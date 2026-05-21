@@ -38,6 +38,7 @@ import '../../services/push_notification_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
 import '../../services/biometric_auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -109,6 +110,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _biometricEnabled   = false;
   bool _biometricAvailable = false;
   String _biometricLabel   = 'Biometrics';
+
+  // App version — populated dynamically from pubspec.yaml via package_info_plus
+  String _appVersion = '1.0.0';
 
   @override
   void initState() {
@@ -221,6 +225,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Reads users/{uid}/roles.isAdmin from Firestore.
     // Fails silently so a Firestore error never blocks the profile from loading.
     _loadAdminRole();
+
+    // ── App version (non-blocking) ───────────────────────────────────────────
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _appVersion = info.version);
+    }).catchError((_) {}); // keep hardcoded fallback on failure
 
     try {
       // Force-reload from storage on every profile load so we always
@@ -964,7 +973,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text('Version 1.0.0',
+                  child: Text('Version $_appVersion',
                       style: GoogleFonts.poppins(
                           fontSize: 12, color: context.hc.textTertiary)),
                 ),
@@ -990,44 +999,142 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final nameCtrl  = TextEditingController(text: displayName);
     final bioCtrl   = TextEditingController(text: _bio ?? '');
 
+    // Track initial values to detect dirty state — Save button only active
+    // when at least one field has been modified from its initial value.
+    final initialName = displayName;
+    final initialBio  = _bio ?? '';
+
     _showSheet(
       title: 'Edit Profile',
       builder: (c) => StatefulBuilder(
-        builder: (ctx, setLocal) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            _sheetField(nameCtrl, 'Name', Icons.person_outline),
-            const SizedBox(height: 16),
-            _sheetField(bioCtrl, 'About me', Icons.edit_note, maxLines: 4),
-            const SizedBox(height: 24),
-            _sheetButton('Save Changes', () async {
-              final newName = nameCtrl.text.trim();
-              final newBio  = bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim();
+        builder: (ctx, setLocal) {
+          // Dirty check — true if either field differs from the initial value
+          final isDirty = nameCtrl.text.trim() != initialName.trim() ||
+              bioCtrl.text.trim() != initialBio.trim();
 
-              if (newName.isNotEmpty) {
-                _onboarding.setName(newName);
-                _onboarding.setBio(newBio);
-                setState(() {
-                  _name = newName;
-                  _bio  = newBio;
-                });
-              }
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              // ── Name field ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: nameCtrl,
+                  maxLines: 1,
+                  keyboardType: TextInputType.name,
+                  textCapitalization: TextCapitalization.words,
+                  onChanged: (_) => setLocal(() {}),
+                  style: GoogleFonts.poppins(
+                      fontSize: 14, color: context.hc.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    labelStyle: GoogleFonts.poppins(
+                        fontSize: 14, color: context.hc.textTertiary),
+                    prefixIcon: Icon(Icons.person_outline,
+                        size: 20, color: context.hc.textTertiary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.hc.divider)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: HuddlColors.primary, width: 2)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // ── Bio field — 200-char limit ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: bioCtrl,
+                  maxLines: 4,
+                  maxLength: 200,
+                  textCapitalization: TextCapitalization.sentences,
+                  onChanged: (_) => setLocal(() {}),
+                  style: GoogleFonts.poppins(
+                      fontSize: 14, color: context.hc.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'About me',
+                    labelStyle: GoogleFonts.poppins(
+                        fontSize: 14, color: context.hc.textTertiary),
+                    prefixIcon: Icon(Icons.edit_note,
+                        size: 20, color: context.hc.textTertiary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.hc.divider)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: HuddlColors.primary, width: 2)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    // Built-in counter shows e.g. "47/200"
+                    counterStyle: GoogleFonts.poppins(
+                        fontSize: 11, color: context.hc.textTertiary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // ── Save Changes — only active when dirty ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isDirty
+                        ? () async {
+                            final newName = nameCtrl.text.trim();
+                            final newBio  = bioCtrl.text.trim().isEmpty
+                                ? null
+                                : bioCtrl.text.trim();
 
-              // Push all changes to Firestore
-              try {
-                await HuddlUserService().syncCurrentUserProfile()
-                    .timeout(const Duration(seconds: 5));
-              } catch (_) {}
+                            if (newName.isNotEmpty) {
+                              _onboarding.setName(newName);
+                              _onboarding.setBio(newBio);
+                              setState(() {
+                                _name = newName;
+                                _bio  = newBio;
+                              });
+                            }
 
-              if (mounted) {
-                Navigator.pop(c);
-                _snack('Profile updated');
-              }
-            }),
-            const SizedBox(height: 16),
-          ],
-        ),
+                            // Push all changes to Firestore
+                            try {
+                              await HuddlUserService()
+                                  .syncCurrentUserProfile()
+                                  .timeout(const Duration(seconds: 5));
+                            } catch (_) {}
+
+                            if (mounted) {
+                              Navigator.pop(c);
+                              _snack('Profile updated');
+                            }
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HuddlColors.primary,
+                      disabledBackgroundColor:
+                          HuddlColors.primary.withValues(alpha: 0.35),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    child: Text('Save Changes',
+                        style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1957,10 +2064,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _snack('Phone update cancelled');
                   return;
                 }
-                // Update phone number — this also changes login credentials
+                final fullPhone = '+44$newPhone';
+                // 1. Update local storage so the profile screen reflects the
+                //    new number immediately without waiting for Firestore.
                 _onboarding.setPhoneNumber(newPhone);
-                setState(() => _phone = '+44$newPhone');
-                _snack('Phone number updated. Your login credentials have been updated to +44$newPhone.');
+                setState(() => _phone = fullPhone);
+
+                // 2. Write the new phone number to Firestore users/{uid}.phoneNumber
+                //    so it is available across devices and to other users.
+                //    NOTE: Full Firebase Auth credential update (re-linking the
+                //    phone auth credential) requires sending a real SMS OTP to the
+                //    new number — handled by FirebaseAuthService.updatePhoneNumber()
+                //    in a production OTP flow. On web the recaptcha + SMS flow is
+                //    needed; we persist to Firestore as a best-effort update here
+                //    and the sign-in credential remains the old number until the
+                //    next full re-auth OTP cycle is implemented.
+                try {
+                  final uid = FirebaseAuth.instance.currentUser?.uid;
+                  if (uid != null) {
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .set({'phoneNumber': fullPhone},
+                            SetOptions(merge: true));
+                  }
+                } catch (e) {
+                  if (kDebugMode) {
+                    debugPrint('[Profile] phone Firestore write error: $e');
+                  }
+                }
+                _snack('Phone number updated to $fullPhone.');
               }
             }),
           ),
@@ -2688,7 +2821,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'Legal basis: your explicit consent (UK GDPR Art. 6(1)(a)). '
                       'You may withdraw at any time by toggling this off. '
-                      'See Privacy Policy \u00a7 16 for full details.',
+                      'See Privacy Policy \u00a7 18 for full details.',
                       style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: HuddlColors.teal,
@@ -2899,12 +3032,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.pop(c);
                   launchUrl(
-                    Uri.parse('https://www.huddlapp.co.uk/privacy-policy.html#s16'),
+                    Uri.parse('https://www.huddlapp.co.uk/privacy-policy.html#s18'),
                     mode: LaunchMode.externalApplication,
                   );
                 },
                 child: Text(
-                  'Read full voice message data policy (Privacy Policy \u00a7 16) \u2192',
+                  'Read full voice message data policy (Privacy Policy \u00a7 18) \u2192',
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: HuddlColors.primary,
@@ -3058,6 +3191,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: context.hc.textPrimary)),
                     trailing: TextButton(
                       onPressed: () async {
+                        // ── Spec §7C: "Unblock [Name]?" confirmation ──────
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogCtx) => Dialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: HuddlColors.primary
+                                          .withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.block,
+                                        size: 28,
+                                        color: HuddlColors.primary),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text('Unblock $userId?',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          color: context.hc.textPrimary),
+                                      textAlign: TextAlign.center),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'They will be able to see your profile and send you messages again.',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: context.hc.textSecondary,
+                                        height: 1.4),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Divider(
+                                      height: 1,
+                                      color: context.hc.divider),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogCtx, false),
+                                          child: Text('Cancel',
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: context
+                                                      .hc.textSecondary)),
+                                        ),
+                                      ),
+                                      Container(
+                                          width: 1,
+                                          height: 36,
+                                          color: context.hc.divider),
+                                      Expanded(
+                                        child: TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogCtx, true),
+                                          child: Text('Unblock',
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: HuddlColors.primary)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                        if (confirmed != true) return;
                         await _blockService.unblockUser(userId);
                         setLocal(() {});
                         setState(() {});
@@ -4229,7 +4444,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text('Version 1.0.0',
+          Text('Version $_appVersion',
               style: GoogleFonts.poppins(
                   fontSize: 13, color: context.hc.textTertiary)),
           const SizedBox(height: 20),
@@ -4374,20 +4589,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () async {
                         Navigator.pop(c);
 
-                        // 1. Sign out from Firebase Auth — MUST happen first
-                        //    so the splash screen sees isSignedIn = false
+                        // 1. Deregister FCM token — prevents push notifications
+                        //    being delivered to a device no longer linked to this
+                        //    account. Best-effort; sign-out proceeds regardless.
+                        try {
+                          final uid = FirebaseAuth.instance.currentUser?.uid;
+                          if (uid != null) {
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(uid)
+                                .set({'fcmToken': ''},
+                                    SetOptions(merge: true));
+                          }
+                        } catch (_) {}
+
+                        // 2. Sign out from Firebase Auth — MUST happen after FCM
+                        //    clear so we can still write while authenticated.
                         try {
                           await FirebaseAuthService().signOut();
                         } catch (_) {}
 
-                        // 2. Clear all local/persisted user data
+                        // 3. Clear all local/persisted user data
                         await BrowserStorage.clear();
                         _onboarding.clear();
 
-                        // 3. Reset in-memory privacy prefs singleton
+                        // 4. Reset in-memory privacy prefs singleton
                         UserPrivacyPrefsService().reset();
 
-                        // 4. Navigate directly to login, removing every route
+                        // 5. Navigate directly to login, removing every route
                         //    (bypasses splash which would re-detect the auth
                         //    token and bounce straight back to /home)
                         if (mounted) {
