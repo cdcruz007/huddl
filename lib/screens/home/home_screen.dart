@@ -1565,10 +1565,8 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
 
-    // If nothing to show, don't render the card
-    if (items.isEmpty && newMeetups == 0 && newEvents == 0) {
-      return const SizedBox.shrink();
-    }
+    // When no new items, show a light "you're all caught up" state
+    // so the card is always visible (matches the home screen mockup design).
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -1695,9 +1693,17 @@ class _HomeScreenState extends State<HomeScreen>
             else
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-                child: Text(
-                  'Your community has been busy. Scroll down to explore.',
-                  style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle_outline,
+                        size: 14, color: HuddlColors.teal),
+                    const SizedBox(width: 6),
+                    Text(
+                      "You're all caught up! Scroll down to explore.",
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, color: hc.textSecondary),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -2341,20 +2347,28 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildCarouselEmpty(dynamic hc, String message, IconData icon) {
     return Container(
-      height: 80,
+      height: 110,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: hc.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: hc.divider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Center(
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: hc.textTertiary),
-            const SizedBox(width: 8),
-            Text(message, style: GoogleFonts.poppins(fontSize: 13, color: hc.textTertiary)),
+            Icon(icon, size: 24, color: hc.textTertiary),
+            const SizedBox(height: 6),
+            Text(message,
+                style: GoogleFonts.poppins(fontSize: 13, color: hc.textTertiary)),
           ],
         ),
       ),
