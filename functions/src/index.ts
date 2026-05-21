@@ -20,6 +20,11 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as https from "https";
 
+// Gemini API key — same key already used in the Flutter app (GeminiConfig._embeddedKey)
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyBk2hsDAYRFj1eLM8XZD5aQndLJBiXTZp4";
+const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -631,17 +636,10 @@ export const cleanupExpiredRecommendations = functions
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * HTTP callable — Co-pilot chat proxy via Anthropic Claude API.
+ * HTTP callable — Co-pilot chat proxy via Google Gemini API.
  *
- * §2C Requirements:
- *   - Model: claude-sonnet-4-20250514
- *   - System prompt injected with user context ({userName}, {borough},
- *     {childrenSummary}, {parentingStage})
- *   - Conversation history passed per request (last 10 messages)
- *   - Session-only — conversation NOT stored in Firestore
- *   - Rate limiting: 20 messages per user per day (Firestore counter)
- *   - API key stored in Firebase config: functions.config().anthropic.key
- *     OR in environment variable ANTHROPIC_API_KEY
+ * Uses the same Gemini key and model already embedded in the Flutter app
+ * (GeminiConfig._embeddedKey / gemini-2.0-flash) — no extra configuration.
  *
  * Request payload:
  *   {
@@ -689,29 +687,42 @@ Children: ${children}
 Parenting stage: ${stage}`;
 }
 
-/** Call Anthropic Claude Messages API using Node.js built-in https. */
-function callClaude(params: {
-  apiKey: string;
+/** Call Gemini generateContent API using Node.js built-in https. */
+function callGemini(params: {
   system: string;
   messages: Array<{ role: string; content: string }>;
 }): Promise<string> {
   return new Promise((resolve, reject) => {
+    // Convert messages to Gemini format (role: user/model, parts: [{text}])
+    const contents = params.messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+
     const body = JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: params.system,
-      messages: params.messages,
+      system_instruction: { parts: [{ text: params.system }] },
+      contents,
+      generationConfig: {
+        temperature: 0.75,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      },
+      safetySettings: [
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT",  threshold: "BLOCK_ONLY_HIGH" },
+        { category: "HARM_CATEGORY_HARASSMENT",         threshold: "BLOCK_ONLY_HIGH" },
+        { category: "HARM_CATEGORY_HATE_SPEECH",        threshold: "BLOCK_ONLY_HIGH" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",  threshold: "BLOCK_ONLY_HIGH" },
+      ],
     });
 
+    const url = new URL(GEMINI_URL);
     const options: https.RequestOptions = {
-      hostname: "api.anthropic.com",
-      path: "/v1/messages",
+      hostname: url.hostname,
+      path: url.pathname + url.search,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Content-Length": Buffer.byteLength(body),
-        "x-api-key": params.apiKey,
-        "anthropic-version": "2023-06-01",
       },
     };
 
@@ -722,13 +733,14 @@ function callClaude(params: {
         try {
           const parsed = JSON.parse(data);
           if (parsed.error) {
-            reject(new Error(`Anthropic error: ${parsed.error.message}`));
+            reject(new Error(`Gemini error: ${parsed.error.message}`));
           } else {
-            const text: string = parsed.content?.[0]?.text ?? "";
+            const text: string =
+              parsed.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
             resolve(text);
           }
         } catch (e) {
-          reject(new Error(`Failed to parse Anthropic response: ${e}`));
+          reject(new Error(`Failed to parse Gemini response: ${e}`));
         }
       });
     });
@@ -823,31 +835,12 @@ export const huddlCopilotChat = functions
 
     const systemPrompt = buildSystemPrompt(enrichedContext);
 
-    // Get API key from Firebase config or environment
-    let apiKey: string;
     try {
-      apiKey =
-        functions.config().anthropic?.key ||
-        process.env.ANTHROPIC_API_KEY ||
-        "";
-    } catch (_) {
-      apiKey = process.env.ANTHROPIC_API_KEY || "";
-    }
-
-    if (!apiKey) {
-      functions.logger.error("[huddlCopilotChat] ANTHROPIC_API_KEY not configured.");
-      throw new functions.https.HttpsError(
-        "internal",
-        "AI service is not configured. Please contact support."
-      );
-    }
-
-    try {
-      const reply = await callClaude({ apiKey, system: systemPrompt, messages });
+      const reply = await callGemini({ system: systemPrompt, messages });
       functions.logger.info(`[huddlCopilotChat] Reply generated for user ${userId}`);
       return { reply };
     } catch (e) {
-      functions.logger.error(`[huddlCopilotChat] Claude API error: ${e}`);
+      functions.logger.error(`[huddlCopilotChat] Gemini API error: ${e}`);
       throw new functions.https.HttpsError(
         "internal",
         "Something went wrong. Please try again."
