@@ -1,22 +1,26 @@
 "use strict";
 /**
- * Huddl — AI Event Recommendation Engine Cloud Functions
+ * Huddl — Cloud Functions
  *
- * Four functions:
+ * Six functions:
  *   1. generateEventRecommendations  — Firestore onCreate on events/{eventId}
  *   2. refreshUserRecommendations    — Firestore onUpdate on users/{userId}
  *   3. recordRecommendationFeedback  — HTTP callable (from Flutter app)
  *   4. cleanupExpiredRecommendations — Scheduled daily at 02:00 UTC
+ *   5. huddlCopilotChat              — §2C  Claude API proxy via HTTP callable
+ *   6. generateCopilotSuggestions    — §2D  Personalised chip generation
  *
  * Firestore schema used:
  *   events/{eventId}
  *   users/{userId}
  *   userRecommendations/{userId}/events/{eventId}
+ *   copilotRateLimits/{userId}          (date + messageCount for 20/day limit)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const https = require("https");
 admin.initializeApp();
 const db = admin.firestore();
 // ═══════════════════════════════════════════════════════════════════════════
@@ -474,4 +478,371 @@ exports.cleanupExpiredRecommendations = functions
     functions.logger.info(`[cleanupExpiredRecommendations] Cleanup complete. ` +
         `Deleted ${totalDeleted} recommendation records for ${expiredEventIds.length} expired events.`);
 });
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUD FUNCTION 5: huddlCopilotChat  (§2C)
+// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * HTTP callable — Co-pilot chat proxy via Anthropic Claude API.
+ *
+ * §2C Requirements:
+ *   - Model: claude-sonnet-4-20250514
+ *   - System prompt injected with user context ({userName}, {borough},
+ *     {childrenSummary}, {parentingStage})
+ *   - Conversation history passed per request (last 10 messages)
+ *   - Session-only — conversation NOT stored in Firestore
+ *   - Rate limiting: 20 messages per user per day (Firestore counter)
+ *   - API key stored in Firebase config: functions.config().anthropic.key
+ *     OR in environment variable ANTHROPIC_API_KEY
+ *
+ * Request payload:
+ *   {
+ *     messages: Array<{ role: "user"|"assistant", content: string }>,
+ *     userContext?: { userName?: string, borough?: string,
+ *                     childrenSummary?: string, parentingStage?: string }
+ *   }
+ * Response:
+ *   { reply: string }  |  error thrown
+ */
+// ── Helpers ────────────────────────────────────────────────────────────────
+/** Build personalised system prompt from user context. */
+function buildSystemPrompt(ctx) {
+    const name = ctx.userName || "there";
+    const borough = ctx.borough || "your area";
+    const children = ctx.childrenSummary || "not specified";
+    const stage = ctx.parentingStage || "not specified";
+    return `You are the Huddl parenting assistant — a warm, knowledgeable, and locally-aware AI for parents in the UK. You know the user's name, their children's ages and names, their location (borough), and their parenting stage.
+
+Your role is to:
+- Answer parenting questions with warmth, accuracy, and practicality
+- Help parents find local resources, groups, and events relevant to their family
+- Assist with Huddl app features (how to join groups, list items, find meetups)
+- Provide age-appropriate developmental guidance
+
+You are NOT:
+- A medical professional — always recommend consulting a GP or health visitor for medical concerns
+- A legal advisor — direct SEND/EHCP questions to IPSEA (ipsea.org.uk)
+- A replacement for human connection — encourage parents to connect with their local community
+
+Keep responses concise and warm. Use plain language. Never use jargon. If you don't know something, say so honestly and suggest where to find help.
+
+User context:
+Name: ${name}
+Borough: ${borough}
+Children: ${children}
+Parenting stage: ${stage}`;
+}
+/** Call Anthropic Claude Messages API using Node.js built-in https. */
+function callClaude(params) {
+    return new Promise((resolve, reject) => {
+        const body = JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1024,
+            system: params.system,
+            messages: params.messages,
+        });
+        const options = {
+            hostname: "api.anthropic.com",
+            path: "/v1/messages",
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Content-Length": Buffer.byteLength(body),
+                "x-api-key": params.apiKey,
+                "anthropic-version": "2023-06-01",
+            },
+        };
+        const req = https.request(options, (res) => {
+            let data = "";
+            res.on("data", (chunk) => (data += chunk));
+            res.on("end", () => {
+                var _a, _b, _c;
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.error) {
+                        reject(new Error(`Anthropic error: ${parsed.error.message}`));
+                    }
+                    else {
+                        const text = (_c = (_b = (_a = parsed.content) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.text) !== null && _c !== void 0 ? _c : "";
+                        resolve(text);
+                    }
+                }
+                catch (e) {
+                    reject(new Error(`Failed to parse Anthropic response: ${e}`));
+                }
+            });
+        });
+        req.on("error", (e) => reject(e));
+        req.write(body);
+        req.end();
+    });
+}
+/** Check and increment rate limit. Returns false when limit exceeded. */
+async function checkAndIncrementRateLimit(userId) {
+    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const ref = db.collection("copilotRateLimits").doc(userId);
+    return db.runTransaction(async (tx) => {
+        var _a;
+        const snap = await tx.get(ref);
+        const data = snap.data();
+        if ((data === null || data === void 0 ? void 0 : data.date) === today) {
+            if (((_a = data.messageCount) !== null && _a !== void 0 ? _a : 0) >= 20) {
+                return false; // limit reached
+            }
+            tx.update(ref, { messageCount: admin.firestore.FieldValue.increment(1) });
+        }
+        else {
+            // New day — reset counter
+            tx.set(ref, { date: today, messageCount: 1 });
+        }
+        return true;
+    });
+}
+// ── Cloud Function ─────────────────────────────────────────────────────────
+exports.huddlCopilotChat = functions
+    .runWith({ timeoutSeconds: 60, memory: "256MB" })
+    .https.onCall(async (data, context) => {
+    var _a, _b;
+    // Authentication guard
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Authentication required.");
+    }
+    const userId = context.auth.uid;
+    // Rate limiting — 20 messages per user per day
+    const allowed = await checkAndIncrementRateLimit(userId);
+    if (!allowed) {
+        throw new functions.https.HttpsError("resource-exhausted", "Daily chat limit reached. Come back tomorrow!");
+    }
+    // Validate input
+    const rawMessages = data.messages;
+    if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) {
+        throw new functions.https.HttpsError("invalid-argument", "messages array is required.");
+    }
+    // Take last 10 messages to keep context manageable
+    const messages = rawMessages.slice(-10);
+    // Build system prompt from user context
+    const userContext = data.userContext;
+    // Enrich user context from Firestore if partially missing
+    let enrichedContext = Object.assign({}, userContext);
+    try {
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (userDoc.exists) {
+            const ud = (_a = userDoc.data()) !== null && _a !== void 0 ? _a : {};
+            enrichedContext = {
+                userName: enrichedContext.userName || ud.name || ud.displayName,
+                borough: enrichedContext.borough || ud.borough,
+                childrenSummary: enrichedContext.childrenSummary || _buildChildrenSummary(ud),
+                parentingStage: enrichedContext.parentingStage || _buildStageLabel(ud),
+            };
+        }
+    }
+    catch (e) {
+        functions.logger.warn(`[huddlCopilotChat] Could not enrich context for ${userId}: ${e}`);
+    }
+    const systemPrompt = buildSystemPrompt(enrichedContext);
+    // Get API key from Firebase config or environment
+    let apiKey;
+    try {
+        apiKey =
+            ((_b = functions.config().anthropic) === null || _b === void 0 ? void 0 : _b.key) ||
+                process.env.ANTHROPIC_API_KEY ||
+                "";
+    }
+    catch (_) {
+        apiKey = process.env.ANTHROPIC_API_KEY || "";
+    }
+    if (!apiKey) {
+        functions.logger.error("[huddlCopilotChat] ANTHROPIC_API_KEY not configured.");
+        throw new functions.https.HttpsError("internal", "AI service is not configured. Please contact support.");
+    }
+    try {
+        const reply = await callClaude({ apiKey, system: systemPrompt, messages });
+        functions.logger.info(`[huddlCopilotChat] Reply generated for user ${userId}`);
+        return { reply };
+    }
+    catch (e) {
+        functions.logger.error(`[huddlCopilotChat] Claude API error: ${e}`);
+        throw new functions.https.HttpsError("internal", "Something went wrong. Please try again.");
+    }
+});
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUD FUNCTION 6: generateCopilotSuggestions  (§2D)
+// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * HTTP callable — Generates 3 personalised suggestion chips for the Co-pilot
+ * welcome screen, based on the user's Firestore profile.
+ *
+ * §2D Requirements:
+ *   - Reads user profile: name, children (ages), parentingStage, borough
+ *   - Computes youngest child's age in months
+ *   - Returns 3 chip strings: age-based, stage-based, location-based
+ *   - Falls back to 3 generic suggestions if profile is incomplete
+ *   - Response is session-cached by the Flutter app (not re-fetched)
+ *
+ * Request payload: {} (empty — auth UID used)
+ * Response: { suggestions: string[] }
+ */
+/** Build a human-readable children summary from the user Firestore doc. */
+function _buildChildrenSummary(ud) {
+    const children = ud.children;
+    if (!children || children.length === 0) {
+        // Try legacy fields
+        const childName = ud.childName;
+        const childBirthday = ud.childBirthday;
+        if (childName && childBirthday) {
+            const ageMonths = _ageMonthsFromBirthday(childBirthday);
+            const ageLabel = ageMonths < 12 ? `${ageMonths} months` : `${Math.floor(ageMonths / 12)} years`;
+            return `${childName} (${ageLabel})`;
+        }
+        return "not specified";
+    }
+    return children
+        .map((c) => {
+        var _a;
+        if (!c.name)
+            return "child";
+        const ageMonths = _ageMonthsFromBirthday((_a = c.birthday) !== null && _a !== void 0 ? _a : "");
+        const ageLabel = ageMonths < 12 ? `${ageMonths} months` : `${Math.floor(ageMonths / 12)} years`;
+        return `${c.name} (${ageLabel})`;
+    })
+        .join(", ");
+}
+/** Build a human-readable parenting stage label. */
+function _buildStageLabel(ud) {
+    var _a, _b;
+    const stages = ud.stagesOfLife;
+    const stage = (_b = (_a = stages === null || stages === void 0 ? void 0 : stages[0]) !== null && _a !== void 0 ? _a : ud.parentingStage) !== null && _b !== void 0 ? _b : "";
+    if (!stage)
+        return "not specified";
+    return stage;
+}
+/** Parse a birthday string ('YYYY-MM-DD' or 'YYYY') → age in months. */
+function _ageMonthsFromBirthday(birthday) {
+    if (!birthday)
+        return -1;
+    try {
+        const dob = birthday.length === 4
+            ? new Date(`${birthday}-01-01`)
+            : new Date(birthday);
+        if (isNaN(dob.getTime()))
+            return -1;
+        return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    }
+    catch (_) {
+        return -1;
+    }
+}
+/** Return the youngest child's age in months from the user Firestore doc. */
+function _youngestChildAgeMonths(ud) {
+    const children = ud.children;
+    if (children && children.length > 0) {
+        const ages = children
+            .map((c) => { var _a; return _ageMonthsFromBirthday((_a = c.birthday) !== null && _a !== void 0 ? _a : ""); })
+            .filter((a) => a >= 0);
+        if (ages.length > 0)
+            return Math.min(...ages);
+    }
+    // Legacy childBirthday field
+    const legacy = ud.childBirthday;
+    if (legacy)
+        return _ageMonthsFromBirthday(legacy);
+    return -1;
+}
+exports.generateCopilotSuggestions = functions.https.onCall(async (_, context) => {
+    var _a, _b, _c;
+    // Authentication guard
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Authentication required.");
+    }
+    const userId = context.auth.uid;
+    // Generic fallback suggestions
+    const fallback = [
+        "What should my child be doing this week?",
+        "Help me find local parenting groups",
+        "Tips for balancing work and family life",
+    ];
+    try {
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (!userDoc.exists) {
+            return { suggestions: fallback };
+        }
+        const ud = (_a = userDoc.data()) !== null && _a !== void 0 ? _a : {};
+        const borough = ud.borough || "your area";
+        const stages = ud.stagesOfLife;
+        const stage = ((_c = (_b = stages === null || stages === void 0 ? void 0 : stages[0]) !== null && _b !== void 0 ? _b : ud.parentingStage) !== null && _c !== void 0 ? _c : "").toLowerCase();
+        const childName = _getFirstChildName(ud);
+        const suggestions = [];
+        // ── Chip 1: Age-based ─────────────────────────────────────────────
+        const ageMonths = _youngestChildAgeMonths(ud);
+        if (ageMonths >= 0) {
+            if (ageMonths <= 3) {
+                const label = childName ? `${childName}` : "your baby";
+                suggestions.push(`Sleep tips for ${label} (${ageMonths}-month-old)`);
+            }
+            else if (ageMonths <= 6) {
+                suggestions.push(`Feeding and weaning advice for a ${ageMonths}-month-old`);
+            }
+            else if (ageMonths <= 12) {
+                suggestions.push(`Milestones to expect at ${ageMonths} months`);
+            }
+            else if (ageMonths <= 24) {
+                const years = Math.floor(ageMonths / 12);
+                suggestions.push(`Activities for a ${years}-year-old`);
+            }
+            else if (ageMonths <= 48) {
+                const years = Math.floor(ageMonths / 12);
+                suggestions.push(`What should my ${years}-year-old know by now?`);
+            }
+            else {
+                suggestions.push("What should my child be doing this week?");
+            }
+        }
+        else {
+            suggestions.push("What should my child be doing this week?");
+        }
+        // ── Chip 2: Stage-based ───────────────────────────────────────────
+        if (stage.includes("expect") || stage.includes("pregnant")) {
+            const dueDate = ud.dueDate;
+            if (dueDate && dueDate.length >= 4) {
+                const year = parseInt(dueDate.slice(0, 4), 10);
+                if (!isNaN(year)) {
+                    suggestions.push(`What to prepare for your ${year} arrival`);
+                }
+                else {
+                    suggestions.push("What to expect in the third trimester");
+                }
+            }
+            else {
+                suggestions.push("What to expect in the third trimester");
+            }
+        }
+        else if (stage.includes("newborn") || stage.includes("new_parent") || stage.includes("new parent")) {
+            suggestions.push("Newborn feeding schedules and sleep routines");
+        }
+        else if (stage.includes("trying") || stage.includes("ttc")) {
+            suggestions.push("Fertility and conception support resources near you");
+        }
+        else if (stage.includes("toddler")) {
+            suggestions.push("Fun toddler activities for rainy days");
+        }
+        else {
+            suggestions.push("Help me find parenting groups nearby");
+        }
+        // ── Chip 3: Location-based ────────────────────────────────────────
+        suggestions.push(`Best parent groups in ${borough}`);
+        return { suggestions: suggestions.slice(0, 3) };
+    }
+    catch (e) {
+        functions.logger.error(`[generateCopilotSuggestions] Error for ${userId}: ${e}`);
+        return { suggestions: fallback };
+    }
+});
+/** Extract the first child's name from the user Firestore doc. */
+function _getFirstChildName(ud) {
+    var _a;
+    const children = ud.children;
+    if (children && children.length > 0 && children[0].name) {
+        return children[0].name;
+    }
+    return (_a = ud.childName) !== null && _a !== void 0 ? _a : null;
+}
 //# sourceMappingURL=index.js.map

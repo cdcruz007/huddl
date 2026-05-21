@@ -38,6 +38,7 @@ import '../../screens/groups/group_chat_screen.dart';
 import '../../screens/groups/dm_chat_screen.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 // =============================================================================
@@ -378,8 +379,28 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Feed preferences persistence ────────────────────────────────────────
+  // §1C: Preferences are persisted to BrowserStorage (local) AND
+  //      Firestore users/{userId}.feedPreferences (cloud) per spec.
   Future<void> _loadFeedPrefs() async {
     try {
+      // 1. Try Firestore first (authoritative, cross-device)
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final fsPrefs = doc.data()?['feedPreferences'] as Map<String, dynamic>?;
+        if (fsPrefs != null) {
+          final loaded = fsPrefs.map((k, v) => MapEntry(k, v as bool));
+          final merged = Map<String, bool>.from(_feedPrefs)..addAll(loaded);
+          // Sync to local cache
+          await BrowserStorage.setString('feed_preferences_v1', json.encode(merged));
+          if (mounted) setState(() => _feedPrefs = merged);
+          return;
+        }
+      }
+      // 2. Fall back to local BrowserStorage
       final raw = await BrowserStorage.getString('feed_preferences_v1');
       if (raw != null) {
         final Map<String, dynamic> decoded = json.decode(raw);
@@ -392,8 +413,21 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _saveFeedPrefs() async {
+    // Save to local BrowserStorage (always, for offline resilience)
     await BrowserStorage.setString(
         'feed_preferences_v1', json.encode(_feedPrefs));
+    // Save to Firestore users/{userId}.feedPreferences (§1C spec)
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({'feedPreferences': _feedPrefs}, SetOptions(merge: true));
+      }
+    } catch (_) {
+      // Non-fatal: local storage already saved, Firestore is best-effort
+    }
   }
 
   /// Returns true when [g] should be hidden from the home feed's suggested
@@ -1096,87 +1130,23 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
 
-              // ── Noticeboard section ────────────────────────────────
+              // ── §2A Co-pilot entry bar ─────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildCopilotEntryBar(hc, isDark),
+              ),
+
+              // ── §3 Today for you — single curated card ────────────
+              if (_buildTodayForYouCard(hc, isDark) != null)
+                SliverToBoxAdapter(
+                  child: _buildTodayForYouCard(hc, isDark)!,
+                ),
+
+              // ── §4 Noticeboard (repositioned below co-pilot) ──────
               SliverToBoxAdapter(
                 child: _buildNoticeboardSection(hc, isDark),
               ),
 
-              // ── Groups carousel ────────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  hc: hc,
-                  icon: Icons.people_rounded,
-                  iconColor: HuddlColors.primary,
-                  title: 'Groups',
-                  subtitle: 'New & active in $_borough',
-                  onSeeAll: () => _switchToTab(2), // Discover tab
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildGroupsCarousel(hc),
-              ),
-
-              // ── Meetups carousel ───────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  hc: hc,
-                  icon: Icons.place_rounded,
-                  iconColor: HuddlColors.teal,
-                  title: 'Meetups',
-                  subtitle: 'Upcoming near you',
-                  onSeeAll: () => _switchToTab(2), // Discover tab
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildMeetupsCarousel(hc),
-              ),
-
-              // ── Events carousel ────────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  hc: hc,
-                  icon: Icons.event_rounded,
-                  iconColor: HuddlColors.accentAmber,
-                  title: 'Events',
-                  subtitle: 'What\'s on in $_borough',
-                  onSeeAll: () => _switchToTab(2), // Discover tab
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildEventsCarousel(hc),
-              ),
-
-              // ── Services carousel ──────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  hc: hc,
-                  icon: Icons.handshake_rounded,
-                  iconColor: HuddlColors.blueDark,
-                  title: 'Services',
-                  subtitle: 'Recommended by parents',
-                  onSeeAll: () => _switchToTab(2), // Discover tab
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildServicesCarousel(hc),
-              ),
-
-              // ── Market carousel ────────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  hc: hc,
-                  icon: Icons.storefront_rounded,
-                  iconColor: HuddlColors.primary,
-                  title: 'Market',
-                  subtitle: 'New items for sale nearby',
-                  onSeeAll: () => _switchToTab(3), // Market tab
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildMarketCarousel(hc),
-              ),
-
-              // ── AI curation note + feed prefs ─────────────────────
+              // ── §5 Feed preferences nudge ─────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -1188,7 +1158,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Text(
                           _smartFeed.isEmpty
                               ? 'Your personalised feed — RSVP to events & meetups to see updates here'
-                              : 'Your personalised feed \u00B7 ${_smartFeed.length} update${_smartFeed.length == 1 ? '' : 's'}',
+                              : 'Your personalised feed · ${_smartFeed.length} update${_smartFeed.length == 1 ? '' : 's'}',
                           style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary),
                         ),
                       ),
@@ -1278,7 +1248,8 @@ class _HomeScreenState extends State<HomeScreen>
 
 
 
-  /// Minimal single-line greeting — name + borough chip, no AI card bloat
+  /// Greeting row: time-based greeting + bold name, teal borough pill right-aligned.
+  /// §1A spec: pill is teal (not orange), positioned adjacent to the greeting text.
   Widget _buildCompactGreeting(dynamic hc, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
@@ -1294,7 +1265,7 @@ class _HomeScreenState extends State<HomeScreen>
                     TextSpan(
                       text: '$_greeting, ',
                       style: GoogleFonts.poppins(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w400,
                         color: hc.textSecondary,
                       ),
@@ -1302,7 +1273,7 @@ class _HomeScreenState extends State<HomeScreen>
                     TextSpan(
                       text: _name.isNotEmpty ? _name : 'there',
                       style: GoogleFonts.poppins(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: hc.textPrimary,
                       ),
@@ -1312,11 +1283,36 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          BoroughBadge(
-            borough: _borough,
-            size: BoroughBadgeSize.medium,
-          ),
+          const SizedBox(width: 10),
+          // §1A §3: Teal borough pill — right-aligned, adjacent to greeting
+          if (_borough.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: HuddlColors.teal.withValues(alpha: isDark ? 0.2 : 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: HuddlColors.teal.withValues(alpha: isDark ? 0.4 : 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.location_on_outlined,
+                      size: 13, color: HuddlColors.teal),
+                  const SizedBox(width: 3),
+                  Text(
+                    _borough,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.teal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1395,19 +1391,22 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Noticeboard section ───────────────────────────────────────────────────
+  // ── §4 Noticeboard section ────────────────────────────────────────────────
+  // Repositioned below the co-pilot bar. Shows pinned/featured post as a
+  // tappable row with chevron — navigates directly to announcement content,
+  // NOT the co-pilot. Post composer removed from this section.
   Widget _buildNoticeboardSection(dynamic hc, bool isDark) {
-    final topAnnouncements = _announcements.take(3).toList();
+    final topAnnouncements = _announcements.take(1).toList(); // one featured post
     final topNudge = _aiFeedService.activeNudges.isNotEmpty
         ? _aiFeedService.activeNudges.first : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section header
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          child: Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header — megaphone icon + title + subtitle
+          Row(
             children: [
               Container(
                 width: 32, height: 32,
@@ -1415,7 +1414,8 @@ class _HomeScreenState extends State<HomeScreen>
                   color: HuddlColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: const Icon(Icons.campaign_rounded, size: 18, color: HuddlColors.primary),
+                child: const Icon(Icons.campaign_rounded,
+                    size: 18, color: HuddlColors.primary),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1423,71 +1423,109 @@ class _HomeScreenState extends State<HomeScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Noticeboard',
-                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: hc.textPrimary)),
-                    Text('${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
-                      style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
+                        style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary)),
+                    Text(
+                        '${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: hc.textTertiary)),
                   ],
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 10),
 
-        // AI prompt — why the noticeboard exists (only shown when board is empty or first time)
-        if (topNudge != null || _announcements.isEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: GestureDetector(
-              onTap: topNudge != null ? () => _handleNudgeTap(topNudge) : null,
+          // Pinned/featured noticeboard post — tappable row, navigates to content
+          if (topNudge != null)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                // Navigate to noticeboard content — NOT co-pilot
+                _handleNudgeTap(topNudge);
+              },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      HuddlColors.primary.withValues(alpha: 0.08),
-                      HuddlColors.teal.withValues(alpha: 0.06),
-                    ],
-                  ),
+                  color: hc.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.15)),
+                  border: Border.all(
+                      color: HuddlColors.primary.withValues(alpha: 0.12)),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome, size: 16, color: HuddlColors.primary),
+                    Icon(Icons.push_pin_outlined,
+                        size: 15, color: HuddlColors.primary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        topNudge != null
-                          ? topNudge.title
-                          : 'Share road closures, lost pets, local news — anything your ${_borough.isNotEmpty ? _borough : "community"} neighbours should know.',
-                        style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary, height: 1.35),
+                        topNudge.title,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: hc.textSecondary,
+                            height: 1.35),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (topNudge != null)
-                      Icon(Icons.chevron_right, size: 16, color: hc.textTertiary),
+                    Icon(Icons.chevron_right,
+                        size: 18, color: hc.textTertiary),
                   ],
                 ),
               ),
+            )
+          else if (topAnnouncements.isNotEmpty)
+            // Show first announcement as the featured row
+            _buildAnnouncementFeedCard(
+              _SmartFeedItem(
+                type: _SmartFeedType.announcement,
+                score: 0.7,
+                reason: topAnnouncements.first.isPinned ? 'Pinned' : 'Recent',
+                announcement: topAnnouncements.first,
+              ),
+              hc, isDark,
+            )
+          else
+            // Empty state — invite community post
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: hc.divider),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.campaign_outlined,
+                      size: 15, color: hc.textTertiary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'No posts yet — be the first to share something with ${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: hc.textTertiary,
+                          height: 1.4),
+                      maxLines: 2,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-
-        // Post composer
-        _buildSmartPostComposer(hc, isDark),
-
-        // Recent announcements (max 3, compact)
-        if (topAnnouncements.isNotEmpty)
-          ...topAnnouncements.map((a) => _buildAnnouncementFeedCard(
-            _SmartFeedItem(
-              type: _SmartFeedType.announcement,
-              score: 0.7,
-              reason: a.isPinned ? 'Pinned' : 'Recent',
-              announcement: a,
-            ),
-            hc, isDark,
-          )),
-      ],
+        ],
+      ),
     );
   }
 
@@ -2466,6 +2504,338 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── §2A Co-pilot entry bar ─────────────────────────────────────────────────
+  // Prominent, always-visible bar that launches the Huddl Assistant.
+  // Includes a contextual daily suggestion chip below the bar.
+  Widget _buildCopilotEntryBar(dynamic hc, bool isDark) {
+    // Contextual suggestion chip — cycles through age/time-aware suggestions
+    final chip = _aiPostHint.isNotEmpty ? _aiPostHint : null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main tappable input bar
+          GestureDetector(
+            onTap: _openAssistant,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: HuddlColors.primary.withValues(alpha: isDark ? 0.5 : 0.35),
+                  width: 1.5,
+                ),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: HuddlColors.primary.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+              ),
+              child: Row(
+                children: [
+                  // Sparkle icon
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.auto_awesome,
+                        size: 18, color: HuddlColors.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Ask huddl anything...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: hc.textTertiary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.arrow_forward_rounded,
+                        size: 16, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Contextual suggestion chip below the bar
+          if (chip != null) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                Navigator.pushNamed(context, '/copilot', arguments: {
+                  'initialMessage': chip.replaceAll('...', ''),
+                  'autoSend': true,
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: HuddlColors.primary.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome,
+                        size: 12, color: HuddlColors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      chip,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── §3 "Today for you" — single curated content card ─────────────────────
+  // Algorithmically selects the single most relevant meetup, event or group.
+  // Returns null if no relevant content is available (section hidden per spec).
+  Widget? _buildTodayForYouCard(dynamic hc, bool isDark) {
+    // Pick the best candidate: first upcoming meetup the user isn't already going to
+    dynamic candidate;
+    String candidateType = '';
+    String ctaLabel = 'View';
+    IconData candidateIcon = Icons.event_rounded;
+    Color candidateColor = HuddlColors.teal;
+
+    if (_upcomingMeetups.isNotEmpty) {
+      candidate = _upcomingMeetups.first;
+      candidateType = 'MEETUP';
+      ctaLabel = 'Join';
+      candidateIcon = Icons.place_rounded;
+      candidateColor = HuddlColors.teal;
+    } else if (_eventService.events.isNotEmpty) {
+      candidate = _eventService.events.first;
+      candidateType = 'EVENT';
+      ctaLabel = 'Book';
+      candidateIcon = Icons.event_rounded;
+      candidateColor = HuddlColors.accentAmber;
+    } else if (_featuredServices.isNotEmpty) {
+      candidate = _featuredServices.first;
+      candidateType = 'SERVICE';
+      ctaLabel = 'View';
+      candidateIcon = Icons.handshake_rounded;
+      candidateColor = HuddlColors.blueDark;
+    }
+
+    if (candidate == null) return null;
+
+    // Extract fields from candidate dynamically
+    final title = (candidate.title as String?) ?? '';
+    final location = (candidate.location as String?) ??
+        (candidate.address as String?) ?? '';
+    final imageUrl = (candidate.imageUrl as String?) ?? '';
+    final category = (candidate.category as String?) ?? candidateType;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 16, color: HuddlColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Today for you',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: hc.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+                child: Text(
+                  'See all',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Full-width card
+          GestureDetector(
+            onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+            child: Container(
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.07),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero image
+                  if (imageUrl.isNotEmpty)
+                    SizedBox(
+                      height: 160,
+                      width: double.infinity,
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: candidateColor.withValues(alpha: 0.12),
+                          child: Center(
+                            child: Icon(candidateIcon,
+                                size: 48, color: candidateColor.withValues(alpha: 0.5)),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      height: 120,
+                      color: candidateColor.withValues(alpha: 0.1),
+                      child: Center(
+                        child: Icon(candidateIcon,
+                            size: 48, color: candidateColor.withValues(alpha: 0.4)),
+                      ),
+                    ),
+                  // Card body
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category tag
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: candidateColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            category.toUpperCase(),
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: candidateColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (location.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_outlined,
+                                  size: 13, color: hc.textTertiary),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  location,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: hc.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        // CTA button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              HapticFeedback.mediumImpact();
+                              _switchToTab(2);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: HuddlColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              ctaLabel,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

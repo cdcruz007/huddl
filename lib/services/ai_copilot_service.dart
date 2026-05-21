@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
@@ -211,7 +212,11 @@ class AiCopilotService with BoroughAiContext {
     _conversationHistory.clear();
   }
 
-  /// Process a user message and generate an AI response
+  /// Process a user message and generate an AI response.
+  ///
+  /// §2C: Primary path → `huddlCopilotChat` Cloud Function (Claude Sonnet).
+  /// Fallback → Gemini (AiApiHelper) if Cloud Function call fails.
+  /// Offline fallback → local pattern-matched response.
   Future<CopilotMessage> sendMessage(String userText) async {
     final userMsg = CopilotMessage(
       id: 'user_${DateTime.now().millisecondsSinceEpoch}',
@@ -220,74 +225,155 @@ class AiCopilotService with BoroughAiContext {
     );
     _messages.add(userMsg);
 
-    // Add to conversation history
+    // Add to conversation history (Anthropic format: role/content)
     _conversationHistory.add({
       'role': 'user',
-      'parts': [
-        {'text': userText}
-      ],
+      'content': userText,
     });
 
     try {
-      // ── Route through shared AiApiHelper (Vertex AI → Gemini fallback) ──
-      final systemPrompt = _promptBuilder.buildCopilotPrompt();
-      final requestBody = {
-        'system_instruction': {
-          'parts': [{'text': systemPrompt}]
-        },
-        'contents': <Map<String, dynamic>>[..._conversationHistory],
-        'generationConfig': {
-          'temperature': 0.75,
-          'topP': 0.95,
-          'topK': 40,
-          'maxOutputTokens': 1024,
-        },
-        'safetySettings': [
-          {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',  'threshold': 'BLOCK_ONLY_HIGH'},
-          {'category': 'HARM_CATEGORY_HARASSMENT',         'threshold': 'BLOCK_ONLY_HIGH'},
-          {'category': 'HARM_CATEGORY_HATE_SPEECH',        'threshold': 'BLOCK_ONLY_HIGH'},
-          {'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',  'threshold': 'BLOCK_ONLY_HIGH'},
-        ],
-      };
-
-      final text = await AiApiHelper.generateText(requestBody) ?? '';
+      // ── §2C Primary: Claude API via huddlCopilotChat Cloud Function ──────
+      final replyText = await _callCopilotCloudFunction(userText);
       final category = _detectCategory(userText);
-      final actions  = _suggestActions(userText, category);
+      final actions = _suggestActions(userText, category);
       final response = CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: text.trim(),
+        text: replyText.trim(),
         isUser: false,
         category: category,
         actions: actions,
         sourceNote: 'Powered by huddl AI',
       );
-
       _messages.add(response);
       _isApiOnline = true;
-
-      // Add AI response to conversation history
       _conversationHistory.add({
-        'role': 'model',
-        'parts': [{'text': response.text}],
+        'role': 'assistant',
+        'content': response.text,
       });
-
       return response;
-    } catch (e) {
-      _isApiOnline = false;
+    } catch (cloudError) {
       if (kDebugMode) {
-        debugPrint('AiCopilot: all AI APIs failed: $e');
+        debugPrint('AiCopilot: Cloud Function failed ($cloudError), trying Gemini fallback');
       }
-      // Fall back to smart local response
-      final fallback = _generateLocalResponse(userText);
-      _messages.add(fallback);
-      _conversationHistory.add({
-        'role': 'model',
-        'parts': [
-          {'text': fallback.text}
-        ],
-      });
-      return fallback;
+      // ── Fallback: Gemini via AiApiHelper ─────────────────────────────────
+      try {
+        // Re-build Gemini-format history from _conversationHistory
+        final geminiHistory = _conversationHistory.map((m) => {
+          'role': m['role'] == 'assistant' ? 'model' : m['role'],
+          'parts': [{'text': m['content'] ?? ''}],
+        }).toList();
+        final systemPrompt = _promptBuilder.buildCopilotPrompt();
+        final requestBody = {
+          'system_instruction': {
+            'parts': [{'text': systemPrompt}]
+          },
+          'contents': <Map<String, dynamic>>[...geminiHistory],
+          'generationConfig': {
+            'temperature': 0.75,
+            'topP': 0.95,
+            'topK': 40,
+            'maxOutputTokens': 1024,
+          },
+          'safetySettings': [
+            {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',  'threshold': 'BLOCK_ONLY_HIGH'},
+            {'category': 'HARM_CATEGORY_HARASSMENT',         'threshold': 'BLOCK_ONLY_HIGH'},
+            {'category': 'HARM_CATEGORY_HATE_SPEECH',        'threshold': 'BLOCK_ONLY_HIGH'},
+            {'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',  'threshold': 'BLOCK_ONLY_HIGH'},
+          ],
+        };
+        final text = await AiApiHelper.generateText(requestBody) ?? '';
+        final category = _detectCategory(userText);
+        final actions = _suggestActions(userText, category);
+        final response = CopilotMessage(
+          id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+          text: text.trim(),
+          isUser: false,
+          category: category,
+          actions: actions,
+          sourceNote: 'Powered by huddl AI',
+        );
+        _messages.add(response);
+        _isApiOnline = true;
+        _conversationHistory.add({
+          'role': 'assistant',
+          'content': response.text,
+        });
+        return response;
+      } catch (geminiError) {
+        _isApiOnline = false;
+        if (kDebugMode) {
+          debugPrint('AiCopilot: all AI APIs failed: $geminiError');
+        }
+        // ── Offline fallback: local pattern-matched response ──────────────
+        final fallback = _generateLocalResponse(userText);
+        _messages.add(fallback);
+        _conversationHistory.add({
+          'role': 'assistant',
+          'content': fallback.text,
+        });
+        return fallback;
+      }
     }
+  }
+
+  /// Build user context map for the Cloud Function call.
+  Map<String, String> _buildUserContextForFunction() {
+    final name = _onboarding.name ?? '';
+    final pc = _onboarding.postcode ?? '';
+    final borough = _postcode.getBoroughFromPostcode(pc) ?? _onboarding.borough ?? '';
+    final children = _onboarding.children;
+    String childrenSummary;
+    if (children.isEmpty) {
+      childrenSummary = 'not specified';
+    } else {
+      childrenSummary = children.map((c) {
+        final n = c['name'] ?? 'child';
+        final bday = c['birthday'] ?? '';
+        if (bday.isEmpty) return n;
+        try {
+          final dob = DateTime.parse(bday);
+          final ageMonths = DateTime.now().difference(dob).inDays ~/ 30;
+          final ageLabel = ageMonths < 12 ? '$ageMonths months' : '${ageMonths ~/ 12} years';
+          return '$n ($ageLabel)';
+        } catch (_) {
+          return n;
+        }
+      }).join(', ');
+    }
+    final stages = _onboarding.stagesOfLife;
+    final stage = stages.isNotEmpty ? stages.first : 'not specified';
+    return {
+      'userName': name,
+      'borough': borough,
+      'childrenSummary': childrenSummary,
+      'parentingStage': stage,
+    };
+  }
+
+  /// Call the `huddlCopilotChat` Firebase Cloud Function.
+  /// Passes last 10 messages and user context.
+  /// Throws on failure so the caller can try Gemini fallback.
+  Future<String> _callCopilotCloudFunction(String userText) async {
+    final callable = FirebaseFunctions.instance.httpsCallable(
+      'huddlCopilotChat',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+    );
+
+    // §2C: Pass last 10 messages in Anthropic format (role/content)
+    final last10 = _conversationHistory.length > 10
+        ? _conversationHistory.sublist(_conversationHistory.length - 10)
+        : List<Map<String, dynamic>>.from(_conversationHistory);
+
+    final result = await callable.call(<String, dynamic>{
+      'messages': last10,
+      'userContext': _buildUserContextForFunction(),
+    });
+
+    final reply = (result.data as Map<dynamic, dynamic>?)?['reply'] as String?;
+    if (reply == null || reply.isEmpty) {
+      throw Exception('Empty reply from Cloud Function');
+    }
+    return reply;
   }
 
   // NOTE: _buildSystemPrompt() has been replaced by
