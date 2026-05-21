@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/browser_storage.dart';
 import '../../services/send_navigator_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -233,22 +235,53 @@ class _Disclaimer extends StatelessWidget {
   final bool isDark;
   const _Disclaimer({required this.isDark});
 
+  Future<void> _launch(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Compact single-line footer — the full legal copy lives in the privacy
-    // policy and the consent gate; this is a brief ambient reminder only.
+    // Compact footer with tappable IPSEA link and tel: crisis number.
+    final baseStyle = GoogleFonts.poppins(
+      fontSize: 10,
+      color: HuddlColors.textHint,
+      height: 1.3,
+    );
+    final linkStyle = GoogleFonts.poppins(
+      fontSize: 10,
+      color: HuddlColors.teal,
+      height: 1.3,
+      decoration: TextDecoration.underline,
+      decorationColor: HuddlColors.teal,
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-      child: Text(
-        'Not legal advice. Verify important decisions with IPSEA · Crisis: 0808 808 3555',
-        style: GoogleFonts.poppins(
-          fontSize: 10,
-          color: HuddlColors.textHint,
-          height: 1.3,
-        ),
+      child: RichText(
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          style: baseStyle,
+          children: [
+            const TextSpan(text: 'Not legal advice. Verify important decisions with '),
+            TextSpan(
+              text: 'IPSEA',
+              style: linkStyle,
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _launch('https://www.ipsea.org.uk'),
+            ),
+            const TextSpan(text: ' · Crisis: '),
+            TextSpan(
+              text: '0808 808 3555',
+              style: linkStyle,
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _launch('tel:08088083555'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -627,6 +660,21 @@ class _ResourceCard extends StatelessWidget {
   final SendResource resource;
   const _ResourceCard({required this.resource});
 
+  Future<void> _launchPhone(String phone) async {
+    final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$digits');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -678,30 +726,47 @@ class _ResourceCard extends StatelessWidget {
           ),
           if (resource.phone != null) ...[
             const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.phone_outlined,
-                    size: 12, color: HuddlColors.textHint),
-                const SizedBox(width: 4),
-                Text(
-                  resource.phone!,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.teal,
+            GestureDetector(
+              onTap: () => _launchPhone(resource.phone!),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  const Icon(Icons.phone_outlined,
+                      size: 12, color: HuddlColors.textHint),
+                  const SizedBox(width: 4),
+                  Text(
+                    resource.phone!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.teal,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
           const SizedBox(height: 6),
-          Text(
-            resource.url,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: HuddlColors.teal,
-              decoration: TextDecoration.underline,
-              decorationColor: HuddlColors.teal,
+          GestureDetector(
+            onTap: () => _launchUrl(resource.url),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                const Icon(Icons.open_in_new, size: 11, color: HuddlColors.textHint),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    resource.url,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: HuddlColors.teal,
+                      decoration: TextDecoration.underline,
+                      decorationColor: HuddlColors.teal,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -2836,6 +2901,21 @@ class _DirectoryCard extends StatelessWidget {
   final SendResource resource;
   const _DirectoryCard({required this.resource});
 
+  Future<void> _launchPhone(String phone) async {
+    final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$digits');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -2922,41 +3002,56 @@ class _DirectoryCard extends StatelessWidget {
           ),
           if (resource.phone != null) ...[
             const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.phone_outlined,
-                    size: 13, color: HuddlColors.textHint),
-                const SizedBox(width: 5),
-                Text(
-                  resource.phone!,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.teal,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.open_in_new,
-                  size: 12, color: HuddlColors.textHint),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  resource.url,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: HuddlColors.teal,
-                    decoration: TextDecoration.underline,
-                    decorationColor: HuddlColors.teal,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+            // Phone row — tappable tel: link
+            GestureDetector(
+              onTap: () => _launchPhone(resource.phone!),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.phone_outlined,
+                        size: 13, color: HuddlColors.textHint),
+                    const SizedBox(width: 5),
+                    Text(
+                      resource.phone!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.teal,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
+          ],
+          // URL row — tappable https: link
+          GestureDetector(
+            onTap: () => _launchUrl(resource.url),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.open_in_new,
+                      size: 12, color: HuddlColors.textHint),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      resource.url,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.teal,
+                        decoration: TextDecoration.underline,
+                        decorationColor: HuddlColors.teal,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

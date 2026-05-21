@@ -31,6 +31,12 @@ const Map<String, String> _kArticleHeroImages = {
   'fin_001':  'https://images.pexels.com/photos/4386373/pexels-photo-4386373.jpeg?auto=compress&cs=tinysrgb&w=800',
 };
 
+// ── Tag-filter notification — bubbles a tag string up to InsightsScreen ───────
+class _TagFilterNotification extends Notification {
+  final String tag;
+  const _TagFilterNotification(this.tag);
+}
+
 // ── Source brand colours ─────────────────────────────────────────────────────
 Color _sourceColor(String source) {
   final s = source.toLowerCase();
@@ -126,7 +132,19 @@ class _InsightsScreenState extends State<InsightsScreen>
   @override
   Widget build(BuildContext context) {
     final isSendTab = _tabController.index == 2;
-    return Scaffold(
+    return NotificationListener<_TagFilterNotification>(
+      onNotification: (n) {
+        // When a hashtag pill is tapped, open search and pre-fill with the tag
+        setState(() {
+          _searchOpen = true;
+          _searchController.text = n.tag;
+          _searchQuery = n.tag.toLowerCase();
+          // Switch to Expert Guides tab if not already on it
+          if (_tabController.index == 0) _tabController.animateTo(1);
+        });
+        return true;
+      },
+      child: Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
@@ -170,7 +188,8 @@ class _InsightsScreenState extends State<InsightsScreen>
           ],
         ),
       ),
-    );
+    ), // Scaffold
+    ); // NotificationListener
   }
 }
 
@@ -516,7 +535,7 @@ class _EmbeddedSendHubScreen extends StatelessWidget {
 
 // ─── Community tab ────────────────────────────────────────────────────────────
 
-class _CommunityTab extends StatelessWidget {
+class _CommunityTab extends StatefulWidget {
   final String searchQuery;
   final KnowledgeCategory? selectedCategory;
   final String sortBy;
@@ -528,7 +547,25 @@ class _CommunityTab extends StatelessWidget {
   });
 
   @override
+  State<_CommunityTab> createState() => _CommunityTabState();
+}
+
+class _CommunityTabState extends State<_CommunityTab>
+    with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // required for keepAlive
     return StreamBuilder<List<CommunityWisdomArticle>>(
       stream: AiKnowledgeFlywheelService().publishedArticlesStream(),
       builder: (context, snap) {
@@ -543,18 +580,18 @@ class _CommunityTab extends StatelessWidget {
 
         var articles = snap.data ?? [];
 
-        if (selectedCategory != null) {
-          articles = articles.where((a) => a.category == selectedCategory).toList();
+        if (widget.selectedCategory != null) {
+          articles = articles.where((a) => a.category == widget.selectedCategory).toList();
         }
-        if (searchQuery.isNotEmpty) {
+        if (widget.searchQuery.isNotEmpty) {
           articles = articles.where((a) {
-            return a.title.toLowerCase().contains(searchQuery) ||
-                a.summary.toLowerCase().contains(searchQuery) ||
-                a.tags.any((t) => t.toLowerCase().contains(searchQuery));
+            return a.title.toLowerCase().contains(widget.searchQuery) ||
+                a.summary.toLowerCase().contains(widget.searchQuery) ||
+                a.tags.any((t) => t.toLowerCase().contains(widget.searchQuery));
           }).toList();
         }
         // Apply sort
-        if (sortBy == 'a-z') {
+        if (widget.sortBy == 'a-z') {
           articles.sort((a, b) => a.title.compareTo(b.title));
         }
         // 'newest' and 'relevance' use default stream ordering (newest first)
@@ -562,10 +599,10 @@ class _CommunityTab extends StatelessWidget {
         if (articles.isEmpty) {
           return _EmptyState(
             icon: Icons.auto_awesome_outlined,
-            title: searchQuery.isNotEmpty
-                ? 'No results for "$searchQuery"'
+            title: widget.searchQuery.isNotEmpty
+                ? 'No results for "${widget.searchQuery}"'
                 : 'No community wisdom yet',
-            subtitle: searchQuery.isNotEmpty
+            subtitle: widget.searchQuery.isNotEmpty
                 ? 'Try a different search term or category.'
                 : 'When parents share helpful insights in group chats, '
                     'they\'ll appear here as Insights articles.',
@@ -573,6 +610,7 @@ class _CommunityTab extends StatelessWidget {
         }
 
         return ListView.separated(
+          controller: _scrollCtrl,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
           itemCount: articles.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -585,7 +623,7 @@ class _CommunityTab extends StatelessWidget {
 
 // ─── Expert Guides tab ────────────────────────────────────────────────────────
 
-class _ExpertTab extends StatelessWidget {
+class _ExpertTab extends StatefulWidget {
   final String searchQuery;
   final KnowledgeCategory? selectedCategory;
   final String sortBy;
@@ -597,31 +635,49 @@ class _ExpertTab extends StatelessWidget {
   });
 
   @override
+  State<_ExpertTab> createState() => _ExpertTabState();
+}
+
+class _ExpertTabState extends State<_ExpertTab>
+    with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // required for keepAlive
     final svc = AiKnowledgeBaseService();
 
     List<KnowledgeArticle> articles;
-    if (selectedCategory != null) {
-      articles = svc.getArticlesByCategory(selectedCategory!);
-    } else if (searchQuery.isNotEmpty) {
-      articles = svc.searchArticles(searchQuery);
+    if (widget.selectedCategory != null) {
+      articles = svc.getArticlesByCategory(widget.selectedCategory!);
+    } else if (widget.searchQuery.isNotEmpty) {
+      articles = svc.searchArticles(widget.searchQuery);
     } else {
       articles = svc.allArticles;
     }
 
-    if (selectedCategory != null && searchQuery.isNotEmpty) {
+    if (widget.selectedCategory != null && widget.searchQuery.isNotEmpty) {
       articles = articles.where((a) {
-        return a.title.toLowerCase().contains(searchQuery) ||
-            a.summary.toLowerCase().contains(searchQuery) ||
-            a.tags.any((t) => t.toLowerCase().contains(searchQuery));
+        return a.title.toLowerCase().contains(widget.searchQuery) ||
+            a.summary.toLowerCase().contains(widget.searchQuery) ||
+            a.tags.any((t) => t.toLowerCase().contains(widget.searchQuery));
       }).toList();
     }
 
     // Apply sort
     final sorted = List<KnowledgeArticle>.from(articles);
-    if (sortBy == 'a-z') {
+    if (widget.sortBy == 'a-z') {
       sorted.sort((a, b) => a.title.compareTo(b.title));
-    } else if (sortBy == 'newest') {
+    } else if (widget.sortBy == 'newest') {
       sorted.sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
     } else {
       // relevance — sort by relevanceWeight descending
@@ -637,10 +693,14 @@ class _ExpertTab extends StatelessWidget {
     }
 
     return ListView.separated(
+      controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       itemCount: sorted.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, i) => _ExpertCard(article: sorted[i]),
+      itemBuilder: (context, i) => _ExpertCard(
+            article: sorted[i],
+            onTagTap: (tag) => _TagFilterNotification(tag).dispatch(context),
+          ),
     );
   }
 }
@@ -751,7 +811,7 @@ class _WisdomCard extends StatelessWidget {
                           .toList(),
                     ),
                   const SizedBox(height: 12),
-                  // Footer — contributor + engagement
+                  // Footer — contributor + engagement + Read →
                   Row(
                     children: [
                       // Contributor avatar
@@ -799,23 +859,21 @@ class _WisdomCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(width: 10),
-                      // Read indicator
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.visibility_outlined,
-                            size: 14,
-                            color: HuddlColors.textHint,
+                      // Read → CTA (spec §2)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.teal.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'Read →',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.teal,
                           ),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${article.viewCount}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: HuddlColors.textHint,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -842,7 +900,8 @@ class _WisdomCard extends StatelessWidget {
 
 class _ExpertCard extends StatelessWidget {
   final KnowledgeArticle article;
-  const _ExpertCard({required this.article});
+  final ValueChanged<String>? onTagTap;
+  const _ExpertCard({required this.article, this.onTagTap});
 
   @override
   Widget build(BuildContext context) {
@@ -880,11 +939,19 @@ class _ExpertCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Photo
+                  // Photo — with shimmer placeholder while loading
                   heroUrl != null
                       ? Image.network(
                           heroUrl,
                           fit: BoxFit.cover,
+                          loadingBuilder: (_, child, progress) {
+                            if (progress == null) return child;
+                            return _ShimmerBox(
+                              width: double.infinity,
+                              height: 160,
+                              borderRadius: 0,
+                            );
+                          },
                           errorBuilder: (_, __, ___) => _PhotoFallback(color: srcColor),
                         )
                       : _PhotoFallback(color: srcColor),
@@ -902,9 +969,9 @@ class _ExpertCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Source badge — top-left
+                  // Source badge — bottom-left (spec §3)
                   Positioned(
-                    top: 10,
+                    bottom: 10,
                     left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -984,7 +1051,11 @@ class _ExpertCard extends StatelessWidget {
                       runSpacing: 4,
                       children: article.tags
                           .take(3)
-                          .map((t) => _Tag(label: t, teal: true))
+                          .map((t) => _Tag(
+                                label: t,
+                                teal: true,
+                                onTap: onTagTap != null ? () => onTagTap!(t) : null,
+                              ))
                           .toList(),
                     ),
                   ],
@@ -1742,11 +1813,12 @@ class _CategoryBadge extends StatelessWidget {
 class _Tag extends StatelessWidget {
   final String label;
   final bool teal;
-  const _Tag({required this.label, this.teal = false});
+  final VoidCallback? onTap;
+  const _Tag({required this.label, this.teal = false, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: teal
@@ -1766,6 +1838,14 @@ class _Tag extends StatelessWidget {
           color: teal ? HuddlColors.teal : HuddlColors.textSecondary,
         ),
       ),
+    );
+    if (onTap == null) return chip;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap!();
+      },
+      child: chip,
     );
   }
 }
@@ -1838,6 +1918,77 @@ class _ErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// SHIMMER LOADING BOX — pure-Dart animated placeholder, no extra packages
+// Usage:
+//   _ShimmerBox(width: double.infinity, height: 160, borderRadius: 0)
+//   _ShimmerBox(width: 64, height: 64, borderRadius: 10)
+// =============================================================================
+class _ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _ShimmerBox({
+    required this.width,
+    required this.height,
+    this.borderRadius = 0,
+  });
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base =
+        isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8);
+    final highlight =
+        isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
+
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value + 1, 0),
+            colors: [base, highlight, base],
+            stops: const [0.0, 0.5, 1.0],
+          ),
         ),
       ),
     );
