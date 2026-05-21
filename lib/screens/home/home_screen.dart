@@ -562,32 +562,32 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _smartFeed = items);
   }
 
-  // ── AI: Generate contextual post hint ─────────────────────────────────────
+  // ── AI: Generate contextual assistant hint ────────────────────────────────
   void _generateAiPostHint() {
     final hour = DateTime.now().hour;
     final hints = <String>[];
     if (hour < 12) {
       hints.addAll([
-        'Share a morning tip with $_borough parents...',
-        'Any good play spots this morning?',
-        'Recommend a local breakfast spot?',
+        'Ask about morning activities in $_borough...',
+        'Find play spots open this morning...',
+        'Ask for local breakfast recommendations...',
       ]);
     } else if (hour < 17) {
       hints.addAll([
-        'What are your afternoon plans in $_borough?',
-        'Any soft play recommendations nearby?',
-        'Looking for after-school activity ideas?',
+        'Find after-school activities near you...',
+        'Ask about soft play spots nearby...',
+        'What\'s on this afternoon in $_borough?',
       ]);
     } else {
       hints.addAll([
-        'How was your day in $_borough?',
-        'Any evening family-friendly spots?',
-        'Share a bedtime tip for new parents...',
+        'Ask about evening family events nearby...',
+        'Find a family-friendly spot tonight...',
+        'Ask for bedtime tips for new parents...',
       ]);
     }
     // Mix in meetup-aware hint
     if (_upcomingMeetups.isNotEmpty) {
-      hints.add('Heading to ${_upcomingMeetups.first.title}? Share tips!');
+      hints.add('Ask about ${_upcomingMeetups.first.title}...');
     }
     setState(() {
       _aiPostHint = hints[Random().nextInt(hints.length)];
