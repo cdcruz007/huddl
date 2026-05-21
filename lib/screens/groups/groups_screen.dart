@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';
@@ -16,6 +17,7 @@ import '../../services/postcode_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/realtime_dm_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/event_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/message_search_service.dart';
@@ -4466,6 +4468,23 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       setState(() {});
       // Trigger Messages tab refresh to show newly joined group
       widget.groupsChangedNotifier.value++;
+
+      // 🎉 First-join celebration overlay
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        try {
+          final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
+          final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+          if (achievements['firstGroupJoined'] != true) {
+            await FirebaseFirestore.instance.doc('users/$uid')
+                .set({'achievements': {'firstGroupJoined': true}}, SetOptions(merge: true));
+            if (mounted) {
+              await HuddlCelebrationOverlay.show(context,
+                  message: 'You joined your first group! 🎉');
+            }
+          }
+        } catch (_) { /* non-critical — ignore */ }
+      }
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -5912,9 +5931,10 @@ class _DiscoverGroupCard extends StatelessWidget {
                       Semantics(
                         label: isJoined ? 'Already joined ${group.name}' : (!canAccess ? 'Restricted group' : 'Join ${group.name}'),
                         button: !isJoined,
-                        child: GestureDetector(
+                        child: ScaleOnPress(
+                          haptic: false,
                           onTap: isJoined ? null : () {
-                            HapticFeedback.lightImpact();
+                            HuddlAnimations.mediumTap();
                             onJoinTap();
                           },
                           child: Container(
@@ -5925,19 +5945,19 @@ class _DiscoverGroupCard extends StatelessWidget {
                                   ? const Color(0xFFF0F0F0)
                                   : (!canAccess
                                       ? const Color(0xFFF0F0F0)
-                                      : const Color(0xFFF2F2F2)),
+                                      : HuddlColors.primary.withValues(alpha: 0.12)),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 color: isJoined
                                     ? HuddlColors.textTertiary
                                     : (!canAccess
                                         ? HuddlColors.textHint
-                                        : context.hc.textPrimary),
+                                        : HuddlColors.primary),
                               ),
                             ),
                           ),

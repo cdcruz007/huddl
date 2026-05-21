@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_character.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';
@@ -1107,6 +1108,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       });
       // ── Section 6D: Increment memberActivity for auto-promotion logic ──
       _incrementMemberActivity(currentUid);
+
+      // 🎉 First-message celebration overlay
+      try {
+        final doc = await FirebaseFirestore.instance.doc('users/$currentUid').get();
+        final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+        if (achievements['firstMessageSent'] != true) {
+          await FirebaseFirestore.instance.doc('users/$currentUid')
+              .set({'achievements': {'firstMessageSent': true}}, SetOptions(merge: true));
+          if (mounted) {
+            await HuddlCelebrationOverlay.show(context,
+                message: 'First message sent! Welcome to the community 💬');
+          }
+        }
+      } catch (_) { /* non-critical */ }
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Firestore send error: $e');
       // Still show as sent locally even if Firestore fails (optimistic ID kept)

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import '../../services/onboarding_data_service.dart';

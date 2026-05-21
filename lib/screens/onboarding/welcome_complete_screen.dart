@@ -6,6 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/backend_api_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
+import '../../widgets/huddl_character.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});
@@ -272,9 +276,26 @@ class WelcomeCompleteScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    HuddlAnimations.heavyTap();
                     _fireWelcomeEmail();
-                    Navigator.pushNamed(context, '/add_photo');
+                    // 🎉 Tutorial complete celebration overlay
+                    try {
+                      final uid = FirebaseAuth.instance.currentUser?.uid;
+                      if (uid != null) {
+                        final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
+                        final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+                        if (achievements['tutorialComplete'] != true) {
+                          await FirebaseFirestore.instance.doc('users/$uid')
+                              .set({'achievements': {'tutorialComplete': true}}, SetOptions(merge: true));
+                          if (context.mounted) {
+                            await HuddlCelebrationOverlay.show(context,
+                                message: 'Welcome to Huddl! Your community awaits 🏡');
+                          }
+                        }
+                      }
+                    } catch (_) { /* non-critical */ }
+                    if (context.mounted) Navigator.pushNamed(context, '/add_photo');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.primary,

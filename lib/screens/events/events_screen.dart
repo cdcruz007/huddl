@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
 import '../../services/default_group_service.dart';
@@ -24,6 +25,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/huddl_character.dart';
@@ -4610,7 +4612,7 @@ class _MeetupCardState extends State<_MeetupCard> {
       meetup.maxAttendees != null &&
       meetup.attendeeCount >= meetup.maxAttendees!;
 
-  void _handleJoin(BuildContext context) {
+  Future<void> _handleJoin(BuildContext context) async {
     HapticFeedback.mediumImpact();
     if (!meetup.isGoing) {
       // Show green "You're going" toast
@@ -4638,6 +4640,25 @@ class _MeetupCardState extends State<_MeetupCard> {
     }
     try {
       _meetupService.toggleGoing(meetup.id);
+
+      // 🎉 First-RSVP celebration overlay
+      if (!meetup.isGoing) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          try {
+            final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
+            final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+            if (achievements['firstMeetupRsvp'] != true) {
+              await FirebaseFirestore.instance.doc('users/$uid')
+                  .set({'achievements': {'firstMeetupRsvp': true}}, SetOptions(merge: true));
+              if (context.mounted) {
+                await HuddlCelebrationOverlay.show(context,
+                    message: "You're going to your first meet-up! 🙌");
+              }
+            }
+          } catch (_) { /* non-critical */ }
+        }
+      }
     } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

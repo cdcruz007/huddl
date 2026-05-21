@@ -6,7 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../widgets/huddl_character.dart';
 import '../../services/rehome_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -362,7 +365,25 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         );
         // Record usage for subscription tracking
         subService.recordListingCreate();
-        Navigator.pop(context, newItem);
+
+        // 🎉 First listing celebration overlay
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          try {
+            final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
+            final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+            if (achievements['firstListingCreated'] != true) {
+              await FirebaseFirestore.instance.doc('users/$uid')
+                  .set({'achievements': {'firstListingCreated': true}}, SetOptions(merge: true));
+              if (mounted) {
+                await HuddlCelebrationOverlay.show(context,
+                    message: 'Your first listing is live! 🛍️');
+              }
+            }
+          } catch (_) { /* non-critical */ }
+        }
+
+        if (mounted) Navigator.pop(context, newItem);
       }
     }
   }

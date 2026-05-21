@@ -18,11 +18,13 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'backend_api_service.dart';
 import 'user_privacy_prefs_service.dart';
+import 'notification_copy_service.dart';
 
 // ── Top-level background handler (must be a top-level / static function) ──────
 @pragma('vm:entry-point')

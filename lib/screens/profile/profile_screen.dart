@@ -8,6 +8,7 @@ import '../../widgets/huddl_character.dart';
 import '../../widgets/huddl_empty_states.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/postcode_service.dart';

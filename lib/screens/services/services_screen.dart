@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_character.dart';
 
 // =============================================================================
@@ -725,7 +727,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
     setState(() => _endorsing = true);
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     try {
       if (_hasEndorsed) {
         await widget.service.removeEndorsement(widget.listing.id);
@@ -744,6 +746,22 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
               duration: const Duration(seconds: 4),
             ),
           );
+          // 🎉 First endorsement celebration overlay
+          try {
+            final uid = FirebaseAuth.instance.currentUser?.uid;
+            if (uid != null) {
+              final doc = await FirebaseFirestore.instance.doc('users/\$uid').get();
+              final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+              if (achievements['firstEndorsement'] != true) {
+                await FirebaseFirestore.instance.doc('users/\$uid')
+                    .set({'achievements': {'firstEndorsement': true}}, SetOptions(merge: true));
+                if (mounted) {
+                  await HuddlCelebrationOverlay.show(context,
+                      message: "First endorsement given! You're helping the community ⭐");
+                }
+              }
+            }
+          } catch (_) { /* non-critical */ }
         }
       }
     } catch (_) {

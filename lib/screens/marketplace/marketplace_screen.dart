@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import '../../services/firestore_service.dart';
@@ -17,6 +18,7 @@ import '../../services/borough_scope_guard.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
 import '../../widgets/huddl_empty_states.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 
 
@@ -1652,15 +1654,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         );
                       },
                     )
-                  // ── 2-column grid (default) ───────────────────────────
-                  : GridView.builder(
+                  // ── Masonry grid (default) — variable-height cards ───
+                  : MasonryGridView.count(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 0.72,
-                      ),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -4012,7 +4011,7 @@ class _MarketGridCardState extends State<_MarketGridCard>
       label:
           '${item.title}, £${item.price.toStringAsFixed(0)}, ${item.condition.label}',
       button: true,
-      child: GestureDetector(
+      child: ScaleOnPress(
         onTap: widget.onTap,
         child: Container(
           decoration: BoxDecoration(

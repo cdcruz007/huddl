@@ -213,8 +213,8 @@ class HuddlApp extends StatelessWidget {
           title: 'Huddl',
           debugShowCheckedModeBanner: false,
           theme: lightTheme,
-          // Dark theme removed - always use light mode
-          themeMode: ThemeMode.light,
+          darkTheme: HuddlTheme.darkTheme,
+          themeMode: ThemeMode.system,
           initialRoute: '/splash',
           onGenerateRoute: AppRouter.generateRoute,
         );
