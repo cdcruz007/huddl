@@ -39,6 +39,9 @@ import '../../services/user_privacy_prefs_service.dart';
 import '../../services/biometric_auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -889,11 +892,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.lock_outline,
                       title: 'Privacy',
                       onTap: _showPrivacySheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.password_outlined,
-                      title: 'Change password',
-                      onTap: _showChangePasswordSheet,
                     ),
                     _MenuItem(
                       icon: Icons.feedback_outlined,
@@ -3514,74 +3512,174 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
   }
 
+  /// Fire-and-forget GDPR export audit log — never throws to caller.
+  void _logGdprExport() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    Future(() async {
+      try {
+        await FirebaseFirestore.instance.collection('gdpr_exports').add({
+          'userId': uid,
+          'exportedAt': FieldValue.serverTimestamp(),
+          'appVersion': _appVersion,
+          'platform': kIsWeb ? 'web' : 'mobile',
+        });
+      } catch (_) {
+        // Non-critical audit log — swallow silently
+      }
+    });
+  }
+
+  /// Section 8A — GDPR Art. 15: View My Data.
+  /// All data fetched live from Firestore (+ local fallback) so the user sees
+  /// the authoritative server-side record, not a possibly-stale cached snapshot.
   void _showViewMyDataSheet() {
-    final data = _compileUserData();
+    // Mutable state held outside the builder so rebuilds don't reset it.
+    Map<String, dynamic>? viewData;
+    bool viewLoading = true;
+    String? viewError;
+
     _showSheet(
       title: 'My Personal Data',
-      builder: (c) => SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: HuddlColors.blueBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline,
-                        size: 18, color: HuddlColors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Under GDPR Article 15, you have the right to access all personal data we hold about you.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: HuddlColors.blue,
-                            height: 1.4),
-                      ),
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          // Kick off the Firestore fetch on the very first build.
+          if (viewLoading && viewData == null) {
+            Future.microtask(() {
+              _compileUserDataAsync().then((result) {
+                if (ctx.mounted) {
+                  setLocal(() { viewData = result; viewLoading = false; });
+                }
+              }).catchError((Object e) {
+                if (ctx.mounted) {
+                  setLocal(() {
+                    viewData = _compileUserData(); // local fallback
+                    viewLoading = false;
+                    viewError = 'Some cloud data could not be loaded.';
+                  });
+                }
+              });
+            });
+          }
+
+          final data = viewData;
+          final loading = viewLoading;
+          final error = viewError;
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                // ── GDPR Art. 15 info banner ──────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.blueBackground,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...data.entries.map((section) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(section.key,
-                        style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: HuddlColors.primaryDark)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline,
+                            size: 18, color: HuddlColors.blue),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Under GDPR Article 15, you have the right to access all personal data we hold about you. Data is fetched live from our servers.',
+                            style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: HuddlColors.blue,
+                                height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                ),
+                // ── Partial error notice ──────────────────────────────────
+                if (error != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding:
+                        const EdgeInsets.fromLTRB(20, 10, 20, 0),
                     child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: context.hc.scaffold,
+                        color: HuddlColors.warningBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: _buildDataContent(section.value),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded,
+                              size: 16, color: HuddlColors.warning),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(error,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: HuddlColors.warning,
+                                    height: 1.3)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                ],
-              );
-            }),
-            const SizedBox(height: 8),
-          ],
-        ),
+                const SizedBox(height: 16),
+                // ── Loading state ─────────────────────────────────────────
+                if (loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(
+                              color: HuddlColors.primary,
+                              strokeWidth: 2),
+                          SizedBox(height: 12),
+                          Text('Fetching your data from Firestore…'),
+                        ],
+                      ),
+                    ),
+                  )
+                // ── Data sections ─────────────────────────────────────────
+                else if (data != null)
+                  ...data.entries.map((section) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(section.key,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: HuddlColors.primaryDark)),
+                        ),
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: ctx.hc.scaffold,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: _buildDataContent(section.value),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                    );
+                  }),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -3646,13 +3744,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // GDPR DATA EXPORT
+  // GDPR DATA EXPORT (Section 8B — GDPR Art. 20 — native share sheet)
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showExportDataSheet() {
     bool exporting = false;
     bool exported = false;
-    String? exportedText;
 
     _showSheet(
       title: 'Export My Data',
@@ -3662,6 +3759,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 12),
+              // ── GDPR Art. 20 info card ─────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
@@ -3699,52 +3797,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              if (exported && exportedText != null) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Container(
-                    width: double.infinity,
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.hc.scaffold,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: context.hc.divider),
-                    ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        exportedText!,
-                        style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textPrimary,
-                            height: 1.5),
-                      ),
-                    ),
+              const SizedBox(height: 16),
+              // ── What is included ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: context.hc.scaffold,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: context.hc.divider),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.check_circle,
-                          size: 16, color: HuddlColors.success),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Your data has been compiled. You can select and copy the text above.',
+                      Text('What is included:',
                           style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.success,
-                              height: 1.3),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: context.hc.textPrimary)),
+                      const SizedBox(height: 6),
+                      for (final item in [
+                        'Profile data (name, bio, location)',
+                        'Group memberships (from Firestore)',
+                        'Meetups created (from Firestore)',
+                        'EHCP deadlines (from Firestore)',
+                        'Notification & privacy settings',
+                        'Voice message consent record',
+                        'Blocked users list',
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('• ',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.hc.textSecondary)),
+                              Expanded(
+                                child: Text(item,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: context.hc.textSecondary,
+                                        height: 1.3)),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-              ],
-              const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 20),
+              // ── Export button ─────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
@@ -3761,9 +3867,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : const Icon(Icons.download, size: 20),
                     label: Text(
                         exporting
-                            ? 'Fetching your data from all devices...'
+                            ? 'Fetching your data…'
                             : exported
-                                ? 'Export complete'
+                                ? 'Exported successfully'
                                 : 'Export my data',
                         style: GoogleFonts.poppins(
                             fontSize: 15, fontWeight: FontWeight.w600)),
@@ -3780,148 +3886,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? null
                         : () async {
                             setLocal(() => exporting = true);
-                            // Fetch both local + Firestore cloud data (Art. 20)
-                            final data = await _compileUserDataAsync();
-                            final buffer = StringBuffer();
-                            buffer.writeln('=== HUDDL — YOUR PERSONAL DATA EXPORT ===');
-                            buffer.writeln('Generated: ${DateTime.now().toString().substring(0, 19)}');
-                            buffer.writeln('');
-                            for (final section in data.entries) {
-                              buffer.writeln('--- ${section.key.toUpperCase()} ---');
-                              if (section.value is Map) {
-                                for (final field in (section.value as Map).entries) {
-                                  buffer.writeln('  ${field.key}: ${field.value}');
-                                }
-                              } else if (section.value is List) {
-                                for (final item in section.value as List) {
-                                  buffer.writeln('  \u2022 $item');
-                                }
-                              } else {
-                                buffer.writeln('  ${section.value}');
-                              }
+                            try {
+                              // 1. Compile local + Firestore cloud data (Art. 20)
+                              final data = await _compileUserDataAsync();
+
+                              // 2. Serialise to plain-text
+                              final buffer = StringBuffer();
+                              buffer.writeln(
+                                  '=== HUDDL — YOUR PERSONAL DATA EXPORT ===');
+                              buffer.writeln(
+                                  'Generated: ${DateTime.now().toString().substring(0, 19)} UTC');
+                              buffer.writeln('GDPR Article 20 — Right to Data Portability');
                               buffer.writeln('');
-                            }
-                            buffer.writeln('=== END OF EXPORT ===');
-                            await Future.delayed(
-                                const Duration(milliseconds: 800));
-                            if (ctx.mounted) {
-                              setLocal(() {
-                                exporting = false;
-                                exported = true;
-                                exportedText = buffer.toString();
-                              });
+                              for (final section in data.entries) {
+                                buffer.writeln(
+                                    '--- ${section.key.toUpperCase()} ---');
+                                if (section.value is Map) {
+                                  for (final field
+                                      in (section.value as Map).entries) {
+                                    buffer.writeln('  ${field.key}: ${field.value}');
+                                  }
+                                } else if (section.value is List) {
+                                  for (final item in section.value as List) {
+                                    buffer.writeln('  • $item');
+                                  }
+                                } else {
+                                  buffer.writeln('  ${section.value}');
+                                }
+                                buffer.writeln('');
+                              }
+                              buffer.writeln('=== END OF EXPORT ===');
+                              final exportText = buffer.toString();
+
+                              // 3. Write to a temp file so the share sheet can
+                              //    attach it as a proper file on iOS & Android.
+                              //    On Web we fall back to sharing the raw text.
+                              if (!kIsWeb) {
+                                final dir =
+                                    await getTemporaryDirectory();
+                                final timestamp = DateTime.now()
+                                    .millisecondsSinceEpoch;
+                                final file = File(
+                                    '${dir.path}/huddl_data_export_$timestamp.txt');
+                                await file.writeAsString(exportText,
+                                    encoding: const Utf8Codec());
+
+                                // 4a. Trigger native share / save sheet
+                                await Share.shareXFiles(
+                                  [XFile(file.path)],
+                                  subject: 'Huddl data export',
+                                  text:
+                                      'My Huddl personal data export (GDPR Art. 20)',
+                                );
+                              } else {
+                                // 4b. Web: share as text (no file system)
+                                await Share.share(
+                                  exportText,
+                                  subject: 'Huddl data export',
+                                );
+                              }
+
+                              // 5. Log export for GDPR compliance audit trail
+                              _logGdprExport();
+
+                              if (ctx.mounted) {
+                                setLocal(() {
+                                  exporting = false;
+                                  exported = true;
+                                });
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                setLocal(() => exporting = false);
+                                _snack('Export failed. Please try again.');
+                              }
                             }
                           },
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // CHANGE PASSWORD (with OTP verification)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  void _showChangePasswordSheet() {
-    final currentCtrl = TextEditingController();
-    final newCtrl = TextEditingController();
-    final confirmCtrl = TextEditingController();
-
-    _showSheet(
-      title: 'Change Password',
-      builder: (c) => StatefulBuilder(
-        builder: (ctx, setLocal) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'You will need to verify via OTP before your password is changed.',
+                  'Your export is saved as a .txt file and shared via your device\'s share sheet (save to Files, email, etc.).',
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                      fontSize: 13, color: context.hc.textSecondary),
+                      fontSize: 11,
+                      color: context.hc.textTertiary,
+                      height: 1.4),
                 ),
               ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _sheetField(
-                    currentCtrl, 'Current password', Icons.lock_outline),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _sheetField(
-                    newCtrl, 'New password', Icons.lock_reset),
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Min 8 characters, 1 uppercase, 1 number, 1 special character',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.hc.textTertiary),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _sheetField(
-                    confirmCtrl, 'Confirm new password', Icons.lock_outline),
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _sheetButton('Change Password', () async {
-                  final current = currentCtrl.text.trim();
-                  final newPw = newCtrl.text.trim();
-                  final confirm = confirmCtrl.text.trim();
-
-                  if (current.isEmpty || newPw.isEmpty || confirm.isEmpty) {
-                    _snack('Please fill in all fields');
-                    return;
-                  }
-                  if (newPw.length < 8) {
-                    _snack('Password must be at least 8 characters');
-                    return;
-                  }
-                  if (!RegExp(r'[A-Z]').hasMatch(newPw)) {
-                    _snack('Password must contain at least 1 uppercase letter');
-                    return;
-                  }
-                  if (!RegExp(r'[0-9]').hasMatch(newPw)) {
-                    _snack('Password must contain at least 1 number');
-                    return;
-                  }
-                  if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(newPw)) {
-                    _snack('Password must contain at least 1 special character');
-                    return;
-                  }
-                  if (newPw != confirm) {
-                    _snack('Passwords do not match');
-                    return;
-                  }
-
-                  Navigator.pop(c);
-                  final verified =
-                      await _verifyWithOtp('change your password');
-                  if (!verified) {
-                    _snack('Password change cancelled');
-                    return;
-                  }
-
-                  // Persist the new password to login credentials
-                  _onboarding.setPassword(newPw);
-                  _snack('Password changed successfully');
-                }),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
             ],
           );
         },
@@ -4650,11 +4706,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Update your postcode', () {
             Navigator.pop(c);
             _showLocationSheet();
-          }),
-          _helpTile(Icons.lock_reset, 'Change password',
-              'Update your login password', () {
-            Navigator.pop(c);
-            _showChangePasswordSheet();
           }),
           const Divider(indent: 16, endIndent: 16),
           _helpTile(Icons.help_outline, 'Help & Support', 'FAQs and contact',
