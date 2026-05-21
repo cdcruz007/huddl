@@ -126,14 +126,22 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.reporterId == request.auth.uid;
 
-      // A user can only read their own submitted reports.
-      // Admin dashboard reads are performed via the Admin SDK (service account)
-      // which bypasses these rules, so no special admin UID rule is required.
-      allow read: if request.auth != null
-        && resource.data.reporterId == request.auth.uid;
+      // A user can read their own submitted reports.
+      // Admin users (roles.isAdmin == true in their users doc) can read ALL reports
+      // — required by AdminDashboardScreen's StreamBuilder.
+      allow read: if request.auth != null && (
+        resource.data.reporterId == request.auth.uid
+        || get(/databases/$(database)/documents/users/$(request.auth.uid))
+             .data.roles.isAdmin == true
+      );
 
-      // Reports are immutable once submitted — no update or delete from client.
-      allow update: if false;
+      // Only admin users may update reports (status transitions: reviewed,
+      // actioned, dismissed) — all other clients cannot modify reports.
+      allow update: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid))
+             .data.roles.isAdmin == true;
+
+      // Reports are never hard-deleted from the client.
       allow delete: if false;
     }
 

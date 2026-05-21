@@ -677,6 +677,60 @@ class FirebaseAuthService {
   /// Firestore data for the currently signed-in user (GDPR Art. 17).
   ///
   /// Collections purged:
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RE-AUTHENTICATION WITH OTP (§5D Change Password)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Verifies an OTP code against the stored verificationId from the most
+  /// recent [verifyPhoneNumber] or [sendPhoneUpdateOtp] call.
+  ///
+  /// Used by the Change Password flow to confirm the user's identity before
+  /// allowing a password change — without creating a new session or profile.
+  ///
+  /// Returns null on success (OTP accepted), or an error string on failure.
+  Future<String?> reAuthWithOtp({required String smsCode}) async {
+    _log('reAuthWithOtp: platform=${kIsWeb ? "web" : defaultTargetPlatform.name}');
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return 'No signed-in user found.';
+
+      if (kIsWeb) {
+        // Web: confirm via the stored ConfirmationResult
+        if (_webConfirmationResult == null) {
+          return 'Verification session expired. Please request a new code.';
+        }
+        // Confirm returns a UserCredential — we only need it to not throw
+        await _webConfirmationResult!.confirm(smsCode);
+        _webConfirmationResult = null;
+        return null;
+      }
+
+      // iOS + Android
+      final vId = _verificationId;
+      if (vId == null || vId.isEmpty) {
+        return 'Verification session expired. Please request a new code.';
+      }
+      final credential = PhoneAuthProvider.credential(
+        verificationId: vId,
+        smsCode: smsCode,
+      );
+      await user.reauthenticateWithCredential(credential);
+      _verificationId = null;
+      return null; // success
+    } on FirebaseAuthException catch (e) {
+      _log('reAuthWithOtp FirebaseAuthException: ${e.code}');
+      if (e.code == 'invalid-verification-code') {
+        return 'Incorrect code. Please check and try again.';
+      } else if (e.code == 'session-expired') {
+        return 'Code expired. Please request a new one.';
+      }
+      return e.message ?? 'Verification failed. Please try again.';
+    } catch (e, stack) {
+      _logError(e, stack, 'reAuthWithOtp');
+      return 'Verification failed. Please try again.';
+    }
+  }
+
   ///   users, subscriptions, group_messages, direct_messages,
   ///   conversations, notifications, meetups, marketplace listings,
   ///   blocks, saved_items, endorsements, rsvps, user_rsvps,

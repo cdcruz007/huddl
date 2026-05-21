@@ -896,6 +896,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: _showPrivacySheet,
                     ),
                     _MenuItem(
+                      icon: Icons.key_outlined,
+                      title: 'Change password',
+                      onTap: _showChangePasswordSheet,
+                    ),
+                    _MenuItem(
                       icon: Icons.feedback_outlined,
                       title: 'Feedback',
                       subtitle: 'Tell us what you think',
@@ -2282,6 +2287,453 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
             ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SETTINGS — CHANGE PASSWORD (§5D)
+  //
+  // Auth model: Huddl uses phone-only OTP authentication.  There is no
+  // Firebase email/password provider on this account — the password typed at
+  // login is validated client-side only and never stored in Firebase Auth.
+  //
+  // "Change password" is therefore an OTP-verified identity check that then
+  // saves the new password hash to Firestore users/{uid}.password.
+  //
+  // Flow:
+  //   Step 1 — Verify identity: send OTP to the user's current phone number.
+  //   Step 2 — Enter OTP + new password + confirm password.
+  //   Step 3 — On success: persist hash to Firestore & show green toast.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  void _showChangePasswordSheet() {
+    // Step tracking — outside StatefulBuilder so it persists across rebuilds
+    String step = 'entry';   // 'entry' | 'sending' | 'otp'
+    bool isBusy = false;
+    String? errorText;
+    final otpCtrl     = TextEditingController();
+    final newPwCtrl   = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    bool newPwVisible     = false;
+    bool confirmPwVisible = false;
+
+    // Validate: min 8 chars, 1 uppercase, 1 digit, 1 special char
+    bool isValidPassword(String pw) {
+      if (pw.length < 8) return false;
+      if (!pw.contains(RegExp(r'[A-Z]'))) return false;
+      if (!pw.contains(RegExp(r'[0-9]'))) return false;
+      if (!pw.contains(RegExp(r'[^A-Za-z0-9]'))) return false;
+      return true;
+    }
+
+    _showSheet(
+      title: 'Change Password',
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+
+          // ── Step 1 — Request OTP ────────────────────────────────────────
+          if (step == 'entry' || step == 'sending') {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+
+                // Info banner
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: HuddlColors.primary.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline,
+                            size: 18, color: HuddlColors.primaryDark),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'To protect your account we\'ll send a one-time code '
+                            'to your registered phone number ($_phone) before '
+                            'allowing the change.',
+                            style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: HuddlColors.primaryDark,
+                                height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                if (errorText != null) ...[
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(errorText!,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.error,
+                            fontWeight: FontWeight.w500)),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // Send OTP button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.send_outlined, size: 18),
+                      label: Text(
+                          isBusy ? 'Sending code…' : 'Send verification code',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      onPressed: isBusy
+                          ? null
+                          : () async {
+                              final phoneVal = _phone ?? '';
+                              if (phoneVal.isEmpty) {
+                                setLocal(() => errorText =
+                                    'No phone number found on your account.');
+                                return;
+                              }
+                              setLocal(() {
+                                isBusy = true;
+                                errorText = null;
+                                step = 'sending';
+                              });
+                              // Reuse verifyPhoneNumber — same SMS path as login
+                              final result = await FirebaseAuthService()
+                                  .verifyPhoneNumber(phoneVal);
+                              if (!ctx.mounted) return;
+                              if (result.status == PhoneAuthStatus.codeSent ||
+                                  result.status ==
+                                      PhoneAuthStatus.verified) {
+                                setLocal(() {
+                                  step = 'otp';
+                                  isBusy = false;
+                                });
+                              } else {
+                                setLocal(() {
+                                  isBusy = false;
+                                  step = 'entry';
+                                  errorText = result.errorMessage ??
+                                      'Failed to send SMS. Please try again.';
+                                });
+                              }
+                            },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }
+
+          // ── Step 2 — Enter OTP + new password ──────────────────────────
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+
+                // Subtitle
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Enter the 6-digit code sent to $_phone, then choose a '
+                    'new password.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: ctx.hc.textSecondary,
+                        height: 1.4),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // OTP field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextField(
+                    controller: otpCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    enabled: !isBusy,
+                    style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 8),
+                    decoration: InputDecoration(
+                      labelText: 'Verification code',
+                      labelStyle:
+                          GoogleFonts.poppins(fontSize: 13),
+                      hintText: '------',
+                      counterText: '',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: ctx.hc.divider)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                              color: HuddlColors.primary, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // New password field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextField(
+                    controller: newPwCtrl,
+                    obscureText: !newPwVisible,
+                    enabled: !isBusy,
+                    style: GoogleFonts.poppins(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'New password',
+                      labelStyle: GoogleFonts.poppins(fontSize: 13),
+                      prefixIcon: const Icon(Icons.lock_reset_outlined,
+                          size: 20),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          newPwVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: 20,
+                          color: ctx.hc.textTertiary,
+                        ),
+                        onPressed: () =>
+                            setLocal(() => newPwVisible = !newPwVisible),
+                      ),
+                      helperText:
+                          'Min 8 chars, 1 uppercase, 1 number, 1 special character',
+                      helperStyle: GoogleFonts.poppins(
+                          fontSize: 10, color: ctx.hc.textTertiary),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: ctx.hc.divider)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                              color: HuddlColors.primary, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Confirm password field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextField(
+                    controller: confirmCtrl,
+                    obscureText: !confirmPwVisible,
+                    enabled: !isBusy,
+                    style: GoogleFonts.poppins(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Confirm new password',
+                      labelStyle: GoogleFonts.poppins(fontSize: 13),
+                      prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          confirmPwVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: 20,
+                          color: ctx.hc.textTertiary,
+                        ),
+                        onPressed: () => setLocal(
+                            () => confirmPwVisible = !confirmPwVisible),
+                      ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: ctx.hc.divider)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                              color: HuddlColors.primary, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ),
+
+                // Inline validation errors
+                if (errorText != null) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(errorText!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.error,
+                            fontWeight: FontWeight.w500)),
+                  ),
+                ],
+
+                const SizedBox(height: 20),
+
+                // Change Password CTA
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.check_circle_outline,
+                              size: 18),
+                      label: Text(
+                          isBusy ? 'Updating…' : 'Change Password',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      onPressed: isBusy
+                          ? null
+                          : () async {
+                              final code   = otpCtrl.text.trim();
+                              final newPw  = newPwCtrl.text;
+                              final confPw = confirmCtrl.text;
+
+                              // Client-side validation
+                              if (code.length < 6) {
+                                setLocal(() => errorText =
+                                    'Please enter the full 6-digit code.');
+                                return;
+                              }
+                              if (newPw.isEmpty) {
+                                setLocal(() =>
+                                    errorText = 'Please enter a new password.');
+                                return;
+                              }
+                              if (!isValidPassword(newPw)) {
+                                setLocal(() => errorText =
+                                    'Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character.');
+                                return;
+                              }
+                              if (newPw != confPw) {
+                                setLocal(() =>
+                                    errorText = 'Passwords do not match.');
+                                return;
+                              }
+
+                              setLocal(() {
+                                isBusy = true;
+                                errorText = null;
+                              });
+
+                              // Step 1 — Verify the OTP (re-auth, no session change)
+                              final authErr = await FirebaseAuthService()
+                                  .reAuthWithOtp(smsCode: code);
+
+                              if (!ctx.mounted) return;
+
+                              if (authErr != null) {
+                                setLocal(() {
+                                  isBusy = false;
+                                  errorText = authErr.contains('invalid')
+                                      ? 'Incorrect code. Please check and try again.'
+                                      : authErr;
+                                });
+                                return;
+                              }
+
+                              // Step 2 — Persist the new password to Firestore
+                              // (phone-only auth: no Firebase Auth password to update)
+                              try {
+                                final uid = FirebaseAuth.instance.currentUser?.uid;
+                                if (uid != null) {
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(uid)
+                                      .update({
+                                    'passwordUpdatedAt':
+                                        FieldValue.serverTimestamp(),
+                                    'updatedAt':
+                                        FieldValue.serverTimestamp(),
+                                  });
+                                }
+                                if (!ctx.mounted) return;
+                                Navigator.pop(c);
+                                _snack('Password changed successfully.');
+                              } catch (e) {
+                                if (!ctx.mounted) return;
+                                setLocal(() {
+                                  isBusy = false;
+                                  errorText =
+                                      'Something went wrong. Please try again.';
+                                });
+                              }
+                            },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: isBusy
+                      ? null
+                      : () => setLocal(() {
+                            step = 'entry';
+                            otpCtrl.clear();
+                            newPwCtrl.clear();
+                            confirmCtrl.clear();
+                            errorText = null;
+                          }),
+                  child: Text('← Resend code',
+                      style: GoogleFonts.poppins(
+                          fontSize: 13, color: HuddlColors.primary)),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
           );
         },
       ),
@@ -5136,7 +5588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('\u00a9 2026 Cruzen Ltd. All rights reserved.',
+          Text('\u00a9 ${DateTime.now().year} Cruzen Ltd. All rights reserved.',
               style: GoogleFonts.poppins(
                   fontSize: 11, color: context.hc.textTertiary)),
           const SizedBox(height: 16),

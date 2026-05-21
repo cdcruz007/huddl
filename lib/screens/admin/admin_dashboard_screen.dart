@@ -69,6 +69,55 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _isAdmin        = false;
   bool _adminChecked   = false;
 
+  // ── Action sheet launcher ─────────────────────────────────────────────────
+
+  /// Opens the Action sub-sheet (Warn user / Remove content / Suspend user).
+  /// Sets report status to 'actioned' and logs the action taken in Firestore.
+  void _showActionSheet(String reportId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ActionSheet(
+        onConfirm: (actionLabel) async {
+          try {
+            await FirebaseFirestore.instance
+                .collection('reports')
+                .doc(reportId)
+                .update({
+              'status'     : 'actioned',
+              'reviewedAt' : FieldValue.serverTimestamp(),
+              'actionTaken': actionLabel,
+            });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Report actioned: $actionLabel'),
+                  backgroundColor: HuddlColors.primary,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to action report: $e'),
+                  backgroundColor: HuddlColors.error,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -101,7 +150,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       await FirebaseFirestore.instance
           .collection('reports')
           .doc(reportId)
-          .update({'status': newStatus, 'reviewedAt': FieldValue.serverTimestamp()});
+          .update({
+        'status'    : newStatus,
+        'reviewedAt': FieldValue.serverTimestamp(),
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -319,6 +371,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               reportId: doc.id,
               data: data,
               onAction: _updateStatus,
+              onActionSheet: _showActionSheet,
             );
           },
         );
@@ -354,11 +407,13 @@ class _ReportCard extends StatefulWidget {
   final String reportId;
   final Map<String, dynamic> data;
   final Future<void> Function(String reportId, String status) onAction;
+  final void Function(String reportId) onActionSheet;
 
   const _ReportCard({
     required this.reportId,
     required this.data,
     required this.onAction,
+    required this.onActionSheet,
   });
 
   @override
@@ -368,6 +423,8 @@ class _ReportCard extends StatefulWidget {
 class _ReportCardState extends State<_ReportCard> {
   _ReportDetails? _details;
   bool _showRawIds = false;
+
+  void _openActionSheet() => widget.onActionSheet(widget.reportId);
 
   @override
   void initState() {
@@ -723,7 +780,8 @@ class _ReportCardState extends State<_ReportCard> {
                       label: 'Action',
                       icon: Icons.gavel_outlined,
                       color: HuddlColors.primary,
-                      onTap: () => widget.onAction(widget.reportId, 'actioned'),
+                      // Opens Warn / Remove content / Suspend sub-sheet
+                      onTap: _openActionSheet,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -830,6 +888,130 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Action Sub-Sheet ──────────────────────────────────────────────────────────
+
+/// Bottom sheet with three moderation actions: Warn user, Remove content,
+/// Suspend user.  On tap, [onConfirm] is called with the human-readable label
+/// so the parent can update Firestore status → 'actioned' + log actionTaken.
+class _ActionSheet extends StatelessWidget {
+  final void Function(String actionLabel) onConfirm;
+  const _ActionSheet({required this.onConfirm});
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      (
+        icon: Icons.warning_amber_rounded,
+        color: HuddlColors.warning,
+        label: 'Warn user',
+        sublabel: 'Send the user an official warning',
+      ),
+      (
+        icon: Icons.delete_outline,
+        color: HuddlColors.error,
+        label: 'Remove content',
+        sublabel: 'Delete the reported message or listing',
+      ),
+      (
+        icon: Icons.block_outlined,
+        color: Colors.red.shade800,
+        label: 'Suspend user',
+        sublabel: 'Temporarily suspend the reported account',
+      ),
+    ];
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Take Action',
+            style: GoogleFonts.poppins(
+              fontSize: 18, fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Select the moderation action for this report.',
+            style: GoogleFonts.poppins(
+              fontSize: 13, color: HuddlColors.disabledText,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...actions.map((a) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.pop(context);
+                onConfirm(a.label);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: a.color.withValues(alpha: 0.3)),
+                  color: a.color.withValues(alpha: 0.05),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: a.color.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(a.icon, size: 20, color: a.color),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(a.label,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14, fontWeight: FontWeight.w600,
+                                  color: a.color)),
+                          Text(a.sublabel,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, color: HuddlColors.disabledText)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: a.color.withValues(alpha: 0.5)),
+                  ],
+                ),
+              ),
+            ),
+          )),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(
+                    fontSize: 14, color: HuddlColors.disabledText)),
+          ),
+        ],
+      ),
     );
   }
 }

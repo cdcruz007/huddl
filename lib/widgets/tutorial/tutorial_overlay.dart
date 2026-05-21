@@ -60,9 +60,9 @@ class _TutorialOverlayState extends State<TutorialOverlay>
   List<TutorialStep> get _steps => TutorialService.steps;
   TutorialStep get _step => _steps[_current];
 
-  // Nav tab layout: 5 evenly-spaced items inside the pill bar
-  // Each item centre is at (index + 0.5) / 5 of the bar width
-  static const int _tabCount = 5;
+  // Nav tab layout: 6 evenly-spaced items inside the pill bar
+  // Each item centre is at (index + 0.5) / 6 of the bar width
+  static const int _tabCount = 6;
 
   @override
   void initState() {

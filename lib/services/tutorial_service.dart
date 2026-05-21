@@ -35,67 +35,66 @@ class TutorialService {
     _isLoaded = true;
   }
 
-  /// Ordered tutorial steps. Each maps to a tab index in MainShell plus
-  /// a description of the screen's purpose and its primary CTA.
+  /// Ordered tutorial steps. Each maps to a tab index in MainShell:
+  ///   0 = Home  1 = Connect  2 = Discover  3 = Market  4 = Insights  5 = Profile
   static const List<TutorialStep> steps = [
-    // 0 — Home
+    // 0 — Home (tab 0)
     TutorialStep(
       tabIndex: 0,
       title: 'HOME',
-      headline: 'Your personalised dashboard',
+      headline: 'Your neighbourhood, at a glance',
       body:
-          'AI-curated feed with events, groups and community updates '
-          'tailored to your children\'s ages, your area, and your family\'s needs. '
-          'Powered by insights from 50+ trusted UK sources including NHS, NCT, '
-          'BBC Bitesize, Gingerbread, Contact, Parentkind, MyBaba, and more.',
+          'Every morning you\'ll see what\'s happening nearby \u2014 new meetups, '
+          'local events, and groups worth joining. All picked for your '
+          'family\'s age and stage. No scrolling through irrelevant noise.',
       ctaLabel: 'Tap cards to explore',
       iconName: 'home',
     ),
-    // 1 — Connect
+    // 1 — Connect (tab 1)
     TutorialStep(
       tabIndex: 1,
       title: 'CONNECT',
-      headline: 'Groups & conversations',
+      headline: 'Your local parent network, ready and waiting',
       body:
-          'Your auto-assigned local groups and DMs. From Bumps & Babies to '
-          'Walk & Talk and more \u2014 all within your borough.',
+          'You\'ve already been added to groups in Cambridge that match your '
+          'stage \u2014 expecting, toddler years, school age. Jump in, ask a '
+          'question, or just say hi. These are the parents on your street.',
       ctaLabel: 'Tap a group to start chatting',
       iconName: 'people',
     ),
-    // 2 — Discover
+    // 2 — Discover (tab 2)
     TutorialStep(
       tabIndex: 2,
       title: 'DISCOVER',
-      headline: 'Events, meetups & activities',
+      headline: 'Never miss the good stuff again',
       body:
-          'AI discovers local events daily. Browse borough meetups and UK-wide '
-          'charity events from NCT, Adoption UK, Gingerbread, Home for Good, '
-          'Barnardo\'s, Care for the Family, Parentkind, Sibs, and '
-          'Coram Family Lives. '
-          'Create your own meetup with the + button.',
+          'We scan local listings, NHS boards, and community pages every day '
+          'so you don\'t have to. Free baby groups, NCT events, toddler classes '
+          '\u2014 filtered to what actually suits your child\'s age.',
       ctaLabel: 'Tap + to create a meetup',
       iconName: 'groups',
     ),
-    // 3 — Market
+    // 3 — Market (tab 3)
     TutorialStep(
       tabIndex: 3,
       title: 'MARKET',
-      headline: 'Buy, sell & give away',
+      headline: 'Give outgrown gear a second life',
       body:
-          'List outgrown baby gear, browse bargains, and discover '
-          'exclusive offers. Safety recalls checked automatically. '
-          'All transactions are hyperlocal to your borough.',
+          'List that barely-used bouncer in 60 seconds. Buy a pram from a '
+          'parent two streets away. Everything is local, trusted, and safe \u2014 '
+          'because you already know who you\'re buying from.',
       ctaLabel: 'Tap + to list an item',
       iconName: 'storefront',
     ),
-    // 4 — Profile
+    // 4 — Profile (tab 5)
     TutorialStep(
-      tabIndex: 4,
+      tabIndex: 5,
       title: 'PROFILE',
-      headline: 'Your account & settings',
+      headline: 'It gets better the more it knows you',
       body:
-          'Manage your subscription, notifications, privacy, '
-          'and account settings. Re-run this tour any time from here.',
+          'Add your children\'s names and ages, set your interests, and Huddl '
+          'tailors everything to your family. Update as your kids grow \u2014 '
+          'your feed grows with them.',
       ctaLabel: 'Scroll down for settings',
       iconName: 'person',
     ),
