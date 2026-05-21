@@ -92,6 +92,28 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- ── FCM default notification channel ────────────────────────────────
+             Sets the default channel for FCM messages that do not specify a
+             channel_id in their payload.  Must match one of the channel IDs
+             created programmatically in MainActivity.createHuddlNotificationChannels().
+             Without this, FCM falls back to a generic "Miscellaneous" channel.
+        ──────────────────────────────────────────────────────────────────── -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="huddl_system_alerts" />
+
+        <!-- Notification icon: a small monochrome icon shown in the status bar.
+             FCM requires a small icon that works on all Android API levels.
+             Using the existing launcher icon as fallback. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+
+        <!-- Notification accent colour: brand orange shown behind the notification icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+
         <!-- ── Firebase Test Lab compatibility fix ────────────────────────────
              androidx.profileinstaller is pulled in as a transitive dependency
              and auto-merges ProfileInstallReceiver into our manifest.  That

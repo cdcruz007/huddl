@@ -906,7 +906,7 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _announcements.remove(announcement);
     });
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     _buildSmartFeed();
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1082,7 +1082,7 @@ class _HomeScreenState extends State<HomeScreen>
                             icon: const Icon(Icons.notifications_outlined),
                             color: hc.textPrimary,
                             onPressed: () {
-                              HapticFeedback.lightImpact();
+                              HuddlAnimations.lightTap();
                               _openNotifications();
                             },
                             padding: EdgeInsets.zero,
@@ -1095,7 +1095,7 @@ class _HomeScreenState extends State<HomeScreen>
                         label: 'Your profile',
                         button: true,
                         child: GestureDetector(
-                          onTap: () { HapticFeedback.lightImpact(); _onAvatarTap(); },
+                          onTap: () { HuddlAnimations.lightTap(); _onAvatarTap(); },
                           child: SizedBox(width: 40, height: 40,
                               child: Center(child: _buildSmallAvatar())),
                         ),
@@ -1164,7 +1164,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       GestureDetector(
-                        onTap: () { HapticFeedback.lightImpact(); _showFeedPreferences(); },
+                        onTap: () { HuddlAnimations.lightTap(); _showFeedPreferences(); },
                         child: Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: Icon(Icons.tune, size: 16, color: hc.textTertiary),
@@ -1369,7 +1369,7 @@ class _HomeScreenState extends State<HomeScreen>
             label: 'See all $title',
             button: true,
             child: GestureDetector(
-              onTap: () { HapticFeedback.selectionClick(); onSeeAll(); },
+              onTap: () { HuddlAnimations.selectionClick(); onSeeAll(); },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
@@ -1443,7 +1443,7 @@ class _HomeScreenState extends State<HomeScreen>
           if (topNudge != null)
             GestureDetector(
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 // Navigate to noticeboard content — NOT co-pilot
                 _handleNudgeTap(topNudge);
               },
@@ -1679,7 +1679,7 @@ class _HomeScreenState extends State<HomeScreen>
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     icon: Icon(Icons.close, size: 16, color: hc.textTertiary),
                     onPressed: () {
-                      HapticFeedback.lightImpact();
+                      HuddlAnimations.lightTap();
                       setState(() => _catchUpDismissed = true);
                     },
                   ),
@@ -1697,7 +1697,7 @@ class _HomeScreenState extends State<HomeScreen>
                   children: items.map((item) {
                     return GestureDetector(
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        HuddlAnimations.selectionClick();
                         item.onTap();
                       },
                       child: Container(
@@ -1767,7 +1767,7 @@ class _HomeScreenState extends State<HomeScreen>
         itemBuilder: (context, index) {
           final g = groups[index];
           return GestureDetector(
-            onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
+            onTap: () { HuddlAnimations.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
             child: Container(
               width: 220,
               decoration: BoxDecoration(
@@ -1835,7 +1835,7 @@ class _HomeScreenState extends State<HomeScreen>
           final isGoing = m.isGoing;
           return GestureDetector(
             onTap: () {
-              HapticFeedback.selectionClick();
+              HuddlAnimations.selectionClick();
               setState(() => _meetupTaps++);
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
             },
@@ -1960,7 +1960,7 @@ class _HomeScreenState extends State<HomeScreen>
           final hasImage = e.imageUrl.isNotEmpty;
           return GestureDetector(
             onTap: () {
-              HapticFeedback.selectionClick();
+              HuddlAnimations.selectionClick();
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
             },
             child: Container(
@@ -2093,7 +2093,7 @@ class _HomeScreenState extends State<HomeScreen>
           final s = services[index];
           final hasImage = s.imageUrl != null && s.imageUrl!.isNotEmpty;
           return GestureDetector(
-            onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+            onTap: () { HuddlAnimations.selectionClick(); _switchToTab(2); },
             child: Container(
               width: 220,
               decoration: BoxDecoration(
@@ -2203,7 +2203,7 @@ class _HomeScreenState extends State<HomeScreen>
           final priceColor = item.isFree ? HuddlColors.teal : HuddlColors.primary;
           return GestureDetector(
             onTap: () {
-              HapticFeedback.selectionClick();
+              HuddlAnimations.selectionClick();
               setState(() => _marketTaps++);
               Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => ItemDetailScreen(item: item),
@@ -2418,7 +2418,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// Opens the Huddl Assistant screen, optionally passing any text the user
   /// has typed in the composer as an initial message.
   void _openAssistant() {
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     final text = _postController.text.trim();
     _postController.clear();
     Navigator.pushNamed(
@@ -2586,7 +2586,7 @@ class _HomeScreenState extends State<HomeScreen>
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 Navigator.pushNamed(context, '/copilot', arguments: {
                   'initialMessage': chip.replaceAll('...', ''),
                   'autoSend': true,
@@ -2686,7 +2686,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               const Spacer(),
               GestureDetector(
-                onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+                onTap: () { HuddlAnimations.selectionClick(); _switchToTab(2); },
                 child: Text(
                   'See all',
                   style: GoogleFonts.poppins(
@@ -2701,7 +2701,7 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 10),
           // Full-width card
           GestureDetector(
-            onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+            onTap: () { HuddlAnimations.selectionClick(); _switchToTab(2); },
             child: Container(
               decoration: BoxDecoration(
                 color: hc.surface,
@@ -2808,7 +2808,7 @@ class _HomeScreenState extends State<HomeScreen>
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              HapticFeedback.mediumImpact();
+                              HuddlAnimations.mediumTap();
                               _switchToTab(2);
                             },
                             style: ElevatedButton.styleFrom(
@@ -4212,7 +4212,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
   }
 
   void _toggle(String key) {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
     setState(() => _prefs[key] = !(_prefs[key] ?? true));
   }
 
@@ -4380,7 +4380,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
   /// Begin replying to [authorName]: pre-fills @mention and focuses input.
   void _startReply(String authorName) {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
     setState(() {
       _replyingTo = authorName;
       _ctrl.text = '@$authorName ';
@@ -4582,7 +4582,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                           button: true,
                                           child: GestureDetector(
                                             onTap: () {
-                                              HapticFeedback.lightImpact();
+                                              HuddlAnimations.lightTap();
                                               setState(() {
                                                 c.isLiked = !c.isLiked;
                                                 c.likes +=

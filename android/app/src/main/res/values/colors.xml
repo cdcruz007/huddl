@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Huddl brand orange — used as the notification accent colour in the status bar.
+         Matches HuddlColors.primary = #FF965C in the Dart theme layer. -->
+    <color name="notification_color">#FF965C</color>
+</resources>

@@ -728,7 +728,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       _selectedCondition != null;
 
   void _clearAllFilters() {
-    HapticFeedback.lightImpact();
+    HuddlAnimations.lightTap();
     setState(() {
       _selectedAge = null;
       _selectedCategory = null;
@@ -760,7 +760,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   /// Opens a combined filter bottom-sheet that consolidates all four filters.
   void _showAllFiltersSheet(HuddlContextColors hc) {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
 
     // Snapshot current values so the sheet StatefulBuilder can mutate locally
     // while also pushing changes back to the parent via setState immediately
@@ -795,7 +795,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             final color = activeColor ?? HuddlColors.primary;
             return GestureDetector(
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 onTap();
               },
               child: AnimatedContainer(
@@ -1113,7 +1113,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   void _openCreateListing() async {
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     final result = await Navigator.push<RehomeItem>(
       context,
       MaterialPageRoute(builder: (_) => const CreateListingScreen()),
@@ -1219,7 +1219,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         button: true,
                         child: ElevatedButton(
                           onPressed: () {
-                            HapticFeedback.mediumImpact();
+                            HuddlAnimations.mediumTap();
                             Navigator.pop(ctx);
                             _service.deleteListing(item.id);
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1516,7 +1516,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 button: true,
                 child: GestureDetector(
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    HuddlAnimations.lightTap();
                     _showAllFiltersSheet(hc);
                   },
                   child: Container(
@@ -1642,7 +1642,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           isOwn: isOwn,
                           onTap: () => _openItemDetail(items[index]),
                           onToggleSave: () {
-                            HapticFeedback.lightImpact();
+                            HuddlAnimations.lightTap();
                             final item = items[index];
                             if (!item.isSaved) {
                               _ai.recordSave(item);
@@ -1669,7 +1669,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           isOwn: isOwn,
                           onTap: () => _openItemDetail(items[index]),
                           onToggleSave: () {
-                            HapticFeedback.lightImpact();
+                            HuddlAnimations.lightTap();
                             final item = items[index];
                             if (!item.isSaved) {
                               _ai.recordSave(item);
@@ -1787,7 +1787,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     return RefreshIndicator(
       color: HuddlColors.primary,
       onRefresh: () async {
-        HapticFeedback.mediumImpact();
+        HuddlAnimations.mediumTap();
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) setState(() {});
       },
@@ -1933,7 +1933,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               onTap: () => _openItemDetail(item),
               onLongPress: () => _showListingActions(item, hc),
               onDismissed: () {
-                HapticFeedback.mediumImpact();
+                HuddlAnimations.mediumTap();
                 _confirmDelistItem(item);
               },
               onInsightFeedback: (helpful) {
@@ -2036,7 +2036,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     HuddlContextColors hc, {
     required bool isAccept,
   }) {
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     final msgController = TextEditingController();
     final focusNode = FocusNode();
 
@@ -2175,7 +2175,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     const SizedBox(height: 8),
                     ...quickReplies.map((reply) => GestureDetector(
                           onTap: () {
-                            HapticFeedback.selectionClick();
+                            HuddlAnimations.selectionClick();
                             msgController.text = reply;
                             msgController.selection = TextSelection.fromPosition(
                               TextPosition(offset: reply.length),
@@ -2375,7 +2375,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // Replaces the 3-4 visible buttons per tile (Edit, Mark sold, Delete, Relist)
   // with a single long-press → clean action list. AI decides the order.
   void _showListingActions(RehomeItem item, HuddlContextColors hc) {
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     showModalBottomSheet(
       context: context,
       backgroundColor: hc.surface,
@@ -2432,7 +2432,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 }),
                 _sheetAction(Icons.check_circle_outline, 'Mark as sold', hc, () {
                   Navigator.pop(context);
-                  HapticFeedback.mediumImpact();
+                  HuddlAnimations.mediumTap();
                   _service.markSold(item.id);
                   // Notify seller + all buyers who had pending offers
                   final pendingBuyerIds = _service.pendingOffers
@@ -2483,7 +2483,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               ] else ...[
                 _sheetAction(Icons.refresh, 'Relist item', hc, () {
                   Navigator.pop(context);
-                  HapticFeedback.mediumImpact();
+                  HuddlAnimations.mediumTap();
                   _service.relistItem(item.id);
                   // Notify users who saved this item
                   for (final savedUser in _service.savedByUserIds(item.id)) {
@@ -2608,7 +2608,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         item: saved[index],
                         onTap: () => _openItemDetail(saved[index]),
                         onToggleSave: () {
-                          HapticFeedback.lightImpact();
+                          HuddlAnimations.lightTap();
                           _service.toggleSaved(saved[index].id);
                         },
                       ),
@@ -2621,7 +2621,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         item: saved[index],
                         onTap: () => _openItemDetail(saved[index]),
                         onToggleSave: () {
-                          HapticFeedback.lightImpact();
+                          HuddlAnimations.lightTap();
                           _service.toggleSaved(saved[index].id);
                         },
                       ),
@@ -2833,27 +2833,7 @@ class _MarketGridBuyCard extends StatefulWidget {
   State<_MarketGridBuyCard> createState() => _MarketGridBuyCardState();
 }
 
-class _MarketGridBuyCardState extends State<_MarketGridBuyCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _heartAnim;
-  late Animation<double> _heartScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _heartAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
-    _heartScale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _heartAnim.dispose();
-    super.dispose();
-  }
+class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
 
   @override
   Widget build(BuildContext context) {
@@ -2969,38 +2949,23 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard>
                             ? 'Remove ${item.title} from saved'
                             : 'Save ${item.title}',
                         button: true,
-                        child: InkWell(
-                          onTap: () {
-                            _heartAnim.forward(from: 0);
-                            widget.onToggleSave();
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: AnimatedBuilder(
-                            animation: _heartScale,
-                            builder: (_, __) => Transform.scale(
-                              scale: _heartScale.value,
-                              child: Container(
-                                width: 30, height: 30,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.92),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.10),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  item.isSaved
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  size: 15,
-                                  color: item.isSaved
-                                      ? HuddlColors.error
-                                      : HuddlColors.textHint,
-                                ),
+                        child: Container(
+                          width: 30, height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.10),
+                                blurRadius: 4,
                               ),
+                            ],
+                          ),
+                          child: Center(
+                            child: HeartPopButton(
+                              isLiked: item.isSaved,
+                              onToggle: widget.onToggleSave,
+                              size: 15,
                             ),
                           ),
                         ),
@@ -3110,27 +3075,7 @@ class _MarketItemCard extends StatefulWidget {
   State<_MarketItemCard> createState() => _MarketItemCardState();
 }
 
-class _MarketItemCardState extends State<_MarketItemCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _heartAnim;
-  late Animation<double> _heartScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _heartAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
-    _heartScale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _heartAnim.dispose();
-    super.dispose();
-  }
+class _MarketItemCardState extends State<_MarketItemCard> {
 
   String _avatarUrl(int i) {
     final idx = (widget.item.id.hashCode + i).abs() % _kMarketAvatarPool.length;
@@ -3228,39 +3173,24 @@ class _MarketItemCardState extends State<_MarketItemCard>
                               ? 'Remove ${item.title} from saved'
                               : 'Save ${item.title}',
                           button: true,
-                          child: InkWell(
-                            onTap: () {
-                              _heartAnim.forward(from: 0);
-                              widget.onToggleSave();
-                            },
-                            borderRadius: BorderRadius.circular(24),
-                            child: AnimatedBuilder(
-                              animation: _heartScale,
-                              builder: (_, __) => Transform.scale(
-                                scale: _heartScale.value,
-                                child: Container(
-                                  width: 34,
-                                  height: 34,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.92),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    item.isSaved
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    size: 17,
-                                    color: item.isSaved
-                                        ? HuddlColors.error
-                                        : HuddlColors.textHint,
-                                  ),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
                                 ),
+                              ],
+                            ),
+                            child: Center(
+                              child: HeartPopButton(
+                                isLiked: item.isSaved,
+                                onToggle: widget.onToggleSave,
+                                size: 17,
                               ),
                             ),
                           ),
@@ -3634,27 +3564,7 @@ class _MarketListCard extends StatefulWidget {
   State<_MarketListCard> createState() => _MarketListCardState();
 }
 
-class _MarketListCardState extends State<_MarketListCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _heartAnim;
-  late Animation<double> _heartScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _heartAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
-    _heartScale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _heartAnim.dispose();
-    super.dispose();
-  }
+class _MarketListCardState extends State<_MarketListCard> {
 
   Color get _conditionColor {
     switch (widget.item.condition.label.toLowerCase()) {
@@ -3869,21 +3779,12 @@ class _MarketListCardState extends State<_MarketListCard>
                       ),
                       // Save heart (hidden for own listings)
                       if (!widget.isOwn) ...[
-                        GestureDetector(
-                          onTap: () {
-                            _heartAnim.forward(from: 0);
-                            widget.onToggleSave();
-                          },
-                          child: ScaleTransition(
-                            scale: _heartScale,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              child: Icon(
-                                item.isSaved ? Icons.favorite : Icons.favorite_border,
-                                size: 20,
-                                color: item.isSaved ? HuddlColors.primary : hc.textTertiary,
-                              ),
-                            ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          child: HeartPopButton(
+                            isLiked: item.isSaved,
+                            onToggle: widget.onToggleSave,
+                            size: 20,
                           ),
                         ),
                       ],
@@ -3965,27 +3866,7 @@ class _MarketGridCard extends StatefulWidget {
   State<_MarketGridCard> createState() => _MarketGridCardState();
 }
 
-class _MarketGridCardState extends State<_MarketGridCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _heartAnim;
-  late Animation<double> _heartScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _heartAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
-    _heartScale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _heartAnim.dispose();
-    super.dispose();
-  }
+class _MarketGridCardState extends State<_MarketGridCard> {
 
   Color _conditionColor(String condition) {
     switch (condition.toLowerCase()) {
@@ -4089,30 +3970,18 @@ class _MarketGridCardState extends State<_MarketGridCard>
                       Positioned(
                         top: 6,
                         right: 6,
-                        child: GestureDetector(
-                          onTap: () {
-                            _heartAnim.forward(from: 0);
-                            widget.onToggleSave();
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: hc.surface.withValues(alpha: 0.88),
-                              shape: BoxShape.circle,
-                            ),
-                            child: ScaleTransition(
-                              scale: _heartScale,
-                              child: Icon(
-                                item.isSaved
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                size: 16,
-                                color: item.isSaved
-                                    ? HuddlColors.primary
-                                    : hc.textTertiary,
-                              ),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: hc.surface.withValues(alpha: 0.88),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: HeartPopButton(
+                              isLiked: item.isSaved,
+                              onToggle: widget.onToggleSave,
+                              size: 16,
                             ),
                           ),
                         ),
@@ -4347,7 +4216,7 @@ class _SellListingTileState extends State<_SellListingTile>
           child: InkWell(
             onTap: widget.onTap,
             onLongPress: () {
-              HapticFeedback.mediumImpact();
+              HuddlAnimations.mediumTap();
               widget.onLongPress();
             },
             borderRadius: BorderRadius.circular(14),
@@ -4482,7 +4351,7 @@ class _SellListingTileState extends State<_SellListingTile>
                         button: true,
                         child: GestureDetector(
                           onTap: () {
-                            HapticFeedback.mediumImpact();
+                            HuddlAnimations.mediumTap();
                             widget.onLongPress();
                           },
                           behavior: HitTestBehavior.opaque,
@@ -4536,7 +4405,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                   button: true,
                                   child: InkWell(
                                     onTap: () {
-                                      HapticFeedback.selectionClick();
+                                      HuddlAnimations.selectionClick();
                                       widget.onInsightFeedback!(true);
                                     },
                                     borderRadius: BorderRadius.circular(12),
@@ -4558,7 +4427,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                   button: true,
                                   child: InkWell(
                                     onTap: () {
-                                      HapticFeedback.selectionClick();
+                                      HuddlAnimations.selectionClick();
                                       widget.onInsightFeedback!(false);
                                     },
                                     borderRadius: BorderRadius.circular(12),
@@ -4595,7 +4464,7 @@ class _SellListingTileState extends State<_SellListingTile>
         key: ValueKey('dismiss_${item.id}'),
         direction: DismissDirection.endToStart,
         confirmDismiss: (_) async {
-          HapticFeedback.mediumImpact();
+          HuddlAnimations.mediumTap();
           // Let the parent handle confirmation dialog
           widget.onDismissed!();
           return false; // Don't auto-remove; parent controls via dialog

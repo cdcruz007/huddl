@@ -374,7 +374,7 @@ class EventsScreenState extends State<EventsScreen>
                                   color: context.hc.textPrimary),
                               tooltip: 'Search groups',
                               onPressed: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 _groupSearchTrigger.value = true;
                               },
                             )
@@ -384,7 +384,7 @@ class EventsScreenState extends State<EventsScreen>
                                   color: context.hc.textPrimary),
                               tooltip: 'Search meetups',
                               onPressed: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 _meetupSearchTrigger.value = true;
                               },
                             )
@@ -394,7 +394,7 @@ class EventsScreenState extends State<EventsScreen>
                                   color: context.hc.textPrimary),
                               tooltip: 'Search events',
                               onPressed: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 _eventSearchTrigger.value = true;
                               },
                             )
@@ -404,7 +404,7 @@ class EventsScreenState extends State<EventsScreen>
                                   color: context.hc.textPrimary),
                               tooltip: 'Search services',
                               onPressed: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 _serviceSearchTrigger.value = true;
                               },
                             )
@@ -501,7 +501,7 @@ class EventsScreenState extends State<EventsScreen>
             right: 16,
             child: GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
+                HuddlAnimations.lightTap();
                 Navigator.pushNamed(context, '/create_group');
               },
               child: Container(
@@ -528,7 +528,7 @@ class EventsScreenState extends State<EventsScreen>
             right: 16,
             child: GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
+                HuddlAnimations.lightTap();
                 _navigateToCreateMeetup();
               },
               child: Container(
@@ -1044,7 +1044,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
   // ── Filter bottom sheet — Figma-exact redesign ───────────────
   void _showFilterSheet(BuildContext context) {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
 
     // ── Local copies of all filter state for the sheet ────────
     double        sheetDistanceKm      = _distanceKm;
@@ -1096,7 +1096,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 setSheetState(() {
                   if (isChecked) {
                     sheetParticipants.remove(label);
@@ -1151,7 +1151,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
           Widget smartSortCard = GestureDetector(
             onTap: () {
-              HapticFeedback.selectionClick();
+              HuddlAnimations.selectionClick();
               setSheetState(() => sheetSortBy = 'smartSort');
             },
             child: AnimatedContainer(
@@ -1298,7 +1298,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           activeThumbColor: orange,
                           activeTrackColor: orange.withValues(alpha: 0.35),
                           onChanged: (val) {
-                            HapticFeedback.selectionClick();
+                            HuddlAnimations.selectionClick();
                             setSheetState(() {
                               sheetSmartSort = val;
                               if (val) sheetSortBy = 'smartSort';
@@ -1353,7 +1353,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           }) {
             return GestureDetector(
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 onTap();
               },
               child: AnimatedContainer(
@@ -1397,7 +1397,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 setSheetState(() => sheetSortBy = value);
               },
               child: SizedBox(
@@ -1530,7 +1530,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               const SizedBox(width: 12),
                               GestureDetector(
                                 onTap: () {
-                                  HapticFeedback.lightImpact();
+                                  HuddlAnimations.lightTap();
                                   setSheetState(() {
                                     sheetDistanceKm    = 10.0;
                                     sheetCategories    = {};
@@ -1853,7 +1853,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                         child: GestureDetector(
                           onTap: () {
-                            HapticFeedback.mediumImpact();
+                            HuddlAnimations.mediumTap();
                             setState(() {
                               _distanceKm        = sheetDistanceKm;
                               _sheetCategories
@@ -2118,7 +2118,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             const SizedBox(width: 6),
                             GestureDetector(
                               onTap: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 setState(
                                     () => _selectedParticipant = 'All');
                               },
@@ -2399,7 +2399,7 @@ class _ImGoingCard extends StatelessWidget {
   });
 
   void _confirmCancel(BuildContext context) {
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -2469,7 +2469,7 @@ class _ImGoingCard extends StatelessWidget {
         ),
       ),
       confirmDismiss: (_) async {
-        HapticFeedback.mediumImpact();
+        HuddlAnimations.mediumTap();
         return true;
       },
       onDismissed: (_) => onCancel(),
@@ -3338,7 +3338,7 @@ class _EventsTabState extends State<_EventsTab> {
                     if (hasActiveFilter)
                       GestureDetector(
                         onTap: () {
-                          HapticFeedback.lightImpact();
+                          HuddlAnimations.lightTap();
                           setState(() {
                             _priceFilter = 'All';
                             _formatFilter = 'All';
@@ -3572,7 +3572,7 @@ class _EventsTabState extends State<_EventsTab> {
 
   // ── Events filter bottom sheet — Figma-exact ─────────────────
   void _showEventsFilterSheet(BuildContext context) {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
 
     // Snapshot all state into local sheet vars
     double         sheetDistanceKm    = _evDistanceKm;
@@ -3627,7 +3627,7 @@ class _EventsTabState extends State<_EventsTab> {
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 setSheetState(() {
                   if (isChecked) {
                     sheetParticipants.remove(label);
@@ -3682,7 +3682,7 @@ class _EventsTabState extends State<_EventsTab> {
 
           Widget smartSortCard = GestureDetector(
             onTap: () {
-              HapticFeedback.selectionClick();
+              HuddlAnimations.selectionClick();
               setSheetState(() => sheetSortBy = 'smartSort');
             },
             child: AnimatedContainer(
@@ -3829,7 +3829,7 @@ class _EventsTabState extends State<_EventsTab> {
                           activeThumbColor: orange,
                           activeTrackColor: orange.withValues(alpha: 0.35),
                           onChanged: (val) {
-                            HapticFeedback.selectionClick();
+                            HuddlAnimations.selectionClick();
                             setSheetState(() {
                               sheetSmartSort = val;
                               if (val) sheetSortBy = 'smartSort';
@@ -3882,7 +3882,7 @@ class _EventsTabState extends State<_EventsTab> {
             IconData? icon,
           }) {
             return GestureDetector(
-              onTap: () { HapticFeedback.selectionClick(); onTap(); },
+              onTap: () { HuddlAnimations.selectionClick(); onTap(); },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: EdgeInsets.symmetric(
@@ -3921,7 +3921,7 @@ class _EventsTabState extends State<_EventsTab> {
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                HapticFeedback.selectionClick();
+                HuddlAnimations.selectionClick();
                 setSheetState(() => sheetSortBy = value);
               },
               child: SizedBox(
@@ -4042,7 +4042,7 @@ class _EventsTabState extends State<_EventsTab> {
                               const SizedBox(width: 12),
                               GestureDetector(
                                 onTap: () {
-                                  HapticFeedback.lightImpact();
+                                  HuddlAnimations.lightTap();
                                   setSheetState(() {
                                     sheetDistanceKm   = 10.0;
                                     sheetParticipants = {};
@@ -4327,7 +4327,7 @@ class _EventsTabState extends State<_EventsTab> {
                         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                         child: GestureDetector(
                           onTap: () {
-                            HapticFeedback.mediumImpact();
+                            HuddlAnimations.mediumTap();
                             setState(() {
                               // Commit extended filter state
                               _evSmartSortEnabled = sheetSmartSort;
@@ -4447,7 +4447,7 @@ class _MeetupSearchRow extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        HuddlAnimations.lightTap();
         if (!canAccess) { onAccessDenied?.call(); return; }
         Navigator.push(
           context,
@@ -4613,7 +4613,7 @@ class _MeetupCardState extends State<_MeetupCard> {
       meetup.attendeeCount >= meetup.maxAttendees!;
 
   Future<void> _handleJoin(BuildContext context) async {
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     if (!meetup.isGoing) {
       // Show green "You're going" toast
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4694,7 +4694,7 @@ class _MeetupCardState extends State<_MeetupCard> {
       button: true,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          HuddlAnimations.lightTap();
           widget.onView?.call();
           if (isRestricted) {
             widget.onAccessDenied?.call();
@@ -4962,9 +4962,10 @@ class _MeetupCardState extends State<_MeetupCard> {
                                       ? 'You are going to ${meetup.title}'
                                       : 'Join ${meetup.title}',
                           button: true,
-                          child: GestureDetector(
+                          child: ScaleOnPress(
+                            haptic: false,
                             onTap: () {
-                              HapticFeedback.lightImpact();
+                              HuddlAnimations.lightTap();
                               widget.onView?.call();
                               if (isRestricted) {
                                 widget.onAccessDenied?.call();
@@ -5064,7 +5065,7 @@ class _EventListCardState extends State<_EventListCard> {
       button: true,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          HuddlAnimations.lightTap();
           Navigator.push(
             context,
             PageRouteBuilder(
@@ -5320,7 +5321,7 @@ class _EventListCardState extends State<_EventListCard> {
                     // Join pill — Groups-style grey
                     GestureDetector(
                       onTap: () {
-                        HapticFeedback.lightImpact();
+                        HuddlAnimations.lightTap();
                         Navigator.push(
                           context,
                           PageRouteBuilder(
@@ -5388,7 +5389,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
   }
 
   void _submit(bool positive) {
-    HapticFeedback.lightImpact();
+    HuddlAnimations.lightTap();
     widget.invisibleAi.submitFeedback(widget.eventId, positive);
     setState(() => _localFeedback = positive);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -5526,7 +5527,7 @@ class _FilterChipState extends State<_FilterChip>
   }
 
   void _handleTap() {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
     _animCtrl.forward().then((_) {
       _animCtrl.reverse();
     });
@@ -5863,7 +5864,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                     const SizedBox(height: 6),
                     GestureDetector(
                       onTap: () {
-                        HapticFeedback.lightImpact();
+                        HuddlAnimations.lightTap();
                         onAction!();
                       },
                       child: Text(
@@ -5882,7 +5883,7 @@ class _SmartNudgeBanner extends StatelessWidget {
             // Dismiss ✕
             GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
+                HuddlAnimations.lightTap();
                 onDismiss();
               },
               child: Padding(

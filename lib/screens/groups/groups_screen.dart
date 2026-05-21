@@ -1137,7 +1137,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                 label: isPinned ? 'Unpin' : 'Pin',
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  HuddlAnimations.lightTap();
                   Navigator.pop(c);
                   setState(() {
                     if (isPinned) {
@@ -1156,7 +1156,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     : Icons.notifications_off_outlined,
                 label: isMuted ? 'Unmute' : 'Mute',
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  HuddlAnimations.lightTap();
                   Navigator.pop(c);
                   setState(() {
                     if (isMuted) {
@@ -1564,7 +1564,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                       runSpacing: 6,
                       children: aiSuggestions.take(4).map((s) => GestureDetector(
                         onTap: () {
-                          HapticFeedback.lightImpact();
+                          HuddlAnimations.lightTap();
                           setState(() {
                             _searchQuery = s.query;
                             _showAiSuggestions = false;
@@ -1619,7 +1619,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 color: HuddlColors.primary,
                 child: InkWell(
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    HuddlAnimations.lightTap();
                     Navigator.pushNamed(context, '/new_dm');
                   },
                   customBorder: const CircleBorder(),
@@ -1678,7 +1678,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           // ── Header row — tap to expand/collapse ───────────────────────
           InkWell(
             onTap: () {
-              HapticFeedback.selectionClick();
+              HuddlAnimations.selectionClick();
               setState(() => _catchUpExpanded = !_catchUpExpanded);
             },
             borderRadius: BorderRadius.circular(16),
@@ -1729,7 +1729,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     icon: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
                     onPressed: () {
-                      HapticFeedback.lightImpact();
+                      HuddlAnimations.lightTap();
                       setState(() => _catchUpDismissed = true);
                     },
                   ),
@@ -1775,7 +1775,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     return InkWell(
       onTap: () {
-        HapticFeedback.selectionClick();
+        HuddlAnimations.selectionClick();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -2649,7 +2649,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                 label: isPinned ? 'Unpin' : 'Pin',
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  HuddlAnimations.lightTap();
                   Navigator.pop(c);
                   setState(() {
                     if (isPinned) {
@@ -2668,7 +2668,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     : Icons.notifications_off_outlined,
                 label: isMuted ? 'Unmute' : 'Mute',
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  HuddlAnimations.lightTap();
                   Navigator.pop(c);
                   setState(() {
                     if (isMuted) {
@@ -4570,7 +4570,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 button: true,
                                 child: GestureDetector(
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
+                                    HuddlAnimations.lightTap();
                                     Navigator.pop(ctx);
                                   },
                                   child: SizedBox(
@@ -4595,7 +4595,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 button: true,
                                 child: GestureDetector(
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
+                                    HuddlAnimations.lightTap();
                                     setSheetState(() {
                                       tempAudiences = {};
                                       tempSort = 'Recommended';
@@ -4635,7 +4635,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               toggled: isChecked,
                               child: GestureDetector(
                                 onTap: () {
-                                  HapticFeedback.selectionClick();
+                                  HuddlAnimations.selectionClick();
                                   setSheetState(() {
                                     if (isChecked) {
                                       tempAudiences.remove(label);
@@ -4701,11 +4701,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             isSelected: tempSort == 'Recommended',
                             smartEnabled: tempSmartSort,
                             onTap: () {
-                              HapticFeedback.selectionClick();
+                              HuddlAnimations.selectionClick();
                               setSheetState(() => tempSort = 'Recommended');
                             },
                             onToggle: (val) {
-                              HapticFeedback.selectionClick();
+                              HuddlAnimations.selectionClick();
                               setSheetState(() {
                                 tempSmartSort = val;
                                 // selecting the card when enabling smart sort
@@ -4725,7 +4725,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               selected: isActive,
                               child: GestureDetector(
                                 onTap: () {
-                                  HapticFeedback.selectionClick();
+                                  HuddlAnimations.selectionClick();
                                   setSheetState(() => tempSort = option);
                                 },
                                 child: Container(
@@ -4797,7 +4797,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       height: 52,
                       child: ElevatedButton(
                         onPressed: () {
-                          HapticFeedback.lightImpact();
+                          HuddlAnimations.lightTap();
                           Navigator.pop(ctx);
                           setState(() {
                             _selectedAudiences = tempAudiences;
@@ -5174,7 +5174,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         button: true,
                         child: GestureDetector(
                           onTap: () {
-                            HapticFeedback.lightImpact();
+                            HuddlAnimations.lightTap();
                             _showFilterSortSheet();
                           },
                           child: Container(
@@ -5285,7 +5285,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               if (_searchQuery.isNotEmpty)
                                 GestureDetector(
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
+                                    HuddlAnimations.lightTap();
                                     _searchController.clear();
                                     setState(() => _searchQuery = '');
                                   },
@@ -5318,7 +5318,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     children: _aiSuggestions.take(3).map((s) {
                       return GestureDetector(
                         onTap: () {
-                          HapticFeedback.selectionClick();
+                          HuddlAnimations.selectionClick();
                           setState(() {
                             _searchQuery = s.query;
                             _searchController.text = s.query;
@@ -5378,7 +5378,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             button: true,
                             child: GestureDetector(
                               onTap: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 setState(() => _showAiContextBanner = false);
                               },
                               child: const Padding(
@@ -5613,7 +5613,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             });
                       },
                       onFeedback: (isPositive) {
-                        HapticFeedback.selectionClick();
+                        HuddlAnimations.selectionClick();
                         _discoverAi.submitFeedback(
                           group.id, isPositive,
                           category: group.category,
@@ -5640,7 +5640,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   ctaLabel: hasActiveFilters ? 'Clear filters' : null,
                   onCta: hasActiveFilters
                       ? () {
-                          HapticFeedback.lightImpact();
+                          HuddlAnimations.lightTap();
                           setState(() {
                             _selectedAudiences = {};
                             _selectedSort = 'Recommended';

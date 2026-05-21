@@ -303,7 +303,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () {
-                            HapticFeedback.lightImpact();
+                            HuddlAnimations.lightTap();
                             setState(() => _selectedCategory = null);
                           },
                           child: Text(
@@ -381,7 +381,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           if (_searchQuery.isNotEmpty)
                             GestureDetector(
                               onTap: () {
-                                HapticFeedback.lightImpact();
+                                HuddlAnimations.lightTap();
                                 setState(() => _searchQuery = '');
                                 _searchCtrl.clear();
                               },
@@ -401,7 +401,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   // Cancel — exits search mode entirely (back to big cards)
                   GestureDetector(
                     onTap: () {
-                      HapticFeedback.lightImpact();
+                      HuddlAnimations.lightTap();
                       _deactivateSearch();
                     },
                     child: Padding(
@@ -492,7 +492,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
       // ── + FAB (matches Groups tab) ────────────────────────────────────────
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          HapticFeedback.mediumImpact();
+          HuddlAnimations.mediumTap();
           _openAddSheet(context);
         },
         backgroundColor: HuddlColors.primary,
@@ -505,7 +505,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   // Category filter bottom sheet
   void _showCategorySheet(BuildContext context) {
-    HapticFeedback.selectionClick();
+    HuddlAnimations.selectionClick();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -585,7 +585,7 @@ class _CategorySheetTile extends StatelessWidget {
     final hc = context.hc;
     return GestureDetector(
       onTap: () {
-        HapticFeedback.selectionClick();
+        HuddlAnimations.selectionClick();
         onTap();
       },
       child: Container(
@@ -843,7 +843,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
 
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        HuddlAnimations.lightTap();
         widget.service.recordView(listing.id);
         _showListingDetail(context, listing, widget.service);
       },
@@ -928,7 +928,8 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
             ),
             const SizedBox(width: 8),
             // ── Endorse / Endorsed pill (mirrors Meetups Join pill) ───────
-            GestureDetector(
+            ScaleOnPress(
+              haptic: false,
               onTap: _endorsing ? null : _toggleEndorse,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -1003,7 +1004,7 @@ class _ListingCardState extends State<_ListingCard> {
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
     setState(() => _endorsing = true);
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     try {
       if (_hasEndorsed) {
         await widget.service.removeEndorsement(widget.listing.id);
@@ -1155,7 +1156,7 @@ class _ListingCardState extends State<_ListingCard> {
     // ── Events-style card shell ───────────────────────────────────────────
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        HuddlAnimations.lightTap();
         widget.service.recordView(listing.id);
         _showListingDetail(context, listing, widget.service);
       },
@@ -1488,7 +1489,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
     setState(() => _endorsing = true);
-    HapticFeedback.mediumImpact();
+    HuddlAnimations.mediumTap();
     if (_hasEndorsed) {
       await widget.service.removeEndorsement(widget.listing.id);
       if (mounted) {
@@ -1834,7 +1835,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 label: listing.phone!,
                 color: HuddlColors.teal,
                 onTap: () async {
-                  HapticFeedback.selectionClick();
+                  HuddlAnimations.selectionClick();
                   final uri = Uri(scheme: 'tel', path: listing.phone);
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri);
@@ -1858,7 +1859,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 label: listing.website!,
                 color: HuddlColors.teal,
                 onTap: () async {
-                  HapticFeedback.selectionClick();
+                  HuddlAnimations.selectionClick();
                   final raw = listing.website!;
                   final hasScheme = raw.startsWith('http://') ||
                       raw.startsWith('https://');

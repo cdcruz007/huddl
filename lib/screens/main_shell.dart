@@ -25,6 +25,11 @@ class MainShell extends StatefulWidget {
   static final GlobalKey<MainShellState> shellKey =
       GlobalKey<MainShellState>();
 
+  /// Navigator key passed to MaterialApp so NotificationCopyService can push
+  /// named routes from outside the widget tree (e.g. from FCM tap handlers).
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   @override
   State<MainShell> createState() => MainShellState();
 }
@@ -77,6 +82,12 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   void _initialisePushNotifications() {
     final push = PushNotificationService();
+
+    // Register the navigator key so NotificationCopyService.handleTap() can
+    // route tapped notifications to the correct named route without a BuildContext.
+    // We expose a static GlobalKey<NavigatorState> so deep-link routing works
+    // even after the shell is rebuilt (key is stable for the app lifetime).
+    push.navigatorKey = MainShell.navigatorKey;
 
     // Show an in-app banner when a message arrives while the app is open.
     push.onForegroundMessage = (RemoteMessage message) {

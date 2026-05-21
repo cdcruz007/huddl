@@ -56,6 +56,11 @@ class PushNotificationService {
   // in the background or foreground — use to navigate to the right screen.
   void Function(RemoteMessage message)? onNotificationTap;
 
+  // ── Navigator key for deep-link routing ──────────────────────────────────
+  // Set this after the app shell mounts so NotificationCopyService.handleTap()
+  // can push named routes directly, without needing a BuildContext.
+  GlobalKey<NavigatorState>? navigatorKey;
+
   // ─────────────────────────────────────────────────────────────────────────
   // PUBLIC: initialise
   // ─────────────────────────────────────────────────────────────────────────
@@ -148,14 +153,14 @@ class PushNotificationService {
       // ── 7. Background → foreground tap ────────────────────────────────────
       FirebaseMessaging.onMessageOpenedApp.listen((message) {
         _log('Tapped from background: ${message.notification?.title}');
-        onNotificationTap?.call(message);
+        _dispatchTap(message);
       });
 
       // ── 8. Terminated → opened tap ────────────────────────────────────────
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
         _log('App opened from terminated by notification');
-        onNotificationTap?.call(initialMessage);
+        _dispatchTap(initialMessage);
       }
 
       _initialised = true;
@@ -219,6 +224,19 @@ class PushNotificationService {
   // ─────────────────────────────────────────────────────────────────────────
   // INTERNAL HELPERS
   // ─────────────────────────────────────────────────────────────────────────
+
+  // Tap dispatch — routes via NotificationCopyService when a navigator key
+  // is registered, otherwise falls back to onNotificationTap.
+  void _dispatchTap(RemoteMessage message) {
+    final key = navigatorKey;
+    if (key != null && key.currentState != null) {
+      // NotificationCopyService handles all 9 payload types with typed routing.
+      NotificationCopyService.handleTap(message, key);
+    } else {
+      // Fall back to the shell handler during early startup (navigator not yet mounted).
+      onNotificationTap?.call(message);
+    }
+  }
 
   Future<void> _registerToken() async {
     try {

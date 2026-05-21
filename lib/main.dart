@@ -7,6 +7,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
 import 'theme/huddl_theme.dart';
 import 'config/router.dart';
+import 'screens/main_shell.dart';
 import 'services/subscription_service.dart';
 import 'services/browser_storage.dart';
 import 'services/huddl_user_service.dart';
@@ -212,6 +213,7 @@ class HuddlApp extends StatelessWidget {
         return MaterialApp(
           title: 'Huddl',
           debugShowCheckedModeBanner: false,
+          navigatorKey: MainShell.navigatorKey,
           theme: lightTheme,
           darkTheme: HuddlTheme.darkTheme,
           themeMode: ThemeMode.system,
