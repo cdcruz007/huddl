@@ -114,6 +114,9 @@ class CommunityWisdomArticle {
   final String authorUid;         // UID of the contributing parent (internal)
   final bool consentGranted;
 
+  // Optional hero image URL — set by moderator when publishing
+  final String? heroImageUrl;
+
   const CommunityWisdomArticle({
     required this.id,
     required this.title,
@@ -139,6 +142,7 @@ class CommunityWisdomArticle {
     this.publishedAt,
     this.upvotes = 0,
     this.viewCount = 0,
+    this.heroImageUrl,
   });
 
   // ── Firestore serialisation ────────────────────────────────────────────────
@@ -173,6 +177,7 @@ class CommunityWisdomArticle {
         'consent_granted':        consentGranted,
         'upvotes':                upvotes,
         'view_count':             viewCount,
+        if (heroImageUrl != null) 'hero_image_url': heroImageUrl,
       };
 
   factory CommunityWisdomArticle.fromFirestore(
@@ -222,6 +227,7 @@ class CommunityWisdomArticle {
       publishedAt:           ts('published_at'),
       upvotes:               data['upvotes'] as int? ?? 0,
       viewCount:             data['view_count'] as int? ?? 0,
+      heroImageUrl:          data['hero_image_url'] as String?,
     );
   }
 
@@ -234,6 +240,7 @@ class CommunityWisdomArticle {
     bool? consentGranted,
     int? upvotes,
     int? viewCount,
+    String? heroImageUrl,
   }) =>
       CommunityWisdomArticle(
         id:                    id,
@@ -260,6 +267,7 @@ class CommunityWisdomArticle {
         publishedAt:           publishedAt ?? this.publishedAt,
         upvotes:               upvotes ?? this.upvotes,
         viewCount:             viewCount ?? this.viewCount,
+        heroImageUrl:          heroImageUrl ?? this.heroImageUrl,
       );
 }
 

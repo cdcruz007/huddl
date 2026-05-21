@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import 'browser_storage.dart';
@@ -296,6 +298,26 @@ class SendNavigatorService {
 
   Future<EhcpStage> loadStage() async {
     if (_cachedStage != null) return _cachedStage!;
+    // Try Firestore first (authoritative source), fall back to BrowserStorage
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final firestoreVal = doc.data()?['ehcpStage'] as String?;
+        if (firestoreVal != null) {
+          _cachedStage = EhcpStageX.fromString(firestoreVal);
+          // Keep BrowserStorage in sync
+          await BrowserStorage.setString(_stageKey, firestoreVal);
+          return _cachedStage!;
+        }
+      }
+    } catch (e) {
+      debugPrint('[SEND] loadStage Firestore error (using local fallback): $e');
+    }
+    // BrowserStorage fallback
     final raw = await BrowserStorage.getString(_stageKey);
     _cachedStage = raw != null
         ? EhcpStageX.fromString(raw)
@@ -305,8 +327,28 @@ class SendNavigatorService {
 
   Future<void> saveStage(EhcpStage stage) async {
     _cachedStage = stage;
+    // Dual-write: BrowserStorage (sync) + Firestore (async, best-effort)
     await BrowserStorage.setString(_stageKey, stage.storageValue);
+    _writeStageToFirestore(stage);
     debugPrint('[SEND] Stage saved: ${stage.storageValue}');
+  }
+
+  /// Writes EHCP stage to Firestore `users/{uid}.ehcpStage` — best-effort,
+  /// never throws (errors are logged and silently swallowed).
+  void _writeStageToFirestore(EhcpStage stage) {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set({'ehcpStage': stage.storageValue}, SetOptions(merge: true))
+          .catchError((Object e) {
+        debugPrint('[SEND] _writeStageToFirestore error: $e');
+      });
+    } catch (e) {
+      debugPrint('[SEND] _writeStageToFirestore sync error: $e');
+    }
   }
 
   // ── Static guidance library ────────────────────────────────────────────────
@@ -636,6 +678,30 @@ class SendNavigatorService {
   Future<List<SendDeadline>> loadDeadlines() async {
     if (_deadlinesLoaded) return List.unmodifiable(_deadlines);
 
+    // Try Firestore first — merge with BrowserStorage (Firestore is authoritative)
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final snap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('deadlines')
+            .get();
+        if (snap.docs.isNotEmpty) {
+          _deadlines = snap.docs
+              .map((d) => SendDeadline.fromJson(
+                    Map<String, dynamic>.from(d.data()),
+                  ))
+              .toList();
+          _deadlinesLoaded = true;
+          return List.unmodifiable(_deadlines);
+        }
+      }
+    } catch (e) {
+      debugPrint('[SEND] loadDeadlines Firestore error (using local fallback): $e');
+    }
+
+    // BrowserStorage fallback
     final raw = await BrowserStorage.getString(_deadlinesKey);
     if (raw != null) {
       try {
@@ -670,8 +736,32 @@ class SendNavigatorService {
   }
 
   Future<void> _persistDeadlines() async {
+    // Dual-write: BrowserStorage (sync) + Firestore (async, best-effort)
     final json = jsonEncode(_deadlines.map((d) => d.toJson()).toList());
     await BrowserStorage.setString(_deadlinesKey, json);
+    _persistDeadlinesToFirestore();
+  }
+
+  /// Writes all in-memory deadlines to Firestore `users/{uid}/deadlines/{id}`.
+  /// Best-effort: errors are logged and silently swallowed.
+  void _persistDeadlinesToFirestore() {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final batch = FirebaseFirestore.instance.batch();
+      final col = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('deadlines');
+      for (final d in _deadlines) {
+        batch.set(col.doc(d.id), d.toJson());
+      }
+      batch.commit().catchError((Object e) {
+        debugPrint('[SEND] _persistDeadlinesToFirestore batch error: $e');
+      });
+    } catch (e) {
+      debugPrint('[SEND] _persistDeadlinesToFirestore sync error: $e');
+    }
   }
 
   /// Seeded borough-aware deadlines — called once on first load.

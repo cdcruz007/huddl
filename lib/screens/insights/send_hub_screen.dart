@@ -331,7 +331,7 @@ class _EhcpNavigatorTabState extends State<_EhcpNavigatorTab> {
         children: [
           // ── Stage picker ─────────────────────────────────────────────────
           _SectionLabel(
-            icon: Icons.map_outlined,
+            icon: Icons.assignment,
             label: 'Where are you in the EHCP process?',
           ),
           const SizedBox(height: 10),

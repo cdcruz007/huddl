@@ -771,6 +771,41 @@ class _WisdomCard extends StatelessWidget {
                 ],
               ),
             ),
+            // Hero image — shown when heroImageUrl is present
+            if (article.heroImageUrl != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(0),
+                  topRight: Radius.circular(0),
+                ),
+                child: SizedBox(
+                  height: 120,
+                  width: double.infinity,
+                  child: Image.network(
+                    article.heroImageUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return _ShimmerBox(
+                        width: double.infinity,
+                        height: 120,
+                        borderRadius: 0,
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 120,
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      child: Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          size: 32,
+                          color: HuddlColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             // Content
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -800,14 +835,18 @@ class _WisdomCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 12),
-                  // Tags
+                  // Tags — tappable, dispatch _TagFilterNotification
                   if (article.tags.isNotEmpty)
                     Wrap(
                       spacing: 6,
                       runSpacing: 4,
                       children: article.tags
                           .take(3)
-                          .map((t) => _Tag(label: t))
+                          .map((t) => _Tag(
+                                label: t,
+                                onTap: () =>
+                                    _TagFilterNotification(t).dispatch(context),
+                              ))
                           .toList(),
                     ),
                   const SizedBox(height: 12),
@@ -1003,9 +1042,9 @@ class _ExpertCard extends StatelessWidget {
                     right: 12,
                     child: _CategoryBadge(category: article.category, teal: false, light: true),
                   ),
-                  // Title overlay — bottom-left
+                  // Title overlay — sits above source badge (badge is at bottom:10)
                   Positioned(
-                    bottom: 12,
+                    bottom: 42,
                     left: 12,
                     right: 12,
                     child: Text(
