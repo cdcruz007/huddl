@@ -147,5 +147,57 @@ service cloud.firestore {
       allow read, write: if request.auth != null
         && userId == request.auth.uid;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GDPR EXPORTS  (§12)
+    // Audit trail written when a user triggers Art. 20 data export from the
+    // Profile → Settings → View My Data sheet.
+    // Each document keyed by an auto-ID; userId field links it to its owner.
+    // ─────────────────────────────────────────────────────────────────────────
+    match /gdpr_exports/{docId} {
+      // Authenticated user may create a record for themselves only.
+      // The userId field in the payload must equal their own UID.
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      // A user may read their own export records.
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+
+      // Export records are immutable once written — no update or delete from client.
+      // (Admin SDK / service accounts bypass these rules for data-pipeline reads.)
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARKETPLACE  (top-level 'marketplace' collection)
+    // Separate from the older /listings/ path; used by RehomeService and
+    // createListing() in FirestoreService.
+    // ─────────────────────────────────────────────────────────────────────────
+    match /marketplace/{itemId} {
+      // Any authenticated user can read listings (Buy feed).
+      allow read: if request.auth != null;
+
+      // Authenticated user can create a listing; sellerId must match own UID.
+      allow create: if request.auth != null
+        && request.resource.data.sellerId == request.auth.uid;
+
+      // Only the seller may update their own listing.
+      // viewCount / offerCount / favouriteCount may be incremented by any
+      // authenticated user (e.g. on detail-screen open or save/unsave).
+      allow update: if request.auth != null && (
+        resource.data.sellerId == request.auth.uid
+        ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['viewCount', 'offerCount', 'favouriteCount', 'updatedAt'])
+      );
+
+      // Only the seller may delete their own listing.
+      // deleteAccount() purges via Admin SDK (bypasses rules) — this covers
+      // explicit delist actions from the app client.
+      allow delete: if request.auth != null
+        && resource.data.sellerId == request.auth.uid;
+    }
   }
 }

@@ -536,11 +536,151 @@ class FirebaseAuthService {
     _webConfirmationResult = null;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // UPDATE PHONE NUMBER (§3D)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Updates the signed-in user's phone number via a two-step SMS OTP flow.
+  ///
+  /// Step 1 — Call [sendPhoneUpdateOtp] with the new phone number.
+  ///   → sends an SMS to the new number and returns codeSent / error.
+  ///
+  /// Step 2 — Call [confirmPhoneUpdate] with the OTP the user typed.
+  ///   → re-links the credential on the Auth account and updates Firestore.
+  ///   → returns null on success, or an error message string on failure.
+  ///
+  /// Platform notes:
+  ///   iOS / Android → verifyPhoneNumber (no reCAPTCHA)
+  ///   Web           → signInWithPhoneNumber (reCAPTCHA, stores ConfirmationResult)
+
+  Future<PhoneAuthResult> sendPhoneUpdateOtp(String newPhoneNumber) async {
+    _log('sendPhoneUpdateOtp: $newPhoneNumber');
+    try {
+      if (kIsWeb) {
+        // Web: trigger reCAPTCHA + SMS to the new number
+        _webConfirmationResult =
+            await _auth.signInWithPhoneNumber(newPhoneNumber);
+        return PhoneAuthResult(status: PhoneAuthStatus.codeSent);
+      } else {
+        // Mobile: verifyPhoneNumber → SMS to new number, store verificationId
+        final completer = Completer<PhoneAuthResult>();
+        await _auth.verifyPhoneNumber(
+          phoneNumber: newPhoneNumber,
+          timeout: const Duration(seconds: 60),
+          verificationCompleted: (_) {
+            // Auto-verified (uncommon for number-change flow) — no-op here;
+            // confirmPhoneUpdate with smsCode will handle it.
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            if (!completer.isCompleted) {
+              completer.complete(PhoneAuthResult(
+                status: PhoneAuthStatus.error,
+                errorMessage: _mapAuthError(e.code),
+              ));
+            }
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            _verificationId = verificationId;
+            _resendToken = resendToken;
+            if (!completer.isCompleted) {
+              completer.complete(
+                PhoneAuthResult(status: PhoneAuthStatus.codeSent),
+              );
+            }
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {
+            _verificationId = verificationId;
+            if (!completer.isCompleted) {
+              completer.complete(
+                PhoneAuthResult(status: PhoneAuthStatus.codeSent),
+              );
+            }
+          },
+        );
+        return completer.future
+            .timeout(const Duration(seconds: 65), onTimeout: () {
+          return PhoneAuthResult(
+            status: PhoneAuthStatus.error,
+            errorMessage: 'Timed out waiting for SMS. Please try again.',
+          );
+        });
+      }
+    } catch (e, stack) {
+      _logError(e, stack, 'sendPhoneUpdateOtp');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: 'Could not send verification SMS. Please try again.',
+      );
+    }
+  }
+
+  /// Confirms the phone-number update using the OTP the user typed.
+  ///
+  /// On success:
+  ///   1. The Firebase Auth account phone number is updated (re-link).
+  ///   2. Firestore users/{uid}.phoneNumber is updated to [newPhoneNumber].
+  ///
+  /// Returns null on success, or a human-readable error string on failure.
+  Future<String?> confirmPhoneUpdate({
+    required String smsCode,
+    required String newPhoneNumber,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return 'No signed-in user. Please log in again.';
+    try {
+      PhoneAuthCredential credential;
+      if (kIsWeb) {
+        final result = await _webConfirmationResult?.confirm(smsCode);
+        if (result == null) {
+          return 'Verification session expired. Please request a new code.';
+        }
+        // On web the phone number was already updated via confirm(); just
+        // update Firestore below.
+        credential = PhoneAuthProvider.credential(
+          verificationId: '',
+          smsCode: smsCode,
+        );
+      } else {
+        final vId = _verificationId;
+        if (vId == null || vId.isEmpty) {
+          return 'Verification session expired. Please go back and try again.';
+        }
+        credential = PhoneAuthProvider.credential(
+          verificationId: vId,
+          smsCode: smsCode,
+        );
+        // Re-link the new phone credential to the existing Auth account.
+        // updatePhoneNumber replaces the old phone credential without sign-out.
+        await user.updatePhoneNumber(credential);
+      }
+
+      // Update Firestore so other devices / backend sees the new number.
+      await _safeDelete(() => _db
+          .collection('users')
+          .doc(user.uid)
+          .set({'phoneNumber': newPhoneNumber}, SetOptions(merge: true)));
+
+      _verificationId = null;
+      _webConfirmationResult = null;
+      _log('confirmPhoneUpdate: success — new number=$newPhoneNumber');
+      return null; // success
+    } on FirebaseAuthException catch (e) {
+      _log('confirmPhoneUpdate: FirebaseAuthException ${e.code}');
+      return _mapAuthError(e.code);
+    } catch (e, stack) {
+      _logError(e, stack, 'confirmPhoneUpdate');
+      return 'Failed to update phone number. Please try again.';
+    }
+  }
+
   /// Permanently deletes the Firebase Auth account and ALL associated
   /// Firestore data for the currently signed-in user (GDPR Art. 17).
   ///
-  /// Collections purged: users, subscriptions, group_messages, direct_messages,
-  /// conversations, notifications, meetups.
+  /// Collections purged:
+  ///   users, subscriptions, group_messages, direct_messages,
+  ///   conversations, notifications, meetups, marketplace listings,
+  ///   blocks, saved_items, endorsements, rsvps, user_rsvps,
+  ///   deadlines sub-collection.
   ///
   /// Returns an error message on failure, or null on success.
   Future<String?> deleteAccount() async {
@@ -584,7 +724,68 @@ class FirebaseAuthService {
         _db.collection('meetups').where('creatorId', isEqualTo: uid),
       );
 
-      // ── 8. Delete the Firebase Auth account last ──────────────────────
+      // ── 8. Delete marketplace listings by this user ───────────────────
+      await _deleteQueryResults(
+        _db.collection('marketplace').where('sellerId', isEqualTo: uid),
+      );
+
+      // ── 9. Delete block records (blocks this user created) ────────────
+      await _deleteQueryResults(
+        _db.collection('blocks').where('blockerId', isEqualTo: uid),
+      );
+      // Also delete records where this user was blocked by others
+      await _deleteQueryResults(
+        _db.collection('blocks').where('blockedId', isEqualTo: uid),
+      );
+
+      // ── 10. Delete saved items ────────────────────────────────────────
+      await _deleteQueryResults(
+        _db.collection('saved_items').where('userId', isEqualTo: uid),
+      );
+
+      // ── 11. Delete endorsements given by this user ────────────────────
+      await _deleteQueryResults(
+        _db.collection('endorsements').where('endorserId', isEqualTo: uid),
+      );
+
+      // ── 12. Delete RSVPs by this user ─────────────────────────────────
+      await _deleteQueryResults(
+        _db.collection('rsvps').where('userId', isEqualTo: uid),
+      );
+      await _deleteQueryResults(
+        _db.collection('user_rsvps').where('userId', isEqualTo: uid),
+      );
+
+      // ── 13. Delete EHCP deadlines (sub-collection under users/{uid}) ──
+      // Sub-collections must be deleted separately — they are NOT removed
+      // when the parent document is deleted.
+      await _deleteQueryResults(
+        _db.collection('users').doc(uid).collection('deadlines'),
+      );
+
+      // ── 14. Remove user from group memberIds arrays ────────────────────
+      // Best-effort: fetch all groups this user belongs to and remove them.
+      try {
+        final groupSnap = await _db
+            .collection('groups')
+            .where('memberIds', arrayContains: uid)
+            .get()
+            .timeout(const Duration(seconds: 10));
+        if (groupSnap.docs.isNotEmpty) {
+          final batch = _db.batch();
+          for (final doc in groupSnap.docs) {
+            batch.update(doc.reference, {
+              'memberIds': FieldValue.arrayRemove([uid]),
+              'memberCount': FieldValue.increment(-1),
+            });
+          }
+          await batch.commit();
+        }
+      } catch (_) {
+        // Non-fatal — group cleanup is best-effort
+      }
+
+      // ── 15. Delete the Firebase Auth account last ─────────────────────
       await user.delete();
       _verificationId = null;
       _resendToken = null;

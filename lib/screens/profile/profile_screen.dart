@@ -41,6 +41,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../services/rehome_service.dart';
 import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
@@ -1955,148 +1957,333 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // PHONE
   // ═══════════════════════════════════════════════════════════════════════════
 
+  /// §3D — Phone Number update.
+  /// Two-step SMS flow using FirebaseAuthService.sendPhoneUpdateOtp /
+  /// confirmPhoneUpdate.  Step 1 sends an SMS to the *new* number; step 2
+  /// verifies the OTP and re-links the credential on the Auth account.
   void _showPhoneSheet() {
-    // Remove country code if it's already in the phone number
+    // Strip any country code prefix already stored
     String phoneOnly = _onboarding.phoneNumber ?? '';
-    if (phoneOnly.startsWith('+44')) {
-      phoneOnly = phoneOnly.substring(3);
-    } else if (phoneOnly.startsWith('44')) {
-      phoneOnly = phoneOnly.substring(2);
-    }
+    if (phoneOnly.startsWith('+44')) phoneOnly = phoneOnly.substring(3);
+    else if (phoneOnly.startsWith('44')) phoneOnly = phoneOnly.substring(2);
+
     final phoneCtrl = TextEditingController(text: phoneOnly);
+
+    // Step state: null = entry, 'sending' = waiting for SMS, 'otp' = OTP entry
+    String step = 'entry';
+    bool isBusy = false;
+    String? errorText;
+    String pendingFullPhone = '';
+    final otpCtrl = TextEditingController();
 
     _showSheet(
       title: 'Phone Number',
-      builder: (c) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: HuddlColors.primary.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      size: 20, color: HuddlColors.primaryDark),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Changing your phone number will also update your login credentials. You will need to use the new number to sign in.',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.primaryDark,
-                          height: 1.4),
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          // ── Step 1: Enter new number ─────────────────────────────────────
+          if (step == 'entry' || step == 'sending') {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                // Warning banner
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: HuddlColors.primary.withValues(alpha: 0.3)),
                     ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded,
+                            size: 20, color: HuddlColors.primaryDark),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Changing your phone number updates your Huddl login. '
+                            'An SMS code will be sent to the new number to confirm.',
+                            style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: HuddlColors.primaryDark,
+                                height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // +44 prefix + input
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: ctx.hc.scaffold,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: ctx.hc.divider),
+                        ),
+                        child: Text('+44',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, color: ctx.hc.textPrimary)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: phoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          style: GoogleFonts.poppins(fontSize: 14),
+                          enabled: !isBusy,
+                          decoration: InputDecoration(
+                            hintText: 'New phone number',
+                            hintStyle: GoogleFonts.poppins(
+                                fontSize: 14, color: ctx.hc.textTertiary),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: ctx.hc.divider)),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: HuddlColors.primary, width: 2)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (errorText != null) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(errorText!,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.error,
+                            fontWeight: FontWeight.w500)),
                   ),
                 ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: context.hc.scaffold,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: context.hc.divider),
-                  ),
-                  child: Text('+44',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textPrimary)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    style: GoogleFonts.poppins(fontSize: 14),
-                    decoration: InputDecoration(
-                      hintText: 'Phone number',
-                      hintStyle: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textTertiary),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              BorderSide(color: context.hc.divider)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: HuddlColors.primary, width: 2)),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.send_outlined, size: 18),
+                      label: Text(isBusy ? 'Sending SMS…' : 'Send verification code',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      onPressed: isBusy
+                          ? null
+                          : () async {
+                              String raw = phoneCtrl.text.trim();
+                              if (raw.isEmpty) {
+                                setLocal(() => errorText =
+                                    'Please enter a phone number.');
+                                return;
+                              }
+                              if (raw.startsWith('+44')) raw = raw.substring(3);
+                              else if (raw.startsWith('44')) raw = raw.substring(2);
+                              if (raw.length < 7) {
+                                setLocal(() => errorText =
+                                    'Please enter a valid UK phone number.');
+                                return;
+                              }
+                              final full = '+44$raw';
+                              setLocal(() {
+                                isBusy = true;
+                                errorText = null;
+                                pendingFullPhone = full;
+                              });
+                              final result = await FirebaseAuthService()
+                                  .sendPhoneUpdateOtp(full);
+                              if (!ctx.mounted) return;
+                              if (result.status == PhoneAuthStatus.codeSent) {
+                                setLocal(() {
+                                  step = 'otp';
+                                  isBusy = false;
+                                });
+                              } else {
+                                setLocal(() {
+                                  isBusy = false;
+                                  errorText = result.errorMessage ??
+                                      'Failed to send SMS. Please try again.';
+                                });
+                              }
+                            },
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _sheetButton('Update Phone', () async {
-              String newPhone = phoneCtrl.text.trim();
-              if (newPhone.isNotEmpty) {
-                // Remove country code if user accidentally included it
-                if (newPhone.startsWith('+44')) {
-                  newPhone = newPhone.substring(3);
-                } else if (newPhone.startsWith('44')) {
-                  newPhone = newPhone.substring(2);
-                }
-                
-                // OTP verification for phone change
-                Navigator.pop(c);
-                final verified = await _verifyWithOtp('change your phone number');
-                if (!verified) {
-                  _snack('Phone update cancelled');
-                  return;
-                }
-                final fullPhone = '+44$newPhone';
-                // 1. Update local storage so the profile screen reflects the
-                //    new number immediately without waiting for Firestore.
-                _onboarding.setPhoneNumber(newPhone);
-                setState(() => _phone = fullPhone);
+            );
+          }
 
-                // 2. Write the new phone number to Firestore users/{uid}.phoneNumber
-                //    so it is available across devices and to other users.
-                //    NOTE: Full Firebase Auth credential update (re-linking the
-                //    phone auth credential) requires sending a real SMS OTP to the
-                //    new number — handled by FirebaseAuthService.updatePhoneNumber()
-                //    in a production OTP flow. On web the recaptcha + SMS flow is
-                //    needed; we persist to Firestore as a best-effort update here
-                //    and the sign-in credential remains the old number until the
-                //    next full re-auth OTP cycle is implemented.
-                try {
-                  final uid = FirebaseAuth.instance.currentUser?.uid;
-                  if (uid != null) {
-                    await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(uid)
-                        .set({'phoneNumber': fullPhone},
-                            SetOptions(merge: true));
-                  }
-                } catch (e) {
-                  if (kDebugMode) {
-                    debugPrint('[Profile] phone Firestore write error: $e');
-                  }
-                }
-                _snack('Phone number updated to $fullPhone.');
-              }
-            }),
-          ),
-          const SizedBox(height: 16),
-        ],
+          // ── Step 2: Enter OTP received on new number ──────────────────────
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Enter the 6-digit code sent to $pendingFullPhone',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: ctx.hc.textSecondary,
+                      height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // OTP input
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: otpCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  textAlign: TextAlign.center,
+                  enabled: !isBusy,
+                  style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 8),
+                  decoration: InputDecoration(
+                    hintText: '------',
+                    counterText: '',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: errorText != null
+                                ? HuddlColors.error
+                                : HuddlColors.divider)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: errorText != null
+                                ? HuddlColors.error
+                                : HuddlColors.primary,
+                            width: 2)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+              if (errorText != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(errorText!,
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.error,
+                          fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center),
+                ),
+              ],
+              const SizedBox(height: 20),
+              // Confirm button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: isBusy
+                        ? const SizedBox(
+                            width: 16, height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.check_circle_outline, size: 18),
+                    label: Text(isBusy ? 'Verifying…' : 'Confirm new number',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w600)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HuddlColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    onPressed: isBusy
+                        ? null
+                        : () async {
+                            final code = otpCtrl.text.trim();
+                            if (code.length < 6) {
+                              setLocal(() => errorText =
+                                  'Please enter the full 6-digit code.');
+                              return;
+                            }
+                            setLocal(() {
+                              isBusy = true;
+                              errorText = null;
+                            });
+                            final err = await FirebaseAuthService()
+                                .confirmPhoneUpdate(
+                              smsCode: code,
+                              newPhoneNumber: pendingFullPhone,
+                            );
+                            if (!ctx.mounted) return;
+                            if (err == null) {
+                              // Success — update local state and close sheet
+                              _onboarding
+                                  .setPhoneNumber(pendingFullPhone.replaceFirst('+44', ''));
+                              if (mounted) {
+                                setState(() => _phone = pendingFullPhone);
+                              }
+                              Navigator.pop(c);
+                              _snack('Phone number updated to $pendingFullPhone');
+                            } else {
+                              setLocal(() {
+                                isBusy = false;
+                                errorText = err;
+                              });
+                            }
+                          },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Back link
+              TextButton(
+                onPressed: isBusy
+                    ? null
+                    : () => setLocal(() {
+                          step = 'entry';
+                          otpCtrl.clear();
+                          errorText = null;
+                        }),
+                child: Text('← Use a different number',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: HuddlColors.primary)),
+              ),
+              const SizedBox(height: 12),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2365,41 +2552,231 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showMyListingsSheet() {
+    // Held outside builder so rebuilds don't reset state.
+    List<RehomeItem>? listings;   // null = loading, [] = loaded empty
+    String? errorText;
+
     _showSheet(
       title: 'My Listings',
-      builder: (c) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const HuddlEmptyState(
-              illustration: HuddlIllustration.marketplaceEmpty,
-              title: 'No listings yet',
-              subtitle: 'Items you list on Market will appear here.',
-            ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.add_circle_outline, size: 18),
-              label: Text('Go to Market',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, fontWeight: FontWeight.w500)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: HuddlColors.primary,
-                side: const BorderSide(color: HuddlColors.primary),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          // Kick off the Firestore fetch on first render.
+          if (listings == null && errorText == null) {
+            FirestoreService().getMyListings().then((docs) {
+              final items = docs
+                  .map((d) => RehomeItem.fromFirestore(d))
+                  .where((i) => i.id.isNotEmpty)
+                  .toList()
+                ..sort((a, b) => b.listedAt.compareTo(a.listedAt));
+              if (ctx.mounted) setLocal(() => listings = items);
+            }).catchError((e) {
+              if (ctx.mounted) {
+                setLocal(() {
+                  listings = [];
+                  errorText = 'Could not load listings. Please try again.';
+                });
+              }
+            });
+          }
+
+          // ── Loading state ────────────────────────────────────────────────────
+          if (listings == null) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(
+                  child: CircularProgressIndicator(color: HuddlColors.primary)),
+            );
+          }
+
+          // ── Error state ──────────────────────────────────────────────────────
+          if (errorText != null) {
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline,
+                      size: 40, color: HuddlColors.error),
+                  const SizedBox(height: 12),
+                  Text(errorText!,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, color: HuddlColors.textSecondary)),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () =>
+                        setLocal(() => listings = null),
+                    child: Text('Retry',
+                        style: GoogleFonts.poppins(
+                            color: HuddlColors.primary,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ],
               ),
-              onPressed: () {
-                Navigator.pop(c);
-                // Switch to Market tab (index 3)
-                MainShell.shellKey.currentState?.switchTab(3);
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
+            );
+          }
+
+          final items = listings!;
+
+          // ── Empty state ──────────────────────────────────────────────────────
+          if (items.isEmpty) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const HuddlEmptyState(
+                  illustration: HuddlIllustration.marketplaceEmpty,
+                  title: 'No listings yet',
+                  subtitle: 'Items you list on Market will appear here.',
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: Text('Go to Market',
+                        style: GoogleFonts.poppins(
+                            fontSize: 14, fontWeight: FontWeight.w500)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: HuddlColors.primary,
+                      side: const BorderSide(color: HuddlColors.primary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(c);
+                      MainShell.shellKey.currentState?.switchTab(3);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            );
+          }
+
+          // ── Listings list ────────────────────────────────────────────────────
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                child: Text(
+                  '${items.length} listing${items.length == 1 ? '' : 's'}',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textTertiary),
+                ),
+              ),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, indent: 72, endIndent: 16),
+                itemBuilder: (_, i) {
+                  final item = items[i];
+                  return ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: item.imageUrls.isNotEmpty
+                          ? Image.network(
+                              item.imageUrls.first,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 48,
+                                height: 48,
+                                color: HuddlColors.surfaceLight,
+                                child: Icon(item.category.icon,
+                                    size: 24,
+                                    color: HuddlColors.primary
+                                        .withValues(alpha: 0.6)),
+                              ),
+                            )
+                          : Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: HuddlColors.surfaceLight,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(item.category.icon,
+                                  size: 24,
+                                  color: HuddlColors.primary
+                                      .withValues(alpha: 0.6)),
+                            ),
+                    ),
+                    title: Text(
+                      item.title,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      '${item.priceDisplay}  \u00b7  ${item.isSold ? 'Sold' : item.condition.label}  \u00b7  ${item.timeAgo}',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: item.isSold
+                              ? HuddlColors.textTertiary
+                              : HuddlColors.textSecondary),
+                    ),
+                    trailing: item.isSold
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text('Sold',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.textTertiary)),
+                          )
+                        : const Icon(Icons.chevron_right,
+                            color: HuddlColors.textTertiary),
+                    onTap: () {
+                      Navigator.pop(c);
+                      MainShell.shellKey.currentState?.switchTab(3);
+                    },
+                  );
+                },
+              ),
+              // ── "Go to Market" footer ──────────────────────────────────────
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.storefront_outlined, size: 18),
+                  label: Text('Go to Market',
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HuddlColors.primary,
+                    side: const BorderSide(color: HuddlColors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    minimumSize: const Size.fromHeight(44),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(c);
+                    MainShell.shellKey.currentState?.switchTab(3);
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2510,81 +2887,177 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showNotificationsSheet() {
+    // OS-level permission state — loaded asynchronously after sheet opens.
+    // null = not yet checked; false = denied; true = granted.
+    bool? osPermissionGranted;
+
     _showSheet(
       title: 'Notifications',
       builder: (c) => StatefulBuilder(
-        builder: (ctx, setLocal) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Master toggle ──────────────────────────────────────────────
-            _toggleTile(
-              Icons.notifications_active_outlined,
-              'Push notifications',
-              'Enable or disable all notifications',
-              _pushEnabled,
-              (v) {
-                setLocal(() => _pushEnabled = v);
-                setState(() {});
-                _saveSetting(UserPrivacyPrefsService.keyPushEnabled, v);
-              },
-            ),
-            const Divider(height: 1, indent: 16, endIndent: 16),
-            // ── Sub-toggles — greyed out & non-interactive when master off ──
-            Opacity(
-              opacity: _pushEnabled ? 1.0 : 0.4,
-              child: IgnorePointer(
-                ignoring: !_pushEnabled,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _toggleTile(Icons.group_outlined, 'Group messages',
-                        'Notifications for new group messages', _groupMessages,
-                        (v) {
-                      setLocal(() => _groupMessages = v);
-                      setState(() {});
-                      _saveSetting(UserPrivacyPrefsService.keyGroupMessages, v);
-                    }),
-                    _toggleTile(Icons.chat_outlined, 'Direct messages',
-                        'Notifications for new DMs', _dmMessages, (v) {
-                      setLocal(() => _dmMessages = v);
-                      setState(() {});
-                      _saveSetting(UserPrivacyPrefsService.keyDmMessages, v);
-                    }),
-                    _toggleTile(Icons.event_outlined, 'Meetup reminders',
-                        'Reminders for upcoming meetups', _eventReminders, (v) {
-                      setLocal(() => _eventReminders = v);
-                      setState(() {});
-                      _saveSetting(UserPrivacyPrefsService.keyEventReminders, v);
-                    }),
-                    _toggleTile(Icons.campaign_outlined, 'Community updates',
-                        'Borough announcements and updates', _communityUpdates,
-                        (v) {
-                      setLocal(() => _communityUpdates = v);
-                      setState(() {});
-                      _saveSetting(
-                          UserPrivacyPrefsService.keyCommunityUpdates, v);
-                    }),
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                    _toggleTile(
-                      Icons.lock_outline_rounded,
-                      'Lock screen alerts',
-                      'Show message previews on lock screen when phone is locked',
-                      _lockScreenAlerts,
-                      (v) {
-                        setLocal(() => _lockScreenAlerts = v);
-                        setState(() {});
-                        // _saveSetting already syncs all notif prefs to Firestore
-                        _saveSetting(
-                            UserPrivacyPrefsService.keyLockScreenAlerts, v);
-                      },
+        builder: (ctx, setLocal) {
+          // Check OS permission status on first render (non-blocking).
+          if (osPermissionGranted == null && !kIsWeb) {
+            PushNotificationService().hasPermission.then((granted) {
+              if (ctx.mounted) setLocal(() => osPermissionGranted = granted);
+            });
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── OS permission denied banner ─────────────────────────────
+              if (osPermissionGranted == false && _pushEnabled)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.warningBg,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded,
+                            size: 18, color: HuddlColors.warning),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Notifications are blocked by your device',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.warningDark),
+                              ),
+                              const SizedBox(height: 2),
+                              GestureDetector(
+                                onTap: () async {
+                                  // Open the OS notification settings page
+                                  // so the user can grant permission.
+                                  await openAppSettings();
+                                  // Re-check permission status after returning
+                                  if (ctx.mounted) {
+                                    final granted = await PushNotificationService()
+                                        .hasPermission;
+                                    if (ctx.mounted) {
+                                      setLocal(
+                                          () => osPermissionGranted = granted);
+                                    }
+                                  }
+                                },
+                                child: Text(
+                                  'Tap here to enable in Settings →',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      color: HuddlColors.warning,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: HuddlColors.warning),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              // ── Master toggle ─────────────────────────────────────────────
+              _toggleTile(
+                Icons.notifications_active_outlined,
+                'Push notifications',
+                'Enable or disable all notifications',
+                _pushEnabled,
+                (v) async {
+                  if (v && !kIsWeb) {
+                    // User is turning push ON — check OS permission first.
+                    final granted =
+                        await PushNotificationService().hasPermission;
+                    if (!granted) {
+                      // Try to request it (fires system dialog if not yet asked).
+                      await PushNotificationService().initialise(force: true);
+                      final grantedAfter =
+                          await PushNotificationService().hasPermission;
+                      if (ctx.mounted) {
+                        setLocal(() => osPermissionGranted = grantedAfter);
+                      }
+                    } else {
+                      if (ctx.mounted) {
+                        setLocal(() => osPermissionGranted = true);
+                      }
+                    }
+                  }
+                  setLocal(() => _pushEnabled = v);
+                  setState(() {});
+                  _saveSetting(UserPrivacyPrefsService.keyPushEnabled, v);
+                },
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              // ── Sub-toggles — greyed out & non-interactive when master off ──
+              Opacity(
+                opacity: _pushEnabled ? 1.0 : 0.4,
+                child: IgnorePointer(
+                  ignoring: !_pushEnabled,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _toggleTile(Icons.group_outlined, 'Group messages',
+                          'Notifications for new group messages',
+                          _groupMessages, (v) {
+                        setLocal(() => _groupMessages = v);
+                        setState(() {});
+                        _saveSetting(
+                            UserPrivacyPrefsService.keyGroupMessages, v);
+                      }),
+                      _toggleTile(Icons.chat_outlined, 'Direct messages',
+                          'Notifications for new DMs', _dmMessages, (v) {
+                        setLocal(() => _dmMessages = v);
+                        setState(() {});
+                        _saveSetting(
+                            UserPrivacyPrefsService.keyDmMessages, v);
+                      }),
+                      _toggleTile(Icons.event_outlined, 'Meetup reminders',
+                          'Reminders for upcoming meetups', _eventReminders,
+                          (v) {
+                        setLocal(() => _eventReminders = v);
+                        setState(() {});
+                        _saveSetting(
+                            UserPrivacyPrefsService.keyEventReminders, v);
+                      }),
+                      _toggleTile(
+                          Icons.campaign_outlined,
+                          'Community updates',
+                          'Borough announcements and updates',
+                          _communityUpdates, (v) {
+                        setLocal(() => _communityUpdates = v);
+                        setState(() {});
+                        _saveSetting(
+                            UserPrivacyPrefsService.keyCommunityUpdates, v);
+                      }),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      _toggleTile(
+                        Icons.lock_outline_rounded,
+                        'Lock screen alerts',
+                        'Show message previews on lock screen when phone is locked',
+                        _lockScreenAlerts,
+                        (v) {
+                          setLocal(() => _lockScreenAlerts = v);
+                          setState(() {});
+                          _saveSetting(
+                              UserPrivacyPrefsService.keyLockScreenAlerts, v);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },
       ),
     );
   }
