@@ -2848,7 +2848,11 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
     final hc = context.hc;
     final photoCount = item.imageUrls.length;
 
-    return Semantics(
+    // SizedBox.expand() forces the card to fill the tight GridView cell
+    // constraints, which makes Expanded widgets inside the Column work
+    // correctly regardless of widget wrapping layers.
+    return SizedBox.expand(
+      child: Semantics(
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, '
           '${item.ageStage.shortLabel}, ${item.sellerLocation}.',
       button: true,
@@ -3063,6 +3067,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
           ),
         ),
       ),
+    ), // SizedBox.expand
     );
   }
 }
