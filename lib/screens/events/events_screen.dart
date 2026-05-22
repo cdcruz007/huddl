@@ -435,14 +435,14 @@ class EventsScreenState extends State<EventsScreen>
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
-                    labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
-                    unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
+                    labelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                    unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorWeight: 2.5,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
@@ -504,11 +504,11 @@ class EventsScreenState extends State<EventsScreen>
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HuddlColors.nearBlack,
+                  color: HuddlColors.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: HuddlColors.nearBlack.withValues(alpha: 0.25),
+                      color: HuddlColors.primary.withValues(alpha: 0.35),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -535,11 +535,11 @@ class EventsScreenState extends State<EventsScreen>
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: HuddlColors.nearBlack,
+                      color: HuddlColors.primary,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: HuddlColors.nearBlack.withValues(alpha: 0.25),
+                          color: HuddlColors.primary.withValues(alpha: 0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -556,7 +556,7 @@ class EventsScreenState extends State<EventsScreen>
                       width: 18,
                       height: 18,
                       decoration: const BoxDecoration(
-                        color: HuddlColors.nearBlack,
+                        color: HuddlColors.textDark,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.lock_outlined,

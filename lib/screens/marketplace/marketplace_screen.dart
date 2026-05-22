@@ -1882,12 +1882,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     )
                   // ── 2-column grid ─────────────────────────────────────
                   : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 1,
-                        mainAxisSpacing: 1,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
                         childAspectRatio: 0.62,
                       ),
                       itemCount: items.length,
