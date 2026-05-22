@@ -1055,8 +1055,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (_isLoading) {
       return Scaffold(
         backgroundColor: hc.scaffold,
-        body: const Center(
-            child: CircularProgressIndicator(color: HuddlColors.primary)),
+        body: Center(
+            child: CircularProgressIndicator(color: context.hc.textTertiary)),
       );
     }
 
@@ -1533,7 +1533,7 @@ class _HomeScreenState extends State<HomeScreen>
                   color: hc.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: HuddlColors.primary.withValues(alpha: 0.12)),
+                      color: hc.divider),
                   boxShadow: isDark
                       ? null
                       : [
@@ -1547,7 +1547,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   children: [
                     Icon(Icons.push_pin_outlined,
-                        size: 15, color: HuddlColors.primary),
+                        size: 15, color: hc.textTertiary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -1711,7 +1711,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newGroupCount > 0) {
       items.add(_CatchUpItem(
         icon: Icons.people_rounded,
-        color: HuddlColors.primary,
+        color: HuddlColors.teal,
         label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
         onTap: () => _switchToTab(2),
       ));
@@ -2449,8 +2449,8 @@ class _HomeScreenState extends State<HomeScreen>
                     avatars[(seed + i) % avatars.length],
                     width: 22, height: 22, fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: HuddlColors.primary.withValues(alpha: 0.2),
-                      child: const Icon(Icons.person, size: 11, color: HuddlColors.primary),
+                      color: HuddlColors.gray100,
+                      child: const Icon(Icons.person, size: 11, color: HuddlColors.textHint),
                     ),
                   ),
                 ),
@@ -2484,9 +2484,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _marketImageFallback(RehomeItem item) {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.07),
+      color: HuddlColors.gray100,
       child: Center(
-        child: Icon(item.category.icon, size: 28, color: HuddlColors.primary.withValues(alpha: 0.4)),
+        child: Icon(item.category.icon, size: 28, color: HuddlColors.textHint),
       ),
     );
   }
@@ -3388,7 +3388,7 @@ class _HomeScreenState extends State<HomeScreen>
         : HuddlColors.gray200;
     final titleColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
     final subtitleColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
-    final labelColor = isDark ? HuddlColors.primary.withValues(alpha: 0.85) : HuddlColors.primary;
+    final labelColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
 
     final categoryLabel = _nudgeCategoryLabel(nudge.type).toUpperCase();
 
@@ -4929,7 +4929,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const Icon(Icons.tune, color: HuddlColors.primary, size: 20),
+                  Icon(Icons.tune, color: hc.textTertiary, size: 20),
                   const SizedBox(width: 8),
                   Text('Feed Preferences',
                       style: GoogleFonts.poppins(
