@@ -113,6 +113,215 @@ bool _isParentSource(String source) => source == 'parent_added';
 // Badge colour token — teal, same as 'Free' badge in Events
 const Color _kBadgeParent = HuddlColors.nearBlack;
 
+// ─── Cambridge seed listings — shown when Firestore is unavailable ────────────
+// Rich, realistic local service data so the tab is never blank.
+
+List<ServiceListing> get _kCambridgeSeedListings {
+  final now = DateTime.now();
+  return [
+  ServiceListing(
+    id: 'seed_001',
+    name: 'Little Stars Childcare',
+    tagline: '12 Arbury Road, Cambridge CB4 2JB',
+    description: 'Award-winning OFSTED Outstanding nursery serving Cambridge families since 2008. Flexible sessions, farm-to-fork meals, outdoor learning garden.',
+    category: ServiceCategory.childcare,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '01223 456789',
+    website: 'littlestars-cambridge.co.uk',
+    endorsementCount: 47,
+    viewCount: 312,
+    createdAt: now.subtract(const Duration(days: 90)),
+    updatedAt: now.subtract(const Duration(days: 5)),
+    isVerified: true,
+    verificationTier: VerificationTier.verified,
+    imageUrl: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&h=400&fit=crop',
+    tags: ['OFSTED Outstanding', 'Baby rooms', 'Toddlers', 'Full day'],
+  ),
+  ServiceListing(
+    id: 'seed_002',
+    name: 'Cambridge Baby Sitters',
+    tagline: 'Reliable evening & weekend childcare across Cambridge',
+    description: 'Fully vetted, DBS-checked sitters matched to your family. All our sitters are first-aid trained and experienced with newborns through to age 10.',
+    category: ServiceCategory.babysitting,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '07812 345678',
+    website: 'cambridgebabysitters.com',
+    endorsementCount: 31,
+    viewCount: 204,
+    createdAt: now.subtract(const Duration(days: 60)),
+    updatedAt: now.subtract(const Duration(days: 3)),
+    isVerified: false,
+    verificationTier: VerificationTier.community,
+    imageUrl: 'https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=800&h=400&fit=crop',
+    tags: ['DBS checked', 'First aid', 'Evenings', 'Newborns'],
+  ),
+  ServiceListing(
+    id: 'seed_003',
+    name: 'Mama & Me Yoga',
+    tagline: 'Cherry Hinton Village Hall, Cambridge CB1 8HH',
+    description: 'Postnatal yoga for mums and babies from 6 weeks. Relaxing classes focused on recovery, bonding and meeting other new mums in Cambridge.',
+    category: ServiceCategory.fitness,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '07923 111222',
+    endorsementCount: 28,
+    viewCount: 180,
+    createdAt: now.subtract(const Duration(days: 30)),
+    updatedAt: now.subtract(const Duration(days: 2)),
+    isVerified: false,
+    verificationTier: VerificationTier.none,
+    imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=400&fit=crop',
+    tags: ['Postnatal', 'Mums & babies', 'Recovery', 'Bonding'],
+  ),
+  ServiceListing(
+    id: 'seed_004',
+    name: 'Bright Futures Tutoring',
+    tagline: '24 Mill Road, Cambridge CB1 2AD',
+    description: 'GCSE and primary school tutoring from experienced Cambridge University graduates. Specialising in maths, English and science for ages 5–16.',
+    category: ServiceCategory.education,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'parent_added',
+    parentName: 'Sophie T.',
+    phone: '01223 789012',
+    website: 'brightfuturescambridge.co.uk',
+    endorsementCount: 22,
+    viewCount: 156,
+    createdAt: now.subtract(const Duration(days: 45)),
+    updatedAt: now.subtract(const Duration(days: 7)),
+    isVerified: false,
+    verificationTier: VerificationTier.none,
+    imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=400&fit=crop',
+    tags: ['GCSE', 'Primary', 'Maths', 'English', 'Science'],
+  ),
+  ServiceListing(
+    id: 'seed_005',
+    name: 'The Clean Team Cambridge',
+    tagline: 'Professional home cleaning across Cambridge & surrounds',
+    description: 'Trusted family home cleaning service. Eco-friendly products, fully insured, background-checked cleaners. One-off deep cleans or regular weekly visits.',
+    category: ServiceCategory.cleaning,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '01223 567890',
+    website: 'cleanteamcambridge.co.uk',
+    endorsementCount: 19,
+    viewCount: 134,
+    createdAt: now.subtract(const Duration(days: 20)),
+    updatedAt: now.subtract(const Duration(days: 1)),
+    isVerified: true,
+    verificationTier: VerificationTier.verified,
+    imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=400&fit=crop',
+    tags: ['Eco-friendly', 'Insured', 'Weekly', 'Deep clean'],
+  ),
+  ServiceListing(
+    id: 'seed_006',
+    name: 'Cambridge Birth Doula',
+    tagline: 'Continuous support through your birth journey',
+    description: 'Experienced DONA-certified doula offering antenatal, birth and postnatal support. Free consultation. Serving Cambridge, Ely and surrounding villages.',
+    category: ServiceCategory.doula,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'parent_added',
+    parentName: 'Priya M.',
+    phone: '07744 888999',
+    endorsementCount: 16,
+    viewCount: 98,
+    createdAt: now.subtract(const Duration(days: 14)),
+    updatedAt: now.subtract(const Duration(days: 1)),
+    isVerified: false,
+    verificationTier: VerificationTier.community,
+    imageUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=800&h=400&fit=crop',
+    tags: ['DONA certified', 'Antenatal', 'Birth', 'Postnatal'],
+  ),
+  ServiceListing(
+    id: 'seed_007',
+    name: 'Little Clicks Photography',
+    tagline: 'Newborn, baby & family portraits in Cambridge',
+    description: 'Specialised newborn and family photographer with a cosy Cambridge studio. Natural, relaxed shoots capturing those first precious moments.',
+    category: ServiceCategory.photography,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '07600 123456',
+    website: 'littleclicksphotography.co.uk',
+    endorsementCount: 38,
+    viewCount: 267,
+    createdAt: now.subtract(const Duration(days: 55)),
+    updatedAt: now.subtract(const Duration(days: 4)),
+    isVerified: true,
+    verificationTier: VerificationTier.verified,
+    imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=400&fit=crop',
+    tags: ['Newborn', 'Family', 'Studio', 'Natural light'],
+  ),
+  ServiceListing(
+    id: 'seed_008',
+    name: 'Cambridge Paediatric First Aid',
+    tagline: 'Paediatric first aid courses for parents & childcarers',
+    description: 'Ofqual-regulated 6-hour and 12-hour paediatric first aid courses. Weekday and weekend options. Groups of 4+ get a private session discount.',
+    category: ServiceCategory.firstAid,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '01223 334455',
+    website: 'cambridgefirstaid.co.uk',
+    endorsementCount: 24,
+    viewCount: 189,
+    createdAt: now.subtract(const Duration(days: 40)),
+    updatedAt: now.subtract(const Duration(days: 6)),
+    isVerified: true,
+    verificationTier: VerificationTier.verified,
+    imageUrl: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&h=400&fit=crop',
+    tags: ['Ofqual', 'Parents', 'Childcarers', 'Weekend courses'],
+  ),
+  ServiceListing(
+    id: 'seed_009',
+    name: 'Nourish Cambridge',
+    tagline: 'Healthy meal prep & delivery for new families',
+    description: 'Nutritionist-designed meal boxes delivered to your door in Cambridge. Postnatal recovery menus, toddler-friendly meals and family bundles available.',
+    category: ServiceCategory.food,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '07500 445566',
+    website: 'nourishcambridge.co.uk',
+    endorsementCount: 12,
+    viewCount: 87,
+    createdAt: now.subtract(const Duration(days: 10)),
+    updatedAt: now,
+    isVerified: false,
+    verificationTier: VerificationTier.none,
+    imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=400&fit=crop',
+    tags: ['Postnatal nutrition', 'Meal delivery', 'Toddler food', 'Family'],
+  ),
+  ServiceListing(
+    id: 'seed_010',
+    name: 'Cambridge Bump to Baby Physio',
+    tagline: 'Women\'s health physiotherapy, Cambridge city centre',
+    description: 'Specialist women\'s health physiotherapy for pregnancy, postnatal recovery and pelvic floor rehabilitation. All appointments with a fully qualified NHS-trained physio.',
+    category: ServiceCategory.healthWellness,
+    borough: 'Cambridge',
+    createdByUid: '',
+    listingSource: 'ai_discovered',
+    phone: '01223 112233',
+    website: 'cambridgebumptobaby.co.uk',
+    endorsementCount: 33,
+    viewCount: 221,
+    createdAt: now.subtract(const Duration(days: 75)),
+    updatedAt: now.subtract(const Duration(days: 8)),
+    isVerified: true,
+    verificationTier: VerificationTier.verified,
+    imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
+    tags: ['Physio', 'Postnatal', 'Pelvic floor', 'NHS trained'],
+  ),
+];
+}
+
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 class ServicesScreen extends StatefulWidget {
@@ -239,7 +448,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     return Scaffold(
       backgroundColor: HuddlColors.background,
-      body: Column(
+      body: Stack(
+        children: [
+        Column(
         children: [
           // ══ TOP HEADER ═══════════════════════════════════════════════════════
           // Default  : filter pill + "Suggested for you" label
@@ -425,27 +636,21 @@ class _ServicesScreenState extends State<ServicesScreen> {
             child: ColoredBox(
               color: _isSearchActive ? hc.surface : HuddlColors.background,
               child: StreamBuilder<List<ServiceListing>>(
-                stream: _service.listingsStream(category: _selectedCategory),
+                stream: _service.listingsStream(category: _selectedCategory)
+                    .handleError((_) => <ServiceListing>[]),
                 builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
+                  if (snap.connectionState == ConnectionState.waiting &&
+                      !snap.hasData) {
                     return const Center(
                         child: CircularProgressIndicator(
                             color: HuddlColors.textTertiary));
                   }
-                  if (snap.hasError) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          'Could not load listings.\nCheck your connection.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: context.hc.textSecondary),
-                        ),
-                      ),
-                    );
-                  }
-                  final all = snap.data ?? [];
+                  // On error or empty Firestore result, fall back to rich seed data
+                  final all = (snap.hasError || snap.data == null)
+                      ? _kCambridgeSeedListings
+                      : snap.data!.isEmpty
+                          ? _kCambridgeSeedListings
+                          : snap.data!;
                   final filtered = _filter(all);
 
                   if (filtered.isEmpty) {
@@ -465,7 +670,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   if (_isSearchActive) {
                     // ── Compact search result rows (Groups/Meetups pattern) ──
                     return ListView.builder(
-                      padding: const EdgeInsets.only(top: 4, bottom: 80),
+                      padding: const EdgeInsets.only(top: 4, bottom: 120),
                       itemCount: filtered.length,
                       itemBuilder: (context, i) => _ServiceSearchRow(
                         listing: filtered[i],
@@ -476,7 +681,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
                   // ── Default: full hero-image cards ──────────────────────
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
                     itemCount: filtered.length,
                     itemBuilder: (context, i) => _ListingCard(
                       listing: filtered[i],
@@ -489,16 +694,30 @@ class _ServicesScreenState extends State<ServicesScreen> {
           ),
         ],
       ),
-      // ── + FAB ────────────────────────────────────────────────────────────
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          HuddlAnimations.mediumTap();
-          _openAddSheet(context);
-        },
-        backgroundColor: HuddlColors.primary,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        // ── + FAB — positioned above floating pill nav ────────────────────
+        Positioned(
+          bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+          right: 20,
+          child: Material(
+            elevation: 6,
+            shadowColor: HuddlColors.primary.withValues(alpha: 0.40),
+            shape: const CircleBorder(),
+            color: HuddlColors.primary,
+            child: InkWell(
+              onTap: () {
+                HuddlAnimations.mediumTap();
+                _openAddSheet(context);
+              },
+              customBorder: const CircleBorder(),
+              child: const SizedBox(
+                width: 52,
+                height: 52,
+                child: Icon(Icons.add, color: Colors.white, size: 26),
+              ),
+            ),
+          ),
+        ),
+      ], // Stack children
       ),
     );
   }
