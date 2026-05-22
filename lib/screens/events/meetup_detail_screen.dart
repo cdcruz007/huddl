@@ -281,10 +281,10 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   leading: Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.share_outlined, color: HuddlColors.primary, size: 20),
+                    child: const Icon(Icons.share_outlined, color: HuddlColors.textDark, size: 20),
                   ),
                   title: Text('Share Meet-up', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
@@ -323,10 +323,10 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     leading: Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.08),
+                        color: HuddlColors.background,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.people_outline, color: HuddlColors.primary, size: 20),
+                      child: const Icon(Icons.people_outline, color: HuddlColors.textDark, size: 20),
                     ),
                     title: Text('Manage Attendees', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                     onTap: () {

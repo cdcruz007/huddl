@@ -270,13 +270,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               Navigator.pop(ctx);
                               _shareGroup();
                             },
-                            icon: const Icon(Icons.link, size: 18, color: HuddlColors.primary),
+                            icon: const Icon(Icons.link, size: 18, color: HuddlColors.textDark),
                             label: Text(
                               'Share link',
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textTertiary,
                               ),
                             ),
                           ),
@@ -347,7 +347,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                 },
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(
-                                      color: HuddlColors.primary),
+                                      color: HuddlColors.divider),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20)),
                                   padding: const EdgeInsets.symmetric(
@@ -358,7 +358,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: HuddlColors.primary,
+                                    color: HuddlColors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -600,17 +600,17 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _showInviteMembersSheet,
                     icon: const Icon(Icons.person_add_outlined,
-                        color: HuddlColors.primary, size: 18),
+                        color: HuddlColors.textDark, size: 18),
                     label: Text(
                       'Invite Members',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textDark,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: HuddlColors.primary),
+                      side: const BorderSide(color: HuddlColors.divider),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(26)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -701,7 +701,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -709,7 +709,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textTertiary,
                       ),
                     ),
                   ),
@@ -730,7 +730,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                 fontSize: 22, color: context.hc.textTertiary),
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                  color: HuddlColors.primary.withValues(alpha: 0.3)),
+                                  color: HuddlColors.divider),
                             ),
                             focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: HuddlColors.primary),
@@ -828,7 +828,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                  color: HuddlColors.primary.withValues(alpha: 0.3)),
+                                  color: HuddlColors.divider),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -886,7 +886,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         child: Text(
                           'See all',
                           style: GoogleFonts.poppins(
-                              fontSize: 14, color: HuddlColors.primary),
+                              fontSize: 14, color: HuddlColors.textTertiary),
                         ),
                       ),
                     ],
@@ -923,7 +923,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           height: 48,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.08),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(24),
                           ),
                           alignment: Alignment.center,
@@ -932,7 +932,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textTertiary,
                             ),
                           ),
                         ),
@@ -956,11 +956,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.bookmark_outline,
-                        color: HuddlColors.primary, size: 22),
+                        color: HuddlColors.textDark, size: 22),
                   ),
                   title: Text(
                     'Saved Messages',
@@ -995,11 +995,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.poll_outlined,
-                        color: HuddlColors.primary, size: 22),
+                        color: HuddlColors.textDark, size: 22),
                   ),
                   title: Text(
                     'Polls',
@@ -1073,7 +1073,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   Widget _heroFallback() {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.background,
       child: CustomPaint(
         painter: _TwoPeoplePainter(),
         child: const SizedBox.expand(),
@@ -1115,12 +1115,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.07),
+                  color: HuddlColors.background,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 18, color: HuddlColors.primary),
+                    Icon(Icons.info_outline, size: 18, color: HuddlColors.textDark),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -1138,8 +1138,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
               ListTile(
-                leading: Icon(Icons.group_add_outlined, color: HuddlColors.primary),
-                title: Text('Join group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                leading: Icon(Icons.group_add_outlined, color: HuddlColors.textDark),
+                title: Text('Join group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
                 onTap: () { Navigator.pop(c); _joinGroup(); },
               ),
             ],
@@ -1451,7 +1451,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     future: _fetchMembersWithActivity(otherMemberIds),
                     builder: (_, snap) {
                       if (snap.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator(color: HuddlColors.primary));
+                        return const Center(child: CircularProgressIndicator(color: HuddlColors.textTertiary));
                       }
                       final memberList = snap.data ?? [];
                       return ListView.builder(
@@ -1808,7 +1808,7 @@ class _CircleButton extends StatelessWidget {
 class _TwoPeoplePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paintPrimary = Paint()..color = HuddlColors.primary;
+    final paintPrimary = Paint()..color = HuddlColors.textDark;
     final paintSecondary = Paint()..color = HuddlColors.primaryLight;
 
     canvas.drawCircle(

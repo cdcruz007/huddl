@@ -601,7 +601,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: HuddlColors.primary.withValues(alpha: 0.08),
+              color: HuddlColors.background,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -638,7 +638,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
             child: _isLoading
                 ? const Center(
                     child:
-                        CircularProgressIndicator(color: HuddlColors.primary))
+                        CircularProgressIndicator(color: HuddlColors.textTertiary))
                 : (_messages.isEmpty)
                     ? _emptyState()
                     : ListView.builder(
@@ -923,7 +923,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: HuddlColors.primary),
+        icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -1093,7 +1093,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: HuddlColors.primary),
+        icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () {
           setState(() {
             _isSearching = false;
@@ -1249,8 +1249,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       icon: const Icon(Icons.chat_bubble_outline, size: 18),
                       label: Text('Message', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: HuddlColors.primary,
-                        side: const BorderSide(color: HuddlColors.primary),
+                        foregroundColor: HuddlColors.textDark,
+                        side: const BorderSide(color: HuddlColors.divider),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -1311,7 +1311,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Widget _profileInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: HuddlColors.primary),
+        Icon(icon, size: 20, color: HuddlColors.textDark),
         const SizedBox(width: 12),
         Text(label, style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
         const Spacer(),
@@ -1363,7 +1363,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
+                  color: HuddlColors.textTertiary,
                 ),
               ),
             ),
@@ -1402,7 +1402,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               IconButton(
                 icon: const Icon(
                   Icons.add_circle_outline,
-                  color: HuddlColors.primary,
+                  color: HuddlColors.textDark,
                 ),
                 onPressed: _openAttachSheet,
               ),
@@ -1564,10 +1564,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  color: HuddlColors.background,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.primary),
+                child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1791,7 +1791,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(c),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: HuddlColors.primary),
+                        side: const BorderSide(color: HuddlColors.divider),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1801,7 +1801,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textSecondary,
                         ),
                       ),
                     ),
@@ -1924,13 +1924,13 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(c),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: HuddlColors.primary),
+                          side: const BorderSide(color: HuddlColors.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text('Cancel',
                             style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2059,13 +2059,13 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(c),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: HuddlColors.primary),
+                          side: const BorderSide(color: HuddlColors.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text('Cancel',
                             style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2148,7 +2148,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const Icon(Icons.bookmark, color: HuddlColors.primary, size: 22),
+                    const Icon(Icons.bookmark, color: HuddlColors.textDark, size: 22),
                     const SizedBox(width: 8),
                     Text(
                       'Saved Messages',
@@ -2180,10 +2180,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         Container(
                           width: 72, height: 72,
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.08),
+                            color: HuddlColors.background,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.primary),
+                          child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.textDark),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -2216,7 +2216,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     itemBuilder: (_, i) {
                       final msg = saved[i];
                       return ListTile(
-                        leading: const Icon(Icons.bookmark, color: HuddlColors.primary, size: 20),
+                        leading: const Icon(Icons.bookmark, color: HuddlColors.textDark, size: 20),
                         title: Text(
                           msg.message,
                           style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
@@ -2890,7 +2890,7 @@ class _DMBubble extends StatelessWidget {
                           children: [
                             if (isSaved) ...[
                               Icon(Icons.bookmark, size: 11,
-                                  color: HuddlColors.primary.withValues(alpha: 0.6)),
+                                  color: HuddlColors.textTertiary),
                               const SizedBox(width: 3),
                             ],
                             Text(
@@ -3064,7 +3064,7 @@ class _DMBubble extends StatelessWidget {
                 ListTile(
                   leading: Icon(
                     capturedIsSaved ? Icons.bookmark : Icons.bookmark_outline,
-                    color: capturedIsSaved ? HuddlColors.primary : hc.textPrimary,
+                    color: capturedIsSaved ? HuddlColors.error : hc.textPrimary,
                   ),
                   title: Text(
                     capturedIsSaved ? 'Unsave message' : 'Save message',
@@ -3893,14 +3893,14 @@ class _LocationBubble extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                       child: Row(
                         children: [
-                          Icon(Icons.open_in_new, size: 13, color: HuddlColors.primary),
+                          Icon(Icons.open_in_new, size: 13, color: HuddlColors.textDark),
                           const SizedBox(width: 4),
                           Text(
                             'Open in Google Maps',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textDark,
                             ),
                           ),
                         ],
@@ -3979,10 +3979,10 @@ class _ContactBubble extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.1),
+                        color: HuddlColors.background,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: HuddlColors.primary, size: 24),
+                      child: const Icon(Icons.person, color: HuddlColors.textDark, size: 24),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -4014,9 +4014,9 @@ class _ContactBubble extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.phone, size: 13, color: HuddlColors.primary),
+                    const Icon(Icons.phone, size: 13, color: HuddlColors.textDark),
                     const SizedBox(width: 4),
-                    Text('Call', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.primary)),
+                    Text('Call', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
                     const Spacer(),
                     Text(
                       '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}',

@@ -322,10 +322,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    color: HuddlColors.background,
                     shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
-                    color: HuddlColors.primary),
+                    color: HuddlColors.textDark),
               ),
               title: const Text('Choose from gallery',
                   style: TextStyle(fontWeight: FontWeight.w500)),
@@ -339,10 +339,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    color: HuddlColors.background,
                     shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
-                    color: HuddlColors.primary),
+                    color: HuddlColors.textDark),
               ),
               title: const Text('Take a photo',
                   style: TextStyle(fontWeight: FontWeight.w500)),
@@ -1001,7 +1001,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         height: 240,
         margin: EdgeInsets.zero,
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.08),
+          color: HuddlColors.background,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1011,7 +1011,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               height: 52,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: HuddlColors.primary.withValues(alpha: 0.4),
+                    color: HuddlColors.divider,
                     width: 2),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1020,7 +1020,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 children: [
                   Icon(Icons.image_outlined,
                       size: 28,
-                      color: HuddlColors.primary.withValues(alpha: 0.7)),
+                      color: HuddlColors.textHint),
                   Positioned(
                     bottom: 4,
                     right: 4,
@@ -1043,7 +1043,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.primary)),
+                    color: HuddlColors.textTertiary)),
           ],
         ),
       ),
@@ -1052,10 +1052,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   Widget _photoPlaceholder() {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.background,
       child: Center(
         child:
-            Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary.withValues(alpha: 0.5)),
+            Icon(Icons.image_outlined, size: 48, color: HuddlColors.textHint),
       ),
     );
   }
@@ -1322,20 +1322,20 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.08),
+          color: HuddlColors.background,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
             const Icon(Icons.info_outline,
-                size: 16, color: HuddlColors.primary),
+                size: 16, color: HuddlColors.textDark),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'You don\'t belong to any groups yet. Join a group first to create group events.',
                 style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textDark,
                     height: 1.3),
               ),
             ),
@@ -1377,12 +1377,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(
                       child: Icon(Icons.people,
-                          size: 14, color: HuddlColors.primary),
+                          size: 14, color: HuddlColors.textDark),
                     ),
                   ),
                   const SizedBox(width: 8),

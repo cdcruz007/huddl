@@ -210,9 +210,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+                    color: HuddlColors.background, shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
-                    color: HuddlColors.primary),
+                    color: HuddlColors.textDark),
               ),
               title: const Text('Choose from gallery',
                   style: TextStyle(fontWeight: FontWeight.w500)),
@@ -226,9 +226,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+                    color: HuddlColors.background, shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
-                    color: HuddlColors.primary),
+                    color: HuddlColors.textDark),
               ),
               title: const Text('Take a photo',
                   style: TextStyle(fontWeight: FontWeight.w500)),
@@ -301,7 +301,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         color: _bannerBg,
         child: const Center(
           child: Icon(Icons.add_photo_alternate_outlined,
-              size: 48, color: HuddlColors.primary),
+              size: 48, color: HuddlColors.textDark),
         ),
       );
 
@@ -366,7 +366,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.12),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -374,7 +374,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textTertiary,
                             ),
                           ),
                         ),
@@ -1058,7 +1058,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded,
-                color: HuddlColors.primary, size: 24),
+                color: HuddlColors.textDark, size: 24),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1087,7 +1087,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               'OK',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
               ),
             ),
           ),
@@ -1415,7 +1415,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           border: _showImageError
               ? Border.all(color: HuddlColors.error, width: 2)
               : Border.all(
-                  color: HuddlColors.primary.withValues(alpha: 0.35),
+                  color: HuddlColors.divider,
                   width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1426,12 +1426,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.12),
+                color: HuddlColors.background,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.add_photo_alternate_outlined,
-                color: HuddlColors.primary,
+                color: HuddlColors.textDark,
                 size: 26,
               ),
             ),
@@ -1441,7 +1441,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
               ),
             ),
             if (_showImageError) ...[
@@ -1535,20 +1535,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.08),
+          color: HuddlColors.background,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
             const Icon(Icons.info_outline,
-                size: 16, color: HuddlColors.primary),
+                size: 16, color: HuddlColors.textDark),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'You don\'t belong to any groups yet. Join a group first to use group privacy.',
                 style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textDark,
                     height: 1.3),
               ),
             ),
@@ -1590,12 +1590,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(
                       child: Icon(Icons.people,
-                          size: 14, color: HuddlColors.primary),
+                          size: 14, color: HuddlColors.textDark),
                     ),
                   ),
                   const SizedBox(width: 8),

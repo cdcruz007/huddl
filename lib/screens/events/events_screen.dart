@@ -233,11 +233,11 @@ class EventsScreenState extends State<EventsScreen>
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.1),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.groups,
-                              color: HuddlColors.primary, size: 22),
+                              color: HuddlColors.textDark, size: 22),
                         ),
                         title: Text(
                           meetup.title,
@@ -1020,7 +1020,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           children: [
             Icon(
               isGroup ? Icons.group : Icons.lock,
-              color: HuddlColors.primary,
+              color: HuddlColors.textDark,
               size: 24,
             ),
             const SizedBox(width: 10),
@@ -1053,7 +1053,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
               'OK',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
               ),
             ),
           ),
@@ -1990,7 +1990,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   const Padding(
                     padding: EdgeInsets.only(left: 12, right: 6),
                     child: Icon(Icons.search, size: 18,
-                        color: HuddlColors.primary),
+                        color: HuddlColors.textHint),
                   ),
                   Expanded(
                     child: TextField(
@@ -2232,7 +2232,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       await _loadUserContext();
                       if (mounted) setState(() {});
                     },
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textTertiary,
                     child: ListView.builder(
                       padding: EdgeInsets.fromLTRB(
                           _isSearchActive ? 0 : 16,
@@ -2699,7 +2699,7 @@ class _GoingAvatar extends StatelessWidget {
       height: 54,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
       ),
       clipBehavior: Clip.antiAlias,
       child: _buildImage(),
@@ -2742,12 +2742,12 @@ class _GoingAvatar extends StatelessWidget {
 
   Widget _fallbackIcon() {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.background,
       child: Center(
         child: Icon(
           isMeetup ? Icons.groups : Icons.event,
           size: 54 * 0.45,
-          color: HuddlColors.primary,
+          color: HuddlColors.textDark,
         ),
       ),
     );
@@ -2894,7 +2894,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) setState(() => _rebuildKey++);
       },
-      color: HuddlColors.primary,
+      color: HuddlColors.textTertiary,
       child: ListView(
         key: ValueKey('im_going_list_$_rebuildKey'),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -3382,7 +3382,7 @@ class _EventsTabState extends State<_EventsTab> {
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textTertiary,
                             ),
                           ),
                         ),
@@ -3401,7 +3401,7 @@ class _EventsTabState extends State<_EventsTab> {
                       const Padding(
                         padding: EdgeInsets.only(left: 12, right: 6),
                         child: Icon(Icons.search, size: 18,
-                            color: HuddlColors.primary),
+                            color: HuddlColors.textHint),
                       ),
                       Expanded(
                         child: TextField(
@@ -3546,7 +3546,7 @@ class _EventsTabState extends State<_EventsTab> {
                   )
                 : RefreshIndicator(
                     onRefresh: _forceRefreshDiscovery,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textTertiary,
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                       keyboardDismissBehavior:
@@ -4589,7 +4589,7 @@ class _MeetupSearchPlaceholder extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.1),
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
@@ -4598,7 +4598,7 @@ class _MeetupSearchPlaceholder extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: HuddlColors.primary,
+            color: HuddlColors.textDark,
           ),
         ),
       ),
@@ -5031,7 +5031,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                                   color: isRestricted
                                       ? HuddlColors.textTertiary
                                       : _isFull && !meetup.isGoing
-                                          ? HuddlColors.primary
+                                          ? HuddlColors.textTertiary
                                           : Colors.white,
                                 ),
                               ),
@@ -5858,7 +5858,7 @@ class _SmartNudgeBanner extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border(
-            left: BorderSide(color: HuddlColors.primary, width: 3),
+            left: BorderSide(color: HuddlColors.divider, width: 3),
           ),
           boxShadow: [
             BoxShadow(
@@ -5901,7 +5901,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textTertiary,
                         ),
                       ),
                     ),
