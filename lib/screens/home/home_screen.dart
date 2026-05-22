@@ -1184,7 +1184,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: _buildSectionHeader(
                       hc: hc,
                       icon: Icons.people_outline,
-                      iconColor: hc.textPrimary,
+                      iconColor: HuddlColors.teal,
                       title: 'Groups near you',
                       subtitle: 'Join local parent groups',
                       onSeeAll: () => _switchToTab(1),
@@ -1200,7 +1200,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: _buildSectionHeader(
                       hc: hc,
                       icon: Icons.place,
-                      iconColor: hc.textPrimary,
+                      iconColor: HuddlColors.primary,
                       title: 'Upcoming meetups',
                       subtitle: 'In ${_borough.isNotEmpty ? _borough : 'your area'}',
                       onSeeAll: () => _switchToTab(2),
@@ -1373,25 +1373,23 @@ class _HomeScreenState extends State<HomeScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.35 : 0.06),
+                    color: isDark
+                        ? HuddlColors.teal.withValues(alpha: 0.25)
+                        : HuddlColors.teal,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.25 : 0.12),
-                      width: 1,
-                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.location_on_outlined,
-                          size: 13, color: hc.textTertiary),
+                          size: 13, color: Colors.white),
                       const SizedBox(width: 3),
                       Text(
                         _borough,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: hc.textTertiary,
+                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -1434,8 +1432,16 @@ class _HomeScreenState extends State<HomeScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // UX-06: No container bg — Icon only in textPrimary
-          Icon(icon, size: 20, color: hc.textPrimary),
+          // Coloured icon container — saturated Figma palette per section
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1459,7 +1465,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
-          // UX-06: Neutral 'See all' — no chevron
+          // Orange 'See all' link
           Semantics(
             label: 'See all $title',
             button: true,
@@ -1469,7 +1475,8 @@ class _HomeScreenState extends State<HomeScreen>
                 'See all',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: hc.textTertiary,
+                  fontWeight: FontWeight.w500,
+                  color: HuddlColors.primary,
                 ),
               ),
             ),
@@ -1538,7 +1545,7 @@ class _HomeScreenState extends State<HomeScreen>
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: hc.textTertiary,
+                    color: HuddlColors.primary,
                   ),
                 ),
               ),
@@ -3134,7 +3141,7 @@ class _HomeScreenState extends State<HomeScreen>
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: hc.textTertiary,
+                    color: HuddlColors.primary,
                   ),
                 ),
               ),

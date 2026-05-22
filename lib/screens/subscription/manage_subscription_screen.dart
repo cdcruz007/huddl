@@ -94,7 +94,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             content: Text(
                 'Subscription paused for 1 month. Welcome back anytime!',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.nearBlack,
+            backgroundColor: HuddlColors.textDark,
           ),
         );
       }

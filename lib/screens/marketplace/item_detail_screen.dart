@@ -383,7 +383,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               '$amountStr offer sent for "${item.title}"! The seller will review it.')),
                     ],
                   ),
-                  backgroundColor: HuddlColors.nearBlack,
+                  backgroundColor: HuddlColors.textDark,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -1190,7 +1190,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             child: Text('"${item.title}" marked as sold')),
                       ],
                     ),
-                    backgroundColor: HuddlColors.nearBlack,
+                    backgroundColor: HuddlColors.textDark,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
@@ -1297,7 +1297,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 Text('"${item.title}" is back on sale')),
                       ],
                     ),
-                    backgroundColor: HuddlColors.nearBlack,
+                    backgroundColor: HuddlColors.textDark,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
@@ -1315,7 +1315,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.nearBlack,
+                backgroundColor: HuddlColors.primary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),

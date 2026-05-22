@@ -503,7 +503,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         Expanded(
             child: Text('"${event.title}" created successfully!')),
       ]),
-      backgroundColor: HuddlColors.nearBlack,
+      backgroundColor: HuddlColors.textDark,
       behavior: SnackBarBehavior.floating,
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

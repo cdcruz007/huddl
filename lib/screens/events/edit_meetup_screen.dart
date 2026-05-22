@@ -387,7 +387,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         const SizedBox(width: 8),
         const Expanded(child: Text('Meetup updated!')),
       ]),
-      backgroundColor: HuddlColors.nearBlack,
+      backgroundColor: HuddlColors.textDark,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));

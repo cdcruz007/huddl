@@ -183,7 +183,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 4),
@@ -207,7 +207,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             Text('Group link copied to clipboard'),
           ],
         ),
-        backgroundColor: HuddlColors.nearBlack,
+        backgroundColor: HuddlColors.textDark,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -338,7 +338,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                     SnackBar(
                                       content: Text(
                                           'Invitation sent to ${contact['name']}'),
-                                      backgroundColor: HuddlColors.nearBlack,
+                                      backgroundColor: HuddlColors.textDark,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10)),
@@ -1596,7 +1596,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         Navigator.pop(ctx);
         ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
           content: Text('Left ${widget.groupName}. $successorName is the new admin.'),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));
@@ -1650,7 +1650,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         Navigator.pop(ctx);
         ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
           content: Text('Left ${widget.groupName}'),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));

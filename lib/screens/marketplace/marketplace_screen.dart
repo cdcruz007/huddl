@@ -23,7 +23,7 @@ import '../../widgets/animations/huddl_loading_states.dart';
 
 
 // Marketplace price colour — near-black for a premium, neutral feel
-const Color _kMarketBlue = HuddlColors.nearBlack;
+const Color _kMarketBlue = HuddlColors.blueDark;  // #347FEF — Figma blue
 
 // 12 deterministic Unsplash face URLs for seller avatar stack
 const List<String> _kMarketAvatarPool = [
@@ -1431,7 +1431,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                             '"${item.title}" has been delisted')),
                                   ],
                                 ),
-                                backgroundColor: HuddlColors.nearBlack,
+                                backgroundColor: HuddlColors.textDark,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)),
@@ -1663,13 +1663,24 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ),
           ),
           const SizedBox(height: 10),
-          // ── Pill tab bar — matches Discover screen style exactly ──────────
-          // Orange filled pill for active tab, plain text for inactive.
-          // No underline, no borders on unselected tabs.
-          _MarketPillTabBar(
+          // ── Standard orange-underline tab bar — matches all other screens ─
+          TabBar(
             controller: _tabController,
-            labels: const ['Buy', 'Sell', 'Saved'],
-            hc: hc,
+            tabs: const [
+              Tab(text: 'Buy'),
+              Tab(text: 'Sell'),
+              Tab(text: 'Saved'),
+            ],
+            labelColor: HuddlColors.primary,
+            unselectedLabelColor: HuddlColors.textHint,
+            labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
+            indicatorColor: HuddlColors.primary,
+            indicatorSize: TabBarIndicatorSize.label,
+            indicatorWeight: 2.5,
+            dividerColor: HuddlColors.divider,
+            padding: EdgeInsets.zero,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
           ),
           const SizedBox(height: 2),
         ],
@@ -2767,7 +2778,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         const SizedBox(width: 8),
                         Expanded(child: Text('"${item.title}" is back on sale')),
                       ]),
-                      backgroundColor: HuddlColors.nearBlack,
+                      backgroundColor: HuddlColors.textDark,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -3201,7 +3212,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.nearBlack.withValues(alpha: 0.90)
+                              ? HuddlColors.teal
                               : Colors.black.withValues(alpha: 0.52),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -5301,88 +5312,3 @@ class _PriceHistogramPainter extends CustomPainter {
       old.low != low || old.high != high;
 }
 
-// ── _MarketPillTabBar ─────────────────────────────────────────────────────────
-// Pill-style tab bar matching the Discover screen's _DiscoverAnimatedTabBar.
-// Active tab: orange filled pill + white bold text (no underline).
-// Inactive tabs: plain text, no border, no background.
-// Wired to an existing TabController so TabBarView keeps working as-is.
-class _MarketPillTabBar extends StatefulWidget {
-  final TabController controller;
-  final List<String> labels;
-  final HuddlContextColors hc;
-
-  const _MarketPillTabBar({
-    required this.controller,
-    required this.labels,
-    required this.hc,
-  });
-
-  @override
-  State<_MarketPillTabBar> createState() => _MarketPillTabBarState();
-}
-
-class _MarketPillTabBarState extends State<_MarketPillTabBar> {
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onTabChange);
-  }
-
-  @override
-  void didUpdateWidget(_MarketPillTabBar old) {
-    super.didUpdateWidget(old);
-    if (old.controller != widget.controller) {
-      old.controller.removeListener(_onTabChange);
-      widget.controller.addListener(_onTabChange);
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onTabChange);
-    super.dispose();
-  }
-
-  void _onTabChange() {
-    if (mounted) setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: widget.labels.asMap().entries.map((entry) {
-        final idx = entry.key;
-        final label = entry.value;
-        final isActive = widget.controller.index == idx;
-
-        return GestureDetector(
-          onTap: () {
-            HuddlAnimations.selectionClick();
-            widget.controller.animateTo(idx);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.only(right: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-            decoration: BoxDecoration(
-              color: isActive ? HuddlColors.primary : Colors.transparent,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight:
-                    isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive
-                    ? Colors.white
-                    : widget.hc.textSecondary,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}

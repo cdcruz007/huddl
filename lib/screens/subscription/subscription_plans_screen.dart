@@ -49,7 +49,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           SnackBar(
             content: Text('Subscription reactivated! Your plan will continue to renew.',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.nearBlack,
+            backgroundColor: HuddlColors.textDark,
           ),
         );
         setState(() {});
@@ -67,7 +67,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           SnackBar(
             content: Text('Scheduled change revoked. Your current plan continues.',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.nearBlack,
+            backgroundColor: HuddlColors.textDark,
           ),
         );
         setState(() {});
@@ -101,7 +101,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             SnackBar(
               content: Text('Reverted to Welcome plan',
                   style: GoogleFonts.poppins(color: HuddlColors.white)),
-              backgroundColor: HuddlColors.nearBlack,
+              backgroundColor: HuddlColors.textDark,
             ),
           );
           Navigator.pop(context, true);
@@ -177,7 +177,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: HuddlColors.blueBackground,
+                      color: HuddlColors.blueBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -465,7 +465,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 : 'No previous purchases found.',
             style: GoogleFonts.poppins(color: HuddlColors.white),
           ),
-          backgroundColor: restored ? HuddlColors.nearBlack : HuddlColors.textHint,
+          backgroundColor: restored ? HuddlColors.textDark : HuddlColors.textHint,
         ),
       );
     }

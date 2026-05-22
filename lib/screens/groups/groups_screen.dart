@@ -288,14 +288,15 @@ class _GroupsScreenState extends State<GroupsScreen>
                       Tab(text: 'Attending'),
                       Tab(text: 'Saved'),
                     ],
-                    labelColor: HuddlColors.textDark,
+                    labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
                     labelStyle: GoogleFonts.poppins(
                         fontSize: 13, fontWeight: FontWeight.w600),
                     unselectedLabelStyle: GoogleFonts.poppins(
                         fontSize: 13, fontWeight: FontWeight.w400),
-                    indicatorColor: HuddlColors.textDark,
+                    indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
+                    indicatorWeight: 2.5,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
                     labelPadding:
@@ -1768,7 +1769,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     // Category icon colour
     const iconColors = [
-      HuddlColors.primary, HuddlColors.nearBlack, HuddlColors.accentAmber,
+      HuddlColors.primary, HuddlColors.teal, HuddlColors.accentAmber,
       HuddlColors.blueDark, Color(0xFF9B59B6),
     ];
     final accentColor = iconColors[summary.groupId.hashCode.abs() % iconColors.length];
@@ -1862,9 +1863,9 @@ class _MessagesTabState extends State<_MessagesTab> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                              color: HuddlColors.accentAmber.withValues(alpha: 0.20),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4)),
+                              border: Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.6)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -4500,7 +4501,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 4),
@@ -6987,7 +6988,7 @@ class _SavedEventCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                          color: HuddlColors.accentAmber.withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(

@@ -2133,7 +2133,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               unawaited(_saveThread(rootMsg, threadReplies, topic));
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: HuddlColors.nearBlack,
+                              backgroundColor: HuddlColors.primary,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -2206,7 +2206,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
           ],
         ),
-        backgroundColor: HuddlColors.nearBlack,
+        backgroundColor: HuddlColors.textDark,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -2879,7 +2879,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 8),
                     Text('${member.name} is now an admin'),
                   ]),
-                  backgroundColor: HuddlColors.nearBlack,
+                  backgroundColor: HuddlColors.textDark,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),

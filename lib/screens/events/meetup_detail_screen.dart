@@ -124,7 +124,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10)),
@@ -310,7 +310,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Text('Link copied to clipboard'),
-                        backgroundColor: HuddlColors.nearBlack,
+                        backgroundColor: HuddlColors.textDark,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -746,7 +746,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         ),
                       ],
                     ),
-                    backgroundColor: HuddlColors.nearBlack,
+                    backgroundColor: HuddlColors.textDark,
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

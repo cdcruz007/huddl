@@ -495,7 +495,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           HuddlAnimations.mediumTap();
           _openAddSheet(context);
         },
-        backgroundColor: HuddlColors.nearBlack,
+        backgroundColor: HuddlColors.primary,
         elevation: 4,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
@@ -1955,7 +1955,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                     child:
-                        CircularProgressIndicator(color: HuddlColors.nearBlack)),
+                        CircularProgressIndicator(color: HuddlColors.primary)),
               )
             else if (_endorsements.isEmpty)
               Padding(

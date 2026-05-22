@@ -221,7 +221,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          CircleAvatar(backgroundColor: HuddlColors.primary.withValues(alpha: 0.15), radius: 18,
+          CircleAvatar(backgroundColor: HuddlColors.orangeIconBg, radius: 18,
             child: Text(ann.authorName.isNotEmpty ? ann.authorName[0].toUpperCase() : '?',
                 style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: HuddlColors.primary))),
           const SizedBox(width: 10),

@@ -163,7 +163,7 @@ class _SubscriptionCheckoutScreenState
         SnackBar(
           content: Text('Subscription restored!',
               style: GoogleFonts.poppins(color: HuddlColors.white)),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
         ),
       );
     }

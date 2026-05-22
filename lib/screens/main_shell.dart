@@ -464,7 +464,7 @@ class _HuddlAnimatedNavBarState extends State<_HuddlAnimatedNavBar>
                         height: 2.5,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: HuddlColors.nearBlack,
+                            color: HuddlColors.primary,
                             borderRadius: const BorderRadius.only(
                               bottomLeft: Radius.circular(2),
                               bottomRight: Radius.circular(2),
@@ -564,7 +564,7 @@ class _AnimatedNavItemState extends State<_AnimatedNavItem>
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = widget.isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack;
+    final activeColor = widget.isDark ? HuddlColors.primary : HuddlColors.primary;
     final inactiveColor = widget.isDark ? HuddlColors.darkTextTertiary : HuddlColors.textHint;
 
     return Expanded(

@@ -462,7 +462,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         const SizedBox(width: 8),
         const Expanded(child: Text('Meetup created!')),
       ]),
-      backgroundColor: HuddlColors.nearBlack,
+      backgroundColor: HuddlColors.textDark,
       behavior: SnackBarBehavior.floating,
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

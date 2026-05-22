@@ -10,7 +10,7 @@ class HuddlTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: HuddlColors.warmSand, // #F7F5F2 warm sand — Phase 1 spec
+      scaffoldBackgroundColor: HuddlColors.warmCream, // #FFF8F3 warm cream — vibrant pass
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
         secondary: HuddlColors.nearBlack,
@@ -35,7 +35,7 @@ class HuddlTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: HuddlColors.white,
-        selectedItemColor: HuddlColors.nearBlack,   // Phase 1: near-black nav active state
+        selectedItemColor: HuddlColors.primary,      // Vibrant pass: saturated orange nav active
         unselectedItemColor: HuddlColors.textHint,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -209,6 +209,7 @@ class HuddlTheme {
       unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
       indicatorColor: HuddlColors.primary,
       indicatorSize: TabBarIndicatorSize.label,
+      dividerColor: HuddlColors.divider,
     );
   }
 

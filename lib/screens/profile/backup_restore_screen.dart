@@ -289,7 +289,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                       GoogleFonts.poppins(fontSize: 13, color: Colors.white))),
         ],
       ),
-      backgroundColor: HuddlColors.nearBlack,
+      backgroundColor: HuddlColors.textDark,
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 4),
       margin: const EdgeInsets.all(16),

@@ -114,7 +114,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('${member.name} is now an admin.'),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));
@@ -283,7 +283,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: const Text('Admin role transferred successfully.'),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));

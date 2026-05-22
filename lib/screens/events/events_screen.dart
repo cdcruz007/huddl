@@ -421,9 +421,28 @@ class EventsScreenState extends State<EventsScreen>
                     ],
                   ),
                   const SizedBox(height: 10),
-                  // ── Airbnb-style animated pill tab bar ────────────
-                  _DiscoverAnimatedTabBar(
-                    selectedIndex: _selectedTab,
+                  // ── Standard orange-underline tab bar ─────────────
+                  TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: const [
+                      Tab(text: 'Groups'),
+                      Tab(text: 'Meetups'),
+                      Tab(text: 'Events'),
+                      Tab(text: 'Services'),
+                      Tab(text: 'Insights'),
+                    ],
+                    labelColor: HuddlColors.primary,
+                    unselectedLabelColor: HuddlColors.textHint,
+                    labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                    unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
+                    indicatorColor: HuddlColors.primary,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    indicatorWeight: 2.5,
+                    dividerColor: HuddlColors.divider,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 16),
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
@@ -431,7 +450,6 @@ class EventsScreenState extends State<EventsScreen>
                       if (index == 3 || _selectedTab == 3) {
                         _serviceResetTrigger.value = true;
                       }
-                      _tabController.animateTo(index);
                       setState(() { _selectedTab = index; });
                     },
                   ),
@@ -551,196 +569,6 @@ class EventsScreenState extends State<EventsScreen>
         // _selectedTab == 2 (Events) or 3 (Services) → no FAB rendered at all
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// AIRBNB-STYLE ANIMATED PILL TAB BAR
-// Spring-animated sliding pill indicator under horizontally scrollable tabs.
-// Each tab has an icon + label. Active tab: nearBlack fill, white text.
-// Inactive tabs: transparent, textTertiary text.
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _DiscoverTabDef {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  const _DiscoverTabDef({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-  });
-}
-
-const _kDiscoverTabs = [
-  _DiscoverTabDef(
-    icon: Icons.group_outlined,
-    activeIcon: Icons.group,
-    label: 'Groups',
-  ),
-  _DiscoverTabDef(
-    icon: Icons.place_outlined,
-    activeIcon: Icons.place,
-    label: 'Meetups',
-  ),
-  _DiscoverTabDef(
-    icon: Icons.event_outlined,
-    activeIcon: Icons.event,
-    label: 'Events',
-  ),
-  _DiscoverTabDef(
-    icon: Icons.handyman_outlined,
-    activeIcon: Icons.handyman,
-    label: 'Services',
-  ),
-  _DiscoverTabDef(
-    icon: Icons.insights_outlined,
-    activeIcon: Icons.insights,
-    label: 'Insights',
-  ),
-];
-
-class _DiscoverAnimatedTabBar extends StatefulWidget {
-  final int selectedIndex;
-  final void Function(int) onTap;
-
-  const _DiscoverAnimatedTabBar({
-    required this.selectedIndex,
-    required this.onTap,
-  });
-
-  @override
-  State<_DiscoverAnimatedTabBar> createState() =>
-      _DiscoverAnimatedTabBarState();
-}
-
-class _DiscoverAnimatedTabBarState extends State<_DiscoverAnimatedTabBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-  int _prevIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 320),
-    );
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
-    _prevIndex = widget.selectedIndex;
-    _ctrl.value = 1.0;
-  }
-
-  @override
-  void didUpdateWidget(_DiscoverAnimatedTabBar old) {
-    super.didUpdateWidget(old);
-    if (old.selectedIndex != widget.selectedIndex) {
-      _prevIndex = old.selectedIndex;
-      _ctrl.forward(from: 0.0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return SizedBox(
-      height: 38,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 0),
-        physics: const BouncingScrollPhysics(),
-        itemCount: _kDiscoverTabs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemBuilder: (context, index) {
-          final tab = _kDiscoverTabs[index];
-          final isActive = index == widget.selectedIndex;
-          return AnimatedBuilder(
-            animation: _anim,
-            builder: (context, _) {
-              // Smooth colour interpolation — Huddl orange active fill.
-              // Unselected pills have no border (transparent bg) so they read
-              // as lightweight text tabs, not heavy outlined buttons.
-              final activeColor = HuddlColors.primary;        // warm orange
-              final inactiveColor = Colors.transparent;
-              Color bgColor;
-              Color textColor;
-              Color iconColor;
-              if (isActive) {
-                bgColor = Color.lerp(inactiveColor, activeColor,
-                    _anim.value)!;
-                textColor = Color.lerp(
-                    hc.textSecondary, Colors.white, _anim.value)!;
-                iconColor = Color.lerp(
-                    hc.textSecondary, Colors.white, _anim.value)!;
-              } else if (index == _prevIndex && _ctrl.value < 1.0) {
-                bgColor = Color.lerp(activeColor, inactiveColor,
-                    _anim.value)!;
-                textColor = Color.lerp(
-                    Colors.white, hc.textSecondary, _anim.value)!;
-                iconColor = Color.lerp(
-                    Colors.white, hc.textSecondary, _anim.value)!;
-              } else {
-                bgColor = inactiveColor;
-                textColor = hc.textSecondary;
-                iconColor = hc.textSecondary;
-              }
-              return GestureDetector(
-                onTap: () {
-                  HuddlAnimations.selectionClick();
-                  widget.onTap(index);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(24),
-                    // Active: orange border matching fill.
-                    // Inactive: very subtle border only (not solid outline pills)
-                    border: Border.all(
-                      color: isActive
-                          ? HuddlColors.primary
-                          : hc.divider.withValues(alpha: 0.0),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isActive ? tab.activeIcon : tab.icon,
-                        size: 14,
-                        color: iconColor,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        tab.label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: isActive
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }
@@ -3296,7 +3124,7 @@ class _EventsTabState extends State<_EventsTab> {
               'Found $count new events near you',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
-            backgroundColor: HuddlColors.nearBlack,
+            backgroundColor: HuddlColors.textDark,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
@@ -4846,7 +4674,7 @@ class _MeetupCardState extends State<_MeetupCard> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.nearBlack,
+          backgroundColor: HuddlColors.textDark,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

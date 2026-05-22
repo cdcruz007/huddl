@@ -249,6 +249,23 @@ class HuddlColors {
   static const Color attachPoll       = Color(0xFFFFCE51);  // Figma yellow dark
   static const Color attachPollBg     = Color(0xFFFFF6C9);
 
+  // ── Warmth pass additions ────────────────────────────────────────────────
+  static const Color warmCream       = Color(0xFFFFF8F3);  // scaffold — warm cream
+  static const Color warmDivider     = Color(0xFFEEDDD4);  // warm-tinted divider
+  static const Color peachSoft       = Color(0xFFFFE8D9);  // orange tint surface
+
+  // ── Saturated category backgrounds — Figma palette ───────────────────────
+  static const Color orangeBg        = Color(0xFFFFF3ED);  // orange category surface
+  static const Color yellowBg        = Color(0xFFFFF7C9);  // yellow category surface
+  static const Color blueBg          = Color(0xFFEDF4FF);  // blue category surface
+  static const Color tealBg          = Color(0xFFE6F5F3);  // teal category surface
+
+  // ── Saturated icon containers — coloured not grey ────────────────────────
+  static const Color orangeIconBg    = Color(0xFFFFE0CC);  // orange icon circle bg
+  static const Color yellowIconBg    = Color(0xFFFFF0A8);  // yellow icon circle bg
+  static const Color blueIconBg      = Color(0xFFCCDDFF);  // blue icon circle bg
+  static const Color tealIconBg      = Color(0xFFB8EAE2);  // teal icon circle bg
+
   // Gradient helpers
   static const Color coralGradientEnd = Color(0xFFFFAD7F);
 
