@@ -29,6 +29,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/huddl_character.dart';
+import '../../services/subscription_service.dart';
 import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
 
@@ -528,27 +529,48 @@ class EventsScreenState extends State<EventsScreen>
           Positioned(
             bottom: 24,
             right: 16,
-            child: GestureDetector(
-              onTap: () {
-                HuddlAnimations.lightTap();
-                _navigateToCreateMeetup();
-              },
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: HuddlColors.blueUI,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: HuddlColors.blueUI.withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+            // P12: Meetup FAB lock overlay when gated
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    HuddlAnimations.lightTap();
+                    _navigateToCreateMeetup();
+                  },
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.blueUI,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: HuddlColors.blueUI.withValues(alpha: 0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                  ),
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 28),
-              ),
+                if (!SubscriptionService().canCreateMeetupFeature)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: HuddlColors.nearBlack,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.lock_outlined,
+                          size: 11, color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
           ),
         // _selectedTab == 2 (Events) or 3 (Services) → no FAB rendered at all

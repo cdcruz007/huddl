@@ -3,6 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
+import '../../widgets/common/huddl_search_bar.dart';
+import '../../widgets/cards/huddl_photo_card.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/animations/huddl_loading_states.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -1052,12 +1056,9 @@ class _HomeScreenState extends State<HomeScreen>
     final hc = context.hc;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // UX-04: Illustrated loading screen replaces CPI spinner
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: hc.scaffold,
-        body: Center(
-            child: CircularProgressIndicator(color: context.hc.textTertiary)),
-      );
+      return HuddlLoadingScreen.findingParents();
     }
 
     return Scaffold(
@@ -1109,6 +1110,29 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+
+              // ── UX-01/05: Search pill — Airbnb-style home entry ────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: HuddlSearchPill(
+                    borough: _borough.isNotEmpty ? _borough : 'your area',
+                    onTap: () {
+                      HuddlAnimations.lightTap();
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => HuddlSearchExpanded(
+                          initialQuery: '',
+                          onSubmit: (q) => Navigator.pop(context),
+                          onClose: () => Navigator.pop(context),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -1213,12 +1237,15 @@ class _HomeScreenState extends State<HomeScreen>
               ),
 
               // ── Smart feed (AI-curated: attending/announcements/tips) ──
+              // UX-03: Spring physics on feed cards
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     if (index >= _smartFeed.length) return null;
                     final item = _smartFeed[index];
-                    return AnimatedBuilder(
+                    return HuddlSpringMount(
+                      delay: Duration(milliseconds: index * 55),
+                      child: AnimatedBuilder(
                       animation: _feedStaggerCtrl,
                       builder: (context, child) {
                         final start = (index * 0.08).clamp(0.0, 0.7);
@@ -1231,7 +1258,7 @@ class _HomeScreenState extends State<HomeScreen>
                               child: _buildSmartFeedCard(item, hc, isDark)),
                         );
                       },
-                    );
+                    ));
                   },
                   childCount: _smartFeed.length,
                 ),
@@ -1386,7 +1413,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Section header with coloured icon, title + See all ───────────────────
+  // ── UX-06: Section header — bare icon (no container), neutral 'See all' ──
   Widget _buildSectionHeader({
     required dynamic hc,
     required IconData icon,
@@ -1400,15 +1427,8 @@ class _HomeScreenState extends State<HomeScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
+          // UX-06: No container bg — Icon only in textPrimary
+          Icon(icon, size: 20, color: hc.textPrimary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1432,6 +1452,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
+          // UX-06: Neutral 'See all' — no chevron
           Semantics(
             label: 'See all $title',
             button: true,
@@ -1440,8 +1461,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: Text(
                 'See all',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
                   color: hc.textTertiary,
                 ),
               ),
@@ -1859,13 +1879,14 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Groups carousel ───────────────────────────────────────────────────────
+  // ── UX-02: Groups carousel — HuddlSinglePhotoCard ───────────────────────
   Widget _buildGroupsCarousel(dynamic hc) {
     final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
     if (groups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
     }
     return SizedBox(
-      height: 300,
+      height: 260,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1873,50 +1894,22 @@ class _HomeScreenState extends State<HomeScreen>
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final g = groups[index];
-          return GestureDetector(
-            onTap: () { HuddlAnimations.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
-            child: Container(
-              width: 220,
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hero photo
-                  SizedBox(
-                    height: 150, width: 220,
-                    child: _buildGroupImage(g.imageUrl),
-                  ),
-                  // Card body
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(g.category.toUpperCase(),
-                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 3),
-                        Text(g.name,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 10),
-                        Row(children: [
-                          _buildAvatarStack(g.id.hashCode, hc),
-                          const SizedBox(width: 5),
-                          Expanded(child: Text('${g.memberCount} members',
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
-                          _buildActionPill('Join', HuddlColors.textDark, hc),
-                        ]),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          return SizedBox(
+            width: 200,
+            child: HuddlSinglePhotoCard(
+              imageUrl: g.imageUrl,
+              title: g.name,
+              subtitle: '${g.memberCount} members · ${g.category}',
+              badge: g.isPrivate ? 'Members only' : null,
+              stat: '${g.memberCount}',
+              statIcon: Icons.people_outline,
+              showSaveButton: false,
+              aspectRatio: 1.1,
+              onTap: () {
+                HuddlAnimations.selectionClick();
+                setState(() => _groupTaps++);
+                _switchToTab(2);
+              },
             ),
           );
         },
@@ -1924,14 +1917,14 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Meetups carousel ──────────────────────────────────────────────────────
+  // ── UX-02: Meetups carousel — HuddlSinglePhotoCard ───────────────────────
   Widget _buildMeetupsCarousel(dynamic hc) {
     final meetups = _upcomingMeetups.take(8).toList();
     if (meetups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No upcoming meetups', Icons.place);
     }
     return SizedBox(
-      height: 320,
+      height: 280,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1940,106 +1933,23 @@ class _HomeScreenState extends State<HomeScreen>
         itemBuilder: (context, index) {
           final m = meetups[index];
           final isGoing = m.isGoing;
-          return GestureDetector(
-            onTap: () {
-              HuddlAnimations.selectionClick();
-              setState(() => _meetupTaps++);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
-            },
-            child: Container(
-              width: 220,
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: isGoing ? Border.all(color: HuddlColors.teal.withValues(alpha: 0.4), width: 1.5) : null,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hero photo with date badge
-                  SizedBox(
-                    height: 150, width: 220,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildMeetupImage(m.imageUrl, m.category),
-                        // Date badge — bottom-left
-                        Positioned(
-                          bottom: 8, left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.teal,
-                              borderRadius: BorderRadius.circular(7),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
-                            ),
-                            child: Text(m.dateDisplay,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
-                          ),
-                        ),
-                        // Going badge — top-right
-                        if (isGoing)
-                          Positioned(
-                            top: 8, right: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.teal,
-                                borderRadius: BorderRadius.circular(7),
-                              ),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Icon(Icons.check_circle, size: 10, color: Colors.white),
-                                const SizedBox(width: 3),
-                                Text('Going', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
-                              ]),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  // Card body
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(m.category.toUpperCase(),
-                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 3),
-                        Text(m.title,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                        if (m.location.isNotEmpty) ...[  
-                          const SizedBox(height: 3),
-                          Row(children: [
-                            Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
-                            const SizedBox(width: 2),
-                            Expanded(child: Text(m.location,
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
-                              maxLines: 1, overflow: TextOverflow.ellipsis)),
-                          ]),
-                        ],
-                        const SizedBox(height: 10),
-                        Row(children: [
-                          _buildAvatarStack(m.id.hashCode, hc),
-                          const SizedBox(width: 5),
-                          Expanded(child: Text('${m.attendeeCount} attending',
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
-                          _buildActionPill(
-                            isGoing ? 'Going ✓' : 'Join',
-                            isGoing ? HuddlColors.teal : HuddlColors.primary,
-                            hc,
-                            isActive: isGoing,
-                          ),
-                        ]),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          return SizedBox(
+            width: 200,
+            child: HuddlSinglePhotoCard(
+              imageUrl: m.imageUrl.isNotEmpty ? m.imageUrl : _meetupCategoryImage(m.category),
+              title: m.title,
+              subtitle: '${m.dateDisplay} · ${m.location.isNotEmpty ? m.location : m.category}',
+              badge: isGoing ? 'Going ✓' : null,
+              stat: '${m.attendeeCount} attending',
+              statIcon: Icons.people_outline,
+              isSaved: isGoing,
+              showSaveButton: false,
+              aspectRatio: 1.1,
+              onTap: () {
+                HuddlAnimations.selectionClick();
+                setState(() => _meetupTaps++);
+                Navigator.of(context).push(HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: m)));
+              },
             ),
           );
         },
@@ -2069,7 +1979,7 @@ class _HomeScreenState extends State<HomeScreen>
           return GestureDetector(
             onTap: () {
               HuddlAnimations.selectionClick();
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
+              Navigator.of(context).push(HuddlSpringPageRoute(page: EventDetailScreen(event: eMap)));
             },
             child: Container(
               width: 220,
@@ -2315,9 +2225,7 @@ class _HomeScreenState extends State<HomeScreen>
             onTap: () {
               HuddlAnimations.selectionClick();
               setState(() => _marketTaps++);
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ItemDetailScreen(item: item),
-              ));
+              Navigator.of(context).push(HuddlSpringPageRoute(page: ItemDetailScreen(item: item)));
             },
             child: Container(
               width: 220,
@@ -2464,22 +2372,23 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Rounded pill action button (Groups "Join" button pattern).
+  /// UX-06: Rounded pill action button — textDark always, no accent colour.
   Widget _buildActionPill(String label, Color accentColor, dynamic hc, {bool isActive = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
         color: isActive
-            ? accentColor.withValues(alpha: 0.12)
-            : const Color(0xFFF2F2F2),
-        borderRadius: BorderRadius.circular(12),
+            ? HuddlColors.textDark.withValues(alpha: 0.08)
+            : HuddlColors.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: HuddlColors.divider, width: 0.5),
       ),
       child: Text(
         label,
         style: GoogleFonts.poppins(
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: isActive ? accentColor : HuddlColors.textPrimary,
+          color: HuddlColors.textDark,
         ),
       ),
     );
@@ -5631,14 +5540,12 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
           final convId = data['conversationId'] as String? ?? '';
           final recipientId = data['recipientId'] as String? ?? '';
           final senderName = n['senderName'] as String? ?? 'Chat';
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => DMChatScreen(
+          Navigator.of(context).push(HuddlSpringPageRoute(page: DMChatScreen(
               recipientId: recipientId,
               recipientName: senderName,
               recipientAvatarColor: '#FF975C',
               conversationId: convId.isEmpty ? null : convId,
-            ),
-          ));
+            )));
         }
         break;
 
@@ -5656,13 +5563,11 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
           final groupName = data['groupName'] as String? ?? 'Group';
           final groupImageUrl = data['groupImageUrl'] as String? ?? '';
           if (groupId.isNotEmpty) {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => GroupChatScreen(
+            Navigator.of(context).push(HuddlSpringPageRoute(page: GroupChatScreen(
                 groupId: groupId,
                 groupName: groupName,
                 groupImageUrl: groupImageUrl,
-              ),
-            ));
+              )));
           } else {
             widget.onNavigate(1); // Groups tab
           }
@@ -5700,23 +5605,19 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
           if (sellerId.isNotEmpty) {
             // Open (or create) a DM conversation with the seller so the
             // buyer can arrange the handover immediately.
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => DMChatScreen(
+            Navigator.of(context).push(HuddlSpringPageRoute(page: DMChatScreen(
                 recipientId: sellerId,
                 recipientName: sellerName,
                 recipientAvatarColor: '#FF975C',
                 conversationId: null, // getOrCreate on first send
-              ),
-            ));
+              )));
           } else {
             // Fallback: open the item detail if we have it
             final item = itemId.isNotEmpty
                 ? RehomeService().getItemById(itemId)
                 : null;
             if (item != null) {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ItemDetailScreen(item: item),
-              ));
+              Navigator.of(context).push(HuddlSpringPageRoute(page: ItemDetailScreen(item: item)));
             } else {
               widget.onNavigate(3);
             }
@@ -5737,9 +5638,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
               ? RehomeService().getItemById(itemId)
               : null;
           if (item != null) {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => ItemDetailScreen(item: item),
-            ));
+            Navigator.of(context).push(HuddlSpringPageRoute(page: ItemDetailScreen(item: item)));
           } else {
             widget.onNavigate(3); // Marketplace tab
           }

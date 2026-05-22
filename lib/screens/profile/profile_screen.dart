@@ -583,6 +583,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ── P11: Usage progress bars ──────────────────────────────────────────────
+  Widget _buildUsageSection(dynamic hc) {
+    final ss = _subscriptionService;
+    final limits = ss.limits;
+
+    // Helper: only show bars for capped limits
+    List<Widget> bars = [];
+
+    void addBar(String label, int used, int max) {
+      if (TierLimits.isUnlimited(max)) return;
+      final ratio = (used / max).clamp(0.0, 1.0);
+      final isNearLimit = ratio >= 0.8;
+      bars.add(Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Expanded(
+              child: Text(label,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: hc.textSecondary)),
+            ),
+            Text('$used / $max',
+                style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isNearLimit ? HuddlColors.error : hc.textTertiary)),
+          ]),
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 5,
+              backgroundColor: HuddlColors.divider,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  isNearLimit ? HuddlColors.error : HuddlColors.textDark),
+            ),
+          ),
+        ]),
+      ));
+    }
+
+    addBar('Groups joined', ss.groupsJoined, limits.maxGroups);
+    addBar('Meetups this month', ss.meetupsThisMonth, limits.maxMeetupsPerMonth);
+    addBar('Messages this month', ss.messagesThisMonth, limits.maxMessagesPerMonth);
+    addBar('Marketplace listings', ss.marketplaceListings, limits.maxMarketplaceListings);
+    addBar('Photos uploaded', ss.photosUploaded, limits.maxPhotoUploads);
+    addBar('AI chats today', ss.aiCopilotChatsToday, limits.maxAiCopilotChatsPerDay);
+
+    if (bars.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      color: hc.surface,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('This month\'s usage',
+              style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: hc.textTertiary)),
+          const SizedBox(height: 12),
+          ...bars,
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
+            child: Text('Upgrade to unlock more →',
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: HuddlColors.primary)),
+          ),
+          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // BUILD
   // ═══════════════════════════════════════════════════════════════════════════
@@ -881,6 +957,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 // ── Subscription section ──────────────────────────────────
                 _buildSubscriptionCard(),
+                // P11: Usage progress bars
+                _buildUsageSection(context.hc),
                 const SizedBox(height: 8),
 
                 // ── Account section ──────────────────────────────────────

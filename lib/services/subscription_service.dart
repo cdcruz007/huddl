@@ -249,6 +249,12 @@ class SubscriptionService extends ChangeNotifier {
   int get dmConversations => _usage('dm_conversations');
   int get marketplaceListings => _usage('marketplace_listings');
   int get messagesThisMonth => _usage('messages_month');
+  // P10: Photo upload gating
+  int get photosUploaded => _usage('photos_uploaded');
+  bool get canUploadPhoto =>
+      TierLimits.isUnlimited(limits.maxPhotoUploads) ||
+      photosUploaded < limits.maxPhotoUploads;
+  Future<void> recordPhotoUpload() => _incrementUsage('photos_uploaded');
 
   // ===========================================================================
   // AI FEATURE -- USAGE GETTERS

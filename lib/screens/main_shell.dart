@@ -16,6 +16,7 @@ import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
+// huddl_spring_animations used via home_screen.dart (HuddlSpringPageRoute on nav pushes)
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
