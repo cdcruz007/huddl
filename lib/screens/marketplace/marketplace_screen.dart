@@ -14,6 +14,8 @@ import '../../services/backend_api_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
 import '../../services/borough_scope_guard.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
 
@@ -1831,6 +1833,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // ── Sell CTA — compact single-row prompt, AI-adapted copy ──
   Widget _buildSellCTA(HuddlContextColors hc) {
+    final ss = SubscriptionService();
+    final maxListings = ss.limits.maxMarketplaceListings;
+    final usedListings = ss.marketplaceListings;
+    final isCapped = !TierLimits.isUnlimited(maxListings);
+
     return Semantics(
       label: 'Create a new listing',
       hint: 'Opens listing form. We\'ll fill in the details from your photo.',
@@ -1848,30 +1855,71 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               borderRadius: BorderRadius.circular(14),
               border: hc.cardBorder,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.background,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(Icons.camera_alt_rounded,
-                      color: HuddlColors.textSecondary, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _ai.sellPrompt(),
-                    style: _adaptiveText(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: hc.textPrimary,
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.camera_alt_rounded,
+                          color: HuddlColors.textSecondary, size: 18),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _ai.sellPrompt(),
+                        style: _adaptiveText(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios,
+                        size: 13, color: hc.textTertiary),
+                  ],
                 ),
-                Icon(Icons.arrow_forward_ios, size: 13, color: hc.textTertiary),
+                // P12: listing usage indicator for capped tiers
+                if (isCapped) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const SizedBox(width: 48), // align under text
+                      Text(
+                        '$usedListings / $maxListings listings used',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: usedListings >= maxListings
+                              ? Colors.red.shade400
+                              : HuddlColors.textTertiary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: (usedListings / maxListings).clamp(0.0, 1.0),
+                            minHeight: 3,
+                            backgroundColor: HuddlColors.divider,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              usedListings >= maxListings
+                                  ? Colors.red.shade400
+                                  : HuddlColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

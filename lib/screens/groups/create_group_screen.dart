@@ -1229,18 +1229,72 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             _buildGroupPicker(),
                           ],
                           const SizedBox(height: 10),
-                          _privacyRadio(
-                            label: 'Private',
-                            description:
-                                'Invite only — choose specific people in ${_userBorough ?? 'your borough'} to invite.',
-                            isSelected: _privacy == 'private',
-                            icon: Icons.lock_outline,
-                            onTap: () => setState(() {
-                              _privacy = 'private';
-                              _selectedParentGroupId = null;
-                              _selectedParentGroupName = null;
-                            }),
-                          ),
+                          Builder(builder: (context) {
+                            final canPrivate =
+                                SubscriptionService().canCreatePrivateGroup;
+                            return Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Greyed overlay when locked
+                                if (!canPrivate)
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                              alpha: 0.55),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                _privacyRadio(
+                                  label: 'Private',
+                                  description: canPrivate
+                                      ? 'Invite only — choose specific people in ${_userBorough ?? 'your borough'} to invite.'
+                                      : 'Invite only — upgrade to Neighbour+ to unlock.',
+                                  isSelected: _privacy == 'private',
+                                  icon: Icons.lock_outline,
+                                  onTap: canPrivate
+                                      ? () => setState(() {
+                                            _privacy = 'private';
+                                            _selectedParentGroupId = null;
+                                            _selectedParentGroupName = null;
+                                          })
+                                      : () {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Upgrade to Neighbour+ to create private groups.',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                ),
+                                // Lock badge — top-right corner
+                                if (!canPrivate)
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: const BoxDecoration(
+                                        color: HuddlColors.nearBlack,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.lock_outlined,
+                                        size: 11,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          }),
                           if (_privacy == 'private') ...[
                             const SizedBox(height: 12),
                             _buildInviteMembersWidget(),

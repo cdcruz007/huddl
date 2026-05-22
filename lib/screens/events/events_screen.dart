@@ -1640,6 +1640,9 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ],
                           ),
                           const SizedBox(height: 10),
+                          // UX-10: Histogram density chart above slider
+                          _DistanceHistogram(currentKm: sheetDistanceKm, maxKm: 50),
+                          const SizedBox(height: 6),
                           // Slider
                           SliderTheme(
                             data: SliderTheme.of(ctx).copyWith(
@@ -5960,4 +5963,77 @@ class _LatLng {
   final double lat;
   final double lng;
   const _LatLng(this.lat, this.lng);
+}
+
+// ── UX-10: Distance histogram density chart ──────────────────────────────────
+class _DistanceHistogram extends StatelessWidget {
+  const _DistanceHistogram({required this.currentKm, required this.maxKm});
+  final double currentKm;
+  final double maxKm;
+
+  static const List<double> _density = [
+    1.0,  0.95, 0.88, 0.80, 0.72, 0.62, 0.52,
+    0.45, 0.40, 0.38, 0.35, 0.30, 0.28, 0.25, 0.22,
+    0.20, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12,
+    0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.07,
+    0.07, 0.06, 0.06, 0.06, 0.05, 0.05, 0.05,
+    0.04, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03,
+    0.03, 0.03, 0.02, 0.02, 0.02, 0.02,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: CustomPaint(
+        size: const Size(double.infinity, 40),
+        painter: _HistogramPainter(
+          currentKm: currentKm,
+          maxKm: maxKm,
+          density: _density,
+        ),
+      ),
+    );
+  }
+}
+
+class _HistogramPainter extends CustomPainter {
+  const _HistogramPainter({
+    required this.currentKm,
+    required this.maxKm,
+    required this.density,
+  });
+  final double currentKm;
+  final double maxKm;
+  final List<double> density;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final barCount = density.length;
+    final barW = size.width / barCount;
+    final activeIndex =
+        ((currentKm / maxKm) * barCount).floor().clamp(0, barCount - 1);
+
+    for (int i = 0; i < barCount; i++) {
+      final barH = size.height * density[i];
+      final rect = Rect.fromLTWH(
+        i * barW + 1,
+        size.height - barH,
+        barW - 2,
+        barH,
+      );
+      final paint = Paint()
+        ..color = i <= activeIndex
+            ? const Color(0xFFFF965C) // HuddlColors.primary
+            : const Color(0xFFD5D5D5) // HuddlColors.divider
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(2)),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HistogramPainter old) => old.currentKm != currentKm;
 }

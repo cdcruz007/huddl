@@ -1,19 +1,28 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/photo_upload_service.dart';
 import '../../theme/huddl_colors.dart';
-import '../../widgets/onboarding_progress_bar.dart';
 
-// ── Design tokens ────────────────────────────────────────────────────────────
+// ── UX-09: Immersive dark profile photo setup ─────────────────────────────────
+//
+// DESIGN SPEC (from huddl_FINAL_complete_delivery.docx):
+//   • scaffold backgroundColor: Colors.black
+//   • Photo preview: ClipOval, 260px diameter, centred on screen
+//   • Above preview: CustomPaint arc progress bar — thin arc in HuddlColors.primary, 20% filled
+//   • Top bar: white 'Preview' title (centred) + white back arrow
+//   • CTA buttons: white outlined + filled (primary colour)
+//
+// Cross-platform: iOS + Android + Web.
 
 // ── Default avatar illustrations (gender-matched) ────────────────────────────
-// Used when the user skips uploading a profile photo.
-const _kMumAvatar = 'assets/images/avatars/Emma.png';  // female illustration
-const _kDadAvatar = 'assets/images/avatars/John.png';  // male illustration
+const _kMumAvatar = 'assets/images/avatars/Emma.png';
+const _kDadAvatar = 'assets/images/avatars/John.png';
 
 class AddPhotoScreen extends StatefulWidget {
   const AddPhotoScreen({super.key});
@@ -22,38 +31,49 @@ class AddPhotoScreen extends StatefulWidget {
   State<AddPhotoScreen> createState() => _AddPhotoScreenState();
 }
 
-class _AddPhotoScreenState extends State<AddPhotoScreen> {
-  final _picker = ImagePicker();
-  final _onboarding = OnboardingDataService();
+class _AddPhotoScreenState extends State<AddPhotoScreen>
+    with SingleTickerProviderStateMixin {
+  final _picker      = ImagePicker();
+  final _onboarding  = OnboardingDataService();
   final _photoUpload = PhotoUploadService();
 
-  XFile? _pickedFile;        // selected image (mobile / web)
-  bool   _isLoading = false;
+  XFile? _pickedFile;
+  bool   _isLoading  = false;
 
-  // ── Photo picker ─────────────────────────────────────────────────────────
+  // Subtle pulse for the arc while loading
+  late final AnimationController _pulseCtrl;
+  late final Animation<double>   _pulseAnim;
 
-  /// Entry point when user taps the avatar circle or "Add photo" button.
-  ///
-  /// • Web: goes straight to the gallery picker — no intermediate sheet needed
-  ///   because (a) camera is unavailable on web and (b) showing a sheet with
-  ///   only one option then triggering the browser's own file chooser creates
-  ///   a confusing double-prompt for the user.
-  ///
-  /// • Mobile: shows a bottom sheet offering both Gallery and Camera options,
-  ///   then calls _pickFrom() with the chosen source.
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 0.18, end: 0.28)
+        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  // ── Photo picker ───────────────────────────────────────────────────────────
+
   Future<void> _showPickerOptions() async {
     if (!mounted) return;
 
-    // ── Web: skip the sheet, open the file picker directly ──────────────────
     if (kIsWeb) {
       await _pickFrom(ImageSource.gallery);
       return;
     }
 
-    // ── Mobile: show gallery / camera choice sheet ───────────────────────────
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFF1C1C1E), // dark sheet
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -63,64 +83,68 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
-                width: 40,
+                width: 36,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: HuddlColors.inputBorder,
+                  color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               Text(
                 'Add a profile photo',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 16),
-              ListTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.photo_library_outlined, color: HuddlColors.onboardingOrange),
-                ),
-                title: const Text('Choose from photos',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickFrom(ImageSource.gallery);
-                },
+              _darkSheetTile(
+                ctx: ctx,
+                icon: Icons.photo_library_outlined,
+                label: 'Choose from photos',
+                onTap: () { Navigator.pop(ctx); _pickFrom(ImageSource.gallery); },
               ),
-              ListTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.onboardingOrange),
-                ),
-                title: const Text('Take a photo',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickFrom(ImageSource.camera);
-                },
+              _darkSheetTile(
+                ctx: ctx,
+                icon: Icons.camera_alt_outlined,
+                label: 'Take a photo',
+                onTap: () { Navigator.pop(ctx); _pickFrom(ImageSource.camera); },
               ),
               const SizedBox(height: 8),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _darkSheetTile({
+    required BuildContext ctx,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: HuddlColors.primary),
+      ),
+      title: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+        ),
+      ),
+      onTap: onTap,
     );
   }
 
@@ -135,28 +159,20 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
         preferredCameraDevice: CameraDevice.front,
       );
       if (file == null || !mounted) return;
-
       setState(() => _pickedFile = file);
 
-      // Build a base64 data URL for local preview (survives app restarts /
-      // browser refreshes; blob: URLs do not).
-      final bytes = await file.readAsBytes();
+      final bytes     = await file.readAsBytes();
       final base64Str = base64Encode(bytes);
-      final mimeType =
-          file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-      final dataUrl = 'data:$mimeType;base64,$base64Str';
+      final mimeType  = file.name.toLowerCase().endsWith('.png')
+          ? 'image/png'
+          : 'image/jpeg';
+      final dataUrl   = 'data:$mimeType;base64,$base64Str';
       _onboarding.setProfilePhotoObjectUrl(dataUrl);
 
-      // Upload to Firebase Storage and store the permanent HTTPS URL.
-      // This runs in the background while the user sees the preview; the
-      // profilePhotoPath will be set to the download URL once ready.
       final downloadUrl = await _photoUpload.uploadProfilePhoto(file);
       if (downloadUrl != null) {
-        // Store the HTTPS URL — safe to write to Firestore from any device.
         _onboarding.setProfilePhotoPath(downloadUrl);
       } else {
-        // Upload failed — fall back to data URL so the photo still shows
-        // locally, but flag as non-remote so it won't be saved to Firestore.
         _onboarding.setProfilePhotoPath(dataUrl);
       }
     } catch (e) {
@@ -173,119 +189,112 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
     }
   }
 
-  // ── Navigation ────────────────────────────────────────────────────────────
+  // ── Navigation ─────────────────────────────────────────────────────────────
 
   void _continue() => Navigator.pushNamed(context, '/about_you');
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final hasPhoto = _pickedFile != null;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // UX-09: Immersive black scaffold
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-            OnboardingProgressBar(step: OnboardingStep.addPhoto),
-            // ── App bar row ──────────────────────────────────────────────
+            // ── Top bar: white back arrow + centred 'Preview' title ─────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  // Back chevron
-                  GestureDetector(
-                    onTap: () => Navigator.maybePop(context),
-                    child: const Icon(Icons.chevron_left,
-                        size: 30, color: HuddlColors.onboardingOrange),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () => Navigator.maybePop(context),
+                      icon: const Icon(Icons.chevron_left,
+                          size: 30, color: Colors.white),
+                    ),
                   ),
-                  const Spacer(),
-                  // Huddl logo centred
-                  Image.asset(
-                    'assets/images/logo_huddl_splash.png',
-                    height: 34,
-                    fit: BoxFit.contain,
+                  Text(
+                    'Preview',
+                    style: GoogleFonts.poppins(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                  const Spacer(),
-                  // Spacer to keep logo centred
-                  const SizedBox(width: 48),
                 ],
               ),
             ),
 
             const SizedBox(height: 32),
 
-            // ── Title ────────────────────────────────────────────────────
-            Text(
-              'Add a photo',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
+            // ── Arc progress bar (CustomPaint, 20% filled) ──────────────────
+            AnimatedBuilder(
+              animation: _isLoading ? _pulseAnim : const AlwaysStoppedAnimation(0.2),
+              builder: (_, __) {
+                final progress = _isLoading
+                    ? _pulseAnim.value
+                    : (hasPhoto ? 0.6 : 0.2);
+                return CustomPaint(
+                  size: const Size(300, 14),
+                  painter: _ArcProgressPainter(progress: progress),
+                );
+              },
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 32),
 
-            // ── Subtitle ─────────────────────────────────────────────────
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Don\'t be just a name – share your smile with us too.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: HuddlColors.disabledText,
-                  height: 1.55,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            // ── Photo circle ─────────────────────────────────────────────
+            // ── 260px ClipOval photo preview ────────────────────────────────
             GestureDetector(
               onTap: _isLoading ? null : _showPickerOptions,
               child: Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  // Avatar circle — no background fill needed; illustration fills it
                   Container(
-                    width: 160,
-                    height: 160,
+                    width: 260,
+                    height: 260,
                     decoration: BoxDecoration(
-                      color: HuddlColors.avatarBg,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: hasPhoto ? HuddlColors.onboardingOrange : HuddlColors.onboardingOrange.withValues(alpha: 0.4),
-                        width: hasPhoto ? 3 : 2,
+                        color: hasPhoto
+                            ? HuddlColors.primary
+                            : Colors.white.withValues(alpha: 0.15),
+                        width: hasPhoto ? 3 : 1.5,
                       ),
                     ),
-                    child: _isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: HuddlColors.onboardingOrange,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : _buildAvatarContent(),
+                    child: ClipOval(
+                      child: _isLoading
+                          ? Container(
+                              color: const Color(0xFF1C1C1E),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: HuddlColors.primary,
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                            )
+                          : _buildAvatarContent(),
+                    ),
                   ),
-                  // Camera badge — always visible so user knows they can tap to change
+                  // Camera badge
                   if (!_isLoading)
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: HuddlColors.onboardingOrange,
+                        color: HuddlColors.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2.5),
+                        border: Border.all(color: Colors.black, width: 2.5),
                       ),
                       child: const Icon(
                         Icons.camera_alt,
                         color: Colors.white,
-                        size: 20,
+                        size: 22,
                       ),
                     ),
                 ],
@@ -294,12 +303,42 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
 
             const Spacer(),
 
-            // ── Buttons ──────────────────────────────────────────────────
+            // ── Headline + subtitle ─────────────────────────────────────────
+            Text(
+              hasPhoto ? 'Looking good!' : 'Add a photo',
+              style: GoogleFonts.poppins(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 10),
+
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                hasPhoto
+                    ? 'Your neighbours will recognise you instantly.'
+                    : 'Don\'t be just a name – share your smile with us too.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.55),
+                  height: 1.55,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // ── CTA buttons ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: Column(
                 children: [
-                  // "Add photo" / "Change photo" outlined button
+                  // Add / change photo — white outlined
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -308,42 +347,44 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                       icon: const Icon(Icons.camera_alt_outlined, size: 20),
                       label: Text(
                         hasPhoto ? 'Change photo' : 'Add photo',
-                        style: const TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: HuddlColors.onboardingOrange,
-                        side: const BorderSide(color: HuddlColors.onboardingOrange, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        foregroundColor: Colors.white,
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.35),
+                          width: 1.5,
                         ),
-                        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 12),
 
-                  // "Continue" filled button (always enabled — user can skip)
+                  // Continue — primary orange filled
                   SizedBox(
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _continue,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.onboardingOrange,
+                        backgroundColor: HuddlColors.primary,
                         disabledBackgroundColor:
-                            HuddlColors.disabled,
+                            HuddlColors.primary.withValues(alpha: 0.4),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Continue',
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -351,8 +392,6 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -362,59 +401,99 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
     );
   }
 
-  /// Returns the asset path of the gender-matched default avatar illustration.
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
   String get _defaultAvatarAsset {
-    final parentType = _onboarding.parentType?.toLowerCase(); // 'mum' or 'dad'
+    final parentType = _onboarding.parentType?.toLowerCase();
     return (parentType == 'dad') ? _kDadAvatar : _kMumAvatar;
   }
 
-  /// Builds the content inside the 160 px avatar circle.
   Widget _buildAvatarContent() {
     if (_pickedFile != null) {
       if (kIsWeb) {
-        // Web: XFile.path is a blob: URL — use Image.network
-        return ClipOval(
-          child: Image.network(
-            _pickedFile!.path,
-            width: 160,
-            height: 160,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _defaultAvatar(),
-          ),
-        );
-      }
-      // Mobile (iOS / Android): XFile.path is a real file-system path.
-      // Image.network does NOT work for local paths on iOS — use Image.file.
-      return ClipOval(
-        child: Image.file(
-          File(_pickedFile!.path),
-          width: 160,
-          height: 160,
+        return Image.network(
+          _pickedFile!.path,
+          width: 260,
+          height: 260,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => _defaultAvatar(),
-        ),
+        );
+      }
+      return Image.file(
+        File(_pickedFile!.path),
+        width: 260,
+        height: 260,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _defaultAvatar(),
       );
     }
-    // ── Gender-matched illustration placeholder ──
     return _defaultAvatar();
   }
 
-  /// Gender-matched illustration shown before a photo is selected.
   Widget _defaultAvatar() {
-    return ClipOval(
-      child: Image.asset(
-        _defaultAvatarAsset,
-        width: 160,
-        height: 160,
-        fit: BoxFit.cover,
-        // If asset fails to load for any reason, fall back to icon
-        errorBuilder: (_, __, ___) => Container(
-          width: 160,
-          height: 160,
-          color: HuddlColors.avatarBg,
-          child: const Icon(Icons.person, size: 64, color: HuddlColors.avatarIcon),
-        ),
+    return Image.asset(
+      _defaultAvatarAsset,
+      width: 260,
+      height: 260,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        width: 260,
+        height: 260,
+        color: const Color(0xFF1C1C1E),
+        child: const Icon(Icons.person, size: 80, color: HuddlColors.textHint),
       ),
     );
   }
+}
+
+// ── Arc progress bar painter ──────────────────────────────────────────────────
+//
+// Draws a thin track arc (270° sweep, bottom-centre start) with a filled
+// foreground arc in HuddlColors.primary. Used above the 260px avatar circle.
+
+class _ArcProgressPainter extends CustomPainter {
+  const _ArcProgressPainter({required this.progress});
+
+  final double progress; // 0.0 → 1.0
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx    = size.width / 2;
+    final cy    = size.height * 3.5; // arc centre below the painted rect
+    final r     = size.width * 0.49;
+
+    final trackPaint = Paint()
+      ..color   = Colors.white.withValues(alpha: 0.12)
+      ..style   = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap   = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color   = HuddlColors.primary
+      ..style   = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap   = StrokeCap.round;
+
+    const startAngle  = math.pi + (math.pi * 0.15); // ~207°
+    const sweepTotal  = math.pi * 0.7;              // ~126° total arc
+
+    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+
+    // Track
+    canvas.drawArc(rect, startAngle, sweepTotal, false, trackPaint);
+
+    // Filled progress
+    if (progress > 0) {
+      canvas.drawArc(
+        rect,
+        startAngle,
+        sweepTotal * progress.clamp(0.0, 1.0),
+        false,
+        fillPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ArcProgressPainter old) => old.progress != progress;
 }
