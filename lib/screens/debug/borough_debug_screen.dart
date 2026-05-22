@@ -125,7 +125,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.primary,
+              color: HuddlColors.textDark,
             ),
           ),
           const SizedBox(height: 8),

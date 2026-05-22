@@ -380,7 +380,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
+          ? const Center(child: CircularProgressIndicator(color: HuddlColors.textTertiary))
           : _error != null
               ? GestureDetector(
                   onTap: _loadData,
@@ -481,7 +481,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
             member: member,
             isCurrentUser: member.uid == _currentUid,
             actionLabel: 'Make admin',
-            actionColor: HuddlColors.primary,
+            actionColor: HuddlColors.textDark,
             onAction: () => _promoteToAdmin(member),
           )),
 

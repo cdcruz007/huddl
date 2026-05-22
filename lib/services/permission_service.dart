@@ -67,13 +67,13 @@ class _PermissionDialog extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.12),
+                color: HuddlColors.background,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.photo_library_outlined,
                 size: 34,
-                color: HuddlColors.primary,
+                color: HuddlColors.textDark,
               ),
             ),
             const SizedBox(height: 20),

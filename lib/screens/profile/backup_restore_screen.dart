@@ -392,7 +392,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           // Export card
           _ActionCard(
             icon: Icons.upload_outlined,
-            iconColor: HuddlColors.primary,
+            iconColor: HuddlColors.textDark,
             title: 'Export backup',
             subtitle: _lastBackup != null
                 ? 'Last backup: ${_formatDate(_lastBackup)}'
@@ -462,7 +462,7 @@ class _AutoBackupStatusCard extends StatelessWidget {
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: HuddlColors.primary.withValues(alpha: 0.25), width: 1),
+            color: HuddlColors.divider, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -830,7 +830,7 @@ class _StorageDetailCard extends StatelessWidget {
                 children: [
                   Icon(Icons.storage_outlined,
                       size: 16,
-                      color: HuddlColors.primary.withValues(alpha: 0.8)),
+                      color: HuddlColors.textTertiary),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

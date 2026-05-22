@@ -150,7 +150,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
                   color: hc.textPrimary)),
         ),
         body: const Center(
-            child: CircularProgressIndicator(color: HuddlColors.primary)),
+            child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
       );
     }
 

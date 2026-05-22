@@ -139,10 +139,10 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
               leading: Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.photo_library_outlined, color: HuddlColors.primary),
+                child: const Icon(Icons.photo_library_outlined, color: HuddlColors.textDark),
               ),
               title: Text('Choose from gallery',
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
@@ -157,10 +157,10 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 leading: Container(
                   width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    color: HuddlColors.background,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.primary),
+                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.textDark),
                 ),
                 title: Text('Take a photo',
                   style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
@@ -413,7 +413,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
         ),
         body: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: HuddlColors.primary))
+                child: CircularProgressIndicator(color: HuddlColors.textTertiary))
             : Form(
                 key: _formKey,
                 child: SingleChildScrollView(
@@ -513,7 +513,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: HuddlColors.primary.withValues(alpha: 0.08),
+              color: HuddlColors.background,
             ),
             child: _buildPhotoContent(),
           ),
@@ -606,7 +606,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
   Widget _photoPlaceholder() => Center(
     child: Icon(Icons.image_outlined, size: 48,
-        color: HuddlColors.primary.withValues(alpha: 0.4)),
+        color: HuddlColors.textTertiary),
   );
 
   // ── Helper widgets ────────────────────────────────────────────────────────

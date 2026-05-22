@@ -294,7 +294,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
           // ── Members list ────────────────────────────────────────────
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
+                ? const Center(child: CircularProgressIndicator(color: HuddlColors.textTertiary))
                 : _error != null
                     ? GestureDetector(
                         onTap: _loadMembers,
@@ -526,13 +526,13 @@ class _MemberTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  color: HuddlColors.background,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'Admin',
                   style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.primary),
+                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
                 ),
               ),
             ],

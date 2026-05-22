@@ -331,16 +331,16 @@ class _StageCard extends StatelessWidget {
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.divider,
                       border: Border.all(
-                          color: HuddlColors.primary.withValues(alpha: 0.25), width: 2),
+                          color: HuddlColors.divider, width: 2),
                     ),
                   ),
                   if (!isLast)
                     Expanded(
                       child: Container(
                         width: 2,
-                        color: HuddlColors.primary.withValues(alpha: 0.2),
+                        color: HuddlColors.divider,
                       ),
                     ),
                 ],
@@ -372,7 +372,7 @@ class _StageCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.1),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -380,7 +380,7 @@ class _StageCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textDark,
                             ),
                           ),
                         ),

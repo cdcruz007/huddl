@@ -201,7 +201,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, size: 28, color: HuddlColors.primary),
+          icon: const Icon(Icons.chevron_left, size: 28, color: HuddlColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

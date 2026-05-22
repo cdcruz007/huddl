@@ -15,7 +15,7 @@ class PrivacyPolicyDetailScreen extends StatelessWidget {
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
           icon: const Icon(Icons.chevron_left,
-              size: 30, color: HuddlColors.primary),
+              size: 30, color: HuddlColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -963,13 +963,13 @@ For any questions about voice message data processing, contact our Data Protecti
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Row(
         children: [
-          const Icon(Icons.update, color: HuddlColors.primary, size: 20),
+          const Icon(Icons.update, color: HuddlColors.textDark, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1048,7 +1048,7 @@ For any questions about voice message data processing, contact our Data Protecti
         children: [
           Row(
             children: [
-              const Icon(Icons.privacy_tip, color: HuddlColors.primary, size: 22),
+              const Icon(Icons.privacy_tip, color: HuddlColors.textDark, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -1107,14 +1107,14 @@ For any questions about voice message data processing, contact our Data Protecti
       decoration: BoxDecoration(
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.shield, color: HuddlColors.primary, size: 22),
+              const Icon(Icons.shield, color: HuddlColors.textDark, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

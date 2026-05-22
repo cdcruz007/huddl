@@ -96,7 +96,7 @@ class _SavedMessagesForGroupScreenState
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: HuddlColors.primary))
+              child: CircularProgressIndicator(color: HuddlColors.textTertiary))
           : _buildBody(),
     );
   }
@@ -115,11 +115,11 @@ class _SavedMessagesForGroupScreenState
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.bookmark_outline,
-                    size: 40, color: HuddlColors.primary),
+                    size: 40, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 20),
               Text(
@@ -185,7 +185,7 @@ class _SavedMessagesForGroupScreenState
                 Row(
                   children: [
                     const Icon(Icons.bookmark,
-                        size: 16, color: HuddlColors.primary),
+                        size: 16, color: HuddlColors.textDark),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

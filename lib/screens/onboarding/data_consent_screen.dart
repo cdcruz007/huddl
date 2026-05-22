@@ -77,13 +77,13 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                         width: 72,
                         height: 72,
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.1),
+                          color: HuddlColors.background,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.shield_outlined,
                           size: 40,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textDark,
                         ),
                       ),
                     ),
@@ -172,7 +172,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                             TextSpan(
                               text: 'Privacy Policy',
                               style: const TextStyle(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textTertiary,
                                 fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
                               ),
@@ -183,7 +183,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                             TextSpan(
                               text: 'Terms of Service',
                               style: const TextStyle(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textTertiary,
                                 fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
                               ),
@@ -220,7 +220,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                             TextSpan(
                               text: 'UK Children\'s Code',
                               style: const TextStyle(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textTertiary,
                                 fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
                               ),
@@ -279,7 +279,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                             TextSpan(
                               text: 'Read our full Privacy Policy',
                               style: const TextStyle(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textTertiary,
                                 decoration: TextDecoration.underline,
                               ),
                               recognizer: TapGestureRecognizer()
@@ -380,10 +380,10 @@ class _SummaryRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: HuddlColors.primary.withValues(alpha: 0.08),
+            color: HuddlColors.background,
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 18, color: HuddlColors.primary),
+          child: Icon(icon, size: 18, color: HuddlColors.textDark),
         ),
         const SizedBox(width: 12),
         Expanded(

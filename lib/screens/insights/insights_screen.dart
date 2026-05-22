@@ -262,7 +262,7 @@ class _Header extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Search insights…',
                   hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                  prefixIcon: const Icon(Icons.search, color: HuddlColors.primary, size: 20),
+                  prefixIcon: const Icon(Icons.search, color: HuddlColors.textTertiary, size: 20),
                   suffixIcon: ValueListenableBuilder<TextEditingValue>(
                     valueListenable: searchController,
                     builder: (_, v, __) => v.text.isNotEmpty
@@ -437,7 +437,7 @@ class _SortSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              const Icon(Icons.tune_rounded, size: 18, color: HuddlColors.primary),
+              const Icon(Icons.tune_rounded, size: 18, color: HuddlColors.textTertiary),
               const SizedBox(width: 8),
               Text('Sort by',
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
@@ -744,7 +744,7 @@ class _WisdomCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.08),
+                color: HuddlColors.background,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -755,7 +755,7 @@ class _WisdomCard extends StatelessWidget {
                   Icon(
                     Icons.auto_awesome,
                     size: 13,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textDark,
                   ),
                   const SizedBox(width: 5),
                   Text(
@@ -763,7 +763,7 @@ class _WisdomCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                     ),
                   ),
                   const Spacer(),
@@ -794,12 +794,12 @@ class _WisdomCard extends StatelessWidget {
                     },
                     errorBuilder: (_, __, ___) => Container(
                       height: 120,
-                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      color: HuddlColors.background,
                       child: Center(
                         child: Icon(
                           Icons.image_not_supported_outlined,
                           size: 32,
-                          color: HuddlColors.primary.withValues(alpha: 0.3),
+                          color: HuddlColors.textTertiary,
                         ),
                       ),
                     ),
@@ -1213,21 +1213,21 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.12),
+                    color: HuddlColors.background,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.lightbulb,
-                          size: 12, color: HuddlColors.primary),
+                          size: 12, color: HuddlColors.textDark),
                       const SizedBox(width: 4),
                       Text(
                         'Insights',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textDark,
                         ),
                       ),
                     ],
@@ -1260,7 +1260,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                     : HuddlColors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: HuddlColors.primary.withValues(alpha: 0.2),
+                  color: HuddlColors.divider,
                 ),
               ),
               child: Row(

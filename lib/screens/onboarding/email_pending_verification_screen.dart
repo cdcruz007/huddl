@@ -189,13 +189,13 @@ class _EmailPendingVerificationScreenState
                       width: 110,
                       height: 110,
                       decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.08),
+                        color: HuddlColors.background,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.mark_email_unread_rounded,
                         size: 56,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textDark,
                       ),
                     ),
 
@@ -230,7 +230,7 @@ class _EmailPendingVerificationScreenState
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -258,7 +258,7 @@ class _EmailPendingVerificationScreenState
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: HuddlColors.primary.withValues(alpha: 0.5),
+                            color: HuddlColors.textTertiary,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -279,16 +279,16 @@ class _EmailPendingVerificationScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 18, vertical: 14),
                       decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.08),
+                        color: HuddlColors.background,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: HuddlColors.primary.withValues(alpha: 0.25),
+                          color: HuddlColors.divider,
                         ),
                       ),
                       child: Row(
                         children: [
                           const Icon(Icons.info_outline,
-                              color: HuddlColors.primary, size: 20),
+                              color: HuddlColors.textDark, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(

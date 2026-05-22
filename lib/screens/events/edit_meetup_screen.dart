@@ -525,7 +525,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Icon(Icons.arrow_back_ios, size: 18, color: _accentOrange),
+            child: Icon(Icons.arrow_back_ios, size: 18, color: HuddlColors.textDark),
           ),
         ),
       ),
@@ -631,7 +631,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(left: 14),
-                  child: Icon(Icons.location_on_outlined, size: 20, color: _accentOrange),
+                  child: Icon(Icons.location_on_outlined, size: 20, color: HuddlColors.textDark),
                 ),
                 Expanded(
                   child: PlacesAutocompleteField(
@@ -650,15 +650,15 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: _accentOrange.withValues(alpha: 0.08),
+              color: HuddlColors.background,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _accentOrange.withValues(alpha: 0.25)),
+              border: Border.all(color: HuddlColors.divider),
             ),
             child: Row(
               children: [
-                const Icon(Icons.wifi, size: 18, color: _accentOrange),
+                const Icon(Icons.wifi, size: 18, color: HuddlColors.textDark),
                 const SizedBox(width: 10),
-                Text('Online meetup', style: GoogleFonts.poppins(fontSize: 14, color: _accentOrange, fontWeight: FontWeight.w500)),
+                Text('Online meetup', style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -736,7 +736,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
                 fontWeight: hasValue ? FontWeight.w500 : FontWeight.w400,
               ),
             )),
-            Icon(icon, size: 18, color: _accentOrange),
+            Icon(icon, size: 18, color: HuddlColors.textDark),
           ],
         ),
       ),

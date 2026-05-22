@@ -303,13 +303,13 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.08),
+              color: HuddlColors.background,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 const Icon(Icons.people_outline,
-                    size: 18, color: HuddlColors.primary),
+                    size: 18, color: HuddlColors.textDark),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -317,7 +317,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                     ),
                   ),
                 ),
@@ -400,7 +400,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      color: HuddlColors.background,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -409,7 +409,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textDark,
                         ),
                       ),
                     ),
@@ -437,13 +437,13 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             TextButton.icon(
               onPressed: _addOption,
               icon: const Icon(Icons.add_circle_outline,
-                  size: 20, color: HuddlColors.primary),
+                  size: 20, color: HuddlColors.textDark),
               label: Text(
                 'Add poll option',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.primary,
+                  color: HuddlColors.textDark,
                 ),
               ),
               style: TextButton.styleFrom(alignment: Alignment.centerLeft),

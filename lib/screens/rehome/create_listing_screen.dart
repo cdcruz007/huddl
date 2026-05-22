@@ -128,9 +128,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+                    color: HuddlColors.background, shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
-                    color: HuddlColors.primary),
+                    color: HuddlColors.textDark),
               ),
               title: const Text('Choose from gallery',
                   style: TextStyle(fontWeight: FontWeight.w500)),
@@ -146,9 +146,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+                    color: HuddlColors.background, shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
-                    color: HuddlColors.primary),
+                    color: HuddlColors.textDark),
               ),
               title: const Text('Take a photo',
                   style: TextStyle(fontWeight: FontWeight.w500)),
@@ -1085,9 +1085,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Widget _imagePlaceholder() {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.background,
       child: const Center(
-        child: Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
+        child: Icon(Icons.image_outlined, size: 48, color: HuddlColors.textDark),
       ),
     );
   }

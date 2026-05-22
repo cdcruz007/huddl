@@ -136,7 +136,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: HuddlColors.primary))
+              child: CircularProgressIndicator(color: HuddlColors.textTertiary))
           : _error != null
               ? Center(
                   child: Padding(

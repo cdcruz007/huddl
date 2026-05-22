@@ -126,10 +126,10 @@ class WelcomeCompleteScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    color: HuddlColors.background,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: HuddlColors.primary.withValues(alpha: 0.2),
+                      color: HuddlColors.divider,
                       width: 1,
                     ),
                   ),
@@ -154,13 +154,12 @@ class WelcomeCompleteScreen extends StatelessWidget {
                                 width: 32,
                                 height: 32,
                                 decoration: BoxDecoration(
-                                  color: HuddlColors.primary
-                                      .withValues(alpha: 0.15),
+                                  color: HuddlColors.background,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Center(
                                   child: Icon(Icons.people_alt_rounded,
-                                      size: 16, color: HuddlColors.primary),
+                                      size: 16, color: HuddlColors.textDark),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -192,10 +191,10 @@ class WelcomeCompleteScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    color: HuddlColors.background,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: HuddlColors.primary.withValues(alpha: 0.2),
+                      color: HuddlColors.divider,
                       width: 1,
                     ),
                   ),
@@ -207,7 +206,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                         height: 40,
                         decoration: BoxDecoration(
                           color:
-                              HuddlColors.primary.withValues(alpha: 0.15),
+                              HuddlColors.background,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
@@ -216,7 +215,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textDark,
                             ),
                           ),
                         ),

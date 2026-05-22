@@ -554,7 +554,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textTertiary,
                     ),
                   ),
                 ),
@@ -673,7 +673,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
             child: _loading
                 ? const Center(
                     child:
-                        CircularProgressIndicator(color: HuddlColors.primary))
+                        CircularProgressIndicator(color: HuddlColors.textTertiary))
                 : TabBarView(
                     controller: _tabCtrl,
                     children: [
@@ -747,13 +747,13 @@ class _ForwardSheetState extends State<_ForwardSheet>
   }
 
   Widget _meetupPlaceholder() => Container(
-        color: HuddlColors.primary.withValues(alpha: 0.12),
-        child: const Center(child: Icon(Icons.event, size: 24, color: HuddlColors.primary)),
+        color: HuddlColors.background,
+        child: const Center(child: Icon(Icons.event, size: 24, color: HuddlColors.textDark)),
       );
 
   Widget _groupPlaceholder() => Container(
-        color: HuddlColors.primary.withValues(alpha: 0.12),
-        child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.primary)),
+        color: HuddlColors.background,
+        child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.textDark)),
       );
 
   Widget _eventPlaceholder() => Container(
@@ -816,7 +816,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.primary),
+                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -834,7 +834,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.primary),
+                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -906,7 +906,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                     padding: const EdgeInsets.only(top: 2),
                     child: Row(
                       children: [
-                        const Icon(Icons.people_outline, size: 11, color: HuddlColors.primary),
+                        const Icon(Icons.people_outline, size: 11, color: HuddlColors.textTertiary),
                         const SizedBox(width: 4),
                         Text(
                           '$memberCount members',
@@ -973,14 +973,14 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.event_outlined, size: 11, color: HuddlColors.primary),
+                      const Icon(Icons.event_outlined, size: 11, color: HuddlColors.textTertiary),
                       const SizedBox(width: 4),
                       Text(
                         'Event',
                         style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textDark,
                         ),
                       ),
                     ],
@@ -1001,7 +1001,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.primary),
+                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -1019,7 +1019,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.primary),
+                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -1061,9 +1061,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 errorBuilder: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   child: const Icon(Icons.image,
-                      size: 24, color: HuddlColors.primary),
+                      size: 24, color: HuddlColors.textDark),
                 ),
               ),
             ),
@@ -1152,11 +1152,11 @@ class _ForwardSheetState extends State<_ForwardSheet>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.1),
+                color: HuddlColors.background,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.person,
-                  size: 20, color: HuddlColors.primary),
+                  size: 20, color: HuddlColors.textDark),
             ),
             const SizedBox(width: 10),
             Expanded(

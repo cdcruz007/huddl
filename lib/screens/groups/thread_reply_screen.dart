@@ -158,7 +158,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: HuddlColors.primary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: HuddlColors.textDark, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

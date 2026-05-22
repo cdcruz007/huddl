@@ -15,7 +15,7 @@ class TermsOfServiceScreen extends StatelessWidget {
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
           icon: const Icon(Icons.chevron_left,
-              size: 30, color: HuddlColors.primary),
+              size: 30, color: HuddlColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -681,13 +681,13 @@ h) Modification or Removal:
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Row(
         children: [
-          const Icon(Icons.update, color: HuddlColors.primary, size: 20),
+          const Icon(Icons.update, color: HuddlColors.textDark, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -727,7 +727,7 @@ h) Modification or Removal:
         children: [
           Row(
             children: [
-              const Icon(Icons.description, color: HuddlColors.primary, size: 22),
+              const Icon(Icons.description, color: HuddlColors.textDark, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -786,7 +786,7 @@ h) Modification or Removal:
       decoration: BoxDecoration(
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
