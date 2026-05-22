@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../services/browser_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,8 +49,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   String _borough = '';
   List<String> _contextualChips = [];
 
-  // §2C: Rate limiting — 20 messages/day (tracked in memory for session)
-  static int _sessionMessageCount = 0;
+  // §2C: Rate limiting — 20 messages/day (persisted daily via BrowserStorage)
+  int _dailyMessageCount = 0;
   static const int _dailyLimit = 20;
 
   @override
@@ -73,6 +74,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     // §2D: Try Cloud Function first; fall back to local generation
     _contextualChips = await _fetchOrGenerateChips();
 
+    _dailyMessageCount = await _loadDailyCount();
     if (mounted) setState(() => _isInitialized = true);
 
     // Pre-populate from home screen composer if provided
@@ -153,6 +155,21 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     return chips.take(3).toList();
   }
 
+  Future<int> _loadDailyCount() async {
+    try {
+      final dateStr = DateTime.now().toIso8601String().split('T').first;
+      final raw = await BrowserStorage.getString('copilot_daily_$dateStr');
+      return int.tryParse(raw ?? '') ?? 0;
+    } catch (_) { return 0; }
+  }
+
+  Future<void> _saveDailyCount(int count) async {
+    try {
+      final dateStr = DateTime.now().toIso8601String().split('T').first;
+      await BrowserStorage.setString('copilot_daily_$dateStr', count.toString());
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _inputController.dispose();
@@ -166,13 +183,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     if (query.isEmpty || _isTyping) return;
 
     // §2C: Client-side daily rate limit guard (server also enforces)
-    if (_sessionMessageCount >= _dailyLimit) {
+    _dailyMessageCount = await _loadDailyCount();
+    if (_dailyMessageCount >= _dailyLimit) {
       _showRateLimitMessage();
       return;
     }
 
     _inputController.clear();
-    _sessionMessageCount++;
+    await _saveDailyCount(_dailyMessageCount + 1);
+    _dailyMessageCount++;
     setState(() => _isTyping = true);
 
     try {
@@ -336,9 +355,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       actions: [
         if (_copilot.messages.isNotEmpty)
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               _copilot.clearConversation();
-              _sessionMessageCount = 0;
+              _dailyMessageCount = 0;
+              await _saveDailyCount(0);
               setState(() {});
             },
             icon:

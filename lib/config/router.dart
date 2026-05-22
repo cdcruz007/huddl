@@ -44,6 +44,7 @@ import '../services/payment_service.dart';
 import '../models/subscription.dart';
 import '../screens/home/journey_map_screen.dart';
 import '../screens/profile/backup_restore_screen.dart';
+import '../screens/noticeboard/noticeboard_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -326,6 +327,9 @@ class AppRouter {
           page: ServicesScreen(searchTrigger: ValueNotifier<bool>(false)),
           direction: SlideDirection.up,
         );
+
+      case '/noticeboard':
+        return SlidePageRoute(page: const NoticeboardScreen());
 
       default:
         return MaterialPageRoute(

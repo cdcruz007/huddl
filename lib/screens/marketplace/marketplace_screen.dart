@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
@@ -54,21 +53,6 @@ TextStyle _adaptiveText({
   TextDecoration? decoration,
   Color? decorationColor,
 }) {
-  final bool isApple =
-      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
-  if (isApple) {
-    return TextStyle(
-      fontFamily: '.SF Pro Text',
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      color: color,
-      height: height,
-      fontStyle: fontStyle,
-      letterSpacing: letterSpacing,
-      decoration: decoration,
-      decorationColor: decorationColor,
-    );
-  }
   return GoogleFonts.poppins(
     fontSize: fontSize,
     fontWeight: fontWeight,

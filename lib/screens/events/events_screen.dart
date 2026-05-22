@@ -31,6 +31,7 @@ import '../../services/borough_scope_guard.dart';
 import '../../widgets/huddl_character.dart';
 import '../../widgets/huddl_empty_states.dart';
 import '../services/services_screen.dart';
+import '../insights/insights_screen.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -88,7 +89,7 @@ class EventsScreenState extends State<EventsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       // Only update the selected tab when the animation has settled,
       // so the FAB never shows/hides based on a mid-swipe index.
@@ -443,6 +444,7 @@ class EventsScreenState extends State<EventsScreen>
                       Tab(text: 'Meetups'),
                       Tab(text: 'Events'),
                       Tab(text: 'Services'),
+                      Tab(text: 'Insights'),
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: context.hc.textTertiary,
@@ -486,6 +488,7 @@ class EventsScreenState extends State<EventsScreen>
                     searchTrigger: _serviceSearchTrigger,
                     resetTrigger: _serviceResetTrigger,
                   ),
+                  const InsightsScreen(),
                 ],
               ),
             ),
@@ -563,6 +566,14 @@ class EventsScreenState extends State<EventsScreen>
 // MEET-UPS TAB — parent-organized casual gatherings
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ── Session-level filter state cache (no persistence — resets on app restart) ──
+class FilterStateCache {
+  static String selectedCategory = 'All';
+  static double distanceKm = 10.0;
+  static String sortOrder = 'mostPopular';
+  static DateTimeRange? dateRange;
+}
+
 class _MeetupsTab extends StatefulWidget {
   final MeetupService meetupService;
   final VoidCallback onCreateMeetup;
@@ -603,6 +614,9 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
   String _selectedCategory = 'All'; // top chip-row (feed header)
   String _selectedParticipant = 'All'; // legacy single-select (kept for compat)
+
+  // ── Distance slider debounce ──────────────────────────────────
+  Timer? _distanceDebounce;
 
   // ── Extended filter state (filter sheet) ─────────────────────
   double _distanceKm = 10.0;
@@ -698,6 +712,11 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   @override
   void initState() {
     super.initState();
+    // Restore session-level filter state
+    _selectedCategory = FilterStateCache.selectedCategory;
+    _distanceKm       = FilterStateCache.distanceKm;
+    _sortBy           = FilterStateCache.sortOrder;
+    _dateRange        = FilterStateCache.dateRange;
     _loadUserContext();
     _initAi();
     _loadUserProfile();
@@ -768,6 +787,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
   @override
   void dispose() {
+    _distanceDebounce?.cancel();
     widget.searchTrigger.removeListener(_onSearchTrigger);
     _localSearchController.dispose();
     _searchFocusNode.dispose();
@@ -1618,6 +1638,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 setSheetState(() {
                                   sheetDistanceKm = v.roundToDouble();
                                 });
+                                _distanceDebounce?.cancel();
+                                _distanceDebounce = Timer(const Duration(milliseconds: 400), () {
+                                  if (mounted) setState(() {});
+                                });
                               },
                             ),
                           ),
@@ -1867,6 +1891,11 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               _sortBy            = sheetSortBy;
                               _aiSmartSortEnabled = sheetSmartSort;
                             });
+                            // Persist to session cache
+                            FilterStateCache.selectedCategory = _selectedCategory;
+                            FilterStateCache.distanceKm       = sheetDistanceKm;
+                            FilterStateCache.sortOrder        = sheetSortBy;
+                            FilterStateCache.dateRange        = sheetDateRange;
                             Navigator.pop(ctx);
                           },
                           child: Container(
