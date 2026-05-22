@@ -1771,7 +1771,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         final uid = FirebaseAuth.instance.currentUser?.uid;
                         final isOwn =
                             uid != null && items[index].sellerId == uid;
-                        return _MarketGridCard(
+                        return _MarketGridBuyCard(
                           item: items[index],
                           isOwn: isOwn,
                           onTap: () => _openItemDetail(items[index]),
@@ -2903,14 +2903,29 @@ class _ShimmerBoxState extends State<_ShimmerBox>
 }
 
 Widget _buildItemImage(String url, RehomeItem item) {
-  final fallback = Container(
+  final iconFallback = Container(
     color: HuddlColors.background,
     child: Center(
       child: Icon(item.category.icon,
           size: 44, color: item.category.color.withValues(alpha: 0.5)),
     ),
   );
-  if (url.isEmpty) return fallback;
+
+  // When no URL provided, use category-matched UHD stock photo instead of plain icon
+  if (url.isEmpty) {
+    final stockUrl = _MarketGridCardState._categoryStockPhoto(item.category, item.title);
+    return Image.network(
+      stockUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => iconFallback,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return const _ShimmerBox(width: double.infinity, height: double.infinity);
+      },
+    );
+  }
   if (url.startsWith('data:')) {
     try {
       final comma = url.indexOf(',');
@@ -2918,10 +2933,10 @@ Widget _buildItemImage(String url, RehomeItem item) {
         final bytes = base64Decode(url.substring(comma + 1));
         return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity,
             height: double.infinity,
-            errorBuilder: (_, __, ___) => fallback);
+            errorBuilder: (_, __, ___) => iconFallback);
       }
     } catch (_) {}
-    return fallback;
+    return iconFallback;
   }
   if (url.startsWith('http')) {
     return Image.network(
@@ -2929,14 +2944,14 @@ Widget _buildItemImage(String url, RehomeItem item) {
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, __, ___) => fallback,
+      errorBuilder: (_, __, ___) => iconFallback,
       loadingBuilder: (_, child, progress) {
         if (progress == null) return child;
         return const _ShimmerBox(width: double.infinity, height: double.infinity);
       },
     );
   }
-  return fallback;
+  return iconFallback;
 }
 
 // =============================================================================
@@ -4244,13 +4259,13 @@ class _MarketGridCardState extends State<_MarketGridCard> {
       return 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&q=80';
     }
     if (t.contains('pushchair') || t.contains('pram') || t.contains('stroller') || t.contains('icandy')) {
-      return 'https://images.unsplash.com/photo-1596561741609-4a2bbfbf7b95?w=600&q=80';
+      return 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80';
     }
     if (t.contains('crib') || t.contains('cot') || t.contains('moses') || t.contains('snüz') || t.contains('snuz')) {
       return 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&q=80';
     }
     if (t.contains('car seat') || t.contains('carseat')) {
-      return 'https://images.unsplash.com/photo-1622482586703-cef61a7f9b42?w=600&q=80';
+      return 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=600&q=80';
     }
     if (t.contains('clothes') || t.contains('bundle') || t.contains('outfit') || t.contains('dress') || t.contains('babygrow')) {
       return 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=600&q=80';
@@ -4274,9 +4289,9 @@ class _MarketGridCardState extends State<_MarketGridCard> {
       case ItemCategory.toysAndGames:
         return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80';
       case ItemCategory.pushchairsAndPrams:
-        return 'https://images.unsplash.com/photo-1596561741609-4a2bbfbf7b95?w=600&q=80';
+        return 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80';
       case ItemCategory.forTheCar:
-        return 'https://images.unsplash.com/photo-1622482586703-cef61a7f9b42?w=600&q=80';
+        return 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=600&q=80';
       case ItemCategory.furniture:
         return 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&q=80';
       case ItemCategory.books:
