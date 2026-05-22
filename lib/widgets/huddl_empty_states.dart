@@ -16,7 +16,7 @@ class ConnectEmptyState extends StatelessWidget {
         subtitle:
             'Join a group in Discover and your conversations will live here.',
         ctaLabel: 'Explore groups',
-        onCta: onCta,
+        onCtaTap: onCta,
       );
 }
 
@@ -49,7 +49,7 @@ class MyGroupsEmptyState extends StatelessWidget {
         subtitle:
             'Parents near you are already chatting — jump in and say hi.',
         ctaLabel: 'Find my groups',
-        onCta: onCta,
+        onCtaTap: onCta,
       );
 }
 
@@ -67,7 +67,7 @@ class MyMeetupsEmptyState extends StatelessWidget {
         subtitle:
             'There are meetups this week in Cambridge that match your family perfectly.',
         ctaLabel: 'Browse meetups',
-        onCta: onCta,
+        onCtaTap: onCta,
       );
 }
 
@@ -85,7 +85,7 @@ class MyListingsEmptyState extends StatelessWidget {
         subtitle:
             'List it in 60 seconds. Local parents are looking for exactly what you\'ve outgrown.',
         ctaLabel: 'List something',
-        onCta: onCta,
+        onCtaTap: onCta,
       );
 }
 

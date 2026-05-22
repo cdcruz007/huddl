@@ -2146,7 +2146,7 @@ class _EmptyDirectory extends StatelessWidget {
           ? 'Try a different category or search term'
           : 'Be the first to add a trusted local pro.\nPaste a WhatsApp recommendation or add manually.',
       ctaLabel: hasFilter ? 'Clear filters' : null,
-      onCta: hasFilter ? onClear : null,
+      onCtaTap: hasFilter ? onClear : null,
     );
   }
 }

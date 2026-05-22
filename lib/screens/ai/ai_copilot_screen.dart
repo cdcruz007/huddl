@@ -8,6 +8,7 @@ import '../../theme/huddl_colors.dart';
 import '../../services/ai_copilot_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
+import '../../services/subscription_service.dart';
 
 
 // =============================================================================
@@ -49,9 +50,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   String _borough = '';
   List<String> _contextualChips = [];
 
-  // §2C: Rate limiting — 20 messages/day (persisted daily via BrowserStorage)
+  // §2C: Rate limiting — limit sourced from user's subscription tier
+  // (persisted daily via BrowserStorage so restarts don't reset the count)
   int _dailyMessageCount = 0;
-  static const int _dailyLimit = 20;
+  int get _dailyLimit => SubscriptionService().limits.maxAiCopilotChatsPerDay;
 
   @override
   void initState() {

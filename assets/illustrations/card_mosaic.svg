@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240">
+  <!-- Card container — 12px radius, no border, shadow -->
+  <defs>
+    <clipPath id="card-clip">
+      <rect width="320" height="240" rx="12"/>
+    </clipPath>
+    <clipPath id="tl-clip">
+      <rect width="157" height="117" rx="0"/>
+    </clipPath>
+    <clipPath id="tr-clip">
+      <rect x="163" width="157" height="117" rx="0"/>
+    </clipPath>
+    <clipPath id="bl-clip">
+      <rect y="123" width="157" height="117" rx="0"/>
+    </clipPath>
+    <clipPath id="br-clip">
+      <rect x="163" y="123" width="157" height="117" rx="0"/>
+    </clipPath>
+  </defs>
+  <!-- Card background -->
+  <rect width="320" height="240" rx="12" fill="#F6F6F6"/>
+  <!-- Top-left photo — warm peach/morning -->
+  <rect clip-path="url(#tl-clip)" width="157" height="117" fill="#FFD4B3"/>
+  <ellipse cx="60" cy="50" rx="40" ry="30" fill="#FF965C" opacity="0.3"/>
+  <ellipse cx="110" cy="80" rx="50" ry="25" fill="#FFAD7F" opacity="0.4"/>
+  <text x="78" y="63" font-family="Arial" font-size="28" text-anchor="middle" opacity="0.25">☕</text>
+  <!-- Top-right photo — park green -->
+  <rect x="163" clip-path="url(#tr-clip)" width="157" height="117" fill="#C8E6C9"/>
+  <ellipse cx="240" cy="40" rx="60" ry="20" fill="#199A85" opacity="0.2"/>
+  <ellipse cx="280" cy="80" rx="40" ry="35" fill="#66BB6A" opacity="0.3"/>
+  <text x="241" y="68" font-family="Arial" font-size="28" text-anchor="middle" opacity="0.25">🌿</text>
+  <!-- Horizontal gap -->
+  <rect x="0" y="117" width="320" height="6" fill="#FFFFFF"/>
+  <!-- Bottom-left photo — blue sky -->
+  <rect y="123" clip-path="url(#bl-clip)" width="157" height="117" fill="#BBDEFB"/>
+  <ellipse cx="80" cy="155" rx="60" ry="30" fill="#5B9CFF" opacity="0.25"/>
+  <text x="78" y="188" font-family="Arial" font-size="28" text-anchor="middle" opacity="0.25">👶</text>
+  <!-- Bottom-right photo — warm yellow -->
+  <rect x="163" y="123" clip-path="url(#br-clip)" width="157" height="117" fill="#FFF8E1"/>
+  <ellipse cx="250" cy="165" rx="50" ry="25" fill="#F3C54F" opacity="0.3"/>
+  <text x="241" y="188" font-family="Arial" font-size="28" text-anchor="middle" opacity="0.25">🏠</text>
+  <!-- Vertical gap -->
+  <rect x="157" y="0" width="6" height="240" fill="#FFFFFF"/>
+  <!-- "Popular" badge — top left -->
+  <rect x="10" y="10" width="64" height="22" rx="11" fill="#262A35"/>
+  <text x="42" y="25" font-family="Arial" font-size="10" font-weight="600" fill="white" text-anchor="middle">Popular</text>
+  <!-- Save heart — top right -->
+  <circle cx="302" cy="20" r="16" fill="rgba(0,0,0,0.25)"/>
+  <text x="302" y="26" font-family="Arial" font-size="14" text-anchor="middle" fill="white">♡</text>
+</svg>

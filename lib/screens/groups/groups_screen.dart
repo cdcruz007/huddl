@@ -5638,7 +5638,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       ? 'Try adjusting your filters or search terms.'
                       : 'Parents near you are already chatting — jump in and say hi.',
                   ctaLabel: hasActiveFilters ? 'Clear filters' : null,
-                  onCta: hasActiveFilters
+                  onCtaTap: hasActiveFilters
                       ? () {
                           HuddlAnimations.lightTap();
                           setState(() {

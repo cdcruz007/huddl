@@ -5643,7 +5643,7 @@ class _EmptyState extends StatelessWidget {
       title: title,
       subtitle: subtitle,
       ctaLabel: actionLabel,
-      onCta: onAction,
+      onCtaTap: onAction,
     );
   }
 }

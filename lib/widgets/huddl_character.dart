@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+// =============================================================================
+// HUDDL CHARACTER — updated with locked + upgrade moods (Phase 2 audit)
+// =============================================================================
+
 /// The emotional states of the Huddl character.
 enum HuddlMood {
   neutral,      // General empty states
@@ -9,6 +13,9 @@ enum HuddlMood {
   curious,      // Co-pilot welcome, search empty state
   supportive,   // SEND section, broken streak, warmth moments
   waving,       // Onboarding welcome, tutorial start, co-pilot greeting
+  locked,       // Subscription gate — feature not available on current plan
+  upgrade,      // Post-upgrade celebration moment
+  noticeboard,  // Noticeboard empty state — character holding megaphone
 }
 
 /// The Huddl character — a consistent illustrated figure used across
@@ -16,7 +23,9 @@ enum HuddlMood {
 ///
 /// Usage:
 ///   HuddlCharacter(mood: HuddlMood.waving, size: 160)
-///   HuddlCharacter(mood: HuddlMood.celebrating, size: 120)
+///   HuddlCharacter(mood: HuddlMood.locked, size: 120)
+///   HuddlCharacter(mood: HuddlMood.upgrade, size: 160)
+///   HuddlCharacter(mood: HuddlMood.noticeboard, size: 140)
 class HuddlCharacter extends StatelessWidget {
   const HuddlCharacter({
     super.key,
@@ -41,6 +50,12 @@ class HuddlCharacter extends StatelessWidget {
         return 'assets/illustrations/huddl_supportive.svg';
       case HuddlMood.waving:
         return 'assets/illustrations/huddl_waving.svg';
+      case HuddlMood.locked:
+        return 'assets/illustrations/huddl_locked.svg';
+      case HuddlMood.upgrade:
+        return 'assets/illustrations/huddl_upgrade.svg';
+      case HuddlMood.noticeboard:
+        return 'assets/illustrations/huddl_noticeboard.svg';
     }
   }
 
@@ -69,20 +84,30 @@ class HuddlCharacter extends StatelessWidget {
         return 'Huddl character offering support';
       case HuddlMood.waving:
         return 'Huddl character waving hello';
+      case HuddlMood.locked:
+        return 'Huddl character holding a lock';
+      case HuddlMood.upgrade:
+        return 'Huddl character celebrating an upgrade';
+      case HuddlMood.noticeboard:
+        return 'Huddl character with a megaphone';
     }
   }
 }
+
+// =============================================================================
+// HUDDL EMPTY STATE — full empty state with character + copy + optional CTA
+// =============================================================================
 
 /// A full empty state screen using the Huddl character.
 /// Use this across all empty states in the app for visual consistency.
 ///
 /// Usage:
 ///   HuddlEmptyState(
-///     mood: HuddlMood.neutral,
-///     title: "Your crew is out there",
-///     subtitle: "Parents near you are already chatting — jump in and say hi.",
-///     ctaLabel: "Find my groups",
-///     onCta: () => Navigator.pushNamed(context, '/discover/groups'),
+///     mood: HuddlMood.waving,
+///     title: 'No groups yet',
+///     subtitle: 'Join a group to connect with parents near you',
+///     ctaLabel: 'Find groups',
+///     onCtaTap: () => _switchToTab(2),
 ///   )
 class HuddlEmptyState extends StatelessWidget {
   const HuddlEmptyState({
@@ -91,65 +116,65 @@ class HuddlEmptyState extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.ctaLabel,
-    this.onCta,
-    this.characterSize = 160,
+    this.onCtaTap,
+    this.characterSize = 120,
   });
 
   final HuddlMood mood;
   final String title;
   final String subtitle;
   final String? ctaLabel;
-  final VoidCallback? onCta;
+  final VoidCallback? onCtaTap;
   final double characterSize;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             HuddlCharacter(mood: mood, size: characterSize),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
               title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1A1A1A),
-              ),
               textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.textDark,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               subtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF666666),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: HuddlColors.textSecondary,
                 height: 1.5,
               ),
-              textAlign: TextAlign.center,
             ),
-            if (ctaLabel != null && onCta != null) ...[
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onCta,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+            if (ctaLabel != null && onCtaTap != null) ...[
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: onCtaTap,
+                style: FilledButton.styleFrom(
+                  backgroundColor: HuddlColors.primary,
+                  foregroundColor: HuddlColors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(ctaLabel!),
+                ),
+                child: Text(
+                  ctaLabel!,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -160,106 +185,95 @@ class HuddlEmptyState extends StatelessWidget {
   }
 }
 
-/// Celebration overlay — full-screen Huddl celebrating moment.
-/// Shows for 2.5 seconds then auto-dismisses.
-///
-/// Usage:
-///   HuddlCelebrationOverlay.show(
-///     context,
-///     message: "Welcome to your first group! 🎉",
-///   );
-class HuddlCelebrationOverlay extends StatefulWidget {
-  const HuddlCelebrationOverlay({super.key, required this.message});
+// =============================================================================
+// HuddlCelebrationOverlay — full-screen confetti celebration
+// =============================================================================
 
-  final String message;
-
-  static Future<void> show(BuildContext context, {required String message}) {
-    return Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black54,
-        transitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (_, __, ___) =>
-            HuddlCelebrationOverlay(message: message),
+/// Displays a temporary full-screen celebration overlay with confetti and a
+/// message. Automatically dismisses after 2.5 seconds.
+class HuddlCelebrationOverlay {
+  static Future<void> show(
+    BuildContext context, {
+    required String message,
+    Duration duration = const Duration(milliseconds: 2500),
+  }) async {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _CelebrationOverlayWidget(
+        message: message,
+        onDone: () => entry.remove(),
       ),
     );
+    overlay.insert(entry);
+    await Future.delayed(duration);
+    if (entry.mounted) entry.remove();
   }
-
-  @override
-  State<HuddlCelebrationOverlay> createState() =>
-      _HuddlCelebrationOverlayState();
 }
 
-class _HuddlCelebrationOverlayState extends State<HuddlCelebrationOverlay>
+class _CelebrationOverlayWidget extends StatefulWidget {
+  final String message;
+  final VoidCallback onDone;
+  const _CelebrationOverlayWidget({required this.message, required this.onDone});
+
+  @override
+  State<_CelebrationOverlayWidget> createState() => _CelebrationOverlayWidgetState();
+}
+
+class _CelebrationOverlayWidgetState extends State<_CelebrationOverlayWidget>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scaleAnim;
-  late final Animation<double> _fadeAnim;
+  late AnimationController _ctrl;
+  late Animation<double> _fade;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _scaleAnim = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    );
-    _fadeAnim = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    );
-    _controller.forward();
-
-    // Auto-dismiss after 2.5 seconds
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) Navigator.of(context).pop();
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
+    _ctrl.forward();
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (mounted) _ctrl.reverse().then((_) => widget.onDone());
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: _fadeAnim,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: ScaleTransition(
-            scale: _scaleAnim,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const HuddlCharacter(
-                    mood: HuddlMood.celebrating,
-                    size: 160,
+      opacity: _fade,
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.55),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🎉', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: 12),
+                Text(
+                  widget.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    widget.message,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

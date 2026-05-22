@@ -104,3 +104,6 @@ flutter:
     - assets/illustrations/onboarding_08_child.svg
     - assets/illustrations/onboarding_14_welcomein.svg
     - assets/illustrations/onboarding_15_photo.svg
+    - assets/illustrations/huddl_locked.svg
+    - assets/illustrations/huddl_upgrade.svg
+    - assets/illustrations/huddl_noticeboard.svg
