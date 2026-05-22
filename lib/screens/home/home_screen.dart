@@ -2307,7 +2307,7 @@ class _HomeScreenState extends State<HomeScreen>
           final priceStr = item.isFree
               ? 'Free'
               : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-          final priceColor = item.isFree ? HuddlColors.teal : HuddlColors.primary;
+          final priceColor = item.isFree ? HuddlColors.teal : HuddlColors.textDark;
           return GestureDetector(
             onTap: () {
               HuddlAnimations.selectionClick();

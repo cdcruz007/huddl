@@ -594,7 +594,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Scaffold(
         backgroundColor: context.hc.scaffold,
         body: Center(
-            child: CircularProgressIndicator(color: HuddlColors.primary)),
+            child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
       );
     }
 
@@ -602,7 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: context.hc.scaffold,
       body: SafeArea(
         child: RefreshIndicator(
-          color: HuddlColors.primary,
+          color: HuddlColors.textTertiary,
           onRefresh: _loadProfileData,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -617,24 +617,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _showEditProfileSheet,
                     child: Container(
                       width: double.infinity,
-                      color: HuddlColors.primary.withValues(alpha: 0.10),
+                      color: HuddlColors.background,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       child: Row(
                         children: [
                           const Icon(Icons.info_outline,
-                              color: HuddlColors.primary, size: 18),
+                              color: HuddlColors.textDark, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Tap here to add your name to complete your profile',
                               style: GoogleFonts.poppins(
                                   fontSize: 13,
-                                  color: HuddlColors.primary,
+                                  color: HuddlColors.textDark,
                                   fontWeight: FontWeight.w500),
                             ),
                           ),
                           const Icon(Icons.chevron_right,
-                              color: HuddlColors.primary, size: 18),
+                              color: HuddlColors.textDark, size: 18),
                         ],
                       ),
                     ),
@@ -674,7 +674,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 28,
                               height: 28,
                               decoration: BoxDecoration(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textDark,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                     color: context.hc.surface, width: 2),
@@ -699,7 +699,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     fontSize: 20,
                                     fontWeight: FontWeight.w600,
                                     color: (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
-                                        ? HuddlColors.primary.withValues(alpha: 0.6)
+                                        ? HuddlColors.textTertiary
                                         : context.hc.textPrimary)),
                           ),
                           if (_subscriptionService.isPaid) ...[
@@ -755,10 +755,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.08),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: HuddlColors.primary.withValues(alpha: 0.2),
+                              color: HuddlColors.divider,
                               width: 1,
                             ),
                           ),
@@ -766,7 +766,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
-                                  color: HuddlColors.primary),
+                                  color: HuddlColors.textDark),
                               textAlign: TextAlign.center),
                         ),
                       const SizedBox(height: 20),
@@ -856,7 +856,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Text('See all $_totalGroupCount',
                                     style: GoogleFonts.poppins(
                                         fontSize: 12,
-                                        color: HuddlColors.primary,
+                                        color: HuddlColors.textTertiary,
                                         fontWeight: FontWeight.w500)),
                               ),
                             ],
@@ -1244,7 +1244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: parentTypeLocked
                         ? context.hc.scaffold
-                        : HuddlColors.primary.withValues(alpha: 0.06),
+                        : HuddlColors.background,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: context.hc.divider),
                   ),
@@ -1254,13 +1254,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.12),
+                          color: HuddlColors.background,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           _parentType.toLowerCase() == 'dad' ? Icons.face : Icons.face_3,
                           size: 22,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textDark,
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -1316,7 +1316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               ...[
                 ('aspiring', 'Trying for a baby', Icons.favorite_outline, HuddlColors.accentCoral),
-                ('expecting', 'Expecting', Icons.pregnant_woman, HuddlColors.primary),
+                ('expecting', 'Expecting', Icons.pregnant_woman, HuddlColors.textDark),
                 ('parent', 'Already a parent', Icons.child_care, HuddlColors.teal),
               ].map((entry) {
                 final isOn = selected.contains(entry.$1);
@@ -1471,7 +1471,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Row(
                         children: [
                           const Icon(Icons.calendar_today,
-                              size: 18, color: HuddlColors.primary),
+                              size: 18, color: HuddlColors.textDark),
                           const SizedBox(width: 12),
                           Text(
                             selectedDueYear.isNotEmpty
@@ -1516,20 +1516,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.1),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.add,
-                                  size: 16, color: HuddlColors.primary),
+                                  size: 16, color: HuddlColors.textDark),
                               const SizedBox(width: 4),
                               Text('Add child',
                                   style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: HuddlColors.primary)),
+                                      color: HuddlColors.textDark)),
                             ],
                           ),
                         ),
@@ -1738,19 +1738,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline,
-                        size: 18, color: HuddlColors.primary),
+                        size: 18, color: HuddlColors.textDark),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Changing your postcode will update your borough and default groups. Only Cambridge postcodes are accepted.',
                         style: GoogleFonts.poppins(
-                            fontSize: 12, color: HuddlColors.primary, height: 1.4),
+                            fontSize: 12, color: HuddlColors.textDark, height: 1.4),
                       ),
                     ),
                   ],
@@ -1793,11 +1793,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: HuddlColors.primary.withValues(alpha: 0.1),
+                                color: HuddlColors.background,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.location_off,
-                                  size: 28, color: HuddlColors.primary),
+                                  size: 28, color: HuddlColors.textDark),
                             ),
                             const SizedBox(height: 16),
                             Text('We\u2019re not in your area yet',
