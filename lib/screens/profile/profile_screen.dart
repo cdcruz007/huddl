@@ -2894,11 +2894,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _avatarFallback(double size) {
+    final raw = (_onboarding.name ?? '').trim();
+    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final initials = parts.length >= 2
+        ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+
     return Container(
       width: size,
       height: size,
-      color: HuddlColors.primary.withValues(alpha: 0.08),
-      child: Icon(Icons.people, size: size * 0.5, color: HuddlColors.primary),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: HuddlColors.primary.withValues(alpha: 0.12),
+        border: Border.all(
+          color: HuddlColors.primary.withValues(alpha: 0.30),
+          width: 1.5,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.poppins(
+            fontSize: size * 0.36,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.primary,
+            height: 1.0,
+          ),
+        ),
+      ),
     );
   }
 

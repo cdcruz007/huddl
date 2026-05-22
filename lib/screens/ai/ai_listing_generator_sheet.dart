@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/ai_listing_service.dart';
 import '../../services/rehome_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI LISTING GENERATOR — Bottom sheet for AI-powered listing creation
@@ -45,6 +48,20 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
   }
 
   Future<void> _simulatePhotoAnalysis() async {
+    // ── Subscription gate ─────────────────────────────────────────────────
+    if (!SubscriptionService().canUseAiListingGenerator) {
+      if (mounted) {
+        await showUpgradePrompt(
+          context,
+          feature: 'ai_listing_generator',
+          message: SubscriptionService().limitReachedMessage('ai_listing_generator'),
+          requiredTier: SubscriptionTier.neighbourhood,
+        );
+      }
+      return;
+    }
+    // ── End gate ─────────────────────────────────────────────────────────
+
     final hint = _hintController.text.isNotEmpty
         ? _hintController.text
         : 'baby pushchair bugaboo';
@@ -61,6 +78,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
         draft.suggestedPrice,
       );
 
+      await SubscriptionService().recordAiListingGeneration();
       if (mounted) {
         setState(() {
           _draft = draft;

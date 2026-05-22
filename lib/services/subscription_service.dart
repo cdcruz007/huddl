@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/subscription.dart';
 import 'browser_storage.dart';
 
@@ -81,6 +83,63 @@ class SubscriptionService extends ChangeNotifier {
       }
     }
 
+    // ── Cross-device sync: read from Firestore ────────────────────────────
+    // Only upgrades local state — never downgrades (trust local paid state).
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('subscriptions')
+            .doc(uid)
+            .get()
+            .timeout(const Duration(seconds: 5));
+        if (doc.exists) {
+          final data = doc.data()!;
+          final tierStr = data['tier'] as String? ?? 'explorer';
+          final periodStr = data['billingPeriod'] as String? ?? 'monthly';
+          final renewalMs = data['renewalDate'] as int?;
+          final isActive = data['isActive'] as bool? ?? false;
+          final schedTierStr = data['scheduledTier'] as String?;
+          final schedPeriodStr = data['scheduledPeriod'] as String?;
+
+          final remoteTier = SubscriptionTier.values.firstWhere(
+            (t) => t.name == tierStr,
+            orElse: () => SubscriptionTier.explorer,
+          );
+          // Only upgrade: if remote tier is higher than local, adopt remote
+          if (_subscription.isFree && remoteTier != SubscriptionTier.explorer) {
+            final remotePeriod = BillingPeriod.values.firstWhere(
+              (p) => p.name == periodStr,
+              orElse: () => BillingPeriod.monthly,
+            );
+            _subscription = UserSubscription(
+              tier: remoteTier,
+              billingPeriod: remotePeriod,
+              startDate: _subscription.startDate,
+              renewalDate: renewalMs != null
+                  ? DateTime.fromMillisecondsSinceEpoch(renewalMs)
+                  : null,
+              isActive: isActive,
+              cancelledAtPeriodEnd:
+                  data['cancelledAtPeriodEnd'] as bool? ?? false,
+              scheduledTier: schedTierStr == null
+                  ? null
+                  : SubscriptionTier.values.firstWhere(
+                      (t) => t.name == schedTierStr,
+                      orElse: () => SubscriptionTier.explorer),
+              scheduledPeriod: schedPeriodStr == null
+                  ? null
+                  : BillingPeriod.values.firstWhere(
+                      (p) => p.name == schedPeriodStr,
+                      orElse: () => BillingPeriod.monthly),
+            );
+          }
+        }
+      }
+    } catch (_) {
+      // Non-fatal — offline or Firestore unavailable; local state is fine.
+    }
+
     _initialized = true;
     // CRITICAL: Use Future.delayed(Duration.zero) instead of addPostFrameCallback.
     // When initialize() is called from main() before runApp(), any
@@ -97,6 +156,31 @@ class SubscriptionService extends ChangeNotifier {
   Future<void> _persist() async {
     await BrowserStorage.setString(_subKey, jsonEncode(_subscription.toJson()));
     await BrowserStorage.setString(_usageKey, jsonEncode(_usageCounts));
+    // Non-blocking Firestore sync so other devices get the updated state
+    _syncToFirestore();
+  }
+
+  // ── Firestore sync — write subscription state for cross-device consistency ───
+  Future<void> _syncToFirestore() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .doc(uid)
+          .set({
+        'tier': _subscription.tier.name,
+        'billingPeriod': _subscription.billingPeriod.name,
+        'renewalDate': _subscription.renewalDate?.millisecondsSinceEpoch,
+        'isActive': _subscription.isActive,
+        'cancelledAtPeriodEnd': _subscription.cancelledAtPeriodEnd,
+        'scheduledTier': _subscription.scheduledTier?.name,
+        'scheduledPeriod': _subscription.scheduledPeriod?.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // Non-fatal — local state is still persisted
+    }
   }
 
   // ===========================================================================

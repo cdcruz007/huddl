@@ -34,6 +34,9 @@ import '../../widgets/event_invite_card.dart';
 import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -378,6 +381,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   Future<void> _sendMessage() async {
+    // ── Subscription gate: message limit ────────────────────────────────────
+    if (!SubscriptionService().canSendMessage) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'messaging',
+          message: SubscriptionService().limitReachedMessage('messages'),
+          requiredTier: SubscriptionTier.neighbourhood,
+        );
+      }
+      return;
+    }
+    // ── End subscription gate ────────────────────────────────────────────────
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
@@ -429,6 +445,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
         conversationId: _conversationId!,
         message: text,
       );
+      // Record message send against subscription limit
+      await SubscriptionService().recordMessageSent();
       // Message will appear via the stream subscription — no setState needed
     } else {
       // ── Demo mode: local DMService ─────────────────────────────────────

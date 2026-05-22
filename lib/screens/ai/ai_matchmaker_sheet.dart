@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/ai_matchmaker_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI MATCHMAKER BOTTOM SHEET
@@ -27,6 +30,20 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
   }
 
   Future<void> _init() async {
+    // ── Subscription gate: tier check ───────────────────────────────────────
+    if (!SubscriptionService().hasAiMeetupMatchmaker) {
+      if (mounted) {
+        await showUpgradePrompt(
+          context,
+          feature: 'ai_matchmaker',
+          message: SubscriptionService().limitReachedMessage('ai_matchmaker'),
+          requiredTier: SubscriptionTier.innerCircle,
+        );
+        Navigator.pop(context);
+      }
+      return;
+    }
+    // ── End gate ─────────────────────────────────────────────────────────
     await _matchmaker.initialize();
     if (mounted) setState(() => _isLoading = false);
   }
@@ -397,8 +414,22 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     const Spacer(),
                     // CTA button
                     GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        // ── Usage limit gate ────────────────────────────────
+                        if (!SubscriptionService().canUseAiMatchmaker) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                              'Monthly matchmaker requests used. Resets next month.',
+                              style: GoogleFonts.poppins(
+                                  color: Colors.white, fontSize: 13)),
+                            backgroundColor: HuddlColors.textDark,
+                            behavior: SnackBarBehavior.floating,
+                          ));
+                          return;
+                        }
+                        await SubscriptionService().recordAiMatchmakerRequest();
                         _matchmaker.createMeetupFromSuggestion(suggestion);
+                        if (!context.mounted) return;
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

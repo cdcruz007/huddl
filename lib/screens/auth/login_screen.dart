@@ -344,11 +344,11 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.12),
+                color: HuddlColors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.waving_hand_rounded,
-                  size: 22, color: HuddlColors.primary),
+                  size: 22, color: HuddlColors.textSecondary),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -987,10 +987,10 @@ class _BiometricLoginButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.06),
+          color: HuddlColors.surfaceAlt,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: HuddlColors.primary.withValues(alpha: 0.2),
+            color: HuddlColors.divider,
             width: 1.5,
           ),
         ),
@@ -1002,7 +1002,7 @@ class _BiometricLoginButton extends StatelessWidget {
                   ? Icons.face_retouching_natural_rounded
                   : Icons.fingerprint_rounded,
               size: 26,
-              color: HuddlColors.primary,
+              color: HuddlColors.textSecondary,
             ),
             const SizedBox(width: 12),
             Column(
@@ -1014,7 +1014,7 @@ class _BiometricLoginButton extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textDark,
                   ),
                 ),
                 if (_maskedPhone.isNotEmpty)

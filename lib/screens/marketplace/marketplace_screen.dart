@@ -863,7 +863,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                   'Clear all',
                                   style: _adaptiveText(
                                     fontSize: 13,
-                                    color: HuddlColors.primary,
+                                    color: HuddlColors.textSecondary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -1457,7 +1457,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Tab(text: 'Sell'),
               Tab(text: 'Saved'),
             ],
-            labelColor: HuddlColors.primary,
+            labelColor: HuddlColors.textDark,
             unselectedLabelColor: hc.textTertiary,
             labelStyle: _adaptiveText(
               fontSize: 15,
@@ -1467,7 +1467,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
-            indicatorColor: HuddlColors.primary,
+            indicatorColor: HuddlColors.textDark,
             indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: hc.divider,
@@ -1524,7 +1524,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           Icons.tune_rounded,
                           size: 18,
                           color: _hasActiveFilters
-                              ? HuddlColors.primary
+                              ? HuddlColors.textDark
                               : hc.textPrimary,
                         ),
                         const SizedBox(width: 8),
@@ -1538,7 +1538,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             color: _hasActiveFilters
-                                ? HuddlColors.primary
+                                ? HuddlColors.textDark
                                 : hc.textPrimary,
                           ),
                         ),
@@ -1555,7 +1555,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     'Clear all',
                     style: _adaptiveText(
                       fontSize: 12,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1988,7 +1988,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.1),
+                    color: HuddlColors.textHint.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -1996,7 +1996,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     style: _adaptiveText(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textSecondary,
                     ),
                   ),
                 ),

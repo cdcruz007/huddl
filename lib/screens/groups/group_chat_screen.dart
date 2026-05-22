@@ -43,6 +43,9 @@ import '../../widgets/item_invite_card.dart';
 import '../../widgets/event_invite_card.dart';
 import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
+import '../../widgets/upgrade_prompt.dart';
 import '../../services/huddl_notification_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -1012,6 +1015,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _sendMessage() async {
+    // ── Subscription gate: message limit ────────────────────────────────────
+    if (!SubscriptionService().canSendMessage) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'messaging',
+          message: SubscriptionService().limitReachedMessage('messages'),
+          requiredTier: SubscriptionTier.neighbourhood,
+        );
+      }
+      return;
+    }
+    // ── End subscription gate ────────────────────────────────────────────────
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
@@ -1071,6 +1087,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         groupId: widget.groupId,
         message: text,
       );
+      // Record message send against subscription limit
+      await SubscriptionService().recordMessageSent();
       // ── Patch local message to use the real Firestore doc ID ──────────
       // This is critical: emoji reactions write to group_messages/{firestoreId}.
       // If msg.id stays as the optimistic 'msg_...' key the reaction Firestore
@@ -4383,6 +4401,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Send voice message ────────────────────────────────────────────────────
   Future<void> _sendVoiceMessage() async {
+    // ── Subscription gate: message limit ────────────────────────────────────
+    if (!SubscriptionService().canSendMessage) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'messaging',
+          message: SubscriptionService().limitReachedMessage('messages'),
+          requiredTier: SubscriptionTier.neighbourhood,
+        );
+      }
+      return;
+    }
+    // ── End subscription gate ────────────────────────────────────────────────
     final result = await _voiceSvc.stopRecording();
     if (mounted) setState(() => _isVoiceRecording = false);
     if (result == null || result.duration < 1) return;

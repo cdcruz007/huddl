@@ -9,6 +9,7 @@ import '../../services/ai_copilot_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 
 
 // =============================================================================
@@ -54,6 +55,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   // (persisted daily via BrowserStorage so restarts don't reset the count)
   int _dailyMessageCount = 0;
   int get _dailyLimit => SubscriptionService().limits.maxAiCopilotChatsPerDay;
+  bool get _isAtDailyLimit =>
+      !TierLimits.isUnlimited(_dailyLimit) &&
+      _dailyMessageCount >= _dailyLimit;
 
   @override
   void initState() {
@@ -222,54 +226,31 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   }
 
   void _showRateLimitMessage() {
-    showDialog(
-      context: context,
-      builder: (c) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.auto_awesome,
-                  size: 40, color: HuddlColors.primary),
-              const SizedBox(height: 16),
-              Text(
-                "You've reached today's chat limit.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Come back tomorrow — I\'ll be here!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: context.hc.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text('OK',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
-          ),
+    final isFreeTier = SubscriptionService().isFree;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFreeTier
+              ? 'Daily limit reached (${_dailyLimit} chats). Upgrade to Neighbour for 25 chats/day!'
+              : "You've reached your $_dailyLimit daily AI chats. Resets at midnight.",
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
         ),
+        backgroundColor:
+            isFreeTier ? HuddlColors.primary : HuddlColors.textDark,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: isFreeTier
+            ? SnackBarAction(
+                label: 'Upgrade',
+                textColor: Colors.white,
+                onPressed: () => Navigator.pushNamed(
+                    context, '/subscription_plans',
+                    arguments: {
+                      'highlightTier': SubscriptionTier.neighbourhood
+                    }),
+              )
+            : null,
       ),
     );
   }
@@ -300,6 +281,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 ? _buildWelcomeView(hc)
                 : _buildChatView(hc),
           ),
+          _buildRemainingCount(),
           _buildInputBar(hc),
         ],
       ),
@@ -779,6 +761,24 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Remaining count (shown only when ≤ 5 messages left today) ───────────
+  Widget _buildRemainingCount() {
+    if (TierLimits.isUnlimited(_dailyLimit)) return const SizedBox.shrink();
+    final remaining = (_dailyLimit - _dailyMessageCount).clamp(0, _dailyLimit);
+    if (remaining > 5) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Text(
+        '$remaining AI chat${remaining == 1 ? '' : 's'} remaining today',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          color: remaining <= 1 ? HuddlColors.error : HuddlColors.textTertiary,
+        ),
       ),
     );
   }

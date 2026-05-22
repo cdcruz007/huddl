@@ -4537,27 +4537,32 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _avatarFallback(double size) {
-    // Use local asset avatar as default when no profile photo
+    // Generate initials from the user's name
+    final raw = _name.trim();
+    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final initials = parts.length >= 2
+        ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: HuddlColors.gray200, width: 1.5),
+        color: HuddlColors.primary.withValues(alpha: 0.12),
+        border: Border.all(
+          color: HuddlColors.primary.withValues(alpha: 0.30),
+          width: 1.5,
+        ),
       ),
-      child: ClipOval(
-        child: Image.asset(
-          _onboarding.parentType?.toLowerCase() == 'dad'
-              ? 'assets/images/avatars/John.png'
-              : 'assets/images/avatars/Emma.png',
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
-            color: HuddlColors.gray100,
-            child: Center(
-              child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.textHint),
-            ),
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.poppins(
+            fontSize: size * 0.36,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.primary,
+            height: 1.0,
           ),
         ),
       ),

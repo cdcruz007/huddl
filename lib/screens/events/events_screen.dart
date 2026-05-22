@@ -446,7 +446,7 @@ class EventsScreenState extends State<EventsScreen>
                       Tab(text: 'Services'),
                       Tab(text: 'Insights'),
                     ],
-                    labelColor: HuddlColors.primary,
+                    labelColor: HuddlColors.textDark,
                     unselectedLabelColor: context.hc.textTertiary,
                     labelStyle: GoogleFonts.poppins(
                       fontSize: 14,
@@ -456,7 +456,7 @@ class EventsScreenState extends State<EventsScreen>
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                     ),
-                    indicatorColor: HuddlColors.primary,
+                    indicatorColor: HuddlColors.textDark,
                     indicatorWeight: 3,
                     indicatorSize: TabBarIndicatorSize.label,
                     dividerColor: context.hc.divider,

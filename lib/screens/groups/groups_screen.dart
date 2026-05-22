@@ -271,7 +271,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textSecondary,
                               ),
                             ),
                           ),
@@ -288,13 +288,13 @@ class _GroupsScreenState extends State<GroupsScreen>
                       Tab(text: 'Attending'),
                       Tab(text: 'Saved'),
                     ],
-                    labelColor: HuddlColors.primary,
+                    labelColor: HuddlColors.textDark,
                     unselectedLabelColor: HuddlColors.textHint,
                     labelStyle: GoogleFonts.poppins(
                         fontSize: 13, fontWeight: FontWeight.w600),
                     unselectedLabelStyle: GoogleFonts.poppins(
                         fontSize: 13, fontWeight: FontWeight.w400),
-                    indicatorColor: HuddlColors.primary,
+                    indicatorColor: HuddlColors.textDark,
                     indicatorSize: TabBarIndicatorSize.label,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,

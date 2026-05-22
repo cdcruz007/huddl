@@ -34,7 +34,7 @@ const _fieldLine    = HuddlColors.divider;       // #D5D5D5 bottom underline
 const _sectionText  = HuddlColors.textDark;      // #42464C section headers
 const _hintGray     = HuddlColors.textTertiary;  // #949494 placeholder text
 const _accentOrange = HuddlColors.primary;       // #FF965C orange accent
-const _bannerBlue   = HuddlColors.blueUI;        // #5B9CFF photo banner bg
+const _bannerBg     = HuddlColors.peachLight;    // photo banner bg
 
 const String _userGroupsKey = 'user_created_groups_v1';
 
@@ -298,10 +298,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   /// Inline fallback shown when picked image fails to decode.
   Widget _emptyPhotoFallback() => Container(
-        color: _bannerBlue,
+        color: _bannerBg,
         child: const Center(
           child: Icon(Icons.add_photo_alternate_outlined,
-              size: 48, color: Colors.white),
+              size: 48, color: HuddlColors.primary),
         ),
       );
 
@@ -1404,33 +1404,44 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       );
     }
 
-    // Placeholder: solid blue banner (matches Create Meetup Figma style)
+    // Placeholder: brand-colored photo banner
     return GestureDetector(
       onTap: _pickGroupImage,
       child: Container(
         width: double.infinity,
         height: 200,
         decoration: BoxDecoration(
-          color: _bannerBlue,
+          color: _bannerBg,
           border: _showImageError
               ? Border.all(color: HuddlColors.error, width: 2)
-              : null,
+              : Border.all(
+                  color: HuddlColors.primary.withValues(alpha: 0.35),
+                  width: 1.5),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.add_photo_alternate_outlined,
-              color: Colors.white,
-              size: 48,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_photo_alternate_outlined,
+                color: HuddlColors.primary,
+                size: 26,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               'Click to add group photo',
               style: GoogleFonts.poppins(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.white,
+                color: HuddlColors.primary,
               ),
             ),
             if (_showImageError) ...[

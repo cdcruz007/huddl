@@ -311,7 +311,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textSecondary,
                             ),
                           ),
                         ),
@@ -411,7 +411,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textSecondary,
                         ),
                       ),
                     ),
