@@ -1931,20 +1931,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    color: HuddlColors.background,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.info_outline,
-                          size: 18, color: HuddlColors.primary),
+                          size: 18, color: HuddlColors.textDark),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'You can opt to remove yourself from your previous $previousBorough borough groups below.',
                           style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textDark,
                               height: 1.4),
                         ),
                       ),
@@ -2063,10 +2063,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: HuddlColors.primary.withValues(alpha: 0.3)),
+                          color: HuddlColors.divider),
                     ),
                     child: Row(
                       children: [
@@ -2349,7 +2349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }),
                 child: Text('← Use a different number',
                     style: GoogleFonts.poppins(
-                        fontSize: 13, color: HuddlColors.primary)),
+                        fontSize: 13, color: HuddlColors.textTertiary)),
               ),
               const SizedBox(height: 12),
             ],
@@ -2413,10 +2413,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.07),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: HuddlColors.primary.withValues(alpha: 0.25)),
+                          color: HuddlColors.divider),
                     ),
                     child: Row(
                       children: [
@@ -2795,7 +2795,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }),
                   child: Text('← Resend code',
                       style: GoogleFonts.poppins(
-                          fontSize: 13, color: HuddlColors.primary)),
+                          fontSize: 13, color: HuddlColors.textTertiary)),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -3014,14 +3014,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.08),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text('${e.attendees}',
                               style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: HuddlColors.primary)),
+                                  color: HuddlColors.textTertiary)),
                         ),
                         dense: true,
                       )),
@@ -3127,7 +3127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(
-                  child: CircularProgressIndicator(color: HuddlColors.primary)),
+                  child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
             );
           }
 
@@ -3151,7 +3151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setLocal(() => listings = null),
                     child: Text('Retry',
                         style: GoogleFonts.poppins(
-                            color: HuddlColors.primary,
+                            color: HuddlColors.textTertiary,
                             fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -3181,8 +3181,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.poppins(
                             fontSize: 14, fontWeight: FontWeight.w500)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: HuddlColors.primary,
-                      side: const BorderSide(color: HuddlColors.primary),
+                      foregroundColor: HuddlColors.textDark,
+                      side: const BorderSide(color: HuddlColors.divider),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24)),
                       padding: const EdgeInsets.symmetric(
@@ -3304,8 +3304,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 14, fontWeight: FontWeight.w500)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: HuddlColors.primary,
-                    side: const BorderSide(color: HuddlColors.primary),
+                    foregroundColor: HuddlColors.textDark,
+                    side: const BorderSide(color: HuddlColors.divider),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24)),
                     minimumSize: const Size.fromHeight(44),
@@ -3339,7 +3339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Padding(
               padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator(color: HuddlColors.primary)),
+              child: Center(child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
             );
           }
           final msgs = svc.savedMessages;
@@ -3362,7 +3362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ...msgs.take(10).map((m) => ListTile(
                       leading: Icon(
                           m.isFromGroup ? Icons.group : Icons.person,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textDark,
                           size: 20),
                       title: Text(m.message,
                           maxLines: 1,
@@ -3412,7 +3412,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary)),
+                          color: HuddlColors.textTertiary)),
                 ),
               ),
             ],
@@ -3621,14 +3621,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Row(
                   children: [
                     Icon(Icons.security_rounded,
-                        size: 16, color: HuddlColors.primary),
+                        size: 16, color: HuddlColors.textDark),
                     const SizedBox(width: 6),
                     Text(
                       'SECURITY',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textDark,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -3642,7 +3642,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.10),
+                    color: HuddlColors.background,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -3650,7 +3650,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? Icons.face_retouching_natural_rounded
                         : Icons.fingerprint_rounded,
                     size: 20,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textDark,
                   ),
                 ),
                 title: Text(
@@ -3733,14 +3733,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Row(
                   children: [
                     Icon(Icons.privacy_tip_outlined,
-                        size: 16, color: HuddlColors.primary),
+                        size: 16, color: HuddlColors.textDark),
                     const SizedBox(width: 6),
                     Text(
                       'PRIVACY',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textDark,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -3785,14 +3785,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
               child: Row(
                 children: [
-                  const Icon(Icons.mic_outlined, size: 16, color: HuddlColors.primary),
+                  const Icon(Icons.mic_outlined, size: 16, color: HuddlColors.textDark),
                   const SizedBox(width: 6),
                   Text(
                     'VOICE MESSAGES',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -3894,7 +3894,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(20)),
                       title: Row(
                         children: [
-                          const Icon(Icons.mic, color: HuddlColors.primary, size: 24),
+                          const Icon(Icons.mic, color: HuddlColors.textDark, size: 24),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text('Enable Voice Messages?',
@@ -4051,10 +4051,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Read full voice message data policy (Privacy Policy \u00a7 18) \u2192',
                   style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textTertiary,
                       fontWeight: FontWeight.w500,
                       decoration: TextDecoration.underline,
-                      decorationColor: HuddlColors.primary),
+                      decorationColor: HuddlColors.textTertiary),
                 ),
               ),
             ),
@@ -4248,13 +4248,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     width: 56,
                                     height: 56,
                                     decoration: BoxDecoration(
-                                      color: HuddlColors.primary
-                                          .withValues(alpha: 0.1),
+                                      color: HuddlColors.background,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(Icons.block,
                                         size: 28,
-                                        color: HuddlColors.primary),
+                                        color: HuddlColors.textDark),
                                   ),
                                   const SizedBox(height: 16),
                                   Text('Unblock $displayName?',
@@ -4303,7 +4302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               style: GoogleFonts.poppins(
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w600,
-                                                  color: HuddlColors.primary)),
+                                                  color: HuddlColors.textTertiary)),
                                         ),
                                       ),
                                     ],
@@ -4333,7 +4332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary)),
+                              color: HuddlColors.textTertiary)),
                     ),
                   );
               }),
@@ -4647,7 +4646,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         children: [
                           CircularProgressIndicator(
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textTertiary,
                               strokeWidth: 2),
                           SizedBox(height: 12),
                           Text('Fetching your data from Firestore…'),
@@ -5027,11 +5026,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      color: HuddlColors.background,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.security,
-                        size: 28, color: HuddlColors.primary),
+                        size: 28, color: HuddlColors.textDark),
                   ),
                   const SizedBox(height: 16),
                   Text('Verify your identity',
@@ -5291,7 +5290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary)),
+                        color: HuddlColors.textTertiary)),
               ),
             ),
             const SizedBox(height: 16),
@@ -5498,7 +5497,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary)),
+                              color: HuddlColors.textTertiary)),
                     ),
                   ),
                 ],
@@ -5643,18 +5642,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Center(
-                        child: Icon(Icons.people, size: 36, color: HuddlColors.primary)),
+                        child: Icon(Icons.people, size: 36, color: HuddlColors.textDark)),
                   ),
                   const SizedBox(height: 8),
                   Text('huddl',
                       style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.primary)),
+                          color: HuddlColors.textDark)),
                 ],
               ),
             ),
@@ -6228,21 +6227,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                                  color: HuddlColors.background,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Icon(Icons.lightbulb_outline,
-                                        size: 18, color: HuddlColors.primary),
+                                        size: 18, color: HuddlColors.textDark),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         'You might want to mention: features you enjoy, things that could be improved, ideas for new features, or your overall experience.',
                                         style: GoogleFonts.poppins(
                                           fontSize: 12,
-                                          color: HuddlColors.primary,
+                                          color: HuddlColors.textDark,
                                           height: 1.4,
                                         ),
                                       ),
@@ -6571,8 +6570,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
-      child: Icon(icon, color: HuddlColors.primary),
+          color: HuddlColors.background, shape: BoxShape.circle),
+      child: Icon(icon, color: HuddlColors.textDark),
     );
   }
 }
@@ -6595,7 +6594,7 @@ class _GroupCard extends StatelessWidget {
         color: context.hc.inputBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-            color: HuddlColors.primary.withValues(alpha: 0.15), width: 1),
+            color: HuddlColors.divider, width: 1),
       ),
       child: Row(
         children: [
@@ -6663,9 +6662,9 @@ class _GroupCard extends StatelessWidget {
   }
 
   Widget _imageFallback() => Container(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
         child: const Center(
-            child: Icon(Icons.people, size: 28, color: HuddlColors.primary)));
+            child: Icon(Icons.people, size: 28, color: HuddlColors.textDark)));
 }
 
 class _StatItem extends StatelessWidget {
@@ -6781,13 +6780,13 @@ class _CountBadge extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.08),
+                color: HuddlColors.background,
                 borderRadius: BorderRadius.circular(10)),
             child: Text('$count',
                 style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary)),
+                    color: HuddlColors.textTertiary)),
           ),
         const SizedBox(width: 4),
         Icon(Icons.chevron_right, color: context.hc.textTertiary),

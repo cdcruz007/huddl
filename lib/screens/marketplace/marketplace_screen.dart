@@ -1774,7 +1774,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     }
 
     return RefreshIndicator(
-      color: HuddlColors.primary,
+      color: HuddlColors.textTertiary,
       onRefresh: () async {
         HuddlAnimations.mediumTap();
         await Future.delayed(const Duration(milliseconds: 500));
@@ -3929,8 +3929,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                                           child: Center(
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              color: HuddlColors.primary
-                                                  .withValues(alpha: 0.5),
+                                              color: HuddlColors.textTertiary,
                                             ),
                                           ),
                                         ),

@@ -864,7 +864,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     style: _adaptiveText(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: HuddlColors.primary,
+                                      color: HuddlColors.textTertiary,
                                     ),
                                   ),
                                 ),
@@ -1008,10 +1008,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       children: [
         images.isEmpty
             ? Container(
-                color: HuddlColors.primary.withValues(alpha: 0.08),
+                color: HuddlColors.background,
                 child: Center(
                   child: Icon(item.category.icon,
-                      size: 64, color: HuddlColors.primary.withValues(alpha: 0.4)),
+                      size: 64, color: HuddlColors.textHint),
                 ),
               )
             : PageView.builder(
@@ -1068,10 +1068,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildDetailImage(String url) {
     final fallback = Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.background,
       child: Center(
         child: Icon(item.category.icon,
-            size: 56, color: HuddlColors.primary.withValues(alpha: 0.6)),
+            size: 56, color: HuddlColors.textHint),
       ),
     );
 
@@ -1203,12 +1203,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 style: _adaptiveText(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
+                  color: HuddlColors.textDark,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: HuddlColors.primary,
-                side: const BorderSide(color: HuddlColors.primary, width: 1.5),
+                foregroundColor: HuddlColors.textDark,
+                side: const BorderSide(color: HuddlColors.divider, width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),

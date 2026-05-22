@@ -668,7 +668,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Forgot password?',
                       style: AppTextStyles.body2.copyWith(
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textTertiary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -705,7 +705,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 56,
                       child: Center(
                         child: CircularProgressIndicator(
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textTertiary,
                           strokeWidth: 2.5,
                         ),
                       ),
@@ -755,7 +755,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Sign up',
                       style: AppTextStyles.body2.copyWith(
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textTertiary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
