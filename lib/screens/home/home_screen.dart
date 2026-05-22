@@ -1393,24 +1393,26 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── §4 Noticeboard section ────────────────────────────────────────────────
-  // Repositioned below the co-pilot bar. Shows pinned/featured post as a
-  // tappable row with chevron — navigates directly to announcement content,
-  // NOT the co-pilot. Post composer removed from this section.
+  // Uses a StreamBuilder on AnnouncementService.boroughStream so posts from
+  // ALL users in the same borough appear in real-time without a manual refresh.
+  // Shows up to 2 posts as compact tap-to-expand rows.
+  // Pin / like / comment / share actions are preserved.
   Widget _buildNoticeboardSection(dynamic hc, bool isDark) {
-    final topAnnouncements = _announcements.take(1).toList(); // one featured post
     final topNudge = _aiFeedService.activeNudges.isNotEmpty
-        ? _aiFeedService.activeNudges.first : null;
+        ? _aiFeedService.activeNudges.first
+        : null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header — megaphone icon + title + subtitle
+          // ── Section header ───────────────────────────────────────────────
           Row(
             children: [
               Container(
-                width: 32, height: 32,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: HuddlColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(9),
@@ -1423,15 +1425,18 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Noticeboard',
-                        style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary)),
                     Text(
-                        '${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: hc.textTertiary)),
+                      'Noticeboard',
+                      style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary),
+                    ),
+                    Text(
+                      '${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: hc.textTertiary),
+                    ),
                   ],
                 ),
               ),
@@ -1439,16 +1444,16 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 10),
 
-          // Pinned/featured noticeboard post — tappable row, navigates to content
-          if (topNudge != null)
+          // ── AI nudge row (if any) ────────────────────────────────────────
+          if (topNudge != null) ...[
             GestureDetector(
               onTap: () {
                 HuddlAnimations.selectionClick();
-                // Navigate to noticeboard content — NOT co-pilot
                 _handleNudgeTap(topNudge);
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                 decoration: BoxDecoration(
                   color: hc.surface,
                   borderRadius: BorderRadius.circular(12),
@@ -1485,48 +1490,89 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
               ),
-            )
-          else if (topAnnouncements.isNotEmpty)
-            // Show first announcement as the featured row
-            _buildAnnouncementFeedCard(
-              _SmartFeedItem(
-                type: _SmartFeedType.announcement,
-                score: 0.7,
-                reason: topAnnouncements.first.isPinned ? 'Pinned' : 'Recent',
-                announcement: topAnnouncements.first,
-              ),
-              hc, isDark,
-            )
-          else
-            // Empty state — invite community post
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: hc.divider),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.campaign_outlined,
-                      size: 15, color: hc.textTertiary),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'No posts yet — be the first to share something with ${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: hc.textTertiary,
-                          height: 1.4),
-                      maxLines: 2,
-                    ),
-                  ),
-                ],
-              ),
             ),
+            const SizedBox(height: 8),
+          ],
+
+          // ── Live StreamBuilder — top 2 posts from Firestore ──────────────
+          StreamBuilder<List<Announcement>>(
+            stream: _announcementService.boroughStream,
+            // initialData from the cache so there's no flash of empty state
+            initialData: _announcementService.boroughAnnouncements,
+            builder: (context, snapshot) {
+              // Keep _announcements state in sync for badge counts etc.
+              final live = snapshot.data ?? [];
+              if (live.isNotEmpty && live != _announcements) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && live != _announcements) {
+                    setState(() {
+                      _announcements = live;
+                    });
+                    _buildSmartFeed();
+                  }
+                });
+              }
+
+              final topTwo = live.take(2).toList();
+
+              if (topTwo.isEmpty) {
+                // Empty state
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: hc.divider),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.campaign_outlined,
+                          size: 15, color: hc.textTertiary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'No posts yet — be the first to share something with '
+                          '${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: hc.textTertiary,
+                              height: 1.4),
+                          maxLines: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Render up to 2 compact tap-to-expand rows
+              return Column(
+                children: topTwo
+                    .map((ann) => _buildNoticeboardRow(ann, hc, isDark))
+                    .toList(),
+              );
+            },
+          ),
         ],
       ),
+    );
+  }
+
+  /// A compact noticeboard row that expands to show full post + actions.
+  Widget _buildNoticeboardRow(
+      Announcement ann, dynamic hc, bool isDark) {
+    return _NoticeboardRow(
+      key: ValueKey(ann.id),
+      announcement: ann,
+      hc: hc,
+      isDark: isDark,
+      onLike: () async {
+        await _toggleLike(ann.id);
+      },
+      onComment: () => _openComments(ann),
+      onShare: () => _sharePost(ann),
+      onMenu: () => _showPostMenu(ann),
     );
   }
 
@@ -4122,6 +4168,259 @@ class _HomeScreenState extends State<HomeScreen>
               child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// _NoticeboardRow — compact tap-to-expand noticeboard post row
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _NoticeboardRow extends StatefulWidget {
+  final Announcement announcement;
+  final dynamic hc;
+  final bool isDark;
+  final VoidCallback onLike;
+  final VoidCallback onComment;
+  final VoidCallback onShare;
+  final VoidCallback onMenu;
+
+  const _NoticeboardRow({
+    super.key,
+    required this.announcement,
+    required this.hc,
+    required this.isDark,
+    required this.onLike,
+    required this.onComment,
+    required this.onShare,
+    required this.onMenu,
+  });
+
+  @override
+  State<_NoticeboardRow> createState() => _NoticeboardRowState();
+}
+
+class _NoticeboardRowState extends State<_NoticeboardRow> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ann = widget.announcement;
+    final hc = widget.hc;
+    final isDark = widget.isDark;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: () => setState(() => _expanded = !_expanded),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: hc.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: ann.isPinned
+                  ? HuddlColors.primary.withValues(alpha: 0.25)
+                  : hc.divider,
+            ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Compact header row ────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Pin / campaign icon
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Icon(
+                        ann.isPinned
+                            ? Icons.push_pin
+                            : Icons.campaign_outlined,
+                        size: 15,
+                        color: ann.isPinned
+                            ? HuddlColors.primary
+                            : hc.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Author + content preview
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Author name + time
+                          Row(
+                            children: [
+                              Text(
+                                ann.authorName,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: hc.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                ann.timeAgo,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  color: hc.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          // Content — truncated when collapsed
+                          Text(
+                            ann.content,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: hc.textSecondary,
+                              height: 1.4,
+                            ),
+                            maxLines: _expanded ? null : 2,
+                            overflow: _expanded
+                                ? TextOverflow.visible
+                                : TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Chevron + overflow menu
+                    Column(
+                      children: [
+                        Icon(
+                          _expanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          size: 18,
+                          color: hc.textTertiary,
+                        ),
+                        GestureDetector(
+                          onTap: widget.onMenu,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Icon(Icons.more_horiz,
+                                size: 18, color: hc.textTertiary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Expanded action bar ───────────────────────────────────
+              if (_expanded) ...[
+                Divider(height: 1, color: hc.divider),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      // Like
+                      _ActionButton(
+                        icon: ann.isLiked
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: ann.isLiked
+                            ? HuddlColors.error
+                            : hc.textTertiary,
+                        label: ann.likes > 0
+                            ? '${ann.likes}'
+                            : '',
+                        onTap: widget.onLike,
+                      ),
+                      // Comment
+                      _ActionButton(
+                        icon: Icons.chat_bubble_outline,
+                        color: hc.textTertiary,
+                        label: ann.comments > 0
+                            ? '${ann.comments}'
+                            : '',
+                        onTap: widget.onComment,
+                      ),
+                      // Share
+                      _ActionButton(
+                        icon: Icons.share_outlined,
+                        color: hc.textTertiary,
+                        label: ann.shares > 0
+                            ? '${ann.shares}'
+                            : '',
+                        onTap: widget.onShare,
+                      ),
+                      const Spacer(),
+                      // Bookmark indicator
+                      if (ann.isBookmarked)
+                        Icon(Icons.bookmark,
+                            size: 16, color: HuddlColors.primary),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Minimal icon + label action button used in the noticeboard row action bar.
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HuddlAnimations.lightTap();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            if (label.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
