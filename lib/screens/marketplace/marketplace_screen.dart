@@ -851,7 +851,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           children: [
                             Icon(icon, size: 20,
                               color: isSelected
-                                  ? HuddlColors.nearBlack
+                                  ? HuddlColors.primary   // orange active
                                   : hc.textTertiary),
                             const SizedBox(width: 14),
                             Expanded(
@@ -865,19 +865,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                       : hc.textPrimary,
                                 )),
                             ),
-                            // Radio circle — Airbnb filled-dot style
+                            // Radio circle — orange filled-dot style
                             Container(
                               width: 22, height: 22,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: isSelected
-                                      ? HuddlColors.nearBlack
+                                      ? HuddlColors.primary  // orange border
                                       : HuddlColors.divider,
                                   width: isSelected ? 6 : 1.5,
                                 ),
                                 color: isSelected
-                                    ? HuddlColors.nearBlack
+                                    ? HuddlColors.primary    // orange fill
                                     : Colors.transparent,
                               ),
                               child: isSelected
@@ -893,7 +893,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   }),
                   const SizedBox(height: 8),
                   Divider(height: 1, color: hc.divider),
-                  // ── nearBlack Save CTA ──
+                  // ── Orange Save CTA ──
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                     child: SizedBox(
@@ -904,7 +904,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           Navigator.pop(ctx);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.nearBlack,
+                          backgroundColor: HuddlColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
@@ -1182,13 +1182,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           high: sheetPriceRange.end,
                           maxPrice: 500,
                         ),
-                        // Range slider
+                        // Range slider — orange active track
                         SliderTheme(
                           data: SliderThemeData(
-                            activeTrackColor: HuddlColors.nearBlack,
+                            activeTrackColor: HuddlColors.primary,    // warm orange
                             inactiveTrackColor: HuddlColors.divider,
                             thumbColor: Colors.white,
-                            overlayColor: HuddlColors.nearBlack.withValues(alpha: 0.10),
+                            overlayColor: HuddlColors.primary.withValues(alpha: 0.15),
                             thumbShape: const RoundSliderThumbShape(
                               enabledThumbRadius: 12,
                               elevation: 3,
@@ -1247,7 +1247,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     ),
                   ),
 
-                  // ── nearBlack "Show items" CTA ────────────────────────
+                  // ── Orange "Show items" CTA ────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: SizedBox(
@@ -1258,7 +1258,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           Navigator.pop(ctx);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.nearBlack,
+                          backgroundColor: HuddlColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
@@ -1505,11 +1505,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: HuddlColors.nearBlack,
+                      color: HuddlColors.primary,      // warm orange FAB
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: HuddlColors.nearBlack.withValues(alpha: 0.25),
+                          color: HuddlColors.primary.withValues(alpha: 0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -1720,13 +1720,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     height: 34,
                     padding: const EdgeInsets.symmetric(horizontal: 13),
                     decoration: BoxDecoration(
+                      // Orange fill when filters are active — warm + visible
                       color: _hasActiveFilters
-                          ? HuddlColors.nearBlack
+                          ? HuddlColors.primary
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: _hasActiveFilters
-                            ? HuddlColors.nearBlack
+                            ? HuddlColors.primary
                             : hc.divider,
                         width: 1.2,
                       ),
@@ -2107,11 +2108,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: HuddlColors.background,
+                        color: HuddlColors.peachLight,        // warm peach
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.camera_alt_rounded,
-                          color: HuddlColors.textSecondary, size: 18),
+                          color: HuddlColors.primary, size: 18), // orange icon
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -5062,12 +5063,13 @@ class _FilterIconTile extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         height: 90,
         decoration: BoxDecoration(
+          // Warm peach tint when selected — like Airbnb's category tiles
           color: isSelected
-              ? HuddlColors.nearBlack.withValues(alpha: 0.04)
+              ? HuddlColors.primaryPale.withValues(alpha: 0.35)
               : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? HuddlColors.nearBlack : HuddlColors.divider,
+            color: isSelected ? HuddlColors.primary : HuddlColors.divider,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -5078,7 +5080,7 @@ class _FilterIconTile extends StatelessWidget {
               icon,
               size: 28,
               color: isSelected
-                  ? HuddlColors.nearBlack
+                  ? HuddlColors.primary              // orange icon when active
                   : HuddlColors.textSecondary,
             ),
             const SizedBox(height: 6),
@@ -5089,7 +5091,7 @@ class _FilterIconTile extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected
-                    ? HuddlColors.nearBlack
+                    ? HuddlColors.primary            // orange label when active
                     : HuddlColors.textSecondary,
                 height: 1.25,
               ),
@@ -5141,7 +5143,9 @@ class _SegmentedPriceControl extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 decoration: BoxDecoration(
-                  color: isSelected ? HuddlColors.nearBlack : Colors.transparent,
+                  color: isSelected
+                      ? HuddlColors.primary              // warm orange fill
+                      : Colors.transparent,
                   borderRadius: BorderRadius.horizontal(
                     left: isFirst ? const Radius.circular(11) : Radius.zero,
                     right: isLast ? const Radius.circular(11) : Radius.zero,
@@ -5150,7 +5154,7 @@ class _SegmentedPriceControl extends StatelessWidget {
                       ? Border(
                           left: BorderSide(
                             color: isSelected
-                                ? HuddlColors.nearBlack
+                                ? HuddlColors.primary
                                 : HuddlColors.divider,
                             width: 0.5,
                           ),
@@ -5179,8 +5183,8 @@ class _SegmentedPriceControl extends StatelessWidget {
 }
 
 // ── _AirbnbChip ──────────────────────────────────────────────────────────────
-// Clean nearBlack/white pill chip for filter sections.
-// Matches Airbnb's minimal chip style: 1px border, nearBlack when selected.
+// Warm pill chip for filter sections — Huddl orange when selected.
+// Mirrors how Airbnb/Spotify/Duolingo use their brand accent on active filters.
 class _AirbnbChip extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -5200,10 +5204,14 @@ class _AirbnbChip extends StatelessWidget {
         duration: const Duration(milliseconds: 140),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? HuddlColors.nearBlack : Colors.white,
+          color: isSelected
+              ? HuddlColors.primary                              // warm orange fill
+              : Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isSelected ? HuddlColors.nearBlack : HuddlColors.divider,
+            color: isSelected
+                ? HuddlColors.primary
+                : HuddlColors.divider,
             width: 1.2,
           ),
         ),
@@ -5291,7 +5299,7 @@ class _PriceHistogramPainter extends CustomPainter {
       final isActive = i >= lowIdx && i < highIdx;
       final paint = Paint()
         ..color = isActive
-            ? const Color(0xFF1C1C1E) // nearBlack — selected range
+            ? const Color(0xFFFF965C) // Huddl orange — selected range
             : const Color(0xFFD5D5D5) // divider — outside range
         ..style = PaintingStyle.fill;
       canvas.drawRRect(

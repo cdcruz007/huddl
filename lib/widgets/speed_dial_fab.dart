@@ -96,7 +96,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.0,
                 icon:       Icons.storefront_rounded,
                 label:      'Local Services',
-                color:      HuddlColors.nearBlack,
+                color:      HuddlColors.primaryLight,  // soft warm orange
                 onPressed:  () => _onAction(widget.onServicesPressed),
               ),
               const SizedBox(height: 10),
@@ -105,7 +105,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.05,
                 icon:       Icons.accessibility_new_rounded,
                 label:      'SEND Navigator',
-                color:      HuddlColors.nearBlack,
+                color:      HuddlColors.success,        // teal — accessibility
                 onPressed:  () => _onAction(widget.onSendPressed),
               ),
               const SizedBox(height: 10),
@@ -114,7 +114,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.1,
                 icon:       Icons.auto_awesome_rounded,
                 label:      'Huddl Wisdom',
-                color:      HuddlColors.accentAmber,
+                color:      HuddlColors.accentAmber,    // amber — wisdom
                 onPressed:  () => _onAction(widget.onInsightsPressed),
               ),
               const SizedBox(height: 10),
@@ -123,7 +123,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.15,
                 icon:       Icons.smart_toy_outlined,
                 label:      'AI Copilot',
-                color:      HuddlColors.nearBlack,
+                color:      HuddlColors.primary,        // brand orange — AI
                 onPressed:  () => _onAction(widget.onAiPressed),
               ),
               const SizedBox(height: 14),

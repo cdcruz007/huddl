@@ -1722,7 +1722,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newMeetups > 0) {
       items.add(_CatchUpItem(
         icon: Icons.place_rounded,
-        color: HuddlColors.nearBlack,
+        color: HuddlColors.primary,      // warm orange
         label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
         onTap: () => _switchToTab(2),
       ));
@@ -1730,7 +1730,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newEvents > 0) {
       items.add(_CatchUpItem(
         icon: Icons.event_rounded,
-        color: HuddlColors.nearBlack,
+        color: HuddlColors.accentAmber,  // amber — events
         label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
         onTap: () => _switchToTab(2),
       ));
@@ -1738,7 +1738,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newGroupCount > 0) {
       items.add(_CatchUpItem(
         icon: Icons.people_rounded,
-        color: HuddlColors.nearBlack,
+        color: HuddlColors.primary,      // warm orange
         label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
         onTap: () => _switchToTab(2),
       ));
@@ -1746,7 +1746,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newMarket > 0) {
       items.add(_CatchUpItem(
         icon: Icons.storefront_rounded,
-        color: HuddlColors.nearBlack,
+        color: HuddlColors.primaryLight, // soft orange — market
         label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale',
         onTap: () => _switchToTab(3),
       ));
@@ -1775,13 +1775,13 @@ class _HomeScreenState extends State<HomeScreen>
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: hc.surfaceAlt,
+                      color: HuddlColors.peachLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.auto_awesome,
                       size: 16,
-                      color: hc.textPrimary,
+                      color: HuddlColors.primary,  // warm orange spark icon
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1838,24 +1838,27 @@ class _HomeScreenState extends State<HomeScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? HuddlColors.nearBlack.withValues(alpha: 0.35)
-                              : HuddlColors.nearBlack.withValues(alpha: 0.06),
+                              ? item.color.withValues(alpha: 0.18)
+                              : item.color.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.25 : 0.12),
+                            color: item.color.withValues(alpha: isDark ? 0.35 : 0.25),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(item.icon, size: 13, color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.nearBlack),
+                            Icon(item.icon, size: 13,
+                              color: isDark ? item.color.withValues(alpha: 0.85) : item.color),
                             const SizedBox(width: 5),
                             Text(
                               item.label,
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.nearBlack,
+                                color: isDark
+                                    ? item.color.withValues(alpha: 0.85)
+                                    : item.color,
                               ),
                             ),
                           ],
@@ -2127,7 +2130,7 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                               decoration: BoxDecoration(
-                                color: HuddlColors.nearBlack,
+                                color: HuddlColors.success,  // teal — confirmed attendance
                                 borderRadius: BorderRadius.circular(7),
                               ),
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -2171,7 +2174,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
                           _buildActionPill(
                             isGoing ? 'Going ✓' : 'Book',
-                            isGoing ? HuddlColors.nearBlack : HuddlColors.accentAmber,
+                            isGoing ? HuddlColors.success : HuddlColors.primary,
                             hc,
                             isActive: isGoing,
                           ),
@@ -2323,7 +2326,7 @@ class _HomeScreenState extends State<HomeScreen>
           final priceStr = item.isFree
               ? 'Free'
               : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-          final priceColor = item.isFree ? HuddlColors.nearBlack : HuddlColors.textDark;
+          final priceColor = item.isFree ? HuddlColors.success : HuddlColors.textDark;
           return GestureDetector(
             onTap: () {
               HuddlAnimations.selectionClick();
@@ -3024,7 +3027,7 @@ class _HomeScreenState extends State<HomeScreen>
     String candidateType = '';
     String ctaLabel = 'View';
     IconData candidateIcon = Icons.event_rounded;
-    Color candidateColor = HuddlColors.nearBlack;
+    Color candidateColor = HuddlColors.primary;   // warm orange default
     // ignore: no_leading_underscores_for_local_identifiers
     String _reasonTag = '';   // shown as a pill below the category tag
 
@@ -3079,7 +3082,7 @@ class _HomeScreenState extends State<HomeScreen>
       candidateType = 'MEETUP';
       ctaLabel = (candidate as Meetup).isGoing ? 'View' : 'Join';
       candidateIcon = Icons.place_rounded;
-      candidateColor = HuddlColors.nearBlack;
+      candidateColor = HuddlColors.primary;         // warm orange meetup CTA
 
     } else if (_eventService.events.isNotEmpty) {
       candidate = _eventService.events.first;
@@ -3093,7 +3096,7 @@ class _HomeScreenState extends State<HomeScreen>
       candidateType = 'SERVICE';
       ctaLabel = 'View';
       candidateIcon = Icons.handshake_rounded;
-      candidateColor = HuddlColors.blueDark;
+      candidateColor = HuddlColors.success;         // teal — services
     }
 
     if (candidate == null) return null;
@@ -3543,13 +3546,13 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const Spacer(),
                       const Icon(Icons.check_circle,
-                          size: 14, color: HuddlColors.nearBlack),
+                          size: 14, color: HuddlColors.success),  // teal
                       const SizedBox(width: 3),
                       Text('Going',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.nearBlack,
+                            color: HuddlColors.success,            // teal
                           )),
                     ],
                   ),
@@ -3670,13 +3673,13 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const Spacer(),
                       Icon(Icons.check_circle,
-                          size: 14, color: HuddlColors.nearBlack),
+                          size: 14, color: HuddlColors.success),  // teal
                       const SizedBox(width: 3),
                       Text('Going',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.nearBlack,
+                            color: HuddlColors.success,            // teal
                           )),
                     ],
                   ),

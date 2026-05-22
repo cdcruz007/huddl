@@ -666,8 +666,10 @@ class _DiscoverAnimatedTabBarState extends State<_DiscoverAnimatedTabBar>
           return AnimatedBuilder(
             animation: _anim,
             builder: (context, _) {
-              // Smooth colour interpolation
-              final activeColor = HuddlColors.nearBlack;
+              // Smooth colour interpolation — Huddl orange active fill.
+              // Unselected pills have no border (transparent bg) so they read
+              // as lightweight text tabs, not heavy outlined buttons.
+              final activeColor = HuddlColors.primary;        // warm orange
               final inactiveColor = Colors.transparent;
               Color bgColor;
               Color textColor;
@@ -676,20 +678,20 @@ class _DiscoverAnimatedTabBarState extends State<_DiscoverAnimatedTabBar>
                 bgColor = Color.lerp(inactiveColor, activeColor,
                     _anim.value)!;
                 textColor = Color.lerp(
-                    hc.textTertiary, Colors.white, _anim.value)!;
+                    hc.textSecondary, Colors.white, _anim.value)!;
                 iconColor = Color.lerp(
-                    hc.textTertiary, Colors.white, _anim.value)!;
+                    hc.textSecondary, Colors.white, _anim.value)!;
               } else if (index == _prevIndex && _ctrl.value < 1.0) {
                 bgColor = Color.lerp(activeColor, inactiveColor,
                     _anim.value)!;
                 textColor = Color.lerp(
-                    Colors.white, hc.textTertiary, _anim.value)!;
+                    Colors.white, hc.textSecondary, _anim.value)!;
                 iconColor = Color.lerp(
-                    Colors.white, hc.textTertiary, _anim.value)!;
+                    Colors.white, hc.textSecondary, _anim.value)!;
               } else {
                 bgColor = inactiveColor;
-                textColor = hc.textTertiary;
-                iconColor = hc.textTertiary;
+                textColor = hc.textSecondary;
+                iconColor = hc.textSecondary;
               }
               return GestureDetector(
                 onTap: () {
@@ -704,10 +706,12 @@ class _DiscoverAnimatedTabBarState extends State<_DiscoverAnimatedTabBar>
                   decoration: BoxDecoration(
                     color: bgColor,
                     borderRadius: BorderRadius.circular(24),
+                    // Active: orange border matching fill.
+                    // Inactive: very subtle border only (not solid outline pills)
                     border: Border.all(
                       color: isActive
-                          ? HuddlColors.nearBlack
-                          : hc.divider,
+                          ? HuddlColors.primary
+                          : hc.divider.withValues(alpha: 0.0),
                       width: 1.2,
                     ),
                   ),
