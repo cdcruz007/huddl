@@ -10,7 +10,7 @@ class HuddlTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: HuddlColors.background, // #F6F6F6 — matches screenshot
+      scaffoldBackgroundColor: HuddlColors.warmSand, // #F7F5F2 warm sand — Phase 1 spec
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
         secondary: HuddlColors.teal,
@@ -35,14 +35,14 @@ class HuddlTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: HuddlColors.white,
-        selectedItemColor: HuddlColors.primary,
+        selectedItemColor: HuddlColors.nearBlack,   // Phase 1: near-black nav active state
         unselectedItemColor: HuddlColors.textHint,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         showUnselectedLabels: true,
       ),
       inputDecorationTheme: _inputTheme(
-        fillColor: HuddlColors.background,
+        fillColor: HuddlColors.warmSand,  // warm sand fill matches scaffold
         hintColor: HuddlColors.textHint,
         labelColor: HuddlColors.textSecondary,
       ),

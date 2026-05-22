@@ -1271,7 +1271,7 @@ class _HomeScreenState extends State<HomeScreen>
         style: GoogleFonts.poppins(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          color: HuddlColors.primary,
+          color: HuddlColors.nearBlack,  // Phase 1: wordmark → near-black; 'h' mark stays orange in logo asset
         ),
       ),
     );
@@ -5021,7 +5021,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
                 enabled ? Icons.check_circle : Icons.circle_outlined,
                 key: ValueKey(enabled),
                 size: 24,
-                color: enabled ? HuddlColors.primary : hc.textTertiary,
+                color: enabled ? HuddlColors.textDark : hc.textTertiary,  // Phase 1: feed-pref toggle → textDark
               ),
             ),
           ],

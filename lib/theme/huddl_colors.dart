@@ -145,6 +145,10 @@ class HuddlColors {
   );
 
   // ── Text ────────────────────────────────────────────────────────────────
+  /// Near-black — Phase 1 primary text + nav active state (#1C1C1E).
+  /// Replaces orange in BottomNavigationBar selectedItemColor, logo wordmark,
+  /// and all high-emphasis body text per docx Phase 1 spec.
+  static const Color nearBlack = Color(0xFF1C1C1E);
   static const Color textDark = Color(0xFF43464D);
   static const Color textPrimary = Color(0xFF262A35);
   static const Color textSecondary = Color(0xFF6C6C6C);
@@ -156,6 +160,9 @@ class HuddlColors {
   static const Color textLight = Color(0xFFB0B0B0);
 
   // ── Backgrounds (light mode) ────────────────────────────────────────────
+  /// Warm sand — Phase 1 scaffold background (#F7F5F2).
+  /// "The single change that does 80% of the work" — docx Phase 1 spec.
+  static const Color warmSand = Color(0xFFF7F5F2);
   static const Color background = Color(0xFFF6F6F6);
   static const Color white = Color(0xFFFFFFFF);
   static const Color peachLight = Color(0xFFFFF3ED);
@@ -335,7 +342,7 @@ class HuddlContextColors {
   bool get _isDark => Theme.of(_ctx).brightness == Brightness.dark;
 
   // Surfaces
-  Color get scaffold   => _isDark ? HuddlColors.darkBackground     : HuddlColors.background;  // #F6F6F6 light grey
+  Color get scaffold   => _isDark ? HuddlColors.darkBackground     : HuddlColors.warmSand;    // #F7F5F2 warm sand
   Color get surface    => _isDark ? HuddlColors.darkSurface         : HuddlColors.white;       // pure white cards
   Color get surfaceAlt => _isDark ? HuddlColors.darkSurfaceVariant  : HuddlColors.background;
   Color get inputBg    => _isDark ? HuddlColors.darkInputBg         : HuddlColors.inputBg;
