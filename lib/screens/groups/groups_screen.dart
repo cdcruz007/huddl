@@ -1913,16 +1913,17 @@ class _MessagesTabState extends State<_MessagesTab> {
         ),
 
         // ── Floating compose button ──────────────────────────────────
+        // Positioned above the floating pill nav bar (64px tall, bottom: safeArea+12)
         if (!isSearchActive)
           Positioned(
-            bottom: 24,
-            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+            right: 20,
             child: Semantics(
               label: 'New direct message',
               button: true,
               child: Material(
-                elevation: 4,
-                shadowColor: HuddlColors.primary.withValues(alpha: 0.35),
+                elevation: 6,
+                shadowColor: HuddlColors.primary.withValues(alpha: 0.40),
                 shape: const CircleBorder(),
                 color: HuddlColors.primary,
                 child: InkWell(
@@ -1934,7 +1935,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   child: const SizedBox(
                     width: 52,
                     height: 52,
-                    child: Icon(Icons.add, color: Colors.white, size: 26),
+                    child: Icon(Icons.edit_outlined, color: Colors.white, size: 22),
                   ),
                 ),
               ),

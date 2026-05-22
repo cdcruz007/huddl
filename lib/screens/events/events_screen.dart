@@ -493,8 +493,8 @@ class EventsScreenState extends State<EventsScreen>
         // create meetup, Events → hidden entirely.
         if (_selectedTab == 0)
           Positioned(
-            bottom: 24,
-            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+            right: 20,
             child: GestureDetector(
               onTap: () {
                 HuddlAnimations.lightTap();
@@ -520,8 +520,8 @@ class EventsScreenState extends State<EventsScreen>
           ),
         if (_selectedTab == 1)
           Positioned(
-            bottom: 24,
-            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+            right: 20,
             // P12: Meetup FAB lock overlay when gated
             child: Stack(
               clipBehavior: Clip.none,

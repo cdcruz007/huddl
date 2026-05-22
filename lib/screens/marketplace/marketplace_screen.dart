@@ -1395,8 +1395,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             // ── FAB — visible on Buy and Sell tabs ────────────────────────
             if (_tabController.index == 0 || _tabController.index == 1)
               Positioned(
-                bottom: 24,
-                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+                right: 20,
                 child: GestureDetector(
                   onTap: _openCreateListing,
                   child: Container(
