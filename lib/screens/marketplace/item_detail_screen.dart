@@ -383,7 +383,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               '$amountStr offer sent for "${item.title}"! The seller will review it.')),
                     ],
                   ),
-                  backgroundColor: HuddlColors.teal,
+                  backgroundColor: HuddlColors.nearBlack,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -657,7 +657,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                           ? 'Report submitted. Thank you for keeping Huddl safe.'
                                           : 'Could not submit report. Please try again.'),
                                       backgroundColor: ok
-                                          ? HuddlColors.teal
+                                          ? HuddlColors.nearBlack
                                           : HuddlColors.error,
                                       behavior:
                                           SnackBarBehavior.floating,
@@ -786,7 +786,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     style: _adaptiveText(
                                       fontSize: 26,
                                       fontWeight: FontWeight.w700,
-                                      color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                                      color: item.isFree ? HuddlColors.nearBlack : _kMarketBlue,
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -1190,7 +1190,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             child: Text('"${item.title}" marked as sold')),
                       ],
                     ),
-                    backgroundColor: HuddlColors.teal,
+                    backgroundColor: HuddlColors.nearBlack,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
@@ -1297,7 +1297,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 Text('"${item.title}" is back on sale')),
                       ],
                     ),
-                    backgroundColor: HuddlColors.teal,
+                    backgroundColor: HuddlColors.nearBlack,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
@@ -1315,7 +1315,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.teal,
+                backgroundColor: HuddlColors.nearBlack,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),

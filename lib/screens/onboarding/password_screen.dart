@@ -345,7 +345,7 @@ class _StrengthBar extends StatelessWidget {
       case _Strength.fair:
         return (segments: 2, color: HuddlColors.warning, label: 'Fair');
       case _Strength.good:
-        return (segments: 3, color: HuddlColors.teal, label: 'Good');
+        return (segments: 3, color: HuddlColors.nearBlack, label: 'Good');
       case _Strength.strong:
         return (segments: 4, color: HuddlColors.success, label: 'Strong');
       case _Strength.empty:

@@ -16,7 +16,7 @@ import 'package:intl/intl.dart';
 // Tab bar: underline style using HuddlColors.primary (orange) — matches
 //   Discover (events_screen.dart) and Connect (groups_screen.dart) exactly.
 // Header badge: HuddlColors.primary — consistent brand primary.
-// Teal (HuddlColors.teal) is retained for secondary/informational surfaces
+// Teal (HuddlColors.nearBlack) is retained for secondary/informational surfaces
 //   (e.g. _kSendInfoBg card backgrounds, success indicators).
 //   _kSendCrimson — escalation/appeal accent (urgency, legal challenge)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -252,10 +252,10 @@ class _Disclaimer extends StatelessWidget {
     );
     final linkStyle = GoogleFonts.poppins(
       fontSize: 10,
-      color: HuddlColors.teal,
+      color: HuddlColors.nearBlack,
       height: 1.3,
       decoration: TextDecoration.underline,
-      decorationColor: HuddlColors.teal,
+      decorationColor: HuddlColors.nearBlack,
     );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
@@ -533,21 +533,21 @@ class _EhcpGuidancePanel extends StatelessWidget {
                   : _kSendInfoBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: HuddlColors.teal.withValues(alpha: 0.3),
+                color: HuddlColors.nearBlack.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.description_outlined,
-                    size: 16, color: HuddlColors.teal),
+                    size: 16, color: HuddlColors.nearBlack),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     g.templateLetterHint!,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                       height: 1.5,
                     ),
                   ),
@@ -698,7 +698,7 @@ class _ResourceCard extends StatelessWidget {
                 size: 14,
                 color: resource.isCharity
                     ? _kSendCrimson
-                    : HuddlColors.teal,
+                    : HuddlColors.nearBlack,
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -739,7 +739,7 @@ class _ResourceCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                     ),
                   ),
                 ],
@@ -759,9 +759,9 @@ class _ResourceCard extends StatelessWidget {
                     resource.url,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                       decoration: TextDecoration.underline,
-                      decorationColor: HuddlColors.teal,
+                      decorationColor: HuddlColors.nearBlack,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1265,7 +1265,7 @@ class _SendAiConsentGate extends StatelessWidget {
           // ── Data & infrastructure ─────────────────────────────────────
           _ConsentSection(
             icon: Icons.cloud_outlined,
-            color: HuddlColors.teal,
+            color: HuddlColors.nearBlack,
             title: 'How your messages are processed',
             body: 'Your messages are sent to Google\'s AI infrastructure '
                 '(Vertex AI / Gemini API) to generate responses. This means '
@@ -1576,7 +1576,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
           // ── Samaritans ─────────────────────────────────────────────────
           _CrisisContactCard(
             icon: Icons.support_agent_outlined,
-            color: HuddlColors.teal,
+            color: HuddlColors.nearBlack,
             label: 'Emotional support — 24 / 7',
             name: 'Samaritans',
             detail: '116 123 (free, any time)',
@@ -1586,7 +1586,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
           // ── GP ─────────────────────────────────────────────────────────
           _CrisisContactCard(
             icon: Icons.local_hospital_outlined,
-            color: HuddlColors.teal,
+            color: HuddlColors.nearBlack,
             label: 'Non-emergency medical / mental health',
             name: 'Your GP or NHS 111',
             detail: 'Call 111',
@@ -2956,7 +2956,7 @@ class _DirectoryCard extends StatelessWidget {
                   size: 18,
                   color: resource.isCharity
                       ? _kSendCrimson
-                      : HuddlColors.teal,
+                      : HuddlColors.nearBlack,
                 ),
               ),
               const SizedBox(width: 10),
@@ -2982,7 +2982,7 @@ class _DirectoryCard extends StatelessWidget {
                         fontSize: 10,
                         color: resource.isCharity
                             ? _kSendCrimson
-                            : HuddlColors.teal,
+                            : HuddlColors.nearBlack,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -3018,7 +3018,7 @@ class _DirectoryCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.nearBlack,
                       ),
                     ),
                   ],
@@ -3042,9 +3042,9 @@ class _DirectoryCard extends StatelessWidget {
                       resource.url,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.nearBlack,
                         decoration: TextDecoration.underline,
-                        decorationColor: HuddlColors.teal,
+                        decorationColor: HuddlColors.nearBlack,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

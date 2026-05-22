@@ -18,6 +18,7 @@ import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
+import '../../widgets/animations/huddl_loading_states.dart';
 
 
 
@@ -702,8 +703,27 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       priceType: _selectedPriceType,
       query: _searchQuery,
     );
-    // AI always ranks invisibly — no toggle needed
-    return _ai.rankItems(raw);
+
+    // AI ranks first; sort modal then overrides order
+    final aiRanked = _ai.rankItems(raw);
+
+    switch (_sortIndex) {
+      case 1: // Newest first — by listedAt desc
+        final sorted = List<RehomeItem>.from(aiRanked)
+          ..sort((a, b) => b.listedAt.compareTo(a.listedAt));
+        return sorted;
+      case 2: // Price low → high (free items first, then ascending)
+        final sorted = List<RehomeItem>.from(aiRanked)
+          ..sort((a, b) => a.price.compareTo(b.price));
+        return sorted;
+      case 3: // Price high → low (descending; free items at end)
+        final sorted = List<RehomeItem>.from(aiRanked)
+          ..sort((a, b) => b.price.compareTo(a.price));
+        return sorted;
+      case 0: // Most relevant — AI ranking (default)
+      default:
+        return aiRanked;
+    }
   }
 
   bool get _hasActiveFilters =>
@@ -1263,10 +1283,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   void _openCreateListing() async {
     HuddlAnimations.mediumTap();
+
+    // Show the Airbnb-style "getting things ready" overlay while the listing
+    // screen initialises.  We capture the overlay's navigator context so we
+    // can dismiss it precisely after the push resolves.
+    if (!mounted) return;
+    bool overlayShowing = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.15),
+      builder: (_) => const HuddlProcessLoadingOverlay(
+        message: 'Setting up your listing',
+        submessage: 'Just a moment…',
+      ),
+    ).then((_) => overlayShowing = false);
+
+    // Brief artificial delay so the overlay is visible for at least one frame
+    // before the page route transition starts — avoids a flash of the overlay
+    // appearing and immediately disappearing on fast devices.
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Push the create-listing screen.
     final result = await Navigator.push<RehomeItem>(
       context,
       MaterialPageRoute(builder: (_) => const CreateListingScreen()),
     );
+
+    // Dismiss the overlay if it is still displayed.
+    if (mounted && overlayShowing) {
+      Navigator.of(context).pop();
+    }
+
     if (result != null && mounted) {
       _tabController.animateTo(1);
     }

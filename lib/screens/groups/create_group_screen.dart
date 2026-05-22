@@ -1028,7 +1028,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         : '"${newGroup.name}" created and listed in Discover for ${creatorBorough != 'Unknown Borough' ? creatorBorough : 'your borough'}!'),
               ),
             ]),
-            backgroundColor: HuddlColors.teal,
+            backgroundColor: HuddlColors.nearBlack,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

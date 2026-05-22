@@ -955,8 +955,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: _isRecipientTyping
-                        ? HuddlColors.teal
-                        : _dmService.isUserOnline(widget.recipientId) ? HuddlColors.teal : HuddlColors.textHint,
+                        ? HuddlColors.nearBlack
+                        : _dmService.isUserOnline(widget.recipientId) ? HuddlColors.success : HuddlColors.textHint,
                     fontWeight: _isRecipientTyping
                         ? FontWeight.w500
                         : FontWeight.w400,
@@ -1202,7 +1202,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   Container(
                     width: 8, height: 8,
                     decoration: const BoxDecoration(
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -3281,7 +3281,7 @@ class _MessageStatusIcon extends StatelessWidget {
       case MessageStatus.read:
         return Semantics(
           label: 'Read',
-          child: const Icon(Icons.done_all, size: 14, color: HuddlColors.teal),
+          child: const Icon(Icons.done_all, size: 14, color: HuddlColors.nearBlack),
         );
       case MessageStatus.error:
         return Semantics(

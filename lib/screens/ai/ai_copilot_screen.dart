@@ -317,7 +317,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 height: 7,
                 decoration: BoxDecoration(
                   color: _copilot.isOnline
-                      ? HuddlColors.teal
+                      ? HuddlColors.success
                       : HuddlColors.textHint,
                   shape: BoxShape.circle,
                 ),
@@ -328,7 +328,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   color: _copilot.isOnline
-                      ? HuddlColors.teal
+                      ? HuddlColors.success
                       : HuddlColors.textHint,
                 ),
               ),

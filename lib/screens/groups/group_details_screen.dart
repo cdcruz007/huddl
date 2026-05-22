@@ -183,7 +183,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 4),
@@ -207,7 +207,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             Text('Group link copied to clipboard'),
           ],
         ),
-        backgroundColor: HuddlColors.teal,
+        backgroundColor: HuddlColors.nearBlack,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -338,7 +338,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                     SnackBar(
                                       content: Text(
                                           'Invitation sent to ${contact['name']}'),
-                                      backgroundColor: HuddlColors.teal,
+                                      backgroundColor: HuddlColors.nearBlack,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10)),
@@ -583,7 +583,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isJoined ? HuddlColors.teal : HuddlColors.primary,
+                  backgroundColor: _isJoined ? HuddlColors.success : HuddlColors.primary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(26)),
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -676,20 +676,20 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: HuddlColors.teal.withValues(alpha: 0.1),
+                        color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, size: 14, color: HuddlColors.teal),
+                          const Icon(Icons.star, size: 14, color: HuddlColors.nearBlack),
                           const SizedBox(width: 4),
                           Text(
                             'You created this group',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.teal,
+                              color: HuddlColors.nearBlack,
                             ),
                           ),
                         ],
@@ -1153,18 +1153,18 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: 0.10),
+                    color: HuddlColors.nearBlack.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.25)),
+                    border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.25)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.shield_outlined, size: 18, color: HuddlColors.teal),
+                      Icon(Icons.shield_outlined, size: 18, color: HuddlColors.nearBlack),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'You\'re an admin of this group',
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.teal, height: 1.4),
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack, height: 1.4),
                         ),
                       ),
                     ],
@@ -1596,7 +1596,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         Navigator.pop(ctx);
         ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
           content: Text('Left ${widget.groupName}. $successorName is the new admin.'),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));
@@ -1650,7 +1650,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         Navigator.pop(ctx);
         ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
           content: Text('Left ${widget.groupName}'),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));

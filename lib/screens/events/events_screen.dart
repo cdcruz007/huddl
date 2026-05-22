@@ -275,11 +275,11 @@ class EventsScreenState extends State<EventsScreen>
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: HuddlColors.teal.withValues(alpha: 0.1),
+                            color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.event,
-                              color: HuddlColors.teal, size: 22),
+                              color: HuddlColors.nearBlack, size: 22),
                         ),
                         title: Text(
                           event.title,
@@ -2657,7 +2657,7 @@ class _ImGoingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor =
-        item.isMeetup ? HuddlColors.primary : HuddlColors.teal;
+        item.isMeetup ? HuddlColors.primary : HuddlColors.nearBlack;
 
     // ── Messages-tab identical row card ──────────────────────────────
     return Dismissible(
@@ -2856,7 +2856,7 @@ class _ImGoingCard extends StatelessWidget {
     if (isPast) return HuddlColors.textSecondary;
     if (daysUntil <= 0) return HuddlColors.error;
     if (daysUntil <= 2) return HuddlColors.accentAmber;
-    return HuddlColors.teal;
+    return HuddlColors.nearBlack;
   }
 }
 
@@ -3292,7 +3292,7 @@ class _EventsTabState extends State<_EventsTab> {
               'Found $count new events near you',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
-            backgroundColor: HuddlColors.teal,
+            backgroundColor: HuddlColors.nearBlack,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
@@ -3679,14 +3679,14 @@ class _EventsTabState extends State<_EventsTab> {
                 const SizedBox(
                   width: 14, height: 14,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: HuddlColors.teal),
+                      strokeWidth: 2, color: HuddlColors.nearBlack),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Finding events for you\u2026',
                   style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                       fontWeight: FontWeight.w500),
                 ),
               ],
@@ -4738,12 +4738,12 @@ class _MeetupSearchRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: isJoined
-                    ? HuddlColors.teal.withValues(alpha: 0.1)
+                    ? HuddlColors.nearBlack.withValues(alpha: 0.1)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isJoined
-                      ? HuddlColors.teal.withValues(alpha: 0.4)
+                      ? HuddlColors.nearBlack.withValues(alpha: 0.4)
                       : context.hc.divider,
                 ),
               ),
@@ -4752,7 +4752,7 @@ class _MeetupSearchRow extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isJoined ? HuddlColors.teal : context.hc.textPrimary,
+                  color: isJoined ? HuddlColors.success : context.hc.textPrimary,
                 ),
               ),
             ),
@@ -4842,7 +4842,7 @@ class _MeetupCardState extends State<_MeetupCard> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -5036,7 +5036,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: isFree
-                            ? HuddlColors.teal
+                            ? HuddlColors.nearBlack
                             : Colors.white.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -5196,7 +5196,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                                     : _isFull && !meetup.isGoing
                                         ? const Color(0xFFFFE5D5)
                                         : meetup.isGoing
-                                            ? HuddlColors.teal
+                                            ? HuddlColors.nearBlack
                                             : HuddlColors.primary,
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -5396,7 +5396,7 @@ class _EventListCardState extends State<_EventListCard> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: isFree
-                            ? HuddlColors.teal
+                            ? HuddlColors.nearBlack
                             : Colors.white.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -5609,7 +5609,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         content: Text(positive
             ? 'Thanks! We\u2019ll show more like this'
             : 'Got it \u2014 fewer like this'),
-        backgroundColor: positive ? HuddlColors.teal : HuddlColors.textSecondary,
+        backgroundColor: positive ? HuddlColors.success : HuddlColors.textSecondary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -5624,10 +5624,10 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: HuddlColors.teal.withValues(alpha: 0.08),
+            color: HuddlColors.nearBlack.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: const Icon(Icons.insights, size: 10, color: HuddlColors.teal),
+          child: const Icon(Icons.insights, size: 10, color: HuddlColors.success),
         ),
         const SizedBox(width: 5),
         Text(
@@ -5641,7 +5641,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             _localFeedback! ? 'Liked' : 'Not for me',
             style: GoogleFonts.poppins(
               fontSize: 10,
-              color: _localFeedback! ? HuddlColors.teal : context.hc.textTertiary,
+              color: _localFeedback! ? HuddlColors.success : context.hc.textTertiary,
               fontWeight: FontWeight.w500,
             ),
           )
@@ -5654,17 +5654,17 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: HuddlColors.teal.withValues(alpha: 0.08),
+                color: HuddlColors.nearBlack.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.teal),
+                  const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.success),
                   const SizedBox(width: 3),
                   Text('Yes', style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
                 ],
               ),
             ),
@@ -5848,7 +5848,7 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Playdate':
       return const _CatStyle(HuddlColors.primary, Icons.child_care);
     case 'Sport':
-      return const _CatStyle(HuddlColors.teal, Icons.sports_golf);
+      return const _CatStyle(HuddlColors.nearBlack, Icons.sports_golf);
     case 'Walk':
       return const _CatStyle(HuddlColors.accentAmber, Icons.directions_walk);
     case 'Social':
@@ -5856,9 +5856,9 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Food':
       return const _CatStyle(HuddlColors.accentAmber, Icons.restaurant);
     case 'Other':
-      return const _CatStyle(HuddlColors.teal, Icons.more_horiz);
+      return const _CatStyle(HuddlColors.nearBlack, Icons.more_horiz);
     default:
-      return const _CatStyle(HuddlColors.teal, Icons.groups);
+      return const _CatStyle(HuddlColors.nearBlack, Icons.groups);
   }
 }
 

@@ -502,7 +502,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         size: 16,
                         color: comp.priceVerdict == 'great_deal'
                             ? HuddlColors.success
-                            : HuddlColors.teal,
+                            : HuddlColors.nearBlack,
                       ),
                       const SizedBox(width: 8),
                       Expanded(

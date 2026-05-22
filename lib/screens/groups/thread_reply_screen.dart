@@ -448,7 +448,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
           IconButton(
             icon: const Icon(
               Icons.add_circle_outline,
-              color: HuddlColors.teal,
+              color: HuddlColors.nearBlack,
             ),
             onPressed: () {
               // Placeholder for attachment in thread

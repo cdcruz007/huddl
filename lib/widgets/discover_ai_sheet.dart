@@ -217,21 +217,21 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: HuddlColors.teal.withValues(alpha: 0.1),
+                        color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.verified,
-                              size: 12, color: HuddlColors.teal),
+                              size: 12, color: HuddlColors.nearBlack),
                           const SizedBox(width: 3),
                           Text(
                             'Smart',
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.teal,
+                              color: HuddlColors.nearBlack,
                             ),
                           ),
                         ],
@@ -253,7 +253,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: _isListening
-                        ? HuddlColors.teal.withValues(alpha: 0.4)
+                        ? HuddlColors.nearBlack.withValues(alpha: 0.4)
                         : Colors.transparent,
                   ),
                 ),
@@ -275,7 +275,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                           hintStyle: GoogleFonts.poppins(
                             fontSize: 14,
                             color: _isListening
-                                ? HuddlColors.teal
+                                ? HuddlColors.nearBlack
                                 : HuddlColors.textHint,
                             fontStyle: _isListening
                                 ? FontStyle.italic
@@ -309,7 +309,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                 height: 36,
                                 decoration: BoxDecoration(
                                   color: _isListening
-                                      ? HuddlColors.teal
+                                      ? HuddlColors.nearBlack
                                       : HuddlColors.background,
                                   shape: BoxShape.circle,
                                 ),
@@ -527,14 +527,14 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
-                            size: 14, color: HuddlColors.teal),
+                            size: 14, color: HuddlColors.nearBlack),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             widget.contextExplanation,
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: HuddlColors.teal,
+                              color: HuddlColors.nearBlack,
                               height: 1.3,
                             ),
                           ),
@@ -553,20 +553,20 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.06),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.thumbs_up_down,
-                        size: 14, color: HuddlColors.teal),
+                        size: 14, color: HuddlColors.nearBlack),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Tap \u{1F44D} or \u{1F44E} on group cards to help us show you better matches.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.nearBlack,
                           height: 1.3,
                         ),
                       ),

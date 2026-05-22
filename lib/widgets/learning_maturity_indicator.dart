@@ -217,7 +217,7 @@ class LearningMaturityIndicator extends StatelessWidget {
   Color _maturityColor(LearningMaturity maturity) {
     switch (maturity) {
       case LearningMaturity.coldStart:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case LearningMaturity.warming:
         return HuddlColors.accentAmber;
       case LearningMaturity.personalised:

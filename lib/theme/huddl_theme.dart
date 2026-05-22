@@ -13,7 +13,7 @@ class HuddlTheme {
       scaffoldBackgroundColor: HuddlColors.warmSand, // #F7F5F2 warm sand — Phase 1 spec
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
-        secondary: HuddlColors.teal,
+        secondary: HuddlColors.nearBlack,
         surface: HuddlColors.white,
         error: HuddlColors.error,
         onPrimary: HuddlColors.white,
@@ -75,7 +75,7 @@ class HuddlTheme {
       scaffoldBackgroundColor: HuddlColors.darkBackground,
       colorScheme: const ColorScheme.dark(
         primary: HuddlColors.primary,
-        secondary: HuddlColors.teal,
+        secondary: HuddlColors.nearBlack,
         surface: HuddlColors.darkSurface,
         error: HuddlColors.errorSoft,
         onPrimary: HuddlColors.white,

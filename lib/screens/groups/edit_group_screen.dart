@@ -322,7 +322,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 Text('Group updated successfully.'),
               ],
             ),
-            backgroundColor: HuddlColors.teal,
+            backgroundColor: HuddlColors.nearBlack,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),

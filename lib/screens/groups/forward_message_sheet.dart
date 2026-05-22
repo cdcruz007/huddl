@@ -757,8 +757,8 @@ class _ForwardSheetState extends State<_ForwardSheet>
       );
 
   Widget _eventPlaceholder() => Container(
-        color: HuddlColors.teal.withValues(alpha: 0.12),
-        child: const Center(child: Icon(Icons.event_outlined, size: 24, color: HuddlColors.teal)),
+        color: HuddlColors.nearBlack.withValues(alpha: 0.12),
+        child: const Center(child: Icon(Icons.event_outlined, size: 24, color: HuddlColors.nearBlack)),
       );
 
   /// Builds the preview section — image thumbnail + caption, or text preview.
@@ -1202,11 +1202,11 @@ class _ForwardSheetState extends State<_ForwardSheet>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.teal.withValues(alpha: 0.1),
+                color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.insert_drive_file,
-                  size: 20, color: HuddlColors.teal),
+                  size: 20, color: HuddlColors.nearBlack),
             ),
             const SizedBox(width: 10),
             Expanded(

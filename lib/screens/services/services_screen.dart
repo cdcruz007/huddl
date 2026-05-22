@@ -54,9 +54,9 @@ const Map<ServiceCategory, String> _kCategoryImages = {
 
 // ── Avatar colour palette for endorser initial circles ─────────────────────────
 const List<Color> _kAvatarPalette = [
-  HuddlColors.teal,
+  HuddlColors.nearBlack,
   HuddlColors.primary,
-  HuddlColors.teal,
+  HuddlColors.nearBlack,
 ];
 
 // ─── Shimmer placeholder for image load ──────────────────────────────────────
@@ -111,7 +111,7 @@ class _ShimmerBoxState extends State<_ShimmerBox>
 bool _isParentSource(String source) => source == 'parent_added';
 
 // Badge colour token — teal, same as 'Free' badge in Events
-const Color _kBadgeParent = HuddlColors.teal;
+const Color _kBadgeParent = HuddlColors.nearBlack;
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
@@ -936,12 +936,12 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: _hasEndorsed
-                      ? HuddlColors.teal.withValues(alpha: 0.1)
+                      ? HuddlColors.nearBlack.withValues(alpha: 0.1)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _hasEndorsed
-                        ? HuddlColors.teal.withValues(alpha: 0.4)
+                        ? HuddlColors.nearBlack.withValues(alpha: 0.4)
                         : context.hc.divider,
                   ),
                 ),
@@ -951,7 +951,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: _hasEndorsed ? HuddlColors.teal : HuddlColors.primary,
+                          color: _hasEndorsed ? HuddlColors.nearBlack : HuddlColors.primary,
                         ),
                       )
                     : Text(
@@ -959,7 +959,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: _hasEndorsed ? HuddlColors.teal : context.hc.textPrimary,
+                          color: _hasEndorsed ? HuddlColors.nearBlack : context.hc.textPrimary,
                         ),
                       ),
               ),
@@ -1237,7 +1237,7 @@ class _ListingCardState extends State<_ListingCard> {
                     top: 12, right: 12,
                     child: _BadgePill(
                       label: isVerified ? 'Verified' : 'Community Pick',
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                     ),
                   ),
               ],
@@ -1399,7 +1399,7 @@ class _VerifiedBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isVerified = tier == VerificationTier.verified;
-    const color = HuddlColors.teal;
+    const color = HuddlColors.nearBlack;
     return Container(
       margin: const EdgeInsets.only(left: 6),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1610,22 +1610,22 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.07),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: HuddlColors.teal.withValues(alpha: 0.22)),
+                      color: HuddlColors.nearBlack.withValues(alpha: 0.22)),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: HuddlColors.teal.withValues(alpha: 0.15),
+                      backgroundColor: HuddlColors.nearBlack.withValues(alpha: 0.15),
                       child: Text(
                         listing.parentName![0].toUpperCase(),
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.nearBlack,
                         ),
                       ),
                     ),
@@ -1638,7 +1638,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                             'Recommended by',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: HuddlColors.teal.withValues(alpha: 0.8),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.8),
                             ),
                           ),
                           Text(
@@ -1646,7 +1646,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.teal,
+                              color: HuddlColors.nearBlack,
                             ),
                           ),
                         ],
@@ -1673,7 +1673,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -1772,13 +1772,13 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 _StatPill(
                   icon: Icons.thumb_up_rounded,
                   label: '$_endorseCount ${_endorseCount == 1 ? "endorsement" : "endorsements"}',
-                  color: HuddlColors.teal,
+                  color: HuddlColors.nearBlack,
                 ),
                 const SizedBox(width: 8),
                 _StatPill(
                   icon: Icons.visibility_outlined,
                   label: '${listing.viewCount} ${listing.viewCount == 1 ? "view" : "views"}',
-                  color: HuddlColors.teal,
+                  color: HuddlColors.nearBlack,
                 ),
               ],
             ),
@@ -1789,16 +1789,16 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _hasEndorsed
-                      ? HuddlColors.teal.withValues(alpha: 0.1)
+                      ? HuddlColors.nearBlack.withValues(alpha: 0.1)
                       : HuddlColors.primary,
                   foregroundColor:
-                      _hasEndorsed ? HuddlColors.teal : Colors.white,
+                      _hasEndorsed ? HuddlColors.nearBlack : Colors.white,
                   elevation: _hasEndorsed ? 0 : 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                     side: _hasEndorsed
                         ? BorderSide(
-                            color: HuddlColors.teal.withValues(alpha: 0.4))
+                            color: HuddlColors.nearBlack.withValues(alpha: 0.4))
                         : BorderSide.none,
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1811,7 +1811,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color:
-                              _hasEndorsed ? HuddlColors.teal : Colors.white,
+                              _hasEndorsed ? HuddlColors.nearBlack : Colors.white,
                         ),
                       )
                     : Icon(
@@ -1833,7 +1833,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               _ContactRow(
                 icon: Icons.phone_outlined,
                 label: listing.phone!,
-                color: HuddlColors.teal,
+                color: HuddlColors.nearBlack,
                 onTap: () async {
                   HuddlAnimations.selectionClick();
                   final uri = Uri(scheme: 'tel', path: listing.phone);
@@ -1857,7 +1857,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               _ContactRow(
                 icon: Icons.language_outlined,
                 label: listing.website!,
-                color: HuddlColors.teal,
+                color: HuddlColors.nearBlack,
                 onTap: () async {
                   HuddlAnimations.selectionClick();
                   final raw = listing.website!;
@@ -1935,7 +1935,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: 0.12),
+                    color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -1943,7 +1943,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.teal,
+                      color: HuddlColors.nearBlack,
                     ),
                   ),
                 ),
@@ -1955,7 +1955,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                     child:
-                        CircularProgressIndicator(color: HuddlColors.teal)),
+                        CircularProgressIndicator(color: HuddlColors.nearBlack)),
               )
             else if (_endorsements.isEmpty)
               Padding(
@@ -2001,7 +2001,7 @@ class _EndorsementTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: HuddlColors.teal.withValues(alpha: 0.15),
+                backgroundColor: HuddlColors.nearBlack.withValues(alpha: 0.15),
                 child: Text(
                   endorsement.firstName.isNotEmpty
                       ? endorsement.firstName[0].toUpperCase()
@@ -2009,7 +2009,7 @@ class _EndorsementTile extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.teal,
+                    color: HuddlColors.nearBlack,
                   ),
                 ),
               ),
@@ -2363,10 +2363,10 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                   Container(
                     padding: const EdgeInsets.all(11),
                     decoration: BoxDecoration(
-                      color: HuddlColors.teal.withValues(alpha: 0.07),
+                      color: HuddlColors.nearBlack.withValues(alpha: 0.07),
                       borderRadius: BorderRadius.circular(11),
                       border: Border.all(
-                          color: HuddlColors.teal.withValues(alpha: 0.25)),
+                          color: HuddlColors.nearBlack.withValues(alpha: 0.25)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2374,7 +2374,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                         Row(
                           children: [
                             const Icon(Icons.person_outline_rounded,
-                                size: 14, color: HuddlColors.teal),
+                                size: 14, color: HuddlColors.nearBlack),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -2382,7 +2382,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.teal,
+                                  color: HuddlColors.nearBlack,
                                 ),
                               ),
                             ),
@@ -2393,7 +2393,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                           'So other parents can message you about this recommendation.',
                           style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: HuddlColors.teal.withValues(alpha: 0.85),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.85),
                               height: 1.4),
                         ),
                         const SizedBox(height: 8),
@@ -2873,10 +2873,10 @@ class _ManualAddFormState extends State<_ManualAddForm> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: HuddlColors.teal.withValues(alpha: 0.07),
+                color: HuddlColors.nearBlack.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: HuddlColors.teal.withValues(alpha: 0.25)),
+                    color: HuddlColors.nearBlack.withValues(alpha: 0.25)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2884,14 +2884,14 @@ class _ManualAddFormState extends State<_ManualAddForm> {
                   Row(
                     children: [
                       const Icon(Icons.person_outline_rounded,
-                          size: 15, color: HuddlColors.teal),
+                          size: 15, color: HuddlColors.nearBlack),
                       const SizedBox(width: 6),
                       Text(
                         'Your recommendation (optional)',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.nearBlack,
                         ),
                       ),
                     ],
@@ -2901,7 +2901,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
                     'Add your name so other parents can message you about your experience with this provider.',
                     style: GoogleFonts.poppins(
                         fontSize: 11.5,
-                        color: HuddlColors.teal.withValues(alpha: 0.85),
+                        color: HuddlColors.nearBlack.withValues(alpha: 0.85),
                         height: 1.4),
                   ),
                   const SizedBox(height: 10),
@@ -3028,9 +3028,9 @@ class _SectionCard extends StatelessWidget {
 Color _categoryColor(ServiceCategory cat) => switch (cat) {
       ServiceCategory.childcare => HuddlColors.categoryBaby,
       ServiceCategory.babysitting => HuddlColors.accentCoral,
-      ServiceCategory.cleaning => HuddlColors.teal,
+      ServiceCategory.cleaning => HuddlColors.nearBlack,
       ServiceCategory.healthWellness => HuddlColors.success,
-      ServiceCategory.education => HuddlColors.teal,
+      ServiceCategory.education => HuddlColors.nearBlack,
       ServiceCategory.fitness => HuddlColors.categorySport,
       ServiceCategory.firstAid => HuddlColors.error,
       ServiceCategory.doula => HuddlColors.pinkSoft,

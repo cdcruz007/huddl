@@ -49,7 +49,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           SnackBar(
             content: Text('Subscription reactivated! Your plan will continue to renew.',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.teal,
+            backgroundColor: HuddlColors.nearBlack,
           ),
         );
         setState(() {});
@@ -67,7 +67,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           SnackBar(
             content: Text('Scheduled change revoked. Your current plan continues.',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.teal,
+            backgroundColor: HuddlColors.nearBlack,
           ),
         );
         setState(() {});
@@ -101,7 +101,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             SnackBar(
               content: Text('Reverted to Welcome plan',
                   style: GoogleFonts.poppins(color: HuddlColors.white)),
-              backgroundColor: HuddlColors.teal,
+              backgroundColor: HuddlColors.nearBlack,
             ),
           );
           Navigator.pop(context, true);
@@ -183,13 +183,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
-                            color: HuddlColors.teal, size: 18),
+                            color: HuddlColors.nearBlack, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '${_service.daysUntilRenewal} days remaining in your current period.',
                             style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.teal),
+                                fontSize: 12, color: HuddlColors.nearBlack),
                           ),
                         ),
                       ],
@@ -243,7 +243,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 child: Text('Reactivate',
                     style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.teal)),
+                        color: HuddlColors.nearBlack)),
               ),
             ],
           ),
@@ -465,7 +465,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 : 'No previous purchases found.',
             style: GoogleFonts.poppins(color: HuddlColors.white),
           ),
-          backgroundColor: restored ? HuddlColors.teal : HuddlColors.textHint,
+          backgroundColor: restored ? HuddlColors.nearBlack : HuddlColors.textHint,
         ),
       );
     }
@@ -493,10 +493,10 @@ class _ScheduledChangeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        isCancellation ? HuddlColors.error : HuddlColors.teal;
+        isCancellation ? HuddlColors.error : HuddlColors.nearBlack;
     final bgColor = isCancellation
         ? HuddlColors.error.withValues(alpha: 0.06)
-        : HuddlColors.teal.withValues(alpha: 0.06);
+        : HuddlColors.nearBlack.withValues(alpha: 0.06);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -716,14 +716,14 @@ class _PlanCard extends StatelessWidget {
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
     if (isScheduledTarget) {
-      borderColor = HuddlColors.teal;
+      borderColor = HuddlColors.nearBlack;
       bgColor = HuddlColors.premiumPurpleBg;
     } else if (isHighlighted && !isCurrentPlan) {
       borderColor = HuddlColors.primary;
       bgColor = HuddlColors.primary.withValues(alpha: 0.06);
     }
     if (isCurrentPlan) {
-      borderColor = isPendingCancel ? HuddlColors.error : HuddlColors.teal;
+      borderColor = isPendingCancel ? HuddlColors.error : HuddlColors.nearBlack;
       bgColor = isPendingCancel
           ? HuddlColors.error.withValues(alpha: 0.05)
           : HuddlColors.successBg;
@@ -782,7 +782,7 @@ class _PlanCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: isPendingCancel
                                     ? HuddlColors.error
-                                    : HuddlColors.teal,
+                                    : HuddlColors.nearBlack,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -799,7 +799,7 @@ class _PlanCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal,
+                                color: HuddlColors.nearBlack,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Scheduled',
@@ -968,20 +968,20 @@ class _PlanCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.08),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.schedule,
-                        color: HuddlColors.teal, size: 16),
+                        color: HuddlColors.nearBlack, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         scheduledSummary ?? 'Scheduled for next billing cycle',
                         style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: HuddlColors.teal),
+                            color: HuddlColors.nearBlack),
                       ),
                     ),
                   ],
@@ -1008,7 +1008,7 @@ class _PlanCard extends StatelessWidget {
                           : HuddlColors.textDark),
                   foregroundColor: HuddlColors.white,
                   disabledBackgroundColor: HuddlColors.successBg,
-                  disabledForegroundColor: HuddlColors.teal,
+                  disabledForegroundColor: HuddlColors.nearBlack,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -1042,7 +1042,7 @@ class _PlanCard extends StatelessWidget {
       case SubscriptionTier.neighbourhood:
         return HuddlColors.primary;
       case SubscriptionTier.innerCircle:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
     }
   }
 
@@ -1119,7 +1119,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.teal))),
+                                color: HuddlColors.nearBlack))),
                   ],
                 ),
               ),
@@ -1210,7 +1210,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.teal))),
+                      color: HuddlColors.nearBlack))),
         ],
       ),
     );
@@ -1237,7 +1237,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                       fontSize: 12, color: HuddlColors.textSecondary))),
           Expanded(child: Center(child: checkIcon(explorer, HuddlColors.textHint))),
           Expanded(child: Center(child: checkIcon(neighbourhood, HuddlColors.textDark))),
-          Expanded(child: Center(child: checkIcon(inner, HuddlColors.teal))),
+          Expanded(child: Center(child: checkIcon(inner, HuddlColors.nearBlack))),
         ],
       ),
     );

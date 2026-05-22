@@ -1000,14 +1000,14 @@ For any questions about voice message data processing, contact our Data Protecti
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.teal.withValues(alpha: 0.08),
+        color: HuddlColors.nearBlack.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.verified_user, color: HuddlColors.teal, size: 22),
+          const Icon(Icons.verified_user, color: HuddlColors.success, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1018,7 +1018,7 @@ For any questions about voice message data processing, contact our Data Protecti
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.teal,
+                    color: HuddlColors.nearBlack,
                   ),
                 ),
                 const SizedBox(height: 4),

@@ -289,7 +289,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                       GoogleFonts.poppins(fontSize: 13, color: Colors.white))),
         ],
       ),
-      backgroundColor: HuddlColors.teal,
+      backgroundColor: HuddlColors.nearBlack,
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 4),
       margin: const EdgeInsets.all(16),
@@ -343,7 +343,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           if (!kIsWeb) ...[
             _InfoCard(
               icon: Icons.cloud_outlined,
-              iconColor: HuddlColors.teal,
+              iconColor: HuddlColors.nearBlack,
               title: Platform.isIOS
                   ? 'iCloud backup (iOS)'
                   : 'Google Drive backup (Android)',
@@ -365,7 +365,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           if (kIsWeb)
             _InfoCard(
               icon: Icons.info_outline,
-              iconColor: HuddlColors.teal,
+              iconColor: HuddlColors.nearBlack,
               title: 'Web — manual backup only',
               body: 'Automatic backup is not available in the web version. '
                   'Use the manual export below to save your data.',
@@ -379,7 +379,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
           _InfoCard(
             icon: Icons.shield_outlined,
-            iconColor: HuddlColors.teal,
+            iconColor: HuddlColors.nearBlack,
             title: 'What is included',
             body: 'All messages, photos, groups, polls, meetups, events, '
                 'saved items, profile data, notification preferences, '
@@ -407,7 +407,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           // Import card
           _ActionCard(
             icon: Icons.download_outlined,
-            iconColor: HuddlColors.teal,
+            iconColor: HuddlColors.nearBlack,
             title: 'Restore from backup',
             subtitle: 'Paste the contents of a previous backup file to '
                 'restore your data.',
@@ -480,12 +480,12 @@ class _AutoBackupStatusCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: kIsWeb
                   ? HuddlColors.accentAmber.withValues(alpha: 0.15)
-                  : HuddlColors.teal.withValues(alpha: 0.15),
+                  : HuddlColors.nearBlack.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               kIsWeb ? Icons.info_outline : Icons.cloud_done_outlined,
-              color: kIsWeb ? HuddlColors.accentAmber : HuddlColors.teal,
+              color: kIsWeb ? HuddlColors.accentAmber : HuddlColors.nearBlack,
               size: 22,
             ),
           ),
@@ -511,7 +511,7 @@ class _AutoBackupStatusCard extends StatelessWidget {
                     'Last manual backup: ${_fmt(lastManualBackup!)}',
                     style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.nearBlack,
                         fontWeight: FontWeight.w500),
                   ),
                 ],
@@ -688,11 +688,11 @@ class _ExportResultSheet extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.12),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check_circle_outline,
-                    color: HuddlColors.teal, size: 22),
+                    color: HuddlColors.nearBlack, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -849,7 +849,7 @@ class _StorageDetailCard extends StatelessWidget {
                     ),
                   ),
                   const Icon(Icons.check_circle,
-                      size: 16, color: HuddlColors.teal),
+                      size: 16, color: HuddlColors.nearBlack),
                 ],
               ),
             ),

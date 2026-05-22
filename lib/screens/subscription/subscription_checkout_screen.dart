@@ -163,7 +163,7 @@ class _SubscriptionCheckoutScreenState
         SnackBar(
           content: Text('Subscription restored!',
               style: GoogleFonts.poppins(color: HuddlColors.white)),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
         ),
       );
     }
@@ -261,7 +261,7 @@ class _SubscriptionCheckoutScreenState
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = _plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
+    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
 
     return Scaffold(
       backgroundColor: context.hc.scaffold,
@@ -295,10 +295,10 @@ class _SubscriptionCheckoutScreenState
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: HuddlColors.teal.withValues(alpha: 0.06),
+                          color: HuddlColors.nearBlack.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                              color: HuddlColors.teal.withValues(alpha: 0.2)),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.2)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +306,7 @@ class _SubscriptionCheckoutScreenState
                             Row(
                               children: [
                                 const Icon(Icons.schedule,
-                                    color: HuddlColors.teal, size: 20),
+                                    color: HuddlColors.nearBlack, size: 20),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -314,7 +314,7 @@ class _SubscriptionCheckoutScreenState
                                     style: GoogleFonts.poppins(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.teal),
+                                        color: HuddlColors.nearBlack),
                                   ),
                                 ),
                               ],
@@ -336,7 +336,7 @@ class _SubscriptionCheckoutScreenState
                                 style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: HuddlColors.teal),
+                                    color: HuddlColors.nearBlack),
                               ),
                             ],
                           ],
@@ -497,7 +497,7 @@ class _SubscriptionCheckoutScreenState
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                color: HuddlColors.teal.withValues(alpha: 0.07),
+                color: HuddlColors.nearBlack.withValues(alpha: 0.07),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -508,7 +508,7 @@ class _SubscriptionCheckoutScreenState
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -518,7 +518,7 @@ class _SubscriptionCheckoutScreenState
                             style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.teal),
+                                color: HuddlColors.nearBlack),
                           ),
                         ),
                       ],
@@ -539,12 +539,12 @@ class _SubscriptionCheckoutScreenState
                               mode: LaunchMode.externalApplication);
                         },
                         icon: const Icon(Icons.open_in_browser,
-                            size: 16, color: HuddlColors.teal),
+                            size: 16, color: HuddlColors.nearBlack),
                         label: Text('Re-open payment page',
                             style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.teal)),
+                                color: HuddlColors.nearBlack)),
                         style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
@@ -743,7 +743,7 @@ class _PaymentMethodsSection extends StatelessWidget {
             child: Row(
               children: [
                 const Icon(Icons.shield_outlined,
-                    color: HuddlColors.teal, size: 16),
+                    color: HuddlColors.nearBlack, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -753,7 +753,7 @@ class _PaymentMethodsSection extends StatelessWidget {
                         : 'Payment is processed securely by your app store. '
                           'Huddl never sees or stores your payment details.',
                     style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.teal),
+                        fontSize: 11, color: HuddlColors.nearBlack),
                   ),
                 ),
               ],
@@ -811,20 +811,20 @@ class _PaymentBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: HuddlColors.teal.withValues(alpha: 0.1),
+        color: HuddlColors.nearBlack.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_iconForMethod(method), size: 14, color: HuddlColors.teal),
+          Icon(_iconForMethod(method), size: 14, color: HuddlColors.nearBlack),
           const SizedBox(width: 4),
           Text(method.displayName,
               style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.teal)),
+                  color: HuddlColors.nearBlack)),
         ],
       ),
     );
@@ -879,7 +879,7 @@ class _PaymentProviderRow extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.check_circle, color: HuddlColors.teal, size: 20),
+        const Icon(Icons.check_circle, color: HuddlColors.nearBlack, size: 20),
       ],
     );
   }
@@ -909,7 +909,7 @@ class _OrderSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
+    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1020,14 +1020,14 @@ class _BillingOptionTile extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.12),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(savingsText!,
                     style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.teal)),
+                        color: HuddlColors.nearBlack)),
               ),
           ],
         ),
@@ -1043,7 +1043,7 @@ class _SuccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
+    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -1114,7 +1114,7 @@ class _ScheduledSuccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
+    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
 
     String dateStr = 'your next billing cycle';
     if (renewalDate != null) {

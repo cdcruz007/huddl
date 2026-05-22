@@ -278,7 +278,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
     final t = total > 1 ? i / (total - 1) : 0.0;
     final color = Color.lerp(
       HuddlColors.primary,
-      HuddlColors.teal,
+      HuddlColors.nearBlack,
       t,
     )!;
     return Container(
@@ -489,14 +489,14 @@ class _PainPointTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(Icons.check_circle_outline,
-                        size: 14, color: HuddlColors.teal),
+                        size: 14, color: HuddlColors.nearBlack),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         point.mitigation,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.nearBlack,
                           height: 1.4,
                         ),
                       ),
@@ -567,7 +567,7 @@ class _CompetitorTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.add_circle_outline,
-                  size: 14, color: HuddlColors.teal),
+                  size: 14, color: HuddlColors.nearBlack),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(

@@ -352,7 +352,7 @@ class _MemberTile extends StatelessWidget {
                 width: 10,
                 height: 10,
                 decoration: const BoxDecoration(
-                  color: HuddlColors.teal,
+                  color: HuddlColors.nearBlack,
                   shape: BoxShape.circle,
                 ),
               ),

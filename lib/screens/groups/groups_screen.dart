@@ -38,7 +38,7 @@ import '../../services/firestore_service.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
-const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
+const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
 
 // ── Member avatar photo pool — used for overlapping circles in group cards ──
 // Deterministic selection: (group.id.hashCode + i) % length
@@ -1667,7 +1667,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           end: Alignment.bottomRight,
           colors: [
             HuddlColors.background,
-            HuddlColors.teal.withValues(alpha: 0.05),
+            HuddlColors.nearBlack.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -1768,7 +1768,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     // Category icon colour
     const iconColors = [
-      HuddlColors.primary, HuddlColors.teal, HuddlColors.accentAmber,
+      HuddlColors.primary, HuddlColors.nearBlack, HuddlColors.accentAmber,
       HuddlColors.blueDark, Color(0xFF9B59B6),
     ];
     final accentColor = iconColors[summary.groupId.hashCode.abs() % iconColors.length];
@@ -1905,13 +1905,13 @@ class _MessagesTabState extends State<_MessagesTab> {
                       padding: const EdgeInsets.only(top: 5),
                       child: Row(
                         children: [
-                          const Icon(Icons.event_rounded, size: 10, color: HuddlColors.teal),
+                          const Icon(Icons.event_rounded, size: 10, color: HuddlColors.nearBlack),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               summary.upcomingPlanNote!,
                               style: GoogleFonts.poppins(
-                                fontSize: 10, color: HuddlColors.teal,
+                                fontSize: 10, color: HuddlColors.nearBlack,
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -3259,7 +3259,7 @@ class _DMMessageRow extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontStyle: FontStyle.italic,
-                                      color: HuddlColors.teal,
+                                      color: HuddlColors.nearBlack,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   )
@@ -4500,7 +4500,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 4),
@@ -5327,18 +5327,18 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: HuddlColors.teal.withValues(alpha: 0.08),
+                            color: HuddlColors.nearBlack.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                            border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.search, size: 11, color: HuddlColors.teal),
+                              Icon(Icons.search, size: 11, color: HuddlColors.nearBlack),
                               const SizedBox(width: 4),
                               Text(s.query, style: _adaptiveText(
                                 fontSize: 11, fontWeight: FontWeight.w500,
-                                color: HuddlColors.teal,
+                                color: HuddlColors.nearBlack,
                               )),
                             ],
                           ),
@@ -5361,16 +5361,16 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: HuddlColors.teal.withValues(alpha: 0.06),
+                        color: HuddlColors.nearBlack.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.search, size: 12, color: HuddlColors.teal),
+                          const Icon(Icons.search, size: 12, color: HuddlColors.nearBlack),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(contextLine,
-                              style: _adaptiveText(fontSize: 11, color: HuddlColors.teal)),
+                              style: _adaptiveText(fontSize: 11, color: HuddlColors.nearBlack)),
                           ),
                           // Dismiss banner
                           Semantics(
@@ -5386,7 +5386,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 14,
-                                  color: HuddlColors.teal,
+                                  color: HuddlColors.nearBlack,
                                 ),
                               ),
                             ),
@@ -5671,15 +5671,15 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   // General / Popular
   'disc_first_time_mums':     {'icon': Icons.child_friendly,      'color': HuddlColors.primary},
-  'disc_dads_connect':        {'icon': Icons.man,                  'color': HuddlColors.teal},
+  'disc_dads_connect':        {'icon': Icons.man,                  'color': HuddlColors.nearBlack},
   'disc_bump_to_baby':        {'icon': Icons.pregnant_woman,       'color': HuddlColors.primaryLight},
   'disc_pregnancy_antenatal': {'icon': Icons.favorite,             'color': HuddlColors.accentCoral},
   'disc_newborn_club':        {'icon': Icons.baby_changing_station,'color': HuddlColors.primary},
-  'disc_single_parents':      {'icon': Icons.person,               'color': HuddlColors.teal},
+  'disc_single_parents':      {'icon': Icons.person,               'color': HuddlColors.nearBlack},
   'disc_lgbtq_parents':       {'icon': Icons.diversity_3,          'color': HuddlColors.accentAmber},
-  'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.teal},
+  'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.nearBlack},
   // Language & Culture
-  'disc_dutch_parents':       {'icon': Icons.language,             'color': HuddlColors.teal},
+  'disc_dutch_parents':       {'icon': Icons.language,             'color': HuddlColors.nearBlack},
   'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.accentAmber},
   // Sleep & Feeding
   'disc_baby_sleep':          {'icon': Icons.bedtime,              'color': HuddlColors.yellowMedium},
@@ -5689,35 +5689,35 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_healthy_meals':       {'icon': Icons.restaurant,           'color': HuddlColors.accentAmber},
   'disc_allergies_dietary':   {'icon': Icons.no_food,              'color': HuddlColors.error},
   // Education & Learning
-  'disc_montessori_parenting':{'icon': Icons.school,               'color': HuddlColors.teal},
-  'disc_forest_school':       {'icon': Icons.park,                 'color': HuddlColors.teal},
+  'disc_montessori_parenting':{'icon': Icons.school,               'color': HuddlColors.nearBlack},
+  'disc_forest_school':       {'icon': Icons.park,                 'color': HuddlColors.nearBlack},
   'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.accentAmber},
-  'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.teal},
+  'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.nearBlack},
   // Activities & Play
   'disc_baby_sensory':        {'icon': Icons.toys,                 'color': HuddlColors.primary},
   'disc_toddler_activities':  {'icon': Icons.directions_run,       'color': HuddlColors.accentCoral},
-  'disc_cambridge_playgrounds':{'icon': Icons.outdoor_grill,       'color': HuddlColors.teal},
+  'disc_cambridge_playgrounds':{'icon': Icons.outdoor_grill,       'color': HuddlColors.nearBlack},
   // Fitness & Sport
   'disc_buggy_runners':       {'icon': Icons.directions_run,       'color': HuddlColors.accentCoral},
   'disc_postnatal_fitness':   {'icon': Icons.fitness_center,       'color': HuddlColors.accentCoral},
   'disc_postnatal_yoga':      {'icon': Icons.self_improvement,     'color': HuddlColors.primary},
   'disc_buggy_bootcamp':      {'icon': Icons.sports,               'color': HuddlColors.accentCoral},
-  'disc_cambridge_tennis':    {'icon': Icons.sports_tennis,        'color': HuddlColors.teal},
-  'disc_cambridge_sports':    {'icon': Icons.sports_soccer,        'color': HuddlColors.teal},
+  'disc_cambridge_tennis':    {'icon': Icons.sports_tennis,        'color': HuddlColors.nearBlack},
+  'disc_cambridge_sports':    {'icon': Icons.sports_soccer,        'color': HuddlColors.nearBlack},
   // Wellbeing & Support
   'disc_mental_health':       {'icon': Icons.spa,                  'color': HuddlColors.primaryLight},
   'disc_nct_cambridge':       {'icon': Icons.group,                'color': HuddlColors.primary},
-  'disc_special_needs_send':  {'icon': Icons.accessibility_new,    'color': HuddlColors.teal},
+  'disc_special_needs_send':  {'icon': Icons.accessibility_new,    'color': HuddlColors.nearBlack},
   'disc_parents_multiples':   {'icon': Icons.people,               'color': HuddlColors.accentAmber},
-  'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.teal},
+  'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.nearBlack},
   // Childcare & Practicalities
   'disc_nanny_share':         {'icon': Icons.home,                 'color': HuddlColors.yellowMedium},
   'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.accentAmber},
   'disc_working_parents':     {'icon': Icons.work_outline,         'color': HuddlColors.accentAmber},
   'disc_child_sleep_consultants':{'icon': Icons.nightlight,        'color': HuddlColors.yellowMedium},
   // Lifestyle
-  'disc_eco_parenting':       {'icon': Icons.eco,                  'color': HuddlColors.teal},
-  'disc_travel_tribe':        {'icon': Icons.flight_takeoff,       'color': HuddlColors.teal},
+  'disc_eco_parenting':       {'icon': Icons.eco,                  'color': HuddlColors.nearBlack},
+  'disc_travel_tribe':        {'icon': Icons.flight_takeoff,       'color': HuddlColors.nearBlack},
 };
 
 // ── Small placeholder thumbnail for search result rows ────────────────────────
@@ -6774,11 +6774,11 @@ class _SavedThreadCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: 0.12),
+                    color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
-                    child: Icon(Icons.topic, size: 14, color: HuddlColors.teal),
+                    child: Icon(Icons.topic, size: 14, color: HuddlColors.nearBlack),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -6788,7 +6788,7 @@ class _SavedThreadCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.forum, size: 12, color: HuddlColors.teal),
+                          const Icon(Icons.forum, size: 12, color: HuddlColors.nearBlack),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -6796,7 +6796,7 @@ class _SavedThreadCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: HuddlColors.teal,
+                                color: HuddlColors.nearBlack,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -6837,7 +6837,7 @@ class _SavedThreadCard extends StatelessWidget {
                 color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(12),
                 border: Border(
-                  left: BorderSide(color: HuddlColors.teal, width: 3),
+                  left: BorderSide(color: HuddlColors.nearBlack, width: 3),
                 ),
               ),
               child: Column(
@@ -6879,14 +6879,14 @@ class _SavedThreadCard extends StatelessWidget {
                   if (savedThread.replies.isNotEmpty)
                   Row(
                     children: [
-                      Icon(Icons.reply, size: 14, color: HuddlColors.teal),
+                      Icon(Icons.reply, size: 14, color: HuddlColors.nearBlack),
                       const SizedBox(width: 4),
                       Text(
                         '${savedThread.replies.length} ${savedThread.replies.length == 1 ? 'reply' : 'replies'}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.nearBlack,
                         ),
                       ),
                     ],
@@ -7013,7 +7013,7 @@ class _SavedEventCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
                           color: savedEvent.isFree
-                              ? HuddlColors.teal.withValues(alpha: 0.12)
+                              ? HuddlColors.nearBlack.withValues(alpha: 0.12)
                               : HuddlColors.background,
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -7024,7 +7024,7 @@ class _SavedEventCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: savedEvent.isFree ? HuddlColors.teal : HuddlColors.textTertiary,
+                            color: savedEvent.isFree ? HuddlColors.nearBlack : HuddlColors.textTertiary,
                           ),
                         ),
                       ),
@@ -7227,7 +7227,7 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
                     // Left side — teal mark read/unread (revealed on right swipe)
                     Expanded(
                       child: Container(
-                        color: showRead ? HuddlColors.teal : Colors.transparent,
+                        color: showRead ? HuddlColors.nearBlack : Colors.transparent,
                         alignment: Alignment.centerLeft,
                         padding: const EdgeInsets.only(left: 24),
                         child: AnimatedOpacity(

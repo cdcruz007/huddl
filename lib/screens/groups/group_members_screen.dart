@@ -9,7 +9,7 @@ import '../../services/user_privacy_prefs_service.dart';
 import 'manage_admins_screen.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
-const Color _kOnline = HuddlColors.teal;
+const Color _kOnline = HuddlColors.success;
 
 class GroupMembersScreen extends StatefulWidget {
   final String groupId;
@@ -158,7 +158,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   Color _colorForUid(String uid) {
     const colors = [
       HuddlColors.primary,
-      HuddlColors.teal,
+      HuddlColors.nearBlack,
       HuddlColors.primaryDark,
       HuddlColors.accentAmber,
       HuddlColors.yellow,

@@ -176,7 +176,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
         _buildRow(
             'Borough set', _guard.currentBorough != null ? 'Yes' : 'No',
             valueColor: _guard.currentBorough != null
-                ? HuddlColors.teal
+                ? HuddlColors.nearBlack
                 : HuddlColors.accentCoral),
       ];
 
@@ -202,9 +202,9 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
               ? 'UK-wide'
               : 'Borough-aware';
       final color = scope == FeatureScope.boroughOnly
-          ? HuddlColors.teal
+          ? HuddlColors.nearBlack
           : scope == FeatureScope.ukWide
-              ? HuddlColors.teal
+              ? HuddlColors.nearBlack
               : HuddlColors.accentAmber;
       return _buildRow(f.name, scopeLabel, valueColor: color);
     }).toList();

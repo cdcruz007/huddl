@@ -187,17 +187,17 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: 0.1),
+                    color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.verified, size: 12, color: HuddlColors.teal),
+                      const Icon(Icons.verified, size: 12, color: HuddlColors.success),
                       const SizedBox(width: 3),
                       Text('Smart', style: GoogleFonts.poppins(
                         fontSize: 10, fontWeight: FontWeight.w600,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.nearBlack,
                       )),
                     ],
                   ),
@@ -217,7 +217,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _isListening
-                      ? HuddlColors.teal.withValues(alpha: 0.4)
+                      ? HuddlColors.nearBlack.withValues(alpha: 0.4)
                       : Colors.transparent,
                 ),
               ),
@@ -233,7 +233,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                         hintText: _isListening ? 'Listening...' : 'Type a command or question...',
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: _isListening ? HuddlColors.teal : context.hc.textTertiary,
+                          color: _isListening ? HuddlColors.nearBlack : context.hc.textTertiary,
                           fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
                         ),
                         border: InputBorder.none,
@@ -256,7 +256,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                             width: 36, height: 36,
                             decoration: BoxDecoration(
                               color: _isListening
-                                  ? HuddlColors.teal
+                                  ? HuddlColors.nearBlack
                                   : HuddlColors.background,
                               shape: BoxShape.circle,
                             ),
@@ -393,13 +393,13 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 14, color: HuddlColors.teal),
+                  const Icon(Icons.info_outline, size: 14, color: HuddlColors.nearBlack),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Suggestions improve as you use them. Tap \u{1F44D} or \u{1F44E} on any suggestion.',
                       style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.teal, height: 1.3,
+                        fontSize: 11, color: HuddlColors.nearBlack, height: 1.3,
                       ),
                     ),
                   ),

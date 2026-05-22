@@ -114,7 +114,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('${member.name} is now an admin.'),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));
@@ -283,7 +283,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: const Text('Admin role transferred successfully.'),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));
@@ -545,11 +545,11 @@ class _AdminTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.12),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text('Creator',
-                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
               ),
             ],
           ],

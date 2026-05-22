@@ -124,7 +124,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               ),
             ],
           ),
-          backgroundColor: HuddlColors.teal,
+          backgroundColor: HuddlColors.nearBlack,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10)),
@@ -299,7 +299,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       color: HuddlColors.blueBackground,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.copy_outlined, color: HuddlColors.teal, size: 20),
+                    child: const Icon(Icons.copy_outlined, color: HuddlColors.nearBlack, size: 20),
                   ),
                   title: Text('Copy Link', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
@@ -310,7 +310,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Text('Link copied to clipboard'),
-                        backgroundColor: HuddlColors.teal,
+                        backgroundColor: HuddlColors.nearBlack,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -342,7 +342,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         color: HuddlColors.blueBackground,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.edit_outlined, color: HuddlColors.teal, size: 20),
+                      child: const Icon(Icons.edit_outlined, color: HuddlColors.nearBlack, size: 20),
                     ),
                     title: Text('Edit meetup', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                     onTap: () {
@@ -746,7 +746,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         ),
                       ],
                     ),
-                    backgroundColor: HuddlColors.teal,
+                    backgroundColor: HuddlColors.nearBlack,
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -785,7 +785,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               backgroundColor: _hasEnded || _isFull
                   ? HuddlColors.textTertiary
                   : _meetup.isGoing
-                      ? HuddlColors.teal
+                      ? HuddlColors.nearBlack
                       : _detailOrange,
               disabledBackgroundColor: HuddlColors.textTertiary,
               disabledForegroundColor: Colors.white,
@@ -1100,7 +1100,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
                               color: inv.status == 'going'
-                                  ? HuddlColors.teal.withValues(alpha: 0.1)
+                                  ? HuddlColors.nearBlack.withValues(alpha: 0.1)
                                   : inv.status == 'declined'
                                       ? HuddlColors.error.withValues(alpha: 0.1)
                                       : _detailOrange.withValues(alpha: 0.1),
@@ -1113,7 +1113,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 11, fontWeight: FontWeight.w600,
                                 color: inv.status == 'going'
-                                    ? HuddlColors.teal
+                                    ? HuddlColors.nearBlack
                                     : inv.status == 'declined'
                                         ? HuddlColors.error
                                         : _detailOrange,
@@ -1297,7 +1297,7 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Playdate':
       return const _CatStyleInfo(HuddlColors.primary, Icons.child_care);
     case 'Sport':
-      return const _CatStyleInfo(HuddlColors.teal, Icons.sports_golf);
+      return const _CatStyleInfo(HuddlColors.nearBlack, Icons.sports_golf);
     case 'Walk':
       return const _CatStyleInfo(HuddlColors.paleBlue, Icons.directions_walk);
     case 'Social':
@@ -1305,7 +1305,7 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Food':
       return const _CatStyleInfo(HuddlColors.accentAmber, Icons.restaurant);
     default:
-      return const _CatStyleInfo(HuddlColors.teal, Icons.groups);
+      return const _CatStyleInfo(HuddlColors.nearBlack, Icons.groups);
   }
 }
 

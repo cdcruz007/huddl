@@ -420,7 +420,7 @@ class _HuddlCelebrationBurstState extends State<HuddlCelebrationBurst>
     _particles.clear();
     final colors = [
       HuddlColors.primary,
-      HuddlColors.teal,
+      HuddlColors.nearBlack,
       HuddlColors.accentAmber,
       HuddlColors.error,
       const Color(0xFF5B9CFF),

@@ -267,7 +267,7 @@ class _CommunityPainter extends CustomPainter {
 
     // 3 overlapping circles representing community
     final c1 = Paint()..color = HuddlColors.primary.withValues(alpha: 0.85);
-    final c2 = Paint()..color = HuddlColors.teal.withValues(alpha: 0.85);
+    final c2 = Paint()..color = HuddlColors.nearBlack.withValues(alpha: 0.85);
     final c3 = Paint()..color = HuddlColors.accentAmber.withValues(alpha: 0.85);
 
     canvas.drawCircle(Offset(cx - 24, cy - 8), 34, c1);
@@ -345,7 +345,7 @@ class _MegaphonePainter extends CustomPainter {
 
     // Sound waves
     final wavePaint = Paint()
-      ..color = HuddlColors.teal.withValues(alpha: 0.6)
+      ..color = HuddlColors.nearBlack.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
@@ -353,7 +353,7 @@ class _MegaphonePainter extends CustomPainter {
       Rect.fromCenter(center: Offset(cx - 28, cy), width: 20, height: 30),
       -0.8, 1.6, false, wavePaint,
     );
-    wavePaint.color = HuddlColors.teal.withValues(alpha: 0.4);
+    wavePaint.color = HuddlColors.nearBlack.withValues(alpha: 0.4);
     canvas.drawArc(
       Rect.fromCenter(center: Offset(cx - 28, cy), width: 36, height: 50),
       -0.8, 1.6, false, wavePaint,
@@ -376,7 +376,7 @@ class _SparklePainter extends CustomPainter {
     // Central sparkle star
     _drawStar(canvas, Offset(cx, cy), 38, HuddlColors.primary);
     _drawStar(canvas, Offset(cx - 40, cy - 30), 14, HuddlColors.accentAmber);
-    _drawStar(canvas, Offset(cx + 42, cy - 24), 10, HuddlColors.teal);
+    _drawStar(canvas, Offset(cx + 42, cy - 24), 10, HuddlColors.nearBlack);
     _drawStar(canvas, Offset(cx - 30, cy + 38), 8, HuddlColors.primary.withValues(alpha: 0.6));
     _drawStar(canvas, Offset(cx + 36, cy + 32), 12, HuddlColors.accentAmber.withValues(alpha: 0.7));
   }

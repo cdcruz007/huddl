@@ -137,8 +137,6 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _greetingAnimCtrl;
   late Animation<double> _greetingFade;
   late Animation<Offset> _greetingSlide;
-  late AnimationController _feedStaggerCtrl;
-
   // ── AI feedback tracking ──────────────────────────────────────────────────
 
 
@@ -153,10 +151,6 @@ class _HomeScreenState extends State<HomeScreen>
     _greetingAnimCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
-    );
-    _feedStaggerCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
     );
     _greetingFade = CurvedAnimation(
       parent: _greetingAnimCtrl,
@@ -183,7 +177,6 @@ class _HomeScreenState extends State<HomeScreen>
     _authStateSub?.cancel();
     _notifStreamSub?.cancel();
     _greetingAnimCtrl.dispose();
-    _feedStaggerCtrl.dispose();
     _postController.dispose();
     super.dispose();
   }
@@ -385,7 +378,6 @@ class _HomeScreenState extends State<HomeScreen>
       _generateAiPostHint();
 
       _greetingAnimCtrl.forward();
-      _feedStaggerCtrl.forward(from: 0.0);
     } catch (e) {
       setState(() => _isLoading = false);
     }
@@ -1260,6 +1252,11 @@ class _HomeScreenState extends State<HomeScreen>
 
               // ── Smart feed (AI-curated: attending/announcements/tips) ──
               // UX-03: Spring physics on feed cards
+              // Uses HuddlSpringMount (spring entry + stagger) — single clean
+              // animation layer.  HuddlStaggeredList wraps the same logic but
+              // requires a pre-built children list; SliverChildBuilderDelegate
+              // is lazy so we keep the SliverList and apply HuddlSpringMount
+              // per-item directly (equivalent to HuddlStaggeredList behaviour).
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -1267,20 +1264,8 @@ class _HomeScreenState extends State<HomeScreen>
                     final item = _smartFeed[index];
                     return HuddlSpringMount(
                       delay: Duration(milliseconds: index * 55),
-                      child: AnimatedBuilder(
-                      animation: _feedStaggerCtrl,
-                      builder: (context, child) {
-                        final start = (index * 0.08).clamp(0.0, 0.7);
-                        final end = (start + 0.5).clamp(0.0, 1.0);
-                        final progress = ((_feedStaggerCtrl.value - start) / (end - start)).clamp(0.0, 1.0);
-                        final curved = Curves.easeOutCubic.transform(progress);
-                        return Transform.translate(
-                          offset: Offset(0, 20 * (1 - curved)),
-                          child: Opacity(opacity: curved,
-                              child: _buildSmartFeedCard(item, hc, isDark)),
-                        );
-                      },
-                    ));
+                      child: _buildSmartFeedCard(item, hc, isDark),
+                    );
                   },
                   childCount: _smartFeed.length,
                 ),
@@ -1903,14 +1888,19 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Groups carousel ───────────────────────────────────────────────────────
-  // ── UX-02: Groups carousel — HuddlSinglePhotoCard ───────────────────────
+  // ── UX-02: Groups carousel — HuddlMosaicPhotoCard (Airbnb experiences style)
+  //
+  // Group model only has a single imageUrl, so we compose a 4-image mosaic by
+  // pairing the group's own photo with 3 category-matched Pexels stock images.
+  // This gives the Airbnb "experience collage" feel without requiring the data
+  // model to be changed.
   Widget _buildGroupsCarousel(dynamic hc) {
     final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
     if (groups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
     }
     return SizedBox(
-      height: 260,
+      height: 280,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1919,16 +1909,14 @@ class _HomeScreenState extends State<HomeScreen>
         itemBuilder: (context, index) {
           final g = groups[index];
           return SizedBox(
-            width: 200,
-            child: HuddlSinglePhotoCard(
-              imageUrl: g.imageUrl,
+            width: 210,
+            child: HuddlMosaicPhotoCard(
+              images: _groupMosaicImages(g),
               title: g.name,
               subtitle: '${g.memberCount} members · ${g.category}',
               badge: g.isPrivate ? 'Members only' : null,
-              stat: '${g.memberCount}',
-              statIcon: Icons.people_outline,
+              stat: '${g.memberCount} ★',
               showSaveButton: false,
-              aspectRatio: 1.1,
               onTap: () {
                 HuddlAnimations.selectionClick();
                 setState(() => _groupTaps++);
@@ -1939,6 +1927,97 @@ class _HomeScreenState extends State<HomeScreen>
         },
       ),
     );
+  }
+
+  /// Builds a 4-image list for [HuddlMosaicPhotoCard] from a [Group].
+  ///
+  /// The group's own [imageUrl] fills slot 0.  Slots 1–3 are filled with
+  /// category-themed Pexels stock photos so the mosaic always looks complete
+  /// even when the group only has one image.
+  static List<String> _groupMosaicImages(Group g) {
+    final stock = _groupCategoryStockImages(g.category);
+    return [
+      g.imageUrl.isNotEmpty ? g.imageUrl : stock[0],
+      stock[0],
+      stock[1],
+      stock[2],
+    ];
+  }
+
+  /// Returns 3 Pexels stock image URLs that match a group category.
+  /// Used as mosaic fill images alongside the group's own photo.
+  static List<String> _groupCategoryStockImages(String category) {
+    switch (category.toLowerCase()) {
+      case 'fitness':
+      case 'sport':
+      case 'exercise':
+        return [
+          'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'arts':
+      case 'crafts':
+      case 'creative':
+        return [
+          'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/102127/pexels-photo-102127.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/374074/pexels-photo-374074.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'food':
+      case 'cooking':
+      case 'dining':
+        return [
+          'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/2097090/pexels-photo-2097090.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'music':
+        return [
+          'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1751731/pexels-photo-1751731.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/210922/pexels-photo-210922.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'outdoor':
+      case 'nature':
+      case 'walk':
+        return [
+          'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/2258536/pexels-photo-2258536.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'tech':
+      case 'technology':
+      case 'coding':
+        return [
+          'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'parenting':
+      case 'family':
+      case 'kids':
+        return [
+          'https://images.pexels.com/photos/3933239/pexels-photo-3933239.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1741231/pexels-photo-1741231.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/3662852/pexels-photo-3662852.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'books':
+      case 'reading':
+      case 'book club':
+        return [
+          'https://images.pexels.com/photos/1148399/pexels-photo-1148399.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/159866/books-book-pages-read-literature-159866.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/904616/pexels-photo-904616.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+      case 'default community':
+      default:
+        return [
+          'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1128318/pexels-photo-1128318.jpeg?auto=compress&cs=tinysrgb&w=300',
+          'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=300',
+        ];
+    }
   }
 
   // ── UX-02: Meetups carousel — HuddlSinglePhotoCard ───────────────────────
@@ -2048,7 +2127,7 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal,
+                                color: HuddlColors.nearBlack,
                                 borderRadius: BorderRadius.circular(7),
                               ),
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -2092,7 +2171,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
                           _buildActionPill(
                             isGoing ? 'Going ✓' : 'Book',
-                            isGoing ? HuddlColors.teal : HuddlColors.accentAmber,
+                            isGoing ? HuddlColors.nearBlack : HuddlColors.accentAmber,
                             hc,
                             isActive: isGoing,
                           ),
@@ -2244,7 +2323,7 @@ class _HomeScreenState extends State<HomeScreen>
           final priceStr = item.isFree
               ? 'Free'
               : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-          final priceColor = item.isFree ? HuddlColors.teal : HuddlColors.textDark;
+          final priceColor = item.isFree ? HuddlColors.nearBlack : HuddlColors.textDark;
           return GestureDetector(
             onTap: () {
               HuddlAnimations.selectionClick();
@@ -2334,7 +2413,7 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: item.isFree
-                                  ? HuddlColors.teal.withValues(alpha: 0.10)
+                                  ? HuddlColors.nearBlack.withValues(alpha: 0.10)
                                   : const Color(0xFFF2F2F2),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -2945,7 +3024,7 @@ class _HomeScreenState extends State<HomeScreen>
     String candidateType = '';
     String ctaLabel = 'View';
     IconData candidateIcon = Icons.event_rounded;
-    Color candidateColor = HuddlColors.teal;
+    Color candidateColor = HuddlColors.nearBlack;
     // ignore: no_leading_underscores_for_local_identifiers
     String _reasonTag = '';   // shown as a pill below the category tag
 
@@ -3000,7 +3079,7 @@ class _HomeScreenState extends State<HomeScreen>
       candidateType = 'MEETUP';
       ctaLabel = (candidate as Meetup).isGoing ? 'View' : 'Join';
       candidateIcon = Icons.place_rounded;
-      candidateColor = HuddlColors.teal;
+      candidateColor = HuddlColors.nearBlack;
 
     } else if (_eventService.events.isNotEmpty) {
       candidate = _eventService.events.first;
@@ -3464,13 +3543,13 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const Spacer(),
                       const Icon(Icons.check_circle,
-                          size: 14, color: HuddlColors.teal),
+                          size: 14, color: HuddlColors.nearBlack),
                       const SizedBox(width: 3),
                       Text('Going',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           )),
                     ],
                   ),
@@ -3521,7 +3600,7 @@ class _HomeScreenState extends State<HomeScreen>
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: HuddlColors.teal.withValues(alpha: 0.25)),
+              color: HuddlColors.nearBlack.withValues(alpha: 0.25)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -3542,20 +3621,20 @@ class _HomeScreenState extends State<HomeScreen>
                     ? Image.network(event.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                              color: HuddlColors.teal
+                              color: HuddlColors.nearBlack
                                   .withValues(alpha: 0.15),
                               child: const Center(
                                 child: Icon(Icons.event,
                                     size: 22,
-                                    color: HuddlColors.teal),
+                                    color: HuddlColors.nearBlack),
                               ),
                             ))
                     : Container(
                         color:
-                            HuddlColors.teal.withValues(alpha: 0.15),
+                            HuddlColors.nearBlack.withValues(alpha: 0.15),
                         child: const Center(
                           child: Icon(Icons.event,
-                              size: 22, color: HuddlColors.teal),
+                              size: 22, color: HuddlColors.nearBlack),
                         ),
                       ),
               ),
@@ -3571,7 +3650,7 @@ class _HomeScreenState extends State<HomeScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.teal
+                          color: HuddlColors.nearBlack
                               .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -3580,7 +3659,7 @@ class _HomeScreenState extends State<HomeScreen>
                           style: GoogleFonts.poppins(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           ),
                         ),
                       ),
@@ -3591,13 +3670,13 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const Spacer(),
                       Icon(Icons.check_circle,
-                          size: 14, color: HuddlColors.teal),
+                          size: 14, color: HuddlColors.nearBlack),
                       const SizedBox(width: 3),
                       Text('Going',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           )),
                     ],
                   ),
@@ -4286,11 +4365,11 @@ class _HomeScreenState extends State<HomeScreen>
   Color _feedIconColor(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case FeedItemType.newGroup:
         return HuddlColors.textDark;
       case FeedItemType.newEvent:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.accentAmber;
       case FeedItemType.milestone:
@@ -4305,9 +4384,9 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.newGroup:
         return HuddlColors.background;
       case FeedItemType.newEvent:
-        return HuddlColors.teal.withValues(alpha: 0.08);
+        return HuddlColors.nearBlack.withValues(alpha: 0.08);
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.teal.withValues(alpha: 0.08);
+        return HuddlColors.nearBlack.withValues(alpha: 0.08);
       case FeedItemType.milestone:
         return HuddlColors.background;
     }
@@ -5495,7 +5574,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
       case 'group_invitation':
       case 'invitation_accepted':
       case 'group_member_joined':
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case 'post_commented':
       case 'comment_replied':
       case 'poll_created':
@@ -5504,7 +5583,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
       case 'meetup_reminder':
       case 'new_meetup_nearby':
       case 'event_update':
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case 'offer_received':
       case 'offer_accepted':
         return HuddlColors.success;
@@ -6608,11 +6687,11 @@ class _ActivityDetailSheet extends StatelessWidget {
   Color _colorForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case FeedItemType.newGroup:
         return HuddlColors.textDark;
       case FeedItemType.newEvent:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.accentAmber;
       case FeedItemType.milestone:

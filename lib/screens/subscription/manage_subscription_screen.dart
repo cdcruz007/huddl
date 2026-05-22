@@ -74,7 +74,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 : 'No previous purchases found.',
             style: GoogleFonts.poppins(color: HuddlColors.white),
           ),
-          backgroundColor: restored ? HuddlColors.teal : HuddlColors.textHint,
+          backgroundColor: restored ? HuddlColors.nearBlack : HuddlColors.textHint,
         ),
       );
     }
@@ -94,7 +94,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             content: Text(
                 'Subscription paused for 1 month. Welcome back anytime!',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.teal,
+            backgroundColor: HuddlColors.nearBlack,
           ),
         );
       }
@@ -180,7 +180,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               },
               child: Text('Open Settings',
                   style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+                      fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
             )
           else
             TextButton(
@@ -190,7 +190,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               },
               child: Text('Open Play Store',
                   style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+                      fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
             ),
         ],
       ),
@@ -364,7 +364,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'Groups Created',
                 used: _service.groupsCreated,
                 limit: limits.maxGroupsCreated,
-                color: HuddlColors.teal,
+                color: HuddlColors.nearBlack,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -380,7 +380,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'DM Conversations',
                 used: _service.dmConversations,
                 limit: limits.maxDMConversations,
-                color: HuddlColors.teal,
+                color: HuddlColors.nearBlack,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -388,7 +388,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'Messages This Month',
                 used: _service.messagesThisMonth,
                 limit: limits.maxMessagesPerMonth,
-                color: HuddlColors.teal,
+                color: HuddlColors.nearBlack,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -421,7 +421,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'AI Chat Summaries Today',
                 used: _service.aiChatSummariesToday,
                 limit: limits.maxAiChatSummariesPerDay,
-                color: HuddlColors.teal,
+                color: HuddlColors.nearBlack,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -438,7 +438,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   label: 'AI Listing Generations This Month',
                   used: _service.aiListingGenerationsThisMonth,
                   limit: limits.maxAiListingGenerationsPerMonth,
-                  color: HuddlColors.teal,
+                  color: HuddlColors.nearBlack,
                 ),
               ],
               if (limits.aiMeetupMatchmaker) ...[
@@ -679,7 +679,7 @@ class _PaymentInfoCard extends StatelessWidget {
                   : (defaultTargetPlatform == TargetPlatform.iOS
                       ? Icons.apple
                       : Icons.g_mobiledata),
-              color: HuddlColors.teal,
+              color: HuddlColors.nearBlack,
               size: 20,
             ),
           ),
@@ -836,7 +836,7 @@ class _CurrentPlanCard extends StatelessWidget {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
     } else if (isInnerCircle) {
-      accentColor = HuddlColors.teal;
+      accentColor = HuddlColors.nearBlack;
       icon = Icons.workspace_premium;
     }
 
@@ -1041,7 +1041,7 @@ class _ManageScheduledBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCancellation = subscription.isPendingCancellation;
     final color =
-        isCancellation ? HuddlColors.error : HuddlColors.teal;
+        isCancellation ? HuddlColors.error : HuddlColors.nearBlack;
 
     return Container(
       padding: const EdgeInsets.all(14),

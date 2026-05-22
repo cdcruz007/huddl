@@ -213,7 +213,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: pct >= 80 ? HuddlColors.success : HuddlColors.teal,
+                    color: pct >= 80 ? HuddlColors.success : HuddlColors.nearBlack,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: context.hc.surface, width: 1.5),
                   ),
@@ -304,14 +304,14 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                   decoration: BoxDecoration(
                     color: pct >= 90
                         ? HuddlColors.success.withValues(alpha: 0.15)
-                        : HuddlColors.teal.withValues(alpha: 0.15),
+                        : HuddlColors.nearBlack.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '$pct% match',
                     style: GoogleFonts.poppins(
                       fontSize: 11, fontWeight: FontWeight.w600,
-                      color: pct >= 90 ? HuddlColors.success : HuddlColors.teal,
+                      color: pct >= 90 ? HuddlColors.success : HuddlColors.nearBlack,
                     ),
                   ),
                 ),
@@ -352,12 +352,12 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.wb_cloudy_outlined, size: 16, color: HuddlColors.teal),
+                        const Icon(Icons.wb_cloudy_outlined, size: 16, color: HuddlColors.nearBlack),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             suggestion.weatherNote!,
-                            style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.teal),
+                            style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.nearBlack),
                           ),
                         ),
                       ],

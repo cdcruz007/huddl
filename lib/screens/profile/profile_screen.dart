@@ -474,7 +474,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? '\u00A349.99/year'
               : '\u00A35.99/month';
     } else if (isInnerCircle) {
-      accentColor = HuddlColors.teal;
+      accentColor = HuddlColors.nearBlack;
       icon = Icons.workspace_premium;
       planLabel = 'Circle';
       subtitle = sub.billingPeriod == BillingPeriod.annual
@@ -784,7 +784,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: _subscriptionService.isInnerCircle
-                                    ? HuddlColors.teal
+                                    ? HuddlColors.nearBlack
                                     : HuddlColors.primary,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1394,7 +1394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ...[
                 ('aspiring', 'Trying for a baby', Icons.favorite_outline, HuddlColors.accentCoral),
                 ('expecting', 'Expecting', Icons.pregnant_woman, HuddlColors.textDark),
-                ('parent', 'Already a parent', Icons.child_care, HuddlColors.teal),
+                ('parent', 'Already a parent', Icons.child_care, HuddlColors.nearBlack),
               ].map((entry) {
                 final isOn = selected.contains(entry.$1);
                 return Padding(
@@ -1635,7 +1635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: HuddlColors.teal.withValues(alpha: 0.15),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(
@@ -1643,7 +1643,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   style: GoogleFonts.poppins(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: HuddlColors.teal)),
+                                      color: HuddlColors.nearBlack)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -3134,14 +3134,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal.withValues(alpha: 0.15),
+                                color: HuddlColors.nearBlack.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Going',
                                   style: GoogleFonts.poppins(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
-                                      color: HuddlColors.teal)),
+                                      color: HuddlColors.nearBlack)),
                             )
                           : null,
                       dense: true,
@@ -3886,9 +3886,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.07),
+                  color: HuddlColors.nearBlack.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.25)),
+                  border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.25)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -3896,7 +3896,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, size: 16, color: HuddlColors.teal),
+                        const Icon(Icons.info_outline, size: 16, color: HuddlColors.nearBlack),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -3904,7 +3904,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'group chats and DMs. Your microphone is accessed only '
                             'while you are actively recording.',
                             style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.teal, height: 1.45),
+                                fontSize: 12, color: HuddlColors.nearBlack, height: 1.45),
                           ),
                         ),
                       ],
@@ -3916,7 +3916,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'See Privacy Policy \u00a7 18 for full details.',
                       style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.nearBlack,
                           fontStyle: FontStyle.italic,
                           height: 1.4),
                     ),
@@ -6589,11 +6589,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: HuddlColors.teal.withValues(alpha: 0.12),
+              color: HuddlColors.nearBlack.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child:
-                const Icon(Icons.check_circle, size: 48, color: HuddlColors.teal),
+                const Icon(Icons.check_circle, size: 48, color: HuddlColors.nearBlack),
           ),
           const SizedBox(height: 20),
           Text(
@@ -6803,16 +6803,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // _emptyState removed — all empty states now use HuddlEmptyState with
   // the appropriate HuddlIllustration brand asset.
-
-  Widget _circleIcon(IconData icon) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-          color: HuddlColors.background, shape: BoxShape.circle),
-      child: Icon(icon, color: HuddlColors.textDark),
-    );
-  }
+  // _circleIcon removed — was unreferenced dead code.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

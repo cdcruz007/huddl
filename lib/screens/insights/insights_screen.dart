@@ -46,7 +46,7 @@ Color _sourceColor(String source) {
   if (s.contains('netmums'))  return const Color(0xFF00A896);
   if (s.contains('dadsnet'))  return const Color(0xFF1A73E8);
   if (s.contains('gov'))      return const Color(0xFF1D1D1B);
-  return HuddlColors.teal;
+  return HuddlColors.nearBlack;
 }
 
 // =============================================================================
@@ -905,7 +905,7 @@ class _WisdomCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: HuddlColors.teal.withValues(alpha: 0.10),
+                          color: HuddlColors.nearBlack.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -913,7 +913,7 @@ class _WisdomCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           ),
                         ),
                       ),
@@ -1114,7 +1114,7 @@ class _ExpertCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: HuddlColors.teal.withValues(alpha: 0.10),
+                          color: HuddlColors.nearBlack.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -1122,7 +1122,7 @@ class _ExpertCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           ),
                         ),
                       ),
@@ -1522,17 +1522,17 @@ class _ExpertArticleScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isDark ? HuddlColors.darkSurface : HuddlColors.successBg,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.35)),
+                          border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.35)),
                         ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal.withValues(alpha: 0.15),
+                                color: HuddlColors.nearBlack.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.open_in_new_rounded, size: 16, color: HuddlColors.teal),
+                              child: const Icon(Icons.open_in_new_rounded, size: 16, color: HuddlColors.nearBlack),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1543,7 +1543,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                                     'Read the full guide',
                                     style: GoogleFonts.poppins(
                                       fontSize: 13, fontWeight: FontWeight.w600,
-                                      color: HuddlColors.teal,
+                                      color: HuddlColors.nearBlack,
                                     ),
                                   ),
                                   Text(
@@ -1555,7 +1555,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded, size: 20, color: HuddlColors.teal),
+                            const Icon(Icons.chevron_right_rounded, size: 20, color: HuddlColors.nearBlack),
                           ],
                         ),
                       ),
@@ -1819,7 +1819,7 @@ class _CategoryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = teal ? HuddlColors.teal : HuddlColors.primary;
+    final color = teal ? HuddlColors.nearBlack : HuddlColors.primary;
     if (light) {
       // White text on semi-transparent dark bg — for use on photo overlays
       return Container(
@@ -1864,12 +1864,12 @@ class _Tag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: teal
-            ? HuddlColors.teal.withValues(alpha: 0.08)
+            ? HuddlColors.nearBlack.withValues(alpha: 0.08)
             : HuddlColors.gray100,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: teal
-              ? HuddlColors.teal.withValues(alpha: 0.2)
+              ? HuddlColors.nearBlack.withValues(alpha: 0.2)
               : HuddlColors.inputBorderLight,
         ),
       ),
@@ -1877,7 +1877,7 @@ class _Tag extends StatelessWidget {
         '#$label',
         style: GoogleFonts.poppins(
           fontSize: 11,
-          color: teal ? HuddlColors.teal : HuddlColors.textSecondary,
+          color: teal ? HuddlColors.nearBlack : HuddlColors.textSecondary,
         ),
       ),
     );

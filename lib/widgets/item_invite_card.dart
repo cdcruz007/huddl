@@ -126,7 +126,7 @@ class ItemInviteCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: HuddlColors.teal.withValues(alpha: 0.1),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -134,7 +134,7 @@ class ItemInviteCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.teal,
+                                color: HuddlColors.nearBlack,
                               ),
                             ),
                           ),
