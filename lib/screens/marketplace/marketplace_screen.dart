@@ -1654,12 +1654,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         );
                       },
                     )
-                  // ── Masonry grid (default) — variable-height cards ───
-                  : MasonryGridView.count(
+                  // ── 2-column grid (default) ──────────────────────────
+                  // GridView.builder gives each child tight box constraints
+                  // (bounded width AND height), so Expanded works correctly
+                  // inside the card. childAspectRatio ≈ 0.62 (portrait card).
+                  : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 0.62,
+                      ),
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -2863,14 +2870,12 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Image area (fixed aspect 1:1) ──────────────────────────
-              // NOTE: MasonryGridView measures children intrinsically —
-              // Expanded has zero height in an unconstrained axis.
-              // Use AspectRatio so the image has a real pixel height.
-              AspectRatio(
-                aspectRatio: 1.0,
+              // ── Image area (⅝ of card height) ────────────────────────────────
+              // GridView.builder provides tight box constraints to each cell
+              // so Expanded works correctly here.
+              Expanded(
+                flex: 5,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -2978,76 +2983,80 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                   ],
                 ),
               ),
-              // ── Card body (intrinsic height — no Expanded) ──────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Category row + price right-aligned
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.category.label.toUpperCase(),
-                            style: _adaptiveText(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: hc.textTertiary,
-                              letterSpacing: 0.3,
+              // ── Card body (⅗ of card height) ────────────────────────────────
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category row + price right-aligned
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.category.label.toUpperCase(),
+                              style: _adaptiveText(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: hc.textTertiary,
+                                letterSpacing: 0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Text(
-                          item.priceDisplay,
-                          style: _adaptiveText(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                          Text(
+                            item.priceDisplay,
+                            style: _adaptiveText(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    // Title
-                    Text(
-                      item.title,
-                      style: _adaptiveText(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: hc.textPrimary,
-                        height: 1.25,
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    // Location row
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined,
-                            size: 11, color: hc.textTertiary),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            item.sellerLocation.isNotEmpty
-                                ? item.sellerLocation
-                                : 'Near you',
-                            style: _adaptiveText(
-                              fontSize: 11,
-                              color: hc.textTertiary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 3),
+                      // Title
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: hc.textPrimary,
+                            height: 1.25,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Location row
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 11, color: hc.textTertiary),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              item.sellerLocation.isNotEmpty
+                                  ? item.sellerLocation
+                                  : 'Near you',
+                              style: _adaptiveText(
+                                fontSize: 11,
+                                color: hc.textTertiary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
