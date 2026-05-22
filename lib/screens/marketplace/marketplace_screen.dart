@@ -1662,29 +1662,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          TabBar(
+          const SizedBox(height: 10),
+          // ── Pill tab bar — matches Discover screen style exactly ──────────
+          // Orange filled pill for active tab, plain text for inactive.
+          // No underline, no borders on unselected tabs.
+          _MarketPillTabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(text: 'Buy'),
-              Tab(text: 'Sell'),
-              Tab(text: 'Saved'),
-            ],
-            labelColor: HuddlColors.textDark,
-            unselectedLabelColor: hc.textTertiary,
-            labelStyle: _adaptiveText(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-            unselectedLabelStyle: _adaptiveText(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-            ),
-            indicatorColor: HuddlColors.textDark,
-            indicatorWeight: 3,
-            indicatorSize: TabBarIndicatorSize.label,
-            dividerColor: hc.divider,
+            labels: const ['Buy', 'Sell', 'Saved'],
+            hc: hc,
           ),
+          const SizedBox(height: 2),
         ],
       ),
     );
@@ -5312,4 +5299,90 @@ class _PriceHistogramPainter extends CustomPainter {
   @override
   bool shouldRepaint(_PriceHistogramPainter old) =>
       old.low != low || old.high != high;
+}
+
+// ── _MarketPillTabBar ─────────────────────────────────────────────────────────
+// Pill-style tab bar matching the Discover screen's _DiscoverAnimatedTabBar.
+// Active tab: orange filled pill + white bold text (no underline).
+// Inactive tabs: plain text, no border, no background.
+// Wired to an existing TabController so TabBarView keeps working as-is.
+class _MarketPillTabBar extends StatefulWidget {
+  final TabController controller;
+  final List<String> labels;
+  final HuddlContextColors hc;
+
+  const _MarketPillTabBar({
+    required this.controller,
+    required this.labels,
+    required this.hc,
+  });
+
+  @override
+  State<_MarketPillTabBar> createState() => _MarketPillTabBarState();
+}
+
+class _MarketPillTabBarState extends State<_MarketPillTabBar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTabChange);
+  }
+
+  @override
+  void didUpdateWidget(_MarketPillTabBar old) {
+    super.didUpdateWidget(old);
+    if (old.controller != widget.controller) {
+      old.controller.removeListener(_onTabChange);
+      widget.controller.addListener(_onTabChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTabChange);
+    super.dispose();
+  }
+
+  void _onTabChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: widget.labels.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final label = entry.value;
+        final isActive = widget.controller.index == idx;
+
+        return GestureDetector(
+          onTap: () {
+            HuddlAnimations.selectionClick();
+            widget.controller.animateTo(idx);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+            decoration: BoxDecoration(
+              color: isActive ? HuddlColors.primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight:
+                    isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive
+                    ? Colors.white
+                    : widget.hc.textSecondary,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
