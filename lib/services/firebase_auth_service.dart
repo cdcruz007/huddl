@@ -1176,6 +1176,14 @@ class FirebaseAuthService {
       }
 
       _log('restoreProfileFromFirestore: restored name="${onboarding.name}" postcode="${onboarding.postcode}"');
+
+      // ── CRITICAL: flush all set*() writes to SharedPreferences NOW ──────────
+      // set*() methods fire-and-forget _saveToStorage(). Any subsequent call to
+      // onboarding.initialize(forceReload:true) that happens before those futures
+      // settle will re-read stale (empty) storage. flush() awaits the write so
+      // storage is guaranteed up-to-date before callers re-read it.
+      await onboarding.flush();
+
       return (onboarding.name ?? '').trim().isNotEmpty;
     } catch (e) {
       _log('restoreProfileFromFirestore: error $e');

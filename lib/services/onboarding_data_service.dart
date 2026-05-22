@@ -231,6 +231,16 @@ class OnboardingDataService {
     };
   }
 
+  /// Explicitly flush all in-memory state to persistent storage and wait for
+  /// the write to complete before returning.
+  ///
+  /// Call this after a batch of set*() operations when another code path will
+  /// immediately call initialize(forceReload:true) to re-read storage — the
+  /// async set*() → _saveToStorage() fire-and-forget pattern races the reload.
+  Future<void> flush() async {
+    await _saveToStorage();
+  }
+
   // Clear all data (GDPR Art. 17 / account deletion)
   // Also resets the initialization guard so that initialize() will re-read
   // storage correctly if the user starts a fresh onboarding session in the

@@ -155,6 +155,14 @@ class HuddlUserService {
           }
           _log('syncCurrentUserProfile: restored local state from Firestore for uid=$uid');
 
+          // ── CRITICAL: flush all set*() writes to SharedPreferences NOW ──────
+          // set*() methods call _saveToStorage() without await (fire-and-forget).
+          // If the profile screen calls initialize(forceReload:true) before those
+          // futures settle it re-reads storage and gets the OLD (empty) values.
+          // flush() awaits _saveToStorage() so storage is definitely up-to-date
+          // before any subsequent reads.
+          await _onboarding.flush();
+
           // Only update presence fields — DO NOT overwrite data-bearing fields
           // because we just restored them correctly from Firestore.
           await _db.collection('users').doc(uid).update({

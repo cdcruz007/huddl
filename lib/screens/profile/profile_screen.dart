@@ -250,8 +250,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
         try {
           await FirebaseAuthService().restoreProfileFromFirestore()
               .timeout(const Duration(seconds: 5));
-          // Force-reload again so the values just written by restore are read
+          // Force-reload again so the values just written by restore are read.
+          // restoreProfileFromFirestore() now calls flush() before returning so
+          // SharedPreferences is guaranteed up-to-date before we re-read here.
           await _onboarding.initialize(forceReload: true);
+        } catch (_) {}
+      }
+
+      // ── ABSOLUTE LAST RESORT: bypass OnboardingDataService entirely ──────────
+      // If, despite all restore attempts, the name is still empty (edge case:
+      // flush/reload race on extremely slow devices, or a Hive/SharedPreferences
+      // write failure), read the Firestore document directly and populate the
+      // local state variables for this render pass. This is purely defensive —
+      // most users will never hit this path, but it ensures the profile is NEVER
+      // blank when a Firestore document exists.
+      if (_onboarding.name == null || _onboarding.name!.trim().isEmpty) {
+        try {
+          String? resolvedUid = FirebaseAuth.instance.currentUser?.uid;
+          if (resolvedUid == null) {
+            final user = await FirebaseAuth.instance
+                .authStateChanges()
+                .first
+                .timeout(const Duration(seconds: 5));
+            resolvedUid = user?.uid;
+          }
+          if (resolvedUid != null) {
+            final doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(resolvedUid)
+                .get()
+                .timeout(const Duration(seconds: 5));
+            if (doc.exists) {
+              final d = doc.data()!;
+              // Inject directly into the singleton's in-memory state AND flush
+              final n = (d['name'] as String?)?.trim() ??
+                  (d['firstName'] as String?)?.trim() ?? '';
+              if (n.isNotEmpty) _onboarding.setName(n);
+              final pc = (d['postcode'] as String?) ?? '';
+              if (pc.isNotEmpty && (_onboarding.postcode == null || _onboarding.postcode!.isEmpty)) {
+                _onboarding.setPostcode(pc);
+              }
+              final br = (d['borough'] as String?) ?? '';
+              if (br.isNotEmpty && (_onboarding.borough == null || _onboarding.borough!.isEmpty)) {
+                _onboarding.setBorough(br);
+              }
+              final pt = (d['parentType'] as String?) ?? '';
+              if (pt.isNotEmpty && _onboarding.parentType == null) {
+                _onboarding.setParentType(pt);
+              }
+              final kids = d['children'];
+              if (kids is List && kids.isNotEmpty && _onboarding.children.isEmpty) {
+                _onboarding.setChildren(
+                  kids.whereType<Map>().map((c) => {
+                    'name': (c['name'] as String?) ?? '',
+                    'birthday': (c['birthday'] as String?) ?? '',
+                  }).where((c) => c['name']!.isNotEmpty).toList(),
+                );
+              }
+              final bio = (d['bio'] as String?) ?? '';
+              if (bio.isNotEmpty && (_onboarding.bio == null || _onboarding.bio!.isEmpty)) {
+                _onboarding.setBio(bio);
+              }
+              // Flush synchronously so storage is ready for the next cold start
+              await _onboarding.flush();
+              if (kDebugMode) debugPrint('[Profile] last-resort Firestore direct read: name=$n');
+            }
+          }
         } catch (_) {}
       }
 
