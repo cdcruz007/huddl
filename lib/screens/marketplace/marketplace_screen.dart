@@ -1489,14 +1489,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     return Column(
       children: [
-        // ── Filter and sort pill — Groups/Events style ────────────
+        // ── Airbnb-quality slim filter row ────────────────────────────
         Container(
           color: hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
             children: [
               Semantics(
-                label: _hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter and sort items',
+                label: _hasActiveFilters ? 'Active filters, tap to change' : 'Filter items',
                 button: true,
                 child: GestureDetector(
                   onTap: () {
@@ -1504,46 +1504,59 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     _showAllFiltersSheet(hc);
                   },
                   child: Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 34,
+                    padding: const EdgeInsets.symmetric(horizontal: 13),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      color: _hasActiveFilters
+                          ? HuddlColors.nearBlack
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _hasActiveFilters
+                            ? HuddlColors.nearBlack
+                            : hc.divider,
+                        width: 1.2,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.tune_rounded,
-                          size: 18,
+                          size: 14,
                           color: _hasActiveFilters
-                              ? HuddlColors.textDark
-                              : hc.textPrimary,
+                              ? Colors.white
+                              : hc.textSecondary,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 5),
                         Text(
                           _hasActiveFilters && _activeFilterCount > 1
-                              ? 'Filter and sort ($_activeFilterCount)'
+                              ? 'Filters · $_activeFilterCount'
                               : _hasActiveFilters
-                                  ? 'Filter and sort · $_activeFilterLabel'
-                                  : 'Filter and sort',
+                                  ? _activeFilterLabel
+                                  : 'Filter',
                           style: GoogleFonts.poppins(
-                            fontSize: 15,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w500,
                             color: _hasActiveFilters
-                                ? HuddlColors.textDark
-                                : hc.textPrimary,
+                                ? Colors.white
+                                : hc.textSecondary,
                           ),
                         ),
                       ],
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  '${items.length} item${items.length == 1 ? '' : 's'}${_hasActiveFilters ? ' · filtered' : ''}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: hc.textTertiary,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
@@ -1552,30 +1565,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 GestureDetector(
                   onTap: _clearAllFilters,
                   child: Text(
-                    'Clear all',
-                    style: _adaptiveText(
-                      fontSize: 12,
-                      color: HuddlColors.textSecondary,
+                    'Clear',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      color: hc.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
             ],
-          ),
-        ),
-        // Item count row
-        Semantics(
-          liveRegion: true,
-          child: Container(
-            color: hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '${items.length} item${items.length == 1 ? '' : 's'}${_hasActiveFilters ? ' (filtered)' : ''}${_searchQuery.isNotEmpty ? ' matching “$_searchQuery”' : ''}',
-                style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
-              ),
-            ),
           ),
         ),
         // 2-column grid (compact cards) — richer browse experience
@@ -1640,13 +1638,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     )
                   // ── 2-column grid ─────────────────────────────────────
                   : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.75,
+                        crossAxisSpacing: 1,
+                        mainAxisSpacing: 1,
+                        childAspectRatio: 0.62,
                       ),
                       itemCount: items.length,
                       itemBuilder: (context, index) {
@@ -3914,179 +3912,147 @@ class _MarketGridCard extends StatefulWidget {
 
 class _MarketGridCardState extends State<_MarketGridCard> {
 
-  Color _conditionColor(String condition) {
-    switch (condition.toLowerCase()) {
-      case 'new':
-        return HuddlColors.teal;
-      case 'like new':
-        return HuddlColors.blueDark;
-      case 'good':
-        return HuddlColors.primary;
-      default:
-        return HuddlColors.textTertiary;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
     final hc = context.hc;
-    final hasImage = item.imageUrls.isNotEmpty;
-    final condColor = _conditionColor(item.condition.label);
+    final hasImage = item.imageUrls.isNotEmpty && item.imageUrls.first.isNotEmpty;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Airbnb-quality grid card:
+    // • No card border or shadow — clean edge-to-edge photo grid
+    // • Photo fills top ~62% with consistent aspect ratio
+    // • Single nearBlack pill badge top-left (condition or "Yours")
+    // • Heart top-right on white scrim circle
+    // • Text below: title (w500), price (w700 nearBlack), location (muted)
+    // • warmSand / white background, zero decorative noise
 
     return Semantics(
-      label:
-          '${item.title}, £${item.price.toStringAsFixed(0)}, ${item.condition.label}',
+      label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, ${item.sellerLocation}',
       button: true,
-      child: ScaleOnPress(
+      child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: hc.surface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+        child: ColoredBox(
+          color: isDark ? hc.surface : const Color(0xFFF7F5F2),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Product image ──────────────────────────────────────────
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(14)),
-                child: AspectRatio(
-                  aspectRatio: 1.05,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Image or placeholder
-                      hasImage
-                          ? Image.network(
-                              item.imageUrls.first,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _gridPlaceholder(hc, item),
-                              loadingBuilder: (_, child, progress) =>
-                                  progress == null
-                                      ? child
-                                      : Container(
-                                          color: hc.surfaceAlt,
-                                          child: Center(
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: HuddlColors.textTertiary,
-                                            ),
-                                          ),
-                                        ),
-                            )
-                          : _gridPlaceholder(hc, item),
+              // ── Photo area ──────────────────────────────────────────────
+              Expanded(
+                flex: 62,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Image
+                    hasImage
+                        ? _buildItemImage(item.imageUrls.first, item)
+                        : _gridPlaceholder(hc, item),
 
-                      // Condition badge OR "Your listing" — top-left
+                    // Condition / ownership badge — top-left nearBlack pill
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.56),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          widget.isOwn ? 'Yours' : item.condition.label,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Save heart — top-right white scrim circle
+                    if (!widget.isOwn)
                       Positioned(
                         top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: widget.isOwn
-                                ? HuddlColors.textTertiary
-                                : condColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            widget.isOwn ? 'Your listing' : item.condition.label,
-                            style: _adaptiveText(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                        right: 8,
+                        child: Semantics(
+                          label: item.isSaved ? 'Remove from saved' : 'Save item',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: widget.onToggleSave,
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: HeartPopButton(
+                                  isLiked: item.isSaved,
+                                  onToggle: widget.onToggleSave,
+                                  size: 16,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-
-                      // Save / heart — top-right (hidden for own listings)
-                      if (!widget.isOwn)
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: hc.surface.withValues(alpha: 0.88),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: HeartPopButton(
-                              isLiked: item.isSaved,
-                              onToggle: widget.onToggleSave,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
 
-              // ── Info area ──────────────────────────────────────────────
+              // ── Text area ───────────────────────────────────────────────
               Expanded(
+                flex: 38,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      // Title
+                      // Title — 2 lines max, medium weight
                       Text(
                         item.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: _adaptiveText(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                           color: hc.textPrimary,
-                          height: 1.3,
+                          height: 1.28,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      // Price — bold, nearBlack, prominent
+                      Text(
+                        item.isFree
+                            ? 'Free'
+                            : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: item.isFree
+                              ? const Color(0xFF2D6A4F) // subtle green for free
+                              : HuddlColors.nearBlack,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // Price
+                      // Location — small, muted, no icon clutter
                       Text(
-                        '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}',
-                        style: _adaptiveText(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: _kMarketBlue,
+                        item.sellerLocation.isNotEmpty
+                            ? item.sellerLocation
+                            : 'Near you',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: hc.textTertiary,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const Spacer(),
-                      // Location row
-                      if (item.sellerLocation.isNotEmpty)
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_outlined,
-                                size: 11, color: hc.textTertiary),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: Text(
-                                item.sellerLocation,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: _adaptiveText(
-                                  fontSize: 10.5,
-                                  color: hc.textTertiary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                     ],
                   ),
                 ),
@@ -4102,8 +4068,8 @@ class _MarketGridCardState extends State<_MarketGridCard> {
     return Container(
       color: hc.surfaceAlt,
       child: Center(
-        child: Icon(Icons.child_care_outlined,
-            size: 36, color: hc.textTertiary.withValues(alpha: 0.4)),
+        child: Icon(item.category.icon,
+            size: 40, color: hc.textTertiary.withValues(alpha: 0.3)),
       ),
     );
   }
