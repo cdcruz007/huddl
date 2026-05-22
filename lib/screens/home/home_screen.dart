@@ -1951,7 +1951,7 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 color: hc.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.3), width: 1.5) : null,
+                border: isGoing ? Border.all(color: HuddlColors.teal.withValues(alpha: 0.4), width: 1.5) : null,
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
               ),
               clipBehavior: Clip.antiAlias,
@@ -1986,7 +1986,7 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                               decoration: BoxDecoration(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.teal,
                                 borderRadius: BorderRadius.circular(7),
                               ),
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -3476,8 +3476,7 @@ class _HomeScreenState extends State<HomeScreen>
         decoration: BoxDecoration(
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: HuddlColors.primary.withValues(alpha: 0.2)),
+          border: Border.all(color: context.hc.divider),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -3508,8 +3507,7 @@ class _HomeScreenState extends State<HomeScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(
-                              alpha: 0.12),
+                          color: context.hc.surfaceAlt,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -3517,7 +3515,7 @@ class _HomeScreenState extends State<HomeScreen>
                           style: GoogleFonts.poppins(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
+                            color: context.hc.textTertiary,
                           ),
                         ),
                       ),
@@ -3528,13 +3526,13 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const Spacer(),
                       const Icon(Icons.check_circle,
-                          size: 14, color: HuddlColors.primary),
+                          size: 14, color: HuddlColors.teal),
                       const SizedBox(width: 3),
                       Text('Going',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.primary,
+                            color: HuddlColors.teal,
                           )),
                     ],
                   ),
@@ -3845,8 +3843,7 @@ class _HomeScreenState extends State<HomeScreen>
           color: hc.surface,
           borderRadius: BorderRadius.circular(14),
           border: a.isPinned
-              ? Border.all(
-                  color: HuddlColors.primary.withValues(alpha: 0.25))
+              ? Border.all(color: context.hc.divider)
               : null,
           boxShadow: isDark
               ? null
@@ -3891,22 +3888,22 @@ class _HomeScreenState extends State<HomeScreen>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 1),
                               decoration: BoxDecoration(
-                                color: HuddlColors.primary.withValues(alpha: 0.08),
+                                color: context.hc.surfaceAlt,
                                 borderRadius:
                                     BorderRadius.circular(5),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.push_pin,
+                                  Icon(Icons.push_pin,
                                       size: 9,
-                                      color: HuddlColors.primary),
+                                      color: context.hc.textTertiary),
                                   const SizedBox(width: 2),
                                   Text('Pinned',
                                       style: GoogleFonts.poppins(
                                         fontSize: 8,
                                         fontWeight: FontWeight.w500,
-                                        color: HuddlColors.primary,
+                                        color: context.hc.textTertiary,
                                       )),
                                 ],
                               ),
@@ -3928,16 +3925,16 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: HuddlColors.primary.withValues(alpha: 0.08),
+                              color: context.hc.surfaceAlt,
                               borderRadius:
                                   BorderRadius.circular(4),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.lightbulb_outline,
+                                Icon(Icons.lightbulb_outline,
                                     size: 8,
-                                    color: HuddlColors.primary),
+                                    color: context.hc.textTertiary),
                                 const SizedBox(width: 3),
                                 Text(
                                   item.reason,
@@ -4445,9 +4442,9 @@ class _HomeScreenState extends State<HomeScreen>
       fallbackUrl,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Container(
-        color: HuddlColors.primary.withValues(alpha: 0.15),
+        color: HuddlColors.gray100,
         child: const Center(
-          child: Icon(Icons.groups, size: 22, color: HuddlColors.primary),
+          child: Icon(Icons.groups, size: 22, color: HuddlColors.textHint),
         ),
       ),
     );
@@ -4477,9 +4474,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _groupImageFallback() {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.gray100,
       child: const Center(
-        child: Icon(Icons.people, size: 22, color: HuddlColors.primary),
+        child: Icon(Icons.people, size: 22, color: HuddlColors.textHint),
       ),
     );
   }
@@ -4546,7 +4543,7 @@ class _HomeScreenState extends State<HomeScreen>
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: HuddlColors.primary, width: 1.5),
+        border: Border.all(color: HuddlColors.gray200, width: 1.5),
       ),
       child: ClipOval(
         child: Image.asset(
@@ -4557,9 +4554,9 @@ class _HomeScreenState extends State<HomeScreen>
           height: size,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            color: HuddlColors.primary.withValues(alpha: 0.08),
+            color: HuddlColors.gray100,
             child: Center(
-              child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary),
+              child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.textHint),
             ),
           ),
         ),
@@ -4616,9 +4613,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
             color: hc.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: ann.isPinned
-                  ? HuddlColors.primary.withValues(alpha: 0.25)
-                  : hc.divider,
+              color: hc.divider,
             ),
             boxShadow: isDark
                 ? null
@@ -4647,9 +4642,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                             ? Icons.push_pin
                             : Icons.campaign_outlined,
                         size: 15,
-                        color: ann.isPinned
-                            ? HuddlColors.primary
-                            : hc.textTertiary,
+                        color: hc.textTertiary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -4763,7 +4756,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       // Bookmark indicator
                       if (ann.isBookmarked)
                         Icon(Icons.bookmark,
-                            size: 16, color: HuddlColors.primary),
+                            size: 16, color: HuddlColors.accentAmber),
                     ],
                   ),
                 ),
@@ -5197,7 +5190,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                   height: 36,
                                   margin: const EdgeInsets.only(right: 8, top: 4),
                                   decoration: BoxDecoration(
-                                    color: HuddlColors.primary.withValues(alpha: 0.25),
+                                    color: HuddlColors.gray200,
                                     borderRadius: BorderRadius.circular(1),
                                   ),
                                 ),
@@ -5239,8 +5232,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 6, vertical: 1),
                                         decoration: BoxDecoration(
-                                          color: HuddlColors.primary
-                                              .withValues(alpha: 0.1),
+                                          color: HuddlColors.gray100,
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),
@@ -5249,7 +5241,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                           style: GoogleFonts.poppins(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
-                                            color: HuddlColors.primary,
+                                            color: HuddlColors.textSecondary,
                                           ),
                                         ),
                                       ),
@@ -5292,7 +5284,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                                         : Icons.favorite_border,
                                                     size: 14,
                                                     color: c.isLiked
-                                                        ? HuddlColors.primary
+                                                        ? HuddlColors.accentCoral
                                                         : HuddlColors.textHint,
                                                   ),
                                                   const SizedBox(width: 4),
@@ -5301,7 +5293,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                                     style: GoogleFonts.poppins(
                                                       fontSize: 11,
                                                       color: c.isLiked
-                                                          ? HuddlColors.primary
+                                                          ? HuddlColors.accentCoral
                                                           : HuddlColors.textHint,
                                                     ),
                                                   ),
@@ -5328,7 +5320,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                                     fontWeight: FontWeight.w500,
                                                     color: _replyingTo ==
                                                             c.authorName
-                                                        ? HuddlColors.primary
+                                                        ? HuddlColors.textSecondary
                                                         : HuddlColors.textHint,
                                                   ),
                                                 ),
@@ -5350,27 +5342,27 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             // ── "Replying to @name" banner ──────────────────────────────────
             if (_replyingTo != null)
               Container(
-                color: HuddlColors.primary.withValues(alpha: 0.06),
+                color: HuddlColors.gray100,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Row(
                   children: [
                     Icon(Icons.reply_rounded,
-                        size: 14, color: HuddlColors.primary),
+                        size: 14, color: HuddlColors.textSecondary),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'Replying to @$_replyingTo',
                         style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: HuddlColors.primary,
+                            color: HuddlColors.textSecondary,
                             fontWeight: FontWeight.w500),
                       ),
                     ),
                     GestureDetector(
                       onTap: _cancelReply,
                       child: Icon(Icons.close_rounded,
-                          size: 16, color: HuddlColors.primary),
+                          size: 16, color: HuddlColors.textHint),
                     ),
                   ],
                 ),
@@ -5792,7 +5784,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                 child: Row(
                   children: [
                     const Icon(Icons.notifications,
-                        color: HuddlColors.primary, size: 22),
+                        size: 22),
                     const SizedBox(width: 8),
                     Text(
                       'Notifications',
@@ -6209,7 +6201,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
             child: Row(
               children: [
                 const Icon(Icons.share,
-                    color: HuddlColors.primary, size: 22),
+                    size: 22),
                 const SizedBox(width: 8),
                 Text(
                   'Share with...',
@@ -6460,9 +6452,9 @@ class _SharePostSheetState extends State<_SharePostSheet>
     return Container(
       width: 44,
       height: 44,
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.gray100,
       child: const Icon(Icons.people,
-          size: 22, color: HuddlColors.primary),
+          size: 22, color: HuddlColors.textHint),
     );
   }
 }
