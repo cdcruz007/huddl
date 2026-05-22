@@ -1441,7 +1441,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textSecondary,
                       ),
                     ),
                   ),
@@ -1856,11 +1856,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.12),
+                    color: HuddlColors.background,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.camera_alt_rounded,
-                      color: HuddlColors.primary, size: 18),
+                      color: HuddlColors.textSecondary, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -2390,8 +2390,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           item.imageUrls.first,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: HuddlColors.primary.withValues(alpha: 0.08),
-                            child: Icon(item.category.icon, size: 22, color: HuddlColors.primary),
+                            color: HuddlColors.background,
+                            child: Icon(item.category.icon, size: 22, color: HuddlColors.textHint),
                           ),
                         ),
                       ),
@@ -2739,7 +2739,7 @@ class _ShimmerBoxState extends State<_ShimmerBox>
 
 Widget _buildItemImage(String url, RehomeItem item) {
   final fallback = Container(
-    color: HuddlColors.primary.withValues(alpha: 0.08),
+    color: HuddlColors.background,
     child: Center(
       child: Icon(item.category.icon,
           size: 44, color: item.category.color.withValues(alpha: 0.5)),
@@ -3293,11 +3293,10 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                                     _avatarUrl(i),
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Container(
-                                      color: HuddlColors.primary
-                                          .withValues(alpha: 0.12),
+                                      color: HuddlColors.background,
                                       child: Icon(Icons.person,
                                           size: 14,
-                                          color: HuddlColors.primary),
+                                          color: HuddlColors.textHint),
                                     ),
                                   ),
                                 ),
@@ -3756,8 +3755,8 @@ class _MarketListCardState extends State<_MarketListCard> {
                                       width: 22, height: 22,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
-                                        color: HuddlColors.primary.withValues(alpha: 0.2),
-                                        child: const Icon(Icons.person, size: 11, color: HuddlColors.primary),
+                                        color: HuddlColors.background,
+                                        child: const Icon(Icons.person, size: 11, color: HuddlColors.textHint),
                                       ),
                                     ),
                                   ),
@@ -3823,18 +3822,18 @@ class _MarketPhotoFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.07),
+      color: HuddlColors.background,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(item.category.icon, size: 44, color: HuddlColors.primary.withValues(alpha: 0.3)),
+            Icon(item.category.icon, size: 44, color: HuddlColors.textHint.withValues(alpha: 0.5)),
             const SizedBox(height: 6),
             Text(
               item.category.label,
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: HuddlColors.primary.withValues(alpha: 0.4),
+                color: HuddlColors.textHint,
               ),
             ),
           ],
