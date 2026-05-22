@@ -1332,7 +1332,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textSecondary,
                         ),
                       ),
                     ),
@@ -1527,7 +1527,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: HuddlColors.primary),
+        child: CircularProgressIndicator(color: HuddlColors.textTertiary),
       );
     }
 
@@ -1574,9 +1574,9 @@ class _MessagesTabState extends State<_MessagesTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.06),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.15)),
+                            border: Border.all(color: HuddlColors.divider),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1584,7 +1584,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                               Text(s.icon, style: const TextStyle(fontSize: 12)),
                               const SizedBox(width: 4),
                               Text(s.query, style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.primary, fontWeight: FontWeight.w500,
+                                fontSize: 12, color: HuddlColors.textDark, fontWeight: FontWeight.w500,
                               )),
                             ],
                           ),
@@ -1614,7 +1614,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               button: true,
               child: Material(
                 elevation: 4,
-                shadowColor: HuddlColors.primary.withValues(alpha: 0.3),
+                shadowColor: HuddlColors.textDark.withValues(alpha: 0.2),
                 shape: const CircleBorder(),
                 color: HuddlColors.primary,
                 child: InkWell(
@@ -1666,12 +1666,12 @@ class _MessagesTabState extends State<_MessagesTab> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            HuddlColors.primary.withValues(alpha: 0.07),
+            HuddlColors.background,
             HuddlColors.teal.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.18)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Column(
         children: [
@@ -1689,10 +1689,10 @@ class _MessagesTabState extends State<_MessagesTab> {
                   Container(
                     width: 34, height: 34,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(9),
                     ),
-                    child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.primary),
+                    child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1743,7 +1743,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             firstChild: const SizedBox(width: double.infinity, height: 0),
             secondChild: Column(
               children: [
-                Container(height: 1, color: HuddlColors.primary.withValues(alpha: 0.10)),
+                Container(height: 1, color: HuddlColors.divider),
                 ...summaries.take(5).map((s) => _buildGroupSummaryRow(s)),
                 const SizedBox(height: 4),
               ],
@@ -1937,19 +1937,19 @@ class _MessagesTabState extends State<_MessagesTab> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.04),
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.12)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Row(
         children: [
           Container(
             width: 34, height: 34,
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.10),
+              color: HuddlColors.background,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.primary),
+            child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1976,7 +1976,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             width: 16, height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: HuddlColors.primary.withValues(alpha: 0.5),
+              color: HuddlColors.textTertiary,
             ),
           ),
         ],
@@ -1993,7 +1993,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     return RefreshIndicator(
       onRefresh: _loadGroups,
-      color: HuddlColors.primary,
+      color: HuddlColors.textTertiary,
       child: ListView(
         padding: const EdgeInsets.only(top: 2, bottom: 100),
         children: [
@@ -2022,7 +2022,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     child: GestureDetector(
                       onTap: _loadGroups,
                       child: Text('Retry', style: GoogleFonts.poppins(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.primary,
+                        fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textTertiary,
                       )),
                     ),
                   ),
@@ -2141,13 +2141,13 @@ class _MessagesTabState extends State<_MessagesTab> {
                         Container(
                           width: 4, height: 4,
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.6),
+                            color: HuddlColors.textTertiary,
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(insight.insightText, style: GoogleFonts.poppins(
-                          fontSize: 10, color: HuddlColors.primary.withValues(alpha: 0.7),
+                          fontSize: 10, color: HuddlColors.textTertiary,
                           fontStyle: FontStyle.italic,
                         )),
                         const Spacer(),
@@ -2215,11 +2215,11 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.search_off,
-                    size: 32, color: HuddlColors.primary),
+                    size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 16),
               Text(
@@ -2323,7 +2323,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         '${convDeepResults.length - 3} more results in this chat',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textTertiary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -2393,7 +2393,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.08),
+                          color: HuddlColors.background,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -2401,7 +2401,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
+                            color: HuddlColors.textTertiary,
                           ),
                         ),
                       ),
@@ -2425,7 +2425,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         '${results.length - 3} more results',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textTertiary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -2451,7 +2451,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textTertiary,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -2805,7 +2805,7 @@ class _GroupMessageRow extends StatelessWidget {
                         children: [
                           if (isPinned) ...[
                             Icon(Icons.push_pin,
-                                size: 14, color: HuddlColors.primary.withValues(alpha: 0.7)),
+                                size: 14, color: HuddlColors.textTertiary),
                             const SizedBox(width: 4),
                           ],
                           Expanded(
@@ -2950,10 +2950,10 @@ class _InvitationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: HuddlColors.divider),
         boxShadow: [
           BoxShadow(
-            color: HuddlColors.primary.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -2968,7 +2968,7 @@ class _InvitationCard extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -2997,7 +2997,7 @@ class _InvitationCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.12),
+                            color: HuddlColors.background,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -3005,7 +3005,7 @@ class _InvitationCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              color: HuddlColors.primary,
+                              color: HuddlColors.textDark,
                             ),
                           ),
                         ),
@@ -3104,7 +3104,7 @@ class _InvitationCard extends StatelessWidget {
   /// Build group image — handles data:base64, http/https URLs, asset paths
   Widget _buildGroupImage(String imageUrl) {
     if (imageUrl.isEmpty) {
-      return const Icon(Icons.group_add, size: 24, color: HuddlColors.primary);
+      return const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark);
     }
 
     // Data URL (base64 image from image picker)
@@ -3119,11 +3119,11 @@ class _InvitationCard extends StatelessWidget {
             width: 48,
             height: 48,
             errorBuilder: (_, __, ___) =>
-                const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+                const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark),
           );
         }
       } catch (_) {}
-      return const Icon(Icons.group_add, size: 24, color: HuddlColors.primary);
+      return const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark);
     }
 
     // Network URL
@@ -3134,7 +3134,7 @@ class _InvitationCard extends StatelessWidget {
         width: 48,
         height: 48,
         errorBuilder: (_, __, ___) =>
-            const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+            const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark),
       );
     }
 
@@ -3146,11 +3146,11 @@ class _InvitationCard extends StatelessWidget {
         width: 48,
         height: 48,
         errorBuilder: (_, __, ___) =>
-            const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+            const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark),
       );
     }
 
-    return const Icon(Icons.group_add, size: 24, color: HuddlColors.primary);
+    return const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark);
   }
 }
 
@@ -3214,7 +3214,7 @@ class _DMMessageRow extends StatelessWidget {
                           if (isPinned) ...[
                             Icon(Icons.push_pin,
                                 size: 14,
-                                color: HuddlColors.primary.withValues(alpha: 0.7)),
+                                color: HuddlColors.textTertiary),
                             const SizedBox(width: 4),
                           ],
                           Expanded(
@@ -3451,7 +3451,7 @@ class _GroupAvatar extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(size * 0.25),
-            color: HuddlColors.primary.withValues(alpha: 0.08),
+            color: HuddlColors.background,
           ),
           clipBehavior: Clip.antiAlias,
           child: _buildImage(),
@@ -4275,7 +4275,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           children: [
             Icon(
               isGroupTier ? Icons.group : Icons.lock,
-              color: HuddlColors.primary,
+              color: HuddlColors.textDark,
               size: 24,
             ),
             const SizedBox(width: 10),
@@ -4308,7 +4308,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               'OK',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
               ),
             ),
           ),
@@ -4608,7 +4608,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       style: _adaptiveText(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary,
+                                        color: HuddlColors.textTertiary,
                                       ),
                                     ),
                                   ),
@@ -5030,9 +5030,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         value: (sampleScore / 100).clamp(0.0, 1.0),
                         minHeight: 6,
                         backgroundColor:
-                            HuddlColors.primary.withValues(alpha: 0.12),
+                            HuddlColors.background,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                            HuddlColors.primary),
+                            HuddlColors.textDark),
                       ),
                     ),
                   ),
@@ -5041,7 +5041,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                     ),
                   ),
                 ],
@@ -5082,17 +5082,17 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: HuddlColors.primary.withValues(alpha: 0.18),
+          color: HuddlColors.divider,
         ),
       ),
       child: Text(label,
         style: GoogleFonts.poppins(
           fontSize: 11,
           fontWeight: FontWeight.w500,
-          color: HuddlColors.primary,
+          color: HuddlColors.textDark,
         ),
       ),
     );
@@ -5151,7 +5151,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           child: Padding(
                             padding: const EdgeInsets.all(8),
                             child: Text('Retry', style: _adaptiveText(
-                              fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.primary,
+                              fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textTertiary,
                             )),
                           ),
                         ),
@@ -6301,7 +6301,7 @@ class _SavedTabState extends State<_SavedTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ),
@@ -6319,7 +6319,7 @@ class _SavedTabState extends State<_SavedTab> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: HuddlColors.primary),
+        child: CircularProgressIndicator(color: HuddlColors.textTertiary),
       );
     }
 
@@ -6548,7 +6548,7 @@ class _SavedTabState extends State<_SavedTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ),
@@ -6596,11 +6596,11 @@ class _SavedMessageCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.08),
+                          color: HuddlColors.background,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
-                          child: Icon(Icons.people, size: 14, color: HuddlColors.primary),
+                          child: Icon(Icons.people, size: 14, color: HuddlColors.textDark),
                         ),
                       )
                     : MemberAvatar(
@@ -6619,7 +6619,7 @@ class _SavedMessageCard extends StatelessWidget {
                           Icon(
                             isGroup ? Icons.group : Icons.person,
                             size: 12,
-                            color: HuddlColors.primary,
+                            color: HuddlColors.textDark,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -6628,7 +6628,7 @@ class _SavedMessageCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.primary,
+                                color: HuddlColors.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -7014,7 +7014,7 @@ class _SavedEventCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: savedEvent.isFree
                               ? HuddlColors.teal.withValues(alpha: 0.12)
-                              : HuddlColors.primary.withValues(alpha: 0.10),
+                              : HuddlColors.background,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -7024,7 +7024,7 @@ class _SavedEventCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: savedEvent.isFree ? HuddlColors.teal : HuddlColors.primary,
+                            color: savedEvent.isFree ? HuddlColors.teal : HuddlColors.textTertiary,
                           ),
                         ),
                       ),
@@ -7117,9 +7117,9 @@ class _SavedEventCard extends StatelessWidget {
 
   Widget _fallbackIcon(BuildContext context) {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: HuddlColors.background,
       child: const Center(
-        child: Icon(Icons.event, size: 28, color: HuddlColors.primary),
+        child: Icon(Icons.event, size: 28, color: HuddlColors.textDark),
       ),
     );
   }
@@ -7363,7 +7363,7 @@ class _SearchSectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.1),
+              color: HuddlColors.background,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -7371,7 +7371,7 @@ class _SearchSectionHeader extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
               ),
             ),
           ),

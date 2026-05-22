@@ -928,7 +928,7 @@ class _HomeScreenState extends State<HomeScreen>
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: 'Undo',
-          textColor: HuddlColors.primary,
+          textColor: HuddlColors.textTertiary,
           onPressed: () {
             setState(() {
               _announcements.insert(
@@ -1064,7 +1064,7 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: hc.scaffold,
       body: SafeArea(
         child: RefreshIndicator(
-          color: HuddlColors.primary,
+          color: HuddlColors.textTertiary,
           onRefresh: _loadData,
           child: CustomScrollView(
             slivers: [
@@ -1910,7 +1910,7 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 5),
                           Expanded(child: Text('${g.memberCount} members',
                             style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
-                          _buildActionPill('Join', HuddlColors.primary, hc),
+                          _buildActionPill('Join', HuddlColors.textDark, hc),
                         ]),
                       ],
                     ),
@@ -4091,14 +4091,14 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.1),
+                color: HuddlColors.background,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('View',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.textTertiary,
                   )),
             ),
           ],
@@ -4350,7 +4350,7 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.newParent:
         return HuddlColors.teal;
       case FeedItemType.newGroup:
-        return HuddlColors.primary;
+        return HuddlColors.textDark;
       case FeedItemType.newEvent:
         return HuddlColors.teal;
       case FeedItemType.newMarketplaceItem:
@@ -4363,15 +4363,15 @@ class _HomeScreenState extends State<HomeScreen>
   Color _feedIconBg(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.primary.withValues(alpha: 0.08);
+        return HuddlColors.background;
       case FeedItemType.newGroup:
-        return HuddlColors.primary.withValues(alpha: 0.08);
+        return HuddlColors.background;
       case FeedItemType.newEvent:
         return HuddlColors.teal.withValues(alpha: 0.08);
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.teal.withValues(alpha: 0.08);
       case FeedItemType.milestone:
-        return HuddlColors.primary.withValues(alpha: 0.08);
+        return HuddlColors.background;
     }
   }
 
@@ -6247,9 +6247,9 @@ class _SharePostSheetState extends State<_SharePostSheet>
           const SizedBox(height: 12),
           TabBar(
             controller: _tabCtrl,
-            labelColor: HuddlColors.primary,
+            labelColor: HuddlColors.textDark,
             unselectedLabelColor: HuddlColors.textHint,
-            indicatorColor: HuddlColors.primary,
+            indicatorColor: HuddlColors.textDark,
             indicatorSize: TabBarIndicatorSize.label,
             labelStyle: GoogleFonts.poppins(
                 fontSize: 14, fontWeight: FontWeight.w600),
@@ -6679,7 +6679,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newParent:
         return HuddlColors.teal;
       case FeedItemType.newGroup:
-        return HuddlColors.primary;
+        return HuddlColors.textDark;
       case FeedItemType.newEvent:
         return HuddlColors.teal;
       case FeedItemType.newMarketplaceItem:
@@ -6694,13 +6694,13 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newParent:
         return HuddlColors.successBg;
       case FeedItemType.newGroup:
-        return HuddlColors.primary.withValues(alpha: 0.08);
+        return HuddlColors.background;
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.primary.withValues(alpha: 0.06);
+        return HuddlColors.background;
       case FeedItemType.milestone:
-        return HuddlColors.primary.withValues(alpha: 0.08);
+        return HuddlColors.background;
     }
   }
 
