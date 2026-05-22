@@ -1654,24 +1654,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         );
                       },
                     )
-                  // ── 2-column grid (default) ──────────────────────────
-                  // GridView.builder gives each child tight box constraints
-                  // (bounded width AND height), so Expanded works correctly
-                  // inside the card. childAspectRatio ≈ 0.62 (portrait card).
-                  : GridView.builder(
+                  // ── 2-column grid ─────────────────────────────────────
+                  : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 0.62,
-                      ),
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final uid = FirebaseAuth.instance.currentUser?.uid;
                         final isOwn = uid != null && items[index].sellerId == uid;
-                        return _MarketGridBuyCard(
+                        return _MarketListBuyCard(
                           item: items[index],
                           isOwn: isOwn,
                           onTap: () => _openItemDetail(items[index]),
@@ -3071,6 +3061,187 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
     );
   }
 }
+
+// =============================================================================
+// BUY TAB — VERTICAL LIST CARD
+// Full-width card: row layout with fixed-size image on left, text on right.
+// No Expanded inside the card — purely intrinsic height. Reliable on all
+// scroll physics and constraint environments.
+// =============================================================================
+class _MarketListBuyCard extends StatelessWidget {
+  final RehomeItem item;
+  final VoidCallback onTap;
+  final VoidCallback onToggleSave;
+  final bool isOwn;
+
+  const _MarketListBuyCard({
+    required this.item,
+    required this.onTap,
+    required this.onToggleSave,
+    this.isOwn = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(16),
+        elevation: 1,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Square image ──────────────────────────────
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: _buildItemImage(
+                      item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+                      item,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // ── Text content ──────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category + condition badge row
+                      Row(
+                        children: [
+                          Text(
+                            item.category.label.toUpperCase(),
+                            style: _adaptiveText(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: hc.textTertiary,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: item.isFree
+                                  ? HuddlColors.teal.withValues(alpha: 0.12)
+                                  : hc.inputBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.isFree ? 'Free' : item.condition.label,
+                              style: _adaptiveText(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: item.isFree
+                                    ? HuddlColors.teal
+                                    : hc.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Title
+                      Text(
+                        item.title,
+                        style: _adaptiveText(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: hc.textPrimary,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      // Price + location row
+                      Row(
+                        children: [
+                          Text(
+                            item.priceDisplay,
+                            style: _adaptiveText(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: item.isFree
+                                  ? HuddlColors.teal
+                                  : _kMarketBlue,
+                            ),
+                          ),
+                          const Spacer(),
+                          // Save heart
+                          HeartPopButton(
+                            isLiked: item.isSaved,
+                            onToggle: onToggleSave,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      // Location
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 11, color: hc.textTertiary),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              item.sellerLocation.isNotEmpty
+                                  ? item.sellerLocation
+                                  : 'Near you',
+                              style: _adaptiveText(
+                                fontSize: 11,
+                                color: hc.textTertiary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isOwn)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Mine',
+                                style: _adaptiveText(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.primary,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
 
 class _MarketItemCard extends StatefulWidget {
   final RehomeItem item;
