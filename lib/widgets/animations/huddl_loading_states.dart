@@ -62,6 +62,7 @@ class HuddlLoadingScreen extends StatefulWidget {
         submessage: 'This only takes a moment',
       );
 
+  // ignore: library_private_types_in_public_api
   final _HuddlLoadingIllustration illustration;
   final String message;
   final String? submessage;

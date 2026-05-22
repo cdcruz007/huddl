@@ -1,7 +1,7 @@
 // Web-only helper: fetches a blob: URL (from the record package) and returns
 // its raw bytes so they can be uploaded to Firebase Storage via putData().
 //
-// ignore: avoid_web_libraries_in_flutter
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:html' as html;
 import 'dart:async';
 import 'dart:typed_data';

@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
-import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_character.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';

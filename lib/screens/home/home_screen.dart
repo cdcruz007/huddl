@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
@@ -2048,6 +2048,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Events carousel ───────────────────────────────────────────────────────
+  // ignore: unused_element
   Widget _buildEventsCarousel(dynamic hc) {
     final events = _eventService.events.take(8).toList();
     if (events.isEmpty) {
@@ -2184,6 +2185,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Services carousel ─────────────────────────────────────────────────────
+  // ignore: unused_element
   Widget _buildServicesCarousel(dynamic hc) {
     final services = _featuredServices.take(8).toList();
     if (services.isEmpty) {
@@ -2289,6 +2291,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Market carousel — horizontal scroll matching Groups/Meetups style ────
+  // ignore: unused_element
   Widget _buildMarketCarousel(dynamic hc) {
     final items = _rehomeService.allItems.take(8).toList();
     if (items.isEmpty) {
@@ -2422,7 +2425,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Shared carousel card helpers ──────────────────────────────────────────
 
   /// 3 overlapping deterministic avatar circles (Groups-card pattern).
-  Widget _buildAvatarStack(int seed, dynamic hc, [Color borderColor = Colors.white]) {
+  Widget _buildAvatarStack(int seed, dynamic hc, [Color borderColor = Colors.white]) {  // ignore: unused_element_parameter
     const avatars = [
       'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=48&q=70',
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=70',
@@ -2537,6 +2540,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // ignore: unused_element
   Widget _buildSmartPostComposer(dynamic hc, bool isDark) {
     return Semantics(
       label: 'Ask the huddl assistant',
@@ -3009,6 +3013,7 @@ class _HomeScreenState extends State<HomeScreen>
     String ctaLabel = 'View';
     IconData candidateIcon = Icons.event_rounded;
     Color candidateColor = HuddlColors.teal;
+    // ignore: no_leading_underscores_for_local_identifiers
     String _reasonTag = '';   // shown as a pill below the category tag
 
     if (_upcomingMeetups.isNotEmpty) {
@@ -4863,10 +4868,13 @@ class _SmartFeedItem {
     required this.type,
     required this.score,
     required this.reason,
+    // ignore: unused_element_parameter
     this.nudge,
     this.meetup,
     this.event,
+    // ignore: unused_element_parameter
     this.announcement,
+    // ignore: unused_element_parameter
     this.group,
     this.feedItem,
   });

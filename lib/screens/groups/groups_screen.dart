@@ -1657,7 +1657,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     if (summaries.isEmpty) return const SizedBox.shrink();
 
-    final totalUnread = summaries.fold<int>(0, (sum, s) => sum + s.unreadCount);
+    final totalUnread = summaries.fold<int>(0, (acc, s) => acc + s.unreadCount);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),

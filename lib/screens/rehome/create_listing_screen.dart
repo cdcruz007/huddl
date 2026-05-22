@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
-import '../../theme/huddl_animations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/huddl_character.dart';

@@ -98,13 +98,11 @@ class HuddlSpringMount extends StatefulWidget {
 class _HuddlSpringMountState extends State<HuddlSpringMount>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double> _progress;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController.unbounded(vsync: this);
-    _progress = _ctrl;
 
     Future.delayed(widget.delay, () {
       if (!mounted) return;
@@ -273,10 +271,10 @@ class HuddlSpringSheet {
 
 class _SpringAnimationController extends AnimationController {
   _SpringAnimationController({
-    required TickerProvider vsync,
+    required super.vsync,
     required SpringDescription spring,
   })  : _spring = spring,
-        super.unbounded(vsync: vsync);
+        super.unbounded();
 
   final SpringDescription _spring;
 

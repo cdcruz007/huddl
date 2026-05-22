@@ -190,7 +190,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
 
     // §2C: Client-side daily rate limit guard (server also enforces)
     _dailyMessageCount = await _loadDailyCount();
-    if (_dailyMessageCount >= _dailyLimit) {
+    if (_isAtDailyLimit) {
       _showRateLimitMessage();
       return;
     }
@@ -232,7 +232,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       SnackBar(
         content: Text(
           isFreeTier
-              ? 'Daily limit reached (${_dailyLimit} chats). Upgrade to Neighbour for 25 chats/day!'
+              ? 'Daily limit reached ($_dailyLimit chats). Upgrade to Neighbour for 25 chats/day!'
               : "You've reached your $_dailyLimit daily AI chats. Resets at midnight.",
           style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
         ),

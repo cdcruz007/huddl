@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
@@ -16,8 +16,6 @@ import '../rehome/create_listing_screen.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
-import '../../widgets/huddl_empty_states.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 
 
@@ -2630,6 +2628,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     required String title,
     required String subtitle,
     Widget? action,
+    // ignore: unused_element_parameter
     IconData? icon,
   }) {
     // Derive mood from the legacy illustration constant
@@ -2815,6 +2814,7 @@ class _MarketGridBuyCard extends StatefulWidget {
     required this.item,
     required this.onTap,
     required this.onToggleSave,
+    // ignore: unused_element_parameter
     this.isOwn = false,
   });
 
@@ -3065,6 +3065,7 @@ class _MarketItemCard extends StatefulWidget {
     required this.item,
     required this.onTap,
     required this.onToggleSave,
+    // ignore: unused_element_parameter
     this.onDismiss,
   });
 
@@ -3320,7 +3321,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF2F2F2),
+                          color: HuddlColors.background,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -3328,7 +3329,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           style: _adaptiveText(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF42464C),
+                            color: HuddlColors.textDark,
                           ),
                         ),
                       ),
@@ -3371,8 +3372,8 @@ class _MarketSearchRow extends StatelessWidget {
 
   Color get _conditionColor {
     switch (item.condition.label.toLowerCase()) {
-      case 'new':       return const Color(0xFF2DBE8A);
-      case 'like new':  return const Color(0xFF5B9CFF);
+      case 'new':       return HuddlColors.teal;
+      case 'like new':  return HuddlColors.blueDark;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
     }
@@ -3521,7 +3522,7 @@ class _MarketSearchRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: item.isFree
                         ? HuddlColors.teal.withValues(alpha: 0.10)
-                        : const Color(0xFFF2F2F2),
+                        : HuddlColors.background,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -3553,6 +3554,7 @@ class _MarketListCard extends StatefulWidget {
     required this.item,
     required this.onTap,
     required this.onToggleSave,
+    // ignore: unused_element_parameter
     this.isOwn = false,
   });
 
@@ -3564,8 +3566,8 @@ class _MarketListCardState extends State<_MarketListCard> {
 
   Color get _conditionColor {
     switch (widget.item.condition.label.toLowerCase()) {
-      case 'new':       return const Color(0xFF2DBE8A);
-      case 'like new':  return const Color(0xFF5B9CFF);
+      case 'new':       return HuddlColors.teal;
+      case 'like new':  return HuddlColors.blueDark;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
     }
@@ -3790,7 +3792,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         decoration: BoxDecoration(
                           color: item.isFree
                               ? HuddlColors.teal.withValues(alpha: 0.10)
-                              : const Color(0xFFF2F2F2),
+                              : HuddlColors.background,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -3867,9 +3869,9 @@ class _MarketGridCardState extends State<_MarketGridCard> {
   Color _conditionColor(String condition) {
     switch (condition.toLowerCase()) {
       case 'new':
-        return const Color(0xFF2DBE8A);
+        return HuddlColors.teal;
       case 'like new':
-        return const Color(0xFF5B9CFF);
+        return HuddlColors.blueDark;
       case 'good':
         return HuddlColors.primary;
       default:

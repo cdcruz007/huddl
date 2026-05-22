@@ -57,11 +57,13 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
         } catch (_) {}
       }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to post. Please try again.', style: GoogleFonts.poppins(fontSize: 13)),
-        backgroundColor: HuddlColors.error,
-        behavior: SnackBarBehavior.floating,
-      ));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to post. Please try again.', style: GoogleFonts.poppins(fontSize: 13)),
+          backgroundColor: HuddlColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
     }
   }
 

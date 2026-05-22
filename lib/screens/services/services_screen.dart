@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -56,7 +56,7 @@ const Map<ServiceCategory, String> _kCategoryImages = {
 const List<Color> _kAvatarPalette = [
   HuddlColors.teal,
   HuddlColors.primary,
-  Color(0xFF7B61FF),
+  HuddlColors.teal,
 ];
 
 // ─── Shimmer placeholder for image load ──────────────────────────────────────
@@ -234,7 +234,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    const Color filterText = Color(0xFF42464C);
+    const Color filterText = HuddlColors.textDark;
     final bool hasActiveFilter = _selectedCategory != null;
 
     return Scaffold(
@@ -1349,7 +1349,7 @@ class _ListingCardState extends State<_ListingCard> {
                                 fontWeight: FontWeight.w500,
                                 color: _hasEndorsed
                                     ? Colors.white
-                                    : const Color(0xFF42464C),
+                                    : HuddlColors.textDark,
                               ),
                             ),
                     ),

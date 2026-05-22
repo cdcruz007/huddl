@@ -336,7 +336,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
+      extendBody: false,  // UX-08: flat nav — no floating pill
       body: Stack(
         children: List.generate(5, (index) {
           return Offstage(
@@ -345,74 +345,57 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           );
         }),
       ),
-      // ── Floating pill nav — original Huddl design ──────────────────
-      // Rounded pill with heavy shadow, floats 12dp above the safe area.
-      // extendBody:true lets the body scroll underneath it.
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Container(
-            height: 70,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: HuddlColors.gray900.withValues(alpha: 0.10),
-                  blurRadius: 24,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
+      // ── UX-08: Flat nav bar — Airbnb-style border-top, no floating pill ──
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: HuddlColors.divider, width: 0.5),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 56,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home,
+                  label: 'Home',
+                  isActive: _currentIndex == 0,
+                  onTap: () => _switchTab(0),
                 ),
-                BoxShadow(
-                  color: HuddlColors.gray900.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 1),
+                _NavItem(
+                  icon: Icons.people_outline,
+                  activeIcon: Icons.people,
+                  label: 'Connect',
+                  isActive: _currentIndex == 1,
+                  onTap: () => _switchTab(1),
+                ),
+                _NavItem(
+                  icon: Icons.explore_outlined,
+                  activeIcon: Icons.explore,
+                  label: 'Discover',
+                  isActive: _currentIndex == 2,
+                  onTap: () => _switchTab(2),
+                ),
+                _NavItem(
+                  icon: Icons.storefront_outlined,
+                  activeIcon: Icons.storefront,
+                  label: 'Market',
+                  isActive: _currentIndex == 3,
+                  onTap: () => _switchTab(3),
+                ),
+                _NavItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  label: 'Profile',
+                  isActive: _currentIndex == 4,
+                  onTap: () => _switchTab(4),
                 ),
               ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _NavItem(
-                    icon: Icons.home_outlined,
-                    activeIcon: Icons.home,
-                    label: 'Home',
-                    isActive: _currentIndex == 0,
-                    onTap: () => _switchTab(0),
-                  ),
-                  _NavItem(
-                    icon: Icons.people_outline,
-                    activeIcon: Icons.people,
-                    label: 'Connect',
-                    isActive: _currentIndex == 1,
-                    onTap: () => _switchTab(1),
-                  ),
-                  _NavItem(
-                    icon: Icons.explore_outlined,
-                    activeIcon: Icons.explore,
-                    label: 'Discover',
-                    isActive: _currentIndex == 2,
-                    onTap: () => _switchTab(2),
-                  ),
-                  _NavItem(
-                    icon: Icons.storefront_outlined,
-                    activeIcon: Icons.storefront,
-                    label: 'Market',
-                    isActive: _currentIndex == 3,
-                    onTap: () => _switchTab(3),
-                  ),
-                  _NavItem(
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person,
-                    label: 'Profile',
-                    isActive: _currentIndex == 4,
-                    onTap: () => _switchTab(4),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
@@ -438,10 +421,11 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // UX-08: flat nav — nearBlack active, textHint inactive, 4px dot indicator
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final itemColor = isActive
-        ? (isDarkMode ? HuddlColors.darkTextPrimary : HuddlColors.textDark)
-        : (Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint);
+    final activeColor = isDarkMode ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack;
+    final inactiveColor = Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint;
+    final itemColor = isActive ? activeColor : inactiveColor;
 
     return Semantics(
       identifier: 'nav_${label.toLowerCase()}',
@@ -458,7 +442,7 @@ class _NavItem extends StatelessWidget {
               onTap();
             },
             customBorder: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: SizedBox(
               width: 56,
@@ -469,20 +453,31 @@ class _NavItem extends StatelessWidget {
                 children: [
                   Icon(
                     isActive ? activeIcon : icon,
-                    size: 22,
+                    size: 24,
                     color: itemColor,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 9,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                      color: itemColor,
+                  const SizedBox(height: 3),
+                  // Active: 4px dot. Inactive: label text (10px)
+                  if (isActive)
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: activeColor,
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                  else
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w400,
+                        color: inactiveColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
                 ],
               ),
             ),

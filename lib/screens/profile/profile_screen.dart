@@ -8,7 +8,6 @@ import '../../widgets/huddl_character.dart';
 import '../../widgets/huddl_empty_states.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
-import '../../theme/huddl_animations.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/postcode_service.dart';
@@ -2035,8 +2034,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showPhoneSheet() {
     // Strip any country code prefix already stored
     String phoneOnly = _onboarding.phoneNumber ?? '';
-    if (phoneOnly.startsWith('+44')) phoneOnly = phoneOnly.substring(3);
-    else if (phoneOnly.startsWith('44')) phoneOnly = phoneOnly.substring(2);
+    if (phoneOnly.startsWith('+44')) { phoneOnly = phoneOnly.substring(3); }
+    else if (phoneOnly.startsWith('44')) { phoneOnly = phoneOnly.substring(2); }
 
     final phoneCtrl = TextEditingController(text: phoneOnly);
 
@@ -2175,8 +2174,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     'Please enter a phone number.');
                                 return;
                               }
-                              if (raw.startsWith('+44')) raw = raw.substring(3);
-                              else if (raw.startsWith('44')) raw = raw.substring(2);
+                              if (raw.startsWith('+44')) { raw = raw.substring(3); }
+                              else if (raw.startsWith('44')) { raw = raw.substring(2); }
                               if (raw.length < 7) {
                                 setLocal(() => errorText =
                                     'Please enter a valid UK phone number.');
@@ -6045,32 +6044,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _fallbackAvatar() {
+    // P5: initials circle — no Emma/John assets
+    final raw = _name.trim();
+    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final initials = parts.length >= 2
+        ? '\${parts.first[0]}\${parts.last[0]}'.toUpperCase()
+        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
     return Container(
       width: 88,
       height: 88,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.primary.withValues(alpha: 0.08),
-        border: Border.all(color: HuddlColors.primary, width: 2),
+        color: HuddlColors.background,
+        border: Border.all(color: HuddlColors.divider, width: 1.5),
       ),
-      child: ClipOval(
-        child: Image.asset(
-          _parentType.toLowerCase() == 'dad'
-              ? 'assets/images/avatars/John.png'
-              : 'assets/images/avatars/Emma.png',
-          width: 84,
-          height: 84,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Center(
-            child: Text(
-                (_name.isNotEmpty && !_name.startsWith('+') && _name != 'User')
-                    ? _name[0].toUpperCase()
-                    : 'U',
-                style: GoogleFonts.poppins(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary)),
-          ),
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.poppins(
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              color: HuddlColors.textDark),
         ),
       ),
     );

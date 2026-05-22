@@ -54,10 +54,9 @@ class MemberPhotoService {
   /// Returns the local asset path for the current user's default avatar
   /// based on parentType (mum / dad). Used when no profile photo is set.
   static String get currentUserAvatarAsset {
+    // P5: Use network defaults instead of Emma/John asset illustrations
     final parentType = OnboardingDataService().parentType;
-    return parentType == 'dad'
-        ? 'assets/images/avatars/John.png'
-        : 'assets/images/avatars/Emma.png';
+    return parentType == 'dad' ? defaultDadAvatar : defaultMumAvatar;
   }
 
   /// Returns the correct default avatar based on the current user's parentType.
