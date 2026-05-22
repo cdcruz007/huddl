@@ -2863,10 +2863,14 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Image area (fixed aspect) ───────────────────────────────
-              Expanded(
-                flex: 5,
+              // ── Image area (fixed aspect 1:1) ──────────────────────────
+              // NOTE: MasonryGridView measures children intrinsically —
+              // Expanded has zero height in an unconstrained axis.
+              // Use AspectRatio so the image has a real pixel height.
+              AspectRatio(
+                aspectRatio: 1.0,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -2974,80 +2978,76 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                   ],
                 ),
               ),
-              // ── Card body ───────────────────────────────────────────────
-              Expanded(
-                flex: 4,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Category row + price right-aligned
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.category.label.toUpperCase(),
-                              style: _adaptiveText(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: hc.textTertiary,
-                                letterSpacing: 0.3,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            item.priceDisplay,
+              // ── Card body (intrinsic height — no Expanded) ──────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Category row + price right-aligned
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.category.label.toUpperCase(),
                             style: _adaptiveText(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: hc.textTertiary,
+                              letterSpacing: 0.3,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      // Title
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: hc.textPrimary,
-                            height: 1.25,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Location row
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 11, color: hc.textTertiary),
-                          const SizedBox(width: 2),
-                          Expanded(
-                            child: Text(
-                              item.sellerLocation.isNotEmpty
-                                  ? item.sellerLocation
-                                  : 'Near you',
-                              style: _adaptiveText(
-                                fontSize: 11,
-                                color: hc.textTertiary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        Text(
+                          item.priceDisplay,
+                          style: _adaptiveText(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: item.isFree ? HuddlColors.teal : _kMarketBlue,
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    // Title
+                    Text(
+                      item.title,
+                      style: _adaptiveText(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: hc.textPrimary,
+                        height: 1.25,
                       ),
-                    ],
-                  ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Location row
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 11, color: hc.textTertiary),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            item.sellerLocation.isNotEmpty
+                                ? item.sellerLocation
+                                : 'Near you',
+                            style: _adaptiveText(
+                              fontSize: 11,
+                              color: hc.textTertiary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
