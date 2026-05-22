@@ -1404,7 +1404,7 @@ class _HomeScreenState extends State<HomeScreen>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
+              color: iconColor.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(icon, size: 18, color: iconColor),
@@ -1732,23 +1732,9 @@ class _HomeScreenState extends State<HomeScreen>
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    HuddlColors.primary.withValues(alpha: 0.18),
-                    HuddlColors.teal.withValues(alpha: 0.12),
-                  ]
-                : [
-                    HuddlColors.primary.withValues(alpha: 0.06),
-                    HuddlColors.teal.withValues(alpha: 0.08),
-                  ],
-          ),
+          color: hc.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: HuddlColors.primary.withValues(alpha: isDark ? 0.25 : 0.15),
-          ),
+          border: Border.all(color: hc.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1762,13 +1748,13 @@ class _HomeScreenState extends State<HomeScreen>
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                      color: hc.surfaceAlt,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.auto_awesome,
                       size: 16,
-                      color: HuddlColors.primary,
+                      color: hc.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -3013,25 +2999,78 @@ class _HomeScreenState extends State<HomeScreen>
   // Algorithmically selects the single most relevant meetup, event or group.
   // Returns null if no relevant content is available (section hidden per spec).
   Widget? _buildTodayForYouCard(dynamic hc, bool isDark) {
-    // Pick the best candidate: first upcoming meetup the user isn't already going to
+    // ── Personalised candidate selection ─────────────────────────────────────
+    // Priority 1: soonest meetup the user has already RSVP'd (isGoing == true)
+    // Priority 2: meetup in user's borough matching their stage-of-life category
+    // Priority 3: any upcoming meetup (first in list)
+    // Priority 4: event, then service as fallback
     dynamic candidate;
     String candidateType = '';
     String ctaLabel = 'View';
     IconData candidateIcon = Icons.event_rounded;
     Color candidateColor = HuddlColors.teal;
+    String _reasonTag = '';   // shown as a pill below the category tag
 
     if (_upcomingMeetups.isNotEmpty) {
-      candidate = _upcomingMeetups.first;
+      // Priority 1: RSVP'd meetup — user is already committed
+      final goingMeetup = _upcomingMeetups
+          .where((m) => m.isGoing)
+          .toList()
+        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+      if (goingMeetup.isNotEmpty) {
+        candidate = goingMeetup.first;
+        _reasonTag = "You're going!";
+      } else {
+        // Priority 2: stage-of-life match in user's borough
+        final stages = _onboarding.stagesOfLife
+            .map((s) => s.toLowerCase())
+            .toList();
+        // Map stages → preferred category keywords
+        final stageKeywords = <String>[];
+        for (final s in stages) {
+          if (s.contains('expect') || s.contains('pregnan') || s.contains('due')) {
+            stageKeywords.addAll(['antenatal', 'pregnancy', 'social']);
+          }
+          if (s.contains('baby') || s.contains('newborn') || s.contains('infant')) {
+            stageKeywords.addAll(['baby', 'social', 'coffee']);
+          }
+          if (s.contains('toddler') || s.contains('1') || s.contains('2') || s.contains('3')) {
+            stageKeywords.addAll(['playdate', 'walk', 'sport']);
+          }
+        }
+
+        Meetup? stageMatch;
+        if (stageKeywords.isNotEmpty) {
+          stageMatch = _upcomingMeetups.cast<Meetup?>().firstWhere(
+            (m) => m != null &&
+                stageKeywords.any((kw) => m.category.toLowerCase().contains(kw)),
+            orElse: () => null,
+          );
+        }
+
+        if (stageMatch != null) {
+          candidate = stageMatch;
+          _reasonTag = 'Near you in $_borough';
+        } else {
+          // Priority 3: soonest meetup regardless
+          candidate = _upcomingMeetups.first;
+          _reasonTag = 'New in ${(_upcomingMeetups.first.category)}';
+        }
+      }
+
       candidateType = 'MEETUP';
-      ctaLabel = 'Join';
+      ctaLabel = (candidate as Meetup).isGoing ? 'View' : 'Join';
       candidateIcon = Icons.place_rounded;
       candidateColor = HuddlColors.teal;
+
     } else if (_eventService.events.isNotEmpty) {
       candidate = _eventService.events.first;
       candidateType = 'EVENT';
       ctaLabel = 'Book';
       candidateIcon = Icons.event_rounded;
       candidateColor = HuddlColors.accentAmber;
+      _reasonTag = 'New in ${_borough.isNotEmpty ? _borough : 'your area'}';
     } else if (_featuredServices.isNotEmpty) {
       candidate = _featuredServices.first;
       candidateType = 'SERVICE';
@@ -3057,7 +3096,7 @@ class _HomeScreenState extends State<HomeScreen>
           // Section header
           Row(
             children: [
-              Icon(Icons.auto_awesome, size: 16, color: HuddlColors.primary),
+              Icon(Icons.auto_awesome, size: 16, color: hc.textTertiary),
               const SizedBox(width: 8),
               Text(
                 'Today for you',
@@ -3153,6 +3192,24 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           ),
                         ),
+                        // Reason tag pill — personalisation signal
+                        if (_reasonTag.isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: hc.surfaceAlt,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              _reasonTag,
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: hc.textTertiary,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 6),
                         Text(
                           title,
