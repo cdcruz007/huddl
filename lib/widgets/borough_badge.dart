@@ -65,25 +65,25 @@ class BoroughBadge extends StatelessWidget {
         padding: padding,
         decoration: BoxDecoration(
           color: isDark
-              ? HuddlColors.teal.withValues(alpha: 0.2)
-              : HuddlColors.teal.withValues(alpha: 0.1),
+              ? HuddlColors.nearBlack.withValues(alpha: 0.35)
+              : HuddlColors.nearBlack.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: HuddlColors.teal.withValues(alpha: 0.3),
+            color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.25 : 0.12),
             width: 0.5,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.public, size: iconSize, color: HuddlColors.teal),
+            Icon(Icons.public, size: iconSize, color: HuddlColors.textTertiary),
             const SizedBox(width: 3),
             Text(
               'UK-wide',
               style: GoogleFonts.poppins(
                 fontSize: fontSize,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.teal,
+                color: HuddlColors.textTertiary,
               ),
             ),
           ],
@@ -93,9 +93,9 @@ class BoroughBadge extends StatelessWidget {
 
     // Borough-only badge
     final Color badgeColor = isDark
-        ? HuddlColors.teal.withValues(alpha: 0.2)
-        : HuddlColors.teal.withValues(alpha: 0.08);
-    final Color textColor = isDark ? HuddlColors.teal : HuddlColors.primaryDark;
+        ? HuddlColors.nearBlack.withValues(alpha: 0.35)
+        : HuddlColors.nearBlack.withValues(alpha: 0.06);
+    final Color textColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textTertiary;
 
     return Container(
       padding: padding,
@@ -103,7 +103,7 @@ class BoroughBadge extends StatelessWidget {
         color: badgeColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: HuddlColors.teal.withValues(alpha: 0.2),
+          color: HuddlColors.nearBlack.withValues(alpha: 0.18),
           width: 0.5,
         ),
       ),
@@ -155,7 +155,7 @@ class BoroughScopeChip extends StatelessWidget {
           context: context,
           icon: Icons.public,
           label: 'UK-wide',
-          color: HuddlColors.teal,
+          color: HuddlColors.textTertiary,
           isDark: isDark,
         );
       case FeatureScope.boroughOnly:
@@ -163,7 +163,7 @@ class BoroughScopeChip extends StatelessWidget {
           context: context,
           icon: Icons.location_on_outlined,
           label: boroughName.isNotEmpty ? boroughName : 'Your borough',
-          color: HuddlColors.blueUI,
+          color: HuddlColors.textTertiary,
           isDark: isDark,
         );
       case FeatureScope.boroughAware:
@@ -244,7 +244,7 @@ class BoroughHeader extends StatelessWidget {
       case FeatureScope.ukWide:
         label = customLabel ?? 'Showing events across the UK';
         icon = Icons.public;
-        color = HuddlColors.teal;
+        color = HuddlColors.textTertiary;
         break;
       case FeatureScope.boroughOnly:
         label = customLabel ??
@@ -252,7 +252,7 @@ class BoroughHeader extends StatelessWidget {
                 ? 'Showing results in $boroughName'
                 : 'Showing results in your borough');
         icon = Icons.location_on_outlined;
-        color = HuddlColors.blueUI;
+        color = HuddlColors.textTertiary;
         break;
       case FeatureScope.boroughAware:
         label = customLabel ??
@@ -322,11 +322,11 @@ class BoroughGateMessage extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark
-            ? HuddlColors.accentAmber.withValues(alpha: 0.1)
-            : HuddlColors.accentAmber.withValues(alpha: 0.08),
+            ? HuddlColors.nearBlack.withValues(alpha: 0.18)
+            : HuddlColors.nearBlack.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: HuddlColors.accentAmber.withValues(alpha: 0.3),
+          color: HuddlColors.nearBlack.withValues(alpha: 0.10),
           width: 0.5,
         ),
       ),
@@ -335,7 +335,7 @@ class BoroughGateMessage extends StatelessWidget {
           Icon(
             Icons.info_outline,
             size: 20,
-            color: HuddlColors.accentAmber,
+            color: HuddlColors.textTertiary,
           ),
           const SizedBox(width: 10),
           Expanded(

@@ -1056,9 +1056,18 @@ class _HomeScreenState extends State<HomeScreen>
     final hc = context.hc;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // UX-04: Illustrated loading screen replaces CPI spinner
+    // Show skeleton shimmer while loading — no full-screen "finding parents" block
     if (_isLoading) {
-      return HuddlLoadingScreen.findingParents();
+      return Scaffold(
+        backgroundColor: hc.scaffold,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: HuddlSkeletonFeed(cardCount: 4),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -1374,15 +1383,15 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               const SizedBox(width: 10),
-              // §1A §3: Teal borough pill — right-aligned, adjacent to greeting
+              // Location pill — neutral, right-aligned
               if (_borough.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: isDark ? 0.2 : 0.1),
+                    color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.35 : 0.06),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: HuddlColors.teal.withValues(alpha: isDark ? 0.4 : 0.25),
+                      color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.25 : 0.12),
                       width: 1,
                     ),
                   ),
@@ -1390,14 +1399,14 @@ class _HomeScreenState extends State<HomeScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.location_on_outlined,
-                          size: 13, color: HuddlColors.teal),
+                          size: 13, color: hc.textTertiary),
                       const SizedBox(width: 3),
                       Text(
                         _borough,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.teal,
+                          color: hc.textTertiary,
                         ),
                       ),
                     ],
@@ -1728,7 +1737,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newMeetups > 0) {
       items.add(_CatchUpItem(
         icon: Icons.place_rounded,
-        color: HuddlColors.teal,
+        color: HuddlColors.nearBlack,
         label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
         onTap: () => _switchToTab(2),
       ));
@@ -1736,7 +1745,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newEvents > 0) {
       items.add(_CatchUpItem(
         icon: Icons.event_rounded,
-        color: HuddlColors.accentAmber,
+        color: HuddlColors.nearBlack,
         label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
         onTap: () => _switchToTab(2),
       ));
@@ -1744,7 +1753,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newGroupCount > 0) {
       items.add(_CatchUpItem(
         icon: Icons.people_rounded,
-        color: HuddlColors.teal,
+        color: HuddlColors.nearBlack,
         label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
         onTap: () => _switchToTab(2),
       ));
@@ -1752,7 +1761,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newMarket > 0) {
       items.add(_CatchUpItem(
         icon: Icons.storefront_rounded,
-        color: HuddlColors.blueDark,
+        color: HuddlColors.nearBlack,
         label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale',
         onTap: () => _switchToTab(3),
       ));
@@ -1843,23 +1852,25 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: item.color.withValues(alpha: isDark ? 0.18 : 0.10),
+                          color: isDark
+                              ? HuddlColors.nearBlack.withValues(alpha: 0.35)
+                              : HuddlColors.nearBlack.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: item.color.withValues(alpha: isDark ? 0.35 : 0.25),
+                            color: HuddlColors.nearBlack.withValues(alpha: isDark ? 0.25 : 0.12),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(item.icon, size: 13, color: item.color),
+                            Icon(item.icon, size: 13, color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.nearBlack),
                             const SizedBox(width: 5),
                             Text(
                               item.label,
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: item.color,
+                                color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.nearBlack,
                               ),
                             ),
                           ],
@@ -1875,7 +1886,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   children: [
                     Icon(Icons.check_circle_outline,
-                        size: 14, color: HuddlColors.teal),
+                        size: 14, color: HuddlColors.textTertiary),
                     const SizedBox(width: 6),
                     Text(
                       "You're all caught up! Scroll down to explore.",
@@ -4476,9 +4487,9 @@ class _HomeScreenState extends State<HomeScreen>
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.primary.withValues(alpha: 0.12),
+        color: HuddlColors.divider,
         border: Border.all(
-          color: HuddlColors.primary.withValues(alpha: 0.30),
+          color: HuddlColors.divider,
           width: 1.5,
         ),
       ),
@@ -4488,7 +4499,7 @@ class _HomeScreenState extends State<HomeScreen>
           style: GoogleFonts.poppins(
             fontSize: size * 0.36,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.primary,
+            color: HuddlColors.textSecondary,
             height: 1.0,
           ),
         ),

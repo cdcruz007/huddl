@@ -489,13 +489,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
           ),
         ],
       ),
-      // ── + FAB (matches Groups tab) ────────────────────────────────────────
+      // ── + FAB ────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           HuddlAnimations.mediumTap();
           _openAddSheet(context);
         },
-        backgroundColor: HuddlColors.primary,
+        backgroundColor: HuddlColors.nearBlack,
         elevation: 4,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),

@@ -1616,7 +1616,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 elevation: 4,
                 shadowColor: HuddlColors.textDark.withValues(alpha: 0.2),
                 shape: const CircleBorder(),
-                color: HuddlColors.primary,
+                color: HuddlColors.nearBlack,
                 child: InkWell(
                   onTap: () {
                     HuddlAnimations.lightTap();

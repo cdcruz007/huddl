@@ -1292,11 +1292,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary,
+                      color: HuddlColors.nearBlack,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: HuddlColors.primary.withValues(alpha: 0.35),
+                          color: HuddlColors.nearBlack.withValues(alpha: 0.25),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
