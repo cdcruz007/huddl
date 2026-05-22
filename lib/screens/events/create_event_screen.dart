@@ -503,7 +503,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         Expanded(
             child: Text('"${event.title}" created successfully!')),
       ]),
-      backgroundColor: HuddlColors.teal,
+      backgroundColor: HuddlColors.nearBlack,
       behavior: SnackBarBehavior.floating,
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -613,7 +613,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         child: CupertinoSwitch(
                           value: _isOnline,
                           onChanged: (v) => setState(() => _isOnline = v),
-                          activeTrackColor: HuddlColors.teal,
+                          activeTrackColor: HuddlColors.nearBlack,
                           inactiveTrackColor: HuddlColors.disabledBorder,
                         ),
                       ),
@@ -846,7 +846,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           value: isOn,
                           onChanged: (v) =>
                               setState(() => _participants[key] = v),
-                          activeTrackColor: HuddlColors.teal,
+                          activeTrackColor: HuddlColors.nearBlack,
                           inactiveTrackColor: HuddlColors.disabledBorder,
                         ),
                       ),

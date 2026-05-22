@@ -187,7 +187,7 @@ extension ItemCategoryExt on ItemCategory {
   Color get color {
     switch (this) {
       case ItemCategory.boysClothes:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case ItemCategory.girlsClothes:
         return HuddlColors.pinkSoft;
       case ItemCategory.toysAndGames:
@@ -199,7 +199,7 @@ extension ItemCategoryExt on ItemCategory {
       case ItemCategory.furniture:
         return HuddlColors.purpleAccent;
       case ItemCategory.books:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case ItemCategory.maternity:
         return HuddlColors.pinkSoft;
       case ItemCategory.babyCareAndAccessories:
@@ -233,9 +233,9 @@ extension ItemConditionExt on ItemCondition {
   Color get color {
     switch (this) {
       case ItemCondition.brandNew:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case ItemCondition.likeNew:
-        return HuddlColors.teal;
+        return HuddlColors.nearBlack;
       case ItemCondition.good:
         return HuddlColors.amberWarm;
       case ItemCondition.wellUsed:

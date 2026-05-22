@@ -62,6 +62,12 @@ class HuddlLoadingScreen extends StatefulWidget {
         submessage: 'This only takes a moment',
       );
 
+  factory HuddlLoadingScreen.reservationReady() => const HuddlLoadingScreen._(
+        illustration: _HuddlLoadingIllustration.payment,
+        message: 'Getting your listing ready',
+        submessage: 'This only takes a moment',
+      );
+
   // ignore: library_private_types_in_public_api
   final _HuddlLoadingIllustration illustration;
   final String message;
@@ -144,26 +150,20 @@ class _HuddlLoadingScreenState extends State<HuddlLoadingScreen>
 
             const SizedBox(height: 40),
 
-            // Message with animated dots
-            RichText(
+            // Airbnb-style 3-dot bounce loader
+            const SizedBox(height: 8),
+            HuddlThreeDotsLoader(color: textColor),
+            const SizedBox(height: 32),
+
+            // Message — clean, no trailing dots (Airbnb shows dots separately above text)
+            Text(
+              widget.message,
               textAlign: TextAlign.center,
-              text: TextSpan(
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: textColor,
-                  height: 1.4,
-                ),
-                children: [
-                  TextSpan(text: widget.message),
-                  TextSpan(
-                    text: '.' * _dotCount,
-                    style: GoogleFonts.poppins(
-                      color: HuddlColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+                height: 1.4,
               ),
             ),
 
@@ -600,6 +600,198 @@ class _HuddlSkeletonCardState extends State<HuddlSkeletonCard>
           ],
         );
       },
+    );
+  }
+}
+
+// =============================================================================
+// HUDDL THREE DOTS LOADER — Airbnb "•••" bounce animation
+// =============================================================================
+//
+// Exact match to Airbnb's loading screen pattern:
+//   • 3 circular dots in a horizontal row
+//   • Sequential bounce animation: dot 1 → dot 2 → dot 3 → repeat
+//   • 360ms per cycle, 120ms stagger between dots
+//   • Scale: 1.0 → 1.5 → 1.0 per dot (spring-like feel)
+//   • Dots are nearBlack (matches Airbnb's dark dot color)
+//
+// Usage:
+//   HuddlThreeDotsLoader()                         // default nearBlack
+//   HuddlThreeDotsLoader(color: Colors.white)       // white on dark bg
+//   HuddlThreeDotsLoader(dotSize: 10)               // custom size
+// =============================================================================
+
+class HuddlThreeDotsLoader extends StatefulWidget {
+  final Color? color;
+  final double dotSize;
+  final double spacing;
+
+  const HuddlThreeDotsLoader({
+    super.key,
+    this.color,
+    this.dotSize = 8.0,
+    this.spacing = 6.0,
+  });
+
+  @override
+  State<HuddlThreeDotsLoader> createState() => _HuddlThreeDotsLoaderState();
+}
+
+class _HuddlThreeDotsLoaderState extends State<HuddlThreeDotsLoader>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<double>> _scaleAnims;
+
+  static const int _dotCount = 3;
+  static const int _durationMs = 360;
+  static const int _staggerMs = 120;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controllers = List.generate(_dotCount, (i) {
+      return AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: _durationMs),
+      );
+    });
+
+    _scaleAnims = _controllers.map((ctrl) {
+      return TweenSequence<double>([
+        TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 1.55)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 40,
+        ),
+        TweenSequenceItem(
+          tween: Tween(begin: 1.55, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeIn)),
+          weight: 60,
+        ),
+      ]).animate(ctrl);
+    }).toList();
+
+    // Stagger-start each dot
+    for (int i = 0; i < _dotCount; i++) {
+      Future.delayed(Duration(milliseconds: i * _staggerMs), () {
+        if (mounted) {
+          _controllers[i].repeat(
+            period: Duration(milliseconds: _durationMs + (_dotCount - 1) * _staggerMs),
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final ctrl in _controllers) {
+      ctrl.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dotColor = widget.color ?? HuddlColors.nearBlack;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(_dotCount, (i) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: widget.spacing / 2),
+          child: AnimatedBuilder(
+            animation: _scaleAnims[i],
+            builder: (_, __) => Transform.scale(
+              scale: _scaleAnims[i].value,
+              child: Container(
+                width: widget.dotSize,
+                height: widget.dotSize,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// =============================================================================
+// HUDDL PROCESS LOADING SCREEN — Airbnb "Reviewing payment" style
+// =============================================================================
+//
+// Full-screen white overlay with:
+//   • Centered HuddlThreeDotsLoader (••• bounce)
+//   • Short message below (e.g. "We're getting your listing ready")
+//   • Optional submessage in grey
+//
+// Usage:
+//   showDialog(
+//     context: context,
+//     barrierDismissible: false,
+//     builder: (_) => HuddlProcessLoadingOverlay(
+//       message: "We're getting your listing ready",
+//     ),
+//   );
+// =============================================================================
+
+class HuddlProcessLoadingOverlay extends StatelessWidget {
+  final String message;
+  final String? submessage;
+
+  const HuddlProcessLoadingOverlay({
+    super.key,
+    required this.message,
+    this.submessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Airbnb 3-dot bounce
+              const HuddlThreeDotsLoader(
+                dotSize: 10,
+                spacing: 8,
+              ),
+              const SizedBox(height: 32),
+              // Main message
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: HuddlColors.nearBlack,
+                  height: 1.4,
+                ),
+              ),
+              if (submessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  submessage!,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: HuddlColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

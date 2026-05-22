@@ -5934,74 +5934,235 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
     if (!mounted) return;
+    // ── Airbnb-style photo setup sheet ──────────────────────────────────────
+    // Dark background, circular preview, "Edit photo" text link, pink ••• button
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A1A), // dark bg — Airbnb profile setup style
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Container(
+                  width: 36, height: 4,
                   decoration: BoxDecoration(
-                      color: context.hc.divider,
-                      borderRadius: BorderRadius.circular(2))),
-              Text('Change profile photo',
-                  style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary)),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: _circleIcon(Icons.photo_library_outlined),
-                title: Text('Choose from gallery',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickProfilePhoto(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: _circleIcon(Icons.camera_alt_outlined),
-                title: Text('Take a photo',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickProfilePhoto(ImageSource.camera);
-                },
-              ),
-              if (_photoUrl != null && _photoUrl!.isNotEmpty)
-                ListTile(
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                        color: HuddlColors.errorLight, shape: BoxShape.circle),
-                    child: const Icon(Icons.delete_outline,
-                        color: HuddlColors.error),
+                    color: Colors.white.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  title: Text('Remove photo',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.error)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _removeProfilePhoto();
-                  },
                 ),
-              const SizedBox(height: 8),
-            ],
+                const SizedBox(height: 4),
+                // ── Header: Preview / Tips ──────────────────────────────
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                        color: Colors.white, size: 22),
+                    ),
+                    const Spacer(),
+                    Text('Preview',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white, fontSize: 15,
+                        fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text('Tips',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white, fontSize: 15,
+                        fontWeight: FontWeight.w500)),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                // ── Circular photo preview on dark bg ─────────────────
+                Center(
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    children: [
+                      // Coral accent line above circle — signature Airbnb detail
+                      Positioned(
+                        top: -4,
+                        child: Container(
+                          width: 40, height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF385C),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      // Circular photo
+                      Container(
+                        width: 180, height: 180,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF2C2C2C),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            width: 2,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: _photoUrl != null && _photoUrl!.isNotEmpty
+                              ? _buildAvatarImage()
+                              : _fallbackAvatarDark(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // ── Bottom controls: "Edit photo" + pink ••• button ───
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // "Edit photo" text link (Airbnb bottom-left)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickProfilePhoto(ImageSource.gallery);
+                      },
+                      child: Text('Edit photo',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.white,
+                        )),
+                    ),
+                    // Pink ••• button (Airbnb bottom-right)
+                    GestureDetector(
+                      onTap: () {
+                        // Show options popup
+                        showModalBottomSheet<void>(
+                          context: ctx,
+                          backgroundColor: const Color(0xFF1A1A1A),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          ),
+                          builder: (optCtx) => SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.photo_library_outlined,
+                                      color: Colors.white),
+                                    title: Text('Choose from gallery',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500)),
+                                    onTap: () {
+                                      Navigator.pop(optCtx);
+                                      Navigator.pop(ctx);
+                                      _pickProfilePhoto(ImageSource.gallery);
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.camera_alt_outlined,
+                                      color: Colors.white),
+                                    title: Text('Take a photo',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500)),
+                                    onTap: () {
+                                      Navigator.pop(optCtx);
+                                      Navigator.pop(ctx);
+                                      _pickProfilePhoto(ImageSource.camera);
+                                    },
+                                  ),
+                                  if (_photoUrl != null && _photoUrl!.isNotEmpty)
+                                    ListTile(
+                                      leading: Icon(Icons.delete_outline,
+                                        color: HuddlColors.error),
+                                      title: Text('Remove photo',
+                                        style: GoogleFonts.poppins(
+                                          color: HuddlColors.error,
+                                          fontWeight: FontWeight.w500)),
+                                      onTap: () {
+                                        Navigator.pop(optCtx);
+                                        Navigator.pop(ctx);
+                                        _removeProfilePhoto();
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF385C), // Airbnb coral pink
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(3, (i) => Padding(
+                            padding: EdgeInsets.only(
+                              left: i > 0 ? 4 : 0),
+                            child: Container(
+                              width: 5, height: 5,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          )),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  // Fallback avatar for dark background (used in Airbnb photo preview)
+  Widget _fallbackAvatarDark() {
+    final raw = _name.trim();
+    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final initials = parts.length >= 2
+        ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+    return Container(
+      width: 180, height: 180,
+      color: const Color(0xFF2C2C2C),
+      child: Center(
+        child: Text(initials,
+          style: GoogleFonts.poppins(
+            fontSize: 64,
+            fontWeight: FontWeight.w600,
+            color: Colors.white.withValues(alpha: 0.7),
+          )),
+      ),
+    );
+  }
+
 
   Future<void> _pickProfilePhoto(ImageSource source) async {
     try {
@@ -6095,7 +6256,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         height: 88,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: HuddlColors.primary, width: 2),
+          border: Border.all(
+            color: HuddlColors.nearBlack.withValues(alpha: 0.12),
+            width: 1.5),
         ),
         child: ClipOval(child: _buildAvatarImage()),
       );

@@ -462,7 +462,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         const SizedBox(width: 8),
         const Expanded(child: Text('Meetup created!')),
       ]),
-      backgroundColor: HuddlColors.teal,
+      backgroundColor: HuddlColors.nearBlack,
       behavior: SnackBarBehavior.floating,
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -571,9 +571,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   // DESIGN TOKENS  (Figma-exact)
   // ─────────────────────────────────────────────────────────────────────
-  static const _bannerBlue   = HuddlColors.blueUI;        // banner — Figma #5B9CFF
+  static const _bannerBlue   = HuddlColors.nearBlack;     // banner — nearBlack for Airbnb parity
   static const _accentOrange = HuddlColors.primary;        // date/time/location icons + toggle — Figma #FF965C
-  static const _accentBlue   = HuddlColors.blueUI;         // category icons + selected pill fill — Figma #5B9CFF
+  static const _accentBlue   = HuddlColors.nearBlack;      // category icons + selected pill fill — nearBlack
   static const _fieldBg      = HuddlColors.background;     // text field fill — Figma #F6F6F6
   static const _fieldLine    = HuddlColors.divider;        // field bottom underline — Figma #D5D5D5
   static const _sectionText  = HuddlColors.textDark;       // section header — Figma #42464C

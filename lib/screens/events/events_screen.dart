@@ -61,7 +61,7 @@ class EventsScreen extends StatefulWidget {
 }
 
 class EventsScreenState extends State<EventsScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
 
   /// Called by MainShell when the user leaves the Discover tab via the bottom
   /// nav, ensuring the Services sub-tab resets from compact search back to
@@ -350,18 +350,18 @@ class EventsScreenState extends State<EventsScreen>
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // Borough chip: blue for Groups/Meetups/Services, UK-wide teal for Events
+                          // Borough chip — always nearBlack (scope shown in tab label)
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
                             child: BoroughScopeChip(
                               key: ValueKey('discover_chip_$_selectedTab'),
                               feature: _selectedTab == 2
-                                  ? HuddlFeature.events     // UK-wide teal
+                                  ? HuddlFeature.events
                                   : _selectedTab == 3
-                                      ? HuddlFeature.services // borough blue
+                                      ? HuddlFeature.services
                                       : _selectedTab == 1
-                                          ? HuddlFeature.meetups  // borough blue
-                                          : HuddlFeature.groups,  // borough blue
+                                          ? HuddlFeature.meetups
+                                          : HuddlFeature.groups,
                             ),
                           ),
                         ],
@@ -414,20 +414,16 @@ class EventsScreenState extends State<EventsScreen>
                               icon: Icon(Icons.notifications_outlined,
                                   color: context.hc.textPrimary),
                               tooltip: 'Notifications',
-                              onPressed: () {
-                                _showNotificationsSheet();
-                              },
+                              onPressed: _showNotificationsSheet,
                             ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  // ── Tabs: Groups | Meetups | Events ──────────────
-                  TabBar(
-                    controller: _tabController,
-                    isScrollable: true,                         // FIX: 5 tabs no longer truncated
-                    tabAlignment: TabAlignment.start,           // FIX: left-align on scroll
+                  const SizedBox(height: 10),
+                  // ── Airbnb-style animated pill tab bar ────────────
+                  _DiscoverAnimatedTabBar(
+                    selectedIndex: _selectedTab,
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
@@ -435,31 +431,11 @@ class EventsScreenState extends State<EventsScreen>
                       if (index == 3 || _selectedTab == 3) {
                         _serviceResetTrigger.value = true;
                       }
+                      _tabController.animateTo(index);
                       setState(() { _selectedTab = index; });
                     },
-                    tabs: const [
-                      Tab(text: 'Groups'),
-                      Tab(text: 'Meetups'),
-                      Tab(text: 'Events'),
-                      Tab(text: 'Services'),
-                      Tab(text: 'Insights'),
-                    ],
-                    labelColor: HuddlColors.nearBlack,
-                    unselectedLabelColor: context.hc.textTertiary,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,                            // FIX: 14→13 for breathing room
-                      fontWeight: FontWeight.w600,
-                    ),
-                    unselectedLabelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    indicatorColor: HuddlColors.primary,       // FIX: orange underline = unambiguous
-                    indicatorWeight: 2.5,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    dividerColor: context.hc.divider,
                   ),
+                  const SizedBox(height: 2),
                 ],
               ),
             ),
@@ -580,7 +556,191 @@ class EventsScreenState extends State<EventsScreen>
   }
 }
 
-// Discover screen has three tabs: Groups | Meetups | Events
+// ═══════════════════════════════════════════════════════════════════════════════
+// AIRBNB-STYLE ANIMATED PILL TAB BAR
+// Spring-animated sliding pill indicator under horizontally scrollable tabs.
+// Each tab has an icon + label. Active tab: nearBlack fill, white text.
+// Inactive tabs: transparent, textTertiary text.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _DiscoverTabDef {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  const _DiscoverTabDef({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
+}
+
+const _kDiscoverTabs = [
+  _DiscoverTabDef(
+    icon: Icons.group_outlined,
+    activeIcon: Icons.group,
+    label: 'Groups',
+  ),
+  _DiscoverTabDef(
+    icon: Icons.place_outlined,
+    activeIcon: Icons.place,
+    label: 'Meetups',
+  ),
+  _DiscoverTabDef(
+    icon: Icons.event_outlined,
+    activeIcon: Icons.event,
+    label: 'Events',
+  ),
+  _DiscoverTabDef(
+    icon: Icons.handyman_outlined,
+    activeIcon: Icons.handyman,
+    label: 'Services',
+  ),
+  _DiscoverTabDef(
+    icon: Icons.insights_outlined,
+    activeIcon: Icons.insights,
+    label: 'Insights',
+  ),
+];
+
+class _DiscoverAnimatedTabBar extends StatefulWidget {
+  final int selectedIndex;
+  final void Function(int) onTap;
+
+  const _DiscoverAnimatedTabBar({
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  @override
+  State<_DiscoverAnimatedTabBar> createState() =>
+      _DiscoverAnimatedTabBarState();
+}
+
+class _DiscoverAnimatedTabBarState extends State<_DiscoverAnimatedTabBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+  int _prevIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+    _prevIndex = widget.selectedIndex;
+    _ctrl.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(_DiscoverAnimatedTabBar old) {
+    super.didUpdateWidget(old);
+    if (old.selectedIndex != widget.selectedIndex) {
+      _prevIndex = old.selectedIndex;
+      _ctrl.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        physics: const BouncingScrollPhysics(),
+        itemCount: _kDiscoverTabs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (context, index) {
+          final tab = _kDiscoverTabs[index];
+          final isActive = index == widget.selectedIndex;
+          return AnimatedBuilder(
+            animation: _anim,
+            builder: (context, _) {
+              // Smooth colour interpolation
+              final activeColor = HuddlColors.nearBlack;
+              final inactiveColor = Colors.transparent;
+              Color bgColor;
+              Color textColor;
+              Color iconColor;
+              if (isActive) {
+                bgColor = Color.lerp(inactiveColor, activeColor,
+                    _anim.value)!;
+                textColor = Color.lerp(
+                    hc.textTertiary, Colors.white, _anim.value)!;
+                iconColor = Color.lerp(
+                    hc.textTertiary, Colors.white, _anim.value)!;
+              } else if (index == _prevIndex && _ctrl.value < 1.0) {
+                bgColor = Color.lerp(activeColor, inactiveColor,
+                    _anim.value)!;
+                textColor = Color.lerp(
+                    Colors.white, hc.textTertiary, _anim.value)!;
+                iconColor = Color.lerp(
+                    Colors.white, hc.textTertiary, _anim.value)!;
+              } else {
+                bgColor = inactiveColor;
+                textColor = hc.textTertiary;
+                iconColor = hc.textTertiary;
+              }
+              return GestureDetector(
+                onTap: () {
+                  HuddlAnimations.selectionClick();
+                  widget.onTap(index);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isActive
+                          ? HuddlColors.nearBlack
+                          : hc.divider,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isActive ? tab.activeIcon : tab.icon,
+                        size: 14,
+                        color: iconColor,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        tab.label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: isActive
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEET-UPS TAB — parent-organized casual gatherings

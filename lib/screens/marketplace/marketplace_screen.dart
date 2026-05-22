@@ -542,6 +542,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   PriceType? _selectedPriceType;
   ItemCondition? _selectedCondition;
   String _searchQuery = '';
+  int _sortIndex = 0; // 0=Most relevant, 1=Newest, 2=Price asc, 3=Price desc
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
 
@@ -743,23 +744,184 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   /// Opens a combined filter bottom-sheet that consolidates all four filters.
-  void _showAllFiltersSheet(HuddlContextColors hc) {
+  // ── Airbnb-style sort sheet ───────────────────────────────────────────────
+  void _showSortSheet(HuddlContextColors hc) {
     HuddlAnimations.selectionClick();
 
-    // Snapshot current values so the sheet StatefulBuilder can mutate locally
-    // while also pushing changes back to the parent via setState immediately
-    // (live filtering as the user taps — no "Apply" delay).
-    AgeStage? sheetAge = _selectedAge;
-    ItemCategory? sheetCat = _selectedCategory;
-    PriceType? sheetPrice = _selectedPriceType;
-    ItemCondition? sheetCond = _selectedCondition;
+    // Sort options — label + icon
+    const options = [
+      ('Most relevant',    Icons.auto_awesome_outlined),
+      ('Newest first',     Icons.schedule_outlined),
+      ('Price: low → high', Icons.south_outlined),
+      ('Price: high → low', Icons.north_outlined),
+    ];
+
+    int selected = _sortIndex;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Handle ──
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 36, height: 4,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.divider,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // ── Title row ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Text('Sort by',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18, fontWeight: FontWeight.w700,
+                            color: hc.textPrimary)),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(ctx),
+                          child: Container(
+                            width: 28, height: 28,
+                            decoration: BoxDecoration(
+                              color: HuddlColors.background,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.close_rounded,
+                              size: 16, color: hc.textSecondary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // ── Divider ──
+                  Divider(height: 1, color: hc.divider),
+                  const SizedBox(height: 4),
+                  // ── Radio options ──
+                  ...options.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final (label, icon) = entry.value;
+                    final isSelected = selected == idx;
+                    return GestureDetector(
+                      onTap: () {
+                        HuddlAnimations.selectionClick();
+                        setSheetState(() => selected = idx);
+                        setState(() => _sortIndex = idx);
+                      },
+                      child: Container(
+                        color: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 14),
+                        child: Row(
+                          children: [
+                            Icon(icon, size: 20,
+                              color: isSelected
+                                  ? HuddlColors.nearBlack
+                                  : hc.textTertiary),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(label,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected
+                                      ? HuddlColors.nearBlack
+                                      : hc.textPrimary,
+                                )),
+                            ),
+                            // Radio circle — Airbnb filled-dot style
+                            Container(
+                              width: 22, height: 22,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? HuddlColors.nearBlack
+                                      : HuddlColors.divider,
+                                  width: isSelected ? 6 : 1.5,
+                                ),
+                                color: isSelected
+                                    ? HuddlColors.nearBlack
+                                    : Colors.transparent,
+                              ),
+                              child: isSelected
+                                  ? const Center(
+                                      child: Icon(Icons.circle,
+                                        size: 8, color: Colors.white))
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  Divider(height: 1, color: hc.divider),
+                  // ── nearBlack Save CTA ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HuddlAnimations.mediumTap();
+                          Navigator.pop(ctx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.nearBlack,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        child: Text('Save',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w600,
+                            color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAllFiltersSheet(HuddlContextColors hc) {
+    HuddlAnimations.selectionClick();
+
+    AgeStage? sheetAge = _selectedAge;
+    ItemCategory? sheetCat = _selectedCategory;
+    PriceType? sheetPrice = _selectedPriceType;
+    ItemCondition? sheetCond = _selectedCondition;
+    RangeValues sheetPriceRange = const RangeValues(0, 500);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: hc.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
@@ -769,104 +931,56 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               sheetPrice != null ||
               sheetCond != null;
 
-          // ── Helper: inline chip that selects/deselects on tap ──────────
-          Widget chip<T>({
-            required String label,
-            required bool isSelected,
-            required VoidCallback onTap,
-            Color? activeColor,
-          }) {
-            final color = activeColor ?? HuddlColors.primary;
-            return GestureDetector(
-              onTap: () {
-                HuddlAnimations.selectionClick();
-                onTap();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? color.withValues(alpha: 0.12)
-                      : shc.inputBg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? color.withValues(alpha: 0.45)
-                        : shc.divider,
-                    width: 1.2,
-                  ),
-                ),
-                child: Text(
-                  label,
-                  style: _adaptiveText(
-                    fontSize: 13,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? color : shc.textSecondary,
-                  ),
-                ),
-              ),
-            );
-          }
-
           return DraggableScrollableSheet(
             expand: false,
-            initialChildSize: 0.82,
+            initialChildSize: 0.80,
             minChildSize: 0.5,
             maxChildSize: 0.95,
             builder: (_, scrollController) => SafeArea(
               child: Column(
                 children: [
-                  // ── Fixed header ───────────────────────────────────────
+                  // ── Fixed header ─────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const HuddlBottomSheetHandle(),
-                        const SizedBox(height: 8),
+                        // Handle
+                        Center(
+                          child: Container(
+                            width: 36, height: 4,
+                            decoration: BoxDecoration(
+                              color: HuddlColors.divider,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         Row(
                           children: [
-                            Text(
-                              'Filters',
-                              style: _adaptiveText(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: shc.textPrimary,
-                              ),
-                            ),
+                            Text('Filters',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18, fontWeight: FontWeight.w700,
+                                color: shc.textPrimary)),
                             const Spacer(),
                             if (hasAny)
-                              TextButton(
-                                onPressed: () {
+                              GestureDetector(
+                                onTap: () {
                                   setSheetState(() {
-                                    sheetAge = null;
-                                    sheetCat = null;
-                                    sheetPrice = null;
-                                    sheetCond = null;
+                                    sheetAge = null; sheetCat = null;
+                                    sheetPrice = null; sheetCond = null;
                                   });
                                   setState(() {
-                                    _selectedAge = null;
-                                    _selectedCategory = null;
-                                    _selectedPriceType = null;
-                                    _selectedCondition = null;
+                                    _selectedAge = null; _selectedCategory = null;
+                                    _selectedPriceType = null; _selectedCondition = null;
                                   });
                                 },
-                                style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap),
-                                child: Text(
-                                  'Clear all',
-                                  style: _adaptiveText(
+                                child: Text('Clear all',
+                                  style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: HuddlColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                                    decoration: TextDecoration.underline,
+                                    color: shc.textSecondary,
+                                    fontWeight: FontWeight.w500)),
                               ),
                           ],
                         ),
@@ -875,215 +989,266 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     ),
                   ),
 
-                  // ── Scrollable filter sections ─────────────────────────
+                  // ── Scrollable sections ───────────────────────────────
                   Expanded(
                     child: ListView(
                       controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       children: [
-                        // ── AGE GROUP ──────────────────────────────────
-                        Text(
-                          'Age group',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: shc.textSecondary,
-                          ),
+                        // ══ SECTION: Recommended quick-filters ══════════
+                        // Airbnb-style icon tiles row (like Free cancellation / Self check-in / Washer)
+                        Text('Recommended for you',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: shc.textSecondary)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            // Tile: Like New
+                            Expanded(child: _FilterIconTile(
+                              icon: Icons.star_outline_rounded,
+                              label: 'Like New',
+                              isSelected: sheetCond == ItemCondition.likeNew,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                final next = sheetCond == ItemCondition.likeNew
+                                    ? null : ItemCondition.likeNew;
+                                setSheetState(() => sheetCond = next);
+                                setState(() => _selectedCondition = next);
+                              },
+                            )),
+                            const SizedBox(width: 10),
+                            // Tile: Brand New
+                            Expanded(child: _FilterIconTile(
+                              icon: Icons.auto_awesome_rounded,
+                              label: 'Brand New',
+                              isSelected: sheetCond == ItemCondition.brandNew,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                final next = sheetCond == ItemCondition.brandNew
+                                    ? null : ItemCondition.brandNew;
+                                setSheetState(() => sheetCond = next);
+                                setState(() => _selectedCondition = next);
+                              },
+                            )),
+                            const SizedBox(width: 10),
+                            // Tile: Free
+                            Expanded(child: _FilterIconTile(
+                              icon: Icons.volunteer_activism_outlined,
+                              label: 'Free items',
+                              isSelected: sheetPrice == PriceType.free,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                final next = sheetPrice == PriceType.free
+                                    ? null : PriceType.free;
+                                setSheetState(() => sheetPrice = next);
+                                setState(() => _selectedPriceType = next);
+                              },
+                            )),
+                          ],
                         ),
+                        const SizedBox(height: 28),
+
+                        // ══ SECTION: Price type (segmented control) ══════
+                        Text('Type',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: shc.textSecondary)),
+                        const SizedBox(height: 10),
+                        _SegmentedPriceControl(
+                          selected: sheetPrice,
+                          onChanged: (val) {
+                            HuddlAnimations.selectionClick();
+                            setSheetState(() => sheetPrice = val);
+                            setState(() => _selectedPriceType = val);
+                          },
+                        ),
+                        const SizedBox(height: 28),
+
+                        // ══ SECTION: Condition ═══════════════════════════
+                        Text('Condition',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: shc.textSecondary)),
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            // "Any age" clears the age selection
-                            chip<void>(
+                            _AirbnbChip(
+                              label: 'Any',
+                              isSelected: sheetCond == null,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                setSheetState(() => sheetCond = null);
+                                setState(() => _selectedCondition = null);
+                              },
+                            ),
+                            ...ItemCondition.values.map((cond) => _AirbnbChip(
+                              label: cond.label,
+                              isSelected: sheetCond == cond,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                final next = sheetCond == cond ? null : cond;
+                                setSheetState(() => sheetCond = next);
+                                setState(() => _selectedCondition = next);
+                              },
+                            )),
+                          ],
+                        ),
+                        const SizedBox(height: 28),
+
+                        // ══ SECTION: Age group ═══════════════════════════
+                        Text('Age group',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: shc.textSecondary)),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _AirbnbChip(
                               label: 'Any age',
                               isSelected: sheetAge == null,
                               onTap: () {
+                                HuddlAnimations.selectionClick();
                                 setSheetState(() => sheetAge = null);
                                 setState(() => _selectedAge = null);
                               },
                             ),
-                            ...AgeStage.values.map((age) => chip<AgeStage>(
-                                  label: age.shortLabel,
-                                  isSelected: sheetAge == age,
-                                  onTap: () {
-                                    // Tap again to deselect
-                                    final next =
-                                        sheetAge == age ? null : age;
-                                    setSheetState(() => sheetAge = next);
-                                    setState(
-                                        () => _selectedAge = next);
-                                  },
-                                )),
+                            ...AgeStage.values.map((age) => _AirbnbChip(
+                              label: age.shortLabel,
+                              isSelected: sheetAge == age,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                final next = sheetAge == age ? null : age;
+                                setSheetState(() => sheetAge = next);
+                                setState(() => _selectedAge = next);
+                              },
+                            )),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 28),
 
-                        // ── CATEGORY ───────────────────────────────────
-                        Text(
-                          'Category',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: shc.textSecondary,
+                        // ══ SECTION: Price range histogram slider ═════════
+                        Row(
+                          children: [
+                            Text('Price range',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13, fontWeight: FontWeight.w600,
+                                color: shc.textSecondary)),
+                            const Spacer(),
+                            Text(
+                              sheetPriceRange.start == 0 && sheetPriceRange.end >= 500
+                                  ? 'Any price'
+                                  : '£${sheetPriceRange.start.toInt()} – £${sheetPriceRange.end >= 500 ? "500+" : sheetPriceRange.end.toInt().toString()}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: shc.textTertiary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text('Listing price, excluding delivery',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, color: shc.textTertiary)),
+                        const SizedBox(height: 10),
+                        // Histogram bars
+                        _PriceHistogram(
+                          low: sheetPriceRange.start,
+                          high: sheetPriceRange.end,
+                          maxPrice: 500,
+                        ),
+                        // Range slider
+                        SliderTheme(
+                          data: SliderThemeData(
+                            activeTrackColor: HuddlColors.nearBlack,
+                            inactiveTrackColor: HuddlColors.divider,
+                            thumbColor: Colors.white,
+                            overlayColor: HuddlColors.nearBlack.withValues(alpha: 0.10),
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 12,
+                              elevation: 3,
+                            ),
+                            rangeThumbShape: const RoundRangeSliderThumbShape(
+                              enabledThumbRadius: 12,
+                              elevation: 3,
+                            ),
+                            trackHeight: 3,
+                          ),
+                          child: RangeSlider(
+                            values: sheetPriceRange,
+                            min: 0,
+                            max: 500,
+                            divisions: 50,
+                            onChanged: (vals) {
+                              setSheetState(() => sheetPriceRange = vals);
+                            },
                           ),
                         ),
+                        const SizedBox(height: 4),
+
+                        // ══ SECTION: Category ════════════════════════════
+                        Text('Category',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: shc.textSecondary)),
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            chip<void>(
+                            _AirbnbChip(
                               label: 'All',
                               isSelected: sheetCat == null,
                               onTap: () {
+                                HuddlAnimations.selectionClick();
                                 setSheetState(() => sheetCat = null);
-                                setState(
-                                    () => _selectedCategory = null);
+                                setState(() => _selectedCategory = null);
                               },
                             ),
-                            ...ItemCategory.values
-                                .map((cat) => chip<ItemCategory>(
-                                      label: cat.label,
-                                      isSelected: sheetCat == cat,
-                                      activeColor: cat.color,
-                                      onTap: () {
-                                        final next = sheetCat == cat
-                                            ? null
-                                            : cat;
-                                        setSheetState(
-                                            () => sheetCat = next);
-                                        setState(() =>
-                                            _selectedCategory = next);
-                                      },
-                                    )),
+                            ...ItemCategory.values.map((cat) => _AirbnbChip(
+                              label: cat.label,
+                              isSelected: sheetCat == cat,
+                              onTap: () {
+                                HuddlAnimations.selectionClick();
+                                final next = sheetCat == cat ? null : cat;
+                                setSheetState(() => sheetCat = next);
+                                setState(() => _selectedCategory = next);
+                              },
+                            )),
                           ],
                         ),
-                        const SizedBox(height: 20),
-
-                        // ── PRICE ──────────────────────────────────────
-                        Text(
-                          'Price',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: shc.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            chip<void>(
-                              label: 'All prices',
-                              isSelected: sheetPrice == null,
-                              onTap: () {
-                                setSheetState(() => sheetPrice = null);
-                                setState(
-                                    () => _selectedPriceType = null);
-                              },
-                            ),
-                            chip<PriceType>(
-                              label: 'Free',
-                              isSelected: sheetPrice == PriceType.free,
-                              activeColor: HuddlColors.actionGreen,
-                              onTap: () {
-                                final next = sheetPrice == PriceType.free
-                                    ? null
-                                    : PriceType.free;
-                                setSheetState(() => sheetPrice = next);
-                                setState(
-                                    () => _selectedPriceType = next);
-                              },
-                            ),
-                            chip<PriceType>(
-                              label: 'Paid',
-                              isSelected: sheetPrice == PriceType.paid,
-                              activeColor: HuddlColors.amberWarm,
-                              onTap: () {
-                                final next = sheetPrice == PriceType.paid
-                                    ? null
-                                    : PriceType.paid;
-                                setSheetState(() => sheetPrice = next);
-                                setState(
-                                    () => _selectedPriceType = next);
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // ── CONDITION ──────────────────────────────────
-                        Text(
-                          'Condition',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: shc.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            chip<void>(
-                              label: 'Any condition',
-                              isSelected: sheetCond == null,
-                              onTap: () {
-                                setSheetState(() => sheetCond = null);
-                                setState(
-                                    () => _selectedCondition = null);
-                              },
-                            ),
-                            ...ItemCondition.values
-                                .map((cond) => chip<ItemCondition>(
-                                      label: cond.label,
-                                      isSelected: sheetCond == cond,
-                                      activeColor: cond.color,
-                                      onTap: () {
-                                        final next = sheetCond == cond
-                                            ? null
-                                            : cond;
-                                        setSheetState(
-                                            () => sheetCond = next);
-                                        setState(() =>
-                                            _selectedCondition = next);
-                                      },
-                                    )),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
 
-                  // ── Fixed "Show items" button ──────────────────────────
+                  // ── nearBlack "Show items" CTA ────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(ctx),
+                        onPressed: () {
+                          HuddlAnimations.mediumTap();
+                          Navigator.pop(ctx);
+                        },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
+                          backgroundColor: HuddlColors.nearBlack,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                           elevation: 0,
                         ),
-                        child: Text(
-                          'Show items',
-                          style: _adaptiveText(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: Text('Show items',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w600,
+                            color: Colors.white)),
                       ),
                     ),
                   ),
@@ -1218,7 +1383,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                             '"${item.title}" has been delisted')),
                                   ],
                                 ),
-                                backgroundColor: HuddlColors.teal,
+                                backgroundColor: HuddlColors.nearBlack,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)),
@@ -1561,7 +1726,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 ),
               ),
               const Spacer(),
-              if (_hasActiveFilters)
+              // ── Sort button ────────────────────────────────────────
+              GestureDetector(
+                onTap: () {
+                  HuddlAnimations.lightTap();
+                  _showSortSheet(hc);
+                },
+                child: Container(
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: hc.divider, width: 1.2),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.sort_rounded,
+                        size: 14,
+                        color: hc.textSecondary),
+                      const SizedBox(width: 5),
+                      Text('Sort',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: hc.textSecondary)),
+                    ],
+                  ),
+                ),
+              ),
+              if (_hasActiveFilters) ...[
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: _clearAllFilters,
                   child: Text(
@@ -1573,6 +1769,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -2534,7 +2731,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         const SizedBox(width: 8),
                         Expanded(child: Text('"${item.title}" is back on sale')),
                       ]),
-                      backgroundColor: HuddlColors.teal,
+                      backgroundColor: HuddlColors.nearBlack,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -2968,7 +3165,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.teal.withValues(alpha: 0.90)
+                              ? HuddlColors.nearBlack.withValues(alpha: 0.90)
                               : Colors.black.withValues(alpha: 0.52),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -3045,7 +3242,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                             style: _adaptiveText(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                              color: item.isFree ? HuddlColors.success : _kMarketBlue,
                             ),
                           ),
                         ],
@@ -3195,7 +3392,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           left: 12,
                           child: _MarketBadgePill(
                             label: 'Free',
-                            color: HuddlColors.teal,
+                            color: HuddlColors.nearBlack,
                           ),
                         ),
                       // Condition badge — top-right scrim pill
@@ -3272,7 +3469,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: item.isFree
-                                  ? HuddlColors.teal
+                                  ? HuddlColors.nearBlack
                                   : _kMarketBlue,
                             ),
                           ),
@@ -3418,7 +3615,7 @@ class _MarketSearchRow extends StatelessWidget {
 
   Color get _conditionColor {
     switch (item.condition.label.toLowerCase()) {
-      case 'new':       return HuddlColors.teal;
+      case 'new':       return HuddlColors.nearBlack;
       case 'like new':  return HuddlColors.blueDark;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
@@ -3432,7 +3629,7 @@ class _MarketSearchRow extends StatelessWidget {
     final priceStr = item.isFree
         ? 'Free'
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-    final priceColor = item.isFree ? HuddlColors.teal : _kMarketBlue;
+    final priceColor = item.isFree ? HuddlColors.success : _kMarketBlue;
 
     return GestureDetector(
       onTap: onTap,
@@ -3567,7 +3764,7 @@ class _MarketSearchRow extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: item.isFree
-                        ? HuddlColors.teal.withValues(alpha: 0.10)
+                        ? HuddlColors.nearBlack.withValues(alpha: 0.10)
                         : HuddlColors.background,
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -3612,7 +3809,7 @@ class _MarketListCardState extends State<_MarketListCard> {
 
   Color get _conditionColor {
     switch (widget.item.condition.label.toLowerCase()) {
-      case 'new':       return HuddlColors.teal;
+      case 'new':       return HuddlColors.nearBlack;
       case 'like new':  return HuddlColors.blueDark;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
@@ -3627,7 +3824,7 @@ class _MarketListCardState extends State<_MarketListCard> {
     final priceStr = item.isFree
         ? 'Free'
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-    final priceColor = item.isFree ? HuddlColors.teal : _kMarketBlue;
+    final priceColor = item.isFree ? HuddlColors.success : _kMarketBlue;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -3837,7 +4034,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.teal.withValues(alpha: 0.10)
+                              ? HuddlColors.nearBlack.withValues(alpha: 0.10)
                               : HuddlColors.background,
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -4193,7 +4390,7 @@ class _SellListingTileState extends State<_SellListingTile>
       'offers' => HuddlColors.primary,
       'price' => HuddlColors.warning,
       'photos' => HuddlColors.primary,
-      'relist' => HuddlColors.teal,
+      'relist' => HuddlColors.nearBlack,
       _ => HuddlColors.textTertiary,
     };
   }
@@ -4337,7 +4534,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                     color: widget.isSold
                                         ? hc.textTertiary
                                         : item.isFree
-                                            ? HuddlColors.teal
+                                            ? HuddlColors.nearBlack
                                             : _kMarketBlue,
                                   ),
                                 ),
@@ -4786,3 +4983,277 @@ class _SmartOfferTile extends StatelessWidget {
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AIRBNB-QUALITY FILTER WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── _FilterIconTile ──────────────────────────────────────────────────────────
+// Airbnb-style bordered square tile with icon + label.
+// Used in "Recommended for you" quick-filter row inside the filter sheet.
+// Selected state: nearBlack border + nearBlack icon/text on white bg.
+// Unselected: 1px divider border, grey icon/text.
+class _FilterIconTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterIconTile({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 90,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? HuddlColors.nearBlack.withValues(alpha: 0.04)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? HuddlColors.nearBlack : HuddlColors.divider,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 28,
+              color: isSelected
+                  ? HuddlColors.nearBlack
+                  : HuddlColors.textSecondary,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected
+                    ? HuddlColors.nearBlack
+                    : HuddlColors.textSecondary,
+                height: 1.25,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _SegmentedPriceControl ───────────────────────────────────────────────────
+// Airbnb "Type of place" style 3-segment control.
+// Segments: All / Free / Paid — with clear border and animated fill.
+class _SegmentedPriceControl extends StatelessWidget {
+  final PriceType? selected;
+  final void Function(PriceType?) onChanged;
+
+  const _SegmentedPriceControl({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const segments = [
+      (null,          'All'),
+      (PriceType.free, 'Free'),
+      (PriceType.paid, 'Paid'),
+    ];
+
+    return Container(
+      height: 42,
+      decoration: BoxDecoration(
+        border: Border.all(color: HuddlColors.divider, width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: segments.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final (type, label) = entry.value;
+          final isSelected = selected == type;
+          final isFirst = idx == 0;
+          final isLast = idx == segments.length - 1;
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(type),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  color: isSelected ? HuddlColors.nearBlack : Colors.transparent,
+                  borderRadius: BorderRadius.horizontal(
+                    left: isFirst ? const Radius.circular(11) : Radius.zero,
+                    right: isLast ? const Radius.circular(11) : Radius.zero,
+                  ),
+                  border: !isFirst
+                      ? Border(
+                          left: BorderSide(
+                            color: isSelected
+                                ? HuddlColors.nearBlack
+                                : HuddlColors.divider,
+                            width: 0.5,
+                          ),
+                        )
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? Colors.white
+                        : HuddlColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── _AirbnbChip ──────────────────────────────────────────────────────────────
+// Clean nearBlack/white pill chip for filter sections.
+// Matches Airbnb's minimal chip style: 1px border, nearBlack when selected.
+class _AirbnbChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _AirbnbChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected ? HuddlColors.nearBlack : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isSelected ? HuddlColors.nearBlack : HuddlColors.divider,
+            width: 1.2,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? Colors.white : HuddlColors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── _PriceHistogram ──────────────────────────────────────────────────────────
+// Airbnb-style price distribution histogram shown above the range slider.
+// Bars inside the selected range are nearBlack; outside are light grey.
+class _PriceHistogram extends StatelessWidget {
+  final double low;
+  final double high;
+  final double maxPrice;
+
+  const _PriceHistogram({
+    required this.low,
+    required this.high,
+    required this.maxPrice,
+  });
+
+  // Simulated price distribution curve (bell-ish, weighted toward lower prices)
+  static const List<double> _distribution = [
+    0.10, 0.18, 0.32, 0.55, 0.72, 0.88, 1.00, 0.95, 0.85, 0.78,
+    0.70, 0.62, 0.55, 0.50, 0.46, 0.42, 0.38, 0.35, 0.32, 0.29,
+    0.27, 0.25, 0.23, 0.21, 0.20, 0.18, 0.17, 0.16, 0.15, 0.14,
+    0.13, 0.12, 0.11, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.07,
+    0.07, 0.06, 0.06, 0.06, 0.05, 0.05, 0.04, 0.04, 0.03, 0.03,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: CustomPaint(
+        size: const Size(double.infinity, 48),
+        painter: _PriceHistogramPainter(
+          low: low,
+          high: high,
+          maxPrice: maxPrice,
+          distribution: _distribution,
+        ),
+      ),
+    );
+  }
+}
+
+class _PriceHistogramPainter extends CustomPainter {
+  final double low;
+  final double high;
+  final double maxPrice;
+  final List<double> distribution;
+
+  const _PriceHistogramPainter({
+    required this.low,
+    required this.high,
+    required this.maxPrice,
+    required this.distribution,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final barCount = distribution.length;
+    final barW = size.width / barCount;
+    final lowIdx = ((low / maxPrice) * barCount).floor().clamp(0, barCount - 1);
+    final highIdx = ((high / maxPrice) * barCount).ceil().clamp(0, barCount);
+
+    for (int i = 0; i < barCount; i++) {
+      final barH = size.height * distribution[i];
+      final rect = Rect.fromLTWH(
+        i * barW + 1,
+        size.height - barH,
+        barW - 2,
+        barH,
+      );
+      final isActive = i >= lowIdx && i < highIdx;
+      final paint = Paint()
+        ..color = isActive
+            ? const Color(0xFF1C1C1E) // nearBlack — selected range
+            : const Color(0xFFD5D5D5) // divider — outside range
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(2)),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PriceHistogramPainter old) =>
+      old.low != low || old.high != high;
+}
