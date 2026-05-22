@@ -264,8 +264,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final e = widget.event;
-    // Always use the brand primary for interactive elements (buttons, outlines)
+    // Brand primary for interactive elements (buttons, price badge, online badge)
     const Color color = HuddlColors.primary;
+    // Passive metadata icons (date, location, people) — use textTertiary, not brand orange
+    const Color metaIconColor = HuddlColors.textTertiary;
     final bool isFree = e['isFree'] == true;
     final String organiser = e['organiser'] as String? ?? 'Unknown';
     final bool isOnline = e['isOnline'] == true;
@@ -479,7 +481,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     children: [
                       _DetailRow(
                         icon: Icons.calendar_today_outlined,
-                        iconColor: color,
+                        iconColor: metaIconColor,
                         title: e['date'] as String? ?? '',
                         subtitle: e['time'] as String? ?? '',
                       ),
@@ -488,7 +490,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         icon: isOnline
                             ? Icons.videocam_outlined
                             : Icons.location_on_outlined,
-                        iconColor: color,
+                        iconColor: metaIconColor,
                         title: e['location'] as String? ?? '',
                         subtitle: isOnline
                             ? 'Online event — link shared on registration'
@@ -497,8 +499,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const Divider(height: 24),
                       _DetailRow(
                         icon: Icons.people_outline,
-                        iconColor: color,
-                        title: '${e['attendees']} people going',
+                        iconColor: metaIconColor,
+                        title: () { final n = e['attendees'] as int? ?? 0; return '$n ${n == 1 ? 'person' : 'people'} going'; }(),
                         subtitle: 'Registrations open',
                       ),
                       const Divider(height: 24),

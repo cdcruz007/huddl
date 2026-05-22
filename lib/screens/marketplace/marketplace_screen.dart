@@ -21,8 +21,8 @@ import '../../widgets/huddl_character.dart';
 
 
 
-// Marketplace price colour — Figma dark blue (selected state) #347FEF
-const Color _kMarketBlue = HuddlColors.blueDark;
+// Marketplace price colour — near-black for a premium, neutral feel
+const Color _kMarketBlue = HuddlColors.nearBlack;
 
 // 12 deterministic Unsplash face URLs for seller avatar stack
 const List<String> _kMarketAvatarPool = [

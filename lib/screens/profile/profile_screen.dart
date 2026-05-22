@@ -651,7 +651,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
             child: Text('Upgrade to unlock more →',
                 style: GoogleFonts.poppins(
-                    fontSize: 12, color: HuddlColors.primary)),
+                    fontSize: 12, color: HuddlColors.textTertiary)),
           ),
           const SizedBox(height: 6),
         ],
@@ -3087,19 +3087,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         subtitle: Text('${e.dateDisplay} \u2022 ${e.location}',
                             style: GoogleFonts.poppins(
                                 fontSize: 12, color: context.hc.textTertiary)),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.background,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text('${e.attendees}',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textTertiary)),
-                        ),
+                        trailing: e.attendees > 0
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.background,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${e.attendees} going',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: HuddlColors.textTertiary)),
+                              )
+                            : const Icon(Icons.chevron_right,
+                                size: 18, color: HuddlColors.textTertiary),
                         dense: true,
                       )),
                 ],

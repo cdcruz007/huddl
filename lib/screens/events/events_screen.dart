@@ -426,11 +426,9 @@ class EventsScreenState extends State<EventsScreen>
                   // ── Tabs: Groups | Meetups | Events ──────────────
                   TabBar(
                     controller: _tabController,
+                    isScrollable: true,                         // FIX: 5 tabs no longer truncated
+                    tabAlignment: TabAlignment.start,           // FIX: left-align on scroll
                     onTap: (index) {
-                      // Immediately update FAB when user taps a tab.
-                      // Tapping Groups while already on it → dismisses search.
-                      // Tapping Services while already on it → dismisses search.
-                      // Tapping any tab while on Groups/Services → dismisses their search.
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
                       }
@@ -446,18 +444,19 @@ class EventsScreenState extends State<EventsScreen>
                       Tab(text: 'Services'),
                       Tab(text: 'Insights'),
                     ],
-                    labelColor: HuddlColors.textDark,
+                    labelColor: HuddlColors.nearBlack,
                     unselectedLabelColor: context.hc.textTertiary,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 16),
                     labelStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 13,                            // FIX: 14→13 for breathing room
                       fontWeight: FontWeight.w600,
                     ),
                     unselectedLabelStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
-                    indicatorColor: HuddlColors.textDark,
-                    indicatorWeight: 3,
+                    indicatorColor: HuddlColors.primary,       // FIX: orange underline = unambiguous
+                    indicatorWeight: 2.5,
                     indicatorSize: TabBarIndicatorSize.label,
                     dividerColor: context.hc.divider,
                   ),

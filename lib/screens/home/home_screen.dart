@@ -1208,33 +1208,46 @@ class _HomeScreenState extends State<HomeScreen>
                   SliverToBoxAdapter(child: _buildMeetupsCarousel(hc)),
                 ],
 
-              // ── §5 Feed preferences nudge ─────────────────────────
+              // ── §5 Your Feed section header ────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                   child: Row(
                     children: [
-                      Icon(Icons.auto_awesome, size: 13, color: hc.textTertiary),
-                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          _smartFeed.isEmpty
-                              ? 'Your personalised feed — RSVP to events & meetups to see updates here'
-                              : 'Your personalised feed · ${_smartFeed.length} update${_smartFeed.length == 1 ? '' : 's'}',
-                          style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary),
+                          'Your Feed',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: hc.textPrimary,
+                          ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () { HuddlAnimations.lightTap(); _showFeedPreferences(); },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Icon(Icons.tune, size: 16, color: hc.textTertiary),
+                      Tooltip(
+                        message: 'Customise your feed',
+                        child: GestureDetector(
+                          onTap: () { HuddlAnimations.lightTap(); _showFeedPreferences(); },
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Icon(Icons.settings_outlined, size: 18, color: hc.textTertiary),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+              if (_smartFeed.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      'RSVP to events & meetups to see personalised updates here',
+                      style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary),
+                    ),
+                  ),
+                ),
 
               // ── Smart feed (AI-curated: attending/announcements/tips) ──
               // UX-03: Spring physics on feed cards

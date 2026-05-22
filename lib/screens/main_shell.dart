@@ -457,28 +457,18 @@ class _NavItem extends StatelessWidget {
                     size: 24,
                     color: itemColor,
                   ),
-                  const SizedBox(height: 3),
-                  // Active: 4px dot. Inactive: label text (10px)
-                  if (isActive)
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: activeColor,
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                  else
-                    Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w400,
-                        color: inactiveColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                  const SizedBox(height: 2),
+                  // Always show label — bold + nearBlack when active
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 9,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: itemColor,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ],
               ),
             ),
