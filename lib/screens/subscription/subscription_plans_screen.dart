@@ -421,7 +421,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                               style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: HuddlColors.primary,
+                                  color: HuddlColors.textTertiary,
                                   decoration: TextDecoration.underline)),
                         ),
                         Padding(
@@ -438,7 +438,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                               style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: HuddlColors.primary,
+                                  color: HuddlColors.textTertiary,
                                   decoration: TextDecoration.underline)),
                         ),
                       ],
@@ -582,9 +582,9 @@ class _GateBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Row(
         children: [
@@ -1165,7 +1165,7 @@ class _FeatureComparisonTable extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.06),
+        color: HuddlColors.background,
         border: const Border(bottom: BorderSide(color: HuddlColors.gray100)),
       ),
       child: Text(title,
@@ -1173,7 +1173,7 @@ class _FeatureComparisonTable extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
-              color: HuddlColors.primary)),
+              color: HuddlColors.textDark)),
     );
   }
 
@@ -1203,7 +1203,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary))),
+                      color: HuddlColors.textDark))),
           Expanded(
               child: Text(inner,
                   textAlign: TextAlign.center,
@@ -1236,7 +1236,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12, color: HuddlColors.textSecondary))),
           Expanded(child: Center(child: checkIcon(explorer, HuddlColors.textHint))),
-          Expanded(child: Center(child: checkIcon(neighbourhood, HuddlColors.primary))),
+          Expanded(child: Center(child: checkIcon(neighbourhood, HuddlColors.textDark))),
           Expanded(child: Center(child: checkIcon(inner, HuddlColors.teal))),
         ],
       ),

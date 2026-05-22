@@ -339,7 +339,7 @@ class HuddlSecondaryButton extends StatelessWidget {
     super.key,
     required this.text,
     this.onPressed,
-    this.borderColor = HuddlColors.primary,
+    this.borderColor = HuddlColors.divider,
   });
 
   @override
@@ -508,7 +508,7 @@ class HuddlSectionHeader extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
               ),
             ),
           ),
@@ -684,9 +684,9 @@ class HuddlImageCard extends StatelessWidget {
                 imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   child: const Center(
-                    child: Icon(Icons.image, color: HuddlColors.primary, size: 32),
+                    child: Icon(Icons.image, color: HuddlColors.textDark, size: 32),
                   ),
                 ),
               ),

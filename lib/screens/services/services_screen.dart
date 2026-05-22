@@ -430,7 +430,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(
                         child: CircularProgressIndicator(
-                            color: HuddlColors.primary));
+                            color: HuddlColors.textTertiary));
                   }
                   if (snap.hasError) {
                     return Center(

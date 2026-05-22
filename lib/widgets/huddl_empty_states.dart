@@ -200,12 +200,12 @@ class CopilotWelcomeState extends StatelessWidget {
                     onPressed: () => onChipTap(chip),
                     backgroundColor: HuddlColors.peachLight,
                     labelStyle: const TextStyle(
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
-                      side: const BorderSide(color: HuddlColors.primary, width: 1),
+                      side: const BorderSide(color: HuddlColors.divider, width: 1),
                     ),
                   ),
                 )

@@ -72,11 +72,11 @@ class _UpgradePromptSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  color: HuddlColors.background,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.lock_outline,
-                    color: HuddlColors.primary, size: 32),
+                    color: HuddlColors.textDark, size: 32),
               ),
               const SizedBox(height: 20),
 
@@ -148,7 +148,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                     color: HuddlColors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: HuddlColors.primary.withValues(alpha: 0.2)),
+                        color: HuddlColors.divider),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
@@ -160,7 +160,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   child: Row(
                     children: [
                       const Icon(Icons.star_rounded,
-                          color: HuddlColors.primary, size: 20),
+                          color: HuddlColors.textDark, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(

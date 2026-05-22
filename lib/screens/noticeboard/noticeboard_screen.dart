@@ -227,7 +227,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
             Text(ann.authorName, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary)),
             Text(timeAgo, style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
           ])),
-          if (ann.isPinned) Icon(Icons.push_pin, size: 14, color: HuddlColors.primary),
+          if (ann.isPinned) Icon(Icons.push_pin, size: 14, color: HuddlColors.textTertiary),
         ]),
         const SizedBox(height: 10),
         Text(ann.content, style: GoogleFonts.poppins(fontSize: 14, color: hc.textPrimary, height: 1.45)),

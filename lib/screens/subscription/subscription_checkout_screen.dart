@@ -452,7 +452,7 @@ class _SubscriptionCheckoutScreenState
                                     style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary,
+                                        color: HuddlColors.textTertiary,
                                         decoration: TextDecoration.underline),
                                   ),
                                   const TextSpan(text: ' and '),
@@ -461,7 +461,7 @@ class _SubscriptionCheckoutScreenState
                                     style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary,
+                                        color: HuddlColors.textTertiary,
                                         decoration: TextDecoration.underline),
                                   ),
                                   const TextSpan(text: '. '),
