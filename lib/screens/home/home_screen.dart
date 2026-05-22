@@ -1329,92 +1329,81 @@ class _HomeScreenState extends State<HomeScreen>
 
 
 
-  /// Greeting row: time-based greeting + bold name, teal borough pill right-aligned.
-  /// §1A spec: pill is teal (not orange), positioned adjacent to the greeting text.
+  /// Greeting row: time-based greeting + bold name.
+  /// Location shown as inline text line (no pill bubble).
   Widget _buildCompactGreeting(dynamic hc, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$_greeting, ',
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w400,
-                            color: hc.textSecondary,
-                          ),
-                        ),
-                        TextSpan(
-                          text: _name.isNotEmpty ? _name : 'there',
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary,
-                          ),
-                        ),
-                      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Greeting + name
+          Semantics(
+            header: true,
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$_greeting, ',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
+                      color: hc.textSecondary,
                     ),
                   ),
-                ),
+                  TextSpan(
+                    text: _name.isNotEmpty ? _name : 'there',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: hc.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              // Location pill — neutral, right-aligned
-              if (_borough.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? HuddlColors.teal.withValues(alpha: 0.25)
-                        : HuddlColors.teal,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 13, color: Colors.white),
-                      const SizedBox(width: 3),
-                      Text(
-                        _borough,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
-        // Borough member count — social proof row
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Row(
+          const SizedBox(height: 6),
+          // Location + member count — single inline row, no pill
+          Row(
             children: [
-              Icon(Icons.people_outline, size: 13, color: hc.textTertiary),
+              Icon(Icons.location_on_rounded,
+                  size: 13,
+                  color: _borough.isNotEmpty
+                      ? HuddlColors.teal
+                      : hc.textTertiary),
               const SizedBox(width: 4),
-              Text(
-                _boroughMembers.isNotEmpty
-                    ? '${_boroughMembers.length}+ parents in ${_borough.isNotEmpty ? _borough : 'your area'}'
-                    : 'Parents in ${_borough.isNotEmpty ? _borough : 'your area'}',
-                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary),
+              if (_borough.isNotEmpty)
+                Text(
+                  _borough,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.teal,
+                  ),
+                ),
+              if (_borough.isNotEmpty && _boroughMembers.isNotEmpty)
+                Text(
+                  ' · ',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: hc.textTertiary),
+                ),
+              Expanded(
+                child: Text(
+                  _boroughMembers.isNotEmpty
+                      ? '${_boroughMembers.length}+ parents here'
+                      : _borough.isNotEmpty
+                          ? 'Your local community'
+                          : 'Your area',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: hc.textTertiary),
+                ),
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1788,7 +1777,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Icon(
                       Icons.auto_awesome,
                       size: 16,
-                      color: HuddlColors.primary,  // warm orange spark icon
+                      color: HuddlColors.primary,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1828,46 +1817,51 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // Activity pills row (horizontal scroll)
+            // Activity rows — card-style, no pills
             if (items.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: items.map((item) {
-                    return GestureDetector(
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+                child: Column(
+                  children: items.asMap().entries.map((entry) {
+                    final item = entry.value;
+                    return InkWell(
                       onTap: () {
                         HuddlAnimations.selectionClick();
                         item.onTap();
                       },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? item.color.withValues(alpha: 0.18)
-                              : item.color.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: item.color.withValues(alpha: isDark ? 0.35 : 0.25),
-                          ),
-                        ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(item.icon, size: 13,
-                              color: isDark ? item.color.withValues(alpha: 0.85) : item.color),
-                            const SizedBox(width: 5),
-                            Text(
-                              item.label,
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? item.color.withValues(alpha: 0.85)
-                                    : item.color,
+                            // Coloured icon square
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: item.color.withValues(
+                                    alpha: isDark ? 0.20 : 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(item.icon,
+                                  size: 18,
+                                  color: isDark
+                                      ? item.color.withValues(alpha: 0.85)
+                                      : item.color),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                item.label,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: hc.textPrimary,
+                                ),
                               ),
                             ),
+                            Icon(Icons.chevron_right_rounded,
+                                size: 18, color: hc.textTertiary),
                           ],
                         ),
                       ),
@@ -1896,6 +1890,8 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+
+
 
   // ── Groups carousel ───────────────────────────────────────────────────────
   // ── UX-02: Groups carousel — HuddlMosaicPhotoCard (Airbnb experiences style)

@@ -337,195 +337,143 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: false,  // UX-08: flat nav — no floating pill
+      extendBody: true,  // let body go behind the floating nav
       body: Stack(
-        children: List.generate(5, (index) {
-          return Offstage(
-            offstage: _currentIndex != index,
-            child: _buildScreen(index),
-          );
-        }),
-      ),
-      bottomNavigationBar: _HuddlAnimatedNavBar(
-        currentIndex: _currentIndex,
-        onTap: _switchTab,
+        children: [
+          // ── Screen stack ──────────────────────────────────────────────
+          ...List.generate(5, (index) {
+            return Offstage(
+              offstage: _currentIndex != index,
+              child: _buildScreen(index),
+            );
+          }),
+          // ── Floating pill nav bar ─────────────────────────────────────
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 12,
+            child: _HuddlFloatingNavBar(
+              currentIndex: _currentIndex,
+              onTap: _switchTab,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 // =============================================================================
-// HUDDL ANIMATED BOTTOM NAV — Airbnb-quality spring physics
+// HUDDL FLOATING PILL NAV BAR
 // =============================================================================
 // Design language:
-//   • Sliding animated pill/highlight that spring-moves between tabs
-//   • Icons spring-scale on activation (pop onto screen)
-//   • Filled ↔ outlined icon swap with opacity cross-fade
-//   • Label always visible — weight w700 + nearBlack active, w400 + hint inactive
-//   • Haptic selectionClick on every tap
-//   • White surface, hairline top border — no shadow, no elevation
+//   • Floating rounded-rectangle pill that hovers above the screen content
+//   • White frosted glass surface, deep shadow, 32px corner radius
+//   • Active tab: orange filled circle background behind icon + orange label
+//   • Inactive: outlined icon, muted label
+//   • Spring-scale pop animation on tap
+//   • Haptic feedback on every tap
 // =============================================================================
 
-class _HuddlAnimatedNavBar extends StatefulWidget {
+class _HuddlFloatingNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const _HuddlAnimatedNavBar({
+  const _HuddlFloatingNavBar({
     required this.currentIndex,
     required this.onTap,
   });
 
   @override
-  State<_HuddlAnimatedNavBar> createState() => _HuddlAnimatedNavBarState();
+  State<_HuddlFloatingNavBar> createState() => _HuddlFloatingNavBarState();
 }
 
-class _HuddlAnimatedNavBarState extends State<_HuddlAnimatedNavBar>
-    with SingleTickerProviderStateMixin {
-  // Spring-driven position for the active indicator pill
-  late AnimationController _pillCtrl;
-  late Animation<double> _pillPos; // 0.0–4.0 (tab index)
-  static const _kTabCount = 5;
-  static const _kNavHeight = 56.0; // content height above safe area
-
-  // Tab definitions
+class _HuddlFloatingNavBarState extends State<_HuddlFloatingNavBar> {
   static const _tabs = [
-    _TabDef(Icons.home_outlined,    Icons.home,         'Home'),
-    _TabDef(Icons.people_outline,   Icons.people,       'Connect'),
-    _TabDef(Icons.explore_outlined, Icons.explore,      'Discover'),
-    _TabDef(Icons.storefront_outlined, Icons.storefront, 'Market'),
-    _TabDef(Icons.person_outline,   Icons.person,       'Profile'),
+    _TabDef(Icons.home_outlined,       Icons.home,         'Home'),
+    _TabDef(Icons.people_outline,      Icons.people,       'Connect'),
+    _TabDef(Icons.explore_outlined,    Icons.explore,      'Discover'),
+    _TabDef(Icons.storefront_outlined, Icons.storefront,   'Market'),
+    _TabDef(Icons.person_outline,      Icons.person,       'Profile'),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _pillCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _pillPos = Tween<double>(
-      begin: widget.currentIndex.toDouble(),
-      end: widget.currentIndex.toDouble(),
-    ).animate(CurvedAnimation(parent: _pillCtrl, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void didUpdateWidget(_HuddlAnimatedNavBar old) {
-    super.didUpdateWidget(old);
-    if (old.currentIndex != widget.currentIndex) {
-      // Spring-drive the pill to the new position
-      final from = _pillPos.value;
-      final to = widget.currentIndex.toDouble();
-      _pillPos = Tween<double>(begin: from, end: to).animate(
-        CurvedAnimation(parent: _pillCtrl, curve: Curves.easeOutCubic),
-      );
-      _pillCtrl.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _pillCtrl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? HuddlColors.darkSurface : Colors.white;
-    final borderColor = isDark ? HuddlColors.darkDivider : HuddlColors.divider;
 
     return Container(
+      height: 64,
       decoration: BoxDecoration(
         color: bg,
-        border: Border(top: BorderSide(color: borderColor, width: 0.5)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: _kNavHeight,
-          child: AnimatedBuilder(
-            animation: _pillPos,
-            builder: (context, _) {
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final tabWidth = constraints.maxWidth / _kTabCount;
-                  final pillLeft = _pillPos.value * tabWidth + tabWidth * 0.18;
-                  final pillWidth = tabWidth * 0.64;
-
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // ── Sliding top-indicator bar ──────────────────────
-                      Positioned(
-                        top: 0,
-                        left: pillLeft,
-                        width: pillWidth,
-                        height: 2.5,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: HuddlColors.primary,
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(2),
-                              bottomRight: Radius.circular(2),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // ── Tab items ──────────────────────────────────────
-                      Row(
-                        children: List.generate(_kTabCount, (i) {
-                          return _AnimatedNavItem(
-                            tab: _tabs[i],
-                            index: i,
-                            currentIndex: widget.currentIndex,
-                            isDark: isDark,
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              widget.onTap(i);
-                            },
-                          );
-                        }),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
+            blurRadius: 24,
+            spreadRadius: 0,
+            offset: const Offset(0, 6),
           ),
-        ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.06),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: List.generate(_tabs.length, (i) {
+          return Expanded(
+            child: _FloatingNavItem(
+              tab: _tabs[i],
+              index: i,
+              currentIndex: widget.currentIndex,
+              isDark: isDark,
+              isFirst: i == 0,
+              isLast: i == _tabs.length - 1,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onTap(i);
+              },
+            ),
+          );
+        }),
       ),
     );
   }
 }
 
-// ── Individual animated tab item ─────────────────────────────────────────────
+// ── Individual floating nav item ─────────────────────────────────────────────
 
-class _AnimatedNavItem extends StatefulWidget {
+class _FloatingNavItem extends StatefulWidget {
   final _TabDef tab;
   final int index;
   final int currentIndex;
   final bool isDark;
+  final bool isFirst;
+  final bool isLast;
   final VoidCallback onTap;
 
-  const _AnimatedNavItem({
+  const _FloatingNavItem({
     required this.tab,
     required this.index,
     required this.currentIndex,
     required this.isDark,
+    required this.isFirst,
+    required this.isLast,
     required this.onTap,
   });
 
   @override
-  State<_AnimatedNavItem> createState() => _AnimatedNavItemState();
+  State<_FloatingNavItem> createState() => _FloatingNavItemState();
 }
 
-class _AnimatedNavItemState extends State<_AnimatedNavItem>
+class _FloatingNavItemState extends State<_FloatingNavItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _scale;
-  late Animation<double> _iconOpacity; // filled icon opacity
+  late Animation<double> _iconOpacity;
 
   bool get _isActive => widget.index == widget.currentIndex;
 
@@ -534,18 +482,18 @@ class _AnimatedNavItemState extends State<_AnimatedNavItem>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 280),
       value: _isActive ? 1.0 : 0.0,
     );
     _scale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.18), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.18, end: 1.0), weight: 60),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.22), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 1.22, end: 1.0), weight: 65),
     ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
     _iconOpacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
   }
 
   @override
-  void didUpdateWidget(_AnimatedNavItem old) {
+  void didUpdateWidget(_FloatingNavItem old) {
     super.didUpdateWidget(old);
     final wasActive = old.index == old.currentIndex;
     final isNowActive = widget.index == widget.currentIndex;
@@ -564,51 +512,73 @@ class _AnimatedNavItemState extends State<_AnimatedNavItem>
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = widget.isDark ? HuddlColors.primary : HuddlColors.primary;
-    final inactiveColor = widget.isDark ? HuddlColors.darkTextTertiary : HuddlColors.textHint;
+    final activeColor = HuddlColors.primary;
+    final inactiveColor =
+        widget.isDark ? HuddlColors.darkTextTertiary : HuddlColors.textHint;
 
-    return Expanded(
-      child: Semantics(
-        label: widget.tab.label,
-        button: true,
-        selected: _isActive,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap,
+    // Rounded clip for first/last items so they follow the pill shape
+    final borderRadius = BorderRadius.horizontal(
+      left: widget.isFirst ? const Radius.circular(32) : Radius.zero,
+      right: widget.isLast ? const Radius.circular(32) : Radius.zero,
+    );
+
+    return Semantics(
+      label: widget.tab.label,
+      button: true,
+      selected: _isActive,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: ClipRRect(
+          borderRadius: borderRadius,
           child: AnimatedBuilder(
             animation: _ctrl,
             builder: (context, _) {
-              final color = Color.lerp(inactiveColor, activeColor, _ctrl.value)!;
+              final labelColor =
+                  Color.lerp(inactiveColor, activeColor, _ctrl.value)!;
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Spring-scaled icon with filled/outline cross-fade
+                  // Icon with orange circle background when active
                   Transform.scale(
                     scale: _scale.value,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Outlined (inactive) icon
-                        Opacity(
-                          opacity: (1.0 - _iconOpacity.value).clamp(0.0, 1.0),
-                          child: Icon(widget.tab.icon, size: 24, color: inactiveColor),
-                        ),
-                        // Filled (active) icon
-                        Opacity(
-                          opacity: _iconOpacity.value.clamp(0.0, 1.0),
-                          child: Icon(widget.tab.activeIcon, size: 24, color: activeColor),
-                        ),
-                      ],
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 38,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: _isActive
+                            ? HuddlColors.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Opacity(
+                            opacity:
+                                (1.0 - _iconOpacity.value).clamp(0.0, 1.0),
+                            child: Icon(widget.tab.icon,
+                                size: 22, color: inactiveColor),
+                          ),
+                          Opacity(
+                            opacity: _iconOpacity.value.clamp(0.0, 1.0),
+                            child: Icon(widget.tab.activeIcon,
+                                size: 22, color: activeColor),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  // Label — always visible, weight shifts
+                  const SizedBox(height: 2),
+                  // Label
                   Text(
                     widget.tab.label,
                     style: GoogleFonts.poppins(
-                      fontSize: 9.5,
-                      fontWeight: _isActive ? FontWeight.w700 : FontWeight.w400,
-                      color: color,
+                      fontSize: 9,
+                      fontWeight:
+                          _isActive ? FontWeight.w700 : FontWeight.w400,
+                      color: labelColor,
                       letterSpacing: _isActive ? 0.1 : 0,
                     ),
                     overflow: TextOverflow.ellipsis,

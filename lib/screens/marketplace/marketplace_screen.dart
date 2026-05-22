@@ -936,32 +936,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           style: GoogleFonts.poppins(
                             fontSize: 13, fontWeight: FontWeight.w600,
                             color: shc.textSecondary)),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _AirbnbChip(
-                              label: 'Any',
-                              isSelected: sheetCond == null,
-                              onTap: () {
-                                HuddlAnimations.selectionClick();
-                                setSheetState(() => sheetCond = null);
-                                setState(() => _selectedCondition = null);
-                              },
-                            ),
-                            ...ItemCondition.values.map((cond) => _AirbnbChip(
-                              label: cond.label,
-                              isSelected: sheetCond == cond,
-                              onTap: () {
-                                HuddlAnimations.selectionClick();
-                                final next = sheetCond == cond ? null : cond;
-                                setSheetState(() => sheetCond = next);
-                                setState(() => _selectedCondition = next);
-                              },
-                            )),
-                          ],
+                        const SizedBox(height: 8),
+                        _AirbnbChip(
+                          label: 'Any',
+                          isSelected: sheetCond == null,
+                          onTap: () {
+                            HuddlAnimations.selectionClick();
+                            setSheetState(() => sheetCond = null);
+                            setState(() => _selectedCondition = null);
+                          },
                         ),
+                        ...ItemCondition.values.map((cond) => Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: _AirbnbChip(
+                            label: cond.label,
+                            isSelected: sheetCond == cond,
+                            onTap: () {
+                              HuddlAnimations.selectionClick();
+                              final next = sheetCond == cond ? null : cond;
+                              setSheetState(() => sheetCond = next);
+                              setState(() => _selectedCondition = next);
+                            },
+                          ),
+                        )),
                         const SizedBox(height: 28),
 
                         // ══ SECTION: Age group ═══════════════════════════
@@ -969,32 +966,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           style: GoogleFonts.poppins(
                             fontSize: 13, fontWeight: FontWeight.w600,
                             color: shc.textSecondary)),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _AirbnbChip(
-                              label: 'Any age',
-                              isSelected: sheetAge == null,
-                              onTap: () {
-                                HuddlAnimations.selectionClick();
-                                setSheetState(() => sheetAge = null);
-                                setState(() => _selectedAge = null);
-                              },
-                            ),
-                            ...AgeStage.values.map((age) => _AirbnbChip(
-                              label: age.shortLabel,
-                              isSelected: sheetAge == age,
-                              onTap: () {
-                                HuddlAnimations.selectionClick();
-                                final next = sheetAge == age ? null : age;
-                                setSheetState(() => sheetAge = next);
-                                setState(() => _selectedAge = next);
-                              },
-                            )),
-                          ],
+                        const SizedBox(height: 8),
+                        _AirbnbChip(
+                          label: 'Any age',
+                          isSelected: sheetAge == null,
+                          onTap: () {
+                            HuddlAnimations.selectionClick();
+                            setSheetState(() => sheetAge = null);
+                            setState(() => _selectedAge = null);
+                          },
                         ),
+                        ...AgeStage.values.map((age) => Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: _AirbnbChip(
+                            label: age.shortLabel,
+                            isSelected: sheetAge == age,
+                            onTap: () {
+                              HuddlAnimations.selectionClick();
+                              final next = sheetAge == age ? null : age;
+                              setSheetState(() => sheetAge = next);
+                              setState(() => _selectedAge = next);
+                            },
+                          ),
+                        )),
                         const SizedBox(height: 28),
 
                         // ══ SECTION: Price range histogram slider ═════════
@@ -1062,32 +1056,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           style: GoogleFonts.poppins(
                             fontSize: 13, fontWeight: FontWeight.w600,
                             color: shc.textSecondary)),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _AirbnbChip(
-                              label: 'All',
-                              isSelected: sheetCat == null,
-                              onTap: () {
-                                HuddlAnimations.selectionClick();
-                                setSheetState(() => sheetCat = null);
-                                setState(() => _selectedCategory = null);
-                              },
-                            ),
-                            ...ItemCategory.values.map((cat) => _AirbnbChip(
-                              label: cat.label,
-                              isSelected: sheetCat == cat,
-                              onTap: () {
-                                HuddlAnimations.selectionClick();
-                                final next = sheetCat == cat ? null : cat;
-                                setSheetState(() => sheetCat = next);
-                                setState(() => _selectedCategory = next);
-                              },
-                            )),
-                          ],
+                        const SizedBox(height: 8),
+                        _AirbnbChip(
+                          label: 'All',
+                          isSelected: sheetCat == null,
+                          onTap: () {
+                            HuddlAnimations.selectionClick();
+                            setSheetState(() => sheetCat = null);
+                            setState(() => _selectedCategory = null);
+                          },
                         ),
+                        ...ItemCategory.values.map((cat) => Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: _AirbnbChip(
+                            label: cat.label,
+                            isSelected: sheetCat == cat,
+                            onTap: () {
+                              HuddlAnimations.selectionClick();
+                              final next = sheetCat == cat ? null : cat;
+                              setSheetState(() => sheetCat = next);
+                              setState(() => _selectedCategory = next);
+                            },
+                          ),
+                        )),
                         // ══ SECTION: Sort by ════════════════════════════
                         Text('Sort by',
                           style: GoogleFonts.poppins(
@@ -4194,13 +4185,109 @@ class _MarketGridCardState extends State<_MarketGridCard> {
   }
 
   Widget _gridPlaceholder(HuddlContextColors hc, RehomeItem item) {
-    return Container(
-      color: hc.surfaceAlt,
-      child: Center(
-        child: Icon(item.category.icon,
-            size: 40, color: hc.textTertiary.withValues(alpha: 0.3)),
-      ),
+    // Rich UHD category-matched stock photo fallback — much better than an icon
+    final url = _categoryStockPhoto(item.category, item.title);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          url,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            color: hc.surfaceAlt,
+            child: Center(
+              child: Icon(item.category.icon,
+                  size: 40,
+                  color: hc.textTertiary.withValues(alpha: 0.3)),
+            ),
+          ),
+          loadingBuilder: (_, child, progress) => progress == null
+              ? child
+              : Container(
+                  color: hc.surfaceAlt,
+                  child: Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: HuddlColors.primary.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        // Subtle darkening scrim so text/badges remain legible
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.black.withValues(alpha: 0.08),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
+  }
+
+  /// Returns a UHD Unsplash stock photo URL matched to the item's category.
+  /// Multiple photos per category so the grid looks varied.
+  static String _categoryStockPhoto(ItemCategory category, String title) {
+    final t = title.toLowerCase();
+
+    // Title-level overrides for very specific items
+    if (t.contains('mamaroo') || t.contains('swing') || t.contains('bouncer')) {
+      return 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&q=80';
+    }
+    if (t.contains('pushchair') || t.contains('pram') || t.contains('stroller') || t.contains('icandy')) {
+      return 'https://images.unsplash.com/photo-1596561741609-4a2bbfbf7b95?w=600&q=80';
+    }
+    if (t.contains('crib') || t.contains('cot') || t.contains('moses') || t.contains('snüz') || t.contains('snuz')) {
+      return 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&q=80';
+    }
+    if (t.contains('car seat') || t.contains('carseat')) {
+      return 'https://images.unsplash.com/photo-1622482586703-cef61a7f9b42?w=600&q=80';
+    }
+    if (t.contains('clothes') || t.contains('bundle') || t.contains('outfit') || t.contains('dress') || t.contains('babygrow')) {
+      return 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=600&q=80';
+    }
+    if (t.contains('high chair') || t.contains('highchair')) {
+      return 'https://images.unsplash.com/photo-1585332003745-59ef8c2c8e2e?w=600&q=80';
+    }
+    if (t.contains('monitor') || t.contains('camera')) {
+      return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80';
+    }
+    if (t.contains('bath') || t.contains('tub')) {
+      return 'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=600&q=80';
+    }
+
+    // Category-level fallbacks — varied within each category
+    switch (category) {
+      case ItemCategory.boysClothes:
+        return 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&q=80';
+      case ItemCategory.girlsClothes:
+        return 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=600&q=80';
+      case ItemCategory.toysAndGames:
+        return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80';
+      case ItemCategory.pushchairsAndPrams:
+        return 'https://images.unsplash.com/photo-1596561741609-4a2bbfbf7b95?w=600&q=80';
+      case ItemCategory.forTheCar:
+        return 'https://images.unsplash.com/photo-1622482586703-cef61a7f9b42?w=600&q=80';
+      case ItemCategory.furniture:
+        return 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&q=80';
+      case ItemCategory.books:
+        return 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&q=80';
+      case ItemCategory.maternity:
+        return 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&q=80';
+      case ItemCategory.babyCareAndAccessories:
+        return 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&q=80';
+      case ItemCategory.other:
+        return 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=600&q=80';
+    }
   }
 }
 
@@ -5065,9 +5152,9 @@ class _SegmentedPriceControl extends StatelessWidget {
   }
 }
 
-// ── _AirbnbChip ──────────────────────────────────────────────────────────────
-// Warm pill chip for filter sections — Huddl orange when selected.
-// Mirrors how Airbnb/Spotify/Duolingo use their brand accent on active filters.
+// ── _AirbnbChip (kept as alias → _FilterToggleRow) ──────────────────────────
+// Replaced pill design with a clean full-width row toggle.
+// Shows label left-aligned + check icon right when selected.
 class _AirbnbChip extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -5081,30 +5168,60 @@ class _AirbnbChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
           color: isSelected
-              ? HuddlColors.primary                              // warm orange fill
-              : Colors.white,
-          borderRadius: BorderRadius.circular(22),
+              ? HuddlColors.primary.withValues(alpha: 0.07)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? HuddlColors.primary
+                ? HuddlColors.primary.withValues(alpha: 0.5)
                 : HuddlColors.divider,
-            width: 1.2,
+            width: isSelected ? 1.5 : 1.0,
           ),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? Colors.white : HuddlColors.textPrimary,
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected
+                      ? HuddlColors.primary
+                      : hc.textPrimary,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  color: HuddlColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded,
+                    size: 14, color: Colors.white),
+              )
+            else
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: HuddlColors.divider, width: 1.5),
+                ),
+              ),
+          ],
         ),
       ),
     );
