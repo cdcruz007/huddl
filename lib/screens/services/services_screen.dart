@@ -352,7 +352,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           const Padding(
                             padding: EdgeInsets.only(left: 12, right: 6),
                             child: Icon(Icons.search, size: 18,
-                                color: HuddlColors.primary),
+                                color: HuddlColors.textDark),
                           ),
                           Expanded(
                             child: TextField(

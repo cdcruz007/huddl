@@ -433,7 +433,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             children: [
                               Icon(Icons.group_outlined,
                                   size: 48,
-                                  color: HuddlColors.primary.withValues(alpha: 0.3)),
+                                  color: HuddlColors.textTertiary),
                               const SizedBox(height: 12),
                               Text(
                                 'No attendees yet',
@@ -478,7 +478,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                                      color: HuddlColors.background,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -486,7 +486,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                       style: GoogleFonts.poppins(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary,
+                                        color: HuddlColors.textDark,
                                       ),
                                     ),
                                   ),
@@ -508,7 +508,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                   '+ ${_meetup.attendeeCount - 1} other ${(_meetup.attendeeCount - 1) == 1 ? 'parent' : 'parents'} going',
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: HuddlColors.primary,
+                                    color: HuddlColors.textTertiary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -1159,7 +1159,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 width: size, height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: HuddlColors.primary, width: 1.5),
+                  border: Border.all(color: HuddlColors.divider, width: 1.5),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Image.memory(bytes, fit: BoxFit.cover, width: size, height: size),
@@ -1171,7 +1171,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           width: size, height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: HuddlColors.primary, width: 1.5),
+            border: Border.all(color: HuddlColors.divider, width: 1.5),
           ),
           clipBehavior: Clip.antiAlias,
           child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
@@ -1208,15 +1208,15 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       width: size, height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: HuddlColors.primary, width: 1.5),
+        border: Border.all(color: HuddlColors.divider, width: 1.5),
       ),
       child: ClipOval(
         child: Image.asset(
           MemberPhotoService.currentUserAvatarAsset,
           width: size, height: size, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            color: HuddlColors.primary.withValues(alpha: 0.08),
-            child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary)),
+            color: HuddlColors.background,
+            child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.textDark)),
           ),
         ),
       ),

@@ -4217,7 +4217,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * 0.3),
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.background,
       ),
       clipBehavior: Clip.antiAlias,
       child: url.startsWith('assets/')
@@ -4225,18 +4225,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               url,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Icon(Icons.people,
-                  size: size * 0.5, color: HuddlColors.primary),
+                  size: size * 0.5, color: HuddlColors.textDark),
             )
           : url.startsWith('http')
               ? Image.network(
                   url,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Icon(Icons.people,
-                      size: size * 0.5, color: HuddlColors.primary),
+                      size: size * 0.5, color: HuddlColors.textDark),
                 )
               : url.startsWith('data:')
                   ? _buildDataImage(size)
-                  : Icon(Icons.people, size: size * 0.5, color: HuddlColors.primary),
+                  : Icon(Icons.people, size: size * 0.5, color: HuddlColors.textDark),
     );
   }
 
@@ -4249,13 +4249,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           Uint8List.fromList(bytes),
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Icon(Icons.people,
-              size: size * 0.5, color: HuddlColors.primary),
+              size: size * 0.5, color: HuddlColors.textDark),
         );
       }
     } catch (_) {
       // fall through
     }
-    return Icon(Icons.people, size: size * 0.5, color: HuddlColors.primary);
+    return Icon(Icons.people, size: size * 0.5, color: HuddlColors.textDark);
   }
 
   Widget _buildInputBar() {

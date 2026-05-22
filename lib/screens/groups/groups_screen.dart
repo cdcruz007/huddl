@@ -5247,7 +5247,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               const Padding(
                                 padding: EdgeInsets.only(left: 12, right: 6),
                                 child: Icon(Icons.search, size: 18,
-                                    color: HuddlColors.primary),
+                                    color: HuddlColors.textDark),
                               ),
                               Expanded(
                                 child: TextField(
@@ -7501,8 +7501,8 @@ class _HighlightedText extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: HuddlColors.primary,
-          backgroundColor: HuddlColors.primary.withValues(alpha: 0.1),
+          color: HuddlColors.textDark,
+          backgroundColor: HuddlColors.background,
         ),
       ));
       start = idx + query.length;
