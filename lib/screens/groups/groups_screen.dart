@@ -377,6 +377,16 @@ class _MessagesTabState extends State<_MessagesTab> {
   bool _isDeepSearching = false;
   Timer? _searchDebounce;
 
+  // ── Filter and sort state (Messages tab) ─────────────────────────────
+  // 0 = All, 1 = Groups only, 2 = DMs only, 3 = Unread first
+  int _messageFilterIndex = 0;
+  static const List<(String, IconData)> _messageFilterOptions = [
+    ('All',          Icons.chat_bubble_outline_rounded),
+    ('Groups only',  Icons.group_outlined),
+    ('DMs only',     Icons.person_outline_rounded),
+    ('Unread first', Icons.mark_chat_unread_outlined),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -1056,56 +1066,264 @@ class _MessagesTabState extends State<_MessagesTab> {
   }
 
   /// Build a unified list of items (groups + DMs) sorted by most recent
-  /// message time — just like WhatsApp.
+  /// message time — just like WhatsApp. Respects _messageFilterIndex.
   List<_MessageListItem> get _unifiedMessageList {
     final List<_MessageListItem> items = [];
 
-    for (final g in _filteredGroups) {
-      items.add(_MessageListItem(
-        id: g.id,
-        name: g.name,
-        imageUrl: g.imageUrl,
-        lastMessage: g.lastMessage,
-        lastSenderName: g.lastSenderName,
-        lastMessageTime: g.lastMessageTime,
-        unreadCount: g.unreadCount ?? 0,
-        isGroup: true,
-        isPinned: _pinnedGroupIds.contains(g.id),
-        isMuted: _mutedGroupIds.contains(g.id),
-        isPrivate: g.isPrivate,
-        groupItem: g,
-        isTyping: false,
-      ));
+    // 1 = Groups only → skip DMs; 2 = DMs only → skip groups
+    if (_messageFilterIndex != 2) {
+      for (final g in _filteredGroups) {
+        items.add(_MessageListItem(
+          id: g.id,
+          name: g.name,
+          imageUrl: g.imageUrl,
+          lastMessage: g.lastMessage,
+          lastSenderName: g.lastSenderName,
+          lastMessageTime: g.lastMessageTime,
+          unreadCount: g.unreadCount ?? 0,
+          isGroup: true,
+          isPinned: _pinnedGroupIds.contains(g.id),
+          isMuted: _mutedGroupIds.contains(g.id),
+          isPrivate: g.isPrivate,
+          groupItem: g,
+          isTyping: false,
+        ));
+      }
     }
 
-    for (final dm in _filteredDMs) {
-      items.add(_MessageListItem(
-        id: dm.id,
-        name: dm.recipientName,
-        imageUrl: '',
-        avatarColor: dm.recipientAvatarColor,
-        lastMessage: dm.lastMessage,
-        lastSenderName: dm.lastSenderName,
-        lastMessageTime: dm.lastMessageTime,
-        unreadCount: dm.unreadCount,
-        isGroup: false,
-        isPinned: _pinnedGroupIds.contains(dm.id),
-        isMuted: _mutedGroupIds.contains(dm.id),
-        isPrivate: false,
-        dmConversation: dm,
-        isTyping: dm.isTyping,
-      ));
+    if (_messageFilterIndex != 1) {
+      for (final dm in _filteredDMs) {
+        items.add(_MessageListItem(
+          id: dm.id,
+          name: dm.recipientName,
+          imageUrl: '',
+          avatarColor: dm.recipientAvatarColor,
+          lastMessage: dm.lastMessage,
+          lastSenderName: dm.lastSenderName,
+          lastMessageTime: dm.lastMessageTime,
+          unreadCount: dm.unreadCount,
+          isGroup: false,
+          isPinned: _pinnedGroupIds.contains(dm.id),
+          isMuted: _mutedGroupIds.contains(dm.id),
+          isPrivate: false,
+          dmConversation: dm,
+          isTyping: dm.isTyping,
+        ));
+      }
     }
 
-    // Sort: pinned first, then by last message time descending
+    // Sort: pinned first, then unread-first (if selected), then by recency
     items.sort((a, b) {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
+      // 3 = Unread first
+      if (_messageFilterIndex == 3) {
+        final aUnread = a.unreadCount > 0;
+        final bUnread = b.unreadCount > 0;
+        if (aUnread && !bUnread) return -1;
+        if (!aUnread && bUnread) return 1;
+      }
       return (b.lastMessageTime ?? DateTime(2000))
           .compareTo(a.lastMessageTime ?? DateTime(2000));
     });
 
     return items;
+  }
+
+  // ── Filter and sort bottom sheet (Messages tab) ───────────────────────────
+  void _showMessageFilterSortSheet() {
+    int tempIndex = _messageFilterIndex;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: context.hc.surface,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.gray300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Header ──────────────────────────────────────
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                HuddlAnimations.lightTap();
+                                Navigator.pop(ctx);
+                              },
+                              child: const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(Icons.close,
+                                    size: 24,
+                                    color: HuddlColors.textPrimary),
+                              ),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  'Filter and sort',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: context.hc.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                HuddlAnimations.lightTap();
+                                setSheetState(() => tempIndex = 0);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Text(
+                                  'RESET',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // ── Show section ────────────────────────────────
+                        Text(
+                          'Show',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: context.hc.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ..._messageFilterOptions.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final (label, icon) = entry.value;
+                          final isSelected = tempIndex == idx;
+                          return GestureDetector(
+                            onTap: () {
+                              HuddlAnimations.selectionClick();
+                              setSheetState(() => tempIndex = idx);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? HuddlColors.primary
+                                        .withValues(alpha: 0.08)
+                                    : context.hc.surface,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? HuddlColors.primary
+                                      : HuddlColors.divider,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(icon,
+                                      size: 20,
+                                      color: isSelected
+                                          ? HuddlColors.primary
+                                          : context.hc.textSecondary),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    label,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? HuddlColors.primary
+                                          : context.hc.textPrimary,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  if (isSelected)
+                                    const Icon(Icons.check_rounded,
+                                        size: 20,
+                                        color: HuddlColors.primary),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+
+                        const SizedBox(height: 20),
+                        // ── Apply button ─────────────────────────────────
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              HuddlAnimations.lightTap();
+                              setState(() => _messageFilterIndex = tempIndex);
+                              Navigator.pop(ctx);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: HuddlColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: Text(
+                              'Apply',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   // ── Long-press actions ─────────────────────────────────────────────────
@@ -1595,6 +1813,95 @@ class _MessagesTabState extends State<_MessagesTab> {
                   ],
                 ),
               ),
+
+            // ── Filter and sort pill (hidden when search is active) ────
+            if (!isSearchActive) ...[
+              Builder(builder: (context) {
+                final bool hasActive = _messageFilterIndex != 0;
+                final String pillLabel = hasActive
+                    ? 'Filter and sort · ${_messageFilterOptions[_messageFilterIndex].$1}'
+                    : 'Filter and sort';
+                return Container(
+                  color: context.hc.surface,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      Semantics(
+                        label: hasActive
+                            ? 'Active filters. Tap to change.'
+                            : 'Filter and sort messages',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            HuddlAnimations.lightTap();
+                            _showMessageFilterSortSheet();
+                          },
+                          child: Container(
+                            height: 44,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Icon(
+                                      Icons.tune_rounded,
+                                      size: 18,
+                                      color: hasActive
+                                          ? HuddlColors.primary
+                                          : context.hc.textPrimary,
+                                    ),
+                                    if (hasActive)
+                                      Positioned(
+                                        top: -3,
+                                        right: -3,
+                                        child: Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: const BoxDecoration(
+                                            color: HuddlColors.primary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  pillLabel,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: hasActive
+                                        ? HuddlColors.primary
+                                        : context.hc.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
+                );
+              }),
+            ],
 
             // ── Content area ──────────────────────────────────────────
             Expanded(

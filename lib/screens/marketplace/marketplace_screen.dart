@@ -763,170 +763,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     return 'Filter';
   }
 
-  /// Opens a combined filter bottom-sheet that consolidates all four filters.
-  // ── Airbnb-style sort sheet ───────────────────────────────────────────────
-  void _showSortSheet(HuddlContextColors hc) {
-    HuddlAnimations.selectionClick();
-
-    // Sort options — label + icon
-    const options = [
-      ('Most relevant',    Icons.auto_awesome_outlined),
-      ('Newest first',     Icons.schedule_outlined),
-      ('Price: low → high', Icons.south_outlined),
-      ('Price: high → low', Icons.north_outlined),
-    ];
-
-    int selected = _sortIndex;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: hc.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Handle ──
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 36, height: 4,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.divider,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // ── Title row ──
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        Text('Sort by',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18, fontWeight: FontWeight.w700,
-                            color: hc.textPrimary)),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(ctx),
-                          child: Container(
-                            width: 28, height: 28,
-                            decoration: BoxDecoration(
-                              color: HuddlColors.background,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(Icons.close_rounded,
-                              size: 16, color: hc.textSecondary),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // ── Divider ──
-                  Divider(height: 1, color: hc.divider),
-                  const SizedBox(height: 4),
-                  // ── Radio options ──
-                  ...options.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final (label, icon) = entry.value;
-                    final isSelected = selected == idx;
-                    return GestureDetector(
-                      onTap: () {
-                        HuddlAnimations.selectionClick();
-                        setSheetState(() => selected = idx);
-                        setState(() => _sortIndex = idx);
-                      },
-                      child: Container(
-                        color: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 14),
-                        child: Row(
-                          children: [
-                            Icon(icon, size: 20,
-                              color: isSelected
-                                  ? HuddlColors.primary   // orange active
-                                  : hc.textTertiary),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(label,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600 : FontWeight.w400,
-                                  color: isSelected
-                                      ? HuddlColors.nearBlack
-                                      : hc.textPrimary,
-                                )),
-                            ),
-                            // Radio circle — orange filled-dot style
-                            Container(
-                              width: 22, height: 22,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected
-                                      ? HuddlColors.primary  // orange border
-                                      : HuddlColors.divider,
-                                  width: isSelected ? 6 : 1.5,
-                                ),
-                                color: isSelected
-                                    ? HuddlColors.primary    // orange fill
-                                    : Colors.transparent,
-                              ),
-                              child: isSelected
-                                  ? const Center(
-                                      child: Icon(Icons.circle,
-                                        size: 8, color: Colors.white))
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                  Divider(height: 1, color: hc.divider),
-                  // ── Orange Save CTA ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HuddlAnimations.mediumTap();
-                          Navigator.pop(ctx);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
-                        ),
-                        child: Text('Save',
-                          style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   void _showAllFiltersSheet(HuddlContextColors hc) {
     HuddlAnimations.selectionClick();
 
@@ -935,6 +771,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     PriceType? sheetPrice = _selectedPriceType;
     ItemCondition? sheetCond = _selectedCondition;
     RangeValues sheetPriceRange = const RangeValues(0, 500);
+    int sheetSortIndex = _sortIndex;
+    const sortOptions = [
+      ('Most relevant',     Icons.auto_awesome_outlined),
+      ('Newest first',      Icons.schedule_outlined),
+      ('Price: low → high', Icons.south_outlined),
+      ('Price: high → low', Icons.north_outlined),
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -949,7 +792,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           final hasAny = sheetAge != null ||
               sheetCat != null ||
               sheetPrice != null ||
-              sheetCond != null;
+              sheetCond != null ||
+              sheetSortIndex != 0;
 
           return DraggableScrollableSheet(
             expand: false,
@@ -978,7 +822,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Text('Filters',
+                            Text('Filter and sort',
                               style: GoogleFonts.poppins(
                                 fontSize: 18, fontWeight: FontWeight.w700,
                                 color: shc.textPrimary)),
@@ -989,10 +833,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                   setSheetState(() {
                                     sheetAge = null; sheetCat = null;
                                     sheetPrice = null; sheetCond = null;
+                                    sheetSortIndex = 0;
                                   });
                                   setState(() {
                                     _selectedAge = null; _selectedCategory = null;
                                     _selectedPriceType = null; _selectedCondition = null;
+                                    _sortIndex = 0;
                                   });
                                 },
                                 child: Text('Clear all',
@@ -1242,6 +1088,66 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             )),
                           ],
                         ),
+                        // ══ SECTION: Sort by ════════════════════════════
+                        Text('Sort by',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: shc.textSecondary)),
+                        const SizedBox(height: 10),
+                        ...sortOptions.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final (label, icon) = entry.value;
+                          final isSelected = sheetSortIndex == idx;
+                          return GestureDetector(
+                            onTap: () {
+                              HuddlAnimations.selectionClick();
+                              setSheetState(() => sheetSortIndex = idx);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 4),
+                              color: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Icon(icon,
+                                    size: 20,
+                                    color: isSelected
+                                        ? HuddlColors.primary
+                                        : shc.textTertiary),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(label,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                        color: isSelected
+                                            ? HuddlColors.primary
+                                            : shc.textPrimary,
+                                      )),
+                                  ),
+                                  Container(
+                                    width: 22, height: 22,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? HuddlColors.primary
+                                            : HuddlColors.divider,
+                                        width: isSelected ? 5.5 : 1.5,
+                                      ),
+                                      color: isSelected
+                                          ? HuddlColors.primary
+                                          : Colors.transparent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -1255,6 +1161,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           HuddlAnimations.mediumTap();
+                          setState(() => _sortIndex = sheetSortIndex);
                           Navigator.pop(ctx);
                         },
                         style: ElevatedButton.styleFrom(
@@ -1698,16 +1605,27 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildBuyTab(HuddlContextColors hc) {
     final items = _filteredItems;
 
+    final bool hasActiveSortOrFilter = _hasActiveFilters || _sortIndex != 0;
+    final String pillLabel = _hasActiveFilters && _activeFilterCount > 1
+        ? 'Filter and sort · $_activeFilterCount'
+        : _hasActiveFilters
+            ? 'Filter and sort · $_activeFilterLabel'
+            : _sortIndex != 0
+                ? 'Filter and sort · sorted'
+                : 'Filter and sort';
+
     return Column(
       children: [
-        // ── Airbnb-quality slim filter row ────────────────────────────
+        // ── Unified "Filter and sort" pill row ────────────────────────
         Container(
           color: hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Row(
             children: [
               Semantics(
-                label: _hasActiveFilters ? 'Active filters, tap to change' : 'Filter items',
+                label: hasActiveSortOrFilter
+                    ? 'Active filters. Tap to change.'
+                    : 'Filter and sort items',
                 button: true,
                 child: GestureDetector(
                   onTap: () {
@@ -1715,44 +1633,56 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     _showAllFiltersSheet(hc);
                   },
                   child: Container(
-                    height: 34,
-                    padding: const EdgeInsets.symmetric(horizontal: 13),
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      // Orange fill when filters are active — warm + visible
-                      color: _hasActiveFilters
-                          ? HuddlColors.primary
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _hasActiveFilters
-                            ? HuddlColors.primary
-                            : hc.divider,
-                        width: 1.2,
-                      ),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.tune_rounded,
-                          size: 14,
-                          color: _hasActiveFilters
-                              ? Colors.white
-                              : hc.textSecondary,
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 18,
+                              color: hasActiveSortOrFilter
+                                  ? HuddlColors.primary
+                                  : hc.textPrimary,
+                            ),
+                            if (hasActiveSortOrFilter)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: HuddlColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 8),
                         Text(
-                          _hasActiveFilters && _activeFilterCount > 1
-                              ? 'Filters · $_activeFilterCount'
-                              : _hasActiveFilters
-                                  ? _activeFilterLabel
-                                  : 'Filter',
+                          pillLabel,
                           style: GoogleFonts.poppins(
-                            fontSize: 12.5,
+                            fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: _hasActiveFilters
-                                ? Colors.white
-                                : hc.textSecondary,
+                            color: hasActiveSortOrFilter
+                                ? HuddlColors.primary
+                                : hc.textPrimary,
                           ),
                         ),
                       ],
@@ -1760,7 +1690,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const Spacer(),
               Semantics(
                 liveRegion: true,
                 child: Text(
@@ -1772,51 +1702,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ),
                 ),
               ),
-              const Spacer(),
-              // ── Sort button ────────────────────────────────────────
-              GestureDetector(
-                onTap: () {
-                  HuddlAnimations.lightTap();
-                  _showSortSheet(hc);
-                },
-                child: Container(
-                  height: 34,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: hc.divider, width: 1.2),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.sort_rounded,
-                        size: 14,
-                        color: hc.textSecondary),
-                      const SizedBox(width: 5),
-                      Text('Sort',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: hc.textSecondary)),
-                    ],
-                  ),
-                ),
-              ),
-              if (_hasActiveFilters) ...[
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _clearAllFilters,
-                  child: Text(
-                    'Clear',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      color: hc.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
