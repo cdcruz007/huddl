@@ -92,13 +92,13 @@ class HuddlEmptyState extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  color: HuddlColors.background,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
                   Icons.image_not_supported_outlined,
                   size: 36,
-                  color: HuddlColors.primary,
+                  color: HuddlColors.textDark,
                 ),
               ),
             ),

@@ -235,13 +235,13 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.06),
+                color: HuddlColors.background,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.pause_circle_outline,
-                      color: HuddlColors.primary, size: 28),
+                      color: HuddlColors.textDark, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -463,7 +463,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                     color: HuddlColors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                        color: HuddlColors.primary.withValues(alpha: 0.2)),
+                        color: HuddlColors.divider),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
@@ -475,7 +475,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   child: Column(
                     children: [
                       const Icon(Icons.rocket_launch,
-                          color: HuddlColors.primary, size: 36),
+                          color: HuddlColors.textDark, size: 36),
                       const SizedBox(height: 12),
                       Text('Unlock Your Full Community',
                           style: GoogleFonts.poppins(
@@ -630,14 +630,14 @@ class _StepRow extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.12),
+              color: HuddlColors.background,
               shape: BoxShape.circle,
             ),
             child: Text(step,
                 style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary)),
+                    color: HuddlColors.textDark)),
           ),
           const SizedBox(width: 10),
           Expanded(

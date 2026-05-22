@@ -131,7 +131,7 @@ class _HuddlSearchPillState extends State<HuddlSearchPill>
           const SizedBox(width: 12),
           // Location pin
           Icon(Icons.location_on_outlined, size: 15,
-              color: HuddlColors.primary),
+              color: HuddlColors.textTertiary),
           const SizedBox(width: 4),
           Expanded(
             child: Text(

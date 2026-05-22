@@ -35,7 +35,7 @@ class UnderlinedTextField extends StatelessWidget {
           Text(
             label!,
             style: AppTextStyles.inputLabel.copyWith(
-              color: HuddlColors.primary,
+              color: HuddlColors.textDark,
               fontSize: 14,
             ),
           ),
@@ -58,7 +58,7 @@ class UnderlinedTextField extends StatelessWidget {
             filled: true,
             fillColor: context.hc.inputBg, // Light gray background
             enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: HuddlColors.primary, width: 2),
+              borderSide: BorderSide(color: HuddlColors.divider, width: 2),
             ),
             focusedBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: HuddlColors.primary, width: 2),

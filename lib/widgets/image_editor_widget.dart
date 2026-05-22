@@ -89,12 +89,12 @@ class ImageEditorWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.photo_library,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                     ),
                   ),
                   title: const Text('Choose from Gallery'),

@@ -329,12 +329,12 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary,
+                      color: HuddlColors.background,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       _iconForName(_step.iconName),
-                      color: Colors.white,
+                      color: HuddlColors.textDark,
                       size: 22,
                     ),
                   ),
@@ -349,7 +349,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
+                            color: HuddlColors.textDark,
                             letterSpacing: 0.5,
                           ),
                         ),

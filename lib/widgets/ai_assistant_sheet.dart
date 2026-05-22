@@ -257,13 +257,13 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                             decoration: BoxDecoration(
                               color: _isListening
                                   ? HuddlColors.teal
-                                  : HuddlColors.primary.withValues(alpha: 0.1),
+                                  : HuddlColors.background,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               _isListening ? Icons.mic : Icons.mic_none,
                               size: 18,
-                              color: _isListening ? Colors.white : HuddlColors.primary,
+                              color: _isListening ? Colors.white : HuddlColors.textDark,
                             ),
                           ),
                         );
@@ -451,7 +451,7 @@ class _QuickActionChip extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(_icon, size: 18, color: HuddlColors.primary),
+            Icon(_icon, size: 18, color: HuddlColors.textDark),
             const Spacer(),
             Text(action.label, style: GoogleFonts.poppins(
               fontSize: 12, fontWeight: FontWeight.w600,

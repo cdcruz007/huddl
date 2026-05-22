@@ -310,8 +310,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                 decoration: BoxDecoration(
                                   color: _isListening
                                       ? HuddlColors.teal
-                                      : HuddlColors.primary
-                                          .withValues(alpha: 0.1),
+                                      : HuddlColors.background,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -319,7 +318,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                   size: 18,
                                   color: _isListening
                                       ? Colors.white
-                                      : HuddlColors.primary,
+                                      : HuddlColors.textDark,
                                 ),
                               ),
                             );
@@ -415,7 +414,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(_quickActionIcon(action.iconName),
-                                size: 18, color: HuddlColors.primary),
+                                size: 18, color: HuddlColors.textDark),
                             const Spacer(),
                             Text(
                               action.label,

@@ -77,10 +77,10 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
             Container(
               width: 56, height: 56,
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.12),
+                color: HuddlColors.background,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.shield_outlined, size: 28, color: HuddlColors.primary),
+              child: const Icon(Icons.shield_outlined, size: 28, color: HuddlColors.textDark),
             ),
             const SizedBox(height: 16),
 
@@ -140,7 +140,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
                     text: 'Privacy Policy',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textTertiary,
                       decoration: TextDecoration.underline,
                       fontWeight: FontWeight.w600,
                     ),
@@ -193,7 +193,7 @@ class _BulletRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: HuddlColors.primary),
+        Icon(icon, size: 16, color: HuddlColors.textDark),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -233,20 +233,20 @@ class ChatSafetyStrip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
         color: isDark
-            ? HuddlColors.primary.withValues(alpha: 0.08)
-            : HuddlColors.primary.withValues(alpha: 0.06),
+            ? HuddlColors.background
+            : HuddlColors.background,
         border: Border(
           top: BorderSide(
             color: isDark
-                ? HuddlColors.primary.withValues(alpha: 0.15)
-                : HuddlColors.primary.withValues(alpha: 0.12),
+                ? HuddlColors.divider
+                : HuddlColors.divider,
             width: 0.5,
           ),
         ),
       ),
       child: Row(
         children: [
-          Icon(Icons.shield_outlined, size: 12, color: HuddlColors.primary.withValues(alpha: 0.8)),
+          Icon(Icons.shield_outlined, size: 12, color: HuddlColors.textDark),
           const SizedBox(width: 5),
           Expanded(
             child: Text(
@@ -266,7 +266,7 @@ class ChatSafetyStrip extends StatelessWidget {
               'About this',
               style: GoogleFonts.poppins(
                 fontSize: 10.5,
-                color: HuddlColors.primary,
+                color: HuddlColors.textTertiary,
                 fontWeight: FontWeight.w600,
                 decoration: TextDecoration.underline,
               ),

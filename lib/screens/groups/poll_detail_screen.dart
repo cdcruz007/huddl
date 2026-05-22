@@ -457,7 +457,7 @@ class PollCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textTertiary,
                       ),
                     ),
                   )
@@ -470,7 +470,7 @@ class PollCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.primary,
+                        color: HuddlColors.textTertiary,
                       ),
                     ),
                   ),

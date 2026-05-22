@@ -63,14 +63,14 @@ class SafeNetworkImage extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: placeholderColor ??
-            HuddlColors.primary.withValues(alpha: 0.06),
+            HuddlColors.background,
         borderRadius: borderRadius,
       ),
       child: Center(
         child: Icon(
           placeholderIcon,
           size: placeholderIconSize,
-          color: HuddlColors.primary.withValues(alpha: 0.3),
+          color: HuddlColors.textTertiary,
         ),
       ),
     );
@@ -81,7 +81,7 @@ class SafeNetworkImage extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.04),
+        color: HuddlColors.background,
         borderRadius: borderRadius,
       ),
       child: Center(
@@ -90,7 +90,7 @@ class SafeNetworkImage extends StatelessWidget {
           height: 20,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: HuddlColors.primary.withValues(alpha: 0.3),
+            color: HuddlColors.textTertiary,
           ),
         ),
       ),
