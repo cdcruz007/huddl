@@ -365,11 +365,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.1),
+              color: HuddlColors.background,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,
-                size: 36, color: HuddlColors.primary),
+                size: 36, color: HuddlColors.textDark),
           ),
           const SizedBox(height: 16),
 
@@ -472,24 +472,24 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.06),
+          color: HuddlColors.background,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: HuddlColors.primary.withValues(alpha: 0.3),
+            color: HuddlColors.divider,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.auto_awesome,
-                size: 13, color: HuddlColors.primary),
+                size: 13, color: HuddlColors.textDark),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: HuddlColors.primary,
+                  color: HuddlColors.textDark,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -602,11 +602,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             height: 28,
             margin: const EdgeInsets.only(right: 8, bottom: 2),
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.12),
+              color: HuddlColors.background,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,
-                size: 14, color: HuddlColors.primary),
+                size: 14, color: HuddlColors.textDark),
           ),
           Flexible(
             child: Column(
@@ -642,7 +642,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         'Tap to retry',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.textTertiary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -729,11 +729,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             height: 28,
             margin: const EdgeInsets.only(right: 8, bottom: 2),
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.12),
+              color: HuddlColors.background,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,
-                size: 14, color: HuddlColors.primary),
+                size: 14, color: HuddlColors.textDark),
           ),
           Container(
             padding:
