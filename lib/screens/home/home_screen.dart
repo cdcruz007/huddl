@@ -513,38 +513,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _buildSmartFeed() {
     final List<_SmartFeedItem> items = [];
-    final now = DateTime.now();
 
     // 1. AI nudge is shown in the Noticeboard section above the smart feed,
     //    so we intentionally skip adding it here to avoid duplication.
     //    (topNudge is read by _buildNoticeboardSection directly.)
 
-    // 2. Upcoming meetups user is attending (high priority — max 2)
-    final goingMeetups = _upcomingMeetups.where((m) => m.isGoing).take(2);
-    for (final m in goingMeetups) {
-      final daysUntil = m.dateTime.difference(now).inDays;
-      items.add(_SmartFeedItem(
-        type: _SmartFeedType.meetup,
-        score: daysUntil <= 1 ? 0.95 : 0.82,
-        reason: daysUntil == 0 ? 'Today' : daysUntil == 1 ? 'Tomorrow' : 'In $daysUntil days',
-        meetup: m,
-      ));
-    }
-
-    // 2b. Upcoming events user is attending (high priority — max 2)
-    final upcomingGoingEvents = _goingEvents
-        .where((e) => e.dateTime.isAfter(now))
-        .toList()
-      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
-    for (final e in upcomingGoingEvents.take(2)) {
-      final daysUntil = e.dateTime.difference(now).inDays;
-      items.add(_SmartFeedItem(
-        type: _SmartFeedType.goingEvent,
-        score: daysUntil <= 1 ? 0.94 : 0.81,
-        reason: daysUntil == 0 ? 'Today' : daysUntil == 1 ? 'Tomorrow' : 'In $daysUntil days',
-        event: e,
-      ));
-    }
+    // 2. isGoing meetups and goingEvents are now exclusively shown in the
+    //    "Don't Forget" pinned carousel above — do NOT add them to the smart
+    //    feed list or they will appear twice on screen.
 
     // 3. Announcements are already rendered inside the Noticeboard section
     //    (see _buildNoticeboardSection → topAnnouncements) so we do NOT add
@@ -5694,7 +5670,9 @@ class _SmartFeedItem {
     required this.reason,
     // ignore: unused_element_parameter
     this.nudge,
+    // ignore: unused_element_parameter
     this.meetup,
+    // ignore: unused_element_parameter
     this.event,
     // ignore: unused_element_parameter
     this.announcement,
