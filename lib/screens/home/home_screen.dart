@@ -1393,30 +1393,33 @@ class _HomeScreenState extends State<HomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Greeting + name
+          // Greeting + name — two separate Text widgets so the name
+          // wraps to a second line rather than being cut off mid-word.
           Semantics(
             header: true,
-            child: RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$_greeting, ',
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w400,
-                      color: hc.textSecondary,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$_greeting,',
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    color: hc.textSecondary,
                   ),
-                  TextSpan(
-                    text: _name.isNotEmpty ? _name : 'there',
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
+                ),
+                Text(
+                  _name.isNotEmpty ? _name : 'there',
+                  style: GoogleFonts.poppins(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: hc.textPrimary,
+                    height: 1.1,
                   ),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 6),
