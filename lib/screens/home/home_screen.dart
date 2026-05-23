@@ -1164,14 +1164,25 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
 
-              // ── Today for you — 'all' | 'meetups' | 'events' ──────
-              if ((_activeFeedFilter == 'all' ||
-                      _activeFeedFilter == 'meetups' ||
-                      _activeFeedFilter == 'events') &&
-                  _buildTodayForYouCard(hc, isDark) != null)
+              // ── Upcoming Meetups & Events carousel ────────────────
+              // Merges meetups + events sorted by soonest dateTime first
+              if (_activeFeedFilter == 'all' ||
+                  _activeFeedFilter == 'meetups' ||
+                  _activeFeedFilter == 'events') ...[
                 SliverToBoxAdapter(
-                  child: _buildTodayForYouCard(hc, isDark)!,
+                  child: _buildSectionHeader(
+                    hc: hc,
+                    icon: Icons.event_available_outlined,
+                    iconColor: HuddlColors.accentAmber,
+                    title: 'Upcoming Meetups & Events',
+                    subtitle: 'In ${_borough.isNotEmpty ? _borough : 'your area'} — soonest first',
+                    onSeeAll: () => _switchToTab(2),
+                  ),
                 ),
+                SliverToBoxAdapter(
+                  child: _buildUpcomingMeetupsEventsCarousel(hc, isDark),
+                ),
+              ],
 
               // ── Discover New Listings — unified carousel ──────────
               // Groups + Meetups + Events + Market items, last 7 days
@@ -2002,6 +2013,69 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
 
+
+  // ── Upcoming Meetups & Events carousel ───────────────────────────────────
+  // Merges _upcomingMeetups + _eventService.events, sorted soonest → latest.
+  // Each card has a MEETUP / EVENT type pill and taps to the detail screen.
+  Widget _buildUpcomingMeetupsEventsCarousel(dynamic hc, bool isDark) {
+    final now = DateTime.now();
+
+    // Build unified list — only future items
+    final items = <_DiscoverItem>[];
+
+    for (final m in _upcomingMeetups.where((m) => m.dateTime.isAfter(now))) {
+      items.add(_DiscoverItem(
+        type: _DiscoverType.meetup,
+        sortDate: m.dateTime,
+        title: m.title,
+        subtitle: '${m.dateDisplay} · ${m.location.isNotEmpty ? m.location : m.category}',
+        imageUrl: m.imageUrl.isNotEmpty ? m.imageUrl : _meetupCategoryImage(m.category),
+        badge: m.isGoing ? 'Going ✓' : null,
+        onTap: () {
+          HuddlAnimations.selectionClick();
+          setState(() => _meetupTaps++);
+          Navigator.of(context).push(HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: m)));
+        },
+      ));
+    }
+
+    for (final e in _eventService.events.where((e) => e.dateTime.isAfter(now))) {
+      final eMap = e.toMap();
+      items.add(_DiscoverItem(
+        type: _DiscoverType.event,
+        sortDate: e.dateTime,
+        title: e.title,
+        subtitle: '${e.dateDisplay} · ${e.location.isNotEmpty ? e.location : e.category}',
+        imageUrl: e.imageUrl,
+        badge: _goingEvents.any((ge) => ge.id == e.id) ? 'Going ✓' : null,
+        onTap: () {
+          HuddlAnimations.selectionClick();
+          Navigator.of(context).push(HuddlSpringPageRoute(page: EventDetailScreen(event: eMap)));
+        },
+      ));
+    }
+
+    // Sort soonest first
+    items.sort((a, b) => a.sortDate.compareTo(b.sortDate));
+
+    // Cap at 12 so the carousel doesn't become overwhelming
+    final visible = items.take(12).toList();
+
+    if (visible.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No upcoming meetups or events', Icons.event_available_outlined);
+    }
+
+    return SizedBox(
+      height: 230,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: visible.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) => _buildDiscoverCard(visible[index], hc, isDark),
+      ),
+    );
+  }
 
   // ── Discover New Listings carousel ───────────────────────────────────────
   // Merges Groups + Meetups + Events + Market items created in the last 7 days
@@ -3386,9 +3460,8 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {}
   }
 
-  // ── §3 "Today for you" — single curated content card ─────────────────────
-  // Algorithmically selects the single most relevant meetup, event or group.
-  // Returns null if no relevant content is available (section hidden per spec).
+  // ── §3 "Today for you" — kept as fallback, superseded by Upcoming carousel ──
+  // ignore: unused_element
   Widget? _buildTodayForYouCard(dynamic hc, bool isDark) {
     // ── Personalised candidate selection ─────────────────────────────────────
     // Priority 1: soonest meetup the user has already RSVP'd (isGoing == true)
