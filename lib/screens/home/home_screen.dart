@@ -140,6 +140,9 @@ class _HomeScreenState extends State<HomeScreen>
   // ── AI feedback tracking ──────────────────────────────────────────────────
 
 
+  // ── Feed filter chip — 'all' | 'meetups' | 'events' | 'noticeboard' | 'tips'
+  String _activeFeedFilter = 'all';
+
   // ── Adaptive: track which sections user interacts with ────────────────────
   int _meetupTaps = 0;
   int _groupTaps = 0;
@@ -1120,10 +1123,15 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
+              // ── Feed header + filter chips ─────────────────────────
+              SliverToBoxAdapter(
+                child: _buildFeedFilterHeader(hc, isDark),
+              ),
+
               // ── UX-01/05: Search pill — Airbnb-style home entry ────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: HuddlSearchPill(
                     borough: _borough.isNotEmpty ? _borough : 'your area',
                     onTap: () {
@@ -1143,141 +1151,114 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              // ── Compact greeting row ────────────────────────────────
-              SliverToBoxAdapter(
-                child: SlideTransition(
-                  position: _greetingSlide,
-                  child: FadeTransition(
-                    opacity: _greetingFade,
-                    child: _buildCompactGreeting(hc, isDark),
+              // ── Compact greeting row — hidden when filtered ──────────
+              if (_activeFeedFilter == 'all')
+                SliverToBoxAdapter(
+                  child: SlideTransition(
+                    position: _greetingSlide,
+                    child: FadeTransition(
+                      opacity: _greetingFade,
+                      child: _buildCompactGreeting(hc, isDark),
+                    ),
                   ),
                 ),
-              ),
 
-              // ── AI Catch-Up Summary Card ───────────────────────────
-              if (!_isLoading)
+              // ── AI Catch-Up Summary Card — 'all' only ─────────────
+              if (!_isLoading && _activeFeedFilter == 'all')
                 SliverToBoxAdapter(
                   child: _buildAiCatchUpCard(hc, isDark),
                 ),
 
               // ── First-run onboarding card ──────────────────────────
-              if (_isFirstRun)
+              if (_isFirstRun && _activeFeedFilter == 'all')
                 SliverToBoxAdapter(
                   child: _buildFirstRunCard(hc, isDark),
                 ),
 
-              // ── Noticeboard composer bar ───────────────────────────
-              SliverToBoxAdapter(
-                child: _buildNoticeboardComposer(hc, isDark),
-              ),
+              // ── Noticeboard composer + feed ────────────────────────
+              // Shown on 'all' and 'noticeboard' filter tabs
+              if (_activeFeedFilter == 'all' || _activeFeedFilter == 'noticeboard') ...[
+                SliverToBoxAdapter(
+                  child: _buildNoticeboardComposer(hc, isDark),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildNoticeboardSection(hc, isDark),
+                ),
+              ],
 
-              // ── §4 Noticeboard — sits directly below composer ─────
-              SliverToBoxAdapter(
-                child: _buildNoticeboardSection(hc, isDark),
-              ),
-
-              // ── §3 Today for you — single curated card ────────────
-              if (_buildTodayForYouCard(hc, isDark) != null)
+              // ── Today for you — 'all' | 'meetups' | 'events' ──────
+              if ((_activeFeedFilter == 'all' ||
+                      _activeFeedFilter == 'meetups' ||
+                      _activeFeedFilter == 'events') &&
+                  _buildTodayForYouCard(hc, isDark) != null)
                 SliverToBoxAdapter(
                   child: _buildTodayForYouCard(hc, isDark)!,
                 ),
 
-              // ── Groups carousel ───────────────────────────────────
-              if (_newPublicGroups.isNotEmpty) ...
-                [
-                  SliverToBoxAdapter(
-                    child: _buildSectionHeader(
-                      hc: hc,
-                      icon: Icons.people_outline,
-                      iconColor: HuddlColors.teal,
-                      title: 'Groups near you',
-                      subtitle: 'Join local parent groups',
-                      onSeeAll: () => _switchToTab(1),
-                    ),
-                  ),
-                  SliverToBoxAdapter(child: _buildGroupsCarousel(hc)),
-                ],
-
-              // ── Meetups carousel ──────────────────────────────────
-              if (_upcomingMeetups.isNotEmpty) ...
-                [
-                  SliverToBoxAdapter(
-                    child: _buildSectionHeader(
-                      hc: hc,
-                      icon: Icons.place,
-                      iconColor: HuddlColors.primary,
-                      title: 'Upcoming meetups',
-                      subtitle: 'In ${_borough.isNotEmpty ? _borough : 'your area'}',
-                      onSeeAll: () => _switchToTab(2),
-                    ),
-                  ),
-                  SliverToBoxAdapter(child: _buildMeetupsCarousel(hc)),
-                ],
-
-              // ── §5 Your Feed section header ────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Your Feed',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: hc.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Tooltip(
-                        message: 'Customise your feed',
-                        child: GestureDetector(
-                          onTap: () { HuddlAnimations.lightTap(); _showFeedPreferences(); },
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Icon(Icons.settings_outlined, size: 18, color: hc.textTertiary),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_smartFeed.isEmpty)
+              // ── Groups carousel — 'all' only ──────────────────────
+              if (_activeFeedFilter == 'all' && _newPublicGroups.isNotEmpty) ...[
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Text(
-                      'RSVP to events & meetups to see personalised updates here',
-                      style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary),
-                    ),
+                  child: _buildSectionHeader(
+                    hc: hc,
+                    icon: Icons.people_outline,
+                    iconColor: HuddlColors.teal,
+                    title: 'Groups near you',
+                    subtitle: 'Join local parent groups',
+                    onSeeAll: () => _switchToTab(1),
                   ),
                 ),
+                SliverToBoxAdapter(child: _buildGroupsCarousel(hc)),
+              ],
 
-              // ── Smart feed (AI-curated: attending/announcements/tips) ──
-              // UX-03: Spring physics on feed cards
-              // Uses HuddlSpringMount (spring entry + stagger) — single clean
-              // animation layer.  HuddlStaggeredList wraps the same logic but
-              // requires a pre-built children list; SliverChildBuilderDelegate
-              // is lazy so we keep the SliverList and apply HuddlSpringMount
-              // per-item directly (equivalent to HuddlStaggeredList behaviour).
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index >= _smartFeed.length) return null;
-                    final item = _smartFeed[index];
-                    return HuddlSpringMount(
-                      delay: Duration(milliseconds: index * 55),
-                      child: _buildSmartFeedCard(item, hc, isDark),
-                    );
-                  },
-                  childCount: _smartFeed.length,
+              // ── Meetups carousel — 'all' | 'meetups' ─────────────
+              if ((_activeFeedFilter == 'all' || _activeFeedFilter == 'meetups') &&
+                  _upcomingMeetups.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: _buildSectionHeader(
+                    hc: hc,
+                    icon: Icons.place,
+                    iconColor: HuddlColors.primary,
+                    title: 'Upcoming meetups',
+                    subtitle: 'In ${_borough.isNotEmpty ? _borough : 'your area'}',
+                    onSeeAll: () => _switchToTab(2),
+                  ),
                 ),
-              ),
+                SliverToBoxAdapter(child: _buildMeetupsCarousel(hc)),
+              ],
 
-              // ── Upgrade banner — shown at the bottom (least intrusive) ──
-              if (SubscriptionService().isFree)
+              // ── Smart feed items — filtered per tab ───────────────
+              // UX-03: Spring physics on feed cards
+              if (_activeFeedFilter != 'noticeboard') ...[
+                if (_filteredSmartFeed(hc, isDark).isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        _activeFeedFilter == 'all'
+                            ? 'RSVP to events & meetups to see personalised updates here'
+                            : 'No $_activeFeedFilter updates yet — check back soon.',
+                        style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary),
+                      ),
+                    ),
+                  ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final feed = _filteredSmartFeed(hc, isDark);
+                      if (index >= feed.length) return null;
+                      final item = feed[index];
+                      return HuddlSpringMount(
+                        delay: Duration(milliseconds: index * 55),
+                        child: _buildSmartFeedCard(item, hc, isDark),
+                      );
+                    },
+                    childCount: _filteredSmartFeed(hc, isDark).length,
+                  ),
+                ),
+              ],
+
+              // ── Upgrade banner — shown at the bottom ──────────────
+              if (_activeFeedFilter == 'all' && SubscriptionService().isFree)
                 SliverToBoxAdapter(
                   child: UpgradeBanner(
                     message: 'Unlock more groups, meetups & private features',
@@ -1333,6 +1314,158 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
 
+
+  // ── Feed filter header ────────────────────────────────────────────────────
+  // Sits immediately below the app bar. Shows the screen title "Your Feed"
+  // with the settings gear on the right, and a horizontally scrollable row of
+  // filter chips below it.
+  Widget _buildFeedFilterHeader(dynamic hc, bool isDark) {
+    const filters = [
+      ('all',         'All',          Icons.home_outlined),
+      ('meetups',     'Meetups',      Icons.place_outlined),
+      ('events',      'Events',       Icons.event_outlined),
+      ('noticeboard', 'Noticeboard',  Icons.campaign_outlined),
+      ('tips',        'Tips & Nudges',Icons.lightbulb_outline),
+    ];
+
+    return Container(
+      color: hc.surface,
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 12, 0),
+            child: Row(
+              children: [
+                Text(
+                  'Your Feed',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: hc.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                Tooltip(
+                  message: 'Customise your feed',
+                  child: GestureDetector(
+                    onTap: () {
+                      HuddlAnimations.lightTap();
+                      _showFeedPreferences();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: hc.surfaceAlt,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.tune_rounded,
+                          size: 18, color: hc.textSecondary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Scrollable filter chips
+          SizedBox(
+            height: 34,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: filters.map((f) {
+                final key = f.$1;
+                final label = f.$2;
+                final icon = f.$3;
+                final isActive = _activeFeedFilter == key;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      HuddlAnimations.lightTap();
+                      setState(() => _activeFeedFilter = key);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? HuddlColors.primary
+                            : hc.surfaceAlt,
+                        borderRadius: BorderRadius.circular(20),
+                        border: isActive
+                            ? null
+                            : Border.all(color: hc.divider),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            icon,
+                            size: 13,
+                            color: isActive
+                                ? Colors.white
+                                : hc.textSecondary,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            label,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                              color: isActive
+                                  ? Colors.white
+                                  : hc.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Returns the smart feed items filtered by [_activeFeedFilter].
+  List<_SmartFeedItem> _filteredSmartFeed(dynamic hc, bool isDark) {
+    switch (_activeFeedFilter) {
+      case 'meetups':
+        return _smartFeed
+            .where((i) =>
+                i.type == _SmartFeedType.meetup ||
+                i.type == _SmartFeedType.goingEvent ||
+                i.type == _SmartFeedType.suggestedMeetup)
+            .toList();
+      case 'events':
+        return _smartFeed
+            .where((i) =>
+                i.type == _SmartFeedType.goingEvent ||
+                i.type == _SmartFeedType.meetup)
+            .toList();
+      case 'noticeboard':
+        return []; // Noticeboard renders its own section above
+      case 'tips':
+        return _smartFeed
+            .where((i) =>
+                i.type == _SmartFeedType.aiNudge ||
+                i.type == _SmartFeedType.communityActivity)
+            .toList();
+      case 'all':
+      default:
+        return _smartFeed;
+    }
+  }
 
   /// Greeting row: time-based greeting + bold name.
   /// Location shown as inline text line (no pill bubble).
