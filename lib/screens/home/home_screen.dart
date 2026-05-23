@@ -1054,23 +1054,19 @@ class _HomeScreenState extends State<HomeScreen>
           onRefresh: _loadData,
           child: CustomScrollView(
             slivers: [
-              // ── Pinned App Bar + Feed Header + Filter Chips ─────────
-              // Using SliverAppBar with pinned:true so the header stays
-              // visible at all times as the feed scrolls beneath it.
-              SliverAppBar(
+              // ── Pinned App Bar + Feed Header ─────────────────────
+              // SliverPersistentHeader with a fixed-height delegate gives
+              // reliable pinning without the PreferredSize clipping issue
+              // that SliverAppBar(bottom:) caused.
+              SliverPersistentHeader(
                 pinned: true,
-                floating: false,
-                snap: false,
-                backgroundColor: hc.surface,
-                surfaceTintColor: Colors.transparent,
-                shadowColor: hc.divider.withValues(alpha: 0.4),
-                elevation: 1,
-                toolbarHeight: 0,     // no default toolbar — we own all content
-                expandedHeight: 0,
-                flexibleSpace: const SizedBox.shrink(),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(100),
+                delegate: _StickyHeaderDelegate(
                   child: _buildStickyHeader(hc, isDark),
+                  // Logo row ≈ 10+40+4 = 54px
+                  // Your Feed title ≈ 28px, subtitle ≈ 16px
+                  // paddings: 6+10 = 16px
+                  // total ≈ 114px — use 116 for safe breathing room
+                  height: 116,
                 ),
               ),
 
@@ -5532,6 +5528,33 @@ class _ActionButton extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SMART FEED DATA MODELS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Sticky header delegate ────────────────────────────────────────────────
+/// Used by SliverPersistentHeader(pinned:true) to keep the app-bar row +
+/// "Your Feed" title pinned at the top of the home screen while content
+/// scrolls beneath it. A fixed [height] is supplied by the caller.
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _StickyHeaderDelegate({required this.child, required this.height});
+
+  final Widget child;
+  final double height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) =>
+      oldDelegate.height != height || oldDelegate.child != child;
+}
 
 // ── AI Catch-Up card helper ───────────────────────────────────────────────
 class _CatchUpItem {
