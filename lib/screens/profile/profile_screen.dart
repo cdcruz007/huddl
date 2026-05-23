@@ -398,7 +398,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _name = _onboarding.name ?? 'User';
         _borough = borough;
         _bio = _onboarding.bio;
-        _photoUrl = _onboarding.profilePhotoObjectUrl;
+        // Prefer the in-memory object URL (base64 data:); fall back to the
+        // persisted Firebase Storage HTTPS URL stored in profilePhotoPath.
+        _photoUrl = (_onboarding.profilePhotoObjectUrl?.isNotEmpty == true)
+            ? _onboarding.profilePhotoObjectUrl
+            : (_onboarding.profilePhotoPath?.isNotEmpty == true &&
+                   _onboarding.profilePhotoPath!.startsWith('http'))
+                ? _onboarding.profilePhotoPath
+                : _onboarding.profilePhotoObjectUrl;
         _parentType = _onboarding.parentType ?? '';
         _stagesOfLife = _onboarding.stagesOfLife;
         _children = _onboarding.children;
@@ -6289,27 +6296,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _fallbackAvatar() {
-    // P5: initials circle — no Emma/John assets
-    final raw = _name.trim();
-    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    final initials = parts.length >= 2
-        ? '\${parts.first[0]}\${parts.last[0]}'.toUpperCase()
-        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+    // Show the Huddl illustrated character when no profile photo is set.
+    // Wrapped in a circular clip with a subtle border to maintain the avatar
+    // shape consistent with the photo state.
     return Container(
       width: 88,
       height: 88,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.background,
-        border: Border.all(color: HuddlColors.divider, width: 1.5),
+        color: HuddlColors.primary.withValues(alpha: 0.08),
+        border: Border.all(
+          color: HuddlColors.primary.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
       ),
-      child: Center(
-        child: Text(
-          initials,
-          style: GoogleFonts.poppins(
-              fontSize: 32,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark),
+      child: ClipOval(
+        child: HuddlCharacter(
+          mood: _parentType == 'dad' ? HuddlMood.waving : HuddlMood.waving,
+          size: 80,
         ),
       ),
     );

@@ -362,7 +362,12 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _name = _onboarding.name ?? 'there';
         _borough = borough;
-        _photoUrl = _onboarding.profilePhotoObjectUrl;
+        _photoUrl = (_onboarding.profilePhotoObjectUrl?.isNotEmpty == true)
+            ? _onboarding.profilePhotoObjectUrl
+            : (_onboarding.profilePhotoPath?.isNotEmpty == true &&
+                   _onboarding.profilePhotoPath!.startsWith('http'))
+                ? _onboarding.profilePhotoPath
+                : _onboarding.profilePhotoObjectUrl;
         _userGroups = groups;
         _announcements = _announcementService.boroughAnnouncements;
         _feedItems = _feedService.feedItems;

@@ -1123,11 +1123,19 @@ class FirebaseAuthService {
         onboarding.setBio(firestoreBio);
       }
 
-      // Photo URL
+      // Photo URL — restore both path and object URL from Firestore so the
+      // profile screen can display the photo on fresh installs / after logout.
       final firestorePhoto = (data['photoUrl'] as String?) ?? '';
-      if (firestorePhoto.isNotEmpty &&
-          (onboarding.profilePhotoPath == null || onboarding.profilePhotoPath!.isEmpty)) {
-        onboarding.setProfilePhotoObjectUrl(firestorePhoto);
+      if (firestorePhoto.isNotEmpty) {
+        // Always update profilePhotoPath (permanent HTTPS download URL)
+        if (onboarding.profilePhotoPath == null || onboarding.profilePhotoPath!.isEmpty) {
+          onboarding.setProfilePhotoPath(firestorePhoto);
+        }
+        // Also set profilePhotoObjectUrl so the profile screen can read it
+        // directly — it accepts both blob: URLs and https: Firebase Storage URLs.
+        if (onboarding.profilePhotoObjectUrl == null || onboarding.profilePhotoObjectUrl!.isEmpty) {
+          onboarding.setProfilePhotoObjectUrl(firestorePhoto);
+        }
       }
 
       // ── Restore subscription tier from Firestore ─────────────────────────

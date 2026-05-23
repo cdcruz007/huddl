@@ -73,6 +73,8 @@ class EventsScreenState extends State<EventsScreen>
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
+  int _groupCount = 0;   // my joined groups count — shown on Groups tab badge
+  int _eventCount = 0;   // user's upcoming events — shown on Events tab badge
   // Fires true to trigger search mode in the Groups tab.
   final ValueNotifier<bool> _groupSearchTrigger = ValueNotifier<bool>(false);
   // Fires true to reset/close search mode when leaving the Groups tab.
@@ -116,8 +118,19 @@ class EventsScreenState extends State<EventsScreen>
         _meetupService.restoreCustomImages();
         // Load meetups from Firestore (also seeds demo data when Firestore is empty)
         _meetupService.loadFromFirestore();
+        // Load group and event counts for tab badges
+        _loadTabCounts();
       }
     });
+  }
+
+  Future<void> _loadTabCounts() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+      final groups = await DefaultGroupService().getUserGroups(uid);
+      if (mounted) setState(() => _groupCount = groups.length);
+    } catch (_) {}
+    if (mounted) setState(() => _eventCount = _eventService.goingEvents.length);
   }
 
   @override
@@ -426,12 +439,22 @@ class EventsScreenState extends State<EventsScreen>
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
-                    tabs: const [
-                      Tab(text: 'Groups'),
-                      Tab(text: 'Meetups'),
-                      Tab(text: 'Events'),
-                      Tab(text: 'Services'),
-                      Tab(text: 'Insights'),
+                    tabs: [
+                      Tab(child: _TabLabel(
+                        text: 'Groups',
+                        count: _groupCount > 0 ? _groupCount : null,
+                      )),
+                      Tab(child: _TabLabel(
+                        text: 'Meetups',
+                        count: _meetupService.meetups.isNotEmpty
+                            ? _meetupService.meetups.length : null,
+                      )),
+                      Tab(child: _TabLabel(
+                        text: 'Events',
+                        count: _eventCount > 0 ? _eventCount : null,
+                      )),
+                      const Tab(text: 'Services'),
+                      const Tab(text: 'Insights'),
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
@@ -6027,4 +6050,41 @@ class _HistogramPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_HistogramPainter old) => old.currentKm != currentKm;
+}
+
+// ─── Tab label with optional count badge ─────────────────────────────────────
+class _TabLabel extends StatelessWidget {
+  final String text;
+  final int? count; // null = no badge shown
+
+  const _TabLabel({required this.text, this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count == null || count == 0) {
+      return Text(text);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text),
+        const SizedBox(width: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+          decoration: BoxDecoration(
+            color: HuddlColors.primary.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '$count',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: HuddlColors.primary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

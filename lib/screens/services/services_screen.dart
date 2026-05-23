@@ -344,6 +344,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   ServiceCategory? _selectedCategory;
   String _searchQuery = '';
   bool _isSearchActive = false;
+  bool _streamTimedOut = false;      // true once the 2-second timeout fires
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
 
@@ -353,6 +354,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
     widget.searchTrigger.addListener(_onSearchTrigger);
     widget.resetTrigger?.addListener(_onResetTrigger);
     _triggerAiRefreshIfDue();
+    // If Firestore stream hasn't emitted data within 2 seconds, fall back to
+    // seed listings immediately rather than showing an infinite spinner.
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted && !_streamTimedOut) {
+        setState(() => _streamTimedOut = true);
+      }
+    });
   }
 
   void _onResetTrigger() {
@@ -639,18 +647,21 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 stream: _service.listingsStream(category: _selectedCategory)
                     .handleError((_) => <ServiceListing>[]),
                 builder: (context, snap) {
+                  // Show spinner only for the first 2 seconds; after timeout
+                  // (or on error/null) we fall through to seed listings.
                   if (snap.connectionState == ConnectionState.waiting &&
-                      !snap.hasData) {
+                      !snap.hasData &&
+                      !_streamTimedOut) {
                     return const Center(
                         child: CircularProgressIndicator(
                             color: HuddlColors.textTertiary));
                   }
-                  // On error or empty Firestore result, fall back to rich seed data
-                  final all = (snap.hasError || snap.data == null)
+                  // On timeout, error, or empty Firestore result → seed data
+                  final all = (snap.hasError ||
+                              snap.data == null ||
+                              snap.data!.isEmpty)
                       ? _kCambridgeSeedListings
-                      : snap.data!.isEmpty
-                          ? _kCambridgeSeedListings
-                          : snap.data!;
+                      : snap.data!;
                   final filtered = _filter(all);
 
                   if (filtered.isEmpty) {
