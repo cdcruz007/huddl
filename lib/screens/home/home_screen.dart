@@ -1077,54 +1077,24 @@ class _HomeScreenState extends State<HomeScreen>
           onRefresh: _loadData,
           child: CustomScrollView(
             slivers: [
-              // ── App Bar ─────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Container(
-                  color: hc.surface,
-                  padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
-                  child: Row(
-                    children: [
-                      Semantics(
-                        label: 'Huddl home',
-                        child: _buildAdaptiveLogo(isDark),
-                      ),
-                      const Spacer(),
-                      // Notification bell
-                      Semantics(
-                        label: 'Notifications, $_notifBadgeCount new',
-                        button: true,
-                        child: HuddlBadge(
-                          count: _notifBadgeCount,
-                          child: IconButton(
-                            icon: const Icon(Icons.notifications_outlined),
-                            color: hc.textPrimary,
-                            onPressed: () {
-                              HuddlAnimations.lightTap();
-                              _openNotifications();
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                          ),
-                        ),
-                      ),
-                      // Profile avatar
-                      Semantics(
-                        label: 'Your profile',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: () { HuddlAnimations.lightTap(); _onAvatarTap(); },
-                          child: SizedBox(width: 40, height: 40,
-                              child: Center(child: _buildSmallAvatar())),
-                        ),
-                      ),
-                    ],
-                  ),
+              // ── Pinned App Bar + Feed Header + Filter Chips ─────────
+              // Using SliverAppBar with pinned:true so the header stays
+              // visible at all times as the feed scrolls beneath it.
+              SliverAppBar(
+                pinned: true,
+                floating: false,
+                snap: false,
+                backgroundColor: hc.surface,
+                surfaceTintColor: Colors.transparent,
+                shadowColor: hc.divider.withValues(alpha: 0.4),
+                elevation: 1,
+                toolbarHeight: 0,     // no default toolbar — we own all content
+                expandedHeight: 0,
+                flexibleSpace: const SizedBox.shrink(),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(148),
+                  child: _buildStickyHeader(hc, isDark),
                 ),
-              ),
-
-              // ── Feed header + filter chips ─────────────────────────
-              SliverToBoxAdapter(
-                child: _buildFeedFilterHeader(hc, isDark),
               ),
 
               // Search pill removed — filter chips in feed header handle discovery
@@ -1284,10 +1254,72 @@ class _HomeScreenState extends State<HomeScreen>
 
 
 
+  // ── Sticky header (app bar row + feed header + filter chips) ─────────────
+  // Rendered as the `bottom:` of SliverAppBar(pinned:true) so the entire
+  // block stays pinned while the feed content scrolls beneath it.
+  Widget _buildStickyHeader(dynamic hc, bool isDark) {
+    return Container(
+      color: hc.surface,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Logo row ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 12, 4),
+            child: Row(
+              children: [
+                Semantics(
+                  label: 'Huddl home',
+                  child: _buildAdaptiveLogo(isDark),
+                ),
+                const Spacer(),
+                // Notification bell
+                Semantics(
+                  label: 'Notifications, $_notifBadgeCount new',
+                  button: true,
+                  child: HuddlBadge(
+                    count: _notifBadgeCount,
+                    child: IconButton(
+                      icon: const Icon(Icons.notifications_outlined),
+                      color: hc.textPrimary,
+                      onPressed: () {
+                        HuddlAnimations.lightTap();
+                        _openNotifications();
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 40, minHeight: 40),
+                    ),
+                  ),
+                ),
+                // Profile avatar
+                Semantics(
+                  label: 'Your profile',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () {
+                      HuddlAnimations.lightTap();
+                      _onAvatarTap();
+                    },
+                    child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Center(child: _buildSmallAvatar())),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // ── "Your Feed" title + subtitle + tune icon ─────────────
+          _buildFeedFilterHeader(hc, isDark),
+        ],
+      ),
+    );
+  }
+
   // ── Feed filter header ────────────────────────────────────────────────────
-  // Sits immediately below the app bar. Shows the screen title "Your Feed"
-  // with the settings gear on the right, and a horizontally scrollable row of
-  // filter chips below it.
+  // Shows the screen title "Your Feed" with the settings gear on the right,
+  // and a horizontally scrollable row of filter chips below it.
   Widget _buildFeedFilterHeader(dynamic hc, bool isDark) {
     const filters = [
       ('all',         'All',          Icons.home_outlined),
