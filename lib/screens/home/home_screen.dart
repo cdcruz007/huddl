@@ -1173,35 +1173,24 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildTodayForYouCard(hc, isDark)!,
                 ),
 
-              // ── Groups carousel — 'all' only ──────────────────────
-              if (_activeFeedFilter == 'all' && _newPublicGroups.isNotEmpty) ...[
+              // ── Discover New Listings — unified carousel ──────────
+              // Groups + Meetups + Events + Market items, last 7 days
+              // (or since last login if < 7 days), newest → oldest
+              if (_activeFeedFilter == 'all' ||
+                  _activeFeedFilter == 'meetups' ||
+                  _activeFeedFilter == 'events') ...[
                 SliverToBoxAdapter(
                   child: _buildSectionHeader(
                     hc: hc,
-                    icon: Icons.people_outline,
-                    iconColor: HuddlColors.teal,
-                    title: 'Groups near you',
-                    subtitle: 'Join local parent groups',
-                    onSeeAll: () => _switchToTab(1),
-                  ),
-                ),
-                SliverToBoxAdapter(child: _buildGroupsCarousel(hc)),
-              ],
-
-              // ── Meetups carousel — 'all' | 'meetups' ─────────────
-              if ((_activeFeedFilter == 'all' || _activeFeedFilter == 'meetups') &&
-                  _upcomingMeetups.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: _buildSectionHeader(
-                    hc: hc,
-                    icon: Icons.place,
+                    icon: Icons.explore_outlined,
                     iconColor: HuddlColors.primary,
-                    title: 'Upcoming meetups',
-                    subtitle: 'In ${_borough.isNotEmpty ? _borough : 'your area'}',
+                    title: 'Discover New Listings',
+                    subtitle: 'New groups, meetups, events & items this week',
                     onSeeAll: () => _switchToTab(2),
                   ),
                 ),
-                SliverToBoxAdapter(child: _buildMeetupsCarousel(hc)),
+                SliverToBoxAdapter(
+                    child: _buildDiscoverNewListingsCarousel(hc, isDark)),
               ],
 
               // ── Smart feed items — filtered per tab ───────────────
@@ -2014,6 +2003,263 @@ class _HomeScreenState extends State<HomeScreen>
 
 
 
+  // ── Discover New Listings carousel ───────────────────────────────────────
+  // Merges Groups + Meetups + Events + Market items created in the last 7 days
+  // (or since last login if more recent). Sorted newest → oldest.
+  // Each card has a type pill badge so users know what they're tapping.
+  Widget _buildDiscoverNewListingsCarousel(dynamic hc, bool isDark) {
+    final now = DateTime.now();
+    final lastLogin = _feedService.lastLogin;
+    // Use whichever is more recent: last login or 7 days ago
+    final cutoff = lastLogin != null && now.difference(lastLogin).inDays < 7
+        ? lastLogin
+        : now.subtract(const Duration(days: 7));
+
+    // Build a unified list of _DiscoverItem wrappers
+    final items = <_DiscoverItem>[];
+
+    // Groups — use lastMessageTime as proxy; fallback to cutoff so they're included
+    for (final g in _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g))) {
+      items.add(_DiscoverItem(
+        type: _DiscoverType.group,
+        sortDate: g.lastMessageTime ?? cutoff.add(const Duration(seconds: 1)),
+        title: g.name,
+        subtitle: '${g.memberCount} member${g.memberCount == 1 ? '' : 's'} · ${g.category}',
+        imageUrl: g.imageUrl.isNotEmpty ? g.imageUrl : _groupMosaicImages(g)[0],
+        badge: g.isPrivate ? 'Members only' : null,
+        onTap: () { HuddlAnimations.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
+      ));
+    }
+
+    // Meetups — use createdAt; include if created within cutoff window
+    for (final m in _upcomingMeetups.where((m) => m.createdAt.isAfter(cutoff))) {
+      items.add(_DiscoverItem(
+        type: _DiscoverType.meetup,
+        sortDate: m.createdAt,
+        title: m.title,
+        subtitle: '${m.dateDisplay} · ${m.location.isNotEmpty ? m.location : m.category}',
+        imageUrl: m.imageUrl.isNotEmpty ? m.imageUrl : _meetupCategoryImage(m.category),
+        badge: m.isGoing ? 'Going ✓' : null,
+        onTap: () {
+          HuddlAnimations.selectionClick();
+          setState(() => _meetupTaps++);
+          Navigator.of(context).push(HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: m)));
+        },
+      ));
+    }
+
+    // Events — use dateTime as created proxy; include future events within cutoff
+    for (final e in _eventService.events.where((e) => e.dateTime.isAfter(cutoff))) {
+      final eMap = e.toMap();
+      items.add(_DiscoverItem(
+        type: _DiscoverType.event,
+        sortDate: e.dateTime,
+        title: e.title,
+        subtitle: '${e.dateDisplay} · ${e.location}',
+        imageUrl: e.imageUrl,
+        badge: _goingEvents.any((ge) => ge.id == e.id) ? 'Going ✓' : null,
+        onTap: () {
+          HuddlAnimations.selectionClick();
+          Navigator.of(context).push(HuddlSpringPageRoute(page: EventDetailScreen(event: eMap)));
+        },
+      ));
+    }
+
+    // Market items — use listedAt; include if listed within cutoff
+    for (final item in _rehomeService.allItems.where((i) => i.listedAt.isAfter(cutoff))) {
+      final priceStr = item.isFree
+          ? 'Free'
+          : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
+      items.add(_DiscoverItem(
+        type: _DiscoverType.sale,
+        sortDate: item.listedAt,
+        title: item.title,
+        subtitle: '$priceStr · ${item.condition.label}',
+        imageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+        badge: item.isFree ? 'Free' : null,
+        onTap: () {
+          HuddlAnimations.selectionClick();
+          setState(() => _marketTaps++);
+          Navigator.of(context).push(HuddlSpringPageRoute(page: ItemDetailScreen(item: item)));
+        },
+      ));
+    }
+
+    // Sort newest → oldest
+    items.sort((a, b) => b.sortDate.compareTo(a.sortDate));
+
+    if (items.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No new listings this week', Icons.explore_outlined);
+    }
+
+    return SizedBox(
+      height: 230,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return _buildDiscoverCard(item, hc, isDark);
+        },
+      ),
+    );
+  }
+
+  /// A single unified Discover card — image hero + type pill + title + subtitle.
+  Widget _buildDiscoverCard(_DiscoverItem item, dynamic hc, bool isDark) {
+    // Type pill colour + label
+    final (pillLabel, pillColor) = switch (item.type) {
+      _DiscoverType.group   => ('GROUP',   HuddlColors.teal),
+      _DiscoverType.meetup  => ('MEETUP',  HuddlColors.primary),
+      _DiscoverType.event   => ('EVENT',   HuddlColors.accentAmber),
+      _DiscoverType.sale    => ('FOR SALE',HuddlColors.success),
+    };
+
+    // Image widget — network, fallback icon
+    Widget imageWidget;
+    if (item.imageUrl.isNotEmpty) {
+      imageWidget = Image.network(
+        item.imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => _discoverImageFallback(item.type, hc),
+      );
+    } else {
+      imageWidget = _discoverImageFallback(item.type, hc);
+    }
+
+    return GestureDetector(
+      onTap: item.onTap,
+      child: Container(
+        width: 190,
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark
+              ? null
+              : [BoxShadow(color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 12, offset: const Offset(0, 3))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Hero image with type pill ─────────────────────────
+            SizedBox(
+              height: 120,
+              width: 190,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  imageWidget,
+                  // Subtle bottom gradient
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0x44000000)],
+                        stops: [0.5, 1.0],
+                      ),
+                    ),
+                  ),
+                  // Type pill — top-left
+                  Positioned(
+                    top: 8, left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: pillColor,
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            blurRadius: 4)],
+                      ),
+                      child: Text(
+                        pillLabel,
+                        style: GoogleFonts.poppins(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.4),
+                      ),
+                    ),
+                  ),
+                  // Optional badge — top-right (Going / Free / Members only)
+                  if (item.badge != null)
+                    Positioned(
+                      top: 8, right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item.badge!,
+                          style: GoogleFonts.poppins(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // ── Card body ─────────────────────────────────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: hc.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      item.subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: hc.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _discoverImageFallback(_DiscoverType type, dynamic hc) {
+    final (icon, color) = switch (type) {
+      _DiscoverType.group  => (Icons.people_outline,     HuddlColors.teal),
+      _DiscoverType.meetup => (Icons.place_outlined,     HuddlColors.primary),
+      _DiscoverType.event  => (Icons.event_outlined,     HuddlColors.accentAmber),
+      _DiscoverType.sale   => (Icons.storefront_outlined,HuddlColors.success),
+    };
+    return Container(
+      color: color.withValues(alpha: 0.08),
+      child: Center(child: Icon(icon, size: 36, color: color.withValues(alpha: 0.5))),
+    );
+  }
+
   // ── Groups carousel ───────────────────────────────────────────────────────
   // ── UX-02: Groups carousel — HuddlMosaicPhotoCard (Airbnb experiences style)
   //
@@ -2021,6 +2267,7 @@ class _HomeScreenState extends State<HomeScreen>
   // pairing the group's own photo with 3 category-matched Pexels stock images.
   // This gives the Airbnb "experience collage" feel without requiring the data
   // model to be changed.
+  // ignore: unused_element
   Widget _buildGroupsCarousel(dynamic hc) {
     final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
     if (groups.isEmpty) {
@@ -2148,6 +2395,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── UX-02: Meetups carousel — HuddlSinglePhotoCard ───────────────────────
+  // ignore: unused_element
   Widget _buildMeetupsCarousel(dynamic hc) {
     final meetups = _upcomingMeetups.take(8).toList();
     if (meetups.isEmpty) {
@@ -4975,6 +5223,29 @@ enum _SmartFeedType {
   announcement,
   group,
   communityActivity,
+}
+
+// ── Discover New Listings types ───────────────────────────────────────────
+enum _DiscoverType { group, meetup, event, sale }
+
+class _DiscoverItem {
+  final _DiscoverType type;
+  final DateTime sortDate;
+  final String title;
+  final String subtitle;
+  final String imageUrl;
+  final String? badge;
+  final VoidCallback onTap;
+
+  const _DiscoverItem({
+    required this.type,
+    required this.sortDate,
+    required this.title,
+    required this.subtitle,
+    required this.imageUrl,
+    this.badge,
+    required this.onTap,
+  });
 }
 
 class _SmartFeedItem {
