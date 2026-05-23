@@ -1164,23 +1164,26 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
 
-              // ── Upcoming Meetups & Events carousel ────────────────
-              // Merges meetups + events sorted by soonest dateTime first
-              if (_activeFeedFilter == 'all' ||
-                  _activeFeedFilter == 'meetups' ||
-                  _activeFeedFilter == 'events') ...[
+              // ── "Don't Forget" — confirmed-attending items ────────
+              // Only shows when the user has RSVP'd / confirmed attendance.
+              // Pulls from: meetups where isGoing==true + _goingEvents.
+              // Sorted soonest first. Hidden entirely when nothing confirmed.
+              if ((_activeFeedFilter == 'all' ||
+                      _activeFeedFilter == 'meetups' ||
+                      _activeFeedFilter == 'events') &&
+                  _hasDontForgetItems) ...[
                 SliverToBoxAdapter(
                   child: _buildSectionHeader(
                     hc: hc,
-                    icon: Icons.event_available_outlined,
+                    icon: Icons.notifications_active_outlined,
                     iconColor: HuddlColors.accentAmber,
-                    title: 'Upcoming Meetups & Events',
-                    subtitle: 'In ${_borough.isNotEmpty ? _borough : 'your area'} — soonest first',
+                    title: "Don't Forget",
+                    subtitle: 'Your confirmed upcoming meetups & events',
                     onSeeAll: () => _switchToTab(2),
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: _buildUpcomingMeetupsEventsCarousel(hc, isDark),
+                  child: _buildDontForgetCarousel(hc, isDark),
                 ),
               ],
 
@@ -2014,32 +2017,34 @@ class _HomeScreenState extends State<HomeScreen>
 
 
 
-  // ── Upcoming Meetups & Events carousel ───────────────────────────────────
-  // Merges _upcomingMeetups + _eventService.events, sorted soonest → latest.
-  // Each card has a MEETUP / EVENT type pill and taps to the detail screen.
-  Widget _buildUpcomingMeetupsEventsCarousel(dynamic hc, bool isDark) {
+  // ── "Don't Forget" carousel ──────────────────────────────────────────────
+  // Shows only confirmed-attending items (isGoing meetups + goingEvents).
+  // Sorted soonest first. Each card shows a countdown "in X days" chip.
+  Widget _buildDontForgetCarousel(dynamic hc, bool isDark) {
     final now = DateTime.now();
-
-    // Build unified list — only future items
     final items = <_DiscoverItem>[];
 
-    for (final m in _upcomingMeetups.where((m) => m.dateTime.isAfter(now))) {
+    // Going meetups — isGoing == true and still in the future
+    for (final m in _upcomingMeetups
+        .where((m) => m.isGoing && m.dateTime.isAfter(now))) {
       items.add(_DiscoverItem(
         type: _DiscoverType.meetup,
         sortDate: m.dateTime,
         title: m.title,
         subtitle: '${m.dateDisplay} · ${m.location.isNotEmpty ? m.location : m.category}',
         imageUrl: m.imageUrl.isNotEmpty ? m.imageUrl : _meetupCategoryImage(m.category),
-        badge: m.isGoing ? 'Going ✓' : null,
+        badge: _daysAwayLabel(m.dateTime),
         onTap: () {
           HuddlAnimations.selectionClick();
           setState(() => _meetupTaps++);
-          Navigator.of(context).push(HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: m)));
+          Navigator.of(context)
+              .push(HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: m)));
         },
       ));
     }
 
-    for (final e in _eventService.events.where((e) => e.dateTime.isAfter(now))) {
+    // Going events — in _goingEvents and still in the future
+    for (final e in _goingEvents.where((e) => e.dateTime.isAfter(now))) {
       final eMap = e.toMap();
       items.add(_DiscoverItem(
         type: _DiscoverType.event,
@@ -2047,10 +2052,11 @@ class _HomeScreenState extends State<HomeScreen>
         title: e.title,
         subtitle: '${e.dateDisplay} · ${e.location.isNotEmpty ? e.location : e.category}',
         imageUrl: e.imageUrl,
-        badge: _goingEvents.any((ge) => ge.id == e.id) ? 'Going ✓' : null,
+        badge: _daysAwayLabel(e.dateTime),
         onTap: () {
           HuddlAnimations.selectionClick();
-          Navigator.of(context).push(HuddlSpringPageRoute(page: EventDetailScreen(event: eMap)));
+          Navigator.of(context)
+              .push(HuddlSpringPageRoute(page: EventDetailScreen(event: eMap)));
         },
       ));
     }
@@ -2058,11 +2064,9 @@ class _HomeScreenState extends State<HomeScreen>
     // Sort soonest first
     items.sort((a, b) => a.sortDate.compareTo(b.sortDate));
 
-    // Cap at 12 so the carousel doesn't become overwhelming
-    final visible = items.take(12).toList();
-
-    if (visible.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No upcoming meetups or events', Icons.event_available_outlined);
+    if (items.isEmpty) {
+      return _buildCarouselEmpty(
+          hc, 'No confirmed events yet — RSVP to see them here', Icons.event_available_outlined);
     }
 
     return SizedBox(
@@ -2070,12 +2074,187 @@ class _HomeScreenState extends State<HomeScreen>
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: visible.length,
+        itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) => _buildDiscoverCard(visible[index], hc, isDark),
+        itemBuilder: (context, index) =>
+            _buildDontForgetCard(items[index], hc, isDark),
       ),
     );
   }
+
+  /// Returns "Today", "Tomorrow", or "in N days" countdown label.
+  String _daysAwayLabel(DateTime dt) {
+    final now = DateTime.now();
+    final diff = dt.difference(DateTime(now.year, now.month, now.day)).inDays;
+    if (diff == 0) return 'Today!';
+    if (diff == 1) return 'Tomorrow';
+    return 'In $diff days';
+  }
+
+  /// True when the user has at least one confirmed upcoming attendance.
+  bool get _hasDontForgetItems {
+    final now = DateTime.now();
+    return _upcomingMeetups.any((m) => m.isGoing && m.dateTime.isAfter(now)) ||
+        _goingEvents.any((e) => e.dateTime.isAfter(now));
+  }
+
+  /// Specialised "Don't Forget" card — identical hero/body to _buildDiscoverCard
+  /// but renders the countdown badge prominently in amber + a "Going ✓" strip.
+  Widget _buildDontForgetCard(_DiscoverItem item, dynamic hc, bool isDark) {
+    final (pillLabel, pillColor) = switch (item.type) {
+      _DiscoverType.meetup  => ('MEETUP', HuddlColors.primary),
+      _DiscoverType.event   => ('EVENT',  HuddlColors.accentAmber),
+      _DiscoverType.group   => ('GROUP',  HuddlColors.teal),
+      _DiscoverType.sale    => ('SALE',   HuddlColors.success),
+    };
+
+    Widget imageWidget = item.imageUrl.isNotEmpty
+        ? Image.network(item.imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => _discoverImageFallback(item.type, hc))
+        : _discoverImageFallback(item.type, hc);
+
+    return GestureDetector(
+      onTap: item.onTap,
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: HuddlColors.accentAmber.withValues(alpha: 0.35), width: 1.5),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                      color: HuddlColors.accentAmber.withValues(alpha: 0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 3)),
+                ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Hero image ──────────────────────────────────────────
+            SizedBox(
+              height: 115,
+              width: 200,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  imageWidget,
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0x55000000)],
+                        stops: [0.45, 1.0],
+                      ),
+                    ),
+                  ),
+                  // Type pill — top-left
+                  Positioned(
+                    top: 8, left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: pillColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(pillLabel,
+                          style: GoogleFonts.poppins(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.4)),
+                    ),
+                  ),
+                  // Countdown badge — top-right, amber
+                  if (item.badge != null)
+                    Positioned(
+                      top: 8, right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.accentAmber,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(item.badge!,
+                            style: GoogleFonts.poppins(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // ── Going confirmation strip ─────────────────────────────
+            Container(
+              width: double.infinity,
+              color: HuddlColors.accentAmber.withValues(alpha: isDark ? 0.18 : 0.08),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle,
+                      size: 11,
+                      color: HuddlColors.accentAmber),
+                  const SizedBox(width: 4),
+                  Text(
+                    "You're going!",
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.accentAmber,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ── Card body ────────────────────────────────────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: hc.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      item.subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: hc.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildUpcomingMeetupsEventsCarousel(dynamic hc, bool isDark) =>
+      _buildDontForgetCarousel(hc, isDark);
 
   // ── Discover New Listings carousel ───────────────────────────────────────
   // Merges Groups + Meetups + Events + Market items created in the last 7 days
