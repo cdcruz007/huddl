@@ -2102,7 +2102,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     return SizedBox(
-      height: 230,
+      height: 252,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2210,16 +2210,26 @@ class _HomeScreenState extends State<HomeScreen>
                     Positioned(
                       top: 8, right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: HuddlColors.accentAmber,
-                          borderRadius: BorderRadius.circular(6),
+                          color: item.badge == 'Today!'
+                              ? Colors.redAccent
+                              : HuddlColors.accentAmber,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                         ),
                         child: Text(item.badge!,
                             style: GoogleFonts.poppins(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white)),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.2)),
                       ),
                     ),
                 ],
@@ -2250,11 +2260,11 @@ class _HomeScreenState extends State<HomeScreen>
             // ── Card body ────────────────────────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+                padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Title
                     Text(
                       item.title,
                       style: GoogleFonts.poppins(
@@ -2265,15 +2275,60 @@ class _HomeScreenState extends State<HomeScreen>
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 3),
+                    // Date / location subtitle
                     Text(
                       item.subtitle,
                       style: GoogleFonts.poppins(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: hc.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const Spacer(),
+                    // ── Prominent countdown row ──────────────────────
+                    if (item.badge != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: item.badge == 'Today!'
+                              ? Colors.redAccent.withValues(alpha: isDark ? 0.25 : 0.10)
+                              : HuddlColors.accentAmber.withValues(
+                                  alpha: isDark ? 0.22 : 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: item.badge == 'Today!'
+                                ? Colors.redAccent.withValues(alpha: 0.45)
+                                : HuddlColors.accentAmber.withValues(alpha: 0.40),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 13,
+                              color: item.badge == 'Today!'
+                                  ? Colors.redAccent
+                                  : HuddlColors.accentAmber,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              item.badge!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: item.badge == 'Today!'
+                                    ? Colors.redAccent
+                                    : HuddlColors.accentAmber,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
