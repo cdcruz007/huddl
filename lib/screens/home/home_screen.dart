@@ -140,7 +140,8 @@ class _HomeScreenState extends State<HomeScreen>
 
 
   // ── Feed filter chip — 'all' | 'meetups' | 'events' | 'noticeboard' | 'tips'
-  String _activeFeedFilter = 'all';
+  // Filter chips removed — feed always shows all content.
+  final String _activeFeedFilter = 'all';
 
   // ── Adaptive: track which sections user interacts with ────────────────────
   int _meetupTaps = 0;
@@ -1068,7 +1069,7 @@ class _HomeScreenState extends State<HomeScreen>
                 expandedHeight: 0,
                 flexibleSpace: const SizedBox.shrink(),
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(148),
+                  preferredSize: const Size.fromHeight(100),
                   child: _buildStickyHeader(hc, isDark),
                 ),
               ),
@@ -1296,136 +1297,60 @@ class _HomeScreenState extends State<HomeScreen>
   // Shows the screen title "Your Feed" with the settings gear on the right,
   // and a horizontally scrollable row of filter chips below it.
   Widget _buildFeedFilterHeader(dynamic hc, bool isDark) {
-    const filters = [
-      ('all',         'All',          Icons.home_outlined),
-      ('meetups',     'Meetups',      Icons.place_outlined),
-      ('events',      'Events',       Icons.event_outlined),
-      ('noticeboard', 'Noticeboard',  Icons.campaign_outlined),
-      ('tips',        'Tips & Nudges',Icons.lightbulb_outline),
-    ];
-
+    // Filter chips removed — all content is shown at once.
     return Container(
       color: hc.surface,
       padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title + subtitle row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 12, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your Feed',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: hc.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'RSVP to events & meetups to see personalised updates',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: hc.textTertiary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Tooltip(
-                  message: 'Customise your feed',
-                  child: GestureDetector(
-                    onTap: () {
-                      HuddlAnimations.lightTap();
-                      _showFeedPreferences();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: hc.surfaceAlt,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.tune_rounded,
-                          size: 18, color: hc.textSecondary),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 12, 0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your Feed',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: hc.textPrimary,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Scrollable filter chips
-          SizedBox(
-            height: 34,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: filters.map((f) {
-                final key = f.$1;
-                final label = f.$2;
-                final icon = f.$3;
-                final isActive = _activeFeedFilter == key;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      HuddlAnimations.lightTap();
-                      setState(() => _activeFeedFilter = key);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? HuddlColors.primary
-                            : hc.surfaceAlt,
-                        borderRadius: BorderRadius.circular(20),
-                        border: isActive
-                            ? null
-                            : Border.all(color: hc.divider),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            icon,
-                            size: 13,
-                            color: isActive
-                                ? Colors.white
-                                : hc.textSecondary,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            label,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                              color: isActive
-                                  ? Colors.white
-                                  : hc.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'RSVP to events & meetups to see personalised updates',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: hc.textTertiary,
+                      height: 1.35,
                     ),
                   ),
-                );
-              }).toList(),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Customise your feed',
+              child: GestureDetector(
+                onTap: () {
+                  HuddlAnimations.lightTap();
+                  _showFeedPreferences();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: hc.surfaceAlt,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.tune_rounded,
+                      size: 18, color: hc.textSecondary),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
