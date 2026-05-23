@@ -539,7 +539,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // Filters
   AgeStage? _selectedAge;
-  ItemCategory? _selectedCategory;
+  Set<ItemCategory> _selectedCategories = {}; // multi-select
   PriceType? _selectedPriceType;
   ItemCondition? _selectedCondition;
   String _searchQuery = '';
@@ -698,7 +698,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   List<RehomeItem> get _filteredItems {
     final raw = _service.filter(
       ageStage: _selectedAge,
-      category: _selectedCategory,
+      categories: _selectedCategories.isEmpty ? null : _selectedCategories,
       condition: _selectedCondition,
       priceType: _selectedPriceType,
       query: _searchQuery,
@@ -728,7 +728,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   bool get _hasActiveFilters =>
       _selectedAge != null ||
-      _selectedCategory != null ||
+      _selectedCategories.isNotEmpty ||
       _selectedPriceType != null ||
       _selectedCondition != null;
 
@@ -736,7 +736,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     HuddlAnimations.lightTap();
     setState(() {
       _selectedAge = null;
-      _selectedCategory = null;
+      _selectedCategories = {};
       _selectedPriceType = null;
       _selectedCondition = null;
       _searchQuery = '';
@@ -747,7 +747,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   int get _activeFilterCount {
     int n = 0;
     if (_selectedAge != null) n++;
-    if (_selectedCategory != null) n++;
+    n += _selectedCategories.length;
     if (_selectedPriceType != null) n++;
     if (_selectedCondition != null) n++;
     return n;
@@ -756,7 +756,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   /// Short label shown inside the filter pill when exactly one filter is active.
   String get _activeFilterLabel {
     if (_selectedAge != null) return _selectedAge!.shortLabel;
-    if (_selectedCategory != null) return _selectedCategory!.label;
+    if (_selectedCategories.length == 1) return _selectedCategories.first.label;
+    if (_selectedCategories.length > 1) return '${_selectedCategories.length} categories';
     if (_selectedPriceType == PriceType.free) return 'Free';
     if (_selectedPriceType == PriceType.paid) return 'Paid';
     if (_selectedCondition != null) return _selectedCondition!.label;
@@ -767,7 +768,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     HuddlAnimations.selectionClick();
 
     AgeStage? sheetAge = _selectedAge;
-    ItemCategory? sheetCat = _selectedCategory;
+    Set<ItemCategory> sheetCats = Set<ItemCategory>.from(_selectedCategories);
     PriceType? sheetPrice = _selectedPriceType;
     ItemCondition? sheetCond = _selectedCondition;
     RangeValues sheetPriceRange = const RangeValues(0, 500);
@@ -790,7 +791,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         builder: (ctx, setSheetState) {
           final shc = ctx.hc;
           final hasAny = sheetAge != null ||
-              sheetCat != null ||
+              sheetCats.isNotEmpty ||
               sheetPrice != null ||
               sheetCond != null ||
               sheetSortIndex != 0;
@@ -831,12 +832,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               GestureDetector(
                                 onTap: () {
                                   setSheetState(() {
-                                    sheetAge = null; sheetCat = null;
+                                    sheetAge = null; sheetCats = {};
                                     sheetPrice = null; sheetCond = null;
                                     sheetSortIndex = 0;
                                   });
                                   setState(() {
-                                    _selectedAge = null; _selectedCategory = null;
+                                    _selectedAge = null; _selectedCategories = {};
                                     _selectedPriceType = null; _selectedCondition = null;
                                     _sortIndex = 0;
                                   });
@@ -1051,34 +1052,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         ),
                         const SizedBox(height: 4),
 
-                        // ══ SECTION: Category ════════════════════════════
-                        Text('Category',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: shc.textSecondary)),
-                        const SizedBox(height: 8),
-                        _AirbnbChip(
-                          label: 'All',
-                          isSelected: sheetCat == null,
-                          onTap: () {
-                            HuddlAnimations.selectionClick();
-                            setSheetState(() => sheetCat = null);
-                            setState(() => _selectedCategory = null);
-                          },
-                        ),
-                        ...ItemCategory.values.map((cat) => Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: _AirbnbChip(
-                            label: cat.label,
-                            isSelected: sheetCat == cat,
-                            onTap: () {
-                              HuddlAnimations.selectionClick();
-                              final next = sheetCat == cat ? null : cat;
-                              setSheetState(() => sheetCat = next);
-                              setState(() => _selectedCategory = next);
-                            },
-                          ),
-                        )),
                         // ══ SECTION: Sort by ════════════════════════════
                         Text('Sort by',
                           style: GoogleFonts.poppins(
@@ -1139,6 +1112,64 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             ),
                           );
                         }),
+                        const SizedBox(height: 28),
+
+                        // ══ SECTION: Category (multi-select) ════════════
+                        Row(
+                          children: [
+                            Text('Category',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13, fontWeight: FontWeight.w600,
+                                color: shc.textSecondary)),
+                            const Spacer(),
+                            if (sheetCats.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.selectionClick();
+                                  setSheetState(() => sheetCats = {});
+                                  setState(() => _selectedCategories = {});
+                                },
+                                child: Text('Clear',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: HuddlColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: HuddlColors.primary,
+                                  )),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // "All categories" deselect row
+                        _MultiSelectChip(
+                          label: 'All categories',
+                          isSelected: sheetCats.isEmpty,
+                          onTap: () {
+                            HuddlAnimations.selectionClick();
+                            setSheetState(() => sheetCats = {});
+                            setState(() => _selectedCategories = {});
+                          },
+                        ),
+                        ...ItemCategory.values.map((cat) => Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: _MultiSelectChip(
+                            label: cat.label,
+                            isSelected: sheetCats.contains(cat),
+                            onTap: () {
+                              HuddlAnimations.selectionClick();
+                              setSheetState(() {
+                                if (sheetCats.contains(cat)) {
+                                  sheetCats = Set.from(sheetCats)..remove(cat);
+                                } else {
+                                  sheetCats = Set.from(sheetCats)..add(cat);
+                                }
+                              });
+                              setState(() =>
+                                  _selectedCategories = Set.from(sheetCats));
+                            },
+                          ),
+                        )),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -5236,6 +5267,78 @@ class _AirbnbChip extends StatelessWidget {
                   border: Border.all(color: HuddlColors.divider, width: 1.5),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _MultiSelectChip ─────────────────────────────────────────────────────────
+// Same visual style as _AirbnbChip but uses a square checkbox tick instead of
+// a radio dot — signals multi-select semantics to the user.
+class _MultiSelectChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MultiSelectChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? HuddlColors.primary.withValues(alpha: 0.07)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? HuddlColors.primary.withValues(alpha: 0.5)
+                : HuddlColors.divider,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? HuddlColors.primary : hc.textPrimary,
+                ),
+              ),
+            ),
+            // Square checkbox — visually distinct from radio-style _AirbnbChip
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: isSelected ? HuddlColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(
+                  color: isSelected ? HuddlColors.primary : HuddlColors.divider,
+                  width: isSelected ? 0 : 1.5,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check_rounded,
+                      size: 14, color: Colors.white)
+                  : null,
+            ),
           ],
         ),
       ),

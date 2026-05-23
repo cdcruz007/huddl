@@ -477,7 +477,7 @@ class RehomeService extends ChangeNotifier {
   /// the additional category/condition/price/query filters on top.
   List<RehomeItem> filter({
     AgeStage? ageStage,
-    ItemCategory? category,
+    Set<ItemCategory>? categories,
     ItemCondition? condition,
     PriceType? priceType,
     String? query,
@@ -492,7 +492,7 @@ class RehomeService extends ChangeNotifier {
           item.ageStage != AgeStage.allAges) {
         return false;
       }
-      if (category != null && item.category != category) return false;
+      if (categories != null && categories.isNotEmpty && !categories.contains(item.category)) return false;
       if (condition != null && item.condition != condition) return false;
       if (priceType == PriceType.free && !item.isFree) return false;
       if (priceType == PriceType.paid && item.isFree) return false;
