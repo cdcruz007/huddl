@@ -69,6 +69,14 @@ class EventsScreenState extends State<EventsScreen>
   void resetServicesSearch() {
     _serviceResetTrigger.value = true;
   }
+
+  /// Jump directly to a specific sub-tab inside the Discover screen.
+  /// 0=Groups, 1=Meetups, 2=Events, 3=Services
+  void switchToSubTab(int subIndex) {
+    if (!mounted) return;
+    _tabController.animateTo(subIndex);
+    setState(() => _selectedTab = subIndex);
+  }
   late TabController _tabController;
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
   final MeetupService _meetupService = MeetupService();

@@ -635,6 +635,15 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  /// Switch to the Discover tab and jump directly to a sub-tab.
+  /// subIndex: 0=Groups, 1=Meetups, 2=Events, 3=Services
+  void _switchToDiscover(int subIndex) {
+    final shellState = MainShell.shellKey.currentState;
+    if (shellState != null) {
+      shellState.switchDiscoverTab(subIndex);
+    }
+  }
+
   Future<void> _toggleLike(String id) async {
     await _announcementService.toggleLike(id);
     setState(() {
@@ -1775,7 +1784,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.place_rounded,
         color: HuddlColors.primary,      // warm orange
         label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
-        onTap: () => _switchToTab(2),
+        onTap: () => _switchToDiscover(1), // Meetups sub-tab
       ));
     }
     if (newEvents > 0) {
@@ -1783,7 +1792,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.event_rounded,
         color: HuddlColors.accentAmber,  // amber — events
         label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
-        onTap: () => _switchToTab(2),
+        onTap: () => _switchToDiscover(2), // Events sub-tab
       ));
     }
     if (newGroupCount > 0) {
@@ -1791,7 +1800,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.people_rounded,
         color: HuddlColors.primary,      // warm orange
         label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
-        onTap: () => _switchToTab(2),
+        onTap: () => _switchToDiscover(0), // Groups sub-tab
       ));
     }
     if (newMarket > 0) {
