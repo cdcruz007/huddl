@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
-import '../../widgets/common/huddl_search_bar.dart';
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
@@ -1128,28 +1127,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: _buildFeedFilterHeader(hc, isDark),
               ),
 
-              // ── UX-01/05: Search pill — Airbnb-style home entry ────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: HuddlSearchPill(
-                    borough: _borough.isNotEmpty ? _borough : 'your area',
-                    onTap: () {
-                      HuddlAnimations.lightTap();
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => HuddlSearchExpanded(
-                          initialQuery: '',
-                          onSubmit: (q) => Navigator.pop(context),
-                          onClose: () => Navigator.pop(context),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+              // Search pill removed — filter chips in feed header handle discovery
 
               // ── Compact greeting row — hidden when filtered ──────────
               if (_activeFeedFilter == 'all')
@@ -1229,18 +1207,6 @@ class _HomeScreenState extends State<HomeScreen>
               // ── Smart feed items — filtered per tab ───────────────
               // UX-03: Spring physics on feed cards
               if (_activeFeedFilter != 'noticeboard') ...[
-                if (_filteredSmartFeed(hc, isDark).isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        _activeFeedFilter == 'all'
-                            ? 'RSVP to events & meetups to see personalised updates here'
-                            : 'No $_activeFeedFilter updates yet — check back soon.',
-                        style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary),
-                      ),
-                    ),
-                  ),
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -1334,20 +1300,37 @@ class _HomeScreenState extends State<HomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row
+          // Title + subtitle row
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 12, 0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Your Feed',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: hc.textPrimary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your Feed',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'RSVP to events & meetups to see personalised updates',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: hc.textTertiary,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Tooltip(
                   message: 'Customise your feed',
                   child: GestureDetector(
@@ -1369,7 +1352,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           // Scrollable filter chips
           SizedBox(
             height: 34,
