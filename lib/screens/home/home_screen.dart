@@ -1135,13 +1135,12 @@ class _HomeScreenState extends State<HomeScreen>
               ],
 
               // ── "Don't Forget" — confirmed-attending items ────────
-              // Only shows when the user has RSVP'd / confirmed attendance.
+              // Always shown (with an empty state CTA when no RSVPs yet).
               // Pulls from: meetups where isGoing==true + _goingEvents.
-              // Sorted soonest first. Hidden entirely when nothing confirmed.
-              if ((_activeFeedFilter == 'all' ||
-                      _activeFeedFilter == 'meetups' ||
-                      _activeFeedFilter == 'events') &&
-                  _hasDontForgetItems) ...[
+              // Sorted soonest first.
+              if (_activeFeedFilter == 'all' ||
+                  _activeFeedFilter == 'meetups' ||
+                  _activeFeedFilter == 'events') ...[
                 SliverToBoxAdapter(
                   child: _buildSectionHeader(
                     hc: hc,
@@ -2097,8 +2096,7 @@ class _HomeScreenState extends State<HomeScreen>
     items.sort((a, b) => a.sortDate.compareTo(b.sortDate));
 
     if (items.isEmpty) {
-      return _buildCarouselEmpty(
-          hc, 'No confirmed events yet — RSVP to see them here', Icons.event_available_outlined);
+      return _buildDontForgetEmptyState(hc, isDark);
     }
 
     return SizedBox(
@@ -2123,11 +2121,103 @@ class _HomeScreenState extends State<HomeScreen>
     return 'In $diff days';
   }
 
-  /// True when the user has at least one confirmed upcoming attendance.
-  bool get _hasDontForgetItems {
-    final now = DateTime.now();
-    return _upcomingMeetups.any((m) => m.isGoing && m.dateTime.isAfter(now)) ||
-        _goingEvents.any((e) => e.dateTime.isAfter(now));
+  /// Empty state shown in the "Don't Forget" section when the user has no RSVPs.
+  /// Amber-tinted, with a dashed border and a CTA that navigates to Connect tab.
+  Widget _buildDontForgetEmptyState(dynamic hc, bool isDark) {
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      decoration: BoxDecoration(
+        color: HuddlColors.accentAmber.withValues(alpha: isDark ? 0.10 : 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: HuddlColors.accentAmber.withValues(alpha: 0.40),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Left amber accent bar
+          Container(
+            width: 5,
+            decoration: BoxDecoration(
+              color: HuddlColors.accentAmber,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Bell icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: HuddlColors.accentAmber.withValues(alpha: isDark ? 0.20 : 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.notifications_active_outlined,
+              size: 20,
+              color: HuddlColors.accentAmber,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Text + CTA
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Nothing confirmed yet",
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: hc.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  "RSVP to a meetup or event and it'll appear here with a countdown.",
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: hc.textSecondary,
+                    height: 1.35,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () {
+                    HuddlAnimations.lightTap();
+                    _switchToTab(2); // Discover tab
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.accentAmber,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Browse events →',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+    );
   }
 
   /// Specialised "Don't Forget" card — identical hero/body to _buildDiscoverCard
