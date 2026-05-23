@@ -1171,16 +1171,16 @@ class _HomeScreenState extends State<HomeScreen>
                 child: _buildNoticeboardComposer(hc, isDark),
               ),
 
+              // ── §4 Noticeboard — sits directly below composer ─────
+              SliverToBoxAdapter(
+                child: _buildNoticeboardSection(hc, isDark),
+              ),
+
               // ── §3 Today for you — single curated card ────────────
               if (_buildTodayForYouCard(hc, isDark) != null)
                 SliverToBoxAdapter(
                   child: _buildTodayForYouCard(hc, isDark)!,
                 ),
-
-              // ── §4 Noticeboard ────────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildNoticeboardSection(hc, isDark),
-              ),
 
               // ── Groups carousel ───────────────────────────────────
               if (_newPublicGroups.isNotEmpty) ...
@@ -4565,34 +4565,19 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _avatarFallback(double size) {
-    // Generate initials from the user's name
-    final raw = _name.trim();
-    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    final initials = parts.length >= 2
-        ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
-        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
-
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.divider,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
         border: Border.all(
-          color: HuddlColors.divider,
+          color: HuddlColors.primary.withValues(alpha: 0.25),
           width: 1.5,
         ),
       ),
-      child: Center(
-        child: Text(
-          initials,
-          style: GoogleFonts.poppins(
-            fontSize: size * 0.36,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.textSecondary,
-            height: 1.0,
-          ),
-        ),
+      child: ClipOval(
+        child: HuddlCharacter(mood: HuddlMood.waving, size: size * 0.95),
       ),
     );
   }
