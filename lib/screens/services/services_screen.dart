@@ -437,8 +437,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
             l.tags.any((t) => t.toLowerCase().contains(q));
       }).toList();
     }
-    // Change 10b: Partner listings (priorityScore > 0) sorted to top of results
-    result.sort((a, b) => b.priorityScore.compareTo(a.priorityScore));
+    // Partner listings sorted first, then by endorsementCount
+    result.sort((a, b) {
+      if (a.isPartnerListing != b.isPartnerListing) {
+        return a.isPartnerListing ? -1 : 1;
+      }
+      return b.endorsementCount.compareTo(a.endorsementCount);
+    });
     return result;
   }
 
@@ -1174,11 +1179,11 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
             ),
             const SizedBox(width: 8),
             // ── Book Now pill — only on Partner listings with a booking URL ─
-            if (listing.bookingUrl != null && listing.bookingUrl!.isNotEmpty) ...[  
+            if (listing.externalBookingUrl != null && listing.externalBookingUrl!.isNotEmpty) ...[  
               GestureDetector(
                 onTap: () async {
                   HuddlAnimations.selectionClick();
-                  final raw = listing.bookingUrl!;
+                  final raw = listing.externalBookingUrl!;
                   final hasScheme = raw.startsWith('http://') || raw.startsWith('https://');
                   final uri = Uri.parse(hasScheme ? raw : 'https://$raw');
                   if (await canLaunchUrl(uri)) {
@@ -1916,12 +1921,12 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     final reply = ctrl.text.trim();
                     if (reply.isEmpty) return;
                     Navigator.pop(ctx);
-                    final ok = await widget.service.replyToEndorsement(
+                    await widget.service.replyToEndorsement(
                       listingId: widget.listing.id,
-                      endorserUid: endorsement.uid,
+                      endorsementUid: endorsement.uid,
                       replyText: reply,
                     );
-                    if (ok && mounted) {
+                    if (mounted) {
                       _load(); // refresh endorsements
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -2281,7 +2286,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               const SizedBox(height: 8),
             ],
             // ── Book Now — Partner listing booking URL ─────────────────
-            if (listing.bookingUrl != null && listing.bookingUrl!.isNotEmpty) ...[  
+            if (listing.externalBookingUrl != null && listing.externalBookingUrl!.isNotEmpty) ...[  
               const SizedBox(height: 4),
               SizedBox(
                 width: double.infinity,
@@ -2301,7 +2306,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   ),
                   onPressed: () async {
                     HuddlAnimations.selectionClick();
-                    final raw = listing.bookingUrl!;
+                    final raw = listing.externalBookingUrl!;
                     final hasScheme = raw.startsWith('http://') ||
                         raw.startsWith('https://');
                     final uri = Uri.parse(hasScheme ? raw : 'https://$raw');

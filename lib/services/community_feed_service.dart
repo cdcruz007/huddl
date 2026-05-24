@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
@@ -274,5 +275,40 @@ class CommunityFeedService {
   Future<void> clearAll() async {
     await BrowserStorage.remove(_storageKey);
     await BrowserStorage.remove(_lastLoginKey);
+  }
+
+  /// Fetch active Partner-promoted cards for the borough home feed.
+  /// Returns max 3 items, ordered newest first. Silent on error.
+  Future<List<FeedItem>> fetchPromotedFeedItems(String borough) async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('borough_feed')
+          .doc(borough)
+          .collection('promoted')
+          .where('isActive', isEqualTo: true)
+          .orderBy('promotedAt', descending: true)
+          .limit(3)
+          .get();
+      return snap.docs.map((d) {
+        final data = d.data();
+        return FeedItem(
+          id: d.id,
+          type: FeedItemType.partnerPromoted,
+          title: data['title'] as String? ?? '',
+          subtitle: data['subtitle'] as String? ?? '',
+          createdAt:
+              (data['promotedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          meta: {
+            'partnerName': data['partnerName'],
+            'partnerUid':  data['partnerUid'],
+            'externalUrl': data['externalUrl'],
+            'ctaLabel':    data['ctaLabel'] ?? 'Find out more',
+            'isVerified':  data['isVerified'] ?? true,
+          },
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 }

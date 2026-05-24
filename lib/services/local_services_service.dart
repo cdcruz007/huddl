@@ -250,11 +250,11 @@ class ServiceListing {
   /// Whether the listing owner is a verified Huddl Partner business.
   final bool isPartnerListing;
 
-  /// Booking / appointment URL for Partner listings.
-  final String? bookingUrl;
+  /// Partner's own booking/enquiry URL (external).
+  final String? externalBookingUrl;
 
-  /// Priority sort weight for Partner listings in the directory (higher = first).
-  final int priorityScore;
+  /// How many listings this owner has in total.
+  final int serviceListingCount;
 
   const ServiceListing({
     required this.id,
@@ -282,8 +282,8 @@ class ServiceListing {
     this.imageUrl,
     this.parentName,
     this.isPartnerListing = false,
-    this.bookingUrl,
-    this.priorityScore = 0,
+    this.externalBookingUrl,
+    this.serviceListingCount = 0,
   });
 
   ServiceListing copyWith({
@@ -298,8 +298,8 @@ class ServiceListing {
     String? website,
     String? ownerUid,
     bool? isPartnerListing,
-    String? bookingUrl,
-    int? priorityScore,
+    String? externalBookingUrl,
+    int? serviceListingCount,
     String? createdByUid,
     VerificationTier? verificationTier,
     bool? isVerified,
@@ -340,8 +340,8 @@ class ServiceListing {
         imageUrl:            imageUrl            ?? this.imageUrl,
         parentName:          parentName          ?? this.parentName,
         isPartnerListing:    isPartnerListing    ?? this.isPartnerListing,
-        bookingUrl:          bookingUrl          ?? this.bookingUrl,
-        priorityScore:       priorityScore       ?? this.priorityScore,
+        externalBookingUrl:  externalBookingUrl  ?? this.externalBookingUrl,
+        serviceListingCount: serviceListingCount ?? this.serviceListingCount,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -367,8 +367,9 @@ class ServiceListing {
         if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
         if (parentName != null && parentName!.isNotEmpty) 'parentName': parentName,
         'isPartnerListing':  isPartnerListing,
-        if (bookingUrl != null && bookingUrl!.isNotEmpty) 'bookingUrl': bookingUrl,
-        'priorityScore':     priorityScore,
+        if (externalBookingUrl != null && externalBookingUrl!.isNotEmpty)
+          'externalBookingUrl': externalBookingUrl,
+        'serviceListingCount': serviceListingCount,
       };
 
   factory ServiceListing.fromFirestore(
@@ -406,9 +407,9 @@ class ServiceListing {
           : null,
       imageUrl:          d['imageUrl'] as String?,
       parentName:        d['parentName'] as String?,
-      isPartnerListing:  d['isPartnerListing'] as bool? ?? false,
-      bookingUrl:        d['bookingUrl'] as String?,
-      priorityScore:     d['priorityScore'] as int? ?? 0,
+      isPartnerListing:    d['isPartnerListing']    as bool?   ?? false,
+      externalBookingUrl:  d['externalBookingUrl']  as String?,
+      serviceListingCount: d['serviceListingCount'] as int?    ?? 0,
     );
   }
 }
@@ -647,56 +648,45 @@ class LocalServicesService {
   // Session-level dedup: each listing is counted at most once per app session.
   final Set<String> _viewedThisSession = {};
 
-  void recordView(String listingId, {bool isPartner = false}) {
+  void recordView(String listingId, {String? ownerUid}) {
     if (_viewedThisSession.contains(listingId)) return;
     _viewedThisSession.add(listingId);
     _db.collection(_collection).doc(listingId).update({
       'viewCount': FieldValue.increment(1),
     }).catchError((e) {
-      if (kDebugMode) debugPrint('LocalServicesService.recordView: $e');
+      if (kDebugMode) debugPrint('LocalServicesService.recordView: \$e');
     });
-    // Partner analytics: record per-listing view event
-    if (isPartner) {
-      final today = DateTime.now();
-      final dateKey =
-          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-      _db
+    // Partner analytics — fire and forget
+    if (ownerUid != null) {
+      FirebaseFirestore.instance
           .collection('partner_analytics')
-          .doc(listingId)
-          .collection('views')
-          .doc(dateKey)
-          .set({'count': FieldValue.increment(1)}, SetOptions(merge: true))
-          .catchError((_) {});
+          .doc(ownerUid)
+          .set({
+        'totalListingViews': FieldValue.increment(1),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)).catchError((_) {});
     }
   }
 
   // ── Reply to endorsement (Partner only) ─────────────────────────────────────
 
-  /// Allows the Partner owner to post a public reply to an endorsement.
-  /// The caller is responsible for confirming the user is the listing owner
-  /// and has the Partner tier.
-  Future<bool> replyToEndorsement({
+  /// Partner-only: post a public reply to a parent endorsement.
+  /// The reply appears below the endorsement quote in the services screen.
+  Future<void> replyToEndorsement({
     required String listingId,
-    required String endorserUid,
+    required String endorsementUid, // the endorser's uid (document key)
     required String replyText,
   }) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return false;
-    try {
-      await _db
-          .collection(_collection)
-          .doc(listingId)
-          .collection('endorsements')
-          .doc(endorserUid)
-          .update({
-        'ownerReply':     replyText.trim(),
-        'ownerRepliedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-    } catch (e) {
-      if (kDebugMode) debugPrint('LocalServicesService.replyToEndorsement: $e');
-      return false;
-    }
+    if (replyText.trim().isEmpty) return;
+    await _db
+        .collection(_collection)
+        .doc(listingId)
+        .collection('endorsements')
+        .doc(endorsementUid)
+        .update({
+      'ownerReply': replyText.trim(),
+      'ownerRepliedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // ── Create listing ─────────────────────────────────────────────────────────
@@ -710,9 +700,9 @@ class LocalServicesService {
     String? phone,
     String? website,
     String? borough,
-    String? parentName,   // the adding parent's name as known in their borough
-    String? bookingUrl,   // Partner: booking / appointment URL
+    String? parentName,          // the adding parent's name as known in their borough
     bool isPartnerListing = false,
+    String? externalBookingUrl,   // Partner's own booking/enquiry URL
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
@@ -740,9 +730,9 @@ class LocalServicesService {
         viewCount:        0,
         createdAt:        now,
         updatedAt:        now,
-        isPartnerListing: isPartnerListing,
-        bookingUrl:       bookingUrl?.trim().isEmpty == true ? null : bookingUrl?.trim(),
-        priorityScore:    isPartnerListing ? 10 : 0,
+        isPartnerListing:    isPartnerListing,
+        externalBookingUrl:  externalBookingUrl?.trim().isEmpty == true ? null : externalBookingUrl?.trim(),
+        serviceListingCount: 0,
       );
 
       final ref = await _db

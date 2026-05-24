@@ -43,12 +43,30 @@ class SubscriptionService extends ChangeNotifier {
   bool get isPlus => _subscription.isVillage || _subscription.isPartner;
   bool get isPro => _subscription.isInnerCircle;
 
+  // ── Partner tier ─────────────────────────────────────────────────────────────
+  /// Plus, legacy Circle, or Partner
+  bool get isPlusOrAbove => isNeighbourhood || isInnerCircle || isPartner;
+
+  // ── Paid meetups (Plus or above only; free meetups open to all) ───────────────
+  bool get canCreatePaidMeetup => isPlusOrAbove;
+
+  // ── Business-gated features (require tier + verification) ─────────────────────
+  bool get canOwnServiceListing    => isPlusOrAbove && isBusinessVerified;
+  bool get canCreateCommercialEvent => isPlusOrAbove && isBusinessVerified;
+
+  // ── Partner-exclusive features ────────────────────────────────────────────────
+  bool get canPromoteInFeed          => isPartner;
+  bool get hasBusinessProfile        => isPartner;
+  bool get hasAnalyticsDashboard     => isPartner;
+  bool get canRespondToEndorsements  => isPartner;
+  bool get hasUnlimitedServiceListings => isPartner;
+
   // ---- Partner / Business verification ----
-  bool _isBusinessVerified = false;
-  bool get isBusinessVerified => _isBusinessVerified;
+  bool _businessVerified = false;
+  bool get isBusinessVerified => _businessVerified;
 
   /// Load business verification status from Firestore.
-  /// Called after initialize() when user is a Partner subscriber.
+  /// Call from screens that gate on isBusinessVerified. Non-blocking.
   Future<void> loadBusinessVerificationStatus() async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -59,8 +77,8 @@ class SubscriptionService extends ChangeNotifier {
           .get()
           .timeout(const Duration(seconds: 5));
       if (doc.exists) {
-        _isBusinessVerified =
-            doc.data()?['isBusinessVerified'] as bool? ?? false;
+        _businessVerified =
+            doc.data()?['businessVerified'] as bool? ?? false;
         notifyListeners();
       }
     } catch (_) {
@@ -70,7 +88,7 @@ class SubscriptionService extends ChangeNotifier {
 
   /// Mark the user as business-verified in Firestore + local state.
   Future<void> setBusinessVerified({required bool verified}) async {
-    _isBusinessVerified = verified;
+    _businessVerified = verified;
     notifyListeners();
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -78,7 +96,7 @@ class SubscriptionService extends ChangeNotifier {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .set({'isBusinessVerified': verified}, SetOptions(merge: true));
+          .set({'businessVerified': verified}, SetOptions(merge: true));
     } catch (_) {}
   }
 

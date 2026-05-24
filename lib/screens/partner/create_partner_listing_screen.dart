@@ -86,7 +86,7 @@ class _CreatePartnerListingScreenState
       phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       website:
           _websiteCtrl.text.trim().isEmpty ? null : _websiteCtrl.text.trim(),
-      bookingUrl:
+      externalBookingUrl:
           _bookingCtrl.text.trim().isEmpty ? null : _bookingCtrl.text.trim(),
       isPartnerListing: true,
     );

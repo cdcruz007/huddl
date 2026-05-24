@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/cards/huddl_photo_card.dart';
@@ -512,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen>
   // into a single AI-ranked stream. Each item type is wrapped in a
   // _SmartFeedItem with a relevance score and AI-generated reason.
 
-  void _buildSmartFeed() {
+  Future<void> _buildSmartFeed() async {
     final List<_SmartFeedItem> items = [];
 
     // 1. AI nudge is shown in the Noticeboard section above the smart feed,
@@ -536,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen>
     for (var i = 0; i < ranked.length && i < 4; i++) {
       items.add(_SmartFeedItem(
         type: _SmartFeedType.communityActivity,
-        score: ranked[i].score * 0.85,
+        relevanceScore: ranked[i].score * 0.85,
         reason: ranked[i].reason,
         feedItem: ranked[i].item,
       ));
@@ -582,37 +583,39 @@ class _HomeScreenState extends State<HomeScreen>
       final sB = sectionOrder[b.type] ?? 99;
       if (sA != sB) return sA.compareTo(sB);
       // Within the same section, higher score first
-      return b.score.compareTo(a.score);
+      return b.relevanceScore.compareTo(a.relevanceScore);
     });
 
-    // ── 1:7 Partner promoted card injection ───────────────────────────────
-    // Insert promoted cards at indices 2, 9, 16, 23... (every 7, offset 2).
-    // Only Partner listings (isPartnerListing: true) are used as promoted cards.
-    final partnerListings = _featuredServices
-        .where((l) => l.isPartnerListing)
-        .toList();
-    if (partnerListings.isNotEmpty) {
-      const kPromoOffset  = 2; // first promoted slot (0-based)
-      const kPromoSpacing = 7; // 1 promoted per 7 organic items
-      int promoIndex = 0;
-      int insertAt    = kPromoOffset;
-      while (insertAt <= items.length && promoIndex < partnerListings.length) {
-        final listing = partnerListings[promoIndex % partnerListings.length];
-        items.insert(
-          insertAt,
-          _SmartFeedItem(
-            type:            _SmartFeedType.partnerPromoted,
-            score:           0.0,
-            reason:          'Partner',
-            promotedListing: listing,
-          ),
-        );
-        promoIndex++;
-        insertAt += kPromoSpacing + 1; // +1 to account for the inserted item
+    setState(() => _smartFeed = items);
+
+    // ── Fetch and interleave Partner promoted cards at 1:7 ratio ─────────
+    // Positions: 2, 9, 16... (3rd, 10th, 17th organic item)
+    // Source: Firestore borough_feed/{borough}/promoted — non-blocking
+    if (_borough.isNotEmpty) {
+      try {
+        final promoted = await _feedService.fetchPromotedFeedItems(_borough);
+        if (!mounted) return;
+        int offset = 0;
+        for (int i = 0; i < promoted.length; i++) {
+          final pos = 2 + (i * 7) + offset;
+          if (pos <= _smartFeed.length) {
+            _smartFeed.insert(
+              pos,
+              _SmartFeedItem(
+                type: _SmartFeedType.partnerPromoted,
+                feedItem: promoted[i],
+                relevanceScore: 0,
+                reason: 'Partner',
+              ),
+            );
+            offset++;
+          }
+        }
+        if (promoted.isNotEmpty && mounted) setState(() {});
+      } catch (_) {
+        // Silently ignore — promoted cards are non-critical
       }
     }
-
-    setState(() => _smartFeed = items);
   }
 
   // ── AI: Generate contextual assistant hint ────────────────────────────────
@@ -4992,136 +4995,119 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Partner promoted card (1:7 ratio in smart feed) ──────────────────────
   Widget _buildPartnerPromotedCard(_SmartFeedItem item, dynamic hc) {
-    final listing = item.promotedListing;
-    if (listing == null) return const SizedBox.shrink();
+    final meta        = item.feedItem?.meta ?? {};
+    final partnerName = meta['partnerName'] as String? ?? '';
+    final externalUrl = meta['externalUrl'] as String? ?? '';
+    final ctaLabel    = meta['ctaLabel']    as String? ?? 'Find out more';
+    final isVerified  = meta['isVerified']  as bool?   ?? false;
+    final title       = item.feedItem?.title   ?? '';
+    final subtitle    = item.feedItem?.subtitle ?? '';
 
-    return GestureDetector(
-      onTap: () {
-        HuddlAnimations.lightTap();
-        _servicesService.recordView(listing.id, isPartner: true);
-        Navigator.pushNamed(context, '/services');
-      },
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-        decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: HuddlColors.primary.withValues(alpha: 0.25), width: 1),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: HuddlColors.primary.withValues(alpha: 0.20),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: hc.shadow,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Promoted label banner
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.10),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(15)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.verified,
-                      size: 13, color: HuddlColors.primary),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Partner · Sponsored',
+            // Header row: partner name + verified tick + "Promoted" pill
+            Row(
+              children: [
+                if (isVerified) ...[
+                  Icon(Icons.verified_rounded,
+                      size: 14, color: HuddlColors.primary),
+                  const SizedBox(width: 4),
+                ],
+                Expanded(
+                  child: Text(
+                    partnerName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Promoted',
                     style: GoogleFonts.poppins(
                       fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
-                      letterSpacing: 0.3,
+                      color: HuddlColors.warningDark,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Title
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: hc.textPrimary,
               ),
             ),
-            // Card body
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Row(
-                children: [
-                  // Category icon circle
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        listing.category.emoji,
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Text block
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          listing.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          listing.tagline.isNotEmpty
-                              ? listing.tagline
-                              : listing.category.displayName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: hc.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.thumb_up_rounded,
-                                size: 11, color: hc.textTertiary),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${listing.endorsementCount} endorsements',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 10, color: hc.textTertiary),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // View arrow
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      listing.bookingUrl != null ? 'Book' : 'View',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: hc.textSecondary,
+                  height: 1.4,
+                ),
               ),
-            ),
+            ],
+            const SizedBox(height: 12),
+            // CTA button
+            if (externalUrl.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse(externalUrl),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HuddlColors.primary,
+                    side: const BorderSide(color: HuddlColors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: Text(
+                    ctaLabel,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -5253,7 +5239,7 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.milestone:
         return Icons.emoji_events;
       case FeedItemType.partnerPromoted:
-        return Icons.verified;
+        return Icons.campaign_outlined;
     }
   }
 
@@ -5804,7 +5790,7 @@ class _DiscoverItem {
 
 class _SmartFeedItem {
   final _SmartFeedType type;
-  final double score;
+  final double relevanceScore;
   final String reason;
   final NudgeCard? nudge;
   final Meetup? meetup;
@@ -5816,7 +5802,7 @@ class _SmartFeedItem {
 
   _SmartFeedItem({
     required this.type,
-    required this.score,
+    required this.relevanceScore,
     required this.reason,
     // ignore: unused_element_parameter
     this.nudge,
@@ -7626,7 +7612,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.milestone:
         return Icons.emoji_events;
       case FeedItemType.partnerPromoted:
-        return Icons.verified;
+        return Icons.campaign_outlined;
     }
   }
 

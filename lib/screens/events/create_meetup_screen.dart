@@ -15,6 +15,7 @@ import '../../services/dm_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
+import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -321,38 +322,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ── Create ──────────────────────────────────────────────────────────
   Future<void> _createMeetup() async {
-    // ── Subscription gate: meetup creation limit ────────────────────
+    // Free meetups: open to all tiers
+    // Paid meetups (price > £0): Plus or above only
     final subService = SubscriptionService();
     await subService.initialize();
-    if (!subService.canCreateMeetup) {
+    if (!_isFree && !subService.canCreatePaidMeetup) {
       if (mounted) {
-        showUpgradePrompt(
+        await showUpgradePrompt(
           context,
-          feature: 'meetups',
-          message: subService.limitReachedMessage('meetups'),
+          feature: 'paid meetups',
+          message: 'Creating a paid meetup requires Huddl Plus. '
+              'Free meetups are available to all members.',
+          requiredTier: SubscriptionTier.neighbourhood,
         );
       }
       return;
-    }
-
-    // ── Partner gate: paid meetups require Partner tier ──────────────
-    if (!_isFree) {
-      final hasPaidPrice = _priceCtrl.text.trim().isNotEmpty &&
-          (double.tryParse(
-                  _priceCtrl.text.replaceAll('\u00A3', '').trim()) ??
-                0) >
-              0;
-      if (hasPaidPrice && !subService.isPartner) {
-        if (mounted) {
-          showUpgradePrompt(
-            context,
-            feature: 'paid_meetups',
-            message:
-                'Creating paid meetups is a Huddl Partner feature. Upgrade to Partner to charge for your events.',
-          );
-        }
-        return;
-      }
     }
     if (!mounted) return;
 
