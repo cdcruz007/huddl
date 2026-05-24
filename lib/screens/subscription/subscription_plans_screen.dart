@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
+import '../../services/payment_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTION PLANS — tier comparison & purchase screen
@@ -343,11 +344,21 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               const SizedBox(height: 20),
 
               // Plan cards
-              ...SubscriptionPlan.allPlans.map((plan) => Padding(
+              ...SubscriptionPlan.allPlans.map((plan) {
+                    // Use the store-localised price string (Apple/Google format
+                    // their own currency and locale).  Falls back to the
+                    // hard-coded GBP price when the store hasn't loaded yet
+                    // (web, sandbox, or slow connection).
+                    final productId = HuddlProductIds.productIdFor(
+                      plan.tier, _period);
+                    final storePrice =
+                        PaymentService().getPriceForProduct(productId);
+                    return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _PlanCard(
                       plan: plan,
                       period: _period,
+                      storePrice: storePrice.isNotEmpty ? storePrice : null,
                       isCurrentPlan: plan.tier == _service.tier,
                       isHighlighted: plan.tier == widget.highlightTier ||
                           (widget.highlightTier == null &&
@@ -359,7 +370,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       daysUntilRenewal: _service.daysUntilRenewal,
                       onSelect: () => _onSelectPlan(plan),
                     ),
-                  )),
+                  );
+                  }),
 
               const SizedBox(height: 16),
 
@@ -689,6 +701,9 @@ class _BillingToggle extends StatelessWidget {
 class _PlanCard extends StatelessWidget {
   final SubscriptionPlan plan;
   final BillingPeriod period;
+  /// Store-localised price string (e.g. "£4.99/month" from Apple/Google).
+  /// When null, falls back to the hard-coded GBP price from the model.
+  final String? storePrice;
   final bool isCurrentPlan;
   final bool isHighlighted;
   final bool isScheduledTarget;
@@ -700,6 +715,7 @@ class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.plan,
     required this.period,
+    this.storePrice,
     required this.isCurrentPlan,
     required this.isHighlighted,
     this.isScheduledTarget = false,
@@ -846,9 +862,12 @@ class _PlanCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
+                  // Prefer the store-localised string (correct currency for
+                  // the user's locale).  Fall back to the hard-coded GBP
+                  // price when the store has not loaded (web / slow network).
                   isFree
                       ? 'Free'
-                      : '\u00A3${price.toStringAsFixed(2)}',
+                      : (storePrice ?? '\u00A3${price.toStringAsFixed(2)}'),
                   style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,

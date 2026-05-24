@@ -43,7 +43,10 @@ android {
     defaultConfig {
         applicationId = "com.huddlconnect.connect"
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        // Explicit value required — Google Play mandates API 35 for new apps
+        // submitted after August 2024.  Do NOT rely on flutter.targetSdkVersion
+        // which may resolve to an older value depending on the Flutter SDK version.
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

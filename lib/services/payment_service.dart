@@ -38,7 +38,7 @@
 //
 // ============================================================================
 
-import 'dart:async';
+import 'dart:async' show StreamSubscription, TimeoutException;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -372,9 +372,16 @@ class PaymentService extends ChangeNotifier {
   /// Load products from the native store
   Future<void> _loadProducts() async {
     try {
-      final response = await InAppPurchase.instance.queryProductDetails(
-        HuddlProductIds.all,
-      );
+      // 15-second timeout prevents the initialization spinner hanging
+      // indefinitely when the App Store / Play Store is unreachable.
+      final response = await InAppPurchase.instance
+          .queryProductDetails(HuddlProductIds.all)
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw TimeoutException(
+              'Product query timed out after 15 seconds',
+            ),
+          );
 
       if (response.error != null) {
         if (kDebugMode) {
@@ -619,6 +626,14 @@ class PaymentService extends ChangeNotifier {
     for (final purchase in purchaseDetailsList) {
       switch (purchase.status) {
         case PurchaseStatus.pending:
+          // iOS "Ask to Buy" — purchase is pending parental approval.
+          // completePurchase() MUST still be called so StoreKit doesn't
+          // re-deliver the transaction on every subsequent app launch.
+          // Without this, the user gets repeated purchase dialogs until
+          // the parent approves or declines.
+          if (purchase.pendingCompletePurchase) {
+            InAppPurchase.instance.completePurchase(purchase);
+          }
           _setStatus(PaymentStatus.purchasing);
           break;
 
@@ -632,6 +647,11 @@ class PaymentService extends ChangeNotifier {
           break;
 
         case PurchaseStatus.canceled:
+          // Canceled purchases on iOS also require completePurchase() to
+          // remove the transaction from the StoreKit queue.
+          if (purchase.pendingCompletePurchase) {
+            InAppPurchase.instance.completePurchase(purchase);
+          }
           _setStatus(PaymentStatus.idle);
           break;
       }
@@ -679,9 +699,12 @@ class PaymentService extends ChangeNotifier {
     }
   }
 
-  void _handlePurchaseFailure(PurchaseDetails purchase) {
+  Future<void> _handlePurchaseFailure(PurchaseDetails purchase) async {
+    // completePurchase must be called for failed transactions too —
+    // failure to do so leaves the transaction in StoreKit's queue and it
+    // will be re-delivered on every app launch until acknowledged.
     if (purchase.pendingCompletePurchase) {
-      InAppPurchase.instance.completePurchase(purchase);
+      await InAppPurchase.instance.completePurchase(purchase);
     }
 
     final errorMsg =
