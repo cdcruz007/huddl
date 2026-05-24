@@ -5027,7 +5027,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                             ),
                           ),
                         ),
-                        // Join / Joined / Full / Restricted button
+                        // Join / Joined / Full / Restricted button — Groups-style
                         Semantics(
                           label: isRestricted
                               ? 'Restricted meetup'
@@ -5036,11 +5036,11 @@ class _MeetupCardState extends State<_MeetupCard> {
                                   : meetup.isGoing
                                       ? 'You are going to ${meetup.title}'
                                       : 'Join ${meetup.title}',
-                          button: true,
+                          button: !meetup.isGoing,
                           child: ScaleOnPress(
                             haptic: false,
-                            onTap: () {
-                              HuddlAnimations.lightTap();
+                            onTap: meetup.isGoing ? null : () {
+                              HuddlAnimations.mediumTap();
                               widget.onView?.call();
                               if (isRestricted) {
                                 widget.onAccessDenied?.call();
@@ -5057,10 +5057,10 @@ class _MeetupCardState extends State<_MeetupCard> {
                                 color: isRestricted
                                     ? const Color(0xFFF0F0F0)
                                     : _isFull && !meetup.isGoing
-                                        ? const Color(0xFFFFE5D5)
+                                        ? const Color(0xFFF0F0F0)
                                         : meetup.isGoing
-                                            ? HuddlColors.nearBlack
-                                            : HuddlColors.primary,
+                                            ? const Color(0xFFF0F0F0)
+                                            : HuddlColors.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -5075,10 +5075,12 @@ class _MeetupCardState extends State<_MeetupCard> {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: isRestricted
-                                      ? HuddlColors.textTertiary
+                                      ? HuddlColors.textHint
                                       : _isFull && !meetup.isGoing
                                           ? HuddlColors.textTertiary
-                                          : Colors.white,
+                                          : meetup.isGoing
+                                              ? HuddlColors.textTertiary
+                                              : HuddlColors.primary,
                                 ),
                               ),
                             ),
@@ -5393,10 +5395,11 @@ class _EventListCardState extends State<_EventListCard> {
                         ),
                       ),
                     ),
-                    // Join pill — Groups-style grey
-                    GestureDetector(
+                    // Join pill — Groups-style (primary tint pill)
+                    ScaleOnPress(
+                      haptic: false,
                       onTap: () {
-                        HuddlAnimations.lightTap();
+                        HuddlAnimations.mediumTap();
                         Navigator.push(
                           context,
                           PageRouteBuilder(
@@ -5413,15 +5416,15 @@ class _EventListCardState extends State<_EventListCard> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF2F2F2),
+                          color: HuddlColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           'Join',
                           style: GoogleFonts.poppins(
                             fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF42464C),
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
                           ),
                         ),
                       ),
