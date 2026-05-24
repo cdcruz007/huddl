@@ -16,10 +16,10 @@ services:
       # STRIPE_SECRET_KEY            → sk_live_51J29Cx...
       # STRIPE_PUBLISHABLE_KEY       → pk_live_51J29Cx...
       # STRIPE_WEBHOOK_SECRET        → whsec_NrvFWpNM...
-      # STRIPE_PRICE_NEIGHBOUR_MONTHLY    → price_1TPMiQGb8Lg9FVI5hzdkzA23
-      # STRIPE_PRICE_NEIGHBOUR_ANNUAL     → price_1TPMjBGb8Lg9FVI5zZwvMgVe
-      # STRIPE_PRICE_CIRCLE_MONTHLY       → price_1TPUqjGb8Lg9FVI5uk3rAKlJ
-      # STRIPE_PRICE_CIRCLE_ANNUAL        → price_1TPMl5Gb8Lg9FVI5YKuJNSRL
+      # STRIPE_PRICE_PLUS_MONTHLY=price_1TaagGGb8Lg9FVI5f2SrV5nv
+      # STRIPE_PRICE_PLUS_ANNUAL=price_1TaagHGb8Lg9FVI5k1BKNlqv
+      # STRIPE_PRICE_PARTNER_MONTHLY=price_1TaagHGb8Lg9FVI5bgzTWFLU
+      # STRIPE_PRICE_PARTNER_ANNUAL=price_1TaagIGb8Lg9FVI54eBr0Qgo
       # FIREBASE_PROJECT_ID              → huddl-connect
       # SMTP_HOST                        → smtp.hostinger.com
       # SMTP_PORT                        → 465
