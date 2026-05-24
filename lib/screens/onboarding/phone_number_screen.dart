@@ -134,7 +134,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     if (!_canContinue) return;
     FocusScope.of(context).unfocus(); // dismiss keyboard
     final digits = _normalise(_ctrl.text);
-    // Store digits only (e.g. "7575888452") and country code separately.
+    // Store digits only (e.g. "7575888453") and country code separately.
     // verification_screen builds the full number as '$countryCode$phoneNumber'
     // so we must NOT include the +44 prefix in phoneNumber itself.
     OnboardingDataService().setPhoneNumber(digits, countryCode: _countryCode);

@@ -25,7 +25,7 @@ void main() async {
 
     // ── Firebase test number bypass ─────────────────────────────────────────
     // appVerificationDisabledForTesting = true is required for Firebase Console
-    // test phone numbers (e.g. +44 7575 888452 / code 123456) to work.
+    // test phone numbers (e.g. +44 7575 888453 / code 123456) to work.
     //
     // WITHOUT this flag Firebase ignores its own test number list entirely and
     // attempts a real APNs silent-push + SMS flow — test codes are rejected

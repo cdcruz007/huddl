@@ -72,13 +72,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
   ///
   /// The format MUST exactly match what is stored in Firebase Console →
   /// Authentication → Phone → Test phone numbers.
-  /// Firebase Console stores: "+44 7575 888452" (with spaces).
+  /// Firebase Console stores: "+44 7575 888453" (with spaces).
   ///
   /// Handles all storage variants defensively:
-  ///   "7575888452"      → "+44 7575 888452" ✓ (normal: digits only stored)
-  ///   "07575888452"     → "+44 7575 888452" ✓ (leading zero)
-  ///   "+447575888452"   → "+44 7575 888452" ✓ (full E.164 stored)
-  ///   "+44 7575 888452" → "+44 7575 888452" ✓ (already correct)
+  ///   "7575888453"      → "+44 7575 888453" ✓ (normal: digits only stored)
+  ///   "07575888453"     → "+44 7575 888453" ✓ (leading zero)
+  ///   "+447575888453"   → "+44 7575 888453" ✓ (full E.164 stored)
+  ///   "+44 7575 888453" → "+44 7575 888453" ✓ (already correct)
   String _buildFullPhoneNumber() {
     final raw = _onboardingData.phoneNumber ?? '';
     final cc = _onboardingData.countryCode ?? '+44';
@@ -86,14 +86,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
     // Strip all non-digit characters to get bare digits
     String digits = raw.replaceAll(RegExp(r'\D'), '');
 
-    // If digits still contain the country code prefix (e.g. stored as "447575888452")
+    // If digits still contain the country code prefix (e.g. stored as "447575888453")
     // strip it. Country code "+44" → numeric "44"
     final ccDigits = cc.replaceAll(RegExp(r'\D'), '');
     if (digits.startsWith(ccDigits) && digits.length > ccDigits.length) {
       digits = digits.substring(ccDigits.length);
     }
 
-    // Strip leading zero (local format "07575888452" → "7575888452")
+    // Strip leading zero (local format "07575888453" → "7575888453")
     if (digits.startsWith('0')) digits = digits.substring(1);
 
     if (digits.isEmpty) return cc;
@@ -448,7 +448,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
                     // Subtitle with phone number
                     Text(
-                      'Enter the 6-digit code sent to\n$displayPhone',  // e.g. +44 7575888452
+                      'Enter the 6-digit code sent to\n$displayPhone',  // e.g. +44 7575888453
                       style: const TextStyle(
                         fontSize: 14,
                         color: kTextGray,

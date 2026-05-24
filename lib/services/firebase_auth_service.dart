@@ -92,7 +92,7 @@ class FirebaseAuthService {
 
   /// Direct sign-in for Firebase Console test phone numbers ONLY.
   ///
-  /// For test numbers (e.g. +447575888452 / OTP 123456), Firebase's
+  /// For test numbers (e.g. +447575888453 / OTP 123456), Firebase's
   /// verifyPhoneNumber fires BOTH codeSent AND verificationCompleted.
   /// Whichever completes the Completer first wins — on many devices codeSent
   /// fires first, routing the app to the OTP screen instead of auto-verifying.
@@ -234,7 +234,7 @@ class FirebaseAuthService {
             final compactPhone = phone.replaceAll(' ', '');
 
             // ── Test-number fast path ─────────────────────────────────────
-            // Firebase Console test numbers (e.g. +447575888452) are real
+            // Firebase Console test numbers (e.g. +447575888453) are real
             // Firebase Auth entries but have NO Firestore `users` document.
             // Calling hasUserProfile() for them always returns false, which
             // causes an immediate sign-out and "account deleted" error —
@@ -909,7 +909,7 @@ class FirebaseAuthService {
   /// E.164 form, no spaces). The pre-check is skipped for these numbers and
   /// the OTP flow proceeds directly.
   static const Set<String> _firebaseTestPhoneNumbers = {
-    '+447575888452', // Firebase Console test number — code 123456
+    '+447575888453', // Firebase Console test number — code 123456
   };
 
   /// Pre-checks whether a phone number has a registered Huddl account in
@@ -926,7 +926,7 @@ class FirebaseAuthService {
   /// so real users are never incorrectly blocked.
   Future<bool> checkPhoneHasAccount(String fullPhoneNumber) async {
     // ── Fast-path: Firebase test numbers bypass Firestore lookup ───────────
-    // Firebase Console test phone numbers (e.g. "+44 7575 888452") exist only
+    // Firebase Console test phone numbers (e.g. "+44 7575 888453") exist only
     // in Firebase Auth. They never have a Firestore users document, so the
     // query below would return false and block the OTP flow. Compact the
     // number and check the allowlist instead.

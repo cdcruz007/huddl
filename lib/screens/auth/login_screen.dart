@@ -137,10 +137,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Builds the phone number sent to Firebase verifyPhoneNumber.
   /// MUST match the exact format stored in Firebase Console test phone numbers.
-  /// Firebase Console stores: "+44 7575 888452" (with spaces).
+  /// Firebase Console stores: "+44 7575 888453" (with spaces).
   /// UK (+44) 10-digit local number → "+44 XXXX XXXXXX"
   ///
-  /// [digits] is the normalised local number (e.g. "7575888452") from _normalise().
+  /// [digits] is the normalised local number (e.g. "7575888453") from _normalise().
   String _buildFullPhone(String digits) {
     // Strip any residual non-digit chars, leading zeros, or country code prefix
     String local = digits.replaceAll(RegExp(r'\D'), '');
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Firebase Console test phone numbers — these bypass _canLogin so that
   // Robo Test Lab can log in even when the controller listeners haven't yet
   // fired setState() at the moment the button is tapped.
-  static const _testPhoneDigits = {'7575888452'};
+  static const _testPhoneDigits = {'7575888453'};
 
   Future<void> _handleLogin() async {
     // For Firebase test numbers we skip the _canLogin gate entirely so that
@@ -226,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    // Format WITH spaces to match Firebase test numbers e.g. "+44 7575 888452"
+    // Format WITH spaces to match Firebase test numbers e.g. "+44 7575 888453"
     final fullPhone = _buildFullPhone(rawDigits);
 
     try {
@@ -972,7 +972,7 @@ class _BiometricLoginButton extends StatelessWidget {
     this.enrolledPhone,
   });
 
-  /// Format enrolled phone for display: +44 7575 888452 → ••• ••• 8452
+  /// Format enrolled phone for display: +44 7575 888453 → ••• ••• 8453
   String get _maskedPhone {
     if (enrolledPhone == null || enrolledPhone!.length < 4) return '';
     final last4 = enrolledPhone!.substring(enrolledPhone!.length - 4);
