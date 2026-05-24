@@ -8,6 +8,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/common/underlined_text_field.dart';
+import '../../widgets/common/primary_button.dart';
 
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
@@ -964,19 +967,6 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
 
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
-    // Self-endorse block: prevent owner from endorsing their own listing
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid != null &&
-        (widget.listing.ownerUid == currentUid ||
-         widget.listing.createdByUid == currentUid)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You cannot endorse your own listing.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
     try {
@@ -1208,38 +1198,39 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
               ),
               const SizedBox(width: 8),
             ],
-            // ── Endorse / Endorsed pill — Groups-style primary tint ────────
-            ScaleOnPress(
-              haptic: false,
-              onTap: _endorsing ? null : _toggleEndorse,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _hasEndorsed
-                      ? const Color(0xFFF0F0F0)
-                      : HuddlColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+            // ── Endorse / Endorsed pill — hidden for own listing ─────────
+            if (FirebaseAuth.instance.currentUser?.uid != widget.listing.ownerUid)
+              ScaleOnPress(
+                haptic: false,
+                onTap: _endorsing ? null : _toggleEndorse,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _hasEndorsed
+                        ? const Color(0xFFF0F0F0)
+                        : HuddlColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _endorsing
+                      ? SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
+                          ),
+                        )
+                      : Text(
+                          _hasEndorsed ? 'Endorsed' : 'Endorse',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
+                          ),
+                        ),
                 ),
-                child: _endorsing
-                    ? SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
-                        ),
-                      )
-                    : Text(
-                        _hasEndorsed ? 'Endorsed' : 'Endorse',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
-                        ),
-                      ),
               ),
-            ),
           ],
         ),
       ),
@@ -1279,19 +1270,6 @@ class _ListingCardState extends State<_ListingCard> {
 
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
-    // Self-endorse block: prevent owner from endorsing their own listing
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid != null &&
-        (widget.listing.ownerUid == currentUid ||
-         widget.listing.createdByUid == currentUid)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You cannot endorse your own listing.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
     try {
@@ -1635,40 +1613,41 @@ class _ListingCardState extends State<_ListingCard> {
                       ),
                     ),
                   ),
-                  // Endorse pill — Groups-style primary tint
-                  ScaleOnPress(
-                    haptic: false,
-                    onTap: _endorsing ? null : _toggleEndorse,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _hasEndorsed
-                            ? const Color(0xFFF0F0F0)
-                            : HuddlColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                  // Endorse pill — hidden for own listing
+                  if (FirebaseAuth.instance.currentUser?.uid != widget.listing.ownerUid)
+                    ScaleOnPress(
+                      haptic: false,
+                      onTap: _endorsing ? null : _toggleEndorse,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _hasEndorsed
+                              ? const Color(0xFFF0F0F0)
+                              : HuddlColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: _endorsing
+                            ? SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
+                                ),
+                              )
+                            : Text(
+                                _hasEndorsed ? 'Endorsed' : 'Endorse',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _hasEndorsed
+                                      ? HuddlColors.textTertiary
+                                      : HuddlColors.primary,
+                                ),
+                              ),
                       ),
-                      child: _endorsing
-                          ? SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
-                              ),
-                            )
-                          : Text(
-                              _hasEndorsed ? 'Endorsed' : 'Endorse',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _hasEndorsed
-                                    ? HuddlColors.textTertiary
-                                    : HuddlColors.primary,
-                              ),
-                            ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -1803,19 +1782,6 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
 
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
-    // Self-endorse block: prevent owner from endorsing their own listing
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid != null &&
-        (widget.listing.ownerUid == currentUid ||
-         widget.listing.createdByUid == currentUid)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You cannot endorse your own listing.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
     if (_hasEndorsed) {
@@ -1848,13 +1814,9 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
     if (mounted) setState(() => _endorsing = false);
   }
 
-  /// Opens reply bottom sheet for listing owners (Partner feature)
-  void _showReplySheet(ServiceEndorsement endorsement) {
-    final isOwner = FirebaseAuth.instance.currentUser?.uid ==
-        widget.listing.ownerUid;
-    if (!isOwner) return;
-    final ctrl = TextEditingController(
-        text: endorsement.ownerReply ?? '');
+  /// Opens reply bottom sheet for listing owners (Partner feature) — v4 spec
+  void _showReplyBottomSheet(String listingId, String endorsementUid) {
+    final controller = TextEditingController();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1866,84 +1828,55 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
           decoration: BoxDecoration(
             color: context.hc.surface,
             borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+                const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  width: 36, height: 4,
                   decoration: BoxDecoration(
-                    color: context.hc.divider,
+                    color: HuddlColors.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              Text(
-                'Reply to ${endorsement.firstName}\'s endorsement',
-                style: GoogleFonts.poppins(
-                    fontSize: 15, fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary),
-              ),
+              const SizedBox(height: 16),
+              Text('Respond to endorsement',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary)),
               const SizedBox(height: 12),
-              TextField(
-                controller: ctrl,
-                maxLines: 4,
-                maxLength: 200,
-                style: GoogleFonts.poppins(fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Thank you for the kind words…',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 13, color: context.hc.textTertiary),
-                  filled: true,
-                  fillColor: context.hc.inputBg,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
+              UnderlinedTextField(
+                controller: controller,
+                hintText: 'Write a public response...',
+                maxLines: 3,
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () async {
-                    final reply = ctrl.text.trim();
-                    if (reply.isEmpty) return;
+              const SizedBox(height: 16),
+              PrimaryButton(
+                text: 'Post response',
+                onPressed: () async {
+                  if (controller.text.trim().isEmpty) return;
+                  await widget.service.replyToEndorsement(
+                    listingId: listingId,
+                    endorsementUid: endorsementUid,
+                    replyText: controller.text.trim(),
+                  );
+                  if (mounted) {
                     Navigator.pop(ctx);
-                    await widget.service.replyToEndorsement(
-                      listingId: widget.listing.id,
-                      endorsementUid: endorsement.uid,
-                      replyText: reply,
+                    _load(); // refresh endorsements
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Reply posted!'),
+                        backgroundColor: HuddlColors.success,
+                        behavior: SnackBarBehavior.floating,
+                      ),
                     );
-                    if (mounted) {
-                      _load(); // refresh endorsements
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Reply posted!'),
-                          backgroundColor: HuddlColors.success,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                  child: Text(
-                    'Post Reply',
-                    style: GoogleFonts.poppins(
-                        color: Colors.white, fontWeight: FontWeight.w600,
-                        fontSize: 14),
-                  ),
-                ),
+                  }
+                },
               ),
             ],
           ),
@@ -2026,6 +1959,23 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                             _BadgePill(label: 'Parent Added', color: _kBadgeParent),
                         ],
                       ),
+                      // 6c — View business profile link
+                      if (listing.isPartnerListing && listing.ownerUid != null)
+                        GestureDetector(
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/partner_profile',
+                            arguments: {'partnerUid': listing.ownerUid},
+                          ),
+                          child: Text(
+                            'View business profile →',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: HuddlColors.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -2215,7 +2165,8 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            // ── Endorse CTA ───────────────────────────────────────────────
+            // ── Endorse CTA \u2014 hidden for own listing ─────────────────────
+            if (FirebaseAuth.instance.currentUser?.uid != listing.ownerUid)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -2436,7 +2387,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ...(_endorsements.map((e) => _EndorsementTile(
                 endorsement: e,
                 listing: widget.listing,
-                onReplyTap: () => _showReplySheet(e),
+                onReplyTap: () => _showReplyBottomSheet(widget.listing.id, e.uid),
               ))),
           ],
         ),
@@ -2462,7 +2413,6 @@ class _EndorsementTile extends StatelessWidget {
     final hc = context.hc;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final isOwner = currentUid != null && listing.ownerUid == currentUid;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -2502,19 +2452,6 @@ class _EndorsementTile extends StatelessWidget {
                   ),
                 ),
               ),
-              // Reply icon — only for listing owner (Partner feature)
-              if (isOwner && listing.isPartnerListing)
-                GestureDetector(
-                  onTap: onReplyTap,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Icon(
-                      Icons.reply_rounded,
-                      size: 18,
-                      color: HuddlColors.primary.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ),
             ],
           ),
           if (endorsement.quote != null && endorsement.quote!.isNotEmpty) ...[
@@ -2537,56 +2474,57 @@ class _EndorsementTile extends StatelessWidget {
               color: hc.textTertiary,
             ),
           ),
-          // Owner reply — displayed when partner has replied
-          if (endorsement.hasOwnerReply) ...[
+          // 6d — Owner reply — v4 spec: surfaceAlt + subdirectory icon + italic
+          if (endorsement.ownerReply != null) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(8),
+                color: context.hc.surfaceAlt,
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: HuddlColors.primary.withValues(alpha: 0.18)),
+                    color: HuddlColors.primary.withValues(alpha: 0.15)),
               ),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.verified, size: 13,
-                          color: HuddlColors.primary),
-                      const SizedBox(width: 5),
-                      Text(
-                        'Business reply',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.primary,
-                        ),
+                  Icon(Icons.subdirectory_arrow_right_rounded,
+                      size: 14, color: HuddlColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      endorsement.ownerReply!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: context.hc.textSecondary,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
                       ),
-                      if (endorsement.ownerRepliedAt != null) ...[
-                        const Spacer(),
-                        Text(
-                          _relativeTime(endorsement.ownerRepliedAt!),
-                          style: GoogleFonts.poppins(
-                              fontSize: 10, color: hc.textTertiary),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    endorsement.ownerReply!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: hc.textSecondary,
-                      height: 1.4,
                     ),
                   ),
                 ],
               ),
             ),
           ],
+          // 6e — "Respond" TextButton for Partner owners (no reply yet)
+          if (currentUid != null &&
+              currentUid == listing.ownerUid &&
+              SubscriptionService().canRespondToEndorsements &&
+              endorsement.ownerReply == null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onReplyTap,
+                child: Text(
+                  'Respond',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: HuddlColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

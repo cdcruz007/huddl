@@ -1,190 +1,166 @@
-// ============================================================================
-// HUDDL -- BUSINESS VERIFICATION SERVICE
-// ============================================================================
-//
-// Provides three verification paths for Huddl Partner applicants:
-//
-//   1. HMRC VAT Registration  — HMRC VAT Checker API (free, no key required)
-//      Endpoint: https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/{vatNumber}
-//      Valid for: VAT-registered businesses (turnover > £90k threshold)
-//
-//   2. Companies House lookup — Companies House REST API (free, no key required
-//      for basic lookup via Accept: application/json header)
-//      Endpoint: https://api.company-information.service.gov.uk/company/{companyNumber}
-//      Valid for: Limited companies and LLPs registered in England & Wales
-//
-//   3. Sole Trader UTR declaration — self-attestation. The user declares their
-//      UTR (Unique Taxpayer Reference) number and agrees to T&Cs. No API call
-//      required. Sets a 'pendingReview' flag so Huddl admin can spot-check.
-//
-// All three paths write the verification result to Firestore via
-// SubscriptionService.setBusinessVerified() on success.
-// ============================================================================
-
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'subscription_service.dart';
 
-/// Verification method chosen by the user.
-enum BusinessVerificationMethod {
-  vat,         // HMRC VAT number lookup
-  companies,   // Companies House number lookup
-  soleTrader,  // UTR self-declaration
-}
+enum BusinessEntityType { limitedCompany, vatRegistered, soleTrader }
 
-/// Result returned by a verification attempt.
 class VerificationResult {
   final bool success;
-  final String? businessName;
-  final String? registrationNumber;
-  final String? errorMessage;
-  final bool pendingReview; // sole-trader path sets this
-
-  const VerificationResult({
-    required this.success,
-    this.businessName,
-    this.registrationNumber,
-    this.errorMessage,
-    this.pendingReview = false,
-  });
-
-  factory VerificationResult.failure(String message) => VerificationResult(
-        success: false,
-        errorMessage: message,
-      );
+  final String? verifiedName;
+  final String? error;
+  const VerificationResult({required this.success, this.verifiedName, this.error});
 }
 
+/// Singleton service handling HMRC + Companies House business verification.
+/// Verification is a post-subscription unlock, not a pre-purchase gate.
 class BusinessVerificationService {
+  static final _i = BusinessVerificationService._();
+  factory BusinessVerificationService() => _i;
   BusinessVerificationService._();
-  static final BusinessVerificationService instance =
-      BusinessVerificationService._();
 
-  // ── HMRC VAT number verification ──────────────────────────────────────────
-
-  /// Validates a UK VAT number via the free HMRC API.
-  /// VAT numbers should be 9 digits; leading 'GB' prefix is stripped.
-  Future<VerificationResult> verifyVatNumber(String rawVat) async {
-    final vatNumber = rawVat.trim().toUpperCase().replaceFirst('GB', '');
-    if (vatNumber.isEmpty || vatNumber.length < 9) {
-      return VerificationResult.failure(
-          'Please enter a valid 9-digit VAT number.');
-    }
-
+  /// Verify a UK limited company via the free Companies House public API.
+  /// No API key required.
+  Future<VerificationResult> verifyLimitedCompany({
+    required String companyNumber,
+    required String companyName,
+  }) async {
     try {
+      final cleaned = companyNumber.trim().toUpperCase().padLeft(8, '0');
       final uri = Uri.parse(
-        'https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/$vatNumber',
-      );
-      final response = await http.get(uri, headers: {
-        'Accept': 'application/json',
-      }).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final target = data['target'] as Map<String, dynamic>?;
-        final name = target?['name'] as String? ?? 'Your business';
-        return VerificationResult(
-          success: true,
-          businessName: name,
-          registrationNumber: 'GB$vatNumber',
-        );
-      } else if (response.statusCode == 404) {
-        return VerificationResult.failure(
-            'VAT number not found. Please check and try again.');
-      } else {
-        return VerificationResult.failure(
-            'HMRC verification unavailable. Please try another method.');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('BusinessVerificationService.verifyVatNumber: $e');
-      }
-      return VerificationResult.failure(
-          'Could not connect to HMRC. Please check your connection and try again.');
-    }
-  }
-
-  // ── Companies House number verification ───────────────────────────────────
-
-  /// Validates a Companies House number via the free public API.
-  /// Company numbers are 8 characters (may start with 0).
-  Future<VerificationResult> verifyCompanyNumber(String rawNumber) async {
-    final number = rawNumber.trim().toUpperCase().padLeft(8, '0');
-    if (number.isEmpty || number.length != 8) {
-      return VerificationResult.failure(
-          'Please enter a valid 8-character Companies House number.');
-    }
-
-    try {
-      final uri = Uri.parse(
-        'https://api.company-information.service.gov.uk/company/$number',
-      );
-      final response = await http.get(uri, headers: {
-        'Accept': 'application/json',
-      }).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final companyStatus = data['company_status'] as String? ?? '';
-        final companyName = data['company_name'] as String? ?? 'Your company';
-
-        // Only allow active companies
-        if (companyStatus != 'active') {
-          return VerificationResult.failure(
-              'This company is listed as "$companyStatus". '
-              'Only active companies are eligible for Partner verification.');
+          'https://api.company-information.service.gov.uk/company/$cleaned');
+      final res =
+          await http.get(uri).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final status = data['company_status'] as String? ?? '';
+        final name   = data['company_name']   as String? ?? '';
+        if (status == 'active') {
+          await _write(
+            method: 'companies_house',
+            entityType: 'limited_company',
+            verifiedName: name,
+            extra: {'companyNumber': cleaned},
+          );
+          return VerificationResult(success: true, verifiedName: name);
         }
-
-        return VerificationResult(
-          success: true,
-          businessName: companyName,
-          registrationNumber: number,
+        return const VerificationResult(
+          success: false,
+          error: 'Company is not listed as active on Companies House. '
+              'Check the number and try again.',
         );
-      } else if (response.statusCode == 404) {
-        return VerificationResult.failure(
-            'Company number not found. Please check and try again.');
-      } else {
-        return VerificationResult.failure(
-            'Companies House verification unavailable. Please try another method.');
       }
+      if (res.statusCode == 404) {
+        return const VerificationResult(
+          success: false,
+          error: 'No company found with that number. '
+              'Check Companies House and try again.',
+        );
+      }
+      return const VerificationResult(
+        success: false,
+        error: 'Companies House is temporarily unavailable. Try again shortly.',
+      );
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('BusinessVerificationService.verifyCompanyNumber: $e');
-      }
-      return VerificationResult.failure(
-          'Could not connect to Companies House. Please check your connection and try again.');
+      if (kDebugMode) debugPrint('BusinessVerificationService: $e');
+      return const VerificationResult(
+        success: false,
+        error: 'Could not connect to Companies House. Check your connection.',
+      );
     }
   }
 
-  // ── Sole Trader UTR self-declaration ──────────────────────────────────────
+  /// Verify a UK VAT number via the free HMRC VAT Validation public API.
+  /// No API key required.
+  Future<VerificationResult> verifyVatNumber(String vatNumber) async {
+    try {
+      final cleaned =
+          vatNumber.trim().replaceAll(RegExp(r'[^0-9]'), '');
+      final uri = Uri.parse(
+          'https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/$cleaned');
+      final res = await http
+          .get(uri, headers: {'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final data   = jsonDecode(res.body) as Map<String, dynamic>;
+        final target = data['target'] as Map<String, dynamic>?;
+        final name   = target?['name'] as String? ?? '';
+        await _write(
+          method: 'hmrc_vat',
+          entityType: 'vat_registered',
+          verifiedName: name,
+          extra: {'vatNumber': cleaned},
+        );
+        return VerificationResult(success: true, verifiedName: name);
+      }
+      if (res.statusCode == 404) {
+        return const VerificationResult(
+          success: false,
+          error: 'VAT number not found. Check the number and try again.',
+        );
+      }
+      return const VerificationResult(
+        success: false,
+        error: 'HMRC is temporarily unavailable. Try again shortly.',
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('BusinessVerificationService: $e');
+      return const VerificationResult(
+        success: false,
+        error: 'Could not connect to HMRC. Check your connection.',
+      );
+    }
+  }
 
-  /// Records a sole trader UTR self-declaration.
-  /// No external API call — sets pendingReview = true for admin spot-check.
-  VerificationResult declareSoleTrader({
-    required String utr,
+  /// Record a sole trader statutory declaration.
+  /// No external API — legal liability transfers to the declarant.
+  Future<VerificationResult> submitSoleTraderDeclaration({
+    required String legalName,
     required String tradingName,
-    required bool agreedToTCs,
-  }) {
-    if (!agreedToTCs) {
-      return VerificationResult.failure(
-          'You must agree to the Terms & Conditions to proceed.');
+    required String utrNumber,
+  }) async {
+    try {
+      await _write(
+        method: 'sole_trader_declaration',
+        entityType: 'sole_trader',
+        verifiedName: tradingName,
+        extra: {
+          'legalName': legalName,
+          'utrHash': utrNumber.hashCode.toString(), // never store raw UTR
+          'declarationSignedAt': FieldValue.serverTimestamp(),
+        },
+      );
+      return VerificationResult(success: true, verifiedName: tradingName);
+    } catch (e) {
+      if (kDebugMode) debugPrint('BusinessVerificationService: $e');
+      return const VerificationResult(
+        success: false,
+        error: 'Could not save declaration. Please try again.',
+      );
     }
+  }
 
-    final cleanUtr = utr.replaceAll(RegExp(r'\s+'), '');
-    if (cleanUtr.length != 10 || int.tryParse(cleanUtr) == null) {
-      return VerificationResult.failure(
-          'Please enter a valid 10-digit Unique Taxpayer Reference (UTR).');
-    }
-
-    if (tradingName.trim().isEmpty) {
-      return VerificationResult.failure(
-          'Please enter your trading name or business name.');
-    }
-
-    return VerificationResult(
-      success: true,
-      businessName: tradingName.trim(),
-      registrationNumber: 'UTR-${cleanUtr.substring(0, 4)}****',
-      pendingReview: true, // Flagged for admin review
-    );
+  Future<void> _write({
+    required String method,
+    required String entityType,
+    required String verifiedName,
+    required Map<String, dynamic> extra,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not authenticated');
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'businessVerified': true,
+      'verificationMethod': method,
+      'verifiedBusinessName': verifiedName,
+      'verificationData': {
+        'entityType': entityType,
+        'verifiedAt': FieldValue.serverTimestamp(),
+        ...extra,
+      },
+    }, SetOptions(merge: true));
+    // Refresh in-memory state immediately
+    await SubscriptionService().loadBusinessVerificationStatus();
   }
 }

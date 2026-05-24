@@ -1108,6 +1108,29 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
             ],
           ),
         ),
+        if (!_isFree && SubscriptionService().isFree)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Text(
+                  'Paid meetups require ',
+                  style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
+                  child: Text(
+                    'Huddl Plus',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: HuddlColors.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (!_isFree) ...[
           const SizedBox(height: 10),
           Container(
@@ -1139,6 +1162,19 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               ],
             ),
           ),
+          if (!_isFree)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Parents arrange payment directly between themselves. '
+                'Huddl shows the cost but is not involved in any payment.',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: HuddlColors.textHint,
+                  height: 1.4,
+                ),
+              ),
+            ),
         ],
       ],
     );

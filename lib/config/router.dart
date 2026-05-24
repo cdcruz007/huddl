@@ -343,8 +343,10 @@ class AppRouter {
         );
 
       case '/partner_profile':
+        final ppArgs = settings.arguments as Map<String, dynamic>? ?? {};
+        final partnerUid = ppArgs['partnerUid'] as String? ?? '';
         return SlidePageRoute(
-          page: const PartnerProfileScreen(),
+          page: PartnerProfileScreen(partnerUid: partnerUid),
         );
 
       case '/partner_analytics':

@@ -1,21 +1,19 @@
-// ============================================================================
-// HUDDL -- BUSINESS VERIFICATION SCREEN
-// ============================================================================
-//
-// Three-step PageView flow:
-//   Step 0 — Choose verification method (VAT / Companies House / Sole Trader)
-//   Step 1 — Enter details and verify
-//   Step 2 — Success confirmation
-//
-// On success, calls SubscriptionService.setBusinessVerified(verified: true)
-// and pops back to the caller (profile or onboarding).
-// ============================================================================
-
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/huddl_colors.dart';
 import '../../services/business_verification_service.dart';
-import '../../services/subscription_service.dart';
+import '../../theme/huddl_colors.dart';
+import '../../widgets/common/underlined_text_field.dart';
+import '../../widgets/common/primary_button.dart';
+
+// =============================================================================
+// BUSINESS VERIFICATION SCREEN
+//
+// Post-subscription unlock flow for Partner subscribers.
+// Step 0 → entity type selection
+// Step 1 → details form (IndexedStack keyed on _entityType)
+// Step 2 → success state with SVG celebration
+// =============================================================================
 
 class BusinessVerificationScreen extends StatefulWidget {
   const BusinessVerificationScreen({super.key});
@@ -28,283 +26,271 @@ class BusinessVerificationScreen extends StatefulWidget {
 class _BusinessVerificationScreenState
     extends State<BusinessVerificationScreen> {
   final PageController _pageCtrl = PageController();
+  int _step = 0; // 0=entity select, 1=details form, 2=success
 
-  BusinessVerificationMethod? _selectedMethod;
-  VerificationResult? _result;
-  bool _loading = false;
-  bool _agreedToTCs = false;
+  BusinessEntityType? _entityType;
+  bool _isLoading = false;
+  String? _errorMessage;
+  String? _verifiedName;
 
-  final _vatCtrl = TextEditingController();
-  final _companyCtrl = TextEditingController();
-  final _utrCtrl = TextEditingController();
-  final _tradingNameCtrl = TextEditingController();
+  // Form controllers
+  final _companyNameCtrl   = TextEditingController();
+  final _companyNumberCtrl = TextEditingController();
+  final _vatNumberCtrl     = TextEditingController();
+  final _legalNameCtrl     = TextEditingController();
+  final _tradingNameCtrl   = TextEditingController();
+  final _utrCtrl           = TextEditingController();
+  bool _declarationConfirmed = false;
 
   @override
   void dispose() {
     _pageCtrl.dispose();
-    _vatCtrl.dispose();
-    _companyCtrl.dispose();
-    _utrCtrl.dispose();
+    _companyNameCtrl.dispose();
+    _companyNumberCtrl.dispose();
+    _vatNumberCtrl.dispose();
+    _legalNameCtrl.dispose();
     _tradingNameCtrl.dispose();
+    _utrCtrl.dispose();
     super.dispose();
   }
 
-  void _goToStep(int step) {
-    _pageCtrl.animateToPage(
-      step,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
+  // ── Verification actions ──────────────────────────────────────────────────
+
+  Future<void> _verifyLtd() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+    final result = await BusinessVerificationService().verifyLimitedCompany(
+      companyNumber: _companyNumberCtrl.text,
+      companyName: _companyNameCtrl.text,
     );
-  }
-
-  Future<void> _verify() async {
-    if (_selectedMethod == null) return;
-    setState(() => _loading = true);
-
-    final svc = BusinessVerificationService.instance;
-    VerificationResult result;
-
-    switch (_selectedMethod!) {
-      case BusinessVerificationMethod.vat:
-        result = await svc.verifyVatNumber(_vatCtrl.text);
-        break;
-      case BusinessVerificationMethod.companies:
-        result = await svc.verifyCompanyNumber(_companyCtrl.text);
-        break;
-      case BusinessVerificationMethod.soleTrader:
-        result = svc.declareSoleTrader(
-          utr: _utrCtrl.text,
-          tradingName: _tradingNameCtrl.text,
-          agreedToTCs: _agreedToTCs,
-        );
-        break;
-    }
-
-    setState(() {
-      _loading = false;
-      _result = result;
-    });
-
+    if (!mounted) return;
+    setState(() { _isLoading = false; });
     if (result.success) {
-      await SubscriptionService().setBusinessVerified(verified: true);
-      _goToStep(2);
+      setState(() => _verifiedName = result.verifiedName);
+      _pageCtrl.nextPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.errorMessage ?? 'Verification failed.'),
-            backgroundColor: HuddlColors.error,
-          ),
-        );
-      }
+      setState(() => _errorMessage = result.error);
     }
   }
+
+  Future<void> _verifyVat() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+    final result = await BusinessVerificationService()
+        .verifyVatNumber(_vatNumberCtrl.text);
+    if (!mounted) return;
+    setState(() { _isLoading = false; });
+    if (result.success) {
+      setState(() => _verifiedName = result.verifiedName);
+      _pageCtrl.nextPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    } else {
+      setState(() => _errorMessage = result.error);
+    }
+  }
+
+  Future<void> _submitSoleTrader() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+    final result = await BusinessVerificationService().submitSoleTraderDeclaration(
+      legalName: _legalNameCtrl.text,
+      tradingName: _tradingNameCtrl.text,
+      utrNumber: _utrCtrl.text,
+    );
+    if (!mounted) return;
+    setState(() { _isLoading = false; });
+    if (result.success) {
+      setState(() => _verifiedName = result.verifiedName);
+      _pageCtrl.nextPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    } else {
+      setState(() => _errorMessage = result.error);
+    }
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.background,
+        backgroundColor: hc.surface,
         elevation: 0,
-        leading: BackButton(color: HuddlColors.nearBlack),
+        leading: _step == 0
+            ? IconButton(
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => Navigator.pop(context),
+              )
+            : (_step < 2
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () {
+                      _pageCtrl.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut);
+                    },
+                  )
+                : const SizedBox.shrink()),
         title: Text(
-          'Business Verification',
+          'Business verification',
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.nearBlack,
+            color: hc.textPrimary,
           ),
         ),
+        centerTitle: true,
       ),
-      body: PageView(
+      body: PageView.builder(
         controller: _pageCtrl,
         physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _StepChooseMethod(),
-          _StepEnterDetails(),
-          _StepSuccess(),
-        ],
+        onPageChanged: (i) => setState(() => _step = i),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          switch (index) {
+            case 0:
+              return _buildStep0(context);
+            case 1:
+              return _buildStep1(context);
+            case 2:
+              return _buildStep2(context);
+            default:
+              return const SizedBox.shrink();
+          }
+        },
       ),
     );
   }
 
-  // ── Step 0: Choose method ─────────────────────────────────────────────────
+  // ── Step 0 — Entity type selection ────────────────────────────────────────
 
-  Widget _StepChooseMethod() {
+  Widget _buildStep0(BuildContext context) {
+    final hc = context.hc;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How would you like to verify your business?',
+            'Verify your business',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: HuddlColors.nearBlack,
+              color: hc.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Verification is required to activate your Huddl Partner profile. '
-            'Your information is kept secure and only used for verification.',
+            'Choose how your business is registered with HMRC',
             style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textTertiary,
-              height: 1.5,
+              fontSize: 14,
+              color: hc.textSecondary,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 28),
-          _MethodCard(
-            icon: Icons.receipt_long_outlined,
-            title: 'VAT Registration',
-            subtitle: 'Verify using your HMRC VAT number (GB + 9 digits)',
-            selected: _selectedMethod == BusinessVerificationMethod.vat,
+          _StageCard(
+            icon: Icons.business_rounded,
+            title: 'Limited company',
+            subtitle: 'Verified instantly via Companies House',
+            selected: _entityType == BusinessEntityType.limitedCompany,
             onTap: () => setState(
-                () => _selectedMethod = BusinessVerificationMethod.vat),
+                () => _entityType = BusinessEntityType.limitedCompany),
           ),
           const SizedBox(height: 12),
-          _MethodCard(
-            icon: Icons.business_outlined,
-            title: 'Companies House',
-            subtitle:
-                'Verify using your registered company number (8 characters)',
-            selected:
-                _selectedMethod == BusinessVerificationMethod.companies,
+          _StageCard(
+            icon: Icons.receipt_long_rounded,
+            title: 'VAT-registered business',
+            subtitle: 'Verified instantly via HMRC',
+            selected: _entityType == BusinessEntityType.vatRegistered,
             onTap: () => setState(
-                () => _selectedMethod = BusinessVerificationMethod.companies),
+                () => _entityType = BusinessEntityType.vatRegistered),
           ),
           const SizedBox(height: 12),
-          _MethodCard(
-            icon: Icons.person_outline,
-            title: 'Sole Trader / Freelancer',
-            subtitle: 'Declare your UTR number — subject to admin review',
-            selected:
-                _selectedMethod == BusinessVerificationMethod.soleTrader,
-            onTap: () => setState(
-                () => _selectedMethod = BusinessVerificationMethod.soleTrader),
+          _StageCard(
+            icon: Icons.person_rounded,
+            title: 'Sole trader',
+            subtitle: 'Self-declaration with UTR reference',
+            selected: _entityType == BusinessEntityType.soleTrader,
+            onTap: () =>
+                setState(() => _entityType = BusinessEntityType.soleTrader),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed:
-                  _selectedMethod != null ? () => _goToStep(1) : null,
-              child: Text(
-                'Continue',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+          PrimaryButton(
+            text: 'Continue',
+            enabled: _entityType != null,
+            onPressed: _entityType == null
+                ? null
+                : () => _pageCtrl.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    ),
           ),
         ],
       ),
     );
   }
 
-  // ── Step 1: Enter details ─────────────────────────────────────────────────
+  // ── Step 1 — Details form ─────────────────────────────────────────────────
 
-  Widget _StepEnterDetails() {
+  Widget _buildStep1(BuildContext context) {
+    final hc = context.hc;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _stepTitle(),
+            _entityType == BusinessEntityType.limitedCompany
+                ? 'Limited company details'
+                : _entityType == BusinessEntityType.vatRegistered
+                    ? 'VAT registration details'
+                    : 'Sole trader declaration',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: HuddlColors.nearBlack,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _stepSubtitle(),
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textTertiary,
-              height: 1.5,
+              color: hc.textPrimary,
             ),
           ),
           const SizedBox(height: 24),
-          if (_selectedMethod == BusinessVerificationMethod.vat) ...[
-            _InputField(
-              controller: _vatCtrl,
-              label: 'VAT Number',
-              hint: 'GB123456789',
-              keyboardType: TextInputType.number,
-            ),
-          ] else if (_selectedMethod ==
-              BusinessVerificationMethod.companies) ...[
-            _InputField(
-              controller: _companyCtrl,
-              label: 'Company Number',
-              hint: '12345678',
-              keyboardType: TextInputType.text,
-            ),
-          ] else if (_selectedMethod ==
-              BusinessVerificationMethod.soleTrader) ...[
-            _InputField(
-              controller: _tradingNameCtrl,
-              label: 'Trading Name / Business Name',
-              hint: 'e.g. Jane Smith Childcare',
-            ),
+          // Entity-specific form via IndexedStack
+          IndexedStack(
+            index: _entityType == null
+                ? 0
+                : _entityType == BusinessEntityType.limitedCompany
+                    ? 0
+                    : _entityType == BusinessEntityType.vatRegistered
+                        ? 1
+                        : 2,
+            children: [
+              _buildLtdForm(context),
+              _buildVatForm(context),
+              _buildSoleTraderForm(context),
+            ],
+          ),
+          // Error message
+          if (_errorMessage != null) ...[
             const SizedBox(height: 16),
-            _InputField(
-              controller: _utrCtrl,
-              label: 'Unique Taxpayer Reference (UTR)',
-              hint: '1234567890',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: () =>
-                  setState(() => _agreedToTCs = !_agreedToTCs),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: HuddlColors.error.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: HuddlColors.error.withValues(alpha: 0.3)),
+              ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: _agreedToTCs
-                          ? HuddlColors.primary
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: _agreedToTCs
-                            ? HuddlColors.primary
-                            : HuddlColors.divider,
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: _agreedToTCs
-                        ? const Icon(Icons.check,
-                            size: 14, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
+                  const Icon(Icons.error_outline_rounded,
+                      size: 18, color: HuddlColors.error),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'I confirm I am self-employed, registered with HMRC, '
-                      'and the UTR I have provided is correct. I agree to '
-                      'the Huddl Partner Terms & Conditions.',
+                      _errorMessage!,
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: HuddlColors.textDark,
-                        height: 1.5,
+                        color: HuddlColors.error,
+                        height: 1.4,
                       ),
                     ),
                   ),
@@ -312,177 +298,195 @@ class _BusinessVerificationScreenState
               ),
             ),
           ],
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: _loading ? null : _verify,
-              child: _loading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      'Verify Now',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+          const SizedBox(height: 24),
+          // Submit button — sole trader has separate button inside the form
+          if (_entityType != BusinessEntityType.soleTrader)
+            PrimaryButton(
+              text: 'Verify now',
+              isLoading: _isLoading,
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      if (_entityType == BusinessEntityType.limitedCompany) {
+                        _verifyLtd();
+                      } else if (_entityType ==
+                          BusinessEntityType.vatRegistered) {
+                        _verifyVat();
+                      }
+                    },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLtdForm(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        UnderlinedTextField(
+          label: 'Company name',
+          controller: _companyNameCtrl,
+        ),
+        const SizedBox(height: 20),
+        UnderlinedTextField(
+          label: 'Companies House number',
+          hintText: '8 digits, e.g. 12345678',
+          controller: _companyNumberCtrl,
+          keyboardType: TextInputType.number,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVatForm(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        UnderlinedTextField(
+          label: 'VAT number',
+          hintText: 'e.g. GB123456789',
+          controller: _vatNumberCtrl,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSoleTraderForm(BuildContext context) {
+    final hc = context.hc;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        UnderlinedTextField(
+          label: 'Legal full name',
+          controller: _legalNameCtrl,
+        ),
+        const SizedBox(height: 20),
+        UnderlinedTextField(
+          label: 'Trading name',
+          controller: _tradingNameCtrl,
+        ),
+        const SizedBox(height: 20),
+        UnderlinedTextField(
+          label: 'UTR number',
+          hintText: '10-digit HMRC reference',
+          controller: _utrCtrl,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 20),
+        // Statutory declaration card
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: hc.surfaceAlt,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HuddlColors.divider),
+          ),
+          child: Text(
+            'I confirm that I am registered as self-employed with HMRC, '
+            'that the trading details I have provided are accurate, and that '
+            'I accept full legal responsibility for all services and events '
+            'I promote through Huddl. I understand that Huddl is a promotional '
+            'platform only and accepts no liability for the services or events I list.',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              height: 1.5,
+              color: hc.textSecondary,
             ),
           ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => _goToStep(0),
-            child: Text(
-              'Change verification method',
+        ),
+        CheckboxListTile(
+          value: _declarationConfirmed,
+          onChanged: (v) =>
+              setState(() => _declarationConfirmed = v ?? false),
+          title: Text(
+            'I confirm the above declaration is true',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          activeColor: HuddlColors.primary,
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+        ),
+        const SizedBox(height: 8),
+        PrimaryButton(
+          text: 'Submit declaration',
+          enabled: _declarationConfirmed && !_isLoading,
+          isLoading: _isLoading,
+          onPressed:
+              (!_declarationConfirmed || _isLoading) ? null : _submitSoleTrader,
+        ),
+      ],
+    );
+  }
+
+  // ── Step 2 — Success ──────────────────────────────────────────────────────
+
+  Widget _buildStep2(BuildContext context) {
+    final hc = context.hc;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/illustrations/huddl_celebrating.svg',
+              height: 180,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Business verified',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: hc.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_verifiedName != null)
+              Text(
+                _verifiedName!,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.primary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            const SizedBox(height: 8),
+            Text(
+              'Your HMRC-verified badge is now active on all your listings.',
+              textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: HuddlColors.textTertiary,
+                color: hc.textSecondary,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Step 2: Success ───────────────────────────────────────────────────────
-
-  Widget _StepSuccess() {
-    final isPending = _result?.pendingReview ?? false;
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: HuddlColors.success.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isPending ? Icons.hourglass_top_outlined : Icons.verified,
-              size: 40,
-              color: isPending ? HuddlColors.accentAmber : HuddlColors.success,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            isPending ? 'Declaration Submitted' : 'Business Verified!',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: HuddlColors.nearBlack,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          if (_result?.businessName != null)
-            Text(
-              _result!.businessName!,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.primary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          const SizedBox(height: 12),
-          Text(
-            isPending
-                ? 'Your sole trader declaration is under review. '
-                    'Your Partner profile will be activated within 24 hours '
-                    'once our team has verified your details.'
-                : 'Your business has been verified. Your Huddl Partner profile '
-                    'is now active — you can start creating listings, viewing '
-                    'analytics, and promoting your business in the community.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textTertiary,
-              height: 1.6,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
+            const SizedBox(height: 32),
+            PrimaryButton(
+              text: 'Done',
               onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Done',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  String _stepTitle() {
-    switch (_selectedMethod) {
-      case BusinessVerificationMethod.vat:
-        return 'Enter your VAT number';
-      case BusinessVerificationMethod.companies:
-        return 'Enter your Companies House number';
-      case BusinessVerificationMethod.soleTrader:
-        return 'Sole trader declaration';
-      default:
-        return 'Enter your details';
-    }
-  }
-
-  String _stepSubtitle() {
-    switch (_selectedMethod) {
-      case BusinessVerificationMethod.vat:
-        return 'Your 9-digit VAT number is on your VAT registration certificate '
-            '(form VAT4) or your HMRC online account.';
-      case BusinessVerificationMethod.companies:
-        return 'Your 8-character company number is shown on your Certificate of '
-            'Incorporation and on the Companies House register.';
-      case BusinessVerificationMethod.soleTrader:
-        return 'Your 10-digit UTR is on any Self Assessment correspondence from '
-            'HMRC, or in your HMRC online account.';
-      default:
-        return '';
-    }
   }
 }
 
-// ── Sub-widgets ───────────────────────────────────────────────────────────────
+// =============================================================================
+// _StageCard — AnimatedContainer with orange border on select, BoxShadow
+// (reproduced here, not imported from another file)
+// =============================================================================
 
-class _MethodCard extends StatelessWidget {
+class _StageCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final bool selected;
   final VoidCallback onTap;
 
-  const _MethodCard({
+  const _StageCard({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -492,6 +496,7 @@ class _MethodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -499,13 +504,24 @@ class _MethodCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: selected
-              ? HuddlColors.primary.withValues(alpha: 0.08)
-              : Colors.white,
+              ? HuddlColors.primary.withValues(alpha: 0.06)
+              : hc.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? HuddlColors.primary : HuddlColors.divider,
+            color: selected
+                ? HuddlColors.primary
+                : HuddlColors.divider,
             width: selected ? 2 : 1,
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: HuddlColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
@@ -515,13 +531,13 @@ class _MethodCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: selected
                     ? HuddlColors.primary.withValues(alpha: 0.12)
-                    : HuddlColors.background,
-                borderRadius: BorderRadius.circular(10),
+                    : hc.inputBg,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: selected ? HuddlColors.primary : HuddlColors.textTertiary,
                 size: 22,
+                color: selected ? HuddlColors.primary : hc.textSecondary,
               ),
             ),
             const SizedBox(width: 14),
@@ -534,9 +550,7 @@ class _MethodCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: selected
-                          ? HuddlColors.primary
-                          : HuddlColors.nearBlack,
+                      color: selected ? HuddlColors.primary : hc.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -544,83 +558,18 @@ class _MethodCard extends StatelessWidget {
                     subtitle,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.textTertiary,
-                      height: 1.4,
+                      color: hc.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: HuddlColors.primary, size: 22),
+              const Icon(Icons.check_circle_rounded,
+                  color: HuddlColors.primary, size: 20),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _InputField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final String hint;
-  final TextInputType keyboardType;
-
-  const _InputField({
-    required this.controller,
-    required this.label,
-    required this.hint,
-    this.keyboardType = TextInputType.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.textTertiary,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            color: HuddlColors.nearBlack,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.poppins(
-              fontSize: 15,
-              color: HuddlColors.textHint,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: HuddlColors.divider),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: HuddlColors.divider),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: HuddlColors.primary, width: 2),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

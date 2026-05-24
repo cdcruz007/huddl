@@ -219,38 +219,30 @@ service cloud.firestore {
     // ─────────────────────────────────────────────────────────────────────────
     // BOROUGH FEED — PROMOTED CARDS
     // Partner-promoted cards surfaced in the home feed.
+    // Correct path: borough_feed/{borough}/promoted/{promotedId}
     // ─────────────────────────────────────────────────────────────────────────
-    match /borough_feed/{docId} {
+    match /borough_feed/{borough}/promoted/{promotedId} {
       allow read: if request.auth != null;
-      // Only authenticated users with a partner listing may write promoted cards.
-      // Admin SDK writes bypass these rules for server-side promotion management.
-      allow create, update: if request.auth != null
-        && request.resource.data.createdByUid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.partnerUid == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.partnerUid == request.auth.uid;
       allow delete: if request.auth != null
-        && resource.data.createdByUid == request.auth.uid;
+        && resource.data.partnerUid == request.auth.uid;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // PARTNER ANALYTICS
-    // Per-listing daily view tracking for Partner subscribers.
-    // partner_analytics/{listingId}/views/{dateKey}
+    // Flat document per Partner owner: partner_analytics/{uid}
+    // Fields: totalProfileViews, totalListingViews, totalBookingClicks,
+    //         totalEndorsements, lastUpdated
     // ─────────────────────────────────────────────────────────────────────────
-    match /partner_analytics/{listingId} {
-      // Listing owner can read their own analytics
-      allow read: if request.auth != null
-        && get(/databases/$(database)/documents/local_services/$(listingId)).data.ownerUid
-            == request.auth.uid;
-
-      match /views/{dateKey} {
-        // Any authenticated user may increment view count (anonymous visitor tracking)
-        allow read: if request.auth != null
-          && get(/databases/$(database)/documents/local_services/$(listingId)).data.ownerUid
-              == request.auth.uid;
-        // Any auth user can create/update view docs (FieldValue.increment pattern)
-        allow create, update: if request.auth != null
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['count', 'updatedAt']);
-      }
+    match /partner_analytics/{uid} {
+      // Owner reads own analytics
+      allow read: if request.auth != null && request.auth.uid == uid;
+      // Any authenticated user may increment counters (profile/listing views,
+      // booking clicks) — increments written via merge:true from viewer sessions
+      allow write: if request.auth != null;
     }
   }
 }

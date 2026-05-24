@@ -1,452 +1,405 @@
-// ============================================================================
-// HUDDL -- PARTNER ANALYTICS SCREEN
-// ============================================================================
-//
-// Shows reach metrics for a Partner's service listings:
-//   — 2×2 metric grid: Total Views, Total Clicks, Endorsements, Avg Rating
-//   — CustomPaint 7-day bar chart for daily views (no external chart library)
-//   — Loads per-listing view data from partner_analytics/{listingId}/views/
-// ============================================================================
-
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
-import '../../services/local_services_service.dart';
+
+// =============================================================================
+// PARTNER ANALYTICS SCREEN
+//
+// Shows reach analytics for the current Partner subscriber.
+// Data source: partner_analytics/{currentUid} — flat Firestore doc.
+// Fields: totalProfileViews, totalListingViews, totalBookingClicks,
+//         totalEndorsements, lastUpdated
+// =============================================================================
 
 class PartnerAnalyticsScreen extends StatefulWidget {
   const PartnerAnalyticsScreen({super.key});
 
   @override
-  State<PartnerAnalyticsScreen> createState() => _PartnerAnalyticsScreenState();
+  State<PartnerAnalyticsScreen> createState() =>
+      _PartnerAnalyticsScreenState();
 }
 
 class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
-  final _svc = LocalServicesService();
-  List<ServiceListing> _listings = [];
-  List<double> _dailyViews = List.filled(7, 0);
   bool _loading = true;
+  String? _error;
+
+  int _totalProfileViews  = 0;
+  int _totalListingViews  = 0;
+  int _totalBookingClicks = 0;
+  int _totalEndorsements  = 0;
+  bool _hasAnyData        = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadAnalytics();
   }
 
-  Future<void> _load() async {
-    
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-
+  Future<void> _loadAnalytics() async {
+    setState(() { _loading = true; _error = null; });
     try {
-      final stream = _svc.myListingsStream();
-      final listings = await stream.first;
-      final myListings = listings
-          .where((l) => l.isPartnerListing && l.ownerUid == uid)
-          .toList();
-
-      // Fetch 7-day view data from partner_analytics
-      final today = DateTime.now();
-      final views = List<double>.filled(7, 0);
-      for (final listing in myListings) {
-        for (int i = 0; i < 7; i++) {
-          final day = today.subtract(Duration(days: 6 - i));
-          final dateKey =
-              '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
-          try {
-            final doc = await FirebaseFirestore.instance
-                .collection('partner_analytics')
-                .doc(listing.id)
-                .collection('views')
-                .doc(dateKey)
-                .get();
-            if (doc.exists) {
-              views[i] += (doc.data()?['count'] as num?)?.toDouble() ?? 0;
-            }
-          } catch (_) {}
-        }
-      }
-
-      if (mounted) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
         setState(() {
-          _listings = myListings;
-          _dailyViews = views;
+          _error = 'Please sign in to view analytics.';
           _loading = false;
         });
+        return;
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      final doc = await FirebaseFirestore.instance
+          .collection('partner_analytics')
+          .doc(uid)
+          .get();
+
+      if (!mounted) return;
+
+      final data = doc.data() ?? {};
+      final profileViews  = (data['totalProfileViews']  as num?)?.toInt() ?? 0;
+      final listingViews  = (data['totalListingViews']  as num?)?.toInt() ?? 0;
+      final bookingClicks = (data['totalBookingClicks'] as num?)?.toInt() ?? 0;
+      final endorsements  = (data['totalEndorsements']  as num?)?.toInt() ?? 0;
+
+      setState(() {
+        _totalProfileViews  = profileViews;
+        _totalListingViews  = listingViews;
+        _totalBookingClicks = bookingClicks;
+        _totalEndorsements  = endorsements;
+        _hasAnyData =
+            profileViews + listingViews + bookingClicks + endorsements > 0;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load analytics. Please try again.';
+        _loading = false;
+      });
     }
   }
-
-  int get _totalViews =>
-      _listings.fold(0, (sum, l) => sum + l.viewCount);
-  int get _totalEndorsements =>
-      _listings.fold(0, (sum, l) => sum + l.endorsementCount);
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.background,
+        backgroundColor: hc.surface,
         elevation: 0,
-        leading: BackButton(color: HuddlColors.nearBlack),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          color: hc.textPrimary,
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
-          'Analytics',
+          'Reach analytics',
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.nearBlack,
+            color: hc.textPrimary,
           ),
         ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            color: HuddlColors.primary,
+            onPressed: _loadAnalytics,
+          ),
+        ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── 2×2 metric grid ──────────────────────────────
-                  _MetricGrid(
-                    totalViews: _totalViews,
-                    totalEndorsements: _totalEndorsements,
-                    listingCount: _listings.length,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ── 7-day bar chart ───────────────────────────────
-                  Text(
-                    '7-Day Views',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.nearBlack,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: _DailyBarChart(views: _dailyViews),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ── Per-listing breakdown ─────────────────────────
-                  Text(
-                    'Listing Breakdown',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.nearBlack,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_listings.isEmpty)
-                    Center(
-                      child: Text(
-                        'No Partner listings yet',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: HuddlColors.textTertiary,
-                        ),
-                      ),
-                    )
-                  else
-                    ..._listings.map((l) => _ListingRow(listing: l)),
-                ],
-              ),
-            ),
+          ? const Center(
+              child:
+                  CircularProgressIndicator(color: HuddlColors.primary))
+          : _error != null
+              ? _buildError()
+              : _buildContent(context),
     );
   }
-}
 
-// ── Metric grid ───────────────────────────────────────────────────────────────
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              size: 48, color: HuddlColors.error),
+          const SizedBox(height: 16),
+          Text(
+            _error!,
+            style: GoogleFonts.poppins(
+                fontSize: 14, color: context.hc.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadAnalytics,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: HuddlColors.primary),
+            child: Text('Retry',
+                style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
-class _MetricGrid extends StatelessWidget {
-  final int totalViews;
-  final int totalEndorsements;
-  final int listingCount;
+  Widget _buildContent(BuildContext context) {
+    final hc = context.hc;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Subtitle
+          Text(
+            'How parents are finding and engaging with your business',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: hc.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
 
-  const _MetricGrid({
-    required this.totalViews,
-    required this.totalEndorsements,
-    required this.listingCount,
-  });
+          // 2×2 metric grid
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.4,
+            children: [
+              _MetricCard(
+                  label: 'Profile views', value: _totalProfileViews),
+              _MetricCard(
+                  label: 'Listing views', value: _totalListingViews),
+              _MetricCard(
+                  label: 'Booking clicks', value: _totalBookingClicks),
+              _MetricCard(
+                  label: 'Endorsements', value: _totalEndorsements),
+            ],
+          ),
 
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
+          const SizedBox(height: 28),
+
+          // Chart or empty state
+          if (!_hasAnyData)
+            _buildEmptyState(context)
+          else
+            _buildChartSection(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          children: [
+            SvgPicture.asset(
+              'assets/illustrations/huddl_neutral.svg',
+              height: 140,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Your analytics will appear here once parents\nstart viewing your listings.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: context.hc.textSecondary,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartSection(BuildContext context) {
+    final hc = context.hc;
+    final bars = [
+      _BarData('Profile', _totalProfileViews),
+      _BarData('Listings', _totalListingViews),
+      _BarData('Bookings', _totalBookingClicks),
+      _BarData('Endorsed', _totalEndorsements),
+    ];
+    final maxValue =
+        bars.map((b) => b.value).reduce((a, b) => a > b ? a : b);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MetricCard(
-          icon: Icons.visibility_outlined,
-          label: 'Total Views',
-          value: '$totalViews',
-          color: HuddlColors.primary,
+        Text(
+          'Overview',
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: hc.textPrimary,
+          ),
         ),
-        _MetricCard(
-          icon: Icons.thumb_up_alt_outlined,
-          label: 'Endorsements',
-          value: '$totalEndorsements',
-          color: HuddlColors.success,
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: hc.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: HuddlColors.divider),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: bars.map((bar) {
+              final fraction =
+                  maxValue > 0 ? bar.value / maxValue : 0.0;
+              const maxBarHeight = 100.0;
+              return _BarItem(
+                label: bar.label,
+                value: bar.value,
+                fraction: fraction,
+                maxHeight: maxBarHeight,
+              );
+            }).toList(),
+          ),
         ),
-        _MetricCard(
-          icon: Icons.storefront_outlined,
-          label: 'Listings',
-          value: '$listingCount',
-          color: HuddlColors.accentAmber,
-        ),
-        _MetricCard(
-          icon: Icons.trending_up_outlined,
-          label: 'This Week',
-          value: '—',
-          color: HuddlColors.textTertiary,
+        const SizedBox(height: 12),
+        Text(
+          'All-time totals',
+          style: GoogleFonts.poppins(
+              fontSize: 11, color: hc.textTertiary),
         ),
       ],
     );
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
+// =============================================================================
+// _MetricCard
+// White surface, 12px radius, orange accent top border
+// Label: 12px textHint, Value: 28px bold primary
+// =============================================================================
 
-  const _MetricCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+class _MetricCard extends StatelessWidget {
+  final String label;
+  final int value;
+
+  const _MetricCard({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: color, size: 22),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: HuddlColors.nearBlack,
-                ),
-              ),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: HuddlColors.textTertiary,
-                ),
-              ),
-            ],
+          // Orange accent top border
+          Container(
+            height: 3,
+            decoration: const BoxDecoration(
+              color: HuddlColors.primary,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Bar chart ─────────────────────────────────────────────────────────────────
-
-class _DailyBarChart extends StatelessWidget {
-  final List<double> views; // 7 values, oldest first
-
-  const _DailyBarChart({required this.views});
-
-  @override
-  Widget build(BuildContext context) {
-    final maxVal = views.reduce((a, b) => a > b ? a : b);
-    final labels = _dayLabels();
-
-    return SizedBox(
-      height: 140,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(7, (i) {
-          final frac =
-              maxVal > 0 ? (views[i] / maxVal).clamp(0.0, 1.0) : 0.0;
-          return Expanded(
+          Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (views[i] > 0)
-                    Text(
-                      '${views[i].toInt()}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
-                      ),
-                    ),
-                  const SizedBox(height: 2),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.easeOut,
-                    height: (90 * frac).clamp(4.0, 90.0),
-                    decoration: BoxDecoration(
-                      color: i == 6
-                          ? HuddlColors.primary
-                          : HuddlColors.primary.withValues(alpha: 0.4),
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4)),
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.textHint,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    labels[i],
+                    '$value',
                     style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: HuddlColors.textTertiary,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: HuddlColors.primary,
+                      height: 1.0,
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        }),
-      ),
-    );
-  }
-
-  static List<String> _dayLabels() {
-    const abbr = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-    final today = DateTime.now();
-    return List.generate(
-        7, (i) => abbr[(today.subtract(Duration(days: 6 - i)).weekday % 7)]);
-  }
-}
-
-// ── Listing row ───────────────────────────────────────────────────────────────
-
-class _ListingRow extends StatelessWidget {
-  final ServiceListing listing;
-
-  const _ListingRow({required this.listing});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  listing.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.nearBlack,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  listing.category.displayName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _Pill(label: '${listing.viewCount}', icon: Icons.visibility_outlined),
-          const SizedBox(width: 8),
-          _Pill(
-              label: '${listing.endorsementCount}',
-              icon: Icons.thumb_up_alt_outlined),
         ],
       ),
     );
   }
 }
 
-class _Pill extends StatelessWidget {
+// ── Simple bar chart helpers ──────────────────────────────────────────────────
+
+class _BarData {
   final String label;
-  final IconData icon;
+  final int value;
+  const _BarData(this.label, this.value);
+}
 
-  const _Pill({required this.label, required this.icon});
+class _BarItem extends StatelessWidget {
+  final String label;
+  final int value;
+  final double fraction;
+  final double maxHeight;
+
+  const _BarItem({
+    required this.label,
+    required this.value,
+    required this.fraction,
+    required this.maxHeight,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: HuddlColors.background,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 13, color: HuddlColors.textTertiary),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.nearBlack,
-            ),
+    final barH = (maxHeight * fraction).clamp(4.0, maxHeight);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          '$value',
+          style: GoogleFonts.poppins(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.primary,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 600),
+          width: 36,
+          height: barH,
+          decoration: BoxDecoration(
+            color: HuddlColors.primary.withValues(alpha: 0.75),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(4)),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            color: context.hc.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }
