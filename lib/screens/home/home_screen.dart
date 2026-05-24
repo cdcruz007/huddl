@@ -557,6 +557,8 @@ class _HomeScreenState extends State<HomeScreen>
         case _SmartFeedType.aiNudge:
         case _SmartFeedType.communityActivity:
           return !(_feedPrefs['tips'] ?? true);
+        case _SmartFeedType.partnerPromoted:
+          return false; // always shown — Partner paid for placement
       }
     });
 
@@ -573,6 +575,7 @@ class _HomeScreenState extends State<HomeScreen>
       _SmartFeedType.group:              2,
       _SmartFeedType.communityActivity:  3,
       _SmartFeedType.aiNudge:            4,
+      _SmartFeedType.partnerPromoted:    5, // below organic; woven in separately
     };
     items.sort((a, b) {
       final sA = sectionOrder[a.type] ?? 99;
@@ -581,6 +584,33 @@ class _HomeScreenState extends State<HomeScreen>
       // Within the same section, higher score first
       return b.score.compareTo(a.score);
     });
+
+    // ── 1:7 Partner promoted card injection ───────────────────────────────
+    // Insert promoted cards at indices 2, 9, 16, 23... (every 7, offset 2).
+    // Only Partner listings (isPartnerListing: true) are used as promoted cards.
+    final partnerListings = _featuredServices
+        .where((l) => l.isPartnerListing)
+        .toList();
+    if (partnerListings.isNotEmpty) {
+      const kPromoOffset  = 2; // first promoted slot (0-based)
+      const kPromoSpacing = 7; // 1 promoted per 7 organic items
+      int promoIndex = 0;
+      int insertAt    = kPromoOffset;
+      while (insertAt <= items.length && promoIndex < partnerListings.length) {
+        final listing = partnerListings[promoIndex % partnerListings.length];
+        items.insert(
+          insertAt,
+          _SmartFeedItem(
+            type:            _SmartFeedType.partnerPromoted,
+            score:           0.0,
+            reason:          'Partner',
+            promotedListing: listing,
+          ),
+        );
+        promoIndex++;
+        insertAt += kPromoSpacing + 1; // +1 to account for the inserted item
+      }
+    }
 
     setState(() => _smartFeed = items);
   }
@@ -4067,6 +4097,8 @@ class _HomeScreenState extends State<HomeScreen>
         return _buildGroupFeedCard(item, hc);
       case _SmartFeedType.communityActivity:
         return _buildCommunityFeedCard(item, hc);
+      case _SmartFeedType.partnerPromoted:
+        return _buildPartnerPromotedCard(item, hc);
     }
   }
 
@@ -4958,6 +4990,144 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // ── Partner promoted card (1:7 ratio in smart feed) ──────────────────────
+  Widget _buildPartnerPromotedCard(_SmartFeedItem item, dynamic hc) {
+    final listing = item.promotedListing;
+    if (listing == null) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () {
+        HuddlAnimations.lightTap();
+        _servicesService.recordView(listing.id, isPartner: true);
+        Navigator.pushNamed(context, '/services');
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: HuddlColors.primary.withValues(alpha: 0.25), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Promoted label banner
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.10),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified,
+                      size: 13, color: HuddlColors.primary),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Partner · Sponsored',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.primary,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Card body
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Row(
+                children: [
+                  // Category icon circle
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        listing.category.emoji,
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Text block
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          listing.name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          listing.tagline.isNotEmpty
+                              ? listing.tagline
+                              : listing.category.displayName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: hc.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.thumb_up_rounded,
+                                size: 11, color: hc.textTertiary),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${listing.endorsementCount} endorsements',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 10, color: hc.textTertiary),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // View arrow
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      listing.bookingUrl != null ? 'Book' : 'View',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Compact action button ─────────────────────────────────────────────────
   Widget _compactAction({
     required IconData icon,
@@ -5606,6 +5776,7 @@ enum _SmartFeedType {
   announcement,
   group,
   communityActivity,
+  partnerPromoted, // Promoted card from a verified Partner business (1:7 ratio)
 }
 
 // ── Discover New Listings types ───────────────────────────────────────────
@@ -5641,6 +5812,7 @@ class _SmartFeedItem {
   final Announcement? announcement;
   final Group? group;
   final FeedItem? feedItem;
+  final ServiceListing? promotedListing; // for partnerPromoted cards
 
   _SmartFeedItem({
     required this.type,
@@ -5657,6 +5829,7 @@ class _SmartFeedItem {
     // ignore: unused_element_parameter
     this.group,
     this.feedItem,
+    this.promotedListing,
   });
 }
 
