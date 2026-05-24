@@ -61,10 +61,6 @@ class HuddlProductIds {
   static const String partnerMonthly = 'huddl_partner_monthly';
   static const String partnerAnnual  = 'huddl_partner_annual';
 
-  // Backward-compat aliases so existing call-sites don't break during migration
-  static const String neighbourhoodMonthly = plusMonthly;
-  static const String neighbourhoodAnnual  = plusAnnual;
-
   /// All product IDs we expect to find in the store
   static const Set<String> all = {
     plusMonthly,
