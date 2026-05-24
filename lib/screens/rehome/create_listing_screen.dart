@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,6 +44,52 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _priceController = TextEditingController();
   // ImagePicker no longer needed - using ImageEditorWidget instead
   // final _picker = ImagePicker();
+
+  // ── S6 fix: upload base64 images to Firebase Storage before Firestore write
+  //
+  // _pickedImages stores items as either:
+  //   (a) "data:<mime>;base64,<bytes>" — freshly picked on this device
+  //   (b) "https://..."               — already a remote URL (edit mode)
+  //
+  // This helper converts all (a) items to permanent HTTPS URLs so that
+  // Firestore never stores raw base64 strings (Firestore has a 1 MB doc limit;
+  // a single JPEG at even low quality can easily exceed it).
+  Future<List<String>> _uploadPendingImages(List<String> images) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return images; // unauthenticated — caller will surface error
+    final storage = FirebaseStorage.instance;
+    final result = <String>[];
+    for (final img in images) {
+      if (!img.startsWith('data:')) {
+        // Already a remote HTTPS URL (edit mode) — keep as-is.
+        result.add(img);
+        continue;
+      }
+      try {
+        // Strip the data-URL prefix to get raw base64.
+        final commaIdx = img.indexOf(',');
+        if (commaIdx == -1) { result.add(img); continue; }
+        final mime = img.substring(5, img.indexOf(';')); // e.g. 'image/jpeg'
+        final ext  = mime.endsWith('png') ? 'png' : 'jpg';
+        final Uint8List bytes = base64Decode(img.substring(commaIdx + 1));
+        final ts  = DateTime.now().millisecondsSinceEpoch;
+        final ref = storage.ref('marketplace_images/$uid/${ts}_${result.length}.$ext');
+        final task = await ref.putData(
+          bytes,
+          SettableMetadata(contentType: mime),
+        );
+        final url = await task.ref.getDownloadURL();
+        result.add(url);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[CreateListing] Image upload failed: $e');
+        // Keep the base64 string as fallback so the listing is not silently
+        // broken; the caller's try/catch will surface the Firestore size error
+        // if the document is too large.
+        result.add(img);
+      }
+    }
+    return result;
+  }
 
   AgeStage? _selectedAge;
   ItemCategory? _selectedCategory;
@@ -163,7 +210,18 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     );
   }
 
+  static const int _maxImages = 6;
+
   Future<void> _pickMultipleFromGallery() async {
+    if (_pickedImages.length >= _maxImages) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Maximum $_maxImages photos per listing'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+      return;
+    }
     try {
       // Pass ImageSource.gallery directly — the caller already showed the
       // source-selection sheet, so we skip ImageEditorWidget's own sheet.
@@ -190,6 +248,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _pickFromCamera() async {
+    if (_pickedImages.length >= _maxImages) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Maximum $_maxImages photos per listing'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+      return;
+    }
     try {
       // Pass ImageSource.camera directly — skips ImageEditorWidget's own sheet.
       final file = await ImageEditorWidget.pickMarketplaceImageWithSource(
@@ -268,7 +335,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         ? borough
         : 'Your area';
 
-    final images = _pickedImages; // Photo is always required
+    // S6 fix: upload any freshly-picked base64 images to Firebase Storage.
+    // Both edit and create paths share the same upload helper so neither
+    // path can accidentally persist raw base64 strings into Firestore.
+    final images = await _uploadPendingImages(List<String>.from(_pickedImages));
 
     if (_isEditing) {
       final updated = RehomeItem(
@@ -311,7 +381,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final uid = FirebaseAuth.instance.currentUser?.uid
           ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
 
-      // ── Write to Firestore first to get a canonical document ID ──────────
+      // ── Write to Firestore to get a canonical document ID ────────────────
+      // `images` is already a list of HTTPS URLs — uploaded to Firebase Storage
+      // in the shared _uploadPendingImages() call above this if/else block.
       String firestoreId;
       try {
         firestoreId = await FirestoreService().createListing({

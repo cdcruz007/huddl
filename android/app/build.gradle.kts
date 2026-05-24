@@ -19,7 +19,10 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "com.huddlconnect.connect"
-    compileSdk = flutter.compileSdkVersion
+    // S20 fix: pin compileSdk to 35 explicitly — flutter.compileSdkVersion can
+    // resolve to an older value when the Flutter SDK version is changed, which
+    // would cause a build failure if any dependency requires API 35 features.
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

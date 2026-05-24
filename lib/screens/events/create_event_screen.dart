@@ -282,7 +282,25 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       context: context,
       initialTime: _endTime ?? const TimeOfDay(hour: 15, minute: 0),
     );
-    if (time != null) setState(() => _endTime = time);
+    if (time != null) {
+      // S11 fix: guard end time must be after start time (mirrors create_meetup)
+      if (_startTime != null) {
+        final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
+        final endMinutes   = time.hour * 60 + time.minute;
+        if (endMinutes <= startMinutes) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('End time must be after start time'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return; // reject the invalid selection
+        }
+      }
+      setState(() => _endTime = time);
+    }
   }
 
   // ── Image picker ──────────────────────────────────────────────────
