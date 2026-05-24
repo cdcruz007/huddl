@@ -202,6 +202,10 @@ class AiFeedService with BoroughAiContext {
               ? 'Milestone'
               : '$reason \u00B7 Milestone';
           break;
+        case FeedItemType.partnerPromoted:
+          score += 0.10;
+          reason = reason.isEmpty ? 'Partner' : '$reason \u00B7 Partner';
+          break;
       }
 
       // Social proximity boost (20%)

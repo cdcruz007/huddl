@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
+
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_character.dart';
@@ -436,6 +437,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
             l.tags.any((t) => t.toLowerCase().contains(q));
       }).toList();
     }
+    // Change 10b: Partner listings (priorityScore > 0) sorted to top of results
+    result.sort((a, b) => b.priorityScore.compareTo(a.priorityScore));
     return result;
   }
 
@@ -956,6 +959,19 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
 
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
+    // Self-endorse block: prevent owner from endorsing their own listing
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid != null &&
+        (widget.listing.ownerUid == currentUid ||
+         widget.listing.createdByUid == currentUid)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot endorse your own listing.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
     try {
@@ -1157,6 +1173,36 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
               ),
             ),
             const SizedBox(width: 8),
+            // ── Book Now pill — only on Partner listings with a booking URL ─
+            if (listing.bookingUrl != null && listing.bookingUrl!.isNotEmpty) ...[  
+              GestureDetector(
+                onTap: () async {
+                  HuddlAnimations.selectionClick();
+                  final raw = listing.bookingUrl!;
+                  final hasScheme = raw.startsWith('http://') || raw.startsWith('https://');
+                  final uri = Uri.parse(hasScheme ? raw : 'https://$raw');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Book Now',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             // ── Endorse / Endorsed pill — Groups-style primary tint ────────
             ScaleOnPress(
               haptic: false,
@@ -1228,6 +1274,19 @@ class _ListingCardState extends State<_ListingCard> {
 
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
+    // Self-endorse block: prevent owner from endorsing their own listing
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid != null &&
+        (widget.listing.ownerUid == currentUid ||
+         widget.listing.createdByUid == currentUid)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot endorse your own listing.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
     try {
@@ -1450,8 +1509,34 @@ class _ListingCardState extends State<_ListingCard> {
                     ),
                   ),
                 ),
-                // Top-left: Parent badge — only shown for parent-added listings
-                if (isParent)
+                // Top-left: Partner badge — highest priority, else Parent Added
+                if (listing.isPartnerListing)
+                  Positioned(
+                    top: 12, left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.verified, size: 13, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Partner',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (isParent)
                   Positioned(
                     top: 12, left: 12,
                     child: _BadgePill(label: 'Parent Added', color: _kBadgeParent),
@@ -1713,6 +1798,19 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
 
   Future<void> _toggleEndorse() async {
     if (_endorsing) return;
+    // Self-endorse block: prevent owner from endorsing their own listing
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid != null &&
+        (widget.listing.ownerUid == currentUid ||
+         widget.listing.createdByUid == currentUid)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot endorse your own listing.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
     if (_hasEndorsed) {
@@ -1743,6 +1841,110 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
       }
     }
     if (mounted) setState(() => _endorsing = false);
+  }
+
+  /// Opens reply bottom sheet for listing owners (Partner feature)
+  void _showReplySheet(ServiceEndorsement endorsement) {
+    final isOwner = FirebaseAuth.instance.currentUser?.uid ==
+        widget.listing.ownerUid;
+    if (!isOwner) return;
+    final ctrl = TextEditingController(
+        text: endorsement.ownerReply ?? '');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.hc.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: context.hc.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'Reply to ${endorsement.firstName}\'s endorsement',
+                style: GoogleFonts.poppins(
+                    fontSize: 15, fontWeight: FontWeight.w700,
+                    color: context.hc.textPrimary),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                maxLines: 4,
+                maxLength: 200,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Thank you for the kind words…',
+                  hintStyle: GoogleFonts.poppins(
+                      fontSize: 13, color: context.hc.textTertiary),
+                  filled: true,
+                  fillColor: context.hc.inputBg,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    final reply = ctrl.text.trim();
+                    if (reply.isEmpty) return;
+                    Navigator.pop(ctx);
+                    final ok = await widget.service.replyToEndorsement(
+                      listingId: widget.listing.id,
+                      endorserUid: endorsement.uid,
+                      replyText: reply,
+                    );
+                    if (ok && mounted) {
+                      _load(); // refresh endorsements
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Reply posted!'),
+                          backgroundColor: HuddlColors.success,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    'Post Reply',
+                    style: GoogleFonts.poppins(
+                        color: Colors.white, fontWeight: FontWeight.w600,
+                        fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -2078,6 +2280,40 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 8),
             ],
+            // ── Book Now — Partner listing booking URL ─────────────────
+            if (listing.bookingUrl != null && listing.bookingUrl!.isNotEmpty) ...[  
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                  label: Text(
+                    'Book Now',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  onPressed: () async {
+                    HuddlAnimations.selectionClick();
+                    final raw = listing.bookingUrl!;
+                    final hasScheme = raw.startsWith('http://') ||
+                        raw.startsWith('https://');
+                    final uri = Uri.parse(hasScheme ? raw : 'https://$raw');
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             if (listing.website != null) ...[
               _ContactRow(
                 icon: Icons.language_outlined,
@@ -2192,7 +2428,11 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 ),
               )
             else
-              ...(_endorsements.map((e) => _EndorsementTile(endorsement: e))),
+              ...(_endorsements.map((e) => _EndorsementTile(
+                endorsement: e,
+                listing: widget.listing,
+                onReplyTap: () => _showReplySheet(e),
+              ))),
           ],
         ),
       ),
@@ -2204,12 +2444,20 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
 
 class _EndorsementTile extends StatelessWidget {
   final ServiceEndorsement endorsement;
-  const _EndorsementTile({required this.endorsement});
+  final ServiceListing listing;
+  final VoidCallback onReplyTap;
+  const _EndorsementTile({
+    required this.endorsement,
+    required this.listing,
+    required this.onReplyTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final isOwner = currentUid != null && listing.ownerUid == currentUid;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -2239,14 +2487,29 @@ class _EndorsementTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                endorsement.credit,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: hc.textPrimary,
+              Expanded(
+                child: Text(
+                  endorsement.credit,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: hc.textPrimary,
+                  ),
                 ),
               ),
+              // Reply icon — only for listing owner (Partner feature)
+              if (isOwner && listing.isPartnerListing)
+                GestureDetector(
+                  onTap: onReplyTap,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(
+                      Icons.reply_rounded,
+                      size: 18,
+                      color: HuddlColors.primary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ),
             ],
           ),
           if (endorsement.quote != null && endorsement.quote!.isNotEmpty) ...[
@@ -2269,6 +2532,56 @@ class _EndorsementTile extends StatelessWidget {
               color: hc.textTertiary,
             ),
           ),
+          // Owner reply — displayed when partner has replied
+          if (endorsement.hasOwnerReply) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                    color: HuddlColors.primary.withValues(alpha: 0.18)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.verified, size: 13,
+                          color: HuddlColors.primary),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Business reply',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                      if (endorsement.ownerRepliedAt != null) ...[
+                        const Spacer(),
+                        Text(
+                          _relativeTime(endorsement.ownerRepliedAt!),
+                          style: GoogleFonts.poppins(
+                              fontSize: 10, color: hc.textTertiary),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    endorsement.ownerReply!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: hc.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

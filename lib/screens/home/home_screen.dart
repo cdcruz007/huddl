@@ -1027,6 +1027,16 @@ class _HomeScreenState extends State<HomeScreen>
               _ActivityDetailSheet(item: item, borough: _borough),
         );
         break;
+      case FeedItemType.partnerPromoted:
+        // Tap navigates to the listing detail or services screen
+        final listingId = item.meta['listingId'] as String?;
+        if (listingId != null && listingId.isNotEmpty) {
+          Navigator.pushNamed(context, '/services',
+              arguments: {'listingId': listingId});
+        } else {
+          Navigator.pushNamed(context, '/services');
+        }
+        break;
     }
   }
 
@@ -5072,6 +5082,8 @@ class _HomeScreenState extends State<HomeScreen>
         return Icons.storefront;
       case FeedItemType.milestone:
         return Icons.emoji_events;
+      case FeedItemType.partnerPromoted:
+        return Icons.verified;
     }
   }
 
@@ -5087,6 +5099,8 @@ class _HomeScreenState extends State<HomeScreen>
         return HuddlColors.accentAmber;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
+      case FeedItemType.partnerPromoted:
+        return HuddlColors.primary;
     }
   }
 
@@ -5102,6 +5116,8 @@ class _HomeScreenState extends State<HomeScreen>
         return HuddlColors.nearBlack.withValues(alpha: 0.08);
       case FeedItemType.milestone:
         return HuddlColors.background;
+      case FeedItemType.partnerPromoted:
+        return HuddlColors.primary.withValues(alpha: 0.10);
     }
   }
 
@@ -5117,6 +5133,8 @@ class _HomeScreenState extends State<HomeScreen>
         return 'Market';
       case FeedItemType.milestone:
         return 'Milestone';
+      case FeedItemType.partnerPromoted:
+        return 'Partner';
     }
   }
 
@@ -7354,6 +7372,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                               break;
                             case FeedItemType.newParent:
                             case FeedItemType.milestone:
+                            case FeedItemType.partnerPromoted:
                               break;
                           }
                         }
@@ -7416,6 +7435,8 @@ class _ActivityDetailSheet extends StatelessWidget {
         return 'Say Welcome';
       case FeedItemType.milestone:
         return 'Celebrate';
+      case FeedItemType.partnerPromoted:
+        return 'View Listing';
     }
   }
 
@@ -7431,6 +7452,8 @@ class _ActivityDetailSheet extends StatelessWidget {
         return Icons.storefront;
       case FeedItemType.milestone:
         return Icons.emoji_events;
+      case FeedItemType.partnerPromoted:
+        return Icons.verified;
     }
   }
 
@@ -7446,6 +7469,8 @@ class _ActivityDetailSheet extends StatelessWidget {
         return HuddlColors.accentAmber;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
+      case FeedItemType.partnerPromoted:
+        return HuddlColors.primary;
     }
   }
 
@@ -7461,6 +7486,8 @@ class _ActivityDetailSheet extends StatelessWidget {
         return HuddlColors.background;
       case FeedItemType.milestone:
         return HuddlColors.background;
+      case FeedItemType.partnerPromoted:
+        return HuddlColors.primary.withValues(alpha: 0.08);
     }
   }
 
@@ -7476,6 +7503,8 @@ class _ActivityDetailSheet extends StatelessWidget {
         return 'Market';
       case FeedItemType.milestone:
         return 'Milestone';
+      case FeedItemType.partnerPromoted:
+        return 'Partner';
     }
   }
 }

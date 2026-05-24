@@ -2,26 +2,27 @@
 // HUDDL -- SUBSCRIPTION MODEL
 // =====================================================================================
 //
-// THREE TIERS:
+// FOUR TIERS:
 //
 // 1. WELCOME (Free) — "Try the community"
 //    Tight but meaningful limits so new users experience real value within
 //    the first few days before hitting a natural upgrade prompt.
 //
-// 2. NEIGHBOUR (£5.99/mo | £49.99/yr) — "Full community access"
+// 2. PLUS (£4.99/mo | £39.99/yr) — "Full community access"
 //    Removes all social friction — unlimited groups, DMs, and meetups.
 //    Unlocks the full AI suite: AI Chat Helper, AI Listing Writer,
 //    Daily Events Finder, and AI Group Summaries.
 //
-// 3. CIRCLE (£12.99/mo | £99.99/yr) — "Lead your community"
-//    Everything in Neighbour, plus truly unlimited AI usage,
-//    AI Meetup Matchmaker, unlimited listings, and 50 photo uploads.
+// 3. PARTNER (£24.99/mo | £199.00/yr) — "Grow your local business"
+//    Dedicated business profile, unlimited service listings, priority
+//    directory placement, endorsement replies, reach analytics, and
+//    promoted cards in the borough feed. Requires business verification.
 //
 // NOTE: No founding member / promotional pricing offered.
 // =====================================================================================
 
 /// Subscription tier levels for Huddl
-enum SubscriptionTier { explorer, neighbourhood, innerCircle }
+enum SubscriptionTier { explorer, neighbourhood, innerCircle, partner }
 
 /// Billing period
 enum BillingPeriod { monthly, annual }
@@ -164,8 +165,8 @@ class TierLimits {
     aiSynthesisAccess: true,
   );
 
-  // ---- CIRCLE (£12.99/mo) -------------------------------------------------------
-  // Everything in Neighbour + unlimited AI, AI Meetup Matchmaker, unlimited listings.
+  // ---- CIRCLE (legacy — kept for backward-compat; maps to innerCircle) ----------
+  // Alias so existing code that references TierLimits.innerCircle still compiles.
   static const TierLimits innerCircle = TierLimits(
     maxGroups: 999,
     maxGroupsCreated: 999,
@@ -196,6 +197,41 @@ class TierLimits {
     aiSynthesisAccess: true,
   );
 
+  // ---- PARTNER (£24.99/mo | £199.00/yr) ------------------------------------------
+  // Business profile + unlimited service listings + promoted cards + analytics.
+  // Requires business verification (HMRC VAT, Companies House, or UTR declaration).
+  static const TierLimits partner = TierLimits(
+    // All social limits same as neighbourhood (Partners are community members too)
+    maxGroups: 999,
+    maxGroupsCreated: 25,
+    maxMeetupsPerMonth: 999,
+    maxDMConversations: 999,
+    maxMarketplaceListings: 999, // unlimited service listings
+    maxPhotoUploads: 30,
+    maxMessagesPerMonth: 999,
+    canCreatePrivateGroups: true,
+    canCreateMeetups: true,     // can create paid meetups
+    customProfileBadge: true,
+    // AI limits same as neighbourhood
+    maxAiCopilotChatsPerDay: 25,
+    maxAiEventDiscoveriesPerWeek: 7,
+    maxAiChatSummariesPerDay: 10,
+    maxAiListingGenerationsPerMonth: 999, // unlimited for business listings
+    maxAiMatchmakerRequestsPerMonth: 0,
+    maxAiSmartFeedRefreshesPerDay: 999,
+    aiCopilotAccess: true,
+    aiEventDiscovery: true,
+    aiEventRecommendations: true,
+    aiChatSummaries: true,
+    aiListingGenerator: true,
+    aiSmartFeed: true,
+    aiMeetupMatchmaker: false,
+    maxQuestionsPerWeek: 15,
+    communityBadgesEnabled: true,
+    maxBookmarksPerMonth: 50,
+    aiSynthesisAccess: true,
+  );
+
   static TierLimits forTier(SubscriptionTier tier) {
     switch (tier) {
       case SubscriptionTier.explorer:
@@ -204,6 +240,8 @@ class TierLimits {
         return neighbourhood;
       case SubscriptionTier.innerCircle:
         return innerCircle;
+      case SubscriptionTier.partner:
+        return partner;
     }
   }
 
@@ -278,14 +316,14 @@ class SubscriptionPlan {
       ],
     ),
 
-    // ---- NEIGHBOUR (£5.99/mo | £49.99/yr) --------------------------------------
+    // ---- PLUS (£4.99/mo | £39.99/yr) – formerly Neighbour -----------------------
     SubscriptionPlan(
       tier: SubscriptionTier.neighbourhood,
-      name: 'Neighbour',
+      name: 'Huddl Plus',
       tagline: 'Full community access with AI tools',
-      subtitle: 'Less than 2 coffees a month',
-      monthlyPrice: 5.99,
-      annualPrice: 49.99,
+      subtitle: 'Less than a coffee a month',
+      monthlyPrice: 4.99,
+      annualPrice: 39.99,
       limits: TierLimits.neighbourhood,
       highlights: [
         'Join unlimited local parent groups',
@@ -313,35 +351,32 @@ class SubscriptionPlan {
       ],
     ),
 
-    // ---- CIRCLE (£12.99/mo | £99.99/yr) ----------------------------------------
+    // ---- PARTNER (£24.99/mo | £199.00/yr) – for local businesses ------------------
     SubscriptionPlan(
-      tier: SubscriptionTier.innerCircle,
-      name: 'Circle',
-      tagline: 'Lead your community with unlimited AI',
-      subtitle: 'For active community builders',
-      monthlyPrice: 12.99,
-      annualPrice: 99.99,
-      limits: TierLimits.innerCircle,
+      tier: SubscriptionTier.partner,
+      name: 'Huddl Partner',
+      tagline: 'Grow your local business in the community',
+      subtitle: 'For verified local businesses',
+      monthlyPrice: 24.99,
+      annualPrice: 199.00,
+      limits: TierLimits.partner,
       highlights: [
-        'Everything included in the Neighbour plan',
-        'Create unlimited groups — no cap on group creation',
-        'Post unlimited items on the marketplace',
-        'Upload up to 50 photos across your posts',
-        'Circle profile badge — exclusive to top-tier members',
-        'AI Chat Helper — unlimited conversations per day',
-        'AI Group Summaries — unlimited, catch up on any chat instantly',
-        'AI Listing Writer — unlimited marketplace listing drafts',
-        'AI Events Finder — unlimited daily local event discovery',
-        'AI Meetup Matchmaker — AI suggests the best local meetups for you based on your interests and location',
-        'Unlimited home feed personalisation',
-        'Ask unlimited questions on the community Q&A board',
-        'Unlimited AI-generated answer summaries on Q&A',
-        'Save unlimited posts and messages to bookmarks',
+        'Dedicated business profile page with cover photo and bio',
+        'Unlimited service directory listings',
+        'Priority placement in the local services directory',
+        'Reply to customer endorsements to build trust',
+        'Reach analytics — views, clicks and endorsement trends',
+        'Promoted cards in the borough community feed (1:7 ratio)',
+        'Create paid meetups and events for your customers',
+        'Everything included in the Huddl Plus plan',
+        'Partner profile badge visible across the community',
+        'AI Listing Writer — unlimited business listing drafts',
+        'Add booking URL to your service listing',
       ],
       shortBenefits: [
-        'Everything in Neighbour, fully unlimited',
-        'AI Meetup Matchmaker + unlimited AI tools',
-        'Unlimited listings, 50 photos & unlimited bookmarks',
+        'Dedicated business profile + unlimited listings',
+        'Promoted feed cards + reach analytics',
+        'Reply to endorsements + paid meetup creation',
       ],
     ),
   ];
@@ -380,6 +415,7 @@ class UserSubscription {
   /// Backward-compat alias
   bool get isVillage => isNeighbourhood;
   bool get isInnerCircle => tier == SubscriptionTier.innerCircle;
+  bool get isPartner => tier == SubscriptionTier.partner;
   bool get isFree => tier == SubscriptionTier.explorer;
   bool get isPaid => !isFree;
   // Legacy compat — no founding members
@@ -416,9 +452,11 @@ class UserSubscription {
       case SubscriptionTier.explorer:
         return 'Welcome';
       case SubscriptionTier.neighbourhood:
-        return 'Neighbour';
+        return 'Huddl Plus';
       case SubscriptionTier.innerCircle:
-        return 'Circle';
+        return 'Huddl Plus'; // legacy tier maps to Plus display name
+      case SubscriptionTier.partner:
+        return 'Huddl Partner';
     }
   }
 
@@ -436,9 +474,11 @@ class UserSubscription {
       case SubscriptionTier.explorer:
         return 'Welcome';
       case SubscriptionTier.neighbourhood:
-        return 'Neighbour';
+        return 'Huddl Plus';
       case SubscriptionTier.innerCircle:
-        return 'Circle';
+        return 'Huddl Plus'; // legacy
+      case SubscriptionTier.partner:
+        return 'Huddl Partner';
     }
   }
 
@@ -465,6 +505,8 @@ class UserSubscription {
     if (tierName == 'welcome') tierName = 'explorer';
     if (tierName == 'neighbour') tierName = 'neighbourhood';
     if (tierName == 'circle') tierName = 'innerCircle';
+    // Validate partner tier exists in enum (added in v4)
+    if (tierName == 'partner') tierName = 'partner';
 
     SubscriptionTier? schedTier;
     final schedTierName = json['scheduledTier'] as String?;

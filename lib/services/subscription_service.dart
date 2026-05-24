@@ -37,10 +37,50 @@ class SubscriptionService extends ChangeNotifier {
   bool get isNeighbourhood => _subscription.isNeighbourhood;
   bool get isVillage => _subscription.isVillage; // backward-compat alias
   bool get isInnerCircle => _subscription.isInnerCircle;
+  bool get isPartner => _subscription.isPartner;
 
   // Backward compat aliases used by some screens
-  bool get isPlus => _subscription.isVillage;
+  bool get isPlus => _subscription.isVillage || _subscription.isPartner;
   bool get isPro => _subscription.isInnerCircle;
+
+  // ---- Partner / Business verification ----
+  bool _isBusinessVerified = false;
+  bool get isBusinessVerified => _isBusinessVerified;
+
+  /// Load business verification status from Firestore.
+  /// Called after initialize() when user is a Partner subscriber.
+  Future<void> loadBusinessVerificationStatus() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 5));
+      if (doc.exists) {
+        _isBusinessVerified =
+            doc.data()?['isBusinessVerified'] as bool? ?? false;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Non-fatal — offline
+    }
+  }
+
+  /// Mark the user as business-verified in Firestore + local state.
+  Future<void> setBusinessVerified({required bool verified}) async {
+    _isBusinessVerified = verified;
+    notifyListeners();
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set({'isBusinessVerified': verified}, SetOptions(merge: true));
+    } catch (_) {}
+  }
 
   // ---- Scheduled change / cancellation getters ----
   bool get hasScheduledChange => _subscription.hasScheduledChange;

@@ -123,17 +123,19 @@ extension ServiceCategoryX on ServiceCategory {
 // ─── Verification tier enum ────────────────────────────────────────────────
 
 enum VerificationTier {
-  none,       // no badge — community listing only
-  community,  // endorsed by 3+ local parents (auto)
-  verified,   // manually verified by Huddl admin (blue badge)
+  none,          // no badge — community listing only
+  community,     // endorsed by 3+ local parents (auto)
+  verified,      // manually verified by Huddl admin (blue badge)
+  huddlVerified, // auto-verified via Partner subscription + business verification
 }
 
 extension VerificationTierX on VerificationTier {
   String get firestoreValue => name;
   String get badgeLabel => switch (this) {
-        VerificationTier.none      => '',
-        VerificationTier.community => 'Community Pick',
-        VerificationTier.verified  => 'Verified Pro',
+        VerificationTier.none          => '',
+        VerificationTier.community     => 'Community Pick',
+        VerificationTier.verified      => 'Verified Pro',
+        VerificationTier.huddlVerified => 'Partner',
       };
   bool get showsBadge => this != VerificationTier.none;
 
@@ -151,8 +153,11 @@ class ServiceEndorsement {
   final String uid;
   final String firstName;
   final String borough;
-  final String? quote;      // optional — "Sandra is reliable, insured, brilliant"
+  final String? quote;         // optional — "Sandra is reliable, insured, brilliant"
   final DateTime createdAt;
+  // Owner reply (Partner feature)
+  final String? ownerReply;
+  final DateTime? ownerRepliedAt;
 
   const ServiceEndorsement({
     required this.uid,
@@ -160,26 +165,37 @@ class ServiceEndorsement {
     required this.borough,
     this.quote,
     required this.createdAt,
+    this.ownerReply,
+    this.ownerRepliedAt,
   });
+
+  bool get hasOwnerReply => ownerReply != null && ownerReply!.isNotEmpty;
 
   String get credit => '$firstName, $borough parent';
 
   Map<String, dynamic> toFirestore() => {
-        'uid':        uid,
-        'firstName':  firstName,
-        'borough':    borough,
-        'quote':      quote,
-        'createdAt':  Timestamp.fromDate(createdAt),
+        'uid':           uid,
+        'firstName':     firstName,
+        'borough':       borough,
+        'quote':         quote,
+        'createdAt':     Timestamp.fromDate(createdAt),
+        'ownerReply':    ownerReply,
+        'ownerRepliedAt': ownerRepliedAt != null
+            ? Timestamp.fromDate(ownerRepliedAt!)
+            : null,
       };
 
   factory ServiceEndorsement.fromFirestore(Map<String, dynamic> d) {
     final ts = d['createdAt'];
+    final replyTs = d['ownerRepliedAt'];
     return ServiceEndorsement(
-      uid:       d['uid'] as String? ?? '',
-      firstName: d['firstName'] as String? ?? 'A parent',
-      borough:   d['borough'] as String? ?? 'local',
-      quote:     d['quote'] as String?,
-      createdAt: ts is Timestamp ? ts.toDate() : DateTime.now(),
+      uid:            d['uid'] as String? ?? '',
+      firstName:      d['firstName'] as String? ?? 'A parent',
+      borough:        d['borough'] as String? ?? 'local',
+      quote:          d['quote'] as String?,
+      createdAt:      ts is Timestamp ? ts.toDate() : DateTime.now(),
+      ownerReply:     d['ownerReply'] as String?,
+      ownerRepliedAt: replyTs is Timestamp ? replyTs.toDate() : null,
     );
   }
 }
@@ -229,6 +245,17 @@ class ServiceListing {
   /// and DM the person who added/endorsed the service.
   final String? parentName;
 
+  // ── Partner-specific fields (v4) ───────────────────────────────────────────
+
+  /// Whether the listing owner is a verified Huddl Partner business.
+  final bool isPartnerListing;
+
+  /// Booking / appointment URL for Partner listings.
+  final String? bookingUrl;
+
+  /// Priority sort weight for Partner listings in the directory (higher = first).
+  final int priorityScore;
+
   const ServiceListing({
     required this.id,
     required this.name,
@@ -254,6 +281,9 @@ class ServiceListing {
     this.aiDiscoveredAt,
     this.imageUrl,
     this.parentName,
+    this.isPartnerListing = false,
+    this.bookingUrl,
+    this.priorityScore = 0,
   });
 
   ServiceListing copyWith({
@@ -267,6 +297,9 @@ class ServiceListing {
     String? phone,
     String? website,
     String? ownerUid,
+    bool? isPartnerListing,
+    String? bookingUrl,
+    int? priorityScore,
     String? createdByUid,
     VerificationTier? verificationTier,
     bool? isVerified,
@@ -306,6 +339,9 @@ class ServiceListing {
         aiDiscoveredAt:      aiDiscoveredAt      ?? this.aiDiscoveredAt,
         imageUrl:            imageUrl            ?? this.imageUrl,
         parentName:          parentName          ?? this.parentName,
+        isPartnerListing:    isPartnerListing    ?? this.isPartnerListing,
+        bookingUrl:          bookingUrl          ?? this.bookingUrl,
+        priorityScore:       priorityScore       ?? this.priorityScore,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -330,6 +366,9 @@ class ServiceListing {
         if (aiDiscoveredAt != null) 'aiDiscoveredAt': Timestamp.fromDate(aiDiscoveredAt!),
         if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
         if (parentName != null && parentName!.isNotEmpty) 'parentName': parentName,
+        'isPartnerListing':  isPartnerListing,
+        if (bookingUrl != null && bookingUrl!.isNotEmpty) 'bookingUrl': bookingUrl,
+        'priorityScore':     priorityScore,
       };
 
   factory ServiceListing.fromFirestore(
@@ -365,8 +404,11 @@ class ServiceListing {
       aiDiscoveredAt: d['aiDiscoveredAt'] is Timestamp
           ? (d['aiDiscoveredAt'] as Timestamp).toDate()
           : null,
-      imageUrl:       d['imageUrl'] as String?,
-      parentName:     d['parentName'] as String?,
+      imageUrl:          d['imageUrl'] as String?,
+      parentName:        d['parentName'] as String?,
+      isPartnerListing:  d['isPartnerListing'] as bool? ?? false,
+      bookingUrl:        d['bookingUrl'] as String?,
+      priorityScore:     d['priorityScore'] as int? ?? 0,
     );
   }
 }
@@ -605,7 +647,7 @@ class LocalServicesService {
   // Session-level dedup: each listing is counted at most once per app session.
   final Set<String> _viewedThisSession = {};
 
-  void recordView(String listingId) {
+  void recordView(String listingId, {bool isPartner = false}) {
     if (_viewedThisSession.contains(listingId)) return;
     _viewedThisSession.add(listingId);
     _db.collection(_collection).doc(listingId).update({
@@ -613,6 +655,48 @@ class LocalServicesService {
     }).catchError((e) {
       if (kDebugMode) debugPrint('LocalServicesService.recordView: $e');
     });
+    // Partner analytics: record per-listing view event
+    if (isPartner) {
+      final today = DateTime.now();
+      final dateKey =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      _db
+          .collection('partner_analytics')
+          .doc(listingId)
+          .collection('views')
+          .doc(dateKey)
+          .set({'count': FieldValue.increment(1)}, SetOptions(merge: true))
+          .catchError((_) {});
+    }
+  }
+
+  // ── Reply to endorsement (Partner only) ─────────────────────────────────────
+
+  /// Allows the Partner owner to post a public reply to an endorsement.
+  /// The caller is responsible for confirming the user is the listing owner
+  /// and has the Partner tier.
+  Future<bool> replyToEndorsement({
+    required String listingId,
+    required String endorserUid,
+    required String replyText,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return false;
+    try {
+      await _db
+          .collection(_collection)
+          .doc(listingId)
+          .collection('endorsements')
+          .doc(endorserUid)
+          .update({
+        'ownerReply':     replyText.trim(),
+        'ownerRepliedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('LocalServicesService.replyToEndorsement: $e');
+      return false;
+    }
   }
 
   // ── Create listing ─────────────────────────────────────────────────────────
@@ -627,6 +711,8 @@ class LocalServicesService {
     String? website,
     String? borough,
     String? parentName,   // the adding parent's name as known in their borough
+    String? bookingUrl,   // Partner: booking / appointment URL
+    bool isPartnerListing = false,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
@@ -643,15 +729,20 @@ class LocalServicesService {
         tags:             tags,
         phone:            phone,
         website:          website,
-        ownerUid:         null,
+        ownerUid:         isPartnerListing ? uid : null,
         createdByUid:     uid,
         parentName:       parentName?.trim().isEmpty == true ? null : parentName?.trim(),
-        verificationTier: VerificationTier.none,
-        isVerified:       false,
+        verificationTier: isPartnerListing
+            ? VerificationTier.huddlVerified
+            : VerificationTier.none,
+        isVerified:       isPartnerListing,
         endorsementCount: 0,
         viewCount:        0,
         createdAt:        now,
         updatedAt:        now,
+        isPartnerListing: isPartnerListing,
+        bookingUrl:       bookingUrl?.trim().isEmpty == true ? null : bookingUrl?.trim(),
+        priorityScore:    isPartnerListing ? 10 : 0,
       );
 
       final ref = await _db

@@ -13,6 +13,7 @@ enum FeedItemType {
   newMarketplaceItem,
   newParent,
   milestone,
+  partnerPromoted, // Promoted card from a verified Partner business
 }
 
 /// A single feed item shown on the Home screen.

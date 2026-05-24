@@ -1043,6 +1043,8 @@ class _PlanCard extends StatelessWidget {
         return HuddlColors.primary;
       case SubscriptionTier.innerCircle:
         return HuddlColors.nearBlack;
+      case SubscriptionTier.partner:
+        return HuddlColors.primary;
     }
   }
 
@@ -1054,6 +1056,8 @@ class _PlanCard extends StatelessWidget {
         return Icons.home_outlined;
       case SubscriptionTier.innerCircle:
         return Icons.workspace_premium;
+      case SubscriptionTier.partner:
+        return Icons.verified;
     }
   }
 }

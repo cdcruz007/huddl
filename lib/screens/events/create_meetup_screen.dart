@@ -334,6 +334,26 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       }
       return;
     }
+
+    // ── Partner gate: paid meetups require Partner tier ──────────────
+    if (!_isFree) {
+      final hasPaidPrice = _priceCtrl.text.trim().isNotEmpty &&
+          (double.tryParse(
+                  _priceCtrl.text.replaceAll('\u00A3', '').trim()) ??
+                0) >
+              0;
+      if (hasPaidPrice && !subService.isPartner) {
+        if (mounted) {
+          showUpgradePrompt(
+            context,
+            feature: 'paid_meetups',
+            message:
+                'Creating paid meetups is a Huddl Partner feature. Upgrade to Partner to charge for your events.',
+          );
+        }
+        return;
+      }
+    }
     if (!mounted) return;
 
     if (!_isFormValid) {

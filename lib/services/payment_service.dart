@@ -53,33 +53,37 @@ import 'backend_api_service.dart';
 class HuddlProductIds {
   HuddlProductIds._();
 
-  // Neighbour tier
-  static const String neighbourhoodMonthly = 'huddl_neighbour_monthly';
-  static const String neighbourhoodAnnual = 'huddl_neighbour_annual';
+  // Plus tier (formerly Neighbour)
+  static const String plusMonthly  = 'huddl_plus_monthly';
+  static const String plusAnnual   = 'huddl_plus_annual';
 
-  // Circle tier
-  static const String innerCircleMonthly = 'huddl_circle_monthly';
-  static const String innerCircleAnnual = 'huddl_circle_annual';
+  // Partner tier (new business tier)
+  static const String partnerMonthly = 'huddl_partner_monthly';
+  static const String partnerAnnual  = 'huddl_partner_annual';
+
+  // Backward-compat aliases so existing call-sites don't break during migration
+  static const String neighbourhoodMonthly = plusMonthly;
+  static const String neighbourhoodAnnual  = plusAnnual;
 
   /// All product IDs we expect to find in the store
   static const Set<String> all = {
-    neighbourhoodMonthly,
-    neighbourhoodAnnual,
-    innerCircleMonthly,
-    innerCircleAnnual,
+    plusMonthly,
+    plusAnnual,
+    partnerMonthly,
+    partnerAnnual,
   };
 
   /// Map product ID -> (SubscriptionTier, BillingPeriod)
   static (SubscriptionTier, BillingPeriod) tierForProduct(String id) {
     switch (id) {
-      case neighbourhoodMonthly:
+      case plusMonthly:
         return (SubscriptionTier.neighbourhood, BillingPeriod.monthly);
-      case neighbourhoodAnnual:
+      case plusAnnual:
         return (SubscriptionTier.neighbourhood, BillingPeriod.annual);
-      case innerCircleMonthly:
-        return (SubscriptionTier.innerCircle, BillingPeriod.monthly);
-      case innerCircleAnnual:
-        return (SubscriptionTier.innerCircle, BillingPeriod.annual);
+      case partnerMonthly:
+        return (SubscriptionTier.partner, BillingPeriod.monthly);
+      case partnerAnnual:
+        return (SubscriptionTier.partner, BillingPeriod.annual);
       default:
         return (SubscriptionTier.explorer, BillingPeriod.monthly);
     }
@@ -91,16 +95,12 @@ class HuddlProductIds {
     BillingPeriod period,
   ) {
     if (tier == SubscriptionTier.neighbourhood) {
-      return period == BillingPeriod.monthly
-          ? neighbourhoodMonthly
-          : neighbourhoodAnnual;
+      return period == BillingPeriod.monthly ? plusMonthly : plusAnnual;
     }
-    if (tier == SubscriptionTier.innerCircle) {
-      return period == BillingPeriod.monthly
-          ? innerCircleMonthly
-          : innerCircleAnnual;
+    if (tier == SubscriptionTier.partner) {
+      return period == BillingPeriod.monthly ? partnerMonthly : partnerAnnual;
     }
-    return neighbourhoodMonthly; // fallback
+    return plusMonthly; // fallback
   }
 }
 
@@ -155,17 +155,18 @@ class StripeConfig {
   // ── Stripe Price IDs ────────────────────────────────────────────────────
   // Live Stripe Price IDs — configured Apr 2025
   //
-  //  Product          Period   Stripe Price ID
-  //  ───────────────  ───────  ──────────────────────────────────────
-  //  Neighbour        Monthly  price_1TPMiQGb8Lg9FVI5hzdkzA23
-  //  Neighbour        Annual   price_1TPMjBGb8Lg9FVI5zZwvMgVe
-  //  Circle           Monthly  price_1TPUqjGb8Lg9FVI5uk3rAKlJ  (£12.99 — updated)
-  //  Circle           Annual   price_1TPMl5Gb8Lg9FVI5YKuJNSRL
+  //  Product          Period   Stripe Price ID                      Amount
+  //  ───────────────  ───────  ──────────────────────────────────── ──────
+  //  Huddl Plus       Monthly  price_1TaagGGb8Lg9FVI5f2SrV5nv       £4.99
+  //  Huddl Plus       Annual   price_1TaagHGb8Lg9FVI5k1BKNlqv      £39.99
+  //  Huddl Partner    Monthly  price_1TaagHGb8Lg9FVI5bgzTWFLU      £24.99
+  //  Huddl Partner    Annual   price_1TaagIGb8Lg9FVI54eBr0Qgo     £199.00
+  //  (created via Stripe API — June 2025; old Neighbour/Circle prices archived)
   static const Map<String, String> priceIds = {
-    HuddlProductIds.neighbourhoodMonthly: 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
-    HuddlProductIds.neighbourhoodAnnual:  'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
-    HuddlProductIds.innerCircleMonthly:   'price_1TPUqjGb8Lg9FVI5uk3rAKlJ',
-    HuddlProductIds.innerCircleAnnual:    'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
+    HuddlProductIds.plusMonthly:     'price_1TaagGGb8Lg9FVI5f2SrV5nv',
+    HuddlProductIds.plusAnnual:      'price_1TaagHGb8Lg9FVI5k1BKNlqv',
+    HuddlProductIds.partnerMonthly:  'price_1TaagHGb8Lg9FVI5bgzTWFLU',
+    HuddlProductIds.partnerAnnual:   'price_1TaagIGb8Lg9FVI54eBr0Qgo',
   };
 }
 
@@ -814,14 +815,19 @@ class PaymentService extends ChangeNotifier {
     switch (tier) {
       case 'neighbourhood':
         return isAnnual
-            ? HuddlProductIds.neighbourhoodAnnual
-            : HuddlProductIds.neighbourhoodMonthly;
+            ? HuddlProductIds.plusAnnual
+            : HuddlProductIds.plusMonthly;
+      case 'partner':
+        return isAnnual
+            ? HuddlProductIds.partnerAnnual
+            : HuddlProductIds.partnerMonthly;
+      // backward-compat — old 'innerCircle' tier string maps to partner
       case 'innerCircle':
         return isAnnual
-            ? HuddlProductIds.innerCircleAnnual
-            : HuddlProductIds.innerCircleMonthly;
+            ? HuddlProductIds.partnerAnnual
+            : HuddlProductIds.partnerMonthly;
       default:
-        return HuddlProductIds.neighbourhoodMonthly;
+        return HuddlProductIds.plusMonthly;
     }
   }
 

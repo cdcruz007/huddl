@@ -668,6 +668,104 @@ h) Modification or Removal:
 • We reserve the right to modify, restrict, or remove the voice message feature at any time, with reasonable notice where practicable
 • Material changes to voice message data processing will be notified in accordance with our Privacy Policy update procedure''',
             ),
+            _buildSection(
+              '19. Huddl Partner Subscription',
+              '''a) Partner Tier Overview:
+The Huddl Partner subscription ("Partner") is a premium business tier designed for verified local service providers, tradespeople, and small business owners who wish to promote their services to the Huddl parent community.
+
+b) Partner Features:
+Partner subscribers receive access to:
+• A dedicated business profile page within the Huddl directory
+• Unlimited service listings (subject to category guidelines)
+• Priority placement in directory search results
+• Promoted feed cards displayed to local parents (subject to the 1:7 ratio policy)
+• Endorsement reply functionality — respond publicly to parent reviews
+• Reach analytics dashboard (view counts, endorsement trends, weekly summaries)
+• Partner verification badge displayed on listings and profile
+• Ability to add a direct booking URL to listings
+
+c) Partner Pricing:
+Partner subscription pricing is displayed at the point of purchase within the App and on the Huddl website. Prices are in GBP and include applicable VAT. Cruzen Ltd reserves the right to change Partner pricing at any time with reasonable notice.
+
+d) Auto-Renewal:
+Partner subscriptions renew automatically at the end of each billing period (monthly or annual) unless cancelled before the renewal date. Cancellation takes effect at the end of the current paid period.
+
+e) Partner Conduct:
+Partner subscribers must:
+• Provide accurate and truthful business information
+• Only list services they are legally authorised to provide
+• Comply with all applicable UK trading standards and consumer protection laws
+• Not use the Partner features to mislead, deceive, or harm Huddl users
+• Not create multiple Partner accounts for the same business
+
+Violation of Partner conduct rules may result in immediate termination of the Partner subscription without refund.''',
+            ),
+            _buildSection(
+              '20. Business Verification',
+              '''a) Verification Options:
+Huddl offers optional business verification for Partner subscribers through three pathways:
+• VAT Registration — verified against HMRC's public VAT number lookup API
+• Companies House Registration — verified against Companies House public API
+• Sole Trader Self-Declaration — self-attestation of UTR number and trading name, subject to manual review
+
+b) Verification Badge:
+Successfully verified businesses receive a "Partner Verified" badge displayed on their listings and business profile. This badge indicates that Huddl has checked the business registration details against public government databases at the time of verification.
+
+c) No Warranty of Verification:
+The Huddl verification process is a basic identity check against publicly available government data. It does NOT constitute:
+• An endorsement of the business, its services, or its quality
+• A guarantee of the business's legitimacy, solvency, or compliance
+• A professional certification, licence, or accreditation
+• A DBS check, insurance check, or qualification verification
+
+d) User Responsibility:
+Users must conduct their own due diligence when engaging with any service provider on Huddl, regardless of verification status. Cruzen Ltd is NOT LIABLE for any harm arising from interactions with verified or unverified businesses.
+
+e) Withdrawal of Verification:
+Cruzen Ltd reserves the right to withdraw the verification badge at any time if we believe the business information is inaccurate, fraudulent, or if the business no longer meets our Partner conduct requirements.''',
+            ),
+            _buildSection(
+              '21. Promoted Content and Partner Feed Cards',
+              '''a) Promoted Feed Cards:
+Partner subscribers may have their service listings promoted as "Partner" cards within the Huddl community feed. These cards are clearly labelled with a Partner badge to distinguish them from organic community content.
+
+b) Promotion Ratio Policy:
+Promoted Partner cards are displayed at a ratio of approximately 1 promoted card per 7 organic feed items. Cruzen Ltd reserves the right to adjust this ratio at any time without notice.
+
+c) No Guaranteed Placement:
+Cruzen Ltd does NOT guarantee:
+• Specific positioning of promoted cards within the feed
+• Minimum impression counts or view rates
+• Conversion rates or enquiry volumes from promoted content
+• Continuous promotion — cards may be paused for moderation, maintenance, or policy reasons
+
+d) Promoted Content Standards:
+Promoted content must comply with all content standards set out in Section 4 of these Terms and must:
+• Accurately represent the business and its services
+• Not contain false, misleading, or exaggerated claims
+• Not target vulnerable users in a harmful manner
+• Comply with UK advertising standards (ASA/CAP Code)
+
+e) No Refunds for Promotion Performance:
+Partner subscription fees are non-refundable regardless of promotion performance, impression counts, or feed placement. Cruzen Ltd does not offer performance-based refunds or credits.''',
+            ),
+            _buildSection(
+              '22. Partner Analytics and Data',
+              '''a) Analytics Dashboard:
+Partner subscribers have access to a dashboard displaying aggregated metrics including view counts, endorsement counts, and weekly activity summaries for their listings.
+
+b) Data Accuracy Disclaimer:
+Analytics data is provided on a best-efforts basis. Cruzen Ltd does NOT guarantee the accuracy, completeness, or real-time nature of analytics data. Analytics figures are for informational purposes only and should not be relied upon for commercial decisions.
+
+c) Data Collection for Analytics:
+View tracking uses anonymised session-based counting to avoid duplicate counts from the same user. No personally identifiable information about viewers is shared with Partner subscribers. Analytics data is stored in Firestore under a Partner-only access path.
+
+d) Data Retention:
+Analytics data is retained for the duration of the Partner subscription. Upon subscription cancellation, analytics data may be deleted after a 90-day grace period.
+
+e) No Commercial Warranty:
+Cruzen Ltd makes no warranty that the analytics data will accurately reflect commercial outcomes, market interest, or business viability. Analytics are provided as a convenience feature only.''',
+            ),
             const SizedBox(height: 8),
             _buildAcceptanceNotice(),
             const SizedBox(height: 24),

@@ -1032,6 +1032,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 8),
 
+                // ── Partner section (shown to Partner subscribers) ───────
+                if (_subscriptionService.isPartner) ...[
+                  _MenuSection(
+                    title: 'Partner',
+                    items: [
+                      _MenuItem(
+                        icon: Icons.store_outlined,
+                        title: 'Business Profile',
+                        subtitle: 'Your public Partner listing page',
+                        onTap: () => Navigator.pushNamed(
+                            context, '/partner_profile'),
+                      ),
+                      _MenuItem(
+                        icon: Icons.bar_chart_outlined,
+                        title: 'Analytics',
+                        subtitle: 'Views, clicks & endorsement trends',
+                        onTap: () => Navigator.pushNamed(
+                            context, '/partner_analytics'),
+                      ),
+                      if (!_subscriptionService.isBusinessVerified)
+                        _MenuItem(
+                          icon: Icons.verified_outlined,
+                          title: 'Verify Your Business',
+                          subtitle: 'Required to activate Partner features',
+                          onTap: () => Navigator.pushNamed(
+                              context, '/business_verification'),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 _MenuSection(
                   title: 'Settings',
                   items: [

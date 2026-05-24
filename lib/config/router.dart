@@ -45,6 +45,10 @@ import '../models/subscription.dart';
 import '../screens/home/journey_map_screen.dart';
 import '../screens/profile/backup_restore_screen.dart';
 import '../screens/noticeboard/noticeboard_screen.dart';
+import '../screens/subscription/business_verification_screen.dart';
+import '../screens/partner/partner_profile_screen.dart';
+import '../screens/partner/partner_analytics_screen.dart';
+import '../screens/partner/create_partner_listing_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -330,6 +334,29 @@ class AppRouter {
 
       case '/noticeboard':
         return SlidePageRoute(page: const NoticeboardScreen());
+
+      // ── Partner feature routes ──────────────────────────────────
+      case '/business_verification':
+        return SlidePageRoute(
+          page: const BusinessVerificationScreen(),
+          direction: SlideDirection.up,
+        );
+
+      case '/partner_profile':
+        return SlidePageRoute(
+          page: const PartnerProfileScreen(),
+        );
+
+      case '/partner_analytics':
+        return SlidePageRoute(
+          page: const PartnerAnalyticsScreen(),
+        );
+
+      case '/create_partner_listing':
+        return SlidePageRoute(
+          page: const CreatePartnerListingScreen(),
+          direction: SlideDirection.up,
+        );
 
       default:
         return MaterialPageRoute(
