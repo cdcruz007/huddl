@@ -1,0 +1,165 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HUDDL — FIREBASE STORAGE SECURITY RULES
+// Project: huddl-connect  •  Bucket: huddl-connect.firebasestorage.app
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Principle: every path is explicitly allowed or denied.
+// Default deny is automatic in rules_version = '2'.
+//
+// All URLs served to clients are getDownloadURL() signed tokens — no path
+// needs to be world-readable.  Every read rule therefore requires auth.
+//
+// Upload size limits are enforced per path to prevent abuse:
+//   • Photos / images : 10 MB  (request.resource.size <= 10 * 1024 * 1024)
+//   • Voice notes     : 25 MB  (audio files can be longer recordings)
+//   • Documents       : 20 MB  (PDFs, Word docs attached in group chat)
+//
+// Content-type guards prevent uploading an executable disguised as an image.
+// ═══════════════════════════════════════════════════════════════════════════
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // =========================================================================
+    // HELPER FUNCTIONS
+    // =========================================================================
+
+    /// Caller is signed in.
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    /// Caller's UID matches the uid segment in the path.
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    /// File is an image (jpeg, png, gif, webp).
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    /// File is audio (any subtype — covers mp4/aac/webm voice notes).
+    function isAudio() {
+      return request.resource.contentType.matches('audio/.*')
+          || request.resource.contentType == 'video/webm';  // webm recorded on web
+    }
+
+    /// File is a document (pdf, Word, plain text).
+    function isDocument() {
+      return request.resource.contentType.matches('application/pdf')
+          || request.resource.contentType.matches('application/.*word.*')
+          || request.resource.contentType.matches('text/.*');
+    }
+
+    /// Max file size in bytes.
+    function maxSize(mb) {
+      return request.resource.size <= mb * 1024 * 1024;
+    }
+
+    // =========================================================================
+    // PROFILE PHOTOS
+    // Path: profile_photos/{uid}/{filename}
+    // =========================================================================
+    // Written by PhotoUploadService.uploadProfilePhoto() and
+    // PhotoUploadService.uploadProfilePhotoFromFile().
+    // Only the owning user may upload/overwrite their own photo.
+    // Any authenticated user may read (needed for group member avatars,
+    // DM header, event attendee lists, etc.).
+    // =========================================================================
+    match /profile_photos/{uid}/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isOwner(uid)
+                    && isImage()
+                    && maxSize(10);
+    }
+
+    // =========================================================================
+    // MARKETPLACE LISTING IMAGES
+    // Path: marketplace_images/{uid}/{filename}
+    // =========================================================================
+    // Written by create_listing_screen._uploadPendingImages().
+    // The sellerId in the Firestore marketplace doc matches the uid segment.
+    // Any authenticated user may read (needed to display listings).
+    // =========================================================================
+    match /marketplace_images/{uid}/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isOwner(uid)
+                    && isImage()
+                    && maxSize(10);
+    }
+
+    // =========================================================================
+    // VOICE NOTES
+    // Path: voice_notes/{conversationId}/{filename}
+    //    or voice_notes/{uid}/{filename}   (fallback when no conversationId)
+    // =========================================================================
+    // Written by VoiceMessageService.uploadVoiceNote().
+    // The filename contains the sender UID: {uid}_{timestamp}.{ext}
+    // We cannot enforce ownership purely on the path segment (conversationId
+    // is the second segment for DMs), so we require auth + audio content type.
+    // File name convention enforced by the service — not repeated here.
+    // Any participant who can read the message in Firestore gets the URL via
+    // getDownloadURL(), so reads are auth-gated.
+    // =========================================================================
+    match /voice_notes/{segment}/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isAuth()
+                    && isAudio()
+                    && maxSize(25);
+    }
+
+    // =========================================================================
+    // DM ATTACHMENTS (images and files sent in direct messages)
+    // Path: dm_images/{uid}_{timestamp}.{ext}
+    // =========================================================================
+    // Written by dm_chat_screen._uploadMediaToStorage() with folder='dm_images'.
+    // The filename always starts with the sender UID.
+    // =========================================================================
+    match /dm_images/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isAuth()
+                    && (isImage() || isDocument())
+                    && maxSize(20);
+    }
+
+    // =========================================================================
+    // GROUP CHAT IMAGES
+    // Path: group_images/{groupId}/{uid}_{timestamp}.jpg
+    // =========================================================================
+    // Written by group_chat_screen image attachment upload.
+    // Any authenticated user may read (group membership enforced at Firestore
+    // message level; Storage URL is only distributed to participants).
+    // =========================================================================
+    match /group_images/{groupId}/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isAuth()
+                    && isImage()
+                    && maxSize(10);
+    }
+
+    // =========================================================================
+    // GROUP CHAT DOCUMENTS
+    // Path: group_documents/{groupId}/{uid}_{timestamp}.{ext}
+    // =========================================================================
+    // Written by group_chat_screen document attachment upload.
+    // =========================================================================
+    match /group_documents/{groupId}/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isAuth()
+                    && (isImage() || isDocument())
+                    && maxSize(20);
+    }
+
+    // =========================================================================
+    // CATCH-ALL: deny everything not explicitly listed above.
+    // This is implicit in rules_version = '2' but stated explicitly for clarity.
+    // =========================================================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+  }
+}
