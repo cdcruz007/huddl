@@ -1157,23 +1157,18 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
               ),
             ),
             const SizedBox(width: 8),
-            // ── Endorse / Endorsed pill (mirrors Meetups Join pill) ───────
+            // ── Endorse / Endorsed pill — Groups-style primary tint ────────
             ScaleOnPress(
               haptic: false,
               onTap: _endorsing ? null : _toggleEndorse,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
                   color: _hasEndorsed
-                      ? HuddlColors.nearBlack.withValues(alpha: 0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _hasEndorsed
-                        ? HuddlColors.nearBlack.withValues(alpha: 0.4)
-                        : context.hc.divider,
-                  ),
+                      ? const Color(0xFFF0F0F0)
+                      : HuddlColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: _endorsing
                     ? SizedBox(
@@ -1181,7 +1176,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: _hasEndorsed ? HuddlColors.nearBlack : HuddlColors.primary,
+                          color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
                         ),
                       )
                     : Text(
@@ -1189,7 +1184,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: _hasEndorsed ? HuddlColors.nearBlack : context.hc.textPrimary,
+                          color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
                         ),
                       ),
               ),
@@ -1550,17 +1545,17 @@ class _ListingCardState extends State<_ListingCard> {
                       ),
                     ),
                   ),
-                  // Endorse pill — grey resting, primary fill when endorsed
-                  // Same visual spec as grey 'Join' pill in Events tab
-                  GestureDetector(
+                  // Endorse pill — Groups-style primary tint
+                  ScaleOnPress(
+                    haptic: false,
                     onTap: _endorsing ? null : _toggleEndorse,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
                         color: _hasEndorsed
-                            ? HuddlColors.primary
-                            : const Color(0xFFF2F2F2),
+                            ? const Color(0xFFF0F0F0)
+                            : HuddlColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: _endorsing
@@ -1569,17 +1564,17 @@ class _ListingCardState extends State<_ListingCard> {
                               height: 14,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: _hasEndorsed ? Colors.white : HuddlColors.primary,
+                                color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
                               ),
                             )
                           : Text(
-                              _hasEndorsed ? 'Endorsed ✓' : 'Endorse',
+                              _hasEndorsed ? 'Endorsed' : 'Endorse',
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 color: _hasEndorsed
-                                    ? Colors.white
-                                    : HuddlColors.textDark,
+                                    ? HuddlColors.textTertiary
+                                    : HuddlColors.primary,
                               ),
                             ),
                     ),
