@@ -6,23 +6,23 @@
 // lifecycle: Checkout Session creation, Customer Portal, webhook event
 // processing, and subscription state synchronization with Firestore.
 //
-// TIERS (3 tiers, no founding member):
+// TIERS (updated — no founding member):
 //   welcome      — free, explorer enum key in Firestore
-//   neighbour    — £5.99/mo | £49.99/yr
-//   circle       — £12.99/mo | £99.99/yr
+//   neighbourhood (Huddl Plus)    — £4.99/mo | £39.99/yr
+//   partner       (Huddl Partner) — £24.99/mo | £199/yr
 //
 // PRODUCT ID MAPPING (must match Flutter HuddlProductIds + App/Play Store)
 // ──────────────────
 //   App product ID              → Stripe Price ID env var
-//   huddl_neighbour_monthly     → STRIPE_PRICE_NEIGHBOUR_MONTHLY
-//   huddl_neighbour_annual      → STRIPE_PRICE_NEIGHBOUR_ANNUAL
-//   huddl_circle_monthly        → STRIPE_PRICE_CIRCLE_MONTHLY
-//   huddl_circle_annual         → STRIPE_PRICE_CIRCLE_ANNUAL
+//   huddl_plus_monthly          → STRIPE_PRICE_PLUS_MONTHLY
+//   huddl_plus_annual           → STRIPE_PRICE_PLUS_ANNUAL
+//   huddl_partner_monthly       → STRIPE_PRICE_PARTNER_MONTHLY
+//   huddl_partner_annual        → STRIPE_PRICE_PARTNER_ANNUAL
 //
 // TIER KEYS in Firestore (= Flutter SubscriptionTier enum .name values):
 //   'explorer'      → Welcome (free)
-//   'neighbourhood' → Neighbour paid tier
-//   'innerCircle'   → Circle paid tier
+//   'neighbourhood' → Huddl Plus paid tier
+//   'partner'       → Huddl Partner paid tier
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -37,32 +37,34 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // ── Helper: get human-readable display name from internal tier key ────────────
 // tier is the Firestore key, which equals Flutter's SubscriptionTier enum .name:
-//   'neighbourhood' → 'Neighbour'  (SubscriptionTier.neighbourhood)
-//   'innerCircle'   → 'Circle'     (SubscriptionTier.innerCircle)
-//   'explorer'      → 'Welcome'    (SubscriptionTier.explorer)
+//   'neighbourhood' → 'Plus'     (SubscriptionTier.neighbourhood)
+//   'partner'       → 'Partner'  (SubscriptionTier.partner)
+//   'explorer'      → 'Free'     (SubscriptionTier.explorer)
 function tierDisplayName(tier) {
   switch (tier) {
-    case 'neighbourhood': return 'Neighbour';
-    case 'innerCircle':   return 'Circle';
-    case 'explorer':      return 'Welcome';
-    // Legacy fallbacks for any old data still using short keys
-    case 'neighbour':     return 'Neighbour';
-    case 'circle':        return 'Circle';
-    default:              return 'Neighbour';
+    case 'neighbourhood': return 'Plus';
+    case 'partner':       return 'Partner';
+    case 'explorer':      return 'Free';
+    // Legacy aliases — keep for safety
+    case 'innerCircle':   return 'Plus';
+    case 'neighbour':     return 'Plus';
+    case 'circle':        return 'Plus';
+    default:              return 'Plus';
   }
 }
 
 // ── Product ID ↔ Stripe Price ID mapping ────────────────────────────────────
 // Product IDs match Flutter's HuddlProductIds constants exactly.
 const PRICE_MAP = {
-  huddl_neighbour_monthly:
-    process.env.STRIPE_PRICE_NEIGHBOUR_MONTHLY || 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
-  huddl_neighbour_annual:
-    process.env.STRIPE_PRICE_NEIGHBOUR_ANNUAL  || 'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
-  huddl_circle_monthly:
-    process.env.STRIPE_PRICE_CIRCLE_MONTHLY    || 'price_1TPUqjGb8Lg9FVI5uk3rAKlJ',
-  huddl_circle_annual:
-    process.env.STRIPE_PRICE_CIRCLE_ANNUAL     || 'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
+  // Current product IDs
+  huddl_plus_monthly:
+    process.env.STRIPE_PRICE_PLUS_MONTHLY    || 'price_1TaagGGb8Lg9FVI5f2SrV5nv',
+  huddl_plus_annual:
+    process.env.STRIPE_PRICE_PLUS_ANNUAL     || 'price_1TaagHGb8Lg9FVI5k1BKNlqv',
+  huddl_partner_monthly:
+    process.env.STRIPE_PRICE_PARTNER_MONTHLY || 'price_1TaagHGb8Lg9FVI5bgzTWFLU',
+  huddl_partner_annual:
+    process.env.STRIPE_PRICE_PARTNER_ANNUAL  || 'price_1TaagIGb8Lg9FVI54eBr0Qgo',
 };
 
 // Reverse mapping: Stripe Price ID → App product ID
@@ -73,12 +75,12 @@ const REVERSE_PRICE_MAP = Object.fromEntries(
 // App product ID → { tier (Firestore key = Flutter SubscriptionTier enum .name), billingPeriod }
 // CRITICAL: tier values MUST match Flutter's enum .name exactly:
 //   SubscriptionTier.neighbourhood.name == 'neighbourhood'
-//   SubscriptionTier.innerCircle.name   == 'innerCircle'
+//   SubscriptionTier.partner.name       == 'partner'
 const PRODUCT_TIER_MAP = {
-  huddl_neighbour_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-  huddl_neighbour_annual:  { tier: 'neighbourhood', billingPeriod: 'annual'  },
-  huddl_circle_monthly:    { tier: 'innerCircle',   billingPeriod: 'monthly' },
-  huddl_circle_annual:     { tier: 'innerCircle',   billingPeriod: 'annual'  },
+  huddl_plus_monthly:    { tier: 'neighbourhood', billingPeriod: 'monthly' },
+  huddl_plus_annual:     { tier: 'neighbourhood', billingPeriod: 'annual'  },
+  huddl_partner_monthly: { tier: 'partner',        billingPeriod: 'monthly' },
+  huddl_partner_annual:  { tier: 'partner',        billingPeriod: 'annual'  },
 };
 
 // ═════════════════════════════════════════════════════════════════════════════

@@ -236,21 +236,25 @@ function _decodeJWS(jws) {
  */
 function _mapAppleProductToTier(appleProductId) {
   // CRITICAL: tier values MUST match Flutter's SubscriptionTier enum .name exactly:
-  //   'neighbourhood' = SubscriptionTier.neighbourhood (displays as 'Neighbour')
-  //   'innerCircle'   = SubscriptionTier.innerCircle   (displays as 'Circle')
-  //   'explorer'      = SubscriptionTier.explorer      (displays as 'Welcome')
+  //   'neighbourhood' = SubscriptionTier.neighbourhood (Huddl Plus)
+  //   'partner'       = SubscriptionTier.partner       (Huddl Partner)
+  //   'explorer'      = SubscriptionTier.explorer      (free)
   const mapping = {
-    // Current product IDs (matching Flutter HuddlProductIds + App/Play Store)
-    huddl_neighbour_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_neighbour_annual:  { tier: 'neighbourhood', billingPeriod: 'annual'  },
-    huddl_circle_monthly:    { tier: 'innerCircle',   billingPeriod: 'monthly' },
-    huddl_circle_annual:     { tier: 'innerCircle',   billingPeriod: 'annual'  },
-    // Legacy product IDs (kept for existing subscribers migrating from old store entries)
+    // Current product IDs
+    huddl_plus_monthly:    { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_plus_annual:     { tier: 'neighbourhood', billingPeriod: 'annual'  },
+    huddl_partner_monthly: { tier: 'partner',        billingPeriod: 'monthly' },
+    huddl_partner_annual:  { tier: 'partner',        billingPeriod: 'annual'  },
+    // Legacy product IDs — keep so any remaining test receipts resolve correctly
+    huddl_neighbour_monthly:              { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_neighbour_annual:               { tier: 'neighbourhood', billingPeriod: 'annual'  },
+    huddl_circle_monthly:                 { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_circle_annual:                  { tier: 'neighbourhood', billingPeriod: 'annual'  },
     huddl_neighbourhood_monthly:          { tier: 'neighbourhood', billingPeriod: 'monthly' },
     huddl_neighbourhood_annual:           { tier: 'neighbourhood', billingPeriod: 'annual'  },
     huddl_neighbourhood_founding_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_inner_circle_monthly:           { tier: 'innerCircle',   billingPeriod: 'monthly' },
-    huddl_inner_circle_annual:            { tier: 'innerCircle',   billingPeriod: 'annual'  },
+    huddl_inner_circle_monthly:           { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_inner_circle_annual:            { tier: 'neighbourhood', billingPeriod: 'annual'  },
   };
   return mapping[appleProductId] || { tier: 'explorer', billingPeriod: 'monthly' };
 }

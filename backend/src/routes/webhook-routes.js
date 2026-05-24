@@ -88,10 +88,10 @@ async function _handleStripeEmailAndPush(event) {
       const billingPeriod = obj.metadata?.billingPeriod || 'monthly';
 
       // Derive display name and price from the Firestore tier key
-      const tierDisplayName = tier === 'innerCircle' ? 'Circle' : 'Neighbour';
+      const tierDisplayName = tier === 'partner' ? 'Partner' : 'Plus';
       const price = billingPeriod === 'annual'
-        ? (tier === 'innerCircle' ? '99.99' : '49.99')
-        : (tier === 'innerCircle' ? '12.99' : '5.99');
+        ? (tier === 'partner' ? '199.00' : '39.99')
+        : (tier === 'partner' ? '24.99' : '4.99');
 
       await sendSubscriptionConfirmation({
         email: user.email || obj.customer_details?.email,

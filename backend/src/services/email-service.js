@@ -292,7 +292,7 @@ async function sendWelcomeEmail({ email, firstName, borough, verifyUrl }) {
       </p>
       <p style="margin:8px 0 0;font-size:14px;color:${B.text};line-height:1.55;">
         When you're ready for unlimited groups, direct messages, meetups and AI tools,
-        upgrading to Neighbour or Circle takes just a few taps.
+        upgrading to Huddl Plus or Huddl Partner takes just a few taps.
       </p>
     </div>
 
@@ -425,7 +425,16 @@ async function sendSubscriptionConfirmation({ email, firstName, tier, billingPer
 
     <p style="margin:0;font-size:12px;color:${B.textLight};text-align:center;">
       Manage your subscription via Profile &rarr; Subscription in the app.
-    </p>`;
+    </p>
+
+    ${tier === 'partner' ? `
+    <p style="margin:16px 0 0;font-size:14px;color:${B.text};line-height:1.6;">
+      <strong>Next step — activate your HMRC-verified badge:</strong><br>
+      Open the Huddl app, go to your Profile, and tap
+      <em>"Verify your business"</em> to complete business verification.
+      Your partner badge and all business features activate immediately
+      once verified.
+    </p>` : ''}`;
 
   return _send(email, `You're now a Huddl ${tierName} member! 🎉`, body);
 }
@@ -609,11 +618,12 @@ async function sendSubscriptionRenewed({ email, firstName, tier, renewalDate, pl
 // ─────────────────────────────────────────────────────────────────────────────
 
 function _tierDisplay(tier) {
-  if (!tier) return 'Neighbour';
+  if (!tier) return 'Plus';
   const t = tier.toLowerCase();
-  if (t === 'innercircle' || t === 'circle') return 'Circle';
+  if (t === 'partner') return 'Partner';
+  if (t === 'innercircle' || t === 'circle') return 'Plus'; // legacy — Circle mapped to Plus
   if (t === 'explorer'    || t === 'welcome') return 'Welcome';
-  return 'Neighbour';
+  return 'Plus';
 }
 
 function _currencySymbol(currency) {
