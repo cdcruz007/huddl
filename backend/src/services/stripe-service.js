@@ -238,6 +238,48 @@ async function findOrCreateCustomer(userId, email) {
 async function handleWebhookEvent(event) {
   const db = getDb();
 
+  // ── Idempotency guard ──────────────────────────────────────────────────────
+  // Stripe can deliver the same webhook event multiple times (network retries,
+  // Stripe's at-least-once delivery guarantee).  We deduplicate by writing the
+  // event ID to `stripe_processed_events/{eventId}` before processing.
+  //
+  // Using a Firestore transaction (create-only) ensures atomicity:
+  //   • First delivery  → document created, processing continues.
+  //   • Duplicate       → create throws ALREADY_EXISTS, we return early.
+  //
+  // The document is written with a TTL field so a Cloud Firestore TTL policy
+  // can auto-delete records older than 30 days and keep the collection lean.
+  const eventRef = db.collection('stripe_processed_events').doc(event.id);
+  try {
+    await db.runTransaction(async (txn) => {
+      const snap = await txn.get(eventRef);
+      if (snap.exists) {
+        // Already processed — signal early exit via a sentinel error.
+        throw Object.assign(new Error('DUPLICATE_EVENT'), { code: 'DUPLICATE_EVENT' });
+      }
+      txn.create(eventRef, {
+        eventId:   event.id,
+        eventType: event.type,
+        processedAt: FieldValue.serverTimestamp(),
+        // TTL field: set to 30 days from now so a Firestore TTL policy can
+        // auto-delete old records.  Enable via:
+        //   Firebase Console → Firestore → TTL policies → collection=stripe_processed_events, field=expireAt
+        expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      });
+    });
+  } catch (err) {
+    if (err.code === 'DUPLICATE_EVENT') {
+      console.log(`[Stripe] Duplicate event skipped: ${event.id} (${event.type})`);
+      return; // ← early return, no double-processing
+    }
+    // Any other transaction error (Firestore unavailable, etc.) — log and
+    // continue processing so the user's subscription still gets activated.
+    // Accepting the small risk of a duplicate write is better than silently
+    // dropping a legitimate payment event.
+    console.warn(`[Stripe] Idempotency write failed (continuing): ${err.message}`);
+  }
+  // ── End idempotency guard ──────────────────────────────────────────────────
+
   switch (event.type) {
     case 'checkout.session.completed':
       await _handleCheckoutCompleted(db, event.data.object);
