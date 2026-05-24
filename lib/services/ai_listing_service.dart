@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
@@ -455,7 +456,7 @@ class AiListingService with BoroughAiContext {
             'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
           ],
       sellerName: _onboarding.name ?? 'You',
-      sellerId: 'current_user',
+      sellerId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
       sellerLocation: borough,
       listedAt: DateTime.now(),
     );
