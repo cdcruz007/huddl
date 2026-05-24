@@ -388,10 +388,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
 
-      // Load events the user is registered for
+      // Only count meetups the user created (not just RSVP'd to)
       final userEvents = _eventService.goingEvents;
       final userMeetups = _meetupService.meetups
-          .where((m) => m.organiserId == 'current_user' || m.isGoing)
+          .where((m) => m.organiserId == 'current_user')
           .toList();
 
       setState(() {
@@ -1013,13 +1013,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.event_outlined,
                       title: 'My Meetups',
-                      trailing: _CountBadge(count: _userEvents.length + _userMeetups.length),
+                      trailing: _CountBadge(count: _userMeetups.length),
                       onTap: _showMyEventsSheet,
                     ),
                     _MenuItem(
                       icon: Icons.storefront_outlined,
                       title: 'My listings',
-                      trailing: const _CountBadge(count: 0),
+                      trailing: _CountBadge(count: RehomeService().myListings.length),
                       onTap: _showMyListingsSheet,
                     ),
                     _MenuItem(
@@ -3048,115 +3048,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showMyEventsSheet() {
-    final allEvents = _eventService.goingEvents;
-    final goingMeetups = _meetupService.meetups
-        .where((m) => m.organiserId == 'current_user' || m.isGoing)
+    // Show only meetups the user created (organiserId == 'current_user').
+    final myMeetups = _meetupService.meetups
+        .where((m) => m.organiserId == 'current_user')
         .toList();
-    final totalCount = allEvents.length + goingMeetups.length;
 
     _showSheet(
-      title: 'My Meetups ($totalCount)',
-      builder: (c) => totalCount == 0
+      title: 'My Meetups (${myMeetups.length})',
+      builder: (c) => myMeetups.isEmpty
           ? MyMeetupsEmptyState(
               onCta: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/discover');
               },
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (allEvents.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                    child: Text('Events you\'re attending',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textTertiary)),
-                  ),
-                  ...allEvents.map((e) => ListTile(
-                        leading: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: e.color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(e.icon, size: 22, color: e.color),
-                        ),
-                        title: Text(e.title,
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textPrimary)),
-                        subtitle: Text('${e.dateDisplay} \u2022 ${e.location}',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12, color: context.hc.textTertiary)),
-                        trailing: e.attendees > 0
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.background,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${e.attendees} going',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: HuddlColors.textTertiary)),
-                              )
-                            : const Icon(Icons.chevron_right,
-                                size: 18, color: HuddlColors.textTertiary),
-                        dense: true,
-                      )),
-                ],
-                if (goingMeetups.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                    child: Text('Meetups',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textTertiary)),
-                  ),
-                  ...goingMeetups.map((m) {
-                    final isOrganiser = m.organiserId == 'current_user';
-                    return ListTile(
-                      leading: _meetupAvatar(m.category, 44, imageUrl: m.imageUrl),
-                      title: Text(m.title,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textPrimary)),
-                      subtitle: Text(
-                          '${m.dateDisplay} \u2022 ${m.location}${isOrganiser ? ' \u2022 Organiser' : ''}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: context.hc.textTertiary)),
-                      trailing: m.isGoing
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.nearBlack.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text('Going',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: HuddlColors.nearBlack)),
-                            )
-                          : null,
-                      dense: true,
-                    );
-                  }),
-                ],
-                const SizedBox(height: 16),
-              ],
+          : ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: myMeetups.length,
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, indent: 72, color: context.hc.divider),
+              itemBuilder: (_, i) {
+                final m = myMeetups[i];
+                return ListTile(
+                  leading: _meetupAvatar(m.category, 44, imageUrl: m.imageUrl),
+                  title: Text(m.title,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: context.hc.textPrimary)),
+                  subtitle: Text(
+                      '${m.dateDisplay} \u2022 ${m.location} \u2022 ${m.attendeeCount} attending',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, color: context.hc.textTertiary)),
+                  trailing: Icon(Icons.chevron_right,
+                      color: context.hc.textTertiary),
+                  dense: true,
+                );
+              },
             ),
     );
   }
@@ -3183,71 +3112,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showMyListingsSheet() {
-    // Held outside builder so rebuilds don't reset state.
-    List<RehomeItem>? listings;   // null = loading, [] = loaded empty
-    String? errorText;
+    // Snapshot the in-memory list once when the sheet opens.
+    final items = RehomeService().myListings.toList()
+      ..sort((a, b) => b.listedAt.compareTo(a.listedAt));
 
     _showSheet(
-      title: 'My Listings',
-      builder: (c) => StatefulBuilder(
-        builder: (ctx, setLocal) {
-          // Kick off the Firestore fetch on first render.
-          if (listings == null && errorText == null) {
-            FirestoreService().getMyListings().then((docs) {
-              final items = docs
-                  .map((d) => RehomeItem.fromFirestore(d))
-                  .where((i) => i.id.isNotEmpty)
-                  .toList()
-                ..sort((a, b) => b.listedAt.compareTo(a.listedAt));
-              if (ctx.mounted) setLocal(() => listings = items);
-            }).catchError((e) {
-              if (ctx.mounted) {
-                setLocal(() {
-                  listings = [];
-                  errorText = 'Could not load listings. Please try again.';
-                });
-              }
-            });
-          }
-
-          // ── Loading state ────────────────────────────────────────────────────
-          if (listings == null) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(
-                  child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
-            );
-          }
-
-          // ── Error state ──────────────────────────────────────────────────────
-          if (errorText != null) {
-            return Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 40, color: HuddlColors.error),
-                  const SizedBox(height: 12),
-                  Text(errorText!,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: HuddlColors.textSecondary)),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () =>
-                        setLocal(() => listings = null),
-                    child: Text('Retry',
-                        style: GoogleFonts.poppins(
-                            color: HuddlColors.textTertiary,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final items = listings!;
+      title: 'My Listings (${items.length})',
+      builder: (c) {
 
           // ── Empty state ──────────────────────────────────────────────────────
           if (items.isEmpty) {
@@ -3409,7 +3280,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           );
         },
-      ),
     );
   }
 
