@@ -5815,6 +5815,7 @@ class _SmartFeedItem {
     // ignore: unused_element_parameter
     this.group,
     this.feedItem,
+    // ignore: unused_element_parameter
     this.promotedListing,
   });
 }

@@ -4069,6 +4069,7 @@ class _MarketGridCard extends StatefulWidget {
     required this.item,
     required this.onTap,
     required this.onToggleSave,
+    // ignore: unused_element_parameter
     this.isOwn = false,
   });
 
