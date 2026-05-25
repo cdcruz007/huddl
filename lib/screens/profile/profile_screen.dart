@@ -519,20 +519,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: HuddlColors.white,
+                color: context.hc.surfaceAlt,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isFree
-                      ? HuddlColors.primary.withValues(alpha: 0.25)
-                      : accentColor.withValues(alpha: 0.2),
+                      ? HuddlColors.primary.withValues(alpha: 0.30)
+                      : accentColor.withValues(alpha: 0.25),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: Row(
                 children: [
@@ -619,8 +612,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: HuddlColors.successBg,
+                  color: hc.surfaceAlt,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: HuddlColors.success.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
                 child: Text('Unlimited',
                     style: GoogleFonts.poppins(
@@ -641,7 +638,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 5,
-              backgroundColor: HuddlColors.divider,
+              backgroundColor: hc.divider,
               valueColor: AlwaysStoppedAnimation<Color>(
                 isUnlimited
                     ? HuddlColors.success

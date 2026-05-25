@@ -3372,13 +3372,14 @@ class _EventsTabState extends State<_EventsTab> {
                           height: 44,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.hc.surface,
                             borderRadius: BorderRadius.circular(28),
+                            border: Border.all(color: context.hc.divider, width: 1),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 6,
+                                offset: const Offset(0, 1),
                               ),
                             ],
                           ),

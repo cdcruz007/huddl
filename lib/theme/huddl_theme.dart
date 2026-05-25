@@ -124,7 +124,7 @@ class HuddlTheme {
         thickness: 1,
         space: 0,
       ),
-      tabBarTheme: _tabBarTheme(),
+      tabBarTheme: darkTabBarTheme(),
     );
   }
 
@@ -204,12 +204,26 @@ class HuddlTheme {
   static TabBarThemeData _tabBarTheme() {
     return TabBarThemeData(
       labelColor: HuddlColors.primary,
-      unselectedLabelColor: HuddlColors.textHint,
+      // Use a WidgetStateColor so unselected tabs are legible in both modes
+      unselectedLabelColor: HuddlColors.textSecondary,
       labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
       unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
       indicatorColor: HuddlColors.primary,
       indicatorSize: TabBarIndicatorSize.label,
-      dividerColor: HuddlColors.divider,
+      dividerColor: Colors.transparent,
+    );
+  }
+
+  // Dark-mode overrides for TabBar — applied where context is available
+  static TabBarThemeData darkTabBarTheme() {
+    return TabBarThemeData(
+      labelColor: HuddlColors.primary,
+      unselectedLabelColor: HuddlColors.darkTextSecondary,
+      labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
+      indicatorColor: HuddlColors.primary,
+      indicatorSize: TabBarIndicatorSize.label,
+      dividerColor: Colors.transparent,
     );
   }
 

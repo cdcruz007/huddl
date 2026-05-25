@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Your Account — Huddl</title>
+  <meta name="description" content="Request deletion of your Huddl account and all associated personal data." />
+  <style>
+    /* ── Brand tokens ─────────────────────────────────────────────── */
+    :root {
+      --primary:        #FF965C;
+      --primary-light:  #FFAD7F;
+      --primary-pale:   #FFC7A8;
+      --primary-bg:     #FFF3ED;
+      --teal:           #199A85;
+      --teal-bg:        #E6F5F3;
+      --error:          #FF5151;
+      --error-bg:       #FFE8E8;
+      --text-dark:      #262A35;
+      --text-secondary: #6C6C6C;
+      --text-tertiary:  #767676;
+      --warm-sand:      #F7F5F2;
+      --white:          #FFFFFF;
+      --divider:        #D5D5D5;
+      --input-bg:       #F5F5F5;
+      --input-border:   #DDDDDD;
+      --radius-sm:      8px;
+      --radius-md:      12px;
+      --radius-lg:      16px;
+      --radius-xl:      24px;
+    }
+
+    /* ── Reset ────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                   'Helvetica Neue', Arial, sans-serif;
+      background: var(--warm-sand);
+      color: var(--text-dark);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ───────────────────────────────────────────────────── */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--divider);
+      padding: 0 24px;
+    }
+
+    .header-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #FF965C, #FFAD7F);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span {
+      color: var(--primary);
+    }
+
+    /* ── Main layout ──────────────────────────────────────────────── */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Page title block ─────────────────────────────────────────── */
+    .page-title-block {
+      margin-bottom: 32px;
+    }
+
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--error-bg);
+      color: var(--error);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      letter-spacing: 0.2px;
+    }
+
+    .page-badge svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--error);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 540px;
+    }
+
+    /* ── Cards ────────────────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-icon.orange { background: var(--primary-bg); }
+    .card-icon.teal   { background: var(--teal-bg); }
+    .card-icon.red    { background: var(--error-bg); }
+
+    .card-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .card-icon.orange svg { fill: var(--primary); }
+    .card-icon.teal   svg { fill: var(--teal); }
+    .card-icon.red    svg { fill: var(--error); }
+
+    .card-title h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    /* ── Steps ────────────────────────────────────────────────────── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #FF965C, #FFAD7F);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .step-divider {
+      width: 1px;
+      height: 12px;
+      background: var(--divider);
+      margin-left: 14px;
+    }
+
+    /* ── Data deletion table ──────────────────────────────────────── */
+    .data-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .data-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--input-bg);
+      gap: 12px;
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .data-row:first-child {
+      padding-top: 0;
+    }
+
+    .data-name {
+      font-size: 14px;
+      color: var(--text-dark);
+      font-weight: 500;
+    }
+
+    .data-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .data-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .data-badge.deleted  { background: var(--error-bg);  color: var(--error); }
+    .data-badge.retained { background: var(--teal-bg);   color: var(--teal);  }
+
+    /* ── Email option ─────────────────────────────────────────────── */
+    .email-box {
+      background: var(--input-bg);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .email-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .email-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .email-note {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    /* ── Warning notice ───────────────────────────────────────────── */
+    .warning-notice {
+      background: var(--error-bg);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .warning-notice svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--error);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .warning-notice p {
+      font-size: 13px;
+      color: var(--error);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* ── Timeline notice ──────────────────────────────────────────── */
+    .timeline-notice {
+      background: var(--primary-bg);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .timeline-notice svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .timeline-notice p {
+      font-size: 13px;
+      color: var(--text-dark);
+      line-height: 1.5;
+    }
+
+    .timeline-notice strong {
+      color: var(--primary);
+    }
+
+    /* ── Divider ──────────────────────────────────────────────────── */
+    .section-divider {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      margin: 8px 0;
+      position: relative;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: calc(50% - 24px);
+      height: 1px;
+      background: var(--divider);
+    }
+
+    .section-divider::before { left: 0; }
+    .section-divider::after  { right: 0; }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--divider);
+      background: var(--white);
+      padding: 24px;
+    }
+
+    .footer-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      main { padding: 24px 16px 60px; }
+      h1   { font-size: 22px; }
+      .card { padding: 20px; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="logo-mark">
+        <!-- Simple house/community icon in white -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3L2 12h3v9h6v-5h2v5h6v-9h3L12 3z"/>
+        </svg>
+      </div>
+      <div class="logo-text">Huddl<span>.</span></div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Page title -->
+    <div class="page-title-block">
+      <div class="page-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        Account Management
+      </div>
+      <h1>Delete Your Account</h1>
+      <p class="page-subtitle">
+        You can delete your Huddl account and all associated data at any time.
+        Choose the method that works best for you below.
+      </p>
+    </div>
+
+    <!-- Warning -->
+    <div class="warning-notice">
+      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <p>Account deletion is <strong>permanent and cannot be undone.</strong> All your data will be removed from our servers within 30 days.</p>
+    </div>
+
+    <!-- Option 1: In-app -->
+    <div class="card">
+      <div class="card-title">
+        <div class="card-icon orange">
+          <svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+        </div>
+        <h2>Option 1 — Delete in the app</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-label">Open Huddl</div>
+            <div class="step-desc">Launch the app on your device</div>
+          </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-label">Go to Profile</div>
+            <div class="step-desc">Tap the Profile tab in the bottom navigation bar</div>
+          </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-label">Open Settings</div>
+            <div class="step-desc">Scroll down and tap Settings</div>
+          </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-label">Tap "Delete Account"</div>
+            <div class="step-desc">Found at the bottom of the Settings screen</div>
+          </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <div class="step-label">Verify with OTP</div>
+            <div class="step-desc">Confirm your identity with the code sent to your phone number</div>
+          </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step">
+          <div class="step-number">6</div>
+          <div class="step-content">
+            <div class="step-label">Confirm deletion</div>
+            <div class="step-desc">Tap the final confirmation button — your account will be scheduled for deletion</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider">or</div>
+
+    <!-- Option 2: Email -->
+    <div class="card">
+      <div class="card-title">
+        <div class="card-icon teal">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        </div>
+        <h2>Option 2 — Request by email</h2>
+      </div>
+
+      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:16px;">
+        If you no longer have access to the app, send an email to request deletion:
+      </p>
+
+      <div class="email-box">
+        <div class="email-label">Send your request to</div>
+        <div class="email-value">privacy@huddapp.co.uk</div>
+      </div>
+
+      <p class="email-note">
+        Include your <strong>registered phone number</strong> in the email so we can identify your account.
+        We will confirm deletion and process your request within <strong>30 days</strong>.
+      </p>
+    </div>
+
+    <!-- What gets deleted -->
+    <div class="card">
+      <div class="card-title">
+        <div class="card-icon red">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </div>
+        <h2>What gets deleted</h2>
+      </div>
+
+      <div class="data-list">
+        <div class="data-row">
+          <div>
+            <div class="data-name">Profile &amp; account</div>
+            <div class="data-desc">Name, phone number, photo, postcode</div>
+          </div>
+          <span class="data-badge deleted">Deleted</span>
+        </div>
+        <div class="data-row">
+          <div>
+            <div class="data-name">Messages &amp; chats</div>
+            <div class="data-desc">Direct messages and group chat history</div>
+          </div>
+          <span class="data-badge deleted">Deleted</span>
+        </div>
+        <div class="data-row">
+          <div>
+            <div class="data-name">Marketplace listings</div>
+            <div class="data-desc">All items you have listed for sale</div>
+          </div>
+          <span class="data-badge deleted">Deleted</span>
+        </div>
+        <div class="data-row">
+          <div>
+            <div class="data-name">Group memberships</div>
+            <div class="data-desc">Removed from all groups and communities</div>
+          </div>
+          <span class="data-badge deleted">Deleted</span>
+        </div>
+        <div class="data-row">
+          <div>
+            <div class="data-name">Events &amp; RSVPs</div>
+            <div class="data-desc">Events you created or joined</div>
+          </div>
+          <span class="data-badge deleted">Deleted</span>
+        </div>
+        <div class="data-row">
+          <div>
+            <div class="data-name">Voice messages</div>
+            <div class="data-desc">All recorded audio messages</div>
+          </div>
+          <span class="data-badge deleted">Deleted</span>
+        </div>
+        <div class="data-row">
+          <div>
+            <div class="data-name">Subscription records</div>
+            <div class="data-desc">Billing records retained for legal compliance</div>
+          </div>
+          <span class="data-badge retained">Retained 7 yrs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-notice">
+      <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+      <p>Deletion requests are processed within <strong>30 days</strong>. You will receive a confirmation email once your data has been permanently removed.</p>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <p class="footer-copy">© 2025 Cruzen Ltd · Huddl Parent Community</p>
+      <div class="footer-links">
+        <a href="https://www.huddapp.co.uk/privacy">Privacy Policy</a>
+        <a href="https://www.huddapp.co.uk/terms">Terms of Service</a>
+        <a href="mailto:privacy@huddapp.co.uk">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

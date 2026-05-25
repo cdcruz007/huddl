@@ -1841,14 +1841,18 @@ class _MessagesTabState extends State<_MessagesTab> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.hc.surface,
                               borderRadius: BorderRadius.circular(28),
+                              border: Border.all(
+                                color: context.hc.divider,
+                                width: 1,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                                      Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 1),
                                 ),
                               ],
                             ),
@@ -3083,10 +3087,10 @@ class _GroupMessageRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
-        color: isPinned ? HuddlColors.white : HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
-        elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        elevation: 0,
+        shadowColor: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
@@ -3490,10 +3494,10 @@ class _DMMessageRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
-        color: isPinned ? HuddlColors.white : HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
-        elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        elevation: 0,
+        shadowColor: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
@@ -5491,13 +5495,17 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             height: 44,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.hc.surface,
                               borderRadius: BorderRadius.circular(28),
+                              border: Border.all(
+                                color: context.hc.divider,
+                                width: 1,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 1),
                                 ),
                               ],
                             ),

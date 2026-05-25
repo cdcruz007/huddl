@@ -1243,37 +1243,44 @@ class _HomeScreenState extends State<HomeScreen>
   // UI BUILDERS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Adaptive logo — in dark mode the dark-grey wordmark is tinted white for
-  /// proper contrast against the dark surface.
+  /// Adaptive logo — light mode shows the asset as-is (orange H + dark wordmark).
+  /// Dark mode: render the wordmark in white using BlendMode.modulate so the
+  /// orange H icon retains its brand colour while dark-grey text pixels lift to
+  /// near-white. Falls back to styled text if the asset is missing.
   Widget _buildAdaptiveLogo(bool isDark) {
-    final logo = Image.asset(
-      'assets/images/logo_huddl.png',
-      height: 26,
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => Text(
-        'huddl',
-        style: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: HuddlColors.nearBlack,  // Phase 1: wordmark → near-black; 'h' mark stays orange in logo asset
-        ),
+    // Fallback text logo — always themed correctly
+    final fallback = RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: 'h',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: HuddlColors.primary, // orange H
+            ),
+          ),
+          TextSpan(
+            text: 'uddl',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack,
+            ),
+          ),
+        ],
       ),
     );
 
-    if (!isDark) return logo;
-
-    // In dark mode, apply a colour filter that brightens the dark-grey wordmark
-    // while keeping the orange H icon vibrant.  BlendMode.srcATop tints only
-    // the opaque pixels; we use a very light grey so the orange still reads.
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix(<double>[
-        // R  G  B  A  offset
-        2.0, 0, 0, 0, 60,   // boost red channel
-        0, 2.0, 0, 0, 60,   // boost green channel
-        0, 0, 2.0, 0, 60,   // boost blue channel
-        0, 0, 0, 1.0, 0,    // keep alpha
-      ]),
-      child: logo,
+    return Image.asset(
+      'assets/images/logo_huddl.png',
+      height: 28,
+      fit: BoxFit.contain,
+      // In dark mode apply a modest brightness-only matrix so dark pixels
+      // become readable white without blowing out the orange H icon.
+      color: isDark ? const Color(0xFFE8E8E8) : null,
+      colorBlendMode: isDark ? BlendMode.modulate : null,
+      errorBuilder: (_, __, ___) => fallback,
     );
   }
 

@@ -1559,19 +1559,15 @@ class _ListingCardState extends State<_ListingCard> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.hc.divider, width: 0.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 18,
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
               spreadRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
