@@ -1130,14 +1130,14 @@ class _FeatureComparisonTable extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: context.hc.textTertiary))),
                     Expanded(
-                        child: Text('Neighbour',
+                        child: Text('Plus',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.primary))),
                     Expanded(
-                        child: Text('Circle',
+                        child: Text('Partner',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,

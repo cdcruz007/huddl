@@ -465,28 +465,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSubscriptionCard() {
     final sub = _subscriptionService.subscription;
     final isFree = sub.isFree;
-    final isNeighbourhood = sub.isNeighbourhood;
-    final isInnerCircle = sub.isInnerCircle;
+    final isNeighbourhood = sub.isNeighbourhood || sub.isInnerCircle; // legacy innerCircle → Plus
+    final isPartner = sub.isPartner;
 
     Color accentColor = HuddlColors.textHint;
     IconData icon = Icons.explore_outlined;
     String planLabel = 'Welcome';
     String subtitle = 'Upgrade for unlimited access';
 
-    if (isNeighbourhood) {
+    if (isPartner) {
+      accentColor = HuddlColors.nearBlack;
+      icon = Icons.verified_outlined;
+      planLabel = 'Huddl Partner';
+      subtitle = sub.billingPeriod == BillingPeriod.annual
+          ? '\u00A3199.00/year'
+          : '\u00A324.99/month';
+    } else if (isNeighbourhood) {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
-      planLabel = 'Neighbour';
+      planLabel = 'Huddl Plus';
       subtitle = sub.billingPeriod == BillingPeriod.annual
-              ? '\u00A349.99/year'
-              : '\u00A35.99/month';
-    } else if (isInnerCircle) {
-      accentColor = HuddlColors.nearBlack;
-      icon = Icons.workspace_premium;
-      planLabel = 'Circle';
-      subtitle = sub.billingPeriod == BillingPeriod.annual
-          ? '\u00A399.99/year'
-          : '\u00A312.99/month';
+              ? '\u00A339.99/year'
+              : '\u00A34.99/month';
     }
 
     return Container(
@@ -790,7 +790,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _subscriptionService.isInnerCircle
+                                color: _subscriptionService.isPartner
                                     ? HuddlColors.nearBlack
                                     : HuddlColors.primary,
                                 borderRadius: BorderRadius.circular(8),
@@ -799,15 +799,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    _subscriptionService.isInnerCircle
-                                        ? Icons.workspace_premium
+                                    _subscriptionService.isPartner
+                                        ? Icons.verified_outlined
                                         : Icons.home_outlined,
                                     color: context.hc.surface,
                                     size: 12,
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    _subscriptionService.isInnerCircle ? 'INNER CIRCLE' : 'N\'HOOD',
+                                    _subscriptionService.isPartner ? 'PARTNER' : 'PLUS',
                                     style: GoogleFonts.poppins(
                                         fontSize: 9,
                                         fontWeight: FontWeight.w700,

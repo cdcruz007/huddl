@@ -484,7 +484,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                               color: context.hc.textPrimary)),
                       const SizedBox(height: 6),
                       Text(
-                        'Unlimited groups, DMs, meetups, and full AI suite \u2014 from just \u00A35.99/mo.',
+                        'Unlimited groups, DMs, meetups, and full AI suite \u2014 from just \u00A34.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                             fontSize: 13, color: context.hc.textSecondary),

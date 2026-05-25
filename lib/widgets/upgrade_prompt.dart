@@ -96,8 +96,8 @@ class _UpgradePromptSheet extends StatelessWidget {
               // Quick tier previews
               if (currentTier == SubscriptionTier.explorer) ...[
                 _QuickTierPreview(
-                  name: 'Neighbour',
-                  price: '\u00A35.99/mo',
+                  name: 'Huddl Plus',
+                  price: '\u00A34.99/mo',
                   color: HuddlColors.primary,
                   icon: Icons.home_outlined,
                   benefits: const [
@@ -118,20 +118,20 @@ class _UpgradePromptSheet extends StatelessWidget {
               ],
 
               _QuickTierPreview(
-                name: 'Circle',
-                price: '\u00A312.99/mo',
+                name: 'Huddl Partner',
+                price: '\u00A324.99/mo',
                 color: HuddlColors.nearBlack,
-                icon: Icons.workspace_premium,
+                icon: Icons.verified_outlined,
                 benefits: const [
-                  'Everything in Neighbour, fully unlimited',
-                  'AI Meetup Matchmaker — smart parent matching',
-                  'Unlimited listings, 50 photos & unlimited bookmarks',
+                  'Everything in Huddl Plus, fully unlimited',
+                  'HMRC-verified badge + dedicated business profile',
+                  'Priority directory placement & reach analytics',
                 ],
                 onTap: () {
                   Navigator.pop(context, false);
                   Navigator.pushNamed(context, '/subscription_plans',
                       arguments: {
-                        'highlightTier': 'innerCircle',
+                        'highlightTier': 'partner',
                         'gateMessage': message,
                       });
                 },
@@ -164,7 +164,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Try Neighbour free for 7 days — no card required',
+                          'Try Huddl Plus free for 7 days — no card required',
                           style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -300,7 +300,7 @@ class UpgradeBanner extends StatelessWidget {
 
   const UpgradeBanner({
     super.key,
-    this.message = 'Upgrade to Neighbour for unlimited access',
+    this.message = 'Upgrade to Huddl Plus for unlimited access',
     this.onTap,
   });
 
