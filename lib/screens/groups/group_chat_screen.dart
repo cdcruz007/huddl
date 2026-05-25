@@ -5091,23 +5091,48 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     double? lat;
     double? lng;
     try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 15),
-      );
+      // Medium accuracy gets a fix faster (network/cell) before GPS warms up.
+      // 30s timeout gives GPS enough time even indoors.
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 30),
+        );
+      } catch (_) {
+        // Fall back to last known position if fresh GPS fix times out
+        position = await Geolocator.getLastKnownPosition();
+      }
+
+      if (position == null) throw Exception('No position available');
       lat = position.latitude;
       lng = position.longitude;
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Geolocation error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      // Check if it was a permission issue or a GPS issue
+      final permission = await Geolocator.checkPermission();
+      final isPermissionIssue = permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not get your location. Please try again.',
-              style: GoogleFonts.poppins(fontSize: 13)),
+          content: Text(
+            isPermissionIssue
+                ? 'Location permission denied. Please allow location access in Settings.'
+                : 'Could not get your location. Make sure location is enabled and try again.',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          action: isPermissionIssue
+              ? SnackBarAction(
+                  label: 'Settings',
+                  textColor: Colors.white,
+                  onPressed: () => openAppSettings(),
+                )
+              : null,
         ),
       );
       return;
