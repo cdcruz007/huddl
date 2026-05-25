@@ -158,6 +158,8 @@ class ServiceEndorsement {
   // Owner reply (Partner feature)
   final String? ownerReply;
   final DateTime? ownerRepliedAt;
+  // Community star rating — 1 to 5 (null if parent didn't rate)
+  final int? rating;
 
   const ServiceEndorsement({
     required this.uid,
@@ -167,6 +169,7 @@ class ServiceEndorsement {
     required this.createdAt,
     this.ownerReply,
     this.ownerRepliedAt,
+    this.rating,
   });
 
   bool get hasOwnerReply => ownerReply != null && ownerReply!.isNotEmpty;
@@ -183,6 +186,7 @@ class ServiceEndorsement {
         'ownerRepliedAt': ownerRepliedAt != null
             ? Timestamp.fromDate(ownerRepliedAt!)
             : null,
+        if (rating != null) 'rating': rating,
       };
 
   factory ServiceEndorsement.fromFirestore(Map<String, dynamic> d) {
@@ -196,6 +200,7 @@ class ServiceEndorsement {
       createdAt:      ts is Timestamp ? ts.toDate() : DateTime.now(),
       ownerReply:     d['ownerReply'] as String?,
       ownerRepliedAt: replyTs is Timestamp ? replyTs.toDate() : null,
+      rating:         (d['rating'] as num?)?.toInt(),
     );
   }
 }
@@ -232,6 +237,15 @@ class ServiceListing {
 
   /// Star rating as reported by AI web search (null for parent-added)
   final double? aiRating;
+
+  /// Aggregate community rating — average of all parent star ratings (1–5).
+  /// Computed from the endorsements sub-collection and stored on the main doc.
+  /// null when no ratings have been given yet.
+  final double? communityRating;
+
+  /// Number of ratings included in communityRating (may be ≤ endorsementCount
+  /// because rating is optional when endorsing).
+  final int ratingCount;
 
   /// When the AI discovery job last found/updated this listing
   final DateTime? aiDiscoveredAt;
@@ -284,6 +298,8 @@ class ServiceListing {
     this.isPartnerListing = false,
     this.externalBookingUrl,
     this.serviceListingCount = 0,
+    this.communityRating,
+    this.ratingCount = 0,
   });
 
   ServiceListing copyWith({
@@ -314,6 +330,8 @@ class ServiceListing {
     DateTime? aiDiscoveredAt,
     String? imageUrl,
     String? parentName,
+    double? communityRating,
+    int? ratingCount,
   }) => ServiceListing(
         id:                  id                  ?? this.id,
         name:                name                ?? this.name,
@@ -342,6 +360,8 @@ class ServiceListing {
         isPartnerListing:    isPartnerListing    ?? this.isPartnerListing,
         externalBookingUrl:  externalBookingUrl  ?? this.externalBookingUrl,
         serviceListingCount: serviceListingCount ?? this.serviceListingCount,
+        communityRating:     communityRating     ?? this.communityRating,
+        ratingCount:         ratingCount         ?? this.ratingCount,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -370,6 +390,8 @@ class ServiceListing {
         if (externalBookingUrl != null && externalBookingUrl!.isNotEmpty)
           'externalBookingUrl': externalBookingUrl,
         'serviceListingCount': serviceListingCount,
+        if (communityRating != null) 'communityRating': communityRating,
+        'ratingCount': ratingCount,
       };
 
   factory ServiceListing.fromFirestore(
@@ -410,6 +432,8 @@ class ServiceListing {
       isPartnerListing:    d['isPartnerListing']    as bool?   ?? false,
       externalBookingUrl:  d['externalBookingUrl']  as String?,
       serviceListingCount: d['serviceListingCount'] as int?    ?? 0,
+      communityRating:     (d['communityRating'] as num?)?.toDouble(),
+      ratingCount:         d['ratingCount'] as int? ?? 0,
     );
   }
 }
@@ -570,7 +594,8 @@ class LocalServicesService {
 
   /// Endorse a listing. Idempotent — calling twice with the same UID is a no-op.
   /// [quote] is optional — the parent's personal endorsement text.
-  Future<void> endorseListing(String listingId, {String? quote}) async {
+  /// [rating] is optional — 1 to 5 star community rating.
+  Future<void> endorseListing(String listingId, {String? quote, int? rating}) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
@@ -592,6 +617,7 @@ class LocalServicesService {
       borough:   borough,
       quote:     quote,
       createdAt: DateTime.now(),
+      rating:    rating,
     );
 
     final batch = _db.batch();
@@ -605,6 +631,11 @@ class LocalServicesService {
     );
     await batch.commit();
 
+    // Update aggregate community rating if a star rating was given
+    if (rating != null) {
+      await _updateCommunityRating(listingId);
+    }
+
     // Check if we should auto-promote to community tier
     final listDoc = await _db.collection(_collection).doc(listingId).get();
     final count = listDoc.data()?['endorsementCount'] as int? ?? 0;
@@ -616,6 +647,30 @@ class LocalServicesService {
           'verificationTier': VerificationTier.community.firestoreValue,
         });
       }
+    }
+  }
+
+  /// Recomputes and stores the aggregate community rating for a listing.
+  /// Fetches all endorsements with a rating, averages them, and writes back.
+  Future<void> _updateCommunityRating(String listingId) async {
+    try {
+      final snap = await _db
+          .collection(_collection)
+          .doc(listingId)
+          .collection('endorsements')
+          .get();
+      final ratings = snap.docs
+          .map((d) => (d.data()['rating'] as num?)?.toInt())
+          .whereType<int>()
+          .toList();
+      if (ratings.isEmpty) return;
+      final avg = ratings.reduce((a, b) => a + b) / ratings.length;
+      await _db.collection(_collection).doc(listingId).update({
+        'communityRating': double.parse(avg.toStringAsFixed(1)),
+        'ratingCount':     ratings.length,
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('LocalServicesService._updateCommunityRating: $e');
     }
   }
 

@@ -110,6 +110,88 @@ class _ShimmerBoxState extends State<_ShimmerBox>
   }
 }
 
+// ─── Star rating picker (interactive, 1–5 stars) ─────────────────────────────
+
+/// Stateful inline star-picker — used inside endorse dialogs.
+/// [onChanged] fires whenever the user taps a star.
+class _StarRatingPicker extends StatefulWidget {
+  final int? initialRating;
+  final ValueChanged<int?> onChanged;
+  const _StarRatingPicker({this.initialRating, required this.onChanged});
+
+  @override
+  State<_StarRatingPicker> createState() => _StarRatingPickerState();
+}
+
+class _StarRatingPickerState extends State<_StarRatingPicker> {
+  int? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initialRating;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        final star = i + 1;
+        final filled = _selected != null && star <= _selected!;
+        return GestureDetector(
+          onTap: () {
+            // Tapping the same star again clears the rating
+            final next = _selected == star ? null : star;
+            setState(() => _selected = next);
+            widget.onChanged(next);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Icon(
+              filled ? Icons.star_rounded : Icons.star_outline_rounded,
+              size: 32,
+              color: filled ? const Color(0xFFFFC107) : HuddlColors.textTertiary,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+/// Displays a compact read-only star row (filled + empty stars + decimal label).
+Widget _buildStarDisplay(double rating, {int count = 0, double size = 13}) {
+  final fullStars = rating.floor();
+  final hasHalf   = (rating - fullStars) >= 0.25;
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (int i = 0; i < 5; i++)
+        Icon(
+          i < fullStars
+              ? Icons.star_rounded
+              : (i == fullStars && hasHalf
+                  ? Icons.star_half_rounded
+                  : Icons.star_outline_rounded),
+          size: size,
+          color: i < fullStars || (i == fullStars && hasHalf)
+              ? const Color(0xFFFFC107)
+              : HuddlColors.textTertiary,
+        ),
+      const SizedBox(width: 4),
+      Text(
+        count > 0 ? '${rating.toStringAsFixed(1)} ($count)' : rating.toStringAsFixed(1),
+        style: GoogleFonts.poppins(
+          fontSize: size - 1,
+          fontWeight: FontWeight.w600,
+          color: HuddlColors.textSecondary,
+        ),
+      ),
+    ],
+  );
+}
+
 // ─── Source badge helpers ─────────────────────────────────────────────────────
 
 bool _isParentSource(String source) => source == 'parent_added';
@@ -974,9 +1056,13 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
         await widget.service.removeEndorsement(widget.listing.id);
         if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
       } else {
-        final quote = await _showEndorseDialog();
-        if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
-        await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+        final result = await _showEndorseDialog();
+        if (result == null) { if (mounted) setState(() => _endorsing = false); return; }
+        final quote  = result['quote']  as String?;
+        final rating = result['rating'] as int?;
+        await widget.service.endorseListing(widget.listing.id,
+            quote: (quote?.isEmpty == true) ? null : quote,
+            rating: rating);
         if (mounted) {
           setState(() { _hasEndorsed = true; _count = _count + 1; });
           ScaffoldMessenger.of(context).showSnackBar(
@@ -991,10 +1077,10 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
           try {
             final uid = FirebaseAuth.instance.currentUser?.uid;
             if (uid != null) {
-              final doc = await FirebaseFirestore.instance.doc('users/\$uid').get();
+              final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
               final achievements = (doc.data()?['achievements'] as Map?) ?? {};
               if (achievements['firstEndorsement'] != true) {
-                await FirebaseFirestore.instance.doc('users/\$uid')
+                await FirebaseFirestore.instance.doc('users/$uid')
                     .set({'achievements': {'firstEndorsement': true}}, SetOptions(merge: true));
                 if (mounted) {
                   await HuddlCelebrationOverlay.show(context,
@@ -1019,11 +1105,15 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
     if (mounted) setState(() => _endorsing = false);
   }
 
-  Future<String?> _showEndorseDialog() => showDialog<String>(
-        context: context,
-        builder: (ctx) {
-          final ctrl = TextEditingController();
-          return AlertDialog(
+  /// Returns {'quote': String, 'rating': int?} or null if cancelled.
+  Future<Map<String, dynamic>?> _showEndorseDialog() {
+    int? pickedRating;
+    final ctrl = TextEditingController();
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
             backgroundColor: context.hc.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Endorse ${widget.listing.name}',
@@ -1032,6 +1122,17 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('Your rating (optional)',
+                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600,
+                        color: context.hc.textPrimary)),
+                const SizedBox(height: 6),
+                Center(
+                  child: _StarRatingPicker(
+                    initialRating: pickedRating,
+                    onChanged: (r) => setDialogState(() => pickedRating = r),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Text('Add a personal note (optional)',
                     style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
                 const SizedBox(height: 8),
@@ -1061,14 +1162,16 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                 style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+                onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
                 child: Text('Endorse',
                     style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1164,6 +1267,11 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  // Community rating — shown when at least 1 rating exists
+                  if (listing.communityRating != null) ...[
+                    const SizedBox(height: 2),
+                    _buildStarDisplay(listing.communityRating!, count: listing.ratingCount, size: 12),
+                  ],
                 ],
               ),
             ),
@@ -1277,9 +1385,13 @@ class _ListingCardState extends State<_ListingCard> {
         await widget.service.removeEndorsement(widget.listing.id);
         if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
       } else {
-        final quote = await _showEndorseDialog();
-        if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
-        await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+        final result = await _showEndorseDialog();
+        if (result == null) { if (mounted) setState(() => _endorsing = false); return; }
+        final quote  = result['quote']  as String?;
+        final rating = result['rating'] as int?;
+        await widget.service.endorseListing(widget.listing.id,
+            quote: (quote?.isEmpty == true) ? null : quote,
+            rating: rating);
         if (mounted) {
           setState(() { _hasEndorsed = true; _count = _count + 1; });
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1306,11 +1418,15 @@ class _ListingCardState extends State<_ListingCard> {
     if (mounted) setState(() => _endorsing = false);
   }
 
-  Future<String?> _showEndorseDialog() => showDialog<String>(
-        context: context,
-        builder: (ctx) {
-          final ctrl = TextEditingController();
-          return AlertDialog(
+  /// Returns {'quote': String, 'rating': int?} or null if cancelled.
+  Future<Map<String, dynamic>?> _showEndorseDialog() {
+    int? pickedRating;
+    final ctrl = TextEditingController();
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
             backgroundColor: context.hc.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Endorse ${widget.listing.name}',
@@ -1319,6 +1435,17 @@ class _ListingCardState extends State<_ListingCard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('Your rating (optional)',
+                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600,
+                        color: context.hc.textPrimary)),
+                const SizedBox(height: 6),
+                Center(
+                  child: _StarRatingPicker(
+                    initialRating: pickedRating,
+                    onChanged: (r) => setDialogState(() => pickedRating = r),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Text('Add a personal note (optional)',
                     style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
                 const SizedBox(height: 8),
@@ -1348,14 +1475,16 @@ class _ListingCardState extends State<_ListingCard> {
                 style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+                onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
                 child: Text('Endorse',
                     style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
+  }
 
   // Builds 1-3 overlapping coloured initial circles from real endorser data.
   // Falls back to category-coloured circles if recentEndorsements is sparse.
@@ -1605,12 +1734,22 @@ class _ListingCardState extends State<_ListingCard> {
                     const SizedBox(width: 8),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(
-                      _count > 0 ? '$_count endorsed' : '0 endorsements',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textTertiary,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _count > 0 ? '$_count endorsed' : '0 endorsements',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: context.hc.textTertiary,
+                          ),
+                        ),
+                        if (listing.communityRating != null) ...[
+                          const SizedBox(height: 2),
+                          _buildStarDisplay(listing.communityRating!, count: listing.ratingCount, size: 12),
+                        ],
+                      ],
                     ),
                   ),
                   // Endorse pill — hidden for own listing
@@ -1793,7 +1932,74 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
         });
       }
     } else {
-      await widget.service.endorseListing(widget.listing.id);
+      // Show rating + note dialog before endorsing
+      int? pickedRating;
+      final ctrl = TextEditingController();
+      final result = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: context.hc.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Endorse ${widget.listing.name}',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your rating (optional)',
+                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600,
+                        color: context.hc.textPrimary)),
+                const SizedBox(height: 6),
+                Center(
+                  child: _StarRatingPicker(
+                    initialRating: pickedRating,
+                    onChanged: (r) => setDialogState(() => pickedRating = r),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text('Add a personal note (optional)',
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: ctrl,
+                  maxLines: 3,
+                  maxLength: 120,
+                  style: GoogleFonts.poppins(fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: '"Reliable, insured, brilliant with our kids"',
+                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    filled: true,
+                    fillColor: context.hc.inputBg,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, null),
+                  child: Text('Cancel', style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
+                child: Text('Endorse',
+                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (result == null) { if (mounted) setState(() => _endorsing = false); return; }
+      final quote  = result['quote']  as String?;
+      final rating = result['rating'] as int?;
+      await widget.service.endorseListing(widget.listing.id,
+          quote: (quote?.isEmpty == true) ? null : quote,
+          rating: rating);
       if (mounted) {
         setState(() {
           _hasEndorsed = true;
@@ -2149,19 +2355,44 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               const SizedBox(height: 16),
             ],
             // ── Stats row ────────────────────────────────────────────────
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 _StatPill(
                   icon: Icons.thumb_up_rounded,
                   label: '$_endorseCount ${_endorseCount == 1 ? "endorsement" : "endorsements"}',
                   color: HuddlColors.nearBlack,
                 ),
-                const SizedBox(width: 8),
                 _StatPill(
                   icon: Icons.visibility_outlined,
                   label: '${listing.viewCount} ${listing.viewCount == 1 ? "view" : "views"}',
                   color: HuddlColors.nearBlack,
                 ),
+                if (listing.communityRating != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFC107)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${listing.communityRating!.toStringAsFixed(1)} community rating'
+                          '${listing.ratingCount > 0 ? " (${listing.ratingCount})" : ""}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF795548),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -2452,6 +2683,30 @@ class _EndorsementTile extends StatelessWidget {
                   ),
                 ),
               ),
+              // Per-endorsement star rating pill
+              if (endorsement.rating != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFFC107)),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${endorsement.rating}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF795548),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
           if (endorsement.quote != null && endorsement.quote!.isNotEmpty) ...[
