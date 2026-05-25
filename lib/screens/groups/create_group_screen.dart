@@ -1253,7 +1253,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                   label: 'Private',
                                   description: canPrivate
                                       ? 'Invite only — choose specific people in ${_userBorough ?? 'your borough'} to invite.'
-                                      : 'Invite only — upgrade to Neighbour+ to unlock.',
+                                      : 'Invite only — upgrade to Huddl Plus to unlock.',
                                   isSelected: _privacy == 'private',
                                   icon: Icons.lock_outline,
                                   onTap: canPrivate
@@ -1267,7 +1267,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                'Upgrade to Neighbour+ to create private groups.',
+                                                'Upgrade to Huddl Plus to create private groups.',
                                               ),
                                             ),
                                           );

@@ -10,8 +10,8 @@ import 'browser_storage.dart';
 ///
 /// FEATURE GATING STRATEGY:
 /// - Welcome (free) gets a taster of AI (3 copilot chats/day, basic discovery)
-/// - Neighbour unlocks full AI suite with generous daily caps
-/// - Circle gets unlimited AI plus exclusive Matchmaker
+/// - Plus unlocks full AI suite with generous daily caps
+/// - Partner gets unlimited AI plus exclusive business features
 /// - AI limits reset daily/weekly/monthly depending on the feature
 class SubscriptionService extends ChangeNotifier {
   // ---- Singleton ----
@@ -677,14 +677,14 @@ class SubscriptionService extends ChangeNotifier {
   /// Returns the minimum tier required for a feature
   SubscriptionTier minimumTierFor(String feature) {
     switch (feature) {
-      // Core social -- Neighbourhood
+      // Core social -- Plus
       case 'private_groups':
       case 'meetups':
       case 'events':
       case 'profile_badge':
         return SubscriptionTier.neighbourhood;
 
-      // AI -- Neighbourhood
+      // AI -- Plus
       case 'ai_listing_generator':
       case 'ai_full_copilot':
       case 'ai_full_chat_summaries':
@@ -730,27 +730,27 @@ class SubscriptionService extends ChangeNotifier {
       case 'listings':
         return 'You\'ve reached the $tierName limit of ${limits.maxMarketplaceListings} listings. Upgrade for more!';
       case 'messages':
-        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Neighbour for unlimited messaging!';
+        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Huddl Plus for unlimited messaging!';
       case 'private_groups':
-        return 'Private groups are a Neighbour feature. Upgrade to create private groups!';
+        return 'Private groups are a Huddl Plus feature. Upgrade to create private groups!';
       case 'events':
-        return 'Meetup creation is a Neighbour feature. Upgrade to create and host meetups!';
+        return 'Meetup creation is a Huddl Plus feature. Upgrade to create and host meetups!';
 
       // AI limits
       case 'ai_copilot':
-        return 'You\'ve used your ${limits.maxAiCopilotChatsPerDay} AI Copilot chats today. Upgrade to Neighbour for 25 chats/day!';
+        return 'You\'ve used your ${limits.maxAiCopilotChatsPerDay} AI Copilot chats today. Upgrade to Huddl Plus for 25 chats/day!';
       case 'ai_chat_summaries':
         return 'You\'ve used your ${limits.maxAiChatSummariesPerDay} AI chat summary today. Upgrade for up to 10 summaries/day!';
       case 'ai_listing_generator':
-        return 'AI Listing Writer is a Neighbour feature. Upgrade to auto-generate listings from photos!';
+        return 'AI Listing Writer is a Huddl Plus feature. Upgrade to auto-generate listings from photos!';
       case 'ai_matchmaker':
-        return 'AI Meetup Matchmaker is a Circle exclusive. Upgrade to get smart parent-matching!';
+        return 'AI Meetup Matchmaker is a Huddl Partner exclusive. Upgrade to get smart matching!';
       case 'ai_event_discovery':
-        return 'You\'ve used your weekly AI event discovery. Upgrade to Neighbour for daily discovery!';
+        return 'You\'ve used your weekly AI event discovery. Upgrade to Huddl Plus for daily discovery!';
       case 'ai_smart_feed':
         return 'You\'ve used your daily smart feed refreshes. Upgrade for unlimited personalisation!';
       case 'community_qa':
-        return 'You\'ve reached your $tierName weekly question limit. Upgrade to Neighbour for 15 questions/week!';
+        return 'You\'ve reached your $tierName weekly question limit. Upgrade to Huddl Plus for 15 questions/week!';
 
       default:
         return 'This feature requires a higher plan. Upgrade to unlock it!';

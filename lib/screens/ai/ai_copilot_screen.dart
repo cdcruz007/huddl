@@ -232,7 +232,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       SnackBar(
         content: Text(
           isFreeTier
-              ? 'Daily limit reached ($_dailyLimit chats). Upgrade to Neighbour for 25 chats/day!'
+              ? 'Daily limit reached ($_dailyLimit chats). Upgrade to Huddl Plus for 25 chats/day!'
               : "You've reached your $_dailyLimit daily AI chats. Resets at midnight.",
           style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
         ),
