@@ -322,7 +322,9 @@ class _SplashScreenState extends State<SplashScreen>
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.10),
                 child: Image.asset(
-                  'assets/images/logo_huddl_splash.png',
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/images/logo_huddl_splash_dark.png'
+                      : 'assets/images/logo_huddl_splash.png',
                   fit: BoxFit.contain,
                 ),
               ),

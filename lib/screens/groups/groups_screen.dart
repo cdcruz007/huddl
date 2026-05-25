@@ -5679,16 +5679,16 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: HuddlColors.nearBlack.withValues(alpha: 0.06),
+                        color: context.hc.surfaceAlt,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.search, size: 12, color: HuddlColors.nearBlack),
+                          Icon(Icons.search, size: 12, color: context.hc.textTertiary),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(contextLine,
-                              style: _adaptiveText(fontSize: 11, color: HuddlColors.nearBlack)),
+                              style: _adaptiveText(fontSize: 11, color: context.hc.textSecondary)),
                           ),
                           // Dismiss banner
                           Semantics(
@@ -5699,12 +5699,12 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 HuddlAnimations.lightTap();
                                 setState(() => _showAiContextBanner = false);
                               },
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 14,
-                                  color: HuddlColors.nearBlack,
+                                  color: context.hc.textTertiary,
                                 ),
                               ),
                             ),

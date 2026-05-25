@@ -1243,12 +1243,12 @@ class _HomeScreenState extends State<HomeScreen>
   // UI BUILDERS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Adaptive logo — light mode shows the asset as-is (orange H + dark wordmark).
-  /// Dark mode: render the wordmark in white using BlendMode.modulate so the
-  /// orange H icon retains its brand colour while dark-grey text pixels lift to
-  /// near-white. Falls back to styled text if the asset is missing.
+  /// Adaptive logo:
+  ///   Light mode → logo_huddl.png       (orange H + dark-grey wordmark, transparent bg)
+  ///   Dark mode  → logo_huddl_dark.png  (orange H + white wordmark, transparent bg)
+  /// Both assets have white background removed at build time.
+  /// RichText fallback is used if either asset is missing.
   Widget _buildAdaptiveLogo(bool isDark) {
-    // Fallback text logo — always themed correctly
     final fallback = RichText(
       text: TextSpan(
         children: [
@@ -1257,7 +1257,7 @@ class _HomeScreenState extends State<HomeScreen>
             style: GoogleFonts.poppins(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: HuddlColors.primary, // orange H
+              color: HuddlColors.primary,
             ),
           ),
           TextSpan(
@@ -1273,13 +1273,11 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     return Image.asset(
-      'assets/images/logo_huddl.png',
+      isDark
+          ? 'assets/images/logo_huddl_dark.png'
+          : 'assets/images/logo_huddl.png',
       height: 28,
       fit: BoxFit.contain,
-      // In dark mode apply a modest brightness-only matrix so dark pixels
-      // become readable white without blowing out the orange H icon.
-      color: isDark ? const Color(0xFFE8E8E8) : null,
-      colorBlendMode: isDark ? BlendMode.modulate : null,
       errorBuilder: (_, __, ___) => fallback,
     );
   }

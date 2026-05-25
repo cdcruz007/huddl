@@ -53,11 +53,11 @@ import 'package:permission_handler/permission_handler.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
-const Color _kMyBubble    = HuddlColors.primary;          // #E8724A
-// Received-bubble: light grey (Figma spec #F5F5F5)
-const Color _kTheirBubble = Color(0xFFF5F5F5);
+const Color _kMyBubble  = HuddlColors.primary;  // #E8724A
+// Received-bubble colour is now adaptive via context.hc.surfaceAlt
+// (#F7F5F2 light / #2C2C2C dark) — see _ChatBubble.build()
 // Timestamp / secondary text
-const Color _kTimestamp   = Color(0xFF999999);
+const Color _kTimestamp = Color(0xFF999999);
 
 class GroupChatScreen extends StatefulWidget {
   /// Fires the groupId string whenever the current user sends any message
@@ -1688,7 +1688,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           margin: const EdgeInsets.only(left: 16, bottom: 8),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: reply.isMe ? HuddlColors.background : HuddlColors.white,
+                            color: context.hc.surfaceAlt,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
@@ -1708,7 +1708,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: reply.isMe ? HuddlColors.textDark : context.hc.textPrimary,
+                                      color: context.hc.textPrimary,
                                     ),
                                   ),
                                   const Spacer(),
@@ -5849,7 +5849,7 @@ class _ChatBubble extends StatelessWidget {
                               ? HuddlColors.primary.withValues(alpha: 0.12)
                               : isMe
                                   ? _kMyBubble        // #E8724A
-                                  : _kTheirBubble,    // #F5F5F5
+                                  : context.hc.surfaceAlt, // adaptive: #F7F5F2 light / #2C2C2C dark
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(18),
                             topRight: const Radius.circular(18),
@@ -5862,12 +5862,12 @@ class _ChatBubble extends StatelessWidget {
                           children: [
                             // Message text (with search highlighting)
                             searchQuery.isNotEmpty
-                                ? _buildHighlightedText(message.message, searchQuery, isMe: isMe)
+                                ? _buildHighlightedText(context, message.message, searchQuery, isMe: isMe)
                                 : Text(
                                     message.message,
                                     style: GoogleFonts.poppins(
                                       fontSize: 15,
-                                      color: isMe ? HuddlColors.white : const Color(0xFF1A1A1A),
+                                      color: isMe ? HuddlColors.white : context.hc.textPrimary,
                                       height: 1.4,
                                     ),
                                   ),
@@ -6147,8 +6147,8 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText(String text, String query, {bool isMe = false}) {
-    final baseColor = isMe ? HuddlColors.white : HuddlColors.textDark;
+  Widget _buildHighlightedText(BuildContext context, String text, String query, {bool isMe = false}) {
+    final baseColor = isMe ? HuddlColors.white : context.hc.textPrimary;
     if (query.isEmpty) {
       return Text(text,
           style: GoogleFonts.poppins(
@@ -6220,7 +6220,7 @@ class _GroupDeletedMessageBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: _kTheirBubble,
+            color: context.hc.surfaceAlt,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(18),
               topRight: const Radius.circular(18),
@@ -6982,7 +6982,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                 Container(
                   constraints: const BoxConstraints(maxWidth: 260),
                   decoration: BoxDecoration(
-                    color: widget.isMe ? _kMyBubble : _kTheirBubble,
+                    color: widget.isMe ? _kMyBubble : context.hc.surfaceAlt,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),

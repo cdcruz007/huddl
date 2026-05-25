@@ -5976,15 +5976,16 @@ class _SmartNudgeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return Container(
-      color: HuddlColors.background,
+      color: hc.scaffold,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: hc.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border(
-            left: BorderSide(color: HuddlColors.divider, width: 3),
+            left: BorderSide(color: HuddlColors.primary, width: 3),
           ),
           boxShadow: [
             BoxShadow(
@@ -6011,7 +6012,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF42464C),
+                      color: hc.textPrimary,
                       height: 1.4,
                     ),
                   ),
@@ -6027,7 +6028,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textTertiary,
+                          color: hc.textTertiary,
                         ),
                       ),
                     ),
@@ -6046,7 +6047,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                 child: Icon(
                   Icons.close_rounded,
                   size: 16,
-                  color: HuddlColors.textTertiary,
+                  color: hc.textTertiary,
                 ),
               ),
             ),
