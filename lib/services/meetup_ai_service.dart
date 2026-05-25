@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'meetup_service.dart';
 import 'browser_storage.dart';
 
@@ -148,8 +149,9 @@ class MeetupAiService {
       boostReason = "You're going";
     }
 
-    // 7. Organiser is "current_user" — their own meetups always surface
-    if (m.organiserId == 'current_user') {
+    // 7. Organiser is current user — their own meetups always surface
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    if (m.organiserId == myUid || m.organiserId == 'current_user') {
       score += 25;
       boostReason = 'Your meetup';
     }

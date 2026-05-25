@@ -4539,29 +4539,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       if (poll.isExpired) return;
 
       final userName = _onboardingService.name ?? 'You';
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
 
       if (poll.data.allowMultiple) {
         // Toggle vote for multi-choice polls
         if (poll.myVotes.contains(optionIndex)) {
           poll.myVotes.remove(optionIndex);
           poll.votes.removeWhere(
-            (v) => v.memberId == 'current_user' && v.optionIndex == optionIndex,
+            (v) => v.memberId == currentUid && v.optionIndex == optionIndex,
           );
         } else {
           poll.myVotes.add(optionIndex);
           poll.votes.add(PollVote(
-            memberId: 'current_user',
+            memberId: currentUid,
             memberName: userName,
             optionIndex: optionIndex,
           ));
         }
       } else {
         // Single-choice: swap selection (allow change of vote)
-        poll.votes.removeWhere((v) => v.memberId == 'current_user');
+        poll.votes.removeWhere((v) => v.memberId == currentUid);
         poll.myVotes.clear();
         poll.myVotes.add(optionIndex);
         poll.votes.add(PollVote(
-          memberId: 'current_user',
+          memberId: currentUid,
           memberName: userName,
           optionIndex: optionIndex,
         ));

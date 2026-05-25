@@ -4569,7 +4569,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         if (g.parentGroupId == null) return true;
         return _invitationService.isGroupJoined(g.parentGroupId!);
       case GroupPrivacy.private_:
-        return g.invitedMemberIds.contains('current_user');
+        final myUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+        return g.invitedMemberIds.contains(myUid);
     }
   }
 

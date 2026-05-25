@@ -27,7 +27,7 @@ class GroupInvitation {
     required this.groupDescription,
     required this.groupImageUrl,
     required this.invitedByName,
-    this.invitedById = 'current_user',
+    this.invitedById = '',  // populated at call-site with real Firebase UID
     this.targetMemberId = '',
     required this.sentAt,
     this.status = 'pending',
@@ -258,7 +258,7 @@ class InvitationService extends ChangeNotifier {
         groupDescription: group.description,
         groupImageUrl: group.imageUrl,
         invitedByName: creatorName,
-        invitedById: 'current_user',
+        invitedById: FirebaseAuth.instance.currentUser?.uid ?? '',
         targetMemberId: memberId,
         sentAt: DateTime.now(),
         status: 'pending',

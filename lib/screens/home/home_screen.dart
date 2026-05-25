@@ -287,7 +287,8 @@ class _HomeScreenState extends State<HomeScreen>
         borough = _postcodeService.getBoroughFromPostcode(pc) ?? '';
       }
 
-      final groups = await _groupService.getUserGroups('current_user');
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+      final groups = await _groupService.getUserGroups(uid);
 
       // ── Load Meetups from Firestore ──────────────────────────────────────
       // The MeetupService singleton only contains locally-created meetups

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
@@ -728,7 +729,7 @@ Please suggest 5 diverse meetups: 1) playdate, 2) coffee morning, 3) outdoor act
       dateTime: suggestion.suggestedDateTime,
       location: suggestion.suggestedLocation,
       organiserName: _onboarding.name ?? 'You',
-      organiserId: 'current_user',
+      organiserId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
       attendeeCount: 1,
       isGoing: true,
       attendeeNames: [_onboarding.name ?? 'You'],

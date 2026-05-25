@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui' show Color;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import 'borough_scope_guard.dart';
@@ -87,7 +88,7 @@ class Meetup {
     required this.dateTime,
     required this.location,
     required this.organiserName,
-    this.organiserId = 'current_user',
+    this.organiserId = '',  // set at call-site via FirebaseAuth.instance.currentUser?.uid
     this.attendeeCount = 1,
     this.maxAttendees,
     this.isGoing = false,
@@ -233,7 +234,7 @@ class Meetup {
     dateTime: DateTime.tryParse(j['date'] ?? j['dateTime'] ?? '') ?? DateTime.now(),
     location: (j['location'] as String?) ?? '',
     organiserName: j['organiserName'] ?? '',
-    organiserId: (j['createdBy'] ?? j['organiserId'] ?? 'current_user') as String,
+    organiserId: (j['createdBy'] ?? j['organiserId'] ?? '') as String,
     attendeeCount: (j['attendeeCount'] as num?)?.toInt() ?? 1,
     maxAttendees: (j['maxAttendees'] as num?)?.toInt(),
     isGoing: j['isGoing'] ?? false,
@@ -283,6 +284,10 @@ class MeetupService extends ChangeNotifier {
   static const String _storageKey = 'huddl_user_meetups';
   final List<Meetup> _meetups = [];
   final BoroughScopeGuard _guard = BoroughScopeGuard();
+
+  /// Returns the current user's Firebase UID, falling back to the legacy
+  /// sentinel 'current_user' for backwards-compat with persisted local data.
+  String get _myUid => FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
 
   /// All meetups (unfiltered) — used internally.
   List<Meetup> get allMeetups => List.unmodifiable(_meetups);
@@ -443,7 +448,7 @@ class MeetupService extends ChangeNotifier {
 
   /// Clear all user-created meetups — used for GDPR account deletion.
   Future<void> clearAll() async {
-    _meetups.removeWhere((m) => m.organiserId == 'current_user');
+    _meetups.removeWhere((m) => m.organiserId == _myUid || m.organiserId == 'current_user');
     await BrowserStorage.remove(_storageKey);
     notifyListeners();
   }
@@ -478,7 +483,7 @@ class MeetupService extends ChangeNotifier {
     for (int i = 0; i < _meetups.length; i++) {
       final m = _meetups[i];
       // Only restore if the current URL is NOT a data: URI (i.e. was swapped)
-      if (!m.imageUrl.startsWith('data:') && m.organiserId == 'current_user') {
+      if (!m.imageUrl.startsWith('data:') && (m.organiserId == _myUid || m.organiserId == 'current_user')) {
         final stored = await BrowserStorage.getString('meetup_image_${m.id}');
         if (stored != null && stored.startsWith('data:')) {
           _meetups[i] = Meetup(
@@ -507,7 +512,7 @@ class MeetupService extends ChangeNotifier {
 
   Future<void> _persistUserMeetups() async {
     try {
-      final userMeetups = _meetups.where((m) => m.organiserId == 'current_user').toList();
+      final userMeetups = _meetups.where((m) => m.organiserId == _myUid || m.organiserId == 'current_user').toList();
       // When serializing, swap out base64 for category fallback to keep JSON small
       final jsonList = userMeetups.map((m) {
         final j = m.toJson();
@@ -591,7 +596,7 @@ class MeetupService extends ChangeNotifier {
       }
       if (changed) {
         // Seed demo meetups only when Firestore is empty so filters are testable
-        if (_meetups.where((m) => m.organiserId != 'current_user').isEmpty) {
+        if (_meetups.where((m) => m.organiserId != _myUid && m.organiserId != 'current_user').isEmpty) {
           _seedDemoMeetups();
         }
         Future.delayed(Duration.zero, () {

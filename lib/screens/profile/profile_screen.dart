@@ -326,7 +326,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borough = _postcodeService.getBoroughFromPostcode(pc) ?? 'Unknown';
       }
 
-      final defaultGroups = await _groupService.getUserGroups('current_user');
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+      final defaultGroups = await _groupService.getUserGroups(currentUid);
 
       // ── Always query Firestore for the full membership list ─────────────
       // Previously Firestore was only queried when the local cache was empty,
@@ -390,8 +391,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Only count meetups the user created (not just RSVP'd to)
       final userEvents = _eventService.goingEvents;
+      final myMeetupUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
       final userMeetups = _meetupService.meetups
-          .where((m) => m.organiserId == 'current_user')
+          .where((m) => m.organiserId == myMeetupUid || m.organiserId == 'current_user')
           .toList();
 
       setState(() {
@@ -1830,7 +1832,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             // Recreate default groups for updated stages
                             // This ensures new groups appear in the Messages tab
                             await _groupService.recreateGroupsForStages(
-                              userId: 'current_user',
+                              userId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
                               stages: selected.toList(),
                               postcode: _postcode,
                             );
@@ -2025,7 +2027,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Recreate default groups for the new borough
                 // based on user's current stage of life
                 await _groupService.recreateGroupsForStages(
-                  userId: 'current_user',
+                  userId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
                   stages: _stagesOfLife,
                   postcode: newPc,
                 );
@@ -2055,7 +2057,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// the ONLY way a user can leave a default group.
   void _showLeavePreviousBoroughGroupsSheet(String previousBorough) async {
     final oldGroups = await _groupService.getUserGroupsForBorough(
-        'current_user', previousBorough);
+        FirebaseAuth.instance.currentUser?.uid ?? 'current_user', previousBorough);
 
     if (oldGroups.isEmpty) return; // Nothing to show
 
@@ -2120,7 +2122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         trailing: TextButton(
                           onPressed: () async {
                             final left = await _groupService.leaveGroup(
-                                'current_user', g.id);
+                                FirebaseAuth.instance.currentUser?.uid ?? 'current_user', g.id);
                             if (left) {
                               setLocal(() {
                                 oldGroups.remove(g);
@@ -3108,9 +3110,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showMyEventsSheet() {
-    // Show only meetups the user created (organiserId == 'current_user').
+    // Show only meetups the user created.
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
     final myMeetups = _meetupService.meetups
-        .where((m) => m.organiserId == 'current_user')
+        .where((m) => m.organiserId == myUid || m.organiserId == 'current_user')
         .toList();
 
     _showSheet(

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
@@ -50,8 +51,9 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
     try {
       final groupService = DefaultGroupService();
       await groupService.initialize();
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
       final assigned =
-          await groupService.assignUserToDefaultGroups('current_user');
+          await groupService.assignUserToDefaultGroups(userId);
       if (kDebugMode) {
         debugPrint('Assigned ${assigned.length} default group(s) at onboarding completion');
       }

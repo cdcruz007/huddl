@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -238,7 +239,8 @@ class _ForwardSheetState extends State<_ForwardSheet>
       final membershipsRaw = await BrowserStorage.getString('user_memberships_v6');
       if (membershipsRaw != null) {
         final Map<String, dynamic> membershipsMap = json.decode(membershipsRaw);
-        final groupIds = (membershipsMap['current_user'] as List<dynamic>?)?.cast<String>() ?? [];
+        final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+        final groupIds = (membershipsMap[uid] as List<dynamic>?)?.cast<String>() ?? [];
         final groupsRaw = await BrowserStorage.getString('default_groups_v6');
         if (groupsRaw != null && groupIds.isNotEmpty) {
           final Map<String, dynamic> groupsMap = json.decode(groupsRaw);
