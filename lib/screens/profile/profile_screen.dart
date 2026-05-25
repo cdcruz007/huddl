@@ -595,72 +595,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ss = _subscriptionService;
     final limits = ss.limits;
 
-    // Helper: only show bars for capped limits
-    List<Widget> bars = [];
+    // Each row shows either a live progress bar (capped) or an
+    // "Unlimited" pill (999+). Always rendered — never skipped.
+    Widget usageRow(String label, int used, int max) {
+      final isUnlimited = TierLimits.isUnlimited(max);
+      final ratio = isUnlimited ? 1.0 : (used / max).clamp(0.0, 1.0);
+      final isNearLimit = !isUnlimited && ratio >= 0.8;
 
-    void addBar(String label, int used, int max) {
-      if (TierLimits.isUnlimited(max)) return;
-      final ratio = (used / max).clamp(0.0, 1.0);
-      final isNearLimit = ratio >= 0.8;
-      bars.add(Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(
               child: Text(label,
                   style: GoogleFonts.poppins(
-                      fontSize: 12, color: hc.textSecondary)),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: hc.textSecondary)),
             ),
-            Text('$used / $max',
-                style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isNearLimit ? HuddlColors.error : hc.textTertiary)),
+            if (isUnlimited)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: HuddlColors.successBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('Unlimited',
+                    style: GoogleFonts.poppins(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.success)),
+              )
+            else
+              Text('$used / $max',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isNearLimit ? HuddlColors.error : hc.textTertiary)),
           ]),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 5,
               backgroundColor: HuddlColors.divider,
               valueColor: AlwaysStoppedAnimation<Color>(
-                  isNearLimit ? HuddlColors.error : HuddlColors.textDark),
+                isUnlimited
+                    ? HuddlColors.success
+                    : isNearLimit
+                        ? HuddlColors.error
+                        : HuddlColors.primary),
             ),
           ),
         ]),
-      ));
+      );
     }
 
-    addBar('Groups joined', ss.groupsJoined, limits.maxGroups);
-    addBar('Meetups this month', ss.meetupsThisMonth, limits.maxMeetupsPerMonth);
-    addBar('Messages this month', ss.messagesThisMonth, limits.maxMessagesPerMonth);
-    addBar('Marketplace listings', ss.marketplaceListings, limits.maxMarketplaceListings);
-    addBar('Photos uploaded', ss.photosUploaded, limits.maxPhotoUploads);
-    addBar('AI chats today', ss.aiCopilotChatsToday, limits.maxAiCopilotChatsPerDay);
-
-    if (bars.isEmpty) return const SizedBox.shrink();
+    final bool hasCappedItems = !TierLimits.isUnlimited(limits.maxAiCopilotChatsPerDay);
 
     return Container(
       color: hc.surface,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('This month\'s usage',
+          Text('Your plan usage',
               style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  color: hc.textPrimary)),
+          const SizedBox(height: 4),
+          Text('This month',
+              style: GoogleFonts.poppins(
+                  fontSize: 11,
                   color: hc.textTertiary)),
-          const SizedBox(height: 12),
-          ...bars,
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
-            child: Text('Upgrade to unlock more →',
-                style: GoogleFonts.poppins(
-                    fontSize: 12, color: HuddlColors.textTertiary)),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
+          usageRow('Groups joined', ss.groupsJoined, limits.maxGroups),
+          usageRow('Messages sent', ss.messagesThisMonth, limits.maxMessagesPerMonth),
+          usageRow('Marketplace listings', ss.marketplaceListings, limits.maxMarketplaceListings),
+          usageRow('Photos uploaded', ss.photosUploaded, limits.maxPhotoUploads),
+          usageRow('Meetups this month', ss.meetupsThisMonth, limits.maxMeetupsPerMonth),
+          usageRow('AI chats today', ss.aiCopilotChatsToday, limits.maxAiCopilotChatsPerDay),
+          if (hasCappedItems) ...[
+            const SizedBox(height: 2),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
+              child: Text('Upgrade for unlimited AI →',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.primary,
+                      fontWeight: FontWeight.w500)),
+            ),
+          ],
+          const SizedBox(height: 8),
         ],
       ),
     );
