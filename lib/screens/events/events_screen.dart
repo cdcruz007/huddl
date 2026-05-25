@@ -5120,8 +5120,70 @@ class _EventListCard extends StatefulWidget {
 
 class _EventListCardState extends State<_EventListCard> {
   Map<String, dynamic> get event => widget.event;
+  final EventService _eventService = EventService();
+  bool _joiningInProgress = false;
 
-  // Match reason chips removed — kept only in detail screen to reduce card clutter.
+  Future<void> _handleJoinFromCard(String eventId, String title) async {
+    if (_joiningInProgress) return;
+    final isCurrentlyGoing = _eventService.isGoing(eventId);
+    setState(() => _joiningInProgress = true);
+    HuddlAnimations.mediumTap();
+    try {
+      _eventService.toggleGoing(eventId);
+      if (!isCurrentlyGoing && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "You're going to $title!",
+                    style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: HuddlColors.textDark,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        // First-RSVP achievement check
+        try {
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (uid != null) {
+            final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
+            final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+            if (achievements['firstMeetupRsvp'] != true) {
+              await FirebaseFirestore.instance.doc('users/$uid')
+                  .set({'achievements': {'firstMeetupRsvp': true}}, SetOptions(merge: true));
+              if (mounted) {
+                await HuddlCelebrationOverlay.show(context,
+                    message: "You're going to your first event! 🙌");
+              }
+            }
+          }
+        } catch (_) { /* non-critical */ }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Couldn't update RSVP. Please try again."),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _joiningInProgress = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -5136,6 +5198,7 @@ class _EventListCardState extends State<_EventListCard> {
     // Falls back to attendees < 10 for legacy events without isNew field.
     final bool isNew = event['isNew'] == true || attendees < 10;
     final String priceLabel = isFree ? 'Free' : (event['price'] as String? ?? '');
+    final bool isGoing = _eventService.isGoing(eventId);
 
     return Semantics(
       label: 'Event: ${event['title']}, ${event['date']} ${event['time']}, ${event['location']}${isFree ? ", Free" : ", ${event['price']}"}',
@@ -5395,38 +5458,51 @@ class _EventListCardState extends State<_EventListCard> {
                         ),
                       ),
                     ),
-                    // Join pill — Groups-style (primary tint pill)
+                    // Join / Going pill — taps directly join without opening detail
                     ScaleOnPress(
                       haptic: false,
-                      onTap: () {
-                        HuddlAnimations.mediumTap();
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder: (_, __, ___) =>
-                                EventDetailScreen(event: event),
-                            transitionsBuilder: (_, animation, __, child) =>
-                                FadeTransition(opacity: animation, child: child),
-                            transitionDuration:
-                                const Duration(milliseconds: 300),
-                          ),
-                        );
-                      },
-                      child: Container(
+                      onTap: () => isGoing
+                          ? null // already going — tap does nothing (or could toggle off)
+                          : _handleJoinFromCard(
+                              eventId, event['title'] as String? ?? 'this event'),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
+                            horizontal: 16, vertical: 9),
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.12),
+                          color: isGoing
+                              ? HuddlColors.successBg
+                              : HuddlColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          'Join',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
-                        ),
+                        child: _joiningInProgress
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: HuddlColors.primary),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isGoing) ...[
+                                    const Icon(Icons.check_circle,
+                                        size: 13, color: HuddlColors.success),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    isGoing ? 'Going' : 'Join',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isGoing
+                                          ? HuddlColors.success
+                                          : HuddlColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                   ],
