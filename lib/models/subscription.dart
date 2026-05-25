@@ -104,17 +104,17 @@ class TierLimits {
   // Enough to genuinely engage — 2 groups, attend meetups, send DMs, list items.
   // AI features are taster-level: 3 AI chats/day and weekly events discovery.
   static const TierLimits explorer = TierLimits(
-    maxGroups: 2,
-    maxGroupsCreated: 999,   // free users can create groups
-    maxMeetupsPerMonth: 999, // free users can create free meetups
-    maxDMConversations: 5,
-    maxMarketplaceListings: 3,  // was 2
-    maxPhotoUploads: 3,
-    maxMessagesPerMonth: 30,
+    maxGroups: 999,            // unlimited — no group join cap on free
+    maxGroupsCreated: 999,     // unlimited — free users can create groups
+    maxMeetupsPerMonth: 999,   // unlimited — free users can create meetups
+    maxDMConversations: 999,   // unlimited
+    maxMarketplaceListings: 999, // unlimited
+    maxPhotoUploads: 999,      // unlimited
+    maxMessagesPerMonth: 999,  // unlimited
     canCreatePrivateGroups: false,
-    canCreateMeetups: true,  // free users can create free meetups
+    canCreateMeetups: true,
     customProfileBadge: false,
-    maxAiCopilotChatsPerDay: 3,
+    maxAiCopilotChatsPerDay: 3,          // AI still gated — upgrade incentive
     maxAiEventDiscoveriesPerWeek: 1,
     maxAiChatSummariesPerDay: 0,
     maxAiListingGenerationsPerMonth: 0,
@@ -127,9 +127,9 @@ class TierLimits {
     aiListingGenerator: false,
     aiSmartFeed: true,
     aiMeetupMatchmaker: false,
-    maxQuestionsPerWeek: 3,
+    maxQuestionsPerWeek: 999,  // unlimited
     communityBadgesEnabled: false,
-    maxBookmarksPerMonth: 10,
+    maxBookmarksPerMonth: 999, // unlimited
     aiSynthesisAccess: false,
   );
 
@@ -284,16 +284,16 @@ class SubscriptionPlan {
         'Create free community meetups',
         'Attend any meetup or event',
         'Message any parent directly',
-        'Post up to 3 items on the marketplace',
+        'Post unlimited items on the marketplace',
         'Recommend local services to other parents',
         'AI Chat Helper — 3 conversations per day',
         'AI Events Finder — 1 local event per week',
         'Personalised home feed',
       ],
       shortBenefits: [
-        'Join groups, message parents, create free meetups',
+        'Join groups, message parents & post on the marketplace',
         'AI Chat Helper (3/day) + weekly events discovery',
-        'Community Q&A board + marketplace listings',
+        'Community Q&A board — all free, forever',
       ],
     ),
 
@@ -309,7 +309,7 @@ class SubscriptionPlan {
       highlights: [
         'Everything in Huddl free',
         'Unlimited marketplace listings',
-        '60-day listing duration (vs 14 days on free)',
+        '60-day listing duration (vs 30 days on free)',
         '1 free listing bump per week',
         'Create paid meetups — cost-share with other parents',
         'Full AI suite — Chat Helper, Summaries, Listing Writer, Events',
