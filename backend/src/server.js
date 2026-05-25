@@ -52,12 +52,33 @@ const PORT = process.env.PORT || 3000;
 // ── Global middleware ────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5060',
-    'https://huddlapp.co.uk',
-    'https://www.huddlapp.co.uk',
-    /\.huddlapp\.co\.uk$/,
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    const allowed = [
+      /^https?:\/\/localhost(:\d+)?$/,          // local dev (any port)
+      /\.huddlapp\.co\.uk$/,                    // all huddlapp subdomains
+      /^https:\/\/huddlapp\.co\.uk$/,           // apex domain
+      /\.sandbox\.novita\.ai$/,                 // Genspark web preview sandbox
+      /\.huddlconnect\.com$/,                   // legacy domain
+    ];
+
+    // Also allow any origin explicitly set via EXTRA_CORS_ORIGINS env var
+    // (comma-separated list, e.g. "https://myapp.com,https://staging.myapp.com")
+    const extra = (process.env.EXTRA_CORS_ORIGINS || '').split(',').filter(Boolean);
+
+    const isAllowed =
+      allowed.some(r => r instanceof RegExp ? r.test(origin) : r === origin) ||
+      extra.includes(origin);
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
   credentials: true,
 }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
