@@ -239,8 +239,8 @@ This indemnification obligation is unlimited in amount and duration, and survive
               '7. Payment Terms and Subscription Management',
               '''a) Subscription Tiers:
 • Welcome Tier (Free): Basic access with limited features
-• Neighbour Tier (Paid): Full community access with AI tools
-• Circle Tier (Paid): Unlimited access with exclusive AI features
+• Plus Tier (Paid): Full community access with AI tools
+• Partner Tier (Paid): Unlimited access with exclusive business features
 
 Exact pricing, features, and limitations are displayed in-app and may be modified at our discretion.
 

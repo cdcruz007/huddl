@@ -720,7 +720,7 @@ class SubscriptionService extends ChangeNotifier {
     switch (limitType) {
       // Core social limits
       case 'groups_join':
-        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Neighbour for unlimited groups!';
+        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Huddl Plus for unlimited groups!';
       case 'groups_create':
         return 'You\'ve hit the $tierName limit of ${limits.maxGroupsCreated} created groups. Upgrade to create more!';
       case 'meetups':
