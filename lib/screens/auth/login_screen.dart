@@ -412,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: HuddlColors.textDark, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: context.hc.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -440,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               Text(
                 'Log in with your UK mobile number',
-                style: AppTextStyles.body1.copyWith(color: HuddlColors.textSecondary),
+                style: AppTextStyles.body1.copyWith(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
 
@@ -453,7 +453,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Phone number',
                     style: AppTextStyles.inputLabel.copyWith(
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -463,9 +463,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Country code (locked to UK)
                       Container(
                         padding: const EdgeInsets.only(bottom: 10),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           border: Border(
-                            bottom: BorderSide(color: HuddlColors.gray300),
+                            bottom: BorderSide(color: context.hc.divider),
                           ),
                         ),
                         child: Row(
@@ -477,6 +477,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               _countryCode,
                               style: AppTextStyles.body1.copyWith(
                                 fontWeight: FontWeight.w600,
+                                color: context.hc.textPrimary,
                               ),
                             ),
                           ],
@@ -507,16 +508,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             LengthLimitingTextInputFormatter(10),
                           ],
                             maxLength: 10,
-                            style: AppTextStyles.body1,
+                            style: AppTextStyles.body1.copyWith(color: context.hc.textPrimary),
                           decoration: InputDecoration(
                             hintText: '7700 900 123',
-                            hintStyle: AppTextStyles.inputHint,
+                            hintStyle: AppTextStyles.inputHint.copyWith(color: context.hc.textTertiary),
                             counterText: '',
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
                                   color: _phoneError != null
                                       ? HuddlColors.error
-                                      : HuddlColors.gray300),
+                                      : context.hc.divider),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
@@ -529,7 +530,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderSide: BorderSide(
                                   color: _phoneError != null
                                       ? HuddlColors.error
-                                      : HuddlColors.gray300),
+                                      : context.hc.divider),
                             ),
                             contentPadding:
                                 const EdgeInsets.symmetric(vertical: 8),
@@ -562,7 +563,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       'Password',
                       style: AppTextStyles.inputLabel.copyWith(
-                        color: HuddlColors.textSecondary,
+                        color: context.hc.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -611,31 +612,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         key: const Key('passwordField'),
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: AppTextStyles.body1,
+                        style: AppTextStyles.body1.copyWith(color: context.hc.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Min 8 chars, upper+lower+digit',
-                          hintStyle: AppTextStyles.inputHint,
+                          hintStyle: AppTextStyles.inputHint.copyWith(color: context.hc.textTertiary),
                           suffixIcon: ExcludeSemantics(
                             child: IconButton(
                               icon: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: HuddlColors.textSecondary,
+                                color: context.hc.textTertiary,
                               ),
                               onPressed: () => setState(
                                   () => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                          border: const UnderlineInputBorder(
-                            borderSide: BorderSide(color: HuddlColors.gray300),
+                          border: UnderlineInputBorder(
+                            borderSide: BorderSide(color: context.hc.divider),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide:
                                 BorderSide(color: HuddlColors.primary, width: 2),
                           ),
-                          enabledBorder: const UnderlineInputBorder(
-                            borderSide: BorderSide(color: HuddlColors.gray300),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: context.hc.divider),
                           ),
                           contentPadding:
                               const EdgeInsets.symmetric(vertical: 8),
@@ -668,7 +669,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Forgot password?',
                       style: AppTextStyles.body2.copyWith(
-                        color: HuddlColors.textTertiary,
+                        color: context.hc.textTertiary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -705,7 +706,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 56,
                       child: Center(
                         child: CircularProgressIndicator(
-                          color: HuddlColors.textTertiary,
+                          color: HuddlColors.primary,
                           strokeWidth: 2.5,
                         ),
                       ),
@@ -746,7 +747,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     "Don't have an account? ",
                     style: AppTextStyles.body2.copyWith(
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                     ),
                   ),
                   GestureDetector(
@@ -755,7 +756,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Sign up',
                       style: AppTextStyles.body2.copyWith(
-                        color: HuddlColors.textTertiary,
+                        color: HuddlColors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -797,7 +798,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: HuddlColors.gray300,
+                      color: ctx.hc.divider,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -813,7 +814,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Enter your UK mobile number. We\'ll send an SMS code to verify your identity.',
                     style: TextStyle(
                         fontSize: 14,
-                        color: HuddlColors.textSecondary,
+                        color: ctx.hc.textSecondary,
                         height: 1.4)),
                 const SizedBox(height: 24),
                 Row(
@@ -1002,7 +1003,7 @@ class _BiometricLoginButton extends StatelessWidget {
                   ? Icons.face_retouching_natural_rounded
                   : Icons.fingerprint_rounded,
               size: 26,
-              color: HuddlColors.textSecondary,
+              color: context.hc.textSecondary,
             ),
             const SizedBox(width: 12),
             Column(
@@ -1014,7 +1015,7 @@ class _BiometricLoginButton extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 if (_maskedPhone.isNotEmpty)
@@ -1022,7 +1023,7 @@ class _BiometricLoginButton extends StatelessWidget {
                     _maskedPhone,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                     ),
                   ),
               ],
