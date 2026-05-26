@@ -2509,35 +2509,154 @@ class _DMChatScreenState extends State<DMChatScreen> {
     );
   }
 
-  void _handleContactShare() async {
-    if (!mounted) return;
+  // ── Contacts permission helpers ────────────────────────────────────────
+  //
+  // WHY a two-step check-then-request?
+  // On iOS, once the user has denied the system prompt, the permission enters
+  // "permanentlyDenied" state.  Calling Permission.contacts.request() when
+  // already permanentlyDenied is a silent no-op — iOS never shows the system
+  // alert again.  By checking status first we can detect this state early and
+  // immediately route the user to Settings instead of silently returning denied.
+  //
+  // Flow:
+  //   granted           → return true, proceed
+  //   notDetermined     → call request() → granted? true : false (snackbar)
+  //   denied            → call request() → iOS shows prompt once more
+  //                        result granted? true : false (snackbar)
+  //   permanentlyDenied → show Settings dialog (openAppSettings), return false
+  //   restricted        → show explanatory snackbar, return false
+  Future<bool> _requestContactsPermission() async {
+    PermissionStatus status = await Permission.contacts.status;
 
-    // ── Request READ_CONTACTS permission (native only) ─────────────────────
-    if (!kIsWeb) {
-      final status = await Permission.contacts.request();
-      if (!status.isGranted) {
-        if (!mounted) return;
+    // Already granted — fast path.
+    if (status.isGranted) return true;
+
+    // Permanently denied — request() won't show system prompt on iOS/Android.
+    // Route user straight to Settings with a proper dialog.
+    if (status.isPermanentlyDenied) {
+      if (mounted) _showContactsSettingsDialog();
+      return false;
+    }
+
+    // Restricted (parental controls / MDM) — cannot request.
+    if (status.isRestricted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              status.isPermanentlyDenied
-                  ? 'Contacts permission permanently denied. Enable it in Settings.'
-                  : 'Contacts permission is needed to share a contact.',
+              'Contacts access is restricted on this device.',
+              style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            action: status.isPermanentlyDenied
-                ? SnackBarAction(
-                    label: 'Settings',
-                    textColor: Colors.white,
-                    onPressed: () => openAppSettings(),
-                  )
-                : null,
           ),
         );
-        return;
       }
+      return false;
+    }
+
+    // notDetermined or denied — ask the OS to show the system permission prompt.
+    final result = await Permission.contacts.request();
+
+    if (result.isGranted) return true;
+
+    if (!mounted) return false;
+
+    // The user tapped "Don't Allow" on the system prompt — now permanently denied.
+    if (result.isPermanentlyDenied) {
+      _showContactsSettingsDialog();
+      return false;
+    }
+
+    // Plain denied (user dismissed without granting).
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Contacts permission is needed to share a contact card.',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        backgroundColor: HuddlColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+    return false;
+  }
+
+  /// Full-screen dialog explaining why contacts are needed and offering a
+  /// direct deep-link into the OS Settings app via [openAppSettings()].
+  void _showContactsSettingsDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: ctx.hc.surface,
+        title: Row(
+          children: [
+            Icon(Icons.contacts_rounded, color: HuddlColors.primary, size: 24),
+            const SizedBox(width: 10),
+            Text(
+              'Contacts Access',
+              style: GoogleFonts.poppins(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: ctx.hc.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Huddl needs access to your contacts so you can share '
+          'contact cards in group and direct message chats.\n\n'
+          'Please open Settings and enable Contacts for Huddl.',
+          style: GoogleFonts.poppins(fontSize: 14, color: ctx.hc.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: ctx.hc.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              openAppSettings(); // Deep-links to iOS Settings → Huddl or Android app info
+            },
+            child: Text(
+              'Open Settings',
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleContactShare() async {
+    if (!mounted) return;
+
+    // ── Contacts permission gate (native only) ────────────────────────────
+    // iOS/Android: check status BEFORE calling request().
+    //   • notDetermined / denied → call request() so the OS system prompt appears.
+    //   • permanentlyDenied      → request() is a no-op on iOS; show Settings dialog.
+    //   • granted                → proceed directly.
+    if (!kIsWeb) {
+      final granted = await _requestContactsPermission();
+      if (!granted) return; // dialog already shown; manual entry NOT offered when perm denied
     }
 
     // ── Manual contact entry bottom sheet ──────────────────────────────────
