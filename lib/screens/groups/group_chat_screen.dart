@@ -6999,7 +6999,14 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                 Container(
                   constraints: const BoxConstraints(maxWidth: 260),
                   decoration: BoxDecoration(
-                    color: widget.isMe ? _kMyBubble : context.hc.surfaceAlt,
+                    // Location bubbles must never use the solid primary-orange
+                    // fill (_kMyBubble) — the map thumbnail and text rows need
+                    // a neutral background regardless of sender/receiver side.
+                    // Use a very light primary tint (same as DM _LocationBubble)
+                    // so the bubble is clearly "mine" without drowning the map.
+                    color: widget.isMe
+                        ? HuddlColors.primary.withValues(alpha: 0.10)
+                        : context.hc.surfaceAlt,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
