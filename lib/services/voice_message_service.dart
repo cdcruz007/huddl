@@ -211,6 +211,22 @@ class VoiceMessageService {
 
   /// Upload the recorded voice file to Firebase Storage.
   /// Returns the public download URL.
+  ///
+  /// Upload strategy (mobile):
+  ///   1. Read the recording file into memory as bytes.
+  ///   2. Upload with [putData] — this is the most reliable path on both iOS
+  ///      and Android with the new `.firebasestorage.app` bucket domain.
+  ///
+  /// Why not [putFile]?
+  ///   On iOS, [putFile] delegates to FIRStorageUploadTask which on some iOS
+  ///   versions tries to verify the storage bucket hostname directly, producing
+  ///   the error "firebase_storage/unknown – A server with the specified
+  ///   hostname could not be found" (NSURLErrorCannotFindHost / -1003).
+  ///   [putData] sends bytes as NSData via a different URLSession code path
+  ///   that correctly targets firebasestorage.googleapis.com and avoids the
+  ///   DNS lookup failure.  It is also more resilient on Android under poor
+  ///   network conditions.  The memory overhead is acceptable for voice notes
+  ///   (≤ 25 MB per the storage rules).
   Future<String> uploadVoiceNote(String localPath, {String? conversationId}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
     final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -225,13 +241,13 @@ class VoiceMessageService {
       // On web, `record` returns a blob: URL.  We fetch the blob as bytes using
       // XHR then upload via putData so the audio is stored in Firebase Storage
       // and playable by all users (a blob: URL is local to one browser tab).
-      // Fetch blob: URL as bytes, then upload to Firebase Storage
       final bytes = await fetchBlobAsBytes(localPath);
       task = ref.putData(
         bytes,
         SettableMetadata(contentType: 'audio/webm'),
       );
     } else {
+      // Mobile (iOS & Android): read bytes first, then upload with putData.
       // stopRecording() already strips file:// — handle both just in case.
       final cleanPath = localPath.startsWith('file://')
           ? Uri.parse(localPath).toFilePath()
@@ -240,8 +256,10 @@ class VoiceMessageService {
       if (!await file.exists()) {
         throw Exception('Voice recording not found at path: $cleanPath');
       }
-      task = ref.putFile(
-        file,
+      // Read into memory — avoids the iOS putFile hostname-resolution bug.
+      final bytes = await file.readAsBytes();
+      task = ref.putData(
+        bytes,
         SettableMetadata(contentType: 'audio/mp4'),
       );
     }
@@ -249,7 +267,7 @@ class VoiceMessageService {
     final snapshot = await task;
     final url = await snapshot.ref.getDownloadURL();
 
-    // Clean up temp file
+    // Clean up temp file after successful upload
     if (!kIsWeb) {
       try {
         final cleanPath = localPath.startsWith('file://')
