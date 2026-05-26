@@ -59,34 +59,40 @@ class PhotoUploadService {
 
       final ref = _storage.ref(storagePath);
 
-      UploadTask task;
+      final metadata = SettableMetadata(
+        contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
+      );
+
+      // Helper to attach progress listener and await the task.
+      Future<TaskSnapshot> runTask(UploadTask t) async {
+        if (onProgress != null) {
+          t.snapshotEvents.listen((s) {
+            if (s.totalBytes > 0) onProgress(s.bytesTransferred / s.totalBytes);
+          });
+        }
+        return await t;
+      }
+
+      TaskSnapshot snapshot;
 
       if (kIsWeb) {
-        // Web: use bytes
+        // Web: must use bytes (no dart:io File)
         final bytes = await file.readAsBytes();
-        final metadata = SettableMetadata(
-          contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
-        );
-        task = ref.putData(bytes, metadata);
+        snapshot = await runTask(ref.putData(bytes, metadata));
       } else {
-        // Mobile: use File
-        final ioFile = File(file.path);
-        final metadata = SettableMetadata(
-          contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
-        );
-        task = ref.putFile(ioFile, metadata);
+        // Mobile: try putFile first (efficient streaming from disk).
+        // Falls back to putData (bytes in memory) if putFile fails —
+        // e.g. when the XFile path is in a sandboxed iOS temp directory
+        // that Firebase Storage cannot access directly.
+        try {
+          snapshot = await runTask(ref.putFile(File(file.path), metadata));
+        } catch (e) {
+          _log('⚠️ putFile failed for XFile ($e), falling back to putData');
+          final bytes = await file.readAsBytes();
+          snapshot = await runTask(ref.putData(bytes, metadata));
+        }
       }
 
-      // Wire up progress callback if provided
-      if (onProgress != null) {
-        task.snapshotEvents.listen((snapshot) {
-          if (snapshot.totalBytes > 0) {
-            onProgress(snapshot.bytesTransferred / snapshot.totalBytes);
-          }
-        });
-      }
-
-      final snapshot = await task;
       final downloadUrl = await snapshot.ref.getDownloadURL();
       _log('✅ Profile photo uploaded → $downloadUrl');
       return downloadUrl;
@@ -101,6 +107,11 @@ class PhotoUploadService {
   ///
   /// This overload is the mobile-only path — on iOS/Android the cropper returns
   /// a dart:io File directly rather than an XFile.
+  ///
+  /// Strategy: try putFile first (streams bytes efficiently from disk), then
+  /// fall back to putData (reads entire file into memory) if putFile fails.
+  /// The fallback handles edge cases where the file is in a sandboxed temp
+  /// directory that Firebase Storage can't access directly on iOS.
   Future<String?> uploadProfilePhotoFromFile(
     File file, {
     void Function(double progress)? onProgress,
@@ -121,17 +132,31 @@ class PhotoUploadService {
       final metadata = SettableMetadata(
         contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
       );
-      final task = ref.putFile(file, metadata);
 
-      if (onProgress != null) {
-        task.snapshotEvents.listen((snapshot) {
-          if (snapshot.totalBytes > 0) {
-            onProgress(snapshot.bytesTransferred / snapshot.totalBytes);
-          }
-        });
+      TaskSnapshot snapshot;
+
+      // Try putFile first — efficient streaming from disk
+      try {
+        final task = ref.putFile(file, metadata);
+        if (onProgress != null) {
+          task.snapshotEvents.listen((s) {
+            if (s.totalBytes > 0) onProgress(s.bytesTransferred / s.totalBytes);
+          });
+        }
+        snapshot = await task;
+      } catch (fileError) {
+        // putFile failed (e.g. iOS sandboxed temp path) — fall back to putData
+        _log('⚠️ putFile failed ($fileError), falling back to putData');
+        final bytes = await file.readAsBytes();
+        final task = ref.putData(bytes, metadata);
+        if (onProgress != null) {
+          task.snapshotEvents.listen((s) {
+            if (s.totalBytes > 0) onProgress(s.bytesTransferred / s.totalBytes);
+          });
+        }
+        snapshot = await task;
       }
 
-      final snapshot = await task;
       final downloadUrl = await snapshot.ref.getDownloadURL();
       _log('✅ Profile photo uploaded → $downloadUrl');
       return downloadUrl;

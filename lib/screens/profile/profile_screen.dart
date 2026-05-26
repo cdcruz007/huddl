@@ -6150,14 +6150,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // ImageEditorWidget returns a dart:io File, so use the File overload.
       final downloadUrl = await _photoUpload.uploadProfilePhotoFromFile(file);
       if (downloadUrl != null) {
+        // Save the permanent HTTPS URL locally
         _onboarding.setProfilePhotoPath(downloadUrl);
+        // ── CRITICAL: write photoUrl to Firestore so other devices see it ──
+        // Without this, the profile photo only exists on this device.
+        try {
+          await FirestoreService().updateUserProfile({'photoUrl': downloadUrl});
+          if (kDebugMode) debugPrint('[ProfileScreen] photoUrl written to Firestore: $downloadUrl');
+        } catch (fsErr) {
+          if (kDebugMode) debugPrint('[ProfileScreen] Firestore photoUrl update failed: $fsErr');
+          // Non-fatal — photo is uploaded; Firestore update can be retried
+        }
+        // Update local state to show the HTTPS URL (replaces data: URI)
+        if (mounted) {
+          setState(() => _photoUrl = downloadUrl);
+        }
       } else {
         // Upload failed — keep data URL as local fallback but it won't sync
         // to other devices. Show a warning so the user knows.
         _onboarding.setProfilePhotoPath(dataUrl);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Photo saved locally — sync may take a moment'),
+            content: Text('Photo saved locally — upload will retry next time'),
             backgroundColor: HuddlColors.warning,
           ));
         }
