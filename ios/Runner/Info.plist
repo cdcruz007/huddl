@@ -109,6 +109,15 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Huddl uses your location to share it with other group members in chat.</string>
 
+	<!-- Location Always — required by Apple when any location API is referenced,
+	     even if the app only requests "when in use" at runtime -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Huddl uses your location to share it with other group members in chat.</string>
+
+	<!-- Location Always (legacy iOS 10 key — required alongside the above) -->
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Huddl uses your location to share it with other group members in chat.</string>
+
 	<!-- Contacts — used for the Contact sharing feature in group and DM chats -->
 	<key>NSContactsUsageDescription</key>
 	<string>Huddl accesses your contacts so you can share contact cards with other members in group and direct message chats.</string>
