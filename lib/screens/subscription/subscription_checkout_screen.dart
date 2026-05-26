@@ -175,14 +175,12 @@ class _SubscriptionCheckoutScreenState
     return _plan.priceFor(_period);
   }
 
-  /// Get store-localised price if available, else our default
+  /// Always use our local authoritative price for the Total row.
+  /// The store-localised price (from Play Store / App Store) is only
+  /// reliable once products are fully configured in the store console.
+  /// Displaying an incorrect store price (e.g. stale/misconfigured) would
+  /// show the wrong total to the user, so we always use the local price here.
   String get _displayPriceString {
-    final productId = HuddlProductIds.productIdFor(
-      _plan.tier,
-      _period,
-    );
-    final storePrice = _payService.getPriceForProduct(productId);
-    if (storePrice.isNotEmpty) return storePrice;
     final isAnnual = _period == BillingPeriod.annual;
     return '\u00A3${_displayPrice.toStringAsFixed(2)}${isAnnual ? '/year' : '/month'}';
   }
@@ -944,7 +942,7 @@ class _OrderSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Huddl ${plan.name}',
+                Text(plan.name,
                     style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
