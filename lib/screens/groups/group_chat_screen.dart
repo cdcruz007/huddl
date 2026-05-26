@@ -6389,23 +6389,40 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     }
   }
 
-  /// Neutral grey circular fallback showing only the sender's first initial.
-  /// Matches Figma style — clean grey circle with white initial text.
+  /// Gender-appropriate illustrated avatar fallback.
+  /// Uses John.png for dads, Emma.png for mums/others.
+  /// Falls back to a grey initial circle if the asset fails to load.
   Widget _buildFallback() {
-    final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
-    return Container(
-      width: 32,
-      height: 32,
-      color: HuddlColors.textTertiary.withValues(alpha: 0.30),
-      child: Center(
-        child: Text(
-          initial,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: HuddlColors.white,
-          ),
-        ),
+    final pt = widget.senderId != null
+        ? (_senderParentTypeCache[widget.senderId!] ?? '')
+        : '';
+    final asset = pt == 'dad'
+        ? 'assets/images/avatars/John.png'
+        : 'assets/images/avatars/Emma.png';
+    return ClipOval(
+      child: Image.asset(
+        asset,
+        width: 32,
+        height: 32,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
+          return Container(
+            width: 32,
+            height: 32,
+            color: HuddlColors.textTertiary.withValues(alpha: 0.30),
+            child: Center(
+              child: Text(
+                initial,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.white,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -6414,7 +6431,7 @@ class _SenderAvatarState extends State<_SenderAvatar> {
   Widget build(BuildContext context) {
     // Priority 1: photoUrl passed on the message (stored when sent)
     // Priority 2: real photoUrl fetched live from Firestore profile
-    // Priority 3: neutral grey circle with first initial (Figma fallback)
+    // Priority 3: gender-appropriate illustrated avatar (John/Emma)
     final resolvedPhoto = (widget.photoUrl != null && widget.photoUrl!.startsWith('http'))
         ? widget.photoUrl!
         : (_firestorePhoto.startsWith('http') ? _firestorePhoto : null);

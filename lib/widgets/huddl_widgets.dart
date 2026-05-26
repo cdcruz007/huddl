@@ -431,12 +431,15 @@ class HuddlAvatar extends StatelessWidget {
   final String? imageUrl;
   final double size;
   final bool hasBorder;
+  /// Used to select John.png (dad) or Emma.png (mum/other) when no photo.
+  final String? parentType;
 
   const HuddlAvatar({
     super.key,
     this.imageUrl,
     this.size = 48,
     this.hasBorder = false,
+    this.parentType,
   });
 
   @override
@@ -464,11 +467,14 @@ class HuddlAvatar extends StatelessWidget {
   }
 
   Widget _defaultAvatar() {
-    return Center(
-      child: Icon(
-        Icons.person,
-        size: size * 0.5,
-        color: HuddlColors.primary,
+    final asset = MemberPhotoService.getDefaultAvatar(parentType: parentType);
+    return Image.asset(
+      asset,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Center(
+        child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary),
       ),
     );
   }
@@ -747,6 +753,8 @@ class MemberAvatar extends StatelessWidget {
   final Color? accentColor;
   final bool showOnlineDot;
   final bool isOnline;
+  /// Used to select John.png (dad) or Emma.png (mum/other) when no photo.
+  final String? parentType;
 
   const MemberAvatar({
     super.key,
@@ -756,6 +764,7 @@ class MemberAvatar extends StatelessWidget {
     this.accentColor,
     this.showOnlineDot = false,
     this.isOnline = false,
+    this.parentType,
   });
 
   @override
@@ -842,6 +851,23 @@ class MemberAvatar extends StatelessWidget {
   }
 
   Widget _fallback(Color color, String initial) {
+    // If parentType is known, show the gender-appropriate illustrated avatar.
+    if (parentType != null) {
+      final asset = MemberPhotoService.getDefaultAvatar(parentType: parentType);
+      return ClipOval(
+        child: Image.asset(
+          asset,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _initialsCircle(color, initial),
+        ),
+      );
+    }
+    return _initialsCircle(color, initial);
+  }
+
+  Widget _initialsCircle(Color color, String initial) {
     return Container(
       width: size,
       height: size,

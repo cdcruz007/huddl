@@ -513,6 +513,7 @@ class _MemberTile extends StatelessWidget {
               ? (member.isOnline && UserPrivacyPrefsService().showOnlineStatus)
               : member.isOnline,
           imageUrl: member.photoUrl,
+          parentType: member.parentType,
         ),
         title: Row(
           children: [

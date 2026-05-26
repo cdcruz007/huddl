@@ -5447,6 +5447,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _avatarFallback(double size) {
+    // Show gender-appropriate illustrated avatar: John.png for dads, Emma.png for mums.
+    final asset = MemberPhotoService.currentUserAvatarAsset;
     return Container(
       width: size,
       height: size,
@@ -5459,7 +5461,17 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
       child: ClipOval(
-        child: HuddlCharacter(mood: HuddlMood.waving, size: size * 0.95),
+        child: Image.asset(
+          asset,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Icon(
+            Icons.person,
+            size: size * 0.5,
+            color: HuddlColors.primary,
+          ),
+        ),
       ),
     );
   }

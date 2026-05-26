@@ -74,11 +74,13 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         final ud = userData[uid] ?? {};
         final name = (ud['name'] as String?)?.trim() ?? 'Member';
         final photo = (ud['photoUrl'] as String?)?.trim();
+        final pt = (ud['parentType'] as String?)?.toLowerCase();
         return _AdminMember(
           uid: uid,
           name: uid == _currentUid ? 'You' : name,
           photoUrl: (photo != null && photo.isNotEmpty) ? photo : null,
           isCreator: uid == createdBy,
+          parentType: pt,
         );
       }
 
@@ -531,6 +533,7 @@ class _AdminTile extends StatelessWidget {
           size: 44,
           accentColor: HuddlColors.primary,
           imageUrl: member.photoUrl,
+          parentType: member.parentType,
         ),
         title: Row(
           children: [
@@ -580,11 +583,13 @@ class _AdminMember {
   final String name;
   final String? photoUrl;
   final bool isCreator;
+  final String? parentType;
 
   const _AdminMember({
     required this.uid,
     required this.name,
     this.photoUrl,
     required this.isCreator,
+    this.parentType,
   });
 }

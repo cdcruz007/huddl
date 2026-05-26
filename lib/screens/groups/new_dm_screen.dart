@@ -312,7 +312,7 @@ class _MemberTile extends StatelessWidget {
         color: context.hc.surface,
         child: Row(
           children: [
-            // Avatar with profile photo or initials
+            // Avatar with profile photo or John/Emma illustration fallback
             MemberAvatar(
               name: member.name,
               size: 48,
@@ -320,6 +320,7 @@ class _MemberTile extends StatelessWidget {
               showOnlineDot: true,
               isOnline: member.isOnline,
               imageUrl: member.photoUrl.isNotEmpty ? member.photoUrl : null,
+              parentType: member.parentType,
             ),
             const SizedBox(width: 14),
             // Name and parent type

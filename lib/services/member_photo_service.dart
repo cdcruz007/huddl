@@ -13,13 +13,11 @@ import '../services/onboarding_data_service.dart';
 class MemberPhotoService {
   MemberPhotoService._();
 
-  // ── Gender-based default avatars ──────────────────────────────────────
-  // Male-presenting Pexels avatar for dads / unknown male
-  static const String defaultDadAvatar =
-      'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200';
-  // Female-presenting Pexels avatar for mums / unknown female
-  static const String defaultMumAvatar =
-      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200';
+  // ── Gender-based default avatars (local illustrated assets) ─────────────
+  // John.png illustration for dads / unknown male
+  static const String defaultDadAvatar = 'assets/images/avatars/John.png';
+  // Emma.png illustration for mums / unknown female
+  static const String defaultMumAvatar = 'assets/images/avatars/Emma.png';
 
   /// Resolves a photo URL for a given display name.
   /// Returns the current user's photo if the name matches,
@@ -53,8 +51,9 @@ class MemberPhotoService {
 
   /// Returns the local asset path for the current user's default avatar
   /// based on parentType (mum / dad). Used when no profile photo is set.
+  /// Returns 'assets/images/avatars/John.png' for dads,
+  /// 'assets/images/avatars/Emma.png' for mums/others.
   static String get currentUserAvatarAsset {
-    // P5: Use network defaults instead of Emma/John asset illustrations
     final parentType = OnboardingDataService().parentType;
     return parentType == 'dad' ? defaultDadAvatar : defaultMumAvatar;
   }

@@ -6081,21 +6081,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Fallback avatar for dark background (used in Airbnb photo preview)
   Widget _fallbackAvatarDark() {
-    final raw = _name.trim();
-    final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    final initials = parts.length >= 2
-        ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
-        : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+    // Show gender-appropriate illustrated avatar on dark background.
+    // Dad → John.png, Mum/other → Emma.png
+    final asset = _parentType == 'dad'
+        ? 'assets/images/avatars/John.png'
+        : 'assets/images/avatars/Emma.png';
     return Container(
       width: 180, height: 180,
       color: const Color(0xFF2C2C2C),
-      child: Center(
-        child: Text(initials,
-          style: GoogleFonts.poppins(
-            fontSize: 64,
-            fontWeight: FontWeight.w600,
-            color: Colors.white.withValues(alpha: 0.7),
-          )),
+      child: ClipRect(
+        child: Image.asset(
+          asset,
+          width: 180,
+          height: 180,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) {
+            final raw = _name.trim();
+            final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+            final initials = parts.length >= 2
+                ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+                : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+            return Center(
+              child: Text(initials,
+                style: GoogleFonts.poppins(
+                  fontSize: 64,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.7),
+                )),
+            );
+          },
+        ),
       ),
     );
   }
@@ -6226,9 +6241,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _fallbackAvatar() {
-    // Show the Huddl illustrated character when no profile photo is set.
-    // Wrapped in a circular clip with a subtle border to maintain the avatar
-    // shape consistent with the photo state.
+    // Show gender-appropriate illustrated avatar when no profile photo is set.
+    // Dad → John.png, Mum/other → Emma.png
+    final asset = _parentType == 'dad'
+        ? 'assets/images/avatars/John.png'
+        : 'assets/images/avatars/Emma.png';
     return Container(
       width: 88,
       height: 88,
@@ -6241,9 +6258,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       child: ClipOval(
-        child: HuddlCharacter(
-          mood: _parentType == 'dad' ? HuddlMood.waving : HuddlMood.waving,
-          size: 80,
+        child: Image.asset(
+          asset,
+          width: 88,
+          height: 88,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(
+            Icons.person,
+            size: 44,
+            color: HuddlColors.primary,
+          ),
         ),
       ),
     );

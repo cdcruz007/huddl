@@ -659,7 +659,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         backgroundImage: NetworkImage(photoUrl),
                         radius: 14,
                       )
-                    : MemberAvatar(name: member.name, size: 28),
+                    : MemberAvatar(name: member.name, size: 28, parentType: member.parentType),
                   label: Text(
                     member.name,
                     style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),

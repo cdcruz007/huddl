@@ -1606,7 +1606,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               return Chip(
                 avatar: photoUrl != null
                     ? CircleAvatar(backgroundImage: NetworkImage(photoUrl), radius: 14)
-                    : MemberAvatar(name: member.name, size: 28),
+                    : MemberAvatar(name: member.name, size: 28, parentType: member.parentType),
                 label: Text(member.name, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
                 deleteIcon: const Icon(Icons.close, size: 16),
                 onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
@@ -1736,7 +1736,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                   child: Chip(
                                     avatar: photoUrl != null
                                         ? CircleAvatar(backgroundImage: NetworkImage(photoUrl), radius: 12)
-                                        : MemberAvatar(name: m.name, size: 24),
+                                        : MemberAvatar(name: m.name, size: 24, parentType: m.parentType),
                                     label: Text(m.name.split(' ').first, style: GoogleFonts.poppins(fontSize: 12)),
                                     deleteIcon: const Icon(Icons.close, size: 14),
                                     onDeleted: () { setSheetState(() => _selectedMemberIds.remove(id)); setState(() {}); },
@@ -1784,8 +1784,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                         decoration: const BoxDecoration(shape: BoxShape.circle),
                                         clipBehavior: Clip.antiAlias,
                                         child: Image.network(photoUrl, fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => MemberAvatar(name: member.name, size: 40)))
-                                    : MemberAvatar(name: member.name, size: 40),
+                                          errorBuilder: (_, __, ___) => MemberAvatar(name: member.name, size: 40, parentType: member.parentType)))
+                                    : MemberAvatar(name: member.name, size: 40, parentType: member.parentType),
                                 title: Text(member.name,
                                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
                                 subtitle: Text(member.parentType == 'mum' ? 'Mum' : 'Dad',
