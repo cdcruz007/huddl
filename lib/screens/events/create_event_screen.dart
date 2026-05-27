@@ -340,7 +340,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: const Color(0xFFF7F7F7),
                     shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
                     color: HuddlColors.textDark),
@@ -357,7 +357,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: const Color(0xFFF7F7F7),
                     shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: HuddlColors.textDark),
@@ -1019,7 +1019,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         height: 240,
         margin: EdgeInsets.zero,
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: const Color(0xFFF7F7F7),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1070,7 +1070,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   Widget _photoPlaceholder() {
     return Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: Center(
         child:
             Icon(Icons.image_outlined, size: 48, color: HuddlColors.textHint),
@@ -1340,7 +1340,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: const Color(0xFFF7F7F7),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1395,7 +1395,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(

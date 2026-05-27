@@ -63,7 +63,7 @@ class SafeNetworkImage extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: placeholderColor ??
-            HuddlColors.background,
+            const Color(0xFFF7F7F7),
         borderRadius: borderRadius,
       ),
       child: Center(
@@ -81,7 +81,7 @@ class SafeNetworkImage extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: borderRadius,
       ),
       child: Center(

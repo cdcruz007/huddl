@@ -1171,7 +1171,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildSectionHeader(
                     hc: hc,
                     icon: Icons.notifications_active_outlined,
-                    iconColor: HuddlColors.accentAmber,
+                    iconColor: HuddlColors.primary,
                     title: "Don't Forget",
                     subtitle: 'Your confirmed upcoming meetups & events',
                     onSeeAll: () => _switchToTab(2),
@@ -1483,7 +1483,7 @@ class _HomeScreenState extends State<HomeScreen>
               Icon(Icons.location_on_rounded,
                   size: 13,
                   color: _borough.isNotEmpty
-                      ? HuddlColors.teal
+                      ? HuddlColors.primary
                       : hc.textTertiary),
               const SizedBox(width: 4),
               if (_borough.isNotEmpty)
@@ -1492,7 +1492,7 @@ class _HomeScreenState extends State<HomeScreen>
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.teal,
+                    color: HuddlColors.primary,
                   ),
                 ),
               if (_borough.isNotEmpty && _boroughMembers.isNotEmpty)
@@ -1839,7 +1839,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newEvents > 0) {
       items.add(_CatchUpItem(
         icon: Icons.event_rounded,
-        color: HuddlColors.accentAmber,  // amber — events
+        color: HuddlColors.primary,  // amber — events
         label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
         onTap: () => _switchToDiscover(2), // Events sub-tab
       ));
@@ -1884,7 +1884,7 @@ class _HomeScreenState extends State<HomeScreen>
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -2086,10 +2086,10 @@ class _HomeScreenState extends State<HomeScreen>
       height: 120,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       decoration: BoxDecoration(
-        color: HuddlColors.accentAmber.withValues(alpha: isDark ? 0.10 : 0.06),
+        color: HuddlColors.primary.withValues(alpha: isDark ? 0.10 : 0.06),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: HuddlColors.accentAmber.withValues(alpha: 0.40),
+          color: HuddlColors.primary.withValues(alpha: 0.40),
           width: 1.5,
         ),
       ),
@@ -2099,7 +2099,7 @@ class _HomeScreenState extends State<HomeScreen>
           Container(
             width: 5,
             decoration: BoxDecoration(
-              color: HuddlColors.accentAmber,
+              color: HuddlColors.primary,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 bottomLeft: Radius.circular(16),
@@ -2112,13 +2112,13 @@ class _HomeScreenState extends State<HomeScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: HuddlColors.accentAmber.withValues(alpha: isDark ? 0.20 : 0.14),
+              color: HuddlColors.primary.withValues(alpha: isDark ? 0.20 : 0.14),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_active_outlined,
               size: 20,
-              color: HuddlColors.accentAmber,
+              color: HuddlColors.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -2156,7 +2156,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
-                      color: HuddlColors.accentAmber,
+                      color: HuddlColors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -2183,9 +2183,9 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildDontForgetCard(_DiscoverItem item, dynamic hc, bool isDark) {
     final (pillLabel, pillColor) = switch (item.type) {
       _DiscoverType.meetup  => ('MEETUP', HuddlColors.primary),
-      _DiscoverType.event   => ('EVENT',  HuddlColors.accentAmber),
-      _DiscoverType.group   => ('GROUP',  HuddlColors.teal),
-      _DiscoverType.sale    => ('SALE',   HuddlColors.success),
+      _DiscoverType.event   => ('EVENT',  HuddlColors.nearBlack),
+      _DiscoverType.group   => ('GROUP',  HuddlColors.nearBlack),
+      _DiscoverType.sale    => ('SALE',   HuddlColors.nearBlack),
     };
 
     Widget imageWidget = item.imageUrl.isNotEmpty
@@ -2204,12 +2204,12 @@ class _HomeScreenState extends State<HomeScreen>
           color: hc.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: HuddlColors.accentAmber.withValues(alpha: 0.35), width: 1.5),
+              color: HuddlColors.primary.withValues(alpha: 0.35), width: 1.5),
           boxShadow: isDark
               ? null
               : [
                   BoxShadow(
-                      color: HuddlColors.accentAmber.withValues(alpha: 0.12),
+                      color: HuddlColors.primary.withValues(alpha: 0.12),
                       blurRadius: 12,
                       offset: const Offset(0, 3)),
                 ],
@@ -2262,7 +2262,7 @@ class _HomeScreenState extends State<HomeScreen>
                         decoration: BoxDecoration(
                           color: item.badge == 'Today!'
                               ? Colors.redAccent
-                              : HuddlColors.accentAmber,
+                              : HuddlColors.primary,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
@@ -2286,20 +2286,20 @@ class _HomeScreenState extends State<HomeScreen>
             // ── Going confirmation strip ─────────────────────────────
             Container(
               width: double.infinity,
-              color: HuddlColors.accentAmber.withValues(alpha: isDark ? 0.18 : 0.08),
+              color: HuddlColors.primary.withValues(alpha: isDark ? 0.18 : 0.08),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Row(
                 children: [
                   Icon(Icons.check_circle,
                       size: 11,
-                      color: HuddlColors.accentAmber),
+                      color: HuddlColors.primary),
                   const SizedBox(width: 4),
                   Text(
                     "You're going!",
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.accentAmber,
+                      color: HuddlColors.primary,
                     ),
                   ),
                 ],
@@ -2343,13 +2343,13 @@ class _HomeScreenState extends State<HomeScreen>
                         decoration: BoxDecoration(
                           color: item.badge == 'Today!'
                               ? Colors.redAccent.withValues(alpha: isDark ? 0.25 : 0.10)
-                              : HuddlColors.accentAmber.withValues(
+                              : HuddlColors.primary.withValues(
                                   alpha: isDark ? 0.22 : 0.12),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: item.badge == 'Today!'
                                 ? Colors.redAccent.withValues(alpha: 0.45)
-                                : HuddlColors.accentAmber.withValues(alpha: 0.40),
+                                : HuddlColors.primary.withValues(alpha: 0.40),
                             width: 1,
                           ),
                         ),
@@ -2361,7 +2361,7 @@ class _HomeScreenState extends State<HomeScreen>
                               size: 13,
                               color: item.badge == 'Today!'
                                   ? Colors.redAccent
-                                  : HuddlColors.accentAmber,
+                                  : HuddlColors.primary,
                             ),
                             const SizedBox(width: 5),
                             Text(
@@ -2371,7 +2371,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 fontWeight: FontWeight.w700,
                                 color: item.badge == 'Today!'
                                     ? Colors.redAccent
-                                    : HuddlColors.accentAmber,
+                                    : HuddlColors.primary,
                               ),
                             ),
                           ],
@@ -2499,10 +2499,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildDiscoverCard(_DiscoverItem item, dynamic hc, bool isDark) {
     // Type pill colour + label
     final (pillLabel, pillColor) = switch (item.type) {
-      _DiscoverType.group   => ('GROUP',   HuddlColors.teal),
+      _DiscoverType.group   => ('GROUP',   HuddlColors.nearBlack),
       _DiscoverType.meetup  => ('MEETUP',  HuddlColors.primary),
-      _DiscoverType.event   => ('EVENT',   HuddlColors.accentAmber),
-      _DiscoverType.sale    => ('FOR SALE',HuddlColors.success),
+      _DiscoverType.event   => ('EVENT',   HuddlColors.nearBlack),
+      _DiscoverType.sale    => ('FOR SALE',HuddlColors.nearBlack),
     };
 
     // Image widget — network, fallback icon
@@ -2637,10 +2637,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _discoverImageFallback(_DiscoverType type, dynamic hc) {
     final (icon, color) = switch (type) {
-      _DiscoverType.group  => (Icons.people_outline,     HuddlColors.teal),
+      _DiscoverType.group  => (Icons.people_outline,     HuddlColors.nearBlack),
       _DiscoverType.meetup => (Icons.place_outlined,     HuddlColors.primary),
-      _DiscoverType.event  => (Icons.event_outlined,     HuddlColors.accentAmber),
-      _DiscoverType.sale   => (Icons.storefront_outlined,HuddlColors.success),
+      _DiscoverType.event  => (Icons.event_outlined,     HuddlColors.nearBlack),
+      _DiscoverType.sale   => (Icons.storefront_outlined,HuddlColors.nearBlack),
     };
     return Container(
       color: color.withValues(alpha: 0.08),
@@ -2852,7 +2852,7 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 color: hc.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: isGoing ? Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4), width: 1.5) : null,
+                border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.4), width: 1.5) : null,
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
               ),
               clipBehavior: Clip.antiAlias,
@@ -2875,7 +2875,7 @@ class _HomeScreenState extends State<HomeScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber,
+                              color: HuddlColors.primary,
                               borderRadius: BorderRadius.circular(7),
                               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
@@ -2934,7 +2934,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
                           _buildActionPill(
                             isGoing ? 'Going ✓' : 'Book',
-                            isGoing ? HuddlColors.success : HuddlColors.primary,
+                            isGoing ? HuddlColors.nearBlack : HuddlColors.primary,
                             hc,
                             isActive: isGoing,
                           ),
@@ -2953,9 +2953,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _eventImageFallback() {
     return Container(
-      color: HuddlColors.accentAmber.withValues(alpha: 0.12),
+      color: HuddlColors.primary.withValues(alpha: 0.12),
       child: const Center(
-        child: Icon(Icons.event_outlined, size: 32, color: HuddlColors.accentAmber),
+        child: Icon(Icons.event_outlined, size: 32, color: HuddlColors.primary),
       ),
     );
   }
@@ -3006,7 +3006,7 @@ class _HomeScreenState extends State<HomeScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: HuddlColors.blueDark,
+                              color: HuddlColors.nearBlack,
                               borderRadius: BorderRadius.circular(7),
                               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
@@ -3043,7 +3043,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Expanded(child: Text(
                             s.endorsementCount > 0 ? '${s.endorsementCount} endorsed' : 'Recommended',
                             style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
-                          _buildActionPill('View', HuddlColors.blueDark, hc),
+                          _buildActionPill('View', HuddlColors.primary, hc),
                         ]),
                       ],
                     ),
@@ -3059,7 +3059,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _serviceImageFallback(String emoji) {
     return Container(
-      color: HuddlColors.blueDark.withValues(alpha: 0.08),
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: Center(
         child: Text(emoji, style: const TextStyle(fontSize: 32)),
       ),
@@ -3245,7 +3245,7 @@ class _HomeScreenState extends State<HomeScreen>
       decoration: BoxDecoration(
         color: isActive
             ? HuddlColors.textDark.withValues(alpha: 0.08)
-            : HuddlColors.background,
+            : const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: HuddlColors.divider, width: 0.5),
       ),
@@ -3848,7 +3848,7 @@ class _HomeScreenState extends State<HomeScreen>
       candidateType = 'EVENT';
       ctaLabel = 'Book';
       candidateIcon = Icons.event_rounded;
-      candidateColor = HuddlColors.accentAmber;
+      candidateColor = HuddlColors.primary;
       _reasonTag = 'New in ${_borough.isNotEmpty ? _borough : 'your area'}';
     } else if (_featuredServices.isNotEmpty) {
       candidate = _featuredServices.first;
@@ -4721,7 +4721,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   item.reason,
                                   style: GoogleFonts.poppins(
                                     fontSize: 9,
-                                    color: HuddlColors.accentAmber,
+                                    color: HuddlColors.primary,
                                   ),
                                 ),
                               ],
@@ -4872,7 +4872,7 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('View',
@@ -5053,7 +5053,7 @@ class _HomeScreenState extends State<HomeScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                    color: HuddlColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -5258,9 +5258,9 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.newEvent:
         return HuddlColors.nearBlack;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case FeedItemType.milestone:
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case FeedItemType.partnerPromoted:
         return HuddlColors.primary;
     }
@@ -5269,15 +5269,15 @@ class _HomeScreenState extends State<HomeScreen>
   Color _feedIconBg(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       case FeedItemType.newGroup:
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       case FeedItemType.newEvent:
         return HuddlColors.nearBlack.withValues(alpha: 0.08);
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.nearBlack.withValues(alpha: 0.08);
       case FeedItemType.milestone:
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       case FeedItemType.partnerPromoted:
         return HuddlColors.primary.withValues(alpha: 0.10);
     }
@@ -5668,7 +5668,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       // Bookmark indicator
                       if (ann.isBookmarked)
                         Icon(Icons.bookmark,
-                            size: 16, color: HuddlColors.accentAmber),
+                            size: 16, color: HuddlColors.primary),
                     ],
                   ),
                 ),
@@ -6538,9 +6538,9 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
       case 'saved_item_sold':
         return HuddlColors.primaryDark;
       case 'item_relisted':
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case 'subscription_activated':
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case 'payment_failed':
         return HuddlColors.error;
       default:
@@ -7644,9 +7644,9 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.nearBlack;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case FeedItemType.milestone:
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case FeedItemType.partnerPromoted:
         return HuddlColors.primary;
     }
@@ -7657,13 +7657,13 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newParent:
         return HuddlColors.successBg;
       case FeedItemType.newGroup:
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       case FeedItemType.milestone:
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       case FeedItemType.partnerPromoted:
         return HuddlColors.primary.withValues(alpha: 0.08);
     }

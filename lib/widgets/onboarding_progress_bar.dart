@@ -75,7 +75,7 @@ class OnboardingProgressBar extends StatelessWidget {
     // ── Colours ───────────────────────────────────────────────────────
     // Light mode: peach background so the bar stands out against the
     // white scaffold; dark mode: dark card surface.
-    final bg         = isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.background;
+    final bg         = isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7);
     final trackColor = isDark
         ? Colors.white.withValues(alpha: 0.12)
         : HuddlColors.onboardingOrange.withValues(alpha: 0.18);

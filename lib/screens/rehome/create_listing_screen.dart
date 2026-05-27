@@ -174,7 +174,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.background, shape: BoxShape.circle),
+                    color: const Color(0xFFF7F7F7), shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
                     color: HuddlColors.textDark),
               ),
@@ -192,7 +192,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.background, shape: BoxShape.circle),
+                    color: const Color(0xFFF7F7F7), shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: HuddlColors.textDark),
               ),
@@ -464,7 +464,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   // ══════════════════════════════════════════════════════════════════════════
 
   // Design tokens — mirrors create_meetup_screen.dart / create_group_screen.dart
-  static const _fieldBg    = HuddlColors.background;  // #F6F6F6 gray field fill
+  static const _fieldBg    = Color(0xFFF7F7F7);  // #F6F6F6 gray field fill
   static const _fieldLine  = HuddlColors.divider;      // #D5D5D5 bottom underline
   static const _sectionTxt = HuddlColors.textDark;     // #42464C section headers
   static const _hintGray   = HuddlColors.textTertiary; // #949494 placeholder
@@ -986,7 +986,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           width: double.infinity,
           height: 200,
           margin: EdgeInsets.zero,
-          color: HuddlColors.blueUI,
+          color: HuddlColors.primary,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1156,7 +1156,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Widget _imagePlaceholder() {
     return Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: const Center(
         child: Icon(Icons.image_outlined, size: 48, color: HuddlColors.textDark),
       ),

@@ -726,7 +726,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _showEditProfileSheet,
                     child: Container(
                       width: double.infinity,
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       child: Row(
                         children: [
@@ -864,7 +864,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: HuddlColors.divider,
@@ -1387,7 +1387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: parentTypeLocked
                         ? context.hc.scaffold
-                        : HuddlColors.background,
+                        : const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: context.hc.divider),
                   ),
@@ -1397,7 +1397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: HuddlColors.background,
+                          color: const Color(0xFFF7F7F7),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1659,7 +1659,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -1881,7 +1881,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1936,7 +1936,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: HuddlColors.background,
+                                color: const Color(0xFFF7F7F7),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.location_off,
@@ -2074,7 +2074,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -2206,7 +2206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color: HuddlColors.divider),
@@ -2556,7 +2556,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color: HuddlColors.divider),
@@ -3255,7 +3255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               errorBuilder: (_, __, ___) => Container(
                                 width: 48,
                                 height: 48,
-                                color: HuddlColors.surfaceLight,
+                                color: Colors.white,
                                 child: Icon(item.category.icon,
                                     size: 24,
                                     color: HuddlColors.primary
@@ -3266,7 +3266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: HuddlColors.surfaceLight,
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(item.category.icon,
@@ -3295,7 +3295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: HuddlColors.surfaceLight,
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text('Sold',
@@ -3660,7 +3660,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -4266,7 +4266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     width: 56,
                                     height: 56,
                                     decoration: BoxDecoration(
-                                      color: HuddlColors.background,
+                                      color: const Color(0xFFF7F7F7),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(Icons.block,
@@ -5044,7 +5044,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.security,
@@ -5660,7 +5660,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Center(
@@ -6438,7 +6438,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: HuddlColors.background,
+                                  color: const Color(0xFFF7F7F7),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -6864,7 +6864,7 @@ class _GroupCard extends StatelessWidget {
   }
 
   Widget _imageFallback() => Container(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         child: const Center(
             child: Icon(Icons.people, size: 28, color: HuddlColors.textDark)));
 }
@@ -6982,7 +6982,7 @@ class _CountBadge extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 borderRadius: BorderRadius.circular(10)),
             child: Text('$count',
                 style: GoogleFonts.poppins(

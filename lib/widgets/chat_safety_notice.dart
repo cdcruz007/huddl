@@ -77,7 +77,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
             Container(
               width: 56, height: 56,
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.shield_outlined, size: 28, color: HuddlColors.textDark),
@@ -233,8 +233,8 @@ class ChatSafetyStrip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
         color: isDark
-            ? HuddlColors.background
-            : HuddlColors.background,
+            ? const Color(0xFFF7F7F7)
+            : const Color(0xFFF7F7F7),
         border: Border(
           top: BorderSide(
             color: isDark

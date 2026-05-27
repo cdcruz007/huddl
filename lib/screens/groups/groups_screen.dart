@@ -1858,7 +1858,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: HuddlColors.divider),
                           ),
@@ -2044,7 +2044,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            HuddlColors.background,
+            const Color(0xFFF7F7F7),
             HuddlColors.nearBlack.withValues(alpha: 0.05),
           ],
         ),
@@ -2067,7 +2067,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   Container(
                     width: 34, height: 34,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
@@ -2146,8 +2146,8 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     // Category icon colour
     const iconColors = [
-      HuddlColors.primary, HuddlColors.teal, HuddlColors.accentAmber,
-      HuddlColors.blueDark, Color(0xFF9B59B6),
+      HuddlColors.primary, HuddlColors.nearBlack, HuddlColors.textSecondary,
+      HuddlColors.textTertiary, HuddlColors.primaryLight,
     ];
     final accentColor = iconColors[summary.groupId.hashCode.abs() % iconColors.length];
 
@@ -2262,18 +2262,18 @@ class _MessagesTabState extends State<_MessagesTab> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber.withValues(alpha: 0.20),
+                              color: HuddlColors.primary.withValues(alpha: 0.20),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.6)),
+                              border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.6)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.priority_high_rounded, size: 9, color: HuddlColors.accentAmber),
+                                const Icon(Icons.priority_high_rounded, size: 9, color: HuddlColors.primary),
                                 const SizedBox(width: 3),
                                 Text('Needs reply',
                                     style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600,
-                                        color: HuddlColors.accentAmber)),
+                                        color: HuddlColors.primary)),
                               ],
                             ),
                           ),
@@ -2337,7 +2337,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -2346,7 +2346,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           Container(
             width: 34, height: 34,
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: const Color(0xFFF7F7F7),
               borderRadius: BorderRadius.circular(9),
             ),
             child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
@@ -2615,7 +2615,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.search_off,
@@ -2793,7 +2793,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.background,
+                          color: const Color(0xFFF7F7F7),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -3374,7 +3374,7 @@ class _InvitationCard extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -3403,7 +3403,7 @@ class _InvitationCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -3788,22 +3788,12 @@ class _MessageListItem {
 /// Palette of distinct background colors used for initials-based avatars.
 /// Chosen to be visually distinct from each other and readable against white text.
 const List<Color> _kAvatarPalette = [
-  Color(0xFFE57373), // red
-  Color(0xFFFF8A65), // deep orange
-  Color(0xFFFFB74D), // orange
-  Color(0xFFFFD54F), // amber
-  Color(0xFFA5D6A7), // green
-  Color(0xFF4DB6AC), // teal
-  Color(0xFF4FC3F7), // light blue
-  Color(0xFF7986CB), // indigo
-  Color(0xFFBA68C8), // purple
-  Color(0xFFF06292), // pink
-  Color(0xFF90A4AE), // blue grey
-  Color(0xFF80CBC4), // teal light
-  Color(0xFFCE93D8), // purple light
-  Color(0xFF80DEEA), // cyan
-  Color(0xFFFFCC02), // yellow
-  Color(0xFF66BB6A), // green darker
+  Color(0xFFFF965C), // primary orange
+  Color(0xFFFFAD7F), // medium orange
+  Color(0xFF43464D), // dark grey
+  Color(0xFF6C6C6C), // mid grey
+  Color(0xFF199A85), // teal (brand secondary)
+  Color(0xFF767676), // neutral grey
 ];
 
 /// Pick a deterministic color from the palette using the group id or name.
@@ -3857,7 +3847,7 @@ class _GroupAvatar extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(size * 0.25),
-            color: HuddlColors.background,
+            color: const Color(0xFFF7F7F7),
           ),
           clipBehavior: Clip.antiAlias,
           child: _buildImage(),
@@ -5294,13 +5284,13 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               ? LinearGradient(
                   colors: [
                     HuddlColors.primary.withValues(alpha: 0.12),
-                    HuddlColors.blueUI.withValues(alpha: 0.08),
+                    HuddlColors.primary.withValues(alpha: 0.08),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: isSelected ? null : HuddlColors.background,
+          color: isSelected ? null : const Color(0xFFF7F7F7),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -5352,7 +5342,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [HuddlColors.blueUI, HuddlColors.primary],
+                                colors: [HuddlColors.primary, HuddlColors.primary],
                               ),
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -5468,7 +5458,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         value: (sampleScore / 100).clamp(0.0, 1.0),
                         minHeight: 6,
                         backgroundColor:
-                            HuddlColors.background,
+                            const Color(0xFFF7F7F7),
                         valueColor: const AlwaysStoppedAnimation<Color>(
                             HuddlColors.textDark),
                       ),
@@ -5520,7 +5510,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: HuddlColors.divider,
@@ -6118,22 +6108,22 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_pregnancy_antenatal': {'icon': Icons.favorite,             'color': HuddlColors.accentCoral},
   'disc_newborn_club':        {'icon': Icons.baby_changing_station,'color': HuddlColors.primary},
   'disc_single_parents':      {'icon': Icons.person,               'color': HuddlColors.nearBlack},
-  'disc_lgbtq_parents':       {'icon': Icons.diversity_3,          'color': HuddlColors.accentAmber},
+  'disc_lgbtq_parents':       {'icon': Icons.diversity_3,          'color': HuddlColors.primary},
   'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.nearBlack},
   // Language & Culture
   'disc_dutch_parents':       {'icon': Icons.language,             'color': HuddlColors.nearBlack},
-  'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.accentAmber},
+  'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.primary},
   // Sleep & Feeding
   'disc_baby_sleep':          {'icon': Icons.bedtime,              'color': HuddlColors.yellowMedium},
   'disc_breastfeeding':       {'icon': Icons.child_care,           'color': HuddlColors.primary},
-  'disc_weaning_first_foods': {'icon': Icons.restaurant,           'color': HuddlColors.accentAmber},
-  'disc_child_nutrition':     {'icon': Icons.lunch_dining,         'color': HuddlColors.accentAmber},
-  'disc_healthy_meals':       {'icon': Icons.restaurant,           'color': HuddlColors.accentAmber},
+  'disc_weaning_first_foods': {'icon': Icons.restaurant,           'color': HuddlColors.primary},
+  'disc_child_nutrition':     {'icon': Icons.lunch_dining,         'color': HuddlColors.primary},
+  'disc_healthy_meals':       {'icon': Icons.restaurant,           'color': HuddlColors.primary},
   'disc_allergies_dietary':   {'icon': Icons.no_food,              'color': HuddlColors.error},
   // Education & Learning
   'disc_montessori_parenting':{'icon': Icons.school,               'color': HuddlColors.nearBlack},
   'disc_forest_school':       {'icon': Icons.park,                 'color': HuddlColors.nearBlack},
-  'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.accentAmber},
+  'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.primary},
   'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.nearBlack},
   // Activities & Play
   'disc_baby_sensory':        {'icon': Icons.toys,                 'color': HuddlColors.primary},
@@ -6150,12 +6140,12 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_mental_health':       {'icon': Icons.spa,                  'color': HuddlColors.primaryLight},
   'disc_nct_cambridge':       {'icon': Icons.group,                'color': HuddlColors.primary},
   'disc_special_needs_send':  {'icon': Icons.accessibility_new,    'color': HuddlColors.nearBlack},
-  'disc_parents_multiples':   {'icon': Icons.people,               'color': HuddlColors.accentAmber},
+  'disc_parents_multiples':   {'icon': Icons.people,               'color': HuddlColors.primary},
   'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.nearBlack},
   // Childcare & Practicalities
   'disc_nanny_share':         {'icon': Icons.home,                 'color': HuddlColors.yellowMedium},
-  'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.accentAmber},
-  'disc_working_parents':     {'icon': Icons.work_outline,         'color': HuddlColors.accentAmber},
+  'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.primary},
+  'disc_working_parents':     {'icon': Icons.work_outline,         'color': HuddlColors.primary},
   'disc_child_sleep_consultants':{'icon': Icons.nightlight,        'color': HuddlColors.yellowMedium},
   // Lifestyle
   'disc_eco_parenting':       {'icon': Icons.eco,                  'color': HuddlColors.nearBlack},
@@ -7122,7 +7112,7 @@ class _SavedMessageCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: HuddlColors.background,
+                          color: const Color(0xFFF7F7F7),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
@@ -7567,21 +7557,21 @@ class _SavedEventCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.accentAmber.withValues(alpha: 0.20),
+                          color: HuddlColors.primary.withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.bookmark,
-                                size: 11, color: HuddlColors.accentAmber),
+                                size: 11, color: HuddlColors.primary),
                             const SizedBox(width: 4),
                             Text(
                               'Saved Event',
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.accentAmber,
+                                color: HuddlColors.primary,
                               ),
                             ),
                           ],
@@ -7594,7 +7584,7 @@ class _SavedEventCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: savedEvent.isFree
                               ? HuddlColors.nearBlack.withValues(alpha: 0.12)
-                              : HuddlColors.background,
+                              : const Color(0xFFF7F7F7),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -7697,7 +7687,7 @@ class _SavedEventCard extends StatelessWidget {
 
   Widget _fallbackIcon(BuildContext context) {
     return Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: const Center(
         child: Icon(Icons.event, size: 28, color: HuddlColors.textDark),
       ),
@@ -7943,7 +7933,7 @@ class _SearchSectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: const Color(0xFFF7F7F7),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -8082,7 +8072,7 @@ class _HighlightedText extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: HuddlColors.textDark,
-          backgroundColor: HuddlColors.background,
+          backgroundColor: const Color(0xFFF7F7F7),
         ),
       ));
       start = idx + query.length;

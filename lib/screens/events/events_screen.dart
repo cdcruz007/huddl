@@ -254,7 +254,7 @@ class EventsScreenState extends State<EventsScreen>
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.groups,
@@ -2260,7 +2260,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         // ── List — light gray scaffold bg ─────────────────────────
         Expanded(
           child: ColoredBox(
-            color: HuddlColors.background,
+            color: const Color(0xFFF7F7F7),
             child: filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
@@ -2721,7 +2721,7 @@ class _ImGoingCard extends StatelessWidget {
   static Color _countdownColor(int daysUntil, bool isPast) {
     if (isPast) return HuddlColors.textSecondary;
     if (daysUntil <= 0) return HuddlColors.error;
-    if (daysUntil <= 2) return HuddlColors.accentAmber;
+    if (daysUntil <= 2) return HuddlColors.nearBlack;
     return HuddlColors.nearBlack;
   }
 }
@@ -2748,7 +2748,7 @@ class _GoingAvatar extends StatelessWidget {
       height: 54,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
       ),
       clipBehavior: Clip.antiAlias,
       child: _buildImage(),
@@ -2791,7 +2791,7 @@ class _GoingAvatar extends StatelessWidget {
 
   Widget _fallbackIcon() {
     return Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: Center(
         child: Icon(
           isMeetup ? Icons.groups : Icons.event,
@@ -3563,7 +3563,7 @@ class _EventsTabState extends State<_EventsTab> {
         // ── Event list — all events as vertical cards under "Suggested for you" ──
         Expanded(
           child: ColoredBox(
-            color: HuddlColors.background,
+            color: const Color(0xFFF7F7F7),
             child: events.isEmpty
                 ? _EmptyState(
                     icon: hasActiveFilter
@@ -4605,12 +4605,12 @@ class _MeetupSearchRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: isJoined
-                    ? HuddlColors.nearBlack.withValues(alpha: 0.1)
+                    ? HuddlColors.nearBlack
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isJoined
-                      ? HuddlColors.nearBlack.withValues(alpha: 0.4)
+                      ? HuddlColors.nearBlack
                       : context.hc.divider,
                 ),
               ),
@@ -4619,7 +4619,7 @@ class _MeetupSearchRow extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isJoined ? HuddlColors.success : context.hc.textPrimary,
+                  color: isJoined ? Colors.white : context.hc.textPrimary,
                 ),
               ),
             ),
@@ -4639,7 +4639,7 @@ class _MeetupSearchPlaceholder extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
@@ -4854,7 +4854,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber,
+                              color: HuddlColors.nearBlack,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -4912,7 +4912,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: isFree ? Colors.white : HuddlColors.blueDark,
+                          color: isFree ? Colors.white : HuddlColors.nearBlack,
                         ),
                       ),
                     ),
@@ -5191,7 +5191,7 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
-    const Color eventTypeBlue = HuddlColors.blueDark;
+    const Color eventTypeBlue = HuddlColors.primary;
     const Radius cardRadius = Radius.circular(20);
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
@@ -5286,7 +5286,7 @@ class _EventListCardState extends State<_EventListCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber,
+                              color: HuddlColors.nearBlack,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -5475,7 +5475,7 @@ class _EventListCardState extends State<_EventListCard> {
                             horizontal: 16, vertical: 9),
                         decoration: BoxDecoration(
                           color: isGoing
-                              ? HuddlColors.successBg
+                              ? HuddlColors.nearBlack
                               : HuddlColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -5492,7 +5492,7 @@ class _EventListCardState extends State<_EventListCard> {
                                 children: [
                                   if (isGoing) ...[
                                     const Icon(Icons.check_circle,
-                                        size: 13, color: HuddlColors.success),
+                                        size: 13, color: Colors.white),
                                     const SizedBox(width: 4),
                                   ],
                                   Text(
@@ -5501,7 +5501,7 @@ class _EventListCardState extends State<_EventListCard> {
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: isGoing
-                                          ? HuddlColors.success
+                                          ? Colors.white
                                           : HuddlColors.primary,
                                     ),
                                   ),
@@ -5555,7 +5555,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         content: Text(positive
             ? 'Thanks! We\u2019ll show more like this'
             : 'Got it \u2014 fewer like this'),
-        backgroundColor: positive ? HuddlColors.success : HuddlColors.textSecondary,
+        backgroundColor: positive ? HuddlColors.primary : HuddlColors.textSecondary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -5573,7 +5573,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             color: HuddlColors.nearBlack.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: const Icon(Icons.insights, size: 10, color: HuddlColors.success),
+          child: const Icon(Icons.insights, size: 10, color: HuddlColors.primary),
         ),
         const SizedBox(width: 5),
         Text(
@@ -5587,7 +5587,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             _localFeedback! ? 'Liked' : 'Not for me',
             style: GoogleFonts.poppins(
               fontSize: 10,
-              color: _localFeedback! ? HuddlColors.success : context.hc.textTertiary,
+              color: _localFeedback! ? HuddlColors.primary : context.hc.textTertiary,
               fontWeight: FontWeight.w500,
             ),
           )
@@ -5607,7 +5607,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.success),
+                  const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.primary),
                   const SizedBox(width: 3),
                   Text('Yes', style: GoogleFonts.poppins(
                     fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
@@ -5796,11 +5796,11 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Sport':
       return const _CatStyle(HuddlColors.nearBlack, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.accentAmber, Icons.directions_walk);
+      return const _CatStyle(HuddlColors.primary, Icons.directions_walk);
     case 'Social':
-      return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
+      return const _CatStyle(HuddlColors.primary, Icons.celebration);
     case 'Food':
-      return const _CatStyle(HuddlColors.accentAmber, Icons.restaurant);
+      return const _CatStyle(HuddlColors.primary, Icons.restaurant);
     case 'Other':
       return const _CatStyle(HuddlColors.nearBlack, Icons.more_horiz);
     default:

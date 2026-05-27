@@ -747,7 +747,7 @@ class _WisdomCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -797,7 +797,7 @@ class _WisdomCard extends StatelessWidget {
                     },
                     errorBuilder: (_, __, ___) => Container(
                       height: 120,
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       child: Center(
                         child: Icon(
                           Icons.image_not_supported_outlined,
@@ -1216,7 +1216,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(

@@ -325,7 +325,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   leading: Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.share_outlined, color: HuddlColors.textDark, size: 20),
@@ -367,7 +367,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     leading: Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: HuddlColors.background,
+                        color: const Color(0xFFF7F7F7),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.people_outline, color: HuddlColors.textDark, size: 20),
@@ -522,7 +522,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: HuddlColors.background,
+                                      color: const Color(0xFFF7F7F7),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -706,7 +706,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
 
   // ── Design tokens (Figma-exact) ─────────────────────────────────────
   static const _detailOrange = HuddlColors.primary;      // brand orange — Figma #FF965C
-  static const _detailBlue   = HuddlColors.blueDark;      // selected blue — Figma #347FEF
+  static const _detailBlue   = HuddlColors.nearBlack;      // selected blue — Figma #347FEF
   static const _detailText   = HuddlColors.textDark;      // primary dark — Figma #42464C
   static const _detailMeta   = HuddlColors.textTertiary;  // gray meta — Figma #949494
 
@@ -1259,7 +1259,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           MemberPhotoService.currentUserAvatarAsset,
           width: size, height: size, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            color: HuddlColors.background,
+            color: const Color(0xFFF7F7F7),
             child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.textDark)),
           ),
         ),
@@ -1345,9 +1345,9 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Walk':
       return const _CatStyleInfo(HuddlColors.paleBlue, Icons.directions_walk);
     case 'Social':
-      return const _CatStyleInfo(HuddlColors.accentAmber, Icons.celebration);
+      return const _CatStyleInfo(HuddlColors.primary, Icons.celebration);
     case 'Food':
-      return const _CatStyleInfo(HuddlColors.accentAmber, Icons.restaurant);
+      return const _CatStyleInfo(HuddlColors.primary, Icons.restaurant);
     default:
       return const _CatStyleInfo(HuddlColors.nearBlack, Icons.groups);
   }

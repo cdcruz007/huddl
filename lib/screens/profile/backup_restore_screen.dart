@@ -196,7 +196,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         title: Row(
           children: [
             const Icon(Icons.warning_amber_rounded,
-                color: HuddlColors.accentAmber, size: 22),
+                color: HuddlColors.primary, size: 22),
             const SizedBox(width: 8),
             Text('Restore backup?',
                 style: GoogleFonts.poppins(
@@ -479,13 +479,13 @@ class _AutoBackupStatusCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: kIsWeb
-                  ? HuddlColors.accentAmber.withValues(alpha: 0.15)
+                  ? HuddlColors.primary.withValues(alpha: 0.15)
                   : HuddlColors.nearBlack.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               kIsWeb ? Icons.info_outline : Icons.cloud_done_outlined,
-              color: kIsWeb ? HuddlColors.accentAmber : HuddlColors.nearBlack,
+              color: kIsWeb ? HuddlColors.primary : HuddlColors.nearBlack,
               size: 22,
             ),
           ),
@@ -886,7 +886,7 @@ class _TipsCard extends StatelessWidget {
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: HuddlColors.accentAmber.withValues(alpha: 0.4), width: 1),
+            color: HuddlColors.primary.withValues(alpha: 0.4), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -894,13 +894,13 @@ class _TipsCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.lightbulb_outline,
-                  color: HuddlColors.accentAmber, size: 18),
+                  color: HuddlColors.primary, size: 18),
               const SizedBox(width: 8),
               Text('Tips',
                   style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.accentAmber)),
+                      color: HuddlColors.primary)),
             ],
           ),
           const SizedBox(height: 10),
@@ -911,7 +911,7 @@ class _TipsCard extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.only(top: 5),
                   child: Icon(Icons.circle,
-                      size: 5, color: HuddlColors.accentAmber),
+                      size: 5, color: HuddlColors.primary),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

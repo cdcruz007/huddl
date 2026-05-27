@@ -532,7 +532,7 @@ class _HuddlPhotoImage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (url.isEmpty) {
       return Container(
-        color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.background,
+        color: isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7),
         child: Icon(Icons.image_outlined, size: 24,
             color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary),
       );
@@ -547,7 +547,7 @@ class _HuddlPhotoImage extends StatelessWidget {
         );
       },
       errorBuilder: (_, __, ___) => Container(
-        color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.background,
+        color: isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7),
         child: Icon(Icons.broken_image_outlined, size: 24,
             color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary),
       ),

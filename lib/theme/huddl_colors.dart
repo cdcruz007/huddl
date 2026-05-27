@@ -359,11 +359,14 @@ class HuddlContextColors {
   bool get _isDark => Theme.of(_ctx).brightness == Brightness.dark;
 
   // Surfaces
-  Color get scaffold   => _isDark ? HuddlColors.darkBackground     : HuddlColors.warmSand;    // #F7F5F2 warm sand
-  Color get surface    => _isDark ? HuddlColors.darkSurface         : HuddlColors.white;       // pure white cards
-  Color get surfaceAlt => _isDark ? HuddlColors.darkSurfaceVariant  : HuddlColors.background;
-  Color get inputBg    => _isDark ? HuddlColors.darkInputBg         : HuddlColors.inputBg;
-  Color get divider    => _isDark ? HuddlColors.darkDivider         : HuddlColors.divider;
+  Color get scaffold   => _isDark ? HuddlColors.darkBackground     : Colors.white;
+  Color get surface    => _isDark ? HuddlColors.darkSurface         : Colors.white;
+  Color get surfaceAlt => _isDark ? HuddlColors.darkSurfaceVariant  : const Color(0xFFF7F7F7);
+  Color get inputBg    => _isDark ? HuddlColors.darkInputBg         : const Color(0xFFF7F7F7);
+  Color get inputFill  => _isDark ? HuddlColors.darkInputBg         : const Color(0xFFF7F7F7);
+  Color get divider    => _isDark ? HuddlColors.darkDivider         : const Color(0xFFE5E5E5);
+  /// Confirmed/joined state — black filled button (passive, authoritative).
+  Color get confirmed  => _isDark ? HuddlColors.darkTextPrimary     : const Color(0xFF1C1C1E);
 
   // Text
   Color get textPrimary   => _isDark ? HuddlColors.darkTextPrimary   : HuddlColors.textDark;

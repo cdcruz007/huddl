@@ -189,7 +189,7 @@ class _EmailPendingVerificationScreenState
                       width: 110,
                       height: 110,
                       decoration: BoxDecoration(
-                        color: HuddlColors.background,
+                        color: const Color(0xFFF7F7F7),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -279,7 +279,7 @@ class _EmailPendingVerificationScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 18, vertical: 14),
                       decoration: BoxDecoration(
-                        color: HuddlColors.background,
+                        color: const Color(0xFFF7F7F7),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: HuddlColors.divider,

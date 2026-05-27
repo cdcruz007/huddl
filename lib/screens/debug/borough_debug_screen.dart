@@ -49,7 +49,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
 
     return Scaffold(
       backgroundColor:
-          isDark ? HuddlColors.darkBackground : HuddlColors.background,
+          isDark ? HuddlColors.darkBackground : const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -205,7 +205,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
           ? HuddlColors.nearBlack
           : scope == FeatureScope.ukWide
               ? HuddlColors.nearBlack
-              : HuddlColors.accentAmber;
+              : HuddlColors.primary;
       return _buildRow(f.name, scopeLabel, valueColor: color);
     }).toList();
   }

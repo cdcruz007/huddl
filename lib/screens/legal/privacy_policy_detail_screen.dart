@@ -963,7 +963,7 @@ For any questions about voice message data processing, contact our Data Protecti
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -1039,7 +1039,7 @@ For any questions about voice message data processing, contact our Data Protecti
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.divider),
       ),

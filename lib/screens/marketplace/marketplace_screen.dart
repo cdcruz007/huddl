@@ -23,7 +23,7 @@ import '../../widgets/animations/huddl_loading_states.dart';
 
 
 // Marketplace price colour — near-black for a premium, neutral feel
-const Color _kMarketBlue = HuddlColors.blueDark;  // #347FEF — Figma blue
+const Color _kMarketBlue = HuddlColors.nearBlack;  // #347FEF — Figma blue
 
 // 12 deterministic Unsplash face URLs for seller avatar stack
 const List<String> _kMarketAvatarPool = [
@@ -2014,7 +2014,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: HuddlColors.peachLight,        // warm peach
+                        color: Colors.white,        // warm peach
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.camera_alt_rounded,
@@ -2586,7 +2586,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           item.imageUrls.first,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             child: Icon(item.category.icon, size: 22, color: HuddlColors.textHint),
                           ),
                         ),
@@ -2936,7 +2936,7 @@ class _ShimmerBoxState extends State<_ShimmerBox>
 
 Widget _buildItemImage(String url, RehomeItem item) {
   final iconFallback = Container(
-    color: HuddlColors.background,
+    color: const Color(0xFFF7F7F7),
     child: Center(
       child: Icon(item.category.icon,
           size: 44, color: item.category.color.withValues(alpha: 0.5)),
@@ -3135,7 +3135,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.teal
+                              ? HuddlColors.nearBlack
                               : Colors.black.withValues(alpha: 0.52),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -3507,7 +3507,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                                     _avatarUrl(i),
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Container(
-                                      color: HuddlColors.background,
+                                      color: const Color(0xFFF7F7F7),
                                       child: Icon(Icons.person,
                                           size: 14,
                                           color: HuddlColors.textHint),
@@ -3534,7 +3534,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: HuddlColors.background,
+                          color: const Color(0xFFF7F7F7),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -3586,7 +3586,7 @@ class _MarketSearchRow extends StatelessWidget {
   Color get _conditionColor {
     switch (item.condition.label.toLowerCase()) {
       case 'new':       return HuddlColors.nearBlack;
-      case 'like new':  return HuddlColors.blueDark;
+      case 'like new':  return HuddlColors.nearBlack;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
     }
@@ -3735,7 +3735,7 @@ class _MarketSearchRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: item.isFree
                         ? HuddlColors.nearBlack.withValues(alpha: 0.10)
-                        : HuddlColors.background,
+                        : const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -3780,7 +3780,7 @@ class _MarketListCardState extends State<_MarketListCard> {
   Color get _conditionColor {
     switch (widget.item.condition.label.toLowerCase()) {
       case 'new':       return HuddlColors.nearBlack;
-      case 'like new':  return HuddlColors.blueDark;
+      case 'like new':  return HuddlColors.nearBlack;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
     }
@@ -3970,7 +3970,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                                       width: 22, height: 22,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
-                                        color: HuddlColors.background,
+                                        color: const Color(0xFFF7F7F7),
                                         child: const Icon(Icons.person, size: 11, color: HuddlColors.textHint),
                                       ),
                                     ),
@@ -4005,7 +4005,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         decoration: BoxDecoration(
                           color: item.isFree
                               ? HuddlColors.nearBlack.withValues(alpha: 0.10)
-                              : HuddlColors.background,
+                              : const Color(0xFFF7F7F7),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -4037,7 +4037,7 @@ class _MarketPhotoFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

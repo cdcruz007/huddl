@@ -72,7 +72,7 @@ class _UpgradePromptSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.lock_outline,

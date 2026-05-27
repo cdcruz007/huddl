@@ -190,7 +190,7 @@ class MeetupInviteCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: isFree ? HuddlColors.nearBlack : HuddlColors.accentAmber,
+                              color: isFree ? HuddlColors.nearBlack : HuddlColors.primary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -506,11 +506,11 @@ _CatStyle _getCatStyle(String category) {
     case 'Sport':
       return const _CatStyle(HuddlColors.nearBlack, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.accentAmber, Icons.directions_walk);
+      return const _CatStyle(HuddlColors.primary, Icons.directions_walk);
     case 'Social':
-      return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
+      return const _CatStyle(HuddlColors.primary, Icons.celebration);
     case 'Food':
-      return const _CatStyle(HuddlColors.accentAmber, Icons.restaurant);
+      return const _CatStyle(HuddlColors.primary, Icons.restaurant);
     case 'Other':
       return const _CatStyle(HuddlColors.nearBlack, Icons.more_horiz);
     default:

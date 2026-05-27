@@ -29,12 +29,12 @@ import '../../services/ai_api_helper.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Design tokens (mirrors create_meetup_screen.dart) ───────────────────────
-const _fieldBg      = HuddlColors.background;   // #F6F6F6 grey field fill
+const _fieldBg      = Color(0xFFF7F7F7);   // #F6F6F6 grey field fill
 const _fieldLine    = HuddlColors.divider;       // #D5D5D5 bottom underline
 const _sectionText  = HuddlColors.textDark;      // #42464C section headers
 const _hintGray     = HuddlColors.textTertiary;  // #949494 placeholder text
 const _accentOrange = HuddlColors.primary;       // #FF965C orange accent
-const _bannerBg     = HuddlColors.peachLight;    // photo banner bg
+const _bannerBg     = Colors.white;    // photo banner bg
 
 const String _userGroupsKey = 'user_created_groups_v1';
 
@@ -210,7 +210,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.background, shape: BoxShape.circle),
+                    color: const Color(0xFFF7F7F7), shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
                     color: HuddlColors.textDark),
               ),
@@ -226,7 +226,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: HuddlColors.background, shape: BoxShape.circle),
+                    color: const Color(0xFFF7F7F7), shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: HuddlColors.textDark),
               ),
@@ -366,7 +366,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -1480,7 +1480,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -1589,7 +1589,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: const Color(0xFFF7F7F7),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1644,7 +1644,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(

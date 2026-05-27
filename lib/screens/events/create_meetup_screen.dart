@@ -620,7 +620,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   static const _bannerBlue   = HuddlColors.nearBlack;     // banner — nearBlack for Airbnb parity
   static const _accentOrange = HuddlColors.primary;        // date/time/location icons + toggle — Figma #FF965C
   static const _accentBlue   = HuddlColors.nearBlack;      // category icons + selected pill fill — nearBlack
-  static const _fieldBg      = HuddlColors.background;     // text field fill — Figma #F6F6F6
+  static const _fieldBg      = Color(0xFFF7F7F7);     // text field fill — Figma #F6F6F6
   static const _fieldLine    = HuddlColors.divider;        // field bottom underline — Figma #D5D5D5
   static const _sectionText  = HuddlColors.textDark;       // section header — Figma #42464C
   static const _hintGray     = HuddlColors.textTertiary;   // placeholder hint text — Figma #949494
@@ -1472,7 +1472,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: const Color(0xFFF7F7F7),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: _pillBorder),
             ),

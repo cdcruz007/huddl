@@ -779,7 +779,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -816,7 +816,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.divider),
       ),

@@ -77,7 +77,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                         width: 72,
                         height: 72,
                         decoration: BoxDecoration(
-                          color: HuddlColors.background,
+                          color: const Color(0xFFF7F7F7),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -380,7 +380,7 @@ class _SummaryRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: HuddlColors.background,
+            color: const Color(0xFFF7F7F7),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 18, color: HuddlColors.textDark),

@@ -236,7 +236,7 @@ class _HuddlSearchExpandedState extends State<HuddlSearchExpanded>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? HuddlColors.darkSurface : HuddlColors.white;
     final textColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
-    final bg = isDark ? HuddlColors.darkBackground : HuddlColors.background;
+    final bg = isDark ? HuddlColors.darkBackground : const Color(0xFFF7F7F7);
 
     return AnimatedBuilder(
       animation: _expandAnim,
@@ -416,7 +416,7 @@ class _SuggestionTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark
                     ? HuddlColors.darkSurfaceVariant
-                    : HuddlColors.background,
+                    : const Color(0xFFF7F7F7),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(suggestion.icon, size: 20,

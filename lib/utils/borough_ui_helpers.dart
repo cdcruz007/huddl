@@ -65,7 +65,7 @@ class BoroughUiHelpers {
             ),
           ],
         ),
-        backgroundColor: HuddlColors.accentAmber.withValues(alpha: 0.9),
+        backgroundColor: HuddlColors.primary.withValues(alpha: 0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
@@ -90,7 +90,7 @@ class BoroughUiHelpers {
         title: Row(
           children: [
             Icon(Icons.location_off,
-                color: HuddlColors.accentAmber, size: 22),
+                color: HuddlColors.primary, size: 22),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

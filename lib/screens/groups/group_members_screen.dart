@@ -160,7 +160,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
       HuddlColors.primary,
       HuddlColors.nearBlack,
       HuddlColors.primaryDark,
-      HuddlColors.accentAmber,
+      HuddlColors.primary,
       HuddlColors.yellow,
       HuddlColors.accentCoral,
     ];
@@ -527,7 +527,7 @@ class _MemberTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

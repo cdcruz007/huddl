@@ -114,7 +114,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.1,
                 icon:       Icons.auto_awesome_rounded,
                 label:      'Huddl Wisdom',
-                color:      HuddlColors.accentAmber,    // amber — wisdom
+                color:      HuddlColors.primary,    // amber — wisdom
                 onPressed:  () => _onAction(widget.onInsightsPressed),
               ),
               const SizedBox(height: 10),

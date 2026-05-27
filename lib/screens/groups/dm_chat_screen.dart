@@ -601,7 +601,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: HuddlColors.background,
+              color: const Color(0xFFF7F7F7),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -1564,7 +1564,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
@@ -2180,7 +2180,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         Container(
                           width: 72, height: 72,
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.textDark),
@@ -3857,7 +3857,7 @@ class _ImageBubble extends StatelessWidget {
   Widget _brokenImage() => Container(
         width: 200,
         height: 200,
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         child: Icon(Icons.broken_image, color: HuddlColors.textTertiary, size: 48),
       );
 
@@ -4137,7 +4137,7 @@ class _ContactBubble extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: HuddlColors.background,
+                        color: const Color(0xFFF7F7F7),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.person, color: HuddlColors.textDark, size: 24),

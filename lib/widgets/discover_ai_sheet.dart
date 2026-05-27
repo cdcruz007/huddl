@@ -310,7 +310,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                 decoration: BoxDecoration(
                                   color: _isListening
                                       ? HuddlColors.nearBlack
-                                      : HuddlColors.background,
+                                      : const Color(0xFFF7F7F7),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(

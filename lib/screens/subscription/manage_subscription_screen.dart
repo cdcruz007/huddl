@@ -235,7 +235,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -372,7 +372,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'Meetups This Month',
                 used: _service.meetupsThisMonth,
                 limit: limits.maxMeetupsPerMonth,
-                color: HuddlColors.accentAmber,
+                color: HuddlColors.primary,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -429,7 +429,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'AI Event Discoveries This Week',
                 used: _service.aiEventDiscoveriesThisWeek,
                 limit: limits.maxAiEventDiscoveriesPerWeek,
-                color: HuddlColors.accentAmber,
+                color: HuddlColors.primary,
               ),
               if (limits.aiListingGenerator) ...[
                 const SizedBox(height: 8),
@@ -630,7 +630,7 @@ class _StepRow extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: const Color(0xFFF7F7F7),
               shape: BoxShape.circle,
             ),
             child: Text(step,

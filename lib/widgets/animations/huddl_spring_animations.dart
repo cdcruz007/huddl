@@ -421,7 +421,7 @@ class _HuddlCelebrationBurstState extends State<HuddlCelebrationBurst>
     final colors = [
       HuddlColors.primary,
       HuddlColors.nearBlack,
-      HuddlColors.accentAmber,
+      HuddlColors.primary,
       HuddlColors.error,
       const Color(0xFF5B9CFF),
     ];

@@ -10,7 +10,7 @@ class HuddlTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: HuddlColors.warmCream, // #FFF8F3 warm cream — vibrant pass
+      scaffoldBackgroundColor: Colors.white,
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
         secondary: HuddlColors.nearBlack,
@@ -42,7 +42,7 @@ class HuddlTheme {
         showUnselectedLabels: true,
       ),
       inputDecorationTheme: _inputTheme(
-        fillColor: HuddlColors.warmSand,  // warm sand fill matches scaffold
+        fillColor: const Color(0xFFF7F7F7),
         hintColor: HuddlColors.textHint,
         labelColor: HuddlColors.textSecondary,
       ),
@@ -53,7 +53,7 @@ class HuddlTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: EdgeInsets.zero,
       ),
-      chipTheme: _chipTheme(bgColor: HuddlColors.background),
+      chipTheme: _chipTheme(bgColor: const Color(0xFFF7F7F7)),
       dividerTheme: const DividerThemeData(
         color: HuddlColors.divider,
         thickness: 1,
@@ -171,10 +171,10 @@ class HuddlTheme {
       filled: true,
       fillColor: fillColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: HuddlColors.primary, width: 1.5)),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: HuddlColors.error, width: 1)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1C1C1E), width: 1.5)),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: HuddlColors.error, width: 1)),
       hintStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400, color: hintColor),
       labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400, color: labelColor),
     );
@@ -183,8 +183,10 @@ class HuddlTheme {
   static ElevatedButtonThemeData _elevatedButtonTheme() {
     return ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
+        backgroundColor: HuddlColors.primary,
+        foregroundColor: HuddlColors.white,
         minimumSize: const Size(double.infinity, 48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
         elevation: 0,
         textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
       ),
@@ -313,7 +315,7 @@ class HuddlTheme {
         if (states.contains(WidgetState.selected)) {
           return HuddlColors.primary.withValues(alpha: 0.12);
         }
-        return HuddlColors.background;
+        return const Color(0xFFF7F7F7);
       }),
       hourMinuteTextColor: WidgetStateColor.resolveWith((states) {
         if (states.contains(WidgetState.selected)) return HuddlColors.primary;

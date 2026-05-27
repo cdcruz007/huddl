@@ -690,7 +690,7 @@ class HuddlImageCard extends StatelessWidget {
                 imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   child: const Center(
                     child: Icon(Icons.image, color: HuddlColors.textDark, size: 32),
                   ),

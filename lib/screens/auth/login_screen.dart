@@ -344,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.waving_hand_rounded,
@@ -988,7 +988,7 @@ class _BiometricLoginButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: const Color(0xFFF7F7F7),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: HuddlColors.divider,

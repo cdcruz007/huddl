@@ -583,7 +583,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isJoined ? HuddlColors.success : HuddlColors.primary,
+                  backgroundColor: _isJoined ? HuddlColors.nearBlack : HuddlColors.primary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(26)),
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -701,7 +701,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -923,7 +923,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           height: 48,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: HuddlColors.background,
+                            color: const Color(0xFFF7F7F7),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           alignment: Alignment.center,
@@ -956,7 +956,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.bookmark_outline,
@@ -995,7 +995,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.poll_outlined,
@@ -1073,7 +1073,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   Widget _heroFallback() {
     return Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: CustomPaint(
         painter: _TwoPeoplePainter(),
         child: const SizedBox.expand(),
@@ -1115,7 +1115,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(

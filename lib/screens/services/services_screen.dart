@@ -549,7 +549,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     final bool hasActiveFilter = _selectedCategory != null;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: const Color(0xFFF7F7F7),
       body: Stack(
         children: [
         Column(
@@ -736,7 +736,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           // ── Listing stream ────────────────────────────────────────────────
           Expanded(
             child: ColoredBox(
-              color: _isSearchActive ? hc.surface : HuddlColors.background,
+              color: _isSearchActive ? hc.surface : const Color(0xFFF7F7F7),
               child: StreamBuilder<List<ServiceListing>>(
                 stream: _service.listingsStream(category: _selectedCategory)
                     .handleError((_) => <ServiceListing>[]),
@@ -3794,7 +3794,7 @@ Color _categoryColor(ServiceCategory cat) => switch (cat) {
       ServiceCategory.fitness => HuddlColors.categorySport,
       ServiceCategory.firstAid => HuddlColors.error,
       ServiceCategory.doula => HuddlColors.pinkSoft,
-      ServiceCategory.homeServices => HuddlColors.accentAmber,
+      ServiceCategory.homeServices => HuddlColors.primary,
       ServiceCategory.photography => HuddlColors.purpleAccent,
       ServiceCategory.food => HuddlColors.primary,
       ServiceCategory.other => HuddlColors.gray400,

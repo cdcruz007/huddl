@@ -366,7 +366,7 @@ class _RequirementsPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.surfaceLight,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: HuddlColors.disabled),
       ),

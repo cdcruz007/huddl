@@ -146,7 +146,7 @@ class EventInviteCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: isFree ? HuddlColors.nearBlack : HuddlColors.accentAmber,
+                              color: isFree ? HuddlColors.nearBlack : HuddlColors.primary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -454,13 +454,13 @@ _EventCatStyle _getEventCatStyle(String category) {
     case 'health':
       return const _EventCatStyle(HuddlColors.nearBlack, Icons.health_and_safety_outlined);
     case 'play':
-      return const _EventCatStyle(HuddlColors.accentAmber, Icons.child_care_outlined);
+      return const _EventCatStyle(HuddlColors.primary, Icons.child_care_outlined);
     case 'sport':
       return const _EventCatStyle(HuddlColors.nearBlack, Icons.sports_outlined);
     case 'music':
       return const _EventCatStyle(HuddlColors.primaryDark, Icons.music_note_outlined);
     case 'food':
-      return const _EventCatStyle(HuddlColors.accentAmber, Icons.restaurant_outlined);
+      return const _EventCatStyle(HuddlColors.primary, Icons.restaurant_outlined);
     case 'arts':
     case 'art':
       return const _EventCatStyle(HuddlColors.accentCoral, Icons.palette_outlined);

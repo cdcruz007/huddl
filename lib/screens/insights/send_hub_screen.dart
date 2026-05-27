@@ -22,7 +22,7 @@ import 'package:intl/intl.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 const Color _kSendAccent  = HuddlColors.primary; // orange — matches Discover & Connect tabs
 const Color _kSendCrimson = HuddlColors.error;          // escalation accent — Figma #FF5151
-const Color _kSendInfoBg  = HuddlColors.peachVeryLight; // light peach bg — Figma #FFF3ED
+const Color _kSendInfoBg  = Colors.white; // light peach bg — Figma #FFF3ED
 // =============================================================================
 // AI ADVISOR — SAFETY & COMPLIANCE CONSTANTS
 // =============================================================================

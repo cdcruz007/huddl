@@ -594,7 +594,7 @@ class _GateBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -679,14 +679,14 @@ class _BillingToggle extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.accentAmber.withValues(alpha: 0.12),
+                    color: HuddlColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text('Save 30%',
                       style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.accentAmber)),
+                          color: HuddlColors.primary)),
                 ),
               ],
             ],
@@ -891,7 +891,7 @@ class _PlanCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: HuddlColors.accentAmber.withValues(alpha: 0.12),
+                        color: HuddlColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -899,7 +899,7 @@ class _PlanCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.accentAmber),
+                            color: HuddlColors.primary),
                       ),
                     ),
                   ],
@@ -1109,7 +1109,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: const BoxDecoration(
-                  color: HuddlColors.surfaceLight,
+                  color: Colors.white,
                   borderRadius:
                       BorderRadius.vertical(top: Radius.circular(15)),
                 ),
@@ -1188,7 +1188,7 @@ class _FeatureComparisonTable extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         border: const Border(bottom: BorderSide(color: HuddlColors.gray100)),
       ),
       child: Text(title,

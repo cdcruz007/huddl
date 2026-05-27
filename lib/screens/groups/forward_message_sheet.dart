@@ -749,12 +749,12 @@ class _ForwardSheetState extends State<_ForwardSheet>
   }
 
   Widget _meetupPlaceholder() => Container(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         child: const Center(child: Icon(Icons.event, size: 24, color: HuddlColors.textDark)),
       );
 
   Widget _groupPlaceholder() => Container(
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
         child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.textDark)),
       );
 
@@ -1063,7 +1063,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 errorBuilder: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   child: const Icon(Icons.image,
                       size: 24, color: HuddlColors.textDark),
                 ),
@@ -1154,7 +1154,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.person,

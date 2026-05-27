@@ -219,7 +219,7 @@ class LearningMaturityIndicator extends StatelessWidget {
       case LearningMaturity.coldStart:
         return HuddlColors.nearBlack;
       case LearningMaturity.warming:
-        return HuddlColors.accentAmber;
+        return HuddlColors.primary;
       case LearningMaturity.personalised:
         return HuddlColors.success;
       case LearningMaturity.mature:
@@ -247,7 +247,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? HuddlColors.darkSurface : HuddlColors.surfaceLight,
+        color: isDark ? HuddlColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? HuddlColors.darkDivider : HuddlColors.gray200,

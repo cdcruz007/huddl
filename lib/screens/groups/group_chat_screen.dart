@@ -1815,7 +1815,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
@@ -3106,7 +3106,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.lock_outline, size: 32, color: HuddlColors.textDark),
@@ -3360,7 +3360,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: const Color(0xFFF7F7F7),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.person_off_outlined, size: 32, color: HuddlColors.textDark),
@@ -3443,7 +3443,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: HuddlColors.background,
+              color: const Color(0xFFF7F7F7),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -3817,7 +3817,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: HuddlColors.background,
+                                          color: const Color(0xFFF7F7F7),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
@@ -4074,7 +4074,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: HuddlColors.background,
+                        color: const Color(0xFFF7F7F7),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -4257,7 +4257,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * 0.3),
-        color: HuddlColors.background,
+        color: const Color(0xFFF7F7F7),
       ),
       clipBehavior: Clip.antiAlias,
       child: url.startsWith('assets/')
@@ -7804,7 +7804,7 @@ class _GroupAttachSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _gAttachIcon(context, Icons.location_on_rounded, 'Location',
-                      HuddlColors.accentAmber, HuddlColors.primary.withValues(alpha: 0.08), 'location'),
+                      HuddlColors.primary, HuddlColors.primary.withValues(alpha: 0.08), 'location'),
                   _gAttachIcon(context, Icons.person_rounded, 'Contact',
                       HuddlColors.primary, HuddlColors.primary.withValues(alpha: 0.08), 'contact'),
                   _gAttachIcon(context, Icons.poll_rounded, 'Poll',

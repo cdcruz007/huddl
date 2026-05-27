@@ -329,7 +329,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: const Color(0xFFF7F7F7),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(

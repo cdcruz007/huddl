@@ -19,7 +19,7 @@ import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
 // Marketplace price colour — Figma dark blue (selected state) #347FEF
-const Color _kMarketBlue = HuddlColors.blueDark;
+const Color _kMarketBlue = HuddlColors.nearBlack;
 
 // =============================================================================
 // PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
@@ -1008,7 +1008,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       children: [
         images.isEmpty
             ? Container(
-                color: HuddlColors.background,
+                color: const Color(0xFFF7F7F7),
                 child: Center(
                   child: Icon(item.category.icon,
                       size: 64, color: HuddlColors.textHint),
@@ -1068,7 +1068,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildDetailImage(String url) {
     final fallback = Container(
-      color: HuddlColors.background,
+      color: const Color(0xFFF7F7F7),
       child: Center(
         child: Icon(item.category.icon,
             size: 56, color: HuddlColors.textHint),

@@ -198,7 +198,7 @@ class CopilotWelcomeState extends StatelessWidget {
                   (chip) => ActionChip(
                     label: Text(chip),
                     onPressed: () => onChipTap(chip),
-                    backgroundColor: HuddlColors.peachLight,
+                    backgroundColor: Colors.white,
                     labelStyle: const TextStyle(
                       color: HuddlColors.textDark,
                       fontSize: 13,
