@@ -1132,7 +1132,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           // ══ DESIGN TOKENS — Figma styleguide exact ════════════
           const Color bgSheet      = Colors.white;
           const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          const Color blue         = Color(0xFF347FEF);  // Figma: "Dark blue" — selected state
+          const Color chipIcon     = Color(0xFF42464C); // nearBlack — replaces blue (Airbnb rule)
           const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
           const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
           const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page background = unselected chip
@@ -1224,7 +1224,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     ? LinearGradient(
                         colors: [
                           orange.withValues(alpha: 0.12),
-                          blue.withValues(alpha: 0.08),
+                          chipIcon.withValues(alpha: 0.08),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -1277,8 +1277,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                        colors: [blue, orange]),
+                                    color: const Color(0xFF42464C),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text('AI',
@@ -1436,7 +1435,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       Icon(
                         icon,
                         size: 15,
-                        color: isSelected ? Colors.white : (iconColor ?? blue),
+                        color: isSelected ? Colors.white : (iconColor ?? chipIcon),
                       ),
                       const SizedBox(width: 6),
                     ],
@@ -1779,7 +1778,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 label: label,
                                 isSelected: sel,
                                 icon: icon,
-                                iconColor: blue,
+                                iconColor: chipIcon,
                                 onTap: () {
                                   setSheetState(() {
                                     if (sel) { sheetCategories.remove(label); }
@@ -3679,7 +3678,7 @@ class _EventsTabState extends State<_EventsTab> {
           // ══ DESIGN TOKENS — Figma styleguide exact ════════════
           const Color bgSheet      = Colors.white;
           const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          const Color blue         = Color(0xFF347FEF);  // Figma: "Dark blue" — selected state
+          const Color chipIcon     = Color(0xFF42464C); // nearBlack — replaces blue (Airbnb rule)
           const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
           const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
           const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page bg = unselected chip
@@ -3771,7 +3770,7 @@ class _EventsTabState extends State<_EventsTab> {
                     ? LinearGradient(
                         colors: [
                           orange.withValues(alpha: 0.12),
-                          blue.withValues(alpha: 0.08),
+                          chipIcon.withValues(alpha: 0.08),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -3824,8 +3823,7 @@ class _EventsTabState extends State<_EventsTab> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                        colors: [blue, orange]),
+                                    color: const Color(0xFF42464C),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text('AI',
@@ -3977,7 +3975,7 @@ class _EventsTabState extends State<_EventsTab> {
                   children: [
                     if (icon != null) ...[
                       Icon(icon, size: 15,
-                          color: isSelected ? Colors.white : blue),
+                          color: isSelected ? Colors.white : chipIcon),
                       const SizedBox(width: 6),
                     ],
                     Text(

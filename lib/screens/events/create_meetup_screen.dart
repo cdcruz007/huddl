@@ -617,7 +617,6 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   // DESIGN TOKENS  (Figma-exact)
   // ─────────────────────────────────────────────────────────────────────
-  static const _bannerBlue   = HuddlColors.nearBlack;     // banner — nearBlack for Airbnb parity
   static const _accentOrange = HuddlColors.primary;        // date/time/location icons + toggle — Figma #FF965C
   static const _accentBlue   = HuddlColors.nearBlack;      // category icons + selected pill fill — nearBlack
   static const _fieldBg      = Color(0xFFF7F7F7);     // text field fill — Figma #F6F6F6
@@ -1487,16 +1486,16 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: _accentBlue.withValues(alpha: 0.08),
+                color: HuddlColors.nearBlack.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _accentBlue.withValues(alpha: 0.3)),
+                border: Border.all(color: HuddlColors.nearBlack.withValues(alpha: 0.20)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.person_add_outlined, size: 14, color: _accentBlue),
+                  const Icon(Icons.person_add_outlined, size: 14, color: HuddlColors.nearBlack),
                   const SizedBox(width: 6),
                   Text('Invite friends +',
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: _accentBlue)),
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
                 ],
               ),
             ),
@@ -1514,22 +1513,18 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     return Container(
       width: double.infinity,
       height: 200,
-      decoration: const BoxDecoration(
-        color: _bannerBlue,   // flat solid #5B9DFF — no gradient
-      ),
+      color: const Color(0xFFF7F7F7),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Figma icon: outlined image-frame square with + at top-right corner
-          // Matches: rounded rect outline + landscape/sun inside + plus badge top-right
           const Icon(
             Icons.add_photo_alternate_outlined,
-            color: Colors.white,
+            color: Color(0xFFB0B0B0),
             size: 48,
           ),
           const SizedBox(height: 12),
-          Text('Click to add photo',
-              style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white)),
+          Text('Tap to add photo',
+              style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: Color(0xFF6C6C6C))),
         ],
       ),
     );

@@ -452,7 +452,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     final id = 'ev_${DateTime.now().millisecondsSinceEpoch}';
 
     // Map category to color/icon for Event model
-    Color catColor = HuddlColors.primary;
+    // Airbnb rule: no per-category colour coding — nearBlack for all types
+    const Color catColor = HuddlColors.nearBlack;
     IconData catIcon = Icons.event;
     for (final cat in _categories) {
       if (cat['label'] == _category) {
@@ -460,11 +461,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         break;
       }
     }
-    if (_category == 'Workshop') catColor = HuddlColors.primaryDark;
-    if (_category == 'Class') catColor = HuddlColors.primary;
-    if (_category == 'Play') catColor = HuddlColors.primary;
-    if (_category == 'Health') catColor = HuddlColors.error;
-    if (_category == 'Community') catColor = HuddlColors.lightBlue;
 
     const dayAbbr = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     const monthAbbr = [

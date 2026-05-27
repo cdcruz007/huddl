@@ -34,7 +34,7 @@ const _fieldLine    = HuddlColors.divider;       // #D5D5D5 bottom underline
 const _sectionText  = HuddlColors.textDark;      // #42464C section headers
 const _hintGray     = HuddlColors.textTertiary;  // #949494 placeholder text
 const _accentOrange = HuddlColors.primary;       // #FF965C orange accent
-const _bannerBg     = Colors.white;    // photo banner bg
+const _bannerBg     = Color(0xFFF7F7F7);  // photo banner bg — neutral grey
 
 const String _userGroupsKey = 'user_created_groups_v1';
 
@@ -301,7 +301,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         color: _bannerBg,
         child: const Center(
           child: Icon(Icons.add_photo_alternate_outlined,
-              size: 48, color: HuddlColors.textDark),
+              size: 48, color: Color(0xFFB0B0B0)),
         ),
       );
 
@@ -1368,21 +1368,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           duration: const Duration(milliseconds: 200),
           height: 52,
           decoration: BoxDecoration(
-            gradient: _isValid
-                ? const LinearGradient(
-                    colors: [HuddlColors.primaryLight, HuddlColors.primary],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  )
-                : null,
-            color: _isValid ? null : HuddlColors.divider,
+            gradient: null,
+            color: _isValid ? HuddlColors.primary : const Color(0xFFEEEEEE),
             borderRadius: BorderRadius.circular(26),
             boxShadow: _isValid
                 ? [
                     BoxShadow(
-                        color: HuddlColors.primary.withValues(alpha: 0.30),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4))
+                        color: HuddlColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3))
                   ]
                 : null,
           ),
@@ -1398,8 +1392,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color:
-                          _isValid ? Colors.white : HuddlColors.textTertiary,
+                      color: _isValid ? Colors.white : const Color(0xFF9E9E9E),
                     ),
                   ),
           ),
@@ -1476,18 +1469,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F7F7),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.add_photo_alternate_outlined,
-                color: HuddlColors.textDark,
-                size: 26,
-              ),
+            const Icon(
+              Icons.add_photo_alternate_outlined,
+              color: Color(0xFFB0B0B0),
+              size: 48,
             ),
             const SizedBox(height: 10),
             Text(
@@ -1495,7 +1480,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.textTertiary,
+                color: Color(0xFF6C6C6C),
               ),
             ),
             if (_showImageError) ...[

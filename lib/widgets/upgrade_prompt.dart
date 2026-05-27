@@ -313,31 +313,32 @@ class UpgradeBanner extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: HuddlColors.primary,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: HuddlColors.primary, width: 1.5),
         ),
         child: Row(
           children: [
-            Icon(Icons.star_rounded, color: context.hc.surface, size: 20),
+            Icon(Icons.star_rounded, color: HuddlColors.primary, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,
                   style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.white)),
+                      color: HuddlColors.nearBlack)),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: HuddlColors.white.withValues(alpha: 0.25),
+                color: HuddlColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('Upgrade',
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.white)),
+                      color: Colors.white)),
             ),
           ],
         ),

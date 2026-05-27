@@ -2336,39 +2336,37 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const Spacer(),
                     // ── Prominent countdown row ──────────────────────
+                    // Outlined pill: white bg + orange border (not filled orange)
                     if (item.badge != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 9, vertical: 5),
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: item.badge == 'Today!'
-                              ? Colors.redAccent.withValues(alpha: isDark ? 0.25 : 0.10)
-                              : HuddlColors.primary.withValues(
-                                  alpha: isDark ? 0.22 : 0.12),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: item.badge == 'Today!'
-                                ? Colors.redAccent.withValues(alpha: 0.45)
-                                : HuddlColors.primary.withValues(alpha: 0.40),
-                            width: 1,
+                                ? Colors.redAccent
+                                : HuddlColors.primary,
+                            width: 1.5,
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.schedule_rounded,
-                              size: 13,
+                              Icons.access_time_outlined,
+                              size: 12,
                               color: item.badge == 'Today!'
                                   ? Colors.redAccent
                                   : HuddlColors.primary,
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 4),
                             Text(
                               item.badge!,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color: item.badge == 'Today!'
                                     ? Colors.redAccent
                                     : HuddlColors.primary,
@@ -5250,37 +5248,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Color _feedIconColor(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return HuddlColors.nearBlack;
-      case FeedItemType.newGroup:
-        return HuddlColors.textDark;
-      case FeedItemType.newEvent:
-        return HuddlColors.nearBlack;
-      case FeedItemType.newMarketplaceItem:
-        return HuddlColors.primary;
-      case FeedItemType.milestone:
-        return HuddlColors.primary;
-      case FeedItemType.partnerPromoted:
-        return HuddlColors.primary;
-    }
+    // Airbnb rule: no per-type colour coding — all nearBlack for visual calm
+    return HuddlColors.nearBlack;
   }
 
   Color _feedIconBg(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return const Color(0xFFF7F7F7);
-      case FeedItemType.newGroup:
-        return const Color(0xFFF7F7F7);
-      case FeedItemType.newEvent:
-        return HuddlColors.nearBlack.withValues(alpha: 0.08);
-      case FeedItemType.newMarketplaceItem:
-        return HuddlColors.nearBlack.withValues(alpha: 0.08);
-      case FeedItemType.milestone:
-        return const Color(0xFFF7F7F7);
-      case FeedItemType.partnerPromoted:
-        return HuddlColors.primary.withValues(alpha: 0.10);
-    }
+    // Airbnb rule: uniform neutral grey — no tinted/coloured icon containers
+    return const Color(0xFFF7F7F7);
   }
 
   String _feedTypeLabel(FeedItemType t) {
@@ -7636,37 +7610,13 @@ class _ActivityDetailSheet extends StatelessWidget {
   }
 
   Color _colorForType(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return HuddlColors.nearBlack;
-      case FeedItemType.newGroup:
-        return HuddlColors.textDark;
-      case FeedItemType.newEvent:
-        return HuddlColors.nearBlack;
-      case FeedItemType.newMarketplaceItem:
-        return HuddlColors.primary;
-      case FeedItemType.milestone:
-        return HuddlColors.primary;
-      case FeedItemType.partnerPromoted:
-        return HuddlColors.primary;
-    }
+    // Airbnb rule: no per-type colour — all nearBlack
+    return HuddlColors.nearBlack;
   }
 
   Color _bgForType(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return HuddlColors.successBg;
-      case FeedItemType.newGroup:
-        return const Color(0xFFF7F7F7);
-      case FeedItemType.newEvent:
-        return HuddlColors.blueBackground;
-      case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFF7F7F7);
-      case FeedItemType.milestone:
-        return const Color(0xFFF7F7F7);
-      case FeedItemType.partnerPromoted:
-        return HuddlColors.primary.withValues(alpha: 0.08);
-    }
+    // Airbnb rule: uniform neutral grey — no tinted backgrounds
+    return const Color(0xFFF7F7F7);
   }
 
   String _typeLabelForType(FeedItemType t) {
