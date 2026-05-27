@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/business_verification_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/underlined_text_field.dart';
-import '../../widgets/common/primary_button.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // =============================================================================
 // BUSINESS VERIFICATION SCREEN
@@ -216,9 +216,8 @@ class _BusinessVerificationScreenState
                 setState(() => _entityType = BusinessEntityType.soleTrader),
           ),
           const SizedBox(height: 32),
-          PrimaryButton(
-            text: 'Continue',
-            enabled: _entityType != null,
+          HuddlButton(
+            label: 'Continue',
             onPressed: _entityType == null
                 ? null
                 : () => _pageCtrl.nextPage(
@@ -301,8 +300,8 @@ class _BusinessVerificationScreenState
           const SizedBox(height: 24),
           // Submit button — sole trader has separate button inside the form
           if (_entityType != BusinessEntityType.soleTrader)
-            PrimaryButton(
-              text: 'Verify now',
+            HuddlButton(
+              label: 'Verify now',
               isLoading: _isLoading,
               onPressed: _isLoading
                   ? null
@@ -408,9 +407,8 @@ class _BusinessVerificationScreenState
           contentPadding: EdgeInsets.zero,
         ),
         const SizedBox(height: 8),
-        PrimaryButton(
-          text: 'Submit declaration',
-          enabled: _declarationConfirmed && !_isLoading,
+        HuddlButton(
+          label: 'Submit declaration',
           isLoading: _isLoading,
           onPressed:
               (!_declarationConfirmed || _isLoading) ? null : _submitSoleTrader,
@@ -463,8 +461,8 @@ class _BusinessVerificationScreenState
               ),
             ),
             const SizedBox(height: 32),
-            PrimaryButton(
-              text: 'Done',
+            HuddlButton(
+              label: 'Done',
               onPressed: () => Navigator.pop(context),
             ),
           ],

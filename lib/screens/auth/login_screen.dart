@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
-import '../../widgets/common/primary_button.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -373,31 +373,17 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(color: HuddlColors.textSecondary),
             ),
           ),
-          ElevatedButton(
+          HuddlButton(
+            label: 'Join Huddl',
+            fullWidth: false,
             onPressed: () {
               Navigator.of(ctx).pop();
-              // Full onboarding journey: carousel → name → parent type → etc.
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/onboarding',
                 (route) => false,
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Join Huddl',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15),
-            ),
           ),
         ],
       ),
@@ -714,9 +700,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   : Semantics(
                       label: 'login_button',
                       button: true,
-                      child: PrimaryButton(
+                      child: HuddlButton(
                         key: const Key('loginButton'),
-                        text: 'Log in',
+                        label: 'Log in',
                         // Always provide a non-null callback so the button is
                         // never disabled in the accessibility tree (disabled
                         // buttons have onPressed=null which makes Robo Test
@@ -875,12 +861,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.w500)),
                 ],
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isSending ? null : () async {
-                      final digits = _normalise(resetPhoneCtrl.text);
-                      if (digits.length == 10 && digits.startsWith('7')) {
+                HuddlButton(
+                  label: isSending ? 'Sending...' : 'Send Verification Code',
+                  isLoading: isSending,
+                  onPressed: isSending ? null : () async {
+                    final digits = _normalise(resetPhoneCtrl.text);
+                    if (digits.length == 10 && digits.startsWith('7')) {
                         setLocal(() => isSending = true);
                         // Format WITH spaces to match Firebase test numbers
                         final fullPhone = _buildFullPhone(digits);
@@ -931,24 +917,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         }
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                    ),
-                    child: isSending
-                        ? const SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Text('Send Verification Code',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white)),
-                  ),
                 ),
               ],
             ),

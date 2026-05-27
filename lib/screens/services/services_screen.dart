@@ -11,7 +11,7 @@ import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/common/underlined_text_field.dart';
-import '../../widgets/common/primary_button.dart';
+import '../../widgets/common/huddl_button.dart';
 
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
@@ -1164,13 +1164,9 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                   onPressed: () => Navigator.pop(ctx, null),
                   child: Text('Cancel',
                       style: GoogleFonts.poppins(color: context.hc.textSecondary))),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              HuddlButton(
+                label: 'Endorse',
                 onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
-                child: Text('Endorse',
-                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -1482,13 +1478,9 @@ class _ListingCardState extends State<_ListingCard> {
                   onPressed: () => Navigator.pop(ctx, null),
                   child: Text('Cancel',
                       style: GoogleFonts.poppins(color: context.hc.textSecondary))),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              HuddlButton(
+                label: 'Endorse',
                 onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
-                child: Text('Endorse',
-                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -1990,13 +1982,9 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               TextButton(
                   onPressed: () => Navigator.pop(ctx, null),
                   child: Text('Cancel', style: GoogleFonts.poppins(color: context.hc.textSecondary))),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              HuddlButton(
+                label: 'Endorse',
                 onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
-                child: Text('Endorse',
-                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -2086,8 +2074,8 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-              PrimaryButton(
-                text: 'Post response',
+              HuddlButton(
+                label: 'Post response',
                 onPressed: () async {
                   if (controller.text.trim().isEmpty) return;
                   await widget.service.replyToEndorsement(
@@ -2422,49 +2410,17 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             const SizedBox(height: 12),
             // ── Endorse CTA \u2014 hidden for own listing ─────────────────────
             if (FirebaseAuth.instance.currentUser?.uid != listing.ownerUid)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _hasEndorsed
-                      ? HuddlColors.nearBlack.withValues(alpha: 0.1)
-                      : HuddlColors.primary,
-                  foregroundColor:
-                      _hasEndorsed ? HuddlColors.nearBlack : Colors.white,
-                  elevation: _hasEndorsed ? 0 : 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: _hasEndorsed
-                        ? BorderSide(
-                            color: HuddlColors.nearBlack.withValues(alpha: 0.4))
-                        : BorderSide.none,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+              HuddlButton(
+                label: _hasEndorsed ? 'Endorsed' : 'Endorse this service',
+                leadingIcon: _hasEndorsed
+                    ? Icons.thumb_up_rounded
+                    : Icons.thumb_up_off_alt_rounded,
+                isLoading: _endorsing,
+                variant: _hasEndorsed
+                    ? HuddlButtonVariant.secondary
+                    : HuddlButtonVariant.primary,
                 onPressed: _endorsing ? null : _toggleEndorse,
-                icon: _endorsing
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color:
-                              _hasEndorsed ? HuddlColors.nearBlack : Colors.white,
-                        ),
-                      )
-                    : Icon(
-                        _hasEndorsed
-                            ? Icons.thumb_up_rounded
-                            : Icons.thumb_up_off_alt_rounded,
-                        size: 18,
-                      ),
-                label: Text(
-                  _hasEndorsed ? 'Endorsed' : 'Endorse this service',
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, fontSize: 14),
-                ),
               ),
-            ),
             const SizedBox(height: 12),
             // ── Contact CTAs ─────────────────────────────────────────────
             if (listing.phone != null) ...[
@@ -2494,34 +2450,20 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             // ── Book Now — Partner listing booking URL ─────────────────
             if (listing.externalBookingUrl != null && listing.externalBookingUrl!.isNotEmpty) ...[  
               const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  icon: const Icon(Icons.calendar_today_outlined, size: 18),
-                  label: Text(
-                    'Book Now',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  onPressed: () async {
-                    HuddlAnimations.selectionClick();
-                    final raw = listing.externalBookingUrl!;
-                    final hasScheme = raw.startsWith('http://') ||
-                        raw.startsWith('https://');
-                    final uri = Uri.parse(hasScheme ? raw : 'https://$raw');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    }
-                  },
-                ),
+              HuddlButton(
+                label: 'Book Now',
+                leadingIcon: Icons.calendar_today_outlined,
+                onPressed: () async {
+                  HuddlAnimations.selectionClick();
+                  final raw = listing.externalBookingUrl!;
+                  final hasScheme = raw.startsWith('http://') ||
+                      raw.startsWith('https://');
+                  final uri = Uri.parse(hasScheme ? raw : 'https://$raw');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri,
+                        mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
               const SizedBox(height: 8),
             ],
@@ -2558,36 +2500,21 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 listing.ownerUid !=
                     FirebaseAuth.instance.currentUser?.uid) ...[
               const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  icon: const Icon(Icons.chat_bubble_outline_rounded,
-                      size: 18),
-                  label: Text(
-                    'Enquire via Huddl',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).pushNamed(
-                      '/dm_chat',
-                      arguments: {
-                        'recipientId': listing.ownerUid,
-                        'recipientName': listing.name,
-                        'recipientAvatarColor': '#3580F0',
-                        'conversationId': '',
-                      },
-                    );
-                  },
-                ),
+              HuddlButton(
+                label: 'Enquire via Huddl',
+                leadingIcon: Icons.chat_bubble_outline_rounded,
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).pushNamed(
+                    '/dm_chat',
+                    arguments: {
+                      'recipientId': listing.ownerUid,
+                      'recipientName': listing.name,
+                      'recipientAvatarColor': '#3580F0',
+                      'conversationId': '',
+                    },
+                  );
+                },
               ),
               const SizedBox(height: 16),
             ],
@@ -3186,9 +3113,11 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HuddlColors.primary,
                         foregroundColor: Colors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                            borderRadius: BorderRadius.circular(14)),
+                        minimumSize: const Size(double.infinity, 52),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                       ),
                       icon: _extracting
                           ? const SizedBox(
@@ -3444,26 +3373,10 @@ class _ExtractedRecommendationCardState
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
+            child: HuddlButton(
+              label: 'Add to directory',
+              isLoading: _submitting,
               onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text(
-                      'Add to directory',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
             ),
           ),
         ],
@@ -3676,26 +3589,10 @@ class _ManualAddFormState extends State<_ManualAddForm> {
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+              child: HuddlButton(
+                label: 'Add to directory',
+                isLoading: _submitting,
                 onPressed: _submitting ? null : _submit,
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : Text(
-                        'Add to directory',
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
               ),
             ),
           ],
