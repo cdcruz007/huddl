@@ -140,18 +140,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   List<ActivePoll> get _pinnedPolls =>
       _polls.where((p) => p.isPinned && !p.isDeleted).toList();
 
-  /// Active polls that are visible in the message flow (not pinned section):
-  /// - Not deleted
-  /// - Not pinned (pinned ones go to the top pinned section)
-  /// - visibleInFlow is true (creator always; non-creator: only before voting
-  ///   or if expired so creator can still access their poll)
-  List<ActivePoll> get _flowPolls => _polls
-      .where((p) =>
-          !p.isDeleted &&
-          !p.isPinned &&
-          (p.visibleInFlow || (p.isExpired && p.isCreatedByMe)))
-      .toList();
-
   /// Count of all non-deleted, non-expired polls (for badge)
   int get _activePollCount =>
       _polls.where((p) => !p.isDeleted && !p.isExpired).length;
@@ -162,6 +150,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Locally added document messages
   final List<_GroupDocumentMessage> _documentMessages = [];
+
+  // ── Inline poll items (Firestore-backed) ──────────────────────────────
+  // Each entry is a (_firestorePollId, timestamp) pair so we can sort polls
+  // into the unified timeline alongside text/image/document messages.
+  final List<({String pollId, DateTime timestamp})> _pollItems = [];
+
+  /// Guard: prevents duplicate poll writes when _openCreatePoll() is called
+  /// while a previous write is still in-flight.
+  bool _pollCreating = false;
 
   /// Emoji reactions: messageId → { emoji → count }
   final Map<String, Map<String, int>> _reactions = {};
@@ -520,22 +517,36 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         // ── Poll from another device ─────────────────────────────────────
         if (msgType == 'poll') {
           final pollQuestion = m['pollQuestion'] as String? ?? '';
-          final pollAnnounceId = 'fs_poll_$id';
-          if (pollQuestion.isNotEmpty &&
-              !_messages.any((e) => e.id == pollAnnounceId)) {
-            _messages.add(ChatMessage(
-              id: pollAnnounceId,
-              senderId: senderId,
-              senderName: m['senderName'] as String? ?? 'Member',
-              senderAvatar: m['senderAvatar'] as String? ?? '',
-              message: '\u{1F4CA} Poll: "$pollQuestion"',
-              timestamp: ts,
-              isMe: false,
-              isSystem: true,
-            ));
-            added = true;
+          // Prefer the patched-back pollFirestoreId field; fall back to legacy
+          // approach of using the group_messages doc ID as a lookup key.
+          final firestorePollId = m['pollFirestoreId'] as String? ?? '';
+
+          // ── Inline FirestorePollCard path (new): add to _pollItems ──────
+          if (firestorePollId.isNotEmpty) {
+            if (!_pollItems.any((p) => p.pollId == firestorePollId)) {
+              _pollItems.add((pollId: firestorePollId, timestamp: ts));
+              added = true;
+            }
+          } else {
+            // ── Legacy fallback: render as system text bubble ────────────
+            final pollAnnounceId = 'fs_poll_$id';
+            if (pollQuestion.isNotEmpty &&
+                !_messages.any((e) => e.id == pollAnnounceId)) {
+              _messages.add(ChatMessage(
+                id: pollAnnounceId,
+                senderId: senderId,
+                senderName: m['senderName'] as String? ?? 'Member',
+                senderAvatar: m['senderAvatar'] as String? ?? '',
+                message: '\u{1F4CA} Poll: "$pollQuestion"',
+                timestamp: ts,
+                isMe: false,
+                isSystem: true,
+              ));
+              added = true;
+            }
           }
-          // Restore the ActivePoll locally if not already present
+
+          // Also restore the ActivePoll for legacy ActivePollsSheet if needed
           final rawOptions = m['pollOptions'];
           if (rawOptions is List && !_polls.any((p) => p.id == 'fs_$id')) {
             final pollData = PollData(
@@ -554,6 +565,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               creatorId: senderId,
               createdAt: ts,
               isPinned: false,
+              firestorePollId: firestorePollId.isNotEmpty ? firestorePollId : null,
             );
             unawaited(_pollService.addPoll(widget.groupId, remotePoll));
           }
@@ -811,21 +823,33 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         // ── Poll history (cross-device) ───────────────────────────────────
         if (msgType == 'poll') {
           final pollQuestion = m['pollQuestion'] as String? ?? '';
-          final pollAnnounceId = 'fs_poll_$id';
-          if (pollQuestion.isNotEmpty &&
-              !_messages.any((e) => e.id == pollAnnounceId)) {
-            _messages.add(ChatMessage(
-              id: pollAnnounceId,
-              senderId: senderId,
-              senderName: m['senderName'] as String? ?? 'Member',
-              senderAvatar: m['senderAvatar'] as String? ?? '',
-              message: '\u{1F4CA} Poll: "$pollQuestion"',
-              timestamp: ts,
-              isMe: isMe,
-              isSystem: true,
-            ));
+          // Prefer the patched-back pollFirestoreId field; fall back to legacy.
+          final firestorePollId = m['pollFirestoreId'] as String? ?? '';
+
+          // ── Inline FirestorePollCard path (new): add to _pollItems ──────
+          if (firestorePollId.isNotEmpty) {
+            if (!_pollItems.any((p) => p.pollId == firestorePollId)) {
+              _pollItems.add((pollId: firestorePollId, timestamp: ts));
+            }
+          } else {
+            // ── Legacy fallback: render as system text bubble ────────────
+            final pollAnnounceId = 'fs_poll_$id';
+            if (pollQuestion.isNotEmpty &&
+                !_messages.any((e) => e.id == pollAnnounceId)) {
+              _messages.add(ChatMessage(
+                id: pollAnnounceId,
+                senderId: senderId,
+                senderName: m['senderName'] as String? ?? 'Member',
+                senderAvatar: m['senderAvatar'] as String? ?? '',
+                message: '\u{1F4CA} Poll: "$pollQuestion"',
+                timestamp: ts,
+                isMe: isMe,
+                isSystem: true,
+              ));
+            }
           }
-          // Restore the ActivePoll locally if not already present
+
+          // Also restore the ActivePoll for legacy ActivePollsSheet if needed
           final rawOptions = m['pollOptions'];
           if (rawOptions is List && !_polls.any((p) => p.id == 'fs_$id')) {
             final pollData = PollData(
@@ -844,6 +868,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               creatorId: senderId,
               createdAt: ts,
               isPinned: false,
+              firestorePollId: firestorePollId.isNotEmpty ? firestorePollId : null,
             );
             unawaited(_pollService.addPoll(widget.groupId, remotePoll));
           }
@@ -3460,44 +3485,27 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        // +1 extra slot at the end for flow poll cards
-                        itemCount: _groupSortedItems.length +
-                            (_flowPolls.isNotEmpty ? 1 : 0),
+                        // Polls are now inline in _groupSortedItems — no +1 trick
+                        itemCount: _groupSortedItems.length,
                         itemBuilder: (context, index) {
                           final items = _groupSortedItems;
-                          // Last slot: render flow poll cards inside the
-                          // scroll list so they scroll with messages and
-                          // don't create a sticky block above the input bar.
-                          if (index == items.length && _flowPolls.isNotEmpty) {
+                          if (index >= items.length) return const SizedBox.shrink();
+                          final item = items[index];
+
+                          // ── Inline FirestorePollCard ────────────────────
+                          if (item.type == _GChatItemType.poll &&
+                              item.pollFirestoreId != null) {
                             return Padding(
-                              padding: const EdgeInsets.only(top: 8, bottom: 8),
-                              child: Column(
-                                children: _flowPolls.map((poll) => PollCard(
-                                  poll: poll,
-                                  onSelectOption: poll.isExpired
-                                      ? null
-                                      : (i) => _votePoll(poll.id, i),
-                                  onViewDetails: poll.isCreatedByMe
-                                      ? () => _viewPollDetails(poll)
-                                      : null,
-                                  onTogglePin: poll.isCreatedByMe
-                                      ? () => _togglePollPin(poll.id)
-                                      : null,
-                                  onDeletePoll: poll.isCreatedByMe
-                                      ? () => _deletePoll(poll.id)
-                                      : null,
-                                  onSeeResults: poll.isCreatedByMe
-                                      ? () => _viewPollDetails(poll)
-                                      : null,
-                                  onChangeVote: !poll.isCreatedByMe && poll.hasVoted
-                                      ? () => _showActivePollsSheet()
-                                      : null,
-                                )).toList(),
+                              key: ValueKey('poll_${item.pollFirestoreId}'),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 0, vertical: 4),
+                              child: FirestorePollCard(
+                                pollId: item.pollFirestoreId!,
+                                onDeletePoll: () =>
+                                    _deleteFirestorePoll(item.pollFirestoreId!),
                               ),
                             );
                           }
-                          if (index >= items.length) return const SizedBox.shrink();
-                          final item = items[index];
 
                           // Image / location message
                           if (item.type == _GChatItemType.image) {
@@ -4500,6 +4508,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Create poll flow ──────────────────────────────────────────────────
   Future<void> _openCreatePoll() async {
+    if (_pollCreating) return; // creation lock — prevent double-tap
     final result = await Navigator.push<PollData>(
       context,
       MaterialPageRoute(
@@ -4507,61 +4516,111 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       ),
     );
     if (result == null || !mounted) return;
+    if (_pollCreating) return; // double-check after await
+    _pollCreating = true;
 
-    final userName = _onboardingService.name ?? 'You';
-    final newPoll = ActivePoll(
-      id: 'poll_${DateTime.now().millisecondsSinceEpoch}',
-      data: result,
-      creatorName: userName,
-      creatorId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
-      createdAt: DateTime.now(),
-      isPinned: false,
-    );
+    try {
+      final userName = _onboardingService.name ?? 'You';
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+      final now = DateTime.now();
 
-    // Persist to PollService FIRST so the list is ready before setState
-    await _pollService.addPoll(widget.groupId, newPoll);
+      // ── Step 1: Write the group_messages announce doc ────────────────
+      // This is the message that appears in the chat timeline for all devices.
+      String groupMsgId = '';
+      try {
+        groupMsgId = await FirestoreService().sendGroupMessage(
+          groupId: widget.groupId,
+          message: '\u{1F4CA} Poll: "${result.question}"',
+          type: 'poll',
+          pollQuestion: result.question,
+          pollOptions: result.options,
+          pollAllowMultiple: result.allowMultiple,
+          pollIsCalendarMode: result.isCalendarMode,
+          pollExpiresAt: result.expiresAt?.toIso8601String(),
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[GroupChat] Poll msg write error: $e');
+      }
 
+      // ── Step 2: Create the polls/{pollId} Firestore document ─────────
+      // This is the canonical vote store. All devices read/vote via this doc.
+      String firestorePollId = '';
+      try {
+        firestorePollId = await FirestoreService().createPoll(
+          groupId: widget.groupId,
+          groupMsgId: groupMsgId,
+          question: result.question,
+          options: result.options,
+          allowMultiple: result.allowMultiple,
+          isCalendarMode: result.isCalendarMode,
+          closesAt: result.expiresAt,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[GroupChat] polls/ write error: $e');
+      }
+
+      if (!mounted) return;
+
+      // ── Step 3: Patch pollFirestoreId back onto the group_messages doc ──
+      // This allows other devices to resolve the polls/ doc from the message
+      // stream without a secondary lookup.
+      if (firestorePollId.isNotEmpty && groupMsgId.isNotEmpty) {
+        unawaited(FirestoreService().patchGroupMessagePollId(
+          groupMsgId: groupMsgId,
+          pollFirestoreId: firestorePollId,
+        ));
+      }
+
+      // ── Step 4: Add to local _pollItems list (inline timeline) ───────
+      if (firestorePollId.isNotEmpty) {
+        setState(() {
+          // Dedup guard — don't add same poll twice
+          if (!_pollItems.any((p) => p.pollId == firestorePollId)) {
+            _pollItems.add((pollId: firestorePollId, timestamp: now));
+          }
+        });
+      }
+
+      // ── Step 5: Also persist to PollService for legacy ActivePollsSheet
+      final newPoll = ActivePoll(
+        id: 'poll_${now.millisecondsSinceEpoch}',
+        data: result,
+        creatorName: userName,
+        creatorId: uid,
+        createdAt: now,
+        isPinned: false,
+        firestorePollId: firestorePollId,
+      );
+      await _pollService.addPoll(widget.groupId, newPoll);
+
+      _fireMessageSentNotifier();
+      _scrollToEnd();
+    } finally {
+      _pollCreating = false;
+    }
+  }
+
+  /// Soft-deletes the Firestore poll doc and removes it from the local
+  /// _pollItems list so it disappears from the chat timeline immediately.
+  /// Only the poll creator should reach this code path (enforced in UI).
+  Future<void> _deleteFirestorePoll(String pollId) async {
+    if (pollId.isEmpty) return;
+    try {
+      await FirestoreService().deletePoll(pollId);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] _deleteFirestorePoll error: $e');
+    }
     if (!mounted) return;
     setState(() {
-      // Add a system message about the poll
-      _messages.add(ChatMessage(
-        id: 'sys_poll_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: 'system',
-        senderName: 'System',
-        senderAvatar: '',
-        message: '$userName created a poll: "${result.question}"',
-        timestamp: DateTime.now(),
-        isMe: false,
-        isSystem: true,
-      ));
+      _pollItems.removeWhere((p) => p.pollId == pollId);
     });
-
-    // ── Write to Firestore so other devices see and can vote on the poll ──
-    try {
-      await FirestoreService().sendGroupMessage(
-        groupId: widget.groupId,
-        message: '\u{1F4CA} Poll: "${result.question}"',
-        type: 'poll',
-        pollQuestion: result.question,
-        pollOptions: result.options,
-        pollAllowMultiple: result.allowMultiple,
-        pollIsCalendarMode: result.isCalendarMode,
-        pollExpiresAt: result.expiresAt?.toIso8601String(),
-      );
-    } catch (e) {
-      if (kDebugMode) debugPrint('[GroupChat] Poll Firestore write error: $e');
+    // Also mark the legacy ActivePoll as deleted so ActivePollsSheet hides it
+    final allPolls = _pollService.getPolls(widget.groupId);
+    final legacyIdx = allPolls.indexWhere((p) => p.firestorePollId == pollId);
+    if (legacyIdx >= 0) {
+      allPolls[legacyIdx].isDeleted = true;
+      unawaited(_pollService.savePolls(widget.groupId, allPolls));
     }
-
-    // Scroll to bottom
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 
   void _votePoll(String pollId, int optionIndex) {
@@ -4739,6 +4798,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
     for (int i = 0; i < _documentMessages.length; i++) {
       items.add(_GChatItem(type: _GChatItemType.document, docIndex: i, timestamp: _documentMessages[i].timestamp));
+    }
+    // Inline poll items — rendered by FirestorePollCard via StreamBuilder
+    for (final p in _pollItems) {
+      items.add(_GChatItem(
+        type: _GChatItemType.poll,
+        pollFirestoreId: p.pollId,
+        timestamp: p.timestamp,
+      ));
     }
     items.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return items;
@@ -6886,13 +6953,15 @@ class _GroupDocumentMessage {
   );
 }
 
-enum _GChatItemType { text, image, document }
+enum _GChatItemType { text, image, document, poll }
 
 class _GChatItem {
   final _GChatItemType type;
   final int? textIndex;
   final int? imageIndex;
   final int? docIndex;
+  /// Firestore `polls/{pollId}` document ID — only set when type == poll
+  final String? pollFirestoreId;
   final DateTime timestamp;
 
   const _GChatItem({
@@ -6900,6 +6969,7 @@ class _GChatItem {
     this.textIndex,
     this.imageIndex,
     this.docIndex,
+    this.pollFirestoreId,
     required this.timestamp,
   });
 }

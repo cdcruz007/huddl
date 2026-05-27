@@ -345,6 +345,9 @@ class FirestoreService {
     bool? pollAllowMultiple,
     String? pollExpiresAt,
     bool? pollIsCalendarMode,
+    /// The `polls/{pollId}` document ID — written back to the group_messages
+    /// doc after the poll/ doc is created, so other devices can resolve it.
+    String? pollFirestoreId,
   }) async {
     final uid = _uid;
     if (uid == null) return '';
@@ -390,6 +393,7 @@ class FirestoreService {
       if (pollAllowMultiple != null) 'pollAllowMultiple': pollAllowMultiple,
       if (pollExpiresAt != null) 'pollExpiresAt': pollExpiresAt,
       if (pollIsCalendarMode != null) 'pollIsCalendarMode': pollIsCalendarMode,
+      if (pollFirestoreId != null) 'pollFirestoreId': pollFirestoreId,
     };
 
     final ref = await _db.collection('group_messages').add(msgData);
@@ -1309,6 +1313,145 @@ class FirestoreService {
       await ref.set({'meetupId': meetupId, 'going': true, 'updatedAt': FieldValue.serverTimestamp()});
     } else {
       await ref.delete();
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // POLL FIRESTORE METHODS
+  // Collection: polls/{pollId}
+  //   question       : string
+  //   pollType       : 'single' | 'multiple'
+  //   createdByUid   : string
+  //   createdByName  : string
+  //   groupId        : string
+  //   groupMsgId     : string  ← the group_messages doc ID (dedup key)
+  //   createdAt      : timestamp
+  //   closesAt       : timestamp | null
+  //   isCalendarMode : bool
+  //   options        : [ { id: string, label: string, voteCount: int } ]
+  //   voters         : { uid: [optionId, …] }
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Create a new poll document in `polls/` and return its ID.
+  Future<String> createPoll({
+    required String groupId,
+    required String groupMsgId,
+    required String question,
+    required List<String> options,
+    required bool allowMultiple,
+    required bool isCalendarMode,
+    DateTime? closesAt,
+  }) async {
+    final uid = _uid;
+    if (uid == null) return '';
+    final profile = await getCurrentUserProfile();
+    final name = _resolveDisplayName(profile);
+
+    final optionDocs = options.asMap().entries.map((e) => {
+          'id': 'opt_${e.key}',
+          'label': e.value,
+          'voteCount': 0,
+        }).toList();
+
+    final data = <String, dynamic>{
+      'question': question,
+      'pollType': allowMultiple ? 'multiple' : 'single',
+      'createdByUid': uid,
+      'createdByName': name.isNotEmpty ? name : 'Anonymous',
+      'groupId': groupId,
+      'groupMsgId': groupMsgId,
+      'createdAt': FieldValue.serverTimestamp(),
+      'closesAt': closesAt != null ? Timestamp.fromDate(closesAt) : null,
+      'isCalendarMode': isCalendarMode,
+      'options': optionDocs,
+      'voters': <String, dynamic>{},
+    };
+
+    final ref = await _db.collection('polls').add(data);
+    await ref.update({'id': ref.id});
+    return ref.id;
+  }
+
+  /// Stream a single poll document for real-time updates.
+  Stream<DocumentSnapshot<Map<String, dynamic>>> pollStream(String pollId) =>
+      _db.collection('polls').doc(pollId).snapshots();
+
+  /// Submit or update a user's vote using a Firestore transaction.
+  /// [selectedOptionIds] is a list of option IDs (e.g. ['opt_0', 'opt_2']).
+  /// For single-choice polls, the list has exactly one element.
+  Future<void> submitPollVote({
+    required String pollId,
+    required String uid,
+    required List<String> selectedOptionIds,
+  }) async {
+    final ref = _db.collection('polls').doc(pollId);
+    await _db.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+
+      // Previous votes for this user
+      final voters = Map<String, dynamic>.from(data['voters'] as Map? ?? {});
+      final prevIds = List<String>.from(voters[uid] as List? ?? []);
+
+      // Current options
+      final rawOptions = List<Map<String, dynamic>>.from(
+        (data['options'] as List).map((e) => Map<String, dynamic>.from(e as Map)),
+      );
+
+      // Decrement counts for previously selected options
+      for (final optId in prevIds) {
+        final idx = rawOptions.indexWhere((o) => o['id'] == optId);
+        if (idx >= 0) {
+          final current = (rawOptions[idx]['voteCount'] as num).toInt();
+          rawOptions[idx]['voteCount'] = (current - 1).clamp(0, 9999);
+        }
+      }
+
+      // Increment counts for newly selected options
+      for (final optId in selectedOptionIds) {
+        final idx = rawOptions.indexWhere((o) => o['id'] == optId);
+        if (idx >= 0) {
+          final current = (rawOptions[idx]['voteCount'] as num).toInt();
+          rawOptions[idx]['voteCount'] = current + 1;
+        }
+      }
+
+      // Write updated voters map and options array
+      voters[uid] = selectedOptionIds;
+      txn.update(ref, {
+        'options': rawOptions,
+        'voters': voters,
+      });
+    });
+  }
+
+  /// Patch the `pollFirestoreId` field back onto a group_messages doc.
+  /// Called from _openCreatePoll() after the polls/ doc is created, so that
+  /// other devices can resolve the Firestore poll ID from the message doc.
+  Future<void> patchGroupMessagePollId({
+    required String groupMsgId,
+    required String pollFirestoreId,
+  }) async {
+    if (groupMsgId.isEmpty || pollFirestoreId.isEmpty) return;
+    try {
+      await _db
+          .collection('group_messages')
+          .doc(groupMsgId)
+          .update({'pollFirestoreId': pollFirestoreId});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[FirestoreService] patchGroupMessagePollId error: $e');
+      }
+    }
+  }
+
+  /// Soft-delete a poll (only poll creator should call this).
+  Future<void> deletePoll(String pollId) async {
+    try {
+      await _db.collection('polls').doc(pollId).update({'deleted': true});
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] deletePoll error: $e');
     }
   }
 
