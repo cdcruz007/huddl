@@ -3,40 +3,56 @@ import 'package:flutter/foundation.dart';
 import '../models/saved_message.dart';
 import 'browser_storage.dart';
 
-const String _savedMessagesKey = 'saved_messages_v1';
-const String _savedThreadsKey = 'saved_threads_v1';
-const String _savedEventsKey = 'saved_events_v1';
+const String _savedMessagesKey = 'saved_messages_v2'; // v2 — per-item unique IDs
+const String _savedThreadsKey  = 'saved_threads_v2';  // v2 — no merge logic
+const String _savedEventsKey   = 'saved_events_v1';
 
 /// Service to manage saved/bookmarked messages from groups and DMs.
+///
+/// ## Data model design
+/// Every save operation creates a **brand-new document with a unique auto-generated
+/// [id]**.  The [topicName] field on both [SavedMessage] and [SavedThread] is a
+/// *display label only* — it controls how items are grouped in the UI but it is
+/// never used as a lookup key or primary key.  Two saves with the same topicName
+/// produce two independent records.  Deleting one never affects the other.
+///
+/// ## Firestore equivalent schema
+/// ```
+/// users/{uid}/saved_messages/{auto-id}   ← SavedMessage
+///   id, messageId, message, senderName, timestamp, savedAt,
+///   topicName, isFromGroup, groupId, groupName, groupImageUrl,
+///   dmRecipientId, dmRecipientName, dmRecipientAvatarColor, dmConversationId
+///
+/// users/{uid}/saved_threads/{auto-id}    ← SavedThread
+///   id, topicName, savedAt,
+///   rootMessageId, rootMessageText, rootSenderName, rootTimestamp,
+///   replies[], groupId, groupName, groupImageUrl
+///
+/// users/{uid}/saved_events/{auto-id}     ← SavedEvent
+///   id, eventId, title, date, time, location, organiser, imageUrl,
+///   isFree, price, category, isOnline, savedAt
+/// ```
+/// The [id] field on every document is the Firestore auto-ID (locally we
+/// generate a timestamp-based surrogate that is equally unique per device).
 class SavedMessageService extends ChangeNotifier {
-  // Singleton pattern
+  // Singleton
   static final SavedMessageService _instance = SavedMessageService._internal();
   factory SavedMessageService() => _instance;
   SavedMessageService._internal();
 
   List<SavedMessage> _savedMessages = [];
-  List<SavedThread> _savedThreads = [];
-  List<SavedEvent> _savedEvents = [];
+  List<SavedThread>  _savedThreads  = [];
+  List<SavedEvent>   _savedEvents   = [];
   bool _initialized = false;
 
   List<SavedMessage> get savedMessages => List.unmodifiable(_savedMessages);
-  List<SavedThread> get savedThreads => List.unmodifiable(_savedThreads);
-  List<SavedEvent> get savedEvents => List.unmodifiable(_savedEvents);
+  List<SavedThread>  get savedThreads  => List.unmodifiable(_savedThreads);
+  List<SavedEvent>   get savedEvents   => List.unmodifiable(_savedEvents);
 
-  /// All saved messages (messages + threads combined count).
-  /// Used by GDPR data compilation.
+  /// All saved messages — used by GDPR data export.
   List<SavedMessage> get allSavedMessages => _savedMessages;
 
-  /// Clear all saved data — used for GDPR account deletion.
-  Future<void> clearAll() async {
-    _savedMessages.clear();
-    _savedThreads.clear();
-    _savedEvents.clear();
-    await _save();
-    await _saveThreads();
-    await _saveEvents();
-    notifyListeners();
-  }
+  // ── Initialisation ────────────────────────────────────────────────────────
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -45,41 +61,41 @@ class SavedMessageService extends ChangeNotifier {
   }
 
   Future<void> _load() async {
+    // ── SavedMessages ────────────────────────────────────────────────────────
     try {
-      final raw = await BrowserStorage.getString(_savedMessagesKey);
+      // Try v2 key first; fall back to v1 to migrate existing data transparently.
+      String? raw = await BrowserStorage.getString(_savedMessagesKey);
+      raw ??= await BrowserStorage.getString('saved_messages_v1');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
         _savedMessages = decoded
             .map((j) => SavedMessage.fromJson(j as Map<String, dynamic>))
             .toList();
-        // Sort by savedAt descending (newest first)
         _savedMessages.sort((a, b) => b.savedAt.compareTo(a.savedAt));
       }
     } catch (_) {
       _savedMessages = [];
     }
-    // Load saved threads
+
+    // ── SavedThreads ─────────────────────────────────────────────────────────
+    // v2: each thread is its own record — no consolidation / merge needed.
+    // If only v1 data exists we load it as-is (existing threads are still valid
+    // SavedThread objects; they just won't be further merged).
     try {
-      final raw = await BrowserStorage.getString(_savedThreadsKey);
+      String? raw = await BrowserStorage.getString(_savedThreadsKey);
+      raw ??= await BrowserStorage.getString('saved_threads_v1');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        final loaded = decoded
+        _savedThreads = decoded
             .map((j) => SavedThread.fromJson(j as Map<String, dynamic>))
             .toList();
-        // ── Consolidate duplicates that were stored before the merge fix ──
-        // Group by normalised topic name, then merge all entries under each name
-        // into one thread (oldest root + combined replies, deduped by messageId).
-        _savedThreads = _consolidateThreads(loaded);
         _savedThreads.sort((a, b) => b.savedAt.compareTo(a.savedAt));
-        // If we collapsed any duplicates, immediately persist the cleaner list.
-        if (_savedThreads.length < loaded.length) {
-          await _saveThreads();
-        }
       }
     } catch (_) {
       _savedThreads = [];
     }
-    // Load saved events
+
+    // ── SavedEvents ──────────────────────────────────────────────────────────
     try {
       final raw = await BrowserStorage.getString(_savedEventsKey);
       if (raw != null) {
@@ -94,85 +110,57 @@ class SavedMessageService extends ChangeNotifier {
     }
   }
 
-  /// Consolidate a raw list of [SavedThread]s so that every unique topic name
-  /// (case-insensitive) is represented by exactly ONE thread.  All messages from
-  /// duplicate entries are merged into the earliest entry's replies list and
-  /// deduped by messageId.  This migration runs once on load and permanently
-  /// fixes data stored before the merge-on-save logic was introduced.
-  List<SavedThread> _consolidateThreads(List<SavedThread> raw) {
-    // Keep insertion order: process oldest-first so the root stays the first
-    // message of each topic.
-    final chronological = List<SavedThread>.from(raw)
-      ..sort((a, b) => a.savedAt.compareTo(b.savedAt));
+  // ── Persistence helpers ───────────────────────────────────────────────────
 
-    // Map from normalised topic name → merged thread.
-    final Map<String, SavedThread> byTopic = {};
-
-    for (final thread in chronological) {
-      final key = thread.topicName.trim().toLowerCase();
-      if (!byTopic.containsKey(key)) {
-        // First time we see this topic — use it as the canonical base.
-        byTopic[key] = thread;
-      } else {
-        // Merge: append the incoming thread's root + replies to the existing
-        // thread, skipping any messageIds already present.
-        final existing = byTopic[key]!;
-        final seenIds = <String>{
-          existing.rootMessageId,
-          ...existing.replies.map((r) => r.messageId),
-        };
-
-        // Treat the incoming root as the first message of the new batch.
-        final incomingBatch = <SavedThreadMessage>[
-          SavedThreadMessage(
-            messageId: thread.rootMessageId,
-            message: thread.rootMessageText,
-            senderName: thread.rootSenderName,
-            timestamp: thread.rootTimestamp,
-          ),
-          ...thread.replies,
-        ];
-
-        final newReplies = <SavedThreadMessage>[
-          ...existing.replies,
-          ...incomingBatch.where((m) => !seenIds.contains(m.messageId)),
-        ];
-
-        byTopic[key] = existing.copyWithReplies(newReplies);
-      }
-    }
-
-    return byTopic.values.toList();
-  }
-
-  Future<void> _save() async {
+  Future<void> _persistMessages() async {
     try {
-      final encoded = json.encode(_savedMessages.map((m) => m.toJson()).toList());
-      await BrowserStorage.setString(_savedMessagesKey, encoded);
-    } catch (_) {
-      // silently fail
-    }
+      await BrowserStorage.setString(
+        _savedMessagesKey,
+        json.encode(_savedMessages.map((m) => m.toJson()).toList()),
+      );
+    } catch (_) {}
   }
 
-  Future<void> _saveThreads() async {
+  Future<void> _persistThreads() async {
     try {
-      final encoded = json.encode(_savedThreads.map((t) => t.toJson()).toList());
-      await BrowserStorage.setString(_savedThreadsKey, encoded);
-    } catch (_) {
-      // silently fail
-    }
+      await BrowserStorage.setString(
+        _savedThreadsKey,
+        json.encode(_savedThreads.map((t) => t.toJson()).toList()),
+      );
+    } catch (_) {}
   }
 
-  Future<void> _saveEvents() async {
+  Future<void> _persistEvents() async {
     try {
-      final encoded = json.encode(_savedEvents.map((e) => e.toJson()).toList());
-      await BrowserStorage.setString(_savedEventsKey, encoded);
-    } catch (_) {
-      // silently fail
-    }
+      await BrowserStorage.setString(
+        _savedEventsKey,
+        json.encode(_savedEvents.map((e) => e.toJson()).toList()),
+      );
+    } catch (_) {}
   }
 
-  /// Save a message from a group chat.
+  // ── Clear all (GDPR) ──────────────────────────────────────────────────────
+
+  Future<void> clearAll() async {
+    _savedMessages.clear();
+    _savedThreads.clear();
+    _savedEvents.clear();
+    await _persistMessages();
+    await _persistThreads();
+    await _persistEvents();
+    notifyListeners();
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // SAVED MESSAGES — individual messages (group or DM)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /// Save a message from a group chat under an optional [topicName] label.
+  ///
+  /// Each call always creates a new record — [topicName] is a grouping label,
+  /// not a primary key.  The same [messageId] may be saved multiple times under
+  /// different topic names (intentional: user may want to categorise the same
+  /// message in two topics).
   Future<void> saveGroupMessage({
     required String messageId,
     required String message,
@@ -181,31 +169,27 @@ class SavedMessageService extends ChangeNotifier {
     required String groupId,
     required String groupName,
     required String groupImageUrl,
+    String topicName = '',
   }) async {
-    // Check if already saved
-    if (_savedMessages.any((m) => m.messageId == messageId && m.groupId == groupId)) {
-      return;
-    }
-
     final saved = SavedMessage(
-      id: 'saved_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'smsg_${DateTime.now().microsecondsSinceEpoch}',
       messageId: messageId,
       message: message,
       senderName: senderName,
       timestamp: timestamp,
       savedAt: DateTime.now(),
       isFromGroup: true,
+      topicName: topicName,
       groupId: groupId,
       groupName: groupName,
       groupImageUrl: groupImageUrl,
     );
-
     _savedMessages.insert(0, saved);
-    await _save();
+    await _persistMessages();
     notifyListeners();
   }
 
-  /// Save a message from a DM conversation.
+  /// Save a message from a DM conversation under an optional [topicName] label.
   Future<void> saveDMMessage({
     required String messageId,
     required String message,
@@ -215,61 +199,55 @@ class SavedMessageService extends ChangeNotifier {
     required String recipientName,
     required String recipientAvatarColor,
     String? conversationId,
+    String topicName = '',
   }) async {
-    // Check if already saved
-    if (_savedMessages.any((m) => m.messageId == messageId && m.dmRecipientId == recipientId)) {
-      return;
-    }
-
     final saved = SavedMessage(
-      id: 'saved_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'smsg_${DateTime.now().microsecondsSinceEpoch}',
       messageId: messageId,
       message: message,
       senderName: senderName,
       timestamp: timestamp,
       savedAt: DateTime.now(),
       isFromGroup: false,
+      topicName: topicName,
       dmRecipientId: recipientId,
       dmRecipientName: recipientName,
       dmRecipientAvatarColor: recipientAvatarColor,
       dmConversationId: conversationId,
     );
-
     _savedMessages.insert(0, saved);
-    await _save();
+    await _persistMessages();
     notifyListeners();
   }
 
-  /// Remove a saved message.
+  /// Remove a saved message by its unique [savedMessageId].
+  /// Only removes that single record — other saves under the same topic are untouched.
   Future<void> unsaveMessage(String savedMessageId) async {
     _savedMessages.removeWhere((m) => m.id == savedMessageId);
-    await _save();
+    await _persistMessages();
     notifyListeners();
   }
 
-  /// Check if a message is saved.
-  bool isMessageSaved(String messageId) {
-    return _savedMessages.any((m) => m.messageId == messageId);
-  }
+  /// Check if a message (by original messageId) has been saved at all.
+  bool isMessageSaved(String messageId) =>
+      _savedMessages.any((m) => m.messageId == messageId);
 
-  /// Get saved messages for a specific group.
-  List<SavedMessage> getSavedForGroup(String groupId) {
-    return _savedMessages.where((m) => m.groupId == groupId).toList();
-  }
+  /// Get all saves for a specific group.
+  List<SavedMessage> getSavedForGroup(String groupId) =>
+      _savedMessages.where((m) => m.groupId == groupId).toList();
 
-  /// Get saved messages for a specific DM.
-  List<SavedMessage> getSavedForDM(String recipientId) {
-    return _savedMessages.where((m) => m.dmRecipientId == recipientId).toList();
-  }
+  /// Get all saves for a specific DM.
+  List<SavedMessage> getSavedForDM(String recipientId) =>
+      _savedMessages.where((m) => m.dmRecipientId == recipientId).toList();
 
-  // ── Thread Saving ──────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
+  // SAVED THREADS — reply threads
+  // ──────────────────────────────────────────────────────────────────────────
 
-  /// Save an entire reply thread under a topic name.
+  /// Save an entire reply thread under a [topicName] label.
   ///
-  /// **Merge behaviour**: if a thread with the same [topicName] already exists
-  /// (case-insensitive match), the new root message + replies are appended to
-  /// that existing thread instead of creating a duplicate entry.  The merged
-  /// thread is moved to the top of the list and [savedAt] is updated.
+  /// **Always creates a new record** — identical [topicName] values do NOT cause
+  /// merging.  Each save produces its own unique document ID.
   Future<void> saveThread({
     required String topicName,
     required String rootMessageId,
@@ -281,87 +259,47 @@ class SavedMessageService extends ChangeNotifier {
     required String groupName,
     required String groupImageUrl,
   }) async {
-    final normName = topicName.trim().toLowerCase();
-
-    // ── Check for an existing thread with the same topic name ──────────────
-    final existingIdx = _savedThreads.indexWhere(
-      (t) => t.topicName.trim().toLowerCase() == normName,
+    final thread = SavedThread(
+      id: 'sthrd_${DateTime.now().microsecondsSinceEpoch}',
+      topicName: topicName.trim(),
+      savedAt: DateTime.now(),
+      rootMessageId: rootMessageId,
+      rootMessageText: rootMessageText,
+      rootSenderName: rootSenderName,
+      rootTimestamp: rootTimestamp,
+      replies: replies,
+      groupId: groupId,
+      groupName: groupName,
+      groupImageUrl: groupImageUrl,
     );
-
-    if (existingIdx >= 0) {
-      // Merge: build the new "root" message as the first SavedThreadMessage of
-      // this batch, append all replies after it, then combine with existing.
-      final newBatch = <SavedThreadMessage>[
-        SavedThreadMessage(
-          messageId: rootMessageId,
-          message: rootMessageText,
-          senderName: rootSenderName,
-          timestamp: rootTimestamp,
-          isMe: false, // root author; caller can override if needed
-        ),
-        ...replies,
-      ];
-
-      // Deduplicate by messageId so repeated saves of the same message don't
-      // add it twice.
-      final existingThread = _savedThreads[existingIdx];
-      final existingIds =
-          {existingThread.rootMessageId, ...existingThread.replies.map((r) => r.messageId)};
-      final dedupedBatch =
-          newBatch.where((m) => !existingIds.contains(m.messageId)).toList();
-
-      final mergedReplies = [...existingThread.replies, ...dedupedBatch];
-      final updated = existingThread.copyWithReplies(mergedReplies);
-
-      // Remove old entry and re-insert at top so it surfaces first.
-      _savedThreads.removeAt(existingIdx);
-      _savedThreads.insert(0, updated);
-    } else {
-      // Brand-new topic — create a fresh entry.
-      final thread = SavedThread(
-        id: 'thread_${DateTime.now().millisecondsSinceEpoch}',
-        topicName: topicName.trim(),
-        savedAt: DateTime.now(),
-        rootMessageId: rootMessageId,
-        rootMessageText: rootMessageText,
-        rootSenderName: rootSenderName,
-        rootTimestamp: rootTimestamp,
-        replies: replies,
-        groupId: groupId,
-        groupName: groupName,
-        groupImageUrl: groupImageUrl,
-      );
-      _savedThreads.insert(0, thread);
-    }
-
-    await _saveThreads();
+    _savedThreads.insert(0, thread);
+    await _persistThreads();
     notifyListeners();
   }
 
-  /// All unique topic names across all saved threads (for autocomplete).
+  /// All unique topic names across saved threads (for autocomplete in the save dialog).
   List<String> get savedTopicNames =>
-      _savedThreads.map((t) => t.topicName).toSet().toList()..sort();
+      _savedThreads.map((t) => t.topicName).where((n) => n.isNotEmpty).toSet().toList()..sort();
 
-  /// Remove a saved thread.
+  /// Remove a single saved thread by its unique [threadId].
+  /// Does NOT affect other threads that happen to share the same topic name.
   Future<void> unsaveThread(String threadId) async {
     _savedThreads.removeWhere((t) => t.id == threadId);
-    await _saveThreads();
+    await _persistThreads();
     notifyListeners();
   }
 
   /// Get all saved threads for a specific group.
-  List<SavedThread> getSavedThreadsForGroup(String groupId) {
-    return _savedThreads.where((t) => t.groupId == groupId).toList();
-  }
+  List<SavedThread> getSavedThreadsForGroup(String groupId) =>
+      _savedThreads.where((t) => t.groupId == groupId).toList();
 
-  // ── Event Bookmarking ────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
+  // SAVED EVENTS — bookmarked events
+  // ──────────────────────────────────────────────────────────────────────────
 
-  /// Whether the user has bookmarked a given event.
   bool isEventSaved(String eventId) =>
       _savedEvents.any((e) => e.eventId == eventId);
 
-  /// Bookmark an event — saves all display data so it can be rendered
-  /// in the Saved tab without needing the full event list.
   Future<void> saveEvent({
     required String eventId,
     required String title,
@@ -375,11 +313,9 @@ class SavedMessageService extends ChangeNotifier {
     required String category,
     required bool isOnline,
   }) async {
-    // Don't save duplicates
     if (isEventSaved(eventId)) return;
-
     final saved = SavedEvent(
-      id: 'event_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'sevt_${DateTime.now().microsecondsSinceEpoch}',
       eventId: eventId,
       title: title,
       date: date,
@@ -393,16 +329,14 @@ class SavedMessageService extends ChangeNotifier {
       isOnline: isOnline,
       savedAt: DateTime.now(),
     );
-
     _savedEvents.insert(0, saved);
-    await _saveEvents();
+    await _persistEvents();
     notifyListeners();
   }
 
-  /// Remove a bookmarked event by its original event id.
   Future<void> unsaveEvent(String eventId) async {
     _savedEvents.removeWhere((e) => e.eventId == eventId);
-    await _saveEvents();
+    await _persistEvents();
     notifyListeners();
   }
 }

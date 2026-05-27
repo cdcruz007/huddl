@@ -6433,35 +6433,39 @@ class _DiscoverGroupsTabState extends State<DiscoverGroupsTab> {
 // SAVED TAB
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Unified wrapper for displaying both SavedMessage and SavedThread in the Saved tab.
+/// Thin wrapper carrying one saved item (message, thread, or event).
 class _SavedItem {
   final SavedMessage? message;
   final SavedThread? thread;
   final SavedEvent? event;
 
-  _SavedItem.fromMessage(this.message)
-      : thread = null,
-        event = null;
-  _SavedItem.fromThread(this.thread)
-      : message = null,
-        event = null;
-  _SavedItem.fromEvent(this.event)
-      : message = null,
-        thread = null;
+  _SavedItem.fromMessage(this.message) : thread = null, event = null;
+  _SavedItem.fromThread(this.thread)   : message = null, event = null;
+  _SavedItem.fromEvent(this.event)     : message = null, thread = null;
 
   bool get isThread => thread != null;
-  bool get isEvent => event != null;
-  String get id => isThread
-      ? thread!.id
-      : isEvent
-          ? event!.id
-          : message!.id;
-  DateTime get savedAt => isThread
-      ? thread!.savedAt
-      : isEvent
-          ? event!.savedAt
-          : message!.savedAt;
+  bool get isEvent  => event  != null;
+
+  String get id => isThread ? thread!.id : isEvent ? event!.id : message!.id;
+
+  DateTime get savedAt =>
+      isThread ? thread!.savedAt : isEvent ? event!.savedAt : message!.savedAt;
+
+  /// The grouping key used for topic header sections.
+  ///   • Threads  → thread.topicName (or group name as fallback)
+  ///   • Messages → message.displayTopic (topicName ?? sourceName)
+  ///   • Events   → 'Saved Events'
+  String get topicKey {
+    if (isEvent) return 'Saved Events';
+    if (isThread) {
+      final t = thread!.topicName.trim();
+      return t.isNotEmpty ? t : thread!.groupName;
+    }
+    return message!.displayTopic;
+  }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SavedTab extends StatefulWidget {
   final ValueNotifier<String> searchNotifier;
@@ -6472,50 +6476,55 @@ class _SavedTab extends StatefulWidget {
 }
 
 class _SavedTabState extends State<_SavedTab> {
-  final SavedMessageService _savedMessageService = SavedMessageService();
+  final SavedMessageService _svc = SavedMessageService();
+
+  // ── Local search controller (inline search bar inside the Saved tab) ──────
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _localQuery = '';
+
+  // ── Collapsed topic set — topic keys stored here are collapsed ────────────
+  final Set<String> _collapsed = {};
+
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Defer listener registration and data load to avoid setState-during-build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _savedMessageService.addListener(_onUpdate);
-      widget.searchNotifier.addListener(_onSearchChanged);
+      _svc.addListener(_onUpdate);
       _init();
     });
   }
 
   @override
   void dispose() {
-    _savedMessageService.removeListener(_onUpdate);
-    widget.searchNotifier.removeListener(_onSearchChanged);
+    _svc.removeListener(_onUpdate);
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  void _onUpdate() {
-    if (mounted) setState(() {});
-  }
-
-  void _onSearchChanged() {
-    if (mounted) setState(() {});
-  }
+  void _onUpdate() { if (mounted) setState(() {}); }
 
   Future<void> _init() async {
-    await _savedMessageService.initialize();
+    await _svc.initialize();
     if (mounted) setState(() => _isLoading = false);
   }
 
-  /// Build a unified list of saved messages + saved threads + saved events,
-  /// sorted newest first.
-  List<_SavedItem> _filteredSaved() {
-    final q = widget.searchNotifier.value.toLowerCase();
+  // ── Filtering ─────────────────────────────────────────────────────────────
+
+  /// Returns all items that match the current search query.
+  List<_SavedItem> _allFiltered() {
+    // Merge local bar + global header bar; whichever has text wins.
+    final q = (_localQuery.isNotEmpty
+            ? _localQuery
+            : widget.searchNotifier.value)
+        .toLowerCase()
+        .trim();
+
     final items = <_SavedItem>[];
 
-    // Add saved events (bookmarks) — shown first by default as they tend
-    // to be time-sensitive
-    for (final ev in _savedMessageService.savedEvents) {
+    for (final ev in _svc.savedEvents) {
       if (q.isEmpty ||
           ev.title.toLowerCase().contains(q) ||
           ev.location.toLowerCase().contains(q) ||
@@ -6525,18 +6534,17 @@ class _SavedTabState extends State<_SavedTab> {
       }
     }
 
-    // Add saved messages
-    for (final m in _savedMessageService.savedMessages) {
+    for (final m in _svc.savedMessages) {
       if (q.isEmpty ||
           m.message.toLowerCase().contains(q) ||
           m.senderName.toLowerCase().contains(q) ||
-          m.sourceName.toLowerCase().contains(q)) {
+          m.sourceName.toLowerCase().contains(q) ||
+          m.topicName.toLowerCase().contains(q)) {
         items.add(_SavedItem.fromMessage(m));
       }
     }
 
-    // Add saved threads
-    for (final t in _savedMessageService.savedThreads) {
+    for (final t in _svc.savedThreads) {
       if (q.isEmpty ||
           t.topicName.toLowerCase().contains(q) ||
           t.rootMessageText.toLowerCase().contains(q) ||
@@ -6546,223 +6554,273 @@ class _SavedTabState extends State<_SavedTab> {
       }
     }
 
-    // Sort by savedAt descending (newest first)
     items.sort((a, b) => b.savedAt.compareTo(a.savedAt));
     return items;
   }
 
-  /// Show delete confirmation dialog matching the Messages tab pattern.
-  void _confirmDeleteSavedMessage(SavedMessage msg) {
-    showDialog(
-      context: context,
-      builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Are you sure you want to permanently delete this saved message?',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textPrimary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Divider(height: 1, color: context.hc.divider),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(c),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(width: 1, height: 40, color: context.hc.divider),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () async {
-                        Navigator.pop(c);
-                        await _savedMessageService.unsaveMessage(msg.id);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Saved message deleted'),
-                              backgroundColor: HuddlColors.primary,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                        }
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Delete',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.error,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  /// Groups the filtered list into an ordered map of topicKey → items.
+  /// Order is determined by the most-recently-saved item per group.
+  Map<String, List<_SavedItem>> _grouped(List<_SavedItem> items) {
+    final Map<String, List<_SavedItem>> map = {};
+    for (final item in items) {
+      map.putIfAbsent(item.topicKey, () => []).add(item);
+    }
+    return map;
   }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: HuddlColors.textTertiary),
-      );
+      return const Center(child: CircularProgressIndicator(color: HuddlColors.textTertiary));
     }
 
-    final allMessages = _savedMessageService.savedMessages;
-    final allThreads = _savedMessageService.savedThreads;
-    // allEvents used below in empty-state check
+    final hasAny = _svc.savedMessages.isNotEmpty ||
+        _svc.savedThreads.isNotEmpty ||
+        _svc.savedEvents.isNotEmpty;
 
-    final allEvents = _savedMessageService.savedEvents;
+    if (!hasAny) return const SavedMessagesEmptyState();
 
-    // No saved items at all — show empty state (no search bar needed)
-    if (allMessages.isEmpty && allThreads.isEmpty && allEvents.isEmpty) {
-      return const SavedMessagesEmptyState();
-    }
-
-    final filtered = _filteredSaved();
+    final filtered = _allFiltered();
+    final grouped  = _grouped(filtered);
+    final q        = _localQuery.isNotEmpty ? _localQuery : widget.searchNotifier.value;
 
     return Column(
       children: [
-        // ── Results list ───────────────────────────────────────────
+        // ── Inline search bar ─────────────────────────────────────────────
+        Container(
+          color: context.hc.surface,
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Container(
+            height: 36,
+            decoration: BoxDecoration(
+              color: context.hc.inputBg,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                Icon(Icons.search, size: 16, color: context.hc.textTertiary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _localQuery = v),
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Search topics, messages, senders…',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      hintStyle: GoogleFonts.poppins(
+                          fontSize: 13, color: context.hc.textTertiary),
+                    ),
+                  ),
+                ),
+                if (_searchCtrl.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _searchCtrl.clear();
+                      _localQuery = '';
+                    }),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(Icons.close, size: 14, color: context.hc.textTertiary),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        Divider(height: 1, color: context.hc.divider),
+
+        // ── Content ───────────────────────────────────────────────────────
         Expanded(
           child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No results for "${widget.searchNotifier.value}"',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Try a different keyword',
-                        style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
-                      ),
-                    ],
-                  ),
-                )
+              ? _buildEmptySearch(q)
               : ListView.builder(
-                  padding: const EdgeInsets.only(top: 4, bottom: 100),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final item = filtered[index];
-                    Widget card;
-                    VoidCallback onDelete;
-                    if (item.isThread) {
-                      card = _SavedThreadCard(
-                        savedThread: item.thread!,
-                        onTap: () => _navigateToThread(item.thread!),
-                      );
-                      onDelete = () => _confirmDeleteSavedThread(item.thread!);
-                    } else if (item.isEvent) {
-                      card = _SavedEventCard(
-                        savedEvent: item.event!,
-                        onTap: () => _navigateToEvent(item.event!),
-                      );
-                      onDelete = () => _removeSavedEvent(item.event!);
-                    } else {
-                      card = _SavedMessageCard(
-                        savedMessage: item.message!,
-                        onTap: () => _navigateToSource(item.message!),
-                      );
-                      onDelete = () => _confirmDeleteSavedMessage(item.message!);
-                    }
-                    return Column(
-                      children: [
-                        _SwipeActionRow(
-                          key: ValueKey('saved_swipe_${item.id}'),
-                          isUnread: false,
-                          onDelete: onDelete,
-                          onToggleRead: () {},
-                          child: card,
-                        ),
-                        if (index < filtered.length - 1)
-                          Divider(
-                            height: 1,
-                            indent: 16,
-                            endIndent: 16,
-                            color: context.hc.divider,
-                          ),
-                      ],
-                    );
-                  },
+                  padding: const EdgeInsets.only(top: 0, bottom: 100),
+                  itemCount: _countListRows(grouped),
+                  itemBuilder: (ctx, index) => _buildRow(ctx, index, grouped),
                 ),
         ),
       ],
     );
   }
 
-  /// Navigate to the event detail screen for a saved event.
-  void _navigateToEvent(SavedEvent ev) {
-    Navigator.pushNamed(context, '/event_detail', arguments: {
-      'id': ev.eventId,
-      'title': ev.title,
-      'date': ev.date,
-      'time': ev.time,
-      'location': ev.location,
-      'organiser': ev.organiser,
-      'imageUrl': ev.imageUrl,
-      'isFree': ev.isFree,
-      'price': ev.price,
-      'category': ev.category,
-      'isOnline': ev.isOnline,
-      'description': '',
-      'attendees': 0,
-      'isUserCreated': false,
-    });
+  // ── Row builder helpers ───────────────────────────────────────────────────
+
+  /// Total rows = header + items for each topic.
+  int _countListRows(Map<String, List<_SavedItem>> grouped) {
+    int count = 0;
+    for (final key in grouped.keys) {
+      count++; // header row
+      if (!_collapsed.contains(key)) count += grouped[key]!.length;
+    }
+    return count;
   }
 
-  /// Remove a bookmarked event without a confirmation dialog
-  /// (mirrors the swipe-to-delete UX used for saved messages).
-  Future<void> _removeSavedEvent(SavedEvent ev) async {
-    await _savedMessageService.unsaveEvent(ev.eventId);
-    // Also remove from EventService in-memory cache so the bookmark icon updates
-    final eventService = EventService();
-    eventService.clearBookmarkCache(ev.eventId);
+  Widget _buildRow(
+      BuildContext ctx, int index, Map<String, List<_SavedItem>> grouped) {
+    // Walk through headers + items to find which row we're at.
+    int cursor = 0;
+    for (final key in grouped.keys) {
+      if (cursor == index) return _buildTopicHeader(ctx, key, grouped[key]!.length);
+      cursor++;
+      if (!_collapsed.contains(key)) {
+        final items = grouped[key]!;
+        for (int i = 0; i < items.length; i++) {
+          if (cursor == index) {
+            return _buildItemRow(ctx, items[i], isLast: i == items.length - 1);
+          }
+          cursor++;
+        }
+      }
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildTopicHeader(BuildContext ctx, String topic, int count) {
+    final isCollapsed = _collapsed.contains(topic);
+    final isEvents    = topic == 'Saved Events';
+    return GestureDetector(
+      onTap: () => setState(() {
+        if (isCollapsed) {
+          _collapsed.remove(topic);
+        } else {
+          _collapsed.add(topic);
+        }
+      }),
+      child: Container(
+        color: ctx.hc.scaffold,
+        padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
+        child: Row(
+          children: [
+            // Icon indicator
+            Container(
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                color: isEvents
+                    ? HuddlColors.primary.withValues(alpha: 0.12)
+                    : HuddlColors.nearBlack.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Icon(
+                  isEvents ? Icons.event_rounded : Icons.topic_rounded,
+                  size: 14,
+                  color: isEvents ? HuddlColors.primary : HuddlColors.nearBlack,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                topic,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: ctx.hc.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Count badge
+            Container(
+              margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: ctx.hc.inputBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$count',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: ctx.hc.textSecondary,
+                ),
+              ),
+            ),
+            Icon(
+              isCollapsed ? Icons.expand_more : Icons.expand_less,
+              size: 20,
+              color: ctx.hc.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemRow(BuildContext ctx, _SavedItem item, {required bool isLast}) {
+    Widget card;
+    VoidCallback onDelete;
+
+    if (item.isThread) {
+      card     = _SavedThreadCard(savedThread: item.thread!, onTap: () => _navigateToThread(item.thread!));
+      onDelete = () => _confirmDeleteSavedThread(item.thread!);
+    } else if (item.isEvent) {
+      card     = _SavedEventCard(savedEvent: item.event!, onTap: () => _navigateToEvent(item.event!));
+      onDelete = () => _removeSavedEvent(item.event!);
+    } else {
+      card     = _SavedMessageCard(savedMessage: item.message!, onTap: () => _navigateToSource(item.message!));
+      onDelete = () => _deleteSavedMessage(item.message!);
+    }
+
+    return Column(
+      children: [
+        _SwipeActionRow(
+          key: ValueKey('saved_swipe_${item.id}'),
+          isUnread: false,
+          onDelete: onDelete,
+          onToggleRead: () {},
+          child: card,
+        ),
+        if (!isLast)
+          Divider(height: 1, indent: 16, endIndent: 16, color: ctx.hc.divider),
+      ],
+    );
+  }
+
+  Widget _buildEmptySearch(String q) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
+          const SizedBox(height: 12),
+          Text(
+            'No results for "$q"',
+            style: GoogleFonts.poppins(
+              fontSize: 15, fontWeight: FontWeight.w500,
+              color: context.hc.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Try searching by topic, message text, sender or group',
+            style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+
+  /// Instant delete (no confirmation) triggered by swipe-left.
+  Future<void> _deleteSavedMessage(SavedMessage msg) async {
+    await _svc.unsaveMessage(msg.id);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Event bookmark removed'),
+          content: const Text('Message unsaved'),
           backgroundColor: HuddlColors.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -6788,7 +6846,6 @@ class _SavedTabState extends State<_SavedTab> {
     }
   }
 
-  /// Navigate to the group chat and auto-open the thread panel for the saved thread.
   void _navigateToThread(SavedThread thread) {
     Navigator.pushNamed(context, '/group_chat', arguments: {
       'groupId': thread.groupId,
@@ -6798,7 +6855,41 @@ class _SavedTabState extends State<_SavedTab> {
     });
   }
 
-  /// Confirm deletion of a saved thread.
+  void _navigateToEvent(SavedEvent ev) {
+    Navigator.pushNamed(context, '/event_detail', arguments: {
+      'id': ev.eventId,
+      'title': ev.title,
+      'date': ev.date,
+      'time': ev.time,
+      'location': ev.location,
+      'organiser': ev.organiser,
+      'imageUrl': ev.imageUrl,
+      'isFree': ev.isFree,
+      'price': ev.price,
+      'category': ev.category,
+      'isOnline': ev.isOnline,
+      'description': '',
+      'attendees': 0,
+      'isUserCreated': false,
+    });
+  }
+
+  Future<void> _removeSavedEvent(SavedEvent ev) async {
+    await _svc.unsaveEvent(ev.eventId);
+    EventService().clearBookmarkCache(ev.eventId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Event bookmark removed'),
+          backgroundColor: HuddlColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  /// Confirm-dialog delete for threads (more destructive — thread has multiple messages).
   void _confirmDeleteSavedThread(SavedThread thread) {
     showDialog(
       context: context,
@@ -6810,12 +6901,19 @@ class _SavedTabState extends State<_SavedTab> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Are you sure you want to permanently delete this saved thread?',
+                'Delete this saved thread?',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 16, fontWeight: FontWeight.w700,
                   color: context.hc.textPrimary,
-                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Only this thread is deleted. Other saves under '
+                '"${thread.topicName}" are not affected.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13, color: context.hc.textSecondary, height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -6827,17 +6925,10 @@ class _SavedTabState extends State<_SavedTab> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
-                      ),
+                      child: Text('Cancel',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600,
+                              color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -6845,11 +6936,11 @@ class _SavedTabState extends State<_SavedTab> {
                     child: TextButton(
                       onPressed: () async {
                         Navigator.pop(c);
-                        await _savedMessageService.unsaveThread(thread.id);
+                        await _svc.unsaveThread(thread.id);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Saved thread deleted'),
+                              content: const Text('Thread unsaved'),
                               backgroundColor: HuddlColors.primary,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
@@ -6858,17 +6949,10 @@ class _SavedTabState extends State<_SavedTab> {
                           );
                         }
                       },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Delete',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.error,
-                        ),
-                      ),
+                      child: Text('Delete',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600,
+                              color: HuddlColors.error)),
                     ),
                   ),
                 ],

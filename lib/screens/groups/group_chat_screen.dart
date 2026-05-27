@@ -2074,7 +2074,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
                     ),
 
-                    // ── Merge notice ─────────────────────────────────────
+                    // ── Topic-reuse notice (informational only — no merge) ────
                     if (isExisting) ...[
                       const SizedBox(height: 8),
                       Container(
@@ -2082,21 +2082,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: HuddlColors.nearBlack.withValues(alpha: 0.08),
+                          color: HuddlColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: HuddlColors.nearBlack.withValues(alpha: 0.3)),
+                              color: HuddlColors.primary.withValues(alpha: 0.25)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.merge_type_rounded,
-                                size: 16, color: HuddlColors.nearBlack),
+                            const Icon(Icons.info_outline_rounded,
+                                size: 16, color: HuddlColors.primary),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'This thread will be added to the existing "${topicController.text.trim()}" topic',
+                                'Saved as a new item under "${topicController.text.trim()}" — existing saves are untouched',
                                 style: GoogleFonts.poppins(
-                                    fontSize: 12, color: HuddlColors.nearBlack),
+                                    fontSize: 12, color: HuddlColors.primary),
                               ),
                             ),
                           ],
@@ -2140,11 +2140,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               elevation: 0,
                             ),
                             child: Text(
-                              isExisting
-                                  ? 'Add to topic'
-                                  : threadReplies.isEmpty
-                                      ? 'Save message'
-                                      : 'Save thread',
+                              threadReplies.isEmpty ? 'Save message' : 'Save thread',
                               style: GoogleFonts.poppins(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -2165,11 +2161,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _saveThread(ChatMessage rootMsg, List<ThreadReply> replies, String topicName) async {
-    // Determine whether this is a merge before saving (for snackbar label)
-    final existingTopics = _savedMessageService.savedTopicNames;
-    final isMerge = existingTopics
-        .any((t) => t.trim().toLowerCase() == topicName.trim().toLowerCase());
-
+    // Each save always creates a brand-new record — topicName is a label only.
     await _savedMessageService.saveThread(
       topicName: topicName,
       rootMessageId: rootMsg.id,
@@ -2190,20 +2182,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       groupImageUrl: widget.groupImageUrl,
     );
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(isMerge ? Icons.merge_type_rounded : Icons.topic,
-                color: Colors.white, size: 18),
+            const Icon(Icons.bookmark_added_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                isMerge
-                    ? 'Thread added to "$topicName"'
-                    : 'Thread saved as "$topicName"',
-              ),
-            ),
+            Expanded(child: Text('Saved under "$topicName"')),
           ],
         ),
         backgroundColor: HuddlColors.textDark,

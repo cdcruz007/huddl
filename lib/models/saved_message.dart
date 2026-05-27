@@ -1,4 +1,8 @@
 /// Represents a message saved by the user from a group or DM conversation.
+///
+/// [topicName] is a user-supplied label used *only* for visual grouping in the
+/// Saved tab.  It is NOT a primary key — multiple SavedMessages may share the
+/// same topicName.  The unique key is always [id] (auto-generated on save).
 class SavedMessage {
   final String id;
   final String messageId; // original message id
@@ -7,6 +11,8 @@ class SavedMessage {
   final DateTime timestamp; // when the message was originally sent
   final DateTime savedAt; // when the user saved it
   final bool isFromGroup; // true = group, false = DM
+  /// User-supplied grouping label — just a display field, never a PK.
+  final String topicName;
   // Source info for groups
   final String? groupId;
   final String? groupName;
@@ -25,6 +31,7 @@ class SavedMessage {
     required this.timestamp,
     required this.savedAt,
     required this.isFromGroup,
+    this.topicName = '',
     this.groupId,
     this.groupName,
     this.groupImageUrl,
@@ -36,6 +43,10 @@ class SavedMessage {
 
   String get sourceName => isFromGroup ? (groupName ?? 'Group') : (dmRecipientName ?? 'DM');
 
+  /// Display label shown as the topic header.  Falls back to the source group /
+  /// DM name so every message always has a non-empty group header.
+  String get displayTopic => topicName.trim().isNotEmpty ? topicName.trim() : sourceName;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'messageId': messageId,
@@ -44,6 +55,7 @@ class SavedMessage {
         'timestamp': timestamp.toIso8601String(),
         'savedAt': savedAt.toIso8601String(),
         'isFromGroup': isFromGroup,
+        'topicName': topicName,
         'groupId': groupId,
         'groupName': groupName,
         'groupImageUrl': groupImageUrl,
@@ -62,6 +74,7 @@ class SavedMessage {
       timestamp: DateTime.parse(json['timestamp'] as String),
       savedAt: DateTime.parse(json['savedAt'] as String),
       isFromGroup: json['isFromGroup'] as bool? ?? true,
+      topicName: json['topicName'] as String? ?? '',
       groupId: json['groupId'] as String?,
       groupName: json['groupName'] as String?,
       groupImageUrl: json['groupImageUrl'] as String?,
@@ -74,9 +87,14 @@ class SavedMessage {
 }
 
 /// Represents an entire saved reply thread stored under a topic name.
+///
+/// **Key design principle**: [topicName] is a display label only — it is NOT a
+/// primary key.  Two threads saved with the same topic name are two distinct
+/// records, each with their own unique [id].  No merging ever happens.
 class SavedThread {
   final String id;
-  final String topicName; // user-given topic name
+  /// User-supplied label — just for display / grouping.  Never used as a PK.
+  final String topicName;
   final DateTime savedAt;
   // The original (root) message
   final String rootMessageId;
@@ -106,24 +124,6 @@ class SavedThread {
 
   int get totalMessages => 1 + replies.length;
 
-  /// Return a copy with [replies] and [savedAt] updated (used when merging
-  /// a new message into an existing topic so the thread grows in-place).
-  SavedThread copyWithReplies(List<SavedThreadMessage> newReplies) {
-    return SavedThread(
-      id: id,
-      topicName: topicName,
-      savedAt: DateTime.now(), // bump so it surfaces at top of list
-      rootMessageId: rootMessageId,
-      rootMessageText: rootMessageText,
-      rootSenderName: rootSenderName,
-      rootTimestamp: rootTimestamp,
-      replies: newReplies,
-      groupId: groupId,
-      groupName: groupName,
-      groupImageUrl: groupImageUrl,
-    );
-  }
-
   Map<String, dynamic> toJson() => {
         'id': id,
         'topicName': topicName,
@@ -141,7 +141,7 @@ class SavedThread {
   factory SavedThread.fromJson(Map<String, dynamic> json) {
     return SavedThread(
       id: json['id'] as String,
-      topicName: json['topicName'] as String,
+      topicName: json['topicName'] as String? ?? '',
       savedAt: DateTime.parse(json['savedAt'] as String),
       rootMessageId: json['rootMessageId'] as String,
       rootMessageText: json['rootMessageText'] as String,
