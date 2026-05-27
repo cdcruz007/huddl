@@ -227,6 +227,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (kIsWeb) {
       _onboardingData.setPhoneVerified(true);
       await _completeSignUp();
+      // Safety reset: if navigation didn't happen (widget still mounted),
+      // clear the spinner so the user isn't permanently blocked.
+      if (mounted) setState(() => _isVerifying = false);
       return;
     }
 
@@ -362,6 +365,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
   /// Safe navigation helper — always pushes to welcome_complete if mounted.
   void _navigateToWelcome() {
     if (!mounted) return;
+    // Clear verifying state before navigating so the button isn't stuck
+    // if the widget somehow remains in the tree after navigation.
+    _isVerifying = false;
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/welcome_complete',

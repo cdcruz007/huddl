@@ -1,51 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme/huddl_colors.dart';
 
 /// Illustration asset paths — centralised so renaming is easy.
+///
+/// All illustrations now use the on-brand Huddl SVG set from
+/// assets/illustrations/. The old stock PNGs in
+/// assets/images/illustrations/ are no longer referenced here.
 abstract class HuddlIllustration {
-  /// Two people with speech bubbles — chat / messages / groups (messages tab)
-  static const chat =
-      'assets/images/illustrations/onboarding_chat_illustration.png';
+  /// Two people celebrating together — chat / messages / groups (messages tab)
+  static const chat = 'assets/illustrations/huddl_celebrating.svg';
 
-  /// Four people celebrating with geometric shapes — community / discover groups
-  static const community =
-      'assets/images/illustrations/man__woman__female__male__person__shapes__shape__layout-1.png';
+  /// Community gathering scene — discover groups / community feed
+  static const community = 'assets/illustrations/onboarding_02_community.svg';
 
-  /// Two people dancing with shapes — meetups / going / activity
-  static const meetup =
-      'assets/images/illustrations/man__woman__female__male__person__shapes__shape__layout.png';
+  /// Neighbours connecting — meetups / going / local activity
+  static const meetup = 'assets/illustrations/onboarding_03_neighbours.svg';
 
-  /// Two people greeting / dancing — events / social bonding
-  static const events =
-      'assets/images/illustrations/onboarding_two_people_illustration.png';
+  /// Character waving hello — events / social bonding / greetings
+  static const events = 'assets/illustrations/huddl_waving.svg';
 
-  /// Group of four dancing — home feed / announcements / welcome
-  static const feed =
-      'assets/images/illustrations/onboarding_welcome_illustration.png';
+  /// Welcome screen illustration — home feed / announcements / welcome
+  static const feed = 'assets/illustrations/onboarding_01_welcome.svg';
 
-  /// Megaphone with social icons — marketplace / sell / saved items
-  static const marketplace =
-      'assets/images/illustrations/not_available_illustration.png';
+  /// Noticeboard with posts — marketplace / sell / announcements
+  static const marketplace = 'assets/illustrations/huddl_noticeboard.svg';
 
-  /// Person with orange handbag next to a storefront phone — marketplace empty/no items
-  static const marketplaceEmpty =
-      'assets/images/illustrations/marketplace_handbag_illustration.png';
+  /// Supportive / caring character — marketplace empty / no items
+  static const marketplaceEmpty = 'assets/illustrations/huddl_supportive.svg';
 
-  /// Four people high-fiving / greeting — groups empty / no groups in borough yet
-  static const groupsEmpty =
-      'assets/images/illustrations/groups_empty_illustration.png';
+  /// Neutral waiting character — groups empty / no groups in borough yet
+  static const groupsEmpty = 'assets/illustrations/huddl_neutral.svg';
 
-  /// Single dancing person — bookmarks / saved messages
-  static const saved =
-      'assets/images/illustrations/Group_3603.png';
+  /// Curious character looking around — bookmarks / saved messages
+  static const saved = 'assets/illustrations/huddl_curious.svg';
 
   /// Man with oversized key at padlock — biometric lock / security / auth
-  /// Source: Huddl uploaded illustration set #20
-  static const auth =
-      'https://www.genspark.ai/api/files/s/T21ihhOF';
+  static const auth = 'assets/illustrations/huddl_locked.svg';
+
+  /// Upgrade / premium — subscription upsell screens
+  static const upgrade = 'assets/illustrations/huddl_upgrade.svg';
 }
 
 /// A consistent, illustration-based empty state widget used across Huddl.
+///
+/// Renders SVG illustrations from the on-brand Huddl illustration set.
 ///
 /// Usage:
 /// ```dart
@@ -84,24 +83,7 @@ class HuddlEmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // ── Illustration ─────────────────────────────────────────
-            Image.asset(
-              illustration,
-              height: illustrationHeight,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.image_not_supported_outlined,
-                  size: 36,
-                  color: HuddlColors.textDark,
-                ),
-              ),
-            ),
+            _buildIllustration(),
 
             const SizedBox(height: 24),
 
@@ -156,6 +138,54 @@ class HuddlEmptyState extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildIllustration() {
+    // SVG paths (assets/illustrations/*.svg)
+    if (illustration.endsWith('.svg')) {
+      return SvgPicture.asset(
+        illustration,
+        height: illustrationHeight,
+        fit: BoxFit.contain,
+        placeholderBuilder: (_) => SizedBox(
+          width: illustrationHeight,
+          height: illustrationHeight,
+        ),
+      );
+    }
+
+    // Fallback: PNG / network image (legacy paths kept working)
+    if (illustration.startsWith('http')) {
+      return Image.network(
+        illustration,
+        height: illustrationHeight,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _fallbackIcon(),
+      );
+    }
+
+    return Image.asset(
+      illustration,
+      height: illustrationHeight,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => _fallbackIcon(),
+    );
+  }
+
+  Widget _fallbackIcon() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Icon(
+        Icons.image_not_supported_outlined,
+        size: 36,
+        color: HuddlColors.textDark,
       ),
     );
   }
