@@ -360,6 +360,10 @@ class _MessagesTabState extends State<_MessagesTab> {
   StreamSubscription<void>? _firestoreGroupsSub;   // watches groups for remote last-message updates
   final Set<String> _pinnedGroupIds = {};
   final Set<String> _mutedGroupIds = {};
+  /// Groups the user has manually marked as unread via long-press.
+  /// Persisted to BrowserStorage so "Unread first" survives app restarts.
+  /// Cleared from here when the group is opened (see GroupChatScreen.messageSent).
+  final Set<String> _unreadGroupIds = {};
   bool _isLoading = true;
   bool _hasLoadError = false;
   String _errorMessage = '';
@@ -407,6 +411,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       widget.searchNotifier.addListener(_onSearchChanged);
       _loadGroups();
       _loadMutedAndPinned();
+      _loadUnreadGroupIds();
       _subscribeToFirestoreGroups();
     });
   }
@@ -690,9 +695,10 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
   }
 
-  // ── Muted & Pinned persistence ────────────────────────────────────
-  static const String _mutedKey = 'huddl_muted_ids';
-  static const String _pinnedKey = 'huddl_pinned_ids';
+  // ── Muted, Pinned & Unread persistence ───────────────────────────
+  static const String _mutedKey   = 'huddl_muted_ids';
+  static const String _pinnedKey  = 'huddl_pinned_ids';
+  static const String _unreadKey  = 'huddl_unread_group_ids';
 
   Future<void> _loadMutedAndPinned() async {
     final mutedStored = await BrowserStorage.getString(_mutedKey);
@@ -720,6 +726,24 @@ class _MessagesTabState extends State<_MessagesTab> {
         _mutedKey, json.encode(_mutedGroupIds.toList()));
     await BrowserStorage.setString(
         _pinnedKey, json.encode(_pinnedGroupIds.toList()));
+  }
+
+  // ── Unread-group-ids persistence ─────────────────────────────────
+  Future<void> _loadUnreadGroupIds() async {
+    final stored = await BrowserStorage.getString(_unreadKey);
+    if (stored != null && stored.isNotEmpty) {
+      final List<dynamic> decoded = json.decode(stored);
+      if (mounted) {
+        setState(() {
+          _unreadGroupIds.addAll(decoded.cast<String>());
+        });
+      }
+    }
+  }
+
+  Future<void> _saveUnreadGroupIds() async {
+    await BrowserStorage.setString(
+        _unreadKey, json.encode(_unreadGroupIds.toList()));
   }
 
 
@@ -1073,6 +1097,12 @@ class _MessagesTabState extends State<_MessagesTab> {
     // 1 = Groups only → skip DMs; 2 = DMs only → skip groups
     if (_messageFilterIndex != 2) {
       for (final g in _filteredGroups) {
+        // _unreadGroupIds is the persisted manual-toggle set.
+        // Firestore always returns unreadCount: 0 (no per-user subcollection yet),
+        // so we use the local set as the authoritative unread signal for groups.
+        final effectiveUnread = _unreadGroupIds.contains(g.id)
+            ? 1
+            : (g.unreadCount ?? 0);
         items.add(_MessageListItem(
           id: g.id,
           name: g.name,
@@ -1080,7 +1110,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           lastMessage: g.lastMessage,
           lastSenderName: g.lastSenderName,
           lastMessageTime: g.lastMessageTime,
-          unreadCount: g.unreadCount ?? 0,
+          unreadCount: effectiveUnread,
           isGroup: true,
           isPinned: _pinnedGroupIds.contains(g.id),
           isMuted: _mutedGroupIds.contains(g.id),
@@ -1395,24 +1425,23 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
               ),
               _ActionTile(
-                icon: (group.unreadCount ?? 0) > 0
+                icon: _unreadGroupIds.contains(group.id)
                     ? Icons.mark_chat_read_outlined
                     : Icons.mark_chat_unread_outlined,
-                label: (group.unreadCount ?? 0) > 0
+                label: _unreadGroupIds.contains(group.id)
                     ? 'Mark as read'
                     : 'Mark as unread',
                 onTap: () {
                   Navigator.pop(c);
                   setState(() {
-                    final idx = _allGroups.indexWhere((g) => g.id == group.id);
-                    if (idx != -1) {
-                      final current = _allGroups[idx].unreadCount ?? 0;
-                      _allGroups[idx] = _allGroups[idx].copyWith(
-                        unreadCount: current > 0 ? 0 : 1,
-                      );
-                      _applyFilter();
+                    if (_unreadGroupIds.contains(group.id)) {
+                      _unreadGroupIds.remove(group.id);
+                    } else {
+                      _unreadGroupIds.add(group.id);
                     }
+                    _applyFilter();
                   });
+                  unawaited(_saveUnreadGroupIds());
                 },
               ),
               // Archive is only available for user-created groups, not default/listed community groups
@@ -2814,17 +2843,18 @@ class _MessagesTabState extends State<_MessagesTab> {
   // ── Toggle read / unread state ────────────────────────────────────────
   void _toggleReadStatus(_MessageListItem item) {
     if (item.isGroup) {
-      // Group: toggle unread on local _allGroups list
-      final idx = _allGroups.indexWhere((g) => g.id == item.id);
-      if (idx != -1) {
-        final current = _allGroups[idx].unreadCount ?? 0;
-        setState(() {
-          _allGroups[idx] = _allGroups[idx].copyWith(
-            unreadCount: current > 0 ? 0 : 1,
-          );
-          _applyFilter();
-        });
-      }
+      // Group: drive read/unread via the persisted _unreadGroupIds set.
+      // _allGroups.unreadCount comes from Firestore (always 0 today);
+      // _unreadGroupIds is the local source of truth for "manually unread".
+      setState(() {
+        if (_unreadGroupIds.contains(item.id)) {
+          _unreadGroupIds.remove(item.id);
+        } else {
+          _unreadGroupIds.add(item.id);
+        }
+        _applyFilter();
+      });
+      unawaited(_saveUnreadGroupIds());
     } else {
       // DM: use Firestore service for real convs, local service for demo
       if (item.unreadCount > 0) {
@@ -2838,12 +2868,17 @@ class _MessagesTabState extends State<_MessagesTab> {
       }
     }
     if (mounted) {
+      // For groups, check the persisted set (post-toggle state).
+      // For DMs, fall back to item.unreadCount (real Firestore value).
+      final nowUnread = item.isGroup
+          ? _unreadGroupIds.contains(item.id)
+          : item.unreadCount > 0;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            item.unreadCount > 0
-                ? '${item.name} marked as read'
-                : '${item.name} marked as unread',
+            nowUnread
+                ? '${item.name} marked as unread'
+                : '${item.name} marked as read',
           ),
           backgroundColor: HuddlColors.primary,
           behavior: SnackBarBehavior.floating,
