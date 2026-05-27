@@ -345,8 +345,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         // Skip new-message processing for IDs we already have
         if (_firestoreMsgIds.contains(id)) continue;
         final senderId = m['senderId'] as String? ?? '';
-        // Skip our own messages — already shown optimistically in _sendMessage()
-        if (senderId == currentUid) {
+
+        // ── Own-message early-out (text/image/voice/etc.) ─────────────────
+        // Documents are handled below BEFORE this guard so the optimistic
+        // bubble can be patched with the real download URL.
+        final msgTypeEarly = m['type'] as String? ?? 'text';
+        final isDocType = msgTypeEarly == 'document' || msgTypeEarly == 'file';
+        if (senderId == currentUid && !isDocType) {
           _firestoreMsgIds.add(id); // track so we don't add again
           continue;
         }
@@ -440,25 +445,54 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           continue;
         }
 
-        // ── Document from another device ───────────────────────────────────
-        if (msgType == 'document') {
-          final docName = m['documentName'] as String? ?? 'Document';
-          final docSize = (m['documentSize'] as num?)?.toInt();
-          final docUrl  = m['documentUrl'] as String? ?? '';
-          final alreadyHave = _documentMessages.any((d) =>
-              d.senderId == senderId && d.fileName == docName);
-          if (!alreadyHave) {
-            _documentMessages.add(_GroupDocumentMessage(
-              fileName: docName,
-              fileSize: docSize,
-              fileUrl: docUrl,
-              isMe: false,
-              timestamp: ts,
-              senderName: m['senderName'] as String? ?? 'Member',
-              senderAvatar: m['senderAvatar'] as String? ?? '',
-              senderId: senderId,
-            ));
+        // ── Document / file from stream ────────────────────────────────────
+        // Handles both type:'document' and type:'file' (alias used by some
+        // older clients).  Uses the Firestore document ID as the dedup key so
+        // two files with the same name never collapse into one.
+        if (msgType == 'document' || msgType == 'file') {
+          _firestoreMsgIds.add(id);
+          final docName  = m['documentName'] as String? ?? m['fileName'] as String? ?? 'Document';
+          final docSize  = (m['documentSize'] as num?)?.toInt() ?? (m['fileSize'] as num?)?.toInt();
+          final docUrl   = m['documentUrl'] as String? ?? m['fileUrl'] as String? ?? '';
+          final docMime  = m['documentMimeType'] as String? ?? m['mimeType'] as String?;
+
+          if (senderId == currentUid) {
+            // Own message: find the optimistic placeholder (isUploading=true or
+            // firestoreId empty) and patch it with the real URL + Firestore ID.
+            final pendingIdx = _documentMessages.indexWhere((d) =>
+                d.isMe &&
+                d.fileName == docName &&
+                (d.isUploading || d.firestoreId.isEmpty));
+            if (pendingIdx >= 0) {
+              _documentMessages[pendingIdx] = _documentMessages[pendingIdx].copyWith(
+                fileUrl: docUrl,
+                firestoreId: id,
+                isUploading: false,
+                uploadError: null,
+              );
+            } else if (!_documentMessages.any((d) => d.firestoreId == id)) {
+              // No placeholder found — add it now (e.g. history load on restart)
+              _documentMessages.add(_GroupDocumentMessage(
+                fileName: docName, fileSize: docSize, fileUrl: docUrl,
+                mimeType: docMime, isMe: true, timestamp: ts,
+                senderName: m['senderName'] as String? ?? 'You',
+                senderAvatar: m['senderAvatar'] as String? ?? '',
+                senderId: senderId, firestoreId: id,
+              ));
+            }
             added = true;
+          } else {
+            // From another user — use Firestore ID as dedup key
+            if (!_documentMessages.any((d) => d.firestoreId == id)) {
+              _documentMessages.add(_GroupDocumentMessage(
+                fileName: docName, fileSize: docSize, fileUrl: docUrl,
+                mimeType: docMime, isMe: false, timestamp: ts,
+                senderName: m['senderName'] as String? ?? 'Member',
+                senderAvatar: m['senderAvatar'] as String? ?? '',
+                senderId: senderId, firestoreId: id,
+              ));
+              added = true;
+            }
           }
           continue;
         }
@@ -730,21 +764,26 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         }
 
         // ── Document history (cross-device) ───────────────────────────────
-        if (msgType == 'document') {
-          final docName = m['documentName'] as String? ?? 'Document';
-          final docSize = (m['documentSize'] as num?)?.toInt();
-          final docUrl  = m['documentUrl'] as String? ?? '';
-          if (!_documentMessages.any((d) =>
-              d.senderId == senderId && d.fileName == docName)) {
+        // Handles both type:'document' and type:'file' (alias).
+        // Uses the Firestore doc ID as the canonical dedup key so two files
+        // with the same name never collapse, and the same file never duplicates.
+        if (msgType == 'document' || msgType == 'file') {
+          final docName = m['documentName'] as String? ?? m['fileName'] as String? ?? 'Document';
+          final docSize = (m['documentSize'] as num?)?.toInt() ?? (m['fileSize'] as num?)?.toInt();
+          final docUrl  = m['documentUrl'] as String? ?? m['fileUrl'] as String? ?? '';
+          final docMime = m['documentMimeType'] as String? ?? m['mimeType'] as String?;
+          if (!_documentMessages.any((d) => d.firestoreId == id)) {
             _documentMessages.add(_GroupDocumentMessage(
               fileName: docName,
               fileSize: docSize,
               fileUrl: docUrl,
+              mimeType: docMime,
               isMe: isMe,
               timestamp: ts,
               senderName: m['senderName'] as String? ?? 'Member',
               senderAvatar: m['senderAvatar'] as String? ?? '',
               senderId: senderId,
+              firestoreId: id,
             ));
           }
           continue;
@@ -3501,7 +3540,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
                           // Document message
                           if (item.type == _GChatItemType.document) {
-                            final docMsg = _documentMessages[item.docIndex!];
+                            final docIdx = item.docIndex!;
+                            final docMsg = _documentMessages[docIdx];
                             return Padding(
                               padding: EdgeInsets.only(
                                 top: 4, bottom: 4,
@@ -3514,7 +3554,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   fileSize: docMsg.fileSize,
                                   isMe: docMsg.isMe,
                                   timestamp: docMsg.timestamp,
-                                  onTap: docMsg.fileUrl.isNotEmpty
+                                  isUploading: docMsg.isUploading,
+                                  uploadError: docMsg.uploadError,
+                                  onRetry: docMsg.uploadError != null
+                                      ? () => _retryDocumentUpload(docIdx)
+                                      : null,
+                                  onTap: (!docMsg.isUploading && docMsg.fileUrl.isNotEmpty)
                                       ? () async {
                                           final uri = Uri.parse(docMsg.fileUrl);
                                           if (await canLaunchUrl(uri)) {
@@ -3531,13 +3576,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                           }
                                         }
                                       : null,
-                                  onForward: () {
-                                    showForwardSheet(
-                                      context: context,
-                                      messageText: docMsg.fileName,
-                                      documentName: docMsg.fileName,
-                                    );
-                                  },
+                                  onForward: docMsg.isUploading
+                                      ? null
+                                      : () {
+                                          showForwardSheet(
+                                            context: context,
+                                            messageText: docMsg.fileName,
+                                            documentName: docMsg.fileName,
+                                          );
+                                        },
                                 ),
                               ),
                             );
@@ -4878,53 +4925,81 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
     final docName = attachment.fileName ?? 'Document';
     final ts = DateTime.now();
-    setState(() {
-      _documentMessages.add(_GroupDocumentMessage(
-        fileName: docName,
-        fileSize: attachment.fileSize,
-        fileUrl: '',          // will be updated after upload
-        isMe: true,
-        timestamp: ts,
-        senderName: userName,
-        senderAvatar: '#FF975C',
-        senderId: currentUid,
-      ));
-    });
+
+    // ── Optimistic add with isUploading:true ────────────────────────────
+    // The bubble shows a spinner immediately; the stream handler patches it
+    // with the real URL + firestoreId once the Firestore write echoes back.
+    final optimisticMsg = _GroupDocumentMessage(
+      fileName: docName,
+      fileSize: attachment.fileSize,
+      fileUrl: '',
+      mimeType: attachment.mimeType,
+      isMe: true,
+      timestamp: ts,
+      senderName: userName,
+      senderAvatar: '#FF975C',
+      senderId: currentUid,
+      isUploading: true,
+    );
+    setState(() => _documentMessages.add(optimisticMsg));
     await _persistUserMediaMessages();
     _fireMessageSentNotifier();
     _scrollToEnd();
 
-    // ── Upload to Firebase Storage and write to Firestore ───────────────
-    // Other devices will see the document via the stream / history load.
+    // Helper: find the optimistic placeholder index by timestamp + name
+    int findPending() => _documentMessages.indexWhere((d) =>
+        d.isMe &&
+        d.fileName == docName &&
+        d.timestamp == ts &&
+        (d.isUploading || d.firestoreId.isEmpty));
+
+    // ── Upload to Firebase Storage ───────────────────────────────────────
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
       final epoch = ts.millisecondsSinceEpoch;
       final ext = docName.contains('.') ? docName.split('.').last : 'bin';
+      // Canonical storage path: groups/{groupId}/files/{uid}_{epoch}.{ext}
       final storageRef = FirebaseStorage.instance
-          .ref('group_documents/${widget.groupId}/${uid}_$epoch.$ext');
+          .ref('groups/${widget.groupId}/files/${uid}_$epoch.$ext');
 
       TaskSnapshot snap;
       if (attachment.bytes != null) {
+        // putData works on both web and mobile — preferred path
         snap = await storageRef.putData(
           attachment.bytes!,
-          SettableMetadata(contentType: attachment.mimeType ?? 'application/octet-stream'),
+          SettableMetadata(
+            contentType: attachment.mimeType ?? 'application/octet-stream',
+          ),
         );
       } else if (attachment.filePath != null && !kIsWeb) {
         snap = await storageRef.putFile(File(attachment.filePath!));
       } else {
-        // No uploadable data — write metadata-only to Firestore so others
-        // at least see the document name in the chat.
+        // No bytes and no file path — write metadata-only so others see the
+        // document name.  Clear the uploading spinner locally.
+        final idx = findPending();
+        if (idx >= 0 && mounted) {
+          setState(() {
+            _documentMessages[idx] =
+                _documentMessages[idx].copyWith(isUploading: false);
+          });
+        }
         await FirestoreService().sendGroupMessage(
           groupId: widget.groupId,
           message: '\u{1F4CE} $docName',
           type: 'document',
           documentName: docName,
           documentSize: attachment.fileSize,
+          documentMimeType: attachment.mimeType,
         );
+        await _persistUserMediaMessages();
         return;
       }
 
       final downloadUrl = await snap.ref.getDownloadURL();
+
+      // ── Write Firestore message ────────────────────────────────────────
+      // The Firestore write triggers the stream listener, which patches the
+      // optimistic bubble with the real URL and sets isUploading:false.
       await FirestoreService().sendGroupMessage(
         groupId: widget.groupId,
         message: '\u{1F4CE} $docName',
@@ -4932,9 +5007,69 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         documentUrl: downloadUrl,
         documentName: docName,
         documentSize: attachment.fileSize,
+        documentMimeType: attachment.mimeType,
       );
+      // _persistUserMediaMessages() will be called again once the stream
+      // patches the placeholder (via setState in the stream handler).
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Document upload/Firestore error: $e');
+      // ── Mark upload as failed — show retry affordance ──────────────────
+      final idx = findPending();
+      if (idx >= 0 && mounted) {
+        setState(() {
+          _documentMessages[idx] = _documentMessages[idx].copyWith(
+            isUploading: false,
+            uploadError: 'Upload failed. Tap to retry.',
+          );
+        });
+        await _persistUserMediaMessages();
+      }
+    }
+  }
+
+  /// Retries a failed document upload for the bubble at [docIndex].
+  Future<void> _retryDocumentUpload(int docIndex) async {
+    final failed = _documentMessages[docIndex];
+    if (!failed.isMe || failed.fileUrl.isNotEmpty) return;
+
+    // Reset to uploading state
+    setState(() {
+      _documentMessages[docIndex] =
+          failed.copyWith(isUploading: true, uploadError: null);
+    });
+    await _persistUserMediaMessages();
+
+    try {
+      // On retry we can only attempt a Firestore metadata-only write since we
+      // no longer have the original bytes in memory.  A full re-pick would be
+      // needed for a fresh byte upload, but metadata-only still lets the
+      // receiver see the document entry (without a download URL).
+      if (mounted) {
+        setState(() {
+          _documentMessages[docIndex] =
+              _documentMessages[docIndex].copyWith(isUploading: false);
+        });
+      }
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: '\u{1F4CE} ${failed.fileName}',
+        type: 'document',
+        documentName: failed.fileName,
+        documentSize: failed.fileSize,
+        documentMimeType: failed.mimeType,
+      );
+      await _persistUserMediaMessages();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Document retry error: $e');
+      if (mounted) {
+        setState(() {
+          _documentMessages[docIndex] = _documentMessages[docIndex].copyWith(
+            isUploading: false,
+            uploadError: 'Upload failed. Tap to retry.',
+          );
+        });
+        await _persistUserMediaMessages();
+      }
     }
   }
 
@@ -5553,6 +5688,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 'fileName': m.fileName,
                 'fileSize': m.fileSize,
                 'fileUrl': m.fileUrl,
+                'mimeType': m.mimeType,
+                'firestoreId': m.firestoreId,
+                'isUploading': m.isUploading,
                 'isMe': true,
                 'timestamp': m.timestamp.toIso8601String(),
                 'senderName': m.senderName,
@@ -5625,10 +5763,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         final docs = (decoded['documents'] as List<dynamic>?) ?? [];
         for (final j in docs) {
           final m = j as Map<String, dynamic>;
+          final persistedFirestoreId = m['firestoreId'] as String? ?? '';
+          // Skip duplicates already loaded from Firestore history
+          if (persistedFirestoreId.isNotEmpty &&
+              _documentMessages.any((d) => d.firestoreId == persistedFirestoreId)) {
+            continue;
+          }
           _documentMessages.add(_GroupDocumentMessage(
             fileName: m['fileName'] as String,
             fileSize: m['fileSize'] as int?,
             fileUrl: m['fileUrl'] as String? ?? '',
+            mimeType: m['mimeType'] as String?,
+            firestoreId: persistedFirestoreId,
+            // Messages persisted while uploading should not show a spinner on
+            // restore — they either completed (and the stream will patch them)
+            // or failed.  Treat them as non-uploading so the user sees the
+            // file card rather than an indefinite spinner.
+            isUploading: false,
             isMe: true,
             timestamp: DateTime.parse(m['timestamp'] as String),
             senderName: m['senderName'] as String,
@@ -6684,23 +6835,55 @@ class _GroupImageMessage {
 class _GroupDocumentMessage {
   final String fileName;
   final int? fileSize;
-  final String fileUrl;   // Firebase Storage download URL (empty for legacy local-only docs)
+  final String fileUrl;      // Firebase Storage download URL (empty while uploading)
+  final String? mimeType;
   final bool isMe;
   final DateTime timestamp;
   final String senderName;
   final String senderAvatar;
   final String senderId;
+  /// Firestore document ID — used as the canonical dedup key.
+  /// Empty for messages that arrived before this field was introduced.
+  final String firestoreId;
+  /// True while the sender's upload is still in progress.
+  final bool isUploading;
+  /// Non-null when upload failed — holds the error string for retry UI.
+  final String? uploadError;
 
   const _GroupDocumentMessage({
     required this.fileName,
     this.fileSize,
     this.fileUrl = '',
+    this.mimeType,
     required this.isMe,
     required this.timestamp,
     required this.senderName,
     required this.senderAvatar,
     required this.senderId,
+    this.firestoreId = '',
+    this.isUploading = false,
+    this.uploadError,
   });
+
+  _GroupDocumentMessage copyWith({
+    String? fileUrl,
+    String? firestoreId,
+    bool? isUploading,
+    String? uploadError,
+  }) => _GroupDocumentMessage(
+    fileName: fileName,
+    fileSize: fileSize,
+    fileUrl: fileUrl ?? this.fileUrl,
+    mimeType: mimeType,
+    isMe: isMe,
+    timestamp: timestamp,
+    senderName: senderName,
+    senderAvatar: senderAvatar,
+    senderId: senderId,
+    firestoreId: firestoreId ?? this.firestoreId,
+    isUploading: isUploading ?? this.isUploading,
+    uploadError: uploadError,
+  );
 }
 
 enum _GChatItemType { text, image, document }

@@ -338,6 +338,7 @@ class FirestoreService {
     String? documentUrl,
     String? documentName,
     int? documentSize,
+    String? documentMimeType,
     // Poll fields
     String? pollQuestion,
     List<String>? pollOptions,
@@ -382,6 +383,7 @@ class FirestoreService {
       if (documentUrl != null) 'documentUrl': documentUrl,
       if (documentName != null) 'documentName': documentName,
       if (documentSize != null) 'documentSize': documentSize,
+      if (documentMimeType != null) 'documentMimeType': documentMimeType,
       // Poll
       if (pollQuestion != null) 'pollQuestion': pollQuestion,
       if (pollOptions != null) 'pollOptions': pollOptions,
