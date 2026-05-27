@@ -1171,7 +1171,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildSectionHeader(
                     hc: hc,
                     icon: Icons.notifications_active_outlined,
-                    iconColor: HuddlColors.primary,
+                    iconColor: HuddlColors.nearBlack,
                     title: "Don't Forget",
                     subtitle: 'Your confirmed upcoming meetups & events',
                     onSeeAll: () => _switchToTab(2),
@@ -1192,7 +1192,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildSectionHeader(
                     hc: hc,
                     icon: Icons.explore_outlined,
-                    iconColor: HuddlColors.primary,
+                    iconColor: HuddlColors.nearBlack,
                     title: 'Discover New Listings',
                     subtitle: 'New groups, meetups, events & items this week',
                     onSeeAll: () => _switchToTab(2),
@@ -1831,7 +1831,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newMeetups > 0) {
       items.add(_CatchUpItem(
         icon: Icons.place_rounded,
-        color: HuddlColors.primary,      // warm orange
+        color: HuddlColors.nearBlack,
         label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
         onTap: () => _switchToDiscover(1), // Meetups sub-tab
       ));
@@ -1839,7 +1839,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newEvents > 0) {
       items.add(_CatchUpItem(
         icon: Icons.event_rounded,
-        color: HuddlColors.primary,  // amber — events
+        color: HuddlColors.nearBlack,
         label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
         onTap: () => _switchToDiscover(2), // Events sub-tab
       ));
@@ -1847,7 +1847,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newGroupCount > 0) {
       items.add(_CatchUpItem(
         icon: Icons.people_rounded,
-        color: HuddlColors.primary,      // warm orange
+        color: HuddlColors.nearBlack,
         label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
         onTap: () => _switchToDiscover(0), // Groups sub-tab
       ));
@@ -1855,7 +1855,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (newMarket > 0) {
       items.add(_CatchUpItem(
         icon: Icons.storefront_rounded,
-        color: HuddlColors.primaryLight, // soft orange — market
+        color: HuddlColors.nearBlack,
         label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale',
         onTap: () => _switchToTab(3),
       ));
@@ -1890,7 +1890,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Icon(
                       Icons.auto_awesome,
                       size: 16,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.nearBlack.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -2086,20 +2086,20 @@ class _HomeScreenState extends State<HomeScreen>
       height: 120,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: isDark ? 0.10 : 0.06),
+        color: isDark ? hc.surface : const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: HuddlColors.primary.withValues(alpha: 0.40),
-          width: 1.5,
+          color: HuddlColors.divider,
+          width: 1,
         ),
       ),
       child: Row(
         children: [
-          // Left amber accent bar
+          // Left neutral accent bar
           Container(
             width: 5,
             decoration: BoxDecoration(
-              color: HuddlColors.primary,
+              color: HuddlColors.nearBlack.withValues(alpha: 0.15),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 bottomLeft: Radius.circular(16),
@@ -2112,13 +2112,13 @@ class _HomeScreenState extends State<HomeScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: isDark ? 0.20 : 0.14),
+              color: HuddlColors.nearBlack.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_active_outlined,
               size: 20,
-              color: HuddlColors.primary,
+              color: HuddlColors.nearBlack.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(width: 12),
@@ -2181,12 +2181,14 @@ class _HomeScreenState extends State<HomeScreen>
   /// Specialised "Don't Forget" card — identical hero/body to _buildDiscoverCard
   /// but renders the countdown badge prominently in amber + a "Going ✓" strip.
   Widget _buildDontForgetCard(_DiscoverItem item, dynamic hc, bool isDark) {
-    final (pillLabel, pillColor) = switch (item.type) {
-      _DiscoverType.meetup  => ('MEETUP', HuddlColors.primary),
-      _DiscoverType.event   => ('EVENT',  HuddlColors.nearBlack),
-      _DiscoverType.group   => ('GROUP',  HuddlColors.nearBlack),
-      _DiscoverType.sale    => ('SALE',   HuddlColors.nearBlack),
+    // Airbnb rule: all type pills nearBlack — no per-type colour coding
+    final pillLabel = switch (item.type) {
+      _DiscoverType.meetup  => 'MEETUP',
+      _DiscoverType.event   => 'EVENT',
+      _DiscoverType.group   => 'GROUP',
+      _DiscoverType.sale    => 'SALE',
     };
+    const pillColor = HuddlColors.nearBlack;
 
     Widget imageWidget = item.imageUrl.isNotEmpty
         ? Image.network(item.imageUrl,
@@ -2204,14 +2206,14 @@ class _HomeScreenState extends State<HomeScreen>
           color: hc.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: HuddlColors.primary.withValues(alpha: 0.35), width: 1.5),
+              color: HuddlColors.divider, width: 1),
           boxShadow: isDark
               ? null
               : [
                   BoxShadow(
-                      color: HuddlColors.primary.withValues(alpha: 0.12),
-                      blurRadius: 12,
-                      offset: const Offset(0, 3)),
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2)),
                 ],
         ),
         clipBehavior: Clip.antiAlias,
@@ -2253,53 +2255,52 @@ class _HomeScreenState extends State<HomeScreen>
                               letterSpacing: 0.4)),
                     ),
                   ),
-                  // Countdown badge — top-right, amber
+                  // Countdown badge — top-right, outlined pill
                   if (item.badge != null)
                     Positioned(
                       top: 8, right: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: item.badge == 'Today!'
-                              ? Colors.redAccent
-                              : HuddlColors.primary,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.25),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: item.badge == 'Today!'
+                                ? Colors.redAccent
+                                : HuddlColors.primary,
+                            width: 1.5,
+                          ),
                         ),
                         child: Text(item.badge!,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                color: item.badge == 'Today!'
+                                    ? Colors.redAccent
+                                    : HuddlColors.primary,
                                 letterSpacing: 0.2)),
                       ),
                     ),
                 ],
               ),
             ),
-            // ── Going confirmation strip ─────────────────────────────
+            // ── Going confirmation strip — neutral, not orange-tinted
             Container(
               width: double.infinity,
-              color: HuddlColors.primary.withValues(alpha: isDark ? 0.18 : 0.08),
+              color: const Color(0xFFF7F7F7),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle,
+                  const Icon(Icons.check_circle,
                       size: 11,
-                      color: HuddlColors.primary),
+                      color: Color(0xFF4CAF50)),
                   const SizedBox(width: 4),
                   Text(
                     "You're going!",
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
+                      color: HuddlColors.textDark,
                     ),
                   ),
                 ],
@@ -2496,9 +2497,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// A single unified Discover card — image hero + type pill + title + subtitle.
   Widget _buildDiscoverCard(_DiscoverItem item, dynamic hc, bool isDark) {
     // Type pill colour + label
+    // Airbnb rule: all type pills nearBlack — no per-type colour coding
     final (pillLabel, pillColor) = switch (item.type) {
       _DiscoverType.group   => ('GROUP',   HuddlColors.nearBlack),
-      _DiscoverType.meetup  => ('MEETUP',  HuddlColors.primary),
+      _DiscoverType.meetup  => ('MEETUP',  HuddlColors.nearBlack),
       _DiscoverType.event   => ('EVENT',   HuddlColors.nearBlack),
       _DiscoverType.sale    => ('FOR SALE',HuddlColors.nearBlack),
     };
@@ -2589,7 +2591,7 @@ class _HomeScreenState extends State<HomeScreen>
                           style: GoogleFonts.poppins(
                               fontSize: 8,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary),
+                              color: HuddlColors.nearBlack),
                         ),
                       ),
                     ),
@@ -2634,9 +2636,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _discoverImageFallback(_DiscoverType type, dynamic hc) {
+    // Airbnb rule: fallback icon colours all nearBlack
     final (icon, color) = switch (type) {
       _DiscoverType.group  => (Icons.people_outline,     HuddlColors.nearBlack),
-      _DiscoverType.meetup => (Icons.place_outlined,     HuddlColors.primary),
+      _DiscoverType.meetup => (Icons.place_outlined,     HuddlColors.nearBlack),
       _DiscoverType.event  => (Icons.event_outlined,     HuddlColors.nearBlack),
       _DiscoverType.sale   => (Icons.storefront_outlined,HuddlColors.nearBlack),
     };
@@ -2850,7 +2853,7 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 color: hc.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.4), width: 1.5) : null,
+                border: isGoing ? Border.all(color: HuddlColors.divider, width: 1) : null,
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
               ),
               clipBehavior: Clip.antiAlias,
@@ -2873,7 +2876,7 @@ class _HomeScreenState extends State<HomeScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: HuddlColors.primary,
+                              color: HuddlColors.nearBlack,
                               borderRadius: BorderRadius.circular(7),
                               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
@@ -2951,9 +2954,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _eventImageFallback() {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.12),
-      child: const Center(
-        child: Icon(Icons.event_outlined, size: 32, color: HuddlColors.primary),
+      color: const Color(0xFFF7F7F7),
+      child: Center(
+        child: Icon(Icons.event_outlined, size: 32,
+            color: HuddlColors.nearBlack.withValues(alpha: 0.3)),
       ),
     );
   }
@@ -3057,7 +3061,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _serviceImageFallback(String emoji) {
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      color: const Color(0xFFF7F7F7),
       child: Center(
         child: Text(emoji, style: const TextStyle(fontSize: 32)),
       ),
