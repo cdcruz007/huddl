@@ -24,7 +24,7 @@
 //   • Polls per group                   (polls_v1_*)
 //   • Meetups                           (huddl_user_meetups, meetup_image_*)
 //   • Events & favourites               (event_groups_v1, huddl_favourite_ids)
-//   • Saved messages / threads / events (saved_messages_v1, saved_threads_v1, saved_events_v1)
+//   • Saved messages / threads / events (saved_messages_v2, saved_threads_v2, saved_events_v1)
 //   • Group memberships, pins, mutes    (user_memberships_v4, huddl_pinned_ids, huddl_muted_ids)
 //   • Invitations                       (group_invitations_v1, joined_groups_v2)
 //   • Blocked users                     (blocked_users_v1)

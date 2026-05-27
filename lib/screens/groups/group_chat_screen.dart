@@ -1973,7 +1973,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Add to existing topic',
+                          'Save under existing topic',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
