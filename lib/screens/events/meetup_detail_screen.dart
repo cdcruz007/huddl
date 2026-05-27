@@ -71,19 +71,66 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     }
   }
 
-  /// Creates a group chat under Messages tab for this meetup attendees
+  /// Creates (or joins) a shared Firestore group chat for all meetup attendees.
+  /// Uses a deterministic ID so every attendee resolves to the same document.
   Future<void> _createMeetupGroupChat() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     final groupKey = 'user_created_groups_v1';
     final meetupGroupId = 'meetup_group_${_meetup.id}';
+    final chatImage = _meetup.imageUrl.isNotEmpty && !_meetup.imageUrl.startsWith('data:')
+        ? _meetup.imageUrl
+        : _categoryFallbackImage(_meetup.category);
 
-    // Check if group already exists
+    // ── 1. Write/join the Firestore group doc (shared across all devices) ──
+    if (uid != null) {
+      try {
+        final groupRef = FirebaseFirestore.instance
+            .collection('groups')
+            .doc(meetupGroupId);
+        final snap = await groupRef.get();
+        if (!snap.exists) {
+          // First joiner creates the shared group doc
+          await groupRef.set({
+            'id':            meetupGroupId,
+            'name':          _meetup.title,
+            'description':   'Group chat for "${_meetup.title}" on ${_meetup.dateDisplay} at ${_meetup.location}',
+            'imageUrl':      chatImage,
+            'category':      'MEETUP',
+            'privacy':       'private',
+            'creatorUid':    uid,
+            'creatorName':   _meetup.organiserName,
+            'memberIds':     [uid],
+            'memberCount':   1,
+            'meetupId':      _meetup.id,
+            'lastMessage':   'Meetup group created',
+            'lastSenderName': 'System',
+            'lastMessageTime': FieldValue.serverTimestamp(),
+            'createdAt':     FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Doc exists — add this user as a member (idempotent arrayUnion)
+          await groupRef.update({
+            'memberIds':   FieldValue.arrayUnion([uid]),
+            'memberCount': FieldValue.increment(1),
+          });
+        }
+      } catch (e) {
+        if (mounted) debugPrint('[createMeetupGroupChat] Firestore error: $e');
+        // Fall through to local storage so the user still sees the chat
+      }
+    }
+
+    // ── 2. Persist to local BrowserStorage for instant visibility ──────────
     final existing = await BrowserStorage.getString(groupKey);
     List<dynamic> groups = [];
     if (existing != null) {
       groups = json.decode(existing) as List<dynamic>;
       final alreadyExists = groups.any((g) =>
           (g as Map<String, dynamic>)['id'] == meetupGroupId);
-      if (alreadyExists) return; // Don't create duplicate
+      if (alreadyExists) {
+        // Already in local storage — nothing more to do (may still update Firestore above)
+        return;
+      }
     }
 
     final newGroup = Group(
@@ -91,9 +138,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       name: _meetup.title,
       description:
           'Group chat for "${_meetup.title}" meetup on ${_meetup.dateDisplay} at ${_meetup.location}',
-      imageUrl: _meetup.imageUrl.isNotEmpty && !_meetup.imageUrl.startsWith('data:')
-          ? _meetup.imageUrl
-          : _categoryFallbackImage(_meetup.category),
+      imageUrl: chatImage,
       memberCount: _meetup.attendeeCount,
       category: 'MEETUP',
       isJoined: true,
@@ -118,9 +163,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
             children: [
               Icon(Icons.group, color: context.hc.surface, size: 18),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                    'Meetup group chat created under Messages tab'),
+              const Expanded(
+                child: Text('Meetup group chat created under Messages tab'),
               ),
             ],
           ),

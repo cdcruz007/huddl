@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import 'package:google_fonts/google_fonts.dart';
@@ -1091,11 +1092,16 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
           } catch (_) { /* non-critical */ }
         }
       }
-    } catch (_) {
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Endorse] _toggleEndorse error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Something went wrong. Please try again.'),
+          SnackBar(
+            content: Text(
+              kDebugMode
+                  ? 'Endorse failed: $e'
+                  : 'Something went wrong. Please try again.',
+            ),
             backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -1404,11 +1410,16 @@ class _ListingCardState extends State<_ListingCard> {
           );
         }
       }
-    } catch (_) {
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Endorse] _toggleEndorse error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Something went wrong. Please try again.'),
+          SnackBar(
+            content: Text(
+              kDebugMode
+                  ? 'Endorse failed: $e'
+                  : 'Something went wrong. Please try again.',
+            ),
             backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -1919,6 +1930,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
     if (_endorsing) return;
     setState(() => _endorsing = true);
     HuddlAnimations.mediumTap();
+    try {
     if (_hasEndorsed) {
       await widget.service.removeEndorsement(widget.listing.id);
       if (mounted) {
@@ -2011,6 +2023,22 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
         );
         // Reload endorsements list to show new entry
         _load();
+      }
+    }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Endorse] _toggleEndorse error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              kDebugMode
+                  ? 'Endorse failed: $e'
+                  : 'Something went wrong. Please try again.',
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
     if (mounted) setState(() => _endorsing = false);

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +20,7 @@ import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/places_autocomplete_field.dart';
 
@@ -482,11 +484,57 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   /// Auto-create a group chat under Messages tab so the creator (and future
   /// attendees) have a place to discuss the meetup.
+  /// Writes to Firestore so all attendees on any device can join the same chat.
   Future<void> _createMeetupGroupChat(Meetup meetup) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     final groupKey = 'user_created_groups_v1';
     final meetupGroupId = 'meetup_group_${meetup.id}';
 
-    // Check if group already exists
+    // Use category fallback image for group chat (base64 too large)
+    String chatImage = meetup.imageUrl;
+    if (chatImage.startsWith('data:')) {
+      chatImage = Meetup.categoryFallbackUrl(meetup.category);
+    }
+
+    // ── 1. Write to Firestore (shared, cross-device) ─────────────────────
+    if (uid != null) {
+      try {
+        final groupRef = FirebaseFirestore.instance
+            .collection('groups')
+            .doc(meetupGroupId);
+        final snap = await groupRef.get();
+        if (!snap.exists) {
+          await groupRef.set({
+            'id':           meetupGroupId,
+            'name':         meetup.title,
+            'description':  'Group chat for "${meetup.title}" on ${meetup.dateDisplay} at ${meetup.location}',
+            'imageUrl':     chatImage,
+            'category':     'MEETUP',
+            'privacy':      'private',
+            'creatorUid':   uid,
+            'creatorName':  meetup.organiserName,
+            'memberIds':    [uid],
+            'memberCount':  1,
+            'meetupId':     meetup.id,
+            'lastMessage':  '${meetup.organiserName} created this meetup chat',
+            'lastSenderName': 'System',
+            'lastMessageTime': FieldValue.serverTimestamp(),
+            'createdAt':    FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Doc exists (e.g. this device already created it) — add self to members
+          await groupRef.update({
+            'memberIds':    FieldValue.arrayUnion([uid]),
+            'memberCount':  FieldValue.increment(1),
+          });
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[createMeetupGroupChat] Firestore error: $e');
+        // Fall through to local storage so the creator still sees the chat
+      }
+    }
+
+    // ── 2. Also persist to local BrowserStorage (instant UI on this device) ─
     final existing = await BrowserStorage.getString(groupKey);
     List<dynamic> groups = [];
     if (existing != null) {
@@ -494,12 +542,6 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       final alreadyExists =
           groups.any((g) => (g as Map<String, dynamic>)['id'] == meetupGroupId);
       if (alreadyExists) return;
-    }
-
-    // Use category fallback image for group chat (base64 too large)
-    String chatImage = meetup.imageUrl;
-    if (chatImage.startsWith('data:')) {
-      chatImage = Meetup.categoryFallbackUrl(meetup.category);
     }
 
     final newGroup = Group(

@@ -597,7 +597,9 @@ class LocalServicesService {
   /// [rating] is optional — 1 to 5 star community rating.
   Future<void> endorseListing(String listingId, {String? quote, int? rating}) async {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      throw Exception('User not authenticated — cannot endorse a listing');
+    }
 
     final firstName = _firstName;
     final borough   = _userBorough;

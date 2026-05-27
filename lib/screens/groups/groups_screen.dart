@@ -1685,9 +1685,45 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
   }
 
+  /// Remove a group ID from the left-groups blocklist so the user can rejoin.
+  /// Called when the user explicitly rejoins a group from Discover or accepts
+  /// a new invitation to a group they previously left.
+  Future<void> _removeFromLeftGroups(String groupId) async {
+    try {
+      final ids = await _getLeftGroupIds();
+      if (ids.contains(groupId)) {
+        ids.remove(groupId);
+        await BrowserStorage.setString(_leftGroupsKey, json.encode(ids));
+        if (kDebugMode) debugPrint('[groups] Removed $groupId from left-groups blocklist');
+      }
+    } catch (_) {}
+  }
+
   // ── Invitation handlers ──────────────────────────────────────────────
   Future<void> _handleAccept(GroupInvitation inv) async {
+    // Remove from left-groups blocklist first so a previously-left group
+    // can reappear in the Messages tab after the user accepts a new invitation.
+    await _removeFromLeftGroups(inv.groupId);
+
     await _invitationService.acceptInvitation(inv.id);
+
+    // Firestore member re-add for invitation-based rejoin
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        final groupRef = FirebaseFirestore.instance.collection('groups').doc(inv.groupId);
+        final snap = await groupRef.get();
+        if (snap.exists) {
+          await groupRef.update({
+            'memberIds':   FieldValue.arrayUnion([uid]),
+            'memberCount': FieldValue.increment(1),
+          });
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[_handleAccept] Firestore member re-add error: $e');
+      }
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -4810,6 +4846,18 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       return;
     }
 
+    // If the user previously left this group, remove the blocklist entry
+    // so it can appear in the Messages tab again after rejoining.
+    try {
+      final leftRaw = await BrowserStorage.getString(_leftGroupsKey);
+      if (leftRaw != null) {
+        final ids = List<String>.from(json.decode(leftRaw) as List);
+        if (ids.remove(groupId)) {
+          await BrowserStorage.setString(_leftGroupsKey, json.encode(ids));
+        }
+      }
+    } catch (_) {}
+
     // Get user name
     final userName = _onboardingService.name ?? 'You';
 
@@ -4831,6 +4879,25 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 
     await _invitationService.joinPublicGroup(groupObj, userName);
 
+    // Firestore member re-add: if the group exists in Firestore, add this
+    // user to memberIds so they are reinstated on all devices.  Uses
+    // arrayUnion so the operation is idempotent.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        final groupRef = FirebaseFirestore.instance.collection('groups').doc(groupId);
+        final snap = await groupRef.get();
+        if (snap.exists) {
+          await groupRef.update({
+            'memberIds':   FieldValue.arrayUnion([uid]),
+            'memberCount': FieldValue.increment(1),
+          });
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[_onJoinTap] Firestore member re-add error: $e');
+      }
+    }
+
     // Record usage for subscription tracking
     subService.recordGroupJoin();
 
@@ -4841,7 +4908,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       widget.groupsChangedNotifier.value++;
 
       // 🎉 First-join celebration overlay
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+      // uid already fetched above — reuse it
       if (uid != null) {
         try {
           final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
