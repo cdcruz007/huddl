@@ -2099,7 +2099,15 @@ class _MessagesTabState extends State<_MessagesTab> {
               isDefaultGroup: isDefault,
             ),
           ),
-        );
+        ).then((_) {
+          // User has navigated into the group and returned — mark this summary
+          // as dismissed so the catch-up card no longer shows this group row.
+          if (!mounted) return;
+          _summariser.dismissSummary(summary.groupId);
+          setState(() {
+            _catchUpSummaries.remove(summary.groupId);
+          });
+        });
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
@@ -2158,14 +2166,28 @@ class _MessagesTabState extends State<_MessagesTab> {
                     ],
                   ),
                   const SizedBox(height: 3),
-                  // AI overview text
-                  Text(
-                    summary.overviewText,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.hc.textSecondary, height: 1.35,
-                    ),
-                    maxLines: 2, overflow: TextOverflow.ellipsis,
-                  ),
+                  // ── Message preview: first keyPoint with author prefix, ──
+                  // or overviewText as fallback when keyPoints is empty.
+                  Builder(builder: (ctx) {
+                    final kp = summary.keyPoints.isNotEmpty
+                        ? summary.keyPoints.first
+                        : null;
+                    final previewText = kp != null
+                        ? (kp.authorName != null && kp.authorName!.isNotEmpty
+                            ? '${kp.authorName}: ${kp.text}'
+                            : kp.text)
+                        : summary.overviewText;
+                    return Text(
+                      previewText,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: context.hc.textSecondary,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  }),
                   // Key topics / action indicator
                   if (summary.mentionedTopics.isNotEmpty || summary.hasActionItems) ...[
                     const SizedBox(height: 5),
@@ -7978,7 +8000,18 @@ class _EmptyMessagesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConnectEmptyState(onCta: onSearch);
+    // Messages tab: show a conversations-specific empty state.
+    // The "Explore groups" CTA belongs on the Discover tab (ConnectEmptyState),
+    // not here — it would be confusing when the filter is set to "DMs only"
+    // and the user already belongs to groups.
+    return const HuddlEmptyState(
+      mood: HuddlMood.waving,
+      title: 'No conversations yet',
+      subtitle:
+          'Your group chats and direct messages will appear here once you start connecting.',
+      // No ctaLabel / onCtaTap — navigating to Discover is handled by the
+      // bottom nav bar; a CTA button here would be redundant and misleading.
+    );
   }
 }
 
