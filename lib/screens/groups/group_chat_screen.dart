@@ -4661,11 +4661,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
     });
 
-    // Persist vote changes
+    // Persist vote changes to local storage
     _pollService.savePolls(widget.groupId, List.from(_polls));
 
-    // If anyone (creator or member) just voted on an unpinned poll → show hint
+    // ── Cross-device sync: if this poll is backed by a Firestore polls/ doc,
+    // write the vote there too so other users see it in real time via
+    // FirestorePollCard's StreamBuilder.  The option IDs are derived from the
+    // optionIndex position (matching createPoll()'s 'opt_0', 'opt_1', … scheme).
     final poll = _polls.firstWhere((p) => p.id == pollId);
+    if (poll.firestorePollId != null && poll.firestorePollId!.isNotEmpty) {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      if (uid.isNotEmpty) {
+        // Build the new selected option ID list from myVotes indices
+        final selectedOptionIds = poll.myVotes
+            .map((idx) => 'opt_$idx')
+            .toList();
+        unawaited(FirestoreService().submitPollVote(
+          pollId: poll.firestorePollId!,
+          uid: uid,
+          selectedOptionIds: selectedOptionIds,
+        ));
+      }
+    }
+
+    // If anyone (creator or member) just voted on an unpinned poll → show hint
     if (!poll.isPinned && poll.hasVoted) {
       final msg = poll.isCreatedByMe
           ? 'Vote recorded. View results via ⋮ → Active Polls.'

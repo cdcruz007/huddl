@@ -7276,23 +7276,77 @@ class _SavedThreadCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
-                  // Reply count badge (only shown when there are replies/merged messages)
-                  if (savedThread.replies.isNotEmpty)
-                  Row(
-                    children: [
-                      Icon(Icons.reply, size: 14, color: HuddlColors.nearBlack),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${savedThread.replies.length} ${savedThread.replies.length == 1 ? 'reply' : 'replies'}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.nearBlack,
+                  // Inline reply previews — show up to 3, then a "+N more" label
+                  if (savedThread.replies.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ...savedThread.replies.take(3).map((reply) => Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left accent line
+                          Container(
+                            width: 2,
+                            height: 36,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(1),
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      reply.senderName,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: context.hc.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _formatMessageTime(reply.timestamp),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        color: context.hc.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  reply.message,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: context.hc.textSecondary,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                    if (savedThread.replies.length > 3)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6, left: 10),
+                        child: Text(
+                          '+${savedThread.replies.length - 3} more ${savedThread.replies.length - 3 == 1 ? 'reply' : 'replies'}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.primary,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ],
               ),
             ),
