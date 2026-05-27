@@ -328,9 +328,47 @@ class PaymentService extends ChangeNotifier {
 
   // ── Initialization ─────────────────────────────────────────────────────
 
+  /// Initialise the payment service.
+  ///
+  /// Wrapped in an 8-second hard timeout so it can never block the UI
+  /// regardless of what happens inside (Play Store unavailable, network
+  /// timeout, device without Play Services, etc.).
   Future<void> initialize() async {
     if (_initialized) return;
 
+    try {
+      await _doInitialize().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          if (kDebugMode) {
+            debugPrint(
+              'PaymentService: initialize() timed out after 8 s '
+              '— falling back to local pricing.',
+            );
+          }
+          // Ensure the service is always left in a usable state
+          if (!_initialized) {
+            _storeAvailable = false;
+            _populateWebProducts();
+            _initialized = true;
+            _setStatus(PaymentStatus.idle);
+          }
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('PaymentService: initialize() failed: $e — using local pricing.');
+      }
+      if (!_initialized) {
+        _storeAvailable = false;
+        _populateWebProducts();
+        _initialized = true;
+        _setStatus(PaymentStatus.idle);
+      }
+    }
+  }
+
+  Future<void> _doInitialize() async {
     _setStatus(PaymentStatus.loading);
 
     if (kIsWeb) {
@@ -338,9 +376,34 @@ class PaymentService extends ChangeNotifier {
       _populateWebProducts();
       _storeAvailable = true;
     } else {
-      // Mobile: initialise the IAP connection
+      // Mobile: initialise the IAP connection.
+      //
+      // IMPORTANT — "Checking service status..." hang explained:
+      // The first call to InAppPurchase.instance triggers BillingClientManager
+      // construction which immediately calls BillingClient.startConnection().
+      // Google Play Billing shows its own OS-level "Checking service status..."
+      // overlay while binding to the Play Store service. If the Play Store is
+      // unreachable (no network, emulator without Play Services, slow device)
+      // this binding can hang indefinitely, freezing the app at launch.
+      //
+      // Fix: isAvailable() has a 6 s timeout → falls back to local pricing.
+      // The outer initialize() has an 8 s hard timeout as a belt-and-braces
+      // safety net (covers isAvailable + _loadProducts combined).
       try {
-        _storeAvailable = await InAppPurchase.instance.isAvailable();
+        _storeAvailable = await InAppPurchase.instance
+            .isAvailable()
+            .timeout(
+              const Duration(seconds: 6),
+              onTimeout: () {
+                if (kDebugMode) {
+                  debugPrint(
+                    'PaymentService: isAvailable() timed out after 6 s '
+                    '— treating store as unavailable, using local pricing.',
+                  );
+                }
+                return false;
+              },
+            );
 
         if (_storeAvailable) {
           // Listen for purchase updates

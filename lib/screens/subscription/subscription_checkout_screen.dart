@@ -69,8 +69,16 @@ class _SubscriptionCheckoutScreenState
   }
 
   Future<void> _initServices() async {
-    await _subService.initialize();
-    await _payService.initialize();
+    // Both initialize() calls have their own internal timeouts, but we wrap
+    // the whole block too so this screen never hangs if something slips through.
+    try {
+      await _subService.initialize()
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {}
+    try {
+      await _payService.initialize()
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {}
 
     // Wire up PaymentService callbacks → SubscriptionService
     _payService.onPurchaseSuccess = _onPurchaseSuccess;
