@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../widgets/common/huddl_button.dart';
 
 import '../../theme/huddl_colors.dart';
 import '../../services/local_services_service.dart';
@@ -295,22 +296,10 @@ class _CreatePartnerListingScreenState
             const SizedBox(height: 32),
 
             // ── Submit ────────────────────────────────────────────────
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
+            HuddlButton(
+              label: _submitting ? 'Publishing...' : 'Publish Listing',
               onPressed: _submitting ? null : _submit,
-              child: Text(
-                _submitting ? 'Publishing...' : 'Publish Listing',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
+              isLoading: _submitting,
             ),
             const SizedBox(height: 32),
           ],

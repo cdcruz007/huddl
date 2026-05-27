@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 import 'send_hub_screen.dart';
 
 // ── UHD hero images per article ID (sourced from Pexels / Unsplash) ─────────
@@ -1740,35 +1741,17 @@ class _ReviewCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: HuddlButton(
+                  label: 'Reject',
                   onPressed: () => _reject(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HuddlColors.error,
-                    side: const BorderSide(color: HuddlColors.error),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  child: Text('Reject',
-                      style: GoogleFonts.poppins(fontSize: 13)),
+                  variant: HuddlButtonVariant.destructive,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: ElevatedButton(
+                child: HuddlButton(
+                  label: 'Publish',
                   onPressed: () => _approve(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.success,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  child: Text('Publish',
-                      style: GoogleFonts.poppins(fontSize: 13)),
                 ),
               ),
             ],

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
@@ -1317,31 +1318,13 @@ class _MessagesTabState extends State<_MessagesTab> {
 
                         const SizedBox(height: 20),
                         // ── Apply button ─────────────────────────────────
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              HuddlAnimations.lightTap();
-                              setState(() => _messageFilterIndex = tempIndex);
-                              Navigator.pop(ctx);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: HuddlColors.primary,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: Text(
-                              'Apply',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                        HuddlButton(
+                          label: 'Apply',
+                          onPressed: () {
+                            HuddlAnimations.lightTap();
+                            setState(() => _messageFilterIndex = tempIndex);
+                            Navigator.pop(ctx);
+                          },
                         ),
                         const SizedBox(height: 4),
                       ],
@@ -3447,57 +3430,17 @@ class _InvitationCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton(
-                    onPressed: onDecline,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: context.hc.divider),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.zero,
-                      alignment: Alignment.center,
-                    ),
-                    child: Text(
-                      'Decline',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textSecondary,
-                        height: 1.0,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+                child: HuddlButton(
+                  label: 'Decline',
+                  onPressed: onDecline,
+                  variant: HuddlButtonVariant.secondary,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: ElevatedButton(
-                    onPressed: onAccept,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.zero,
-                      alignment: Alignment.center,
-                    ),
-                    child: Text(
-                      'Accept',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.surface,
-                        height: 1.0,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+                child: HuddlButton(
+                  label: 'Accept',
+                  onPressed: onAccept,
                 ),
               ),
             ],

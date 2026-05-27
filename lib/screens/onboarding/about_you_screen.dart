@@ -5,6 +5,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/huddl_user_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
 // large textarea filling most of screen, orange "Continue" button at bottom.
@@ -184,53 +185,19 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
             // ── Continue button at bottom ────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _finish,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.onboardingOrange,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              child: HuddlButton(
+                label: 'Continue',
+                onPressed: _finish,
               ),
             ),
 
             // ── Skip button ─────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: TextButton(
-                  onPressed: _finish,
-                  style: TextButton.styleFrom(
-                    foregroundColor: HuddlColors.disabledText,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.disabledText,
-                    ),
-                  ),
-                ),
+              child: HuddlButton(
+                label: 'Skip',
+                onPressed: _finish,
+                variant: HuddlButtonVariant.ghost,
               ),
             ),
           ],

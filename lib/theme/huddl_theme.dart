@@ -47,6 +47,8 @@ class HuddlTheme {
         labelColor: HuddlColors.textSecondary,
       ),
       elevatedButtonTheme: _elevatedButtonTheme(),
+      outlinedButtonTheme: _outlinedButtonTheme(),
+      textButtonTheme: _textButtonTheme(),
       cardTheme: CardThemeData(
         color: HuddlColors.white,
         elevation: 0,
@@ -109,6 +111,8 @@ class HuddlTheme {
         labelColor: HuddlColors.darkTextSecondary,
       ),
       elevatedButtonTheme: _elevatedButtonTheme(),
+      outlinedButtonTheme: _outlinedButtonTheme(),
+      textButtonTheme: _textButtonTheme(),
       cardTheme: CardThemeData(
         color: HuddlColors.darkSurface,
         elevation: 0,
@@ -185,9 +189,38 @@ class HuddlTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: HuddlColors.primary,
         foregroundColor: HuddlColors.white,
-        minimumSize: const Size(double.infinity, 48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+        disabledBackgroundColor: const Color(0xFFEEEEEE),
+        disabledForegroundColor: const Color(0xFF9E9E9E),
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  static OutlinedButtonThemeData _outlinedButtonTheme() {
+    return OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF1C1C1E),
+        side: const BorderSide(color: Color(0xFF1C1C1E), width: 1.5),
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  static TextButtonThemeData _textButtonTheme() {
+    return TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: HuddlColors.primary,
+        minimumSize: const Size(0, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );

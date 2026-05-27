@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme/huddl_colors.dart';
+import 'huddl_button.dart';
 
 /// Illustration asset paths — centralised so renaming is easy.
 ///
@@ -114,26 +115,10 @@ class HuddlEmptyState extends StatelessWidget {
             // ── Optional CTA button ──────────────────────────────────
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 28),
-              ElevatedButton(
+              HuddlButton(
+                label: actionLabel!,
                 onPressed: onAction,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  minimumSize: const Size(140, 48),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                  elevation: 0,
-                ),
-                child: Text(
-                  actionLabel!,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                fullWidth: false,
               ),
             ],
           ],

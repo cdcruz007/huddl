@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import '../../services/browser_storage.dart';
@@ -601,26 +602,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 // Done button
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(sheetCtx),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Done',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  child: HuddlButton(
+                    label: 'Done',
+                    onPressed: () => Navigator.pop(sheetCtx),
                   ),
                 ),
               ],

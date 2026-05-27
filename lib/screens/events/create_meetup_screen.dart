@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../services/meetup_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
@@ -1844,19 +1845,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                         ),
                         Padding(
                           padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(sheetCtx).padding.bottom + 12),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () { _memberSearchController.clear(); _memberSearchQuery = ''; Navigator.pop(sheetCtx); },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: HuddlColors.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                elevation: 0,
-                              ),
-                              child: Text('Done',
-                                  style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.surface)),
-                            ),
+                          child: HuddlButton(
+                            label: 'Done',
+                            onPressed: () { _memberSearchController.clear(); _memberSearchQuery = ''; Navigator.pop(sheetCtx); },
                           ),
                         ),
                       ],

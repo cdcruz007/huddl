@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../widgets/huddl_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/rehome_service.dart';
@@ -1377,24 +1378,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             child: Semantics(
               label: 'Make an offer for this item',
               button: true,
-              child: OutlinedButton(
+              child: HuddlButton(
+                label: 'Make offer',
                 onPressed: _showMakeOfferSheet,
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(
-                      color: _kMarketBlue, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  minimumSize: const Size(0, 48),
-                ),
-                child: Text(
-                  'Make offer',
-                  style: _adaptiveText(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: _kMarketBlue,
-                  ),
-                ),
+                variant: HuddlButtonVariant.secondary,
               ),
             ),
           ),
@@ -1404,31 +1391,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             child: Semantics(
               label: 'Message the seller',
               button: true,
-              child: ElevatedButton(
+              child: HuddlButton(
+                label: 'Message',
                 onPressed: _openingChat ? null : _openSellerChat,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  elevation: 0,
-                  minimumSize: const Size(0, 48),
-                ),
-                child: _openingChat
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(
-                        'Message',
-                        style: _adaptiveText(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                isLoading: _openingChat,
               ),
             ),
           ),
