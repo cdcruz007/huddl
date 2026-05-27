@@ -2246,7 +2246,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           _SmartNudgeBanner(
             nudge: _activeNudge!,
             onDismiss: () {
-              _aiService.dismissNudge(_activeNudge!.type.name);
+              // dismissNudge is now async (persists to BrowserStorage).
+              // Fire-and-forget — the setState below is synchronous and does
+              // not need to wait for the storage write to hide the banner.
+              unawaited(_aiService.dismissNudge(_activeNudge!.type.name));
               setState(() => _activeNudge = null);
             },
             onAction: _activeNudge!.actionLabel != null
@@ -5995,9 +5998,9 @@ class _SmartNudgeBanner extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+        padding: const EdgeInsets.fromLTRB(12, 4, 4, 10),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Emoji icon
             Text(nudge.icon, style: const TextStyle(fontSize: 16)),
@@ -6036,19 +6039,25 @@ class _SmartNudgeBanner extends StatelessWidget {
                 ],
               ),
             ),
-            // Dismiss ✕
-            GestureDetector(
-              onTap: () {
-                HuddlAnimations.lightTap();
-                onDismiss();
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8, top: 1),
-                child: Icon(
-                  Icons.close_rounded,
-                  size: 16,
-                  color: hc.textTertiary,
-                ),
+            // Dismiss ✕ — IconButton gives a guaranteed 48×48 touch target
+            // (Material spec minimum). The previous GestureDetector wrapping
+            // a 16px Icon had an ~16×16 effective hit area, which was too
+            // small to tap reliably on physical devices.
+            Semantics(
+              label: 'Dismiss trending banner',
+              button: true,
+              child: IconButton(
+                onPressed: () {
+                  HuddlAnimations.lightTap();
+                  onDismiss();
+                },
+                icon: const Icon(Icons.close_rounded, size: 18),
+                color: hc.textTertiary,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                visualDensity: VisualDensity.compact,
+                splashRadius: 18,
+                tooltip: 'Dismiss',
               ),
             ),
           ],

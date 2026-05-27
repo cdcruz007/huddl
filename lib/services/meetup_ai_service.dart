@@ -85,9 +85,20 @@ class MeetupAiService {
     _persistBehaviourData();
   }
 
-  /// Dismiss a nudge so it doesn't appear again this session.
-  void dismissNudge(String nudgeKey) {
+  /// Dismiss a nudge permanently (persisted across app restarts).
+  ///
+  /// Previously this was memory-only (`void`), so the same nudge reappeared
+  /// every time the app launched. Now we write a timestamped entry to
+  /// BrowserStorage under `dismissed_nudge_<key>` and restore all dismissed
+  /// keys in [_loadBehaviourData] so they survive app restarts.
+  Future<void> dismissNudge(String nudgeKey) async {
     _dismissedNudgeKeys.add(nudgeKey);
+    try {
+      await BrowserStorage.setString(
+        'dismissed_nudge_$nudgeKey',
+        DateTime.now().toIso8601String(),
+      );
+    } catch (_) {}
   }
 
   // ── B) Smart Sort ─────────────────────────────────────────────────
@@ -300,6 +311,31 @@ class MeetupAiService {
         if (data['lastAttended'] != null) {
           _lastAttendedDate = DateTime.tryParse(data['lastAttended']);
         }
+      }
+    } catch (_) {}
+
+    // Restore persisted nudge dismissals so the same nudge doesn't reappear
+    // after an app restart. Each key is stored individually as
+    // `dismissed_nudge_<nudgeKey>` (ISO-8601 timestamp as value).
+    try {
+      for (final nudgeType in NudgeType.values) {
+        final key = 'dismissed_nudge_${nudgeType.name}';
+        final stored = await BrowserStorage.getString(key);
+        if (stored != null) {
+          _dismissedNudgeKeys.add(nudgeType.name);
+        }
+      }
+      // Also restore composite keys like 'weekend_<weekNum>' and 'popular_<day>'
+      // by scanning for any stored dismissed_nudge_* entries.
+      // We check the known dynamic patterns used in getSmartNudge().
+      final now = DateTime.now();
+      final weekendKey = 'dismissed_nudge_weekend_${now.weekOfYear}';
+      final popularKey = 'dismissed_nudge_popular_${now.day}';
+      if (await BrowserStorage.getString(weekendKey) != null) {
+        _dismissedNudgeKeys.add('weekend_${now.weekOfYear}');
+      }
+      if (await BrowserStorage.getString(popularKey) != null) {
+        _dismissedNudgeKeys.add('popular_${now.day}');
       }
     } catch (_) {}
   }
