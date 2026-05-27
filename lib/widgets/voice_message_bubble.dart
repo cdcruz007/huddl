@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
@@ -62,10 +63,16 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       await _svc.togglePlayback(widget.audioUrl);
     } catch (e) {
       if (!mounted) return;
+      // In debug mode show the real exception so developers can diagnose
+      // the root cause (expired token, AVAudioSession error, Android
+      // MediaPlayer platform exception, etc.) without needing a device log.
+      final msg = kDebugMode
+          ? 'Playback error: $e'
+          : 'Could not play voice message. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not play voice message. Please try again.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(msg),
+          duration: const Duration(seconds: 4),
         ),
       );
     }

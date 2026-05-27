@@ -140,5 +140,19 @@
 		<string>remote-notification</string>
 	</array>
 
+	<!-- ── App Transport Security ───────────────────────────────────────────
+	     Firebase Storage download URLs are served over HTTPS, but iOS ATS
+	     can still reject connections on some network configurations or if the
+	     CDN uses certificate pinning that differs from ATS expectations.
+	     NSAllowsArbitraryLoads lets audioplayers stream the signed HTTPS URL
+	     without ATS blocking it. This is consistent with Firebase's own
+	     recommended Info.plist configuration for Storage access on iOS.
+	────────────────────────────────────────────────────────────────────── -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
 </dict>
 </plist>

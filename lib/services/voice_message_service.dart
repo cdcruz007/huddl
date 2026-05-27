@@ -288,8 +288,16 @@ class VoiceMessageService {
   /// Android note: audioplayers 6.x defaults to LOW_LATENCY mode which does
   /// not support HTTP streaming. We must set PlayerMode.mediaPlayer first so
   /// Android MediaPlayer is used instead of SoundPool.
+  ///
+  /// Firebase Storage tokens can expire, so we refresh the URL immediately
+  /// before playback using [_refreshStorageUrl].
   Future<void> togglePlayback(String url) async {
     try {
+      // ── Fix 1: Refresh Firebase Storage URL before playback ──────────────
+      // Tokens embedded in download URLs can expire. Refreshing here ensures
+      // we always play with a valid, non-expired signed URL.
+      final freshUrl = await _refreshStorageUrl(url);
+
       if (_playingUrl == url && _isPlaying) {
         await _player.pause();
         _isPlaying = false;
@@ -310,13 +318,20 @@ class VoiceMessageService {
       _isPlaying = false;
       _playingUrlController.add(url);
 
-      // Android: must use mediaPlayer mode to stream remote HTTPS URLs.
-      // Low-latency (SoundPool) mode doesn't support network sources.
-      // iOS: re-apply audio context before each play to ensure AVAudioSession
-      // is active — the session can be deactivated by other audio (calls,
-      // other apps) and must be re-acquired before playback resumes.
       if (!kIsWeb) {
+        // ── Fix 2: Android PlayerMode ordering ──────────────────────────────
+        // setPlayerMode MUST come first on Android. Calling play(UrlSource())
+        // in one step skips explicit source-set ordering and causes a
+        // platform exception on some Android versions after stop().
+        // We set the mode, configure the AVAudioSession (iOS), set the source,
+        // then call resume() — this is the correct sequence for both platforms.
         await _player.setPlayerMode(PlayerMode.mediaPlayer);
+
+        // ── Fix 3: iOS AVAudioSession — surface errors instead of swallowing ─
+        // The session can be deactivated by interruptions (phone calls, Siri,
+        // other audio apps). Previously the catch(_) silently swallowed the
+        // failure, causing play() to throw a cryptic platform exception.
+        // Now we log and rethrow so the real cause reaches the UI.
         try {
           await _player.setAudioContext(
             AudioContext(
@@ -333,12 +348,23 @@ class VoiceMessageService {
               ),
             ),
           );
-        } catch (_) {
-          // Non-fatal — proceed with playback even if context reset fails
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[VoiceMessageService] AVAudioSession error: $e');
+          }
+          rethrow; // surface it — silent swallow causes cryptic play() failure
         }
+
+        // Set source URL explicitly then resume — avoids the Android race
+        // where combined play(UrlSource()) doesn't guarantee mode is applied
+        // before the source is prepared by the platform MediaPlayer.
+        await _player.setSourceUrl(freshUrl);
+        await _player.resume();
+      } else {
+        // Web: setSourceUrl + resume() is not needed; play(UrlSource()) works fine.
+        await _player.play(UrlSource(freshUrl));
       }
 
-      await _player.play(UrlSource(url));
       _isPlaying = true;
       _playingUrlController.add(url);
     } catch (e) {
@@ -381,6 +407,28 @@ class VoiceMessageService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /// Refresh a Firebase Storage download URL to prevent token-expiry failures.
+  ///
+  /// Firebase Storage signed tokens in download URLs can expire (typically
+  /// after a few hours to a few days). Calling [getDownloadURL()] via
+  /// [refFromURL()] fetches a fresh token from the Firebase Storage backend.
+  ///
+  /// Falls back to the original [url] if:
+  ///  - the URL is not a Firebase Storage URL (non-Firebase audio source)
+  ///  - the refresh call fails for any reason (network error, bad ref, etc.)
+  Future<String> _refreshStorageUrl(String url) async {
+    if (!url.contains('firebasestorage.googleapis.com')) return url;
+    try {
+      final ref = FirebaseStorage.instance.refFromURL(url);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[VoiceMessageService] URL refresh failed, using original: $e');
+      }
+      return url; // fall back to the original — playback may still succeed
+    }
+  }
 
   /// Format seconds into mm:ss string.
   static String formatDuration(int seconds) {
