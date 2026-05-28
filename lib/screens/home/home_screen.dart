@@ -3990,7 +3990,6 @@ class _HomeScreenState extends State<HomeScreen>
     final borderColor = isDark
         ? HuddlColors.darkDivider
         : HuddlColors.gray200;
-    final titleColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
     final subtitleColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
     final labelColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
 

@@ -126,7 +126,6 @@ class _HuddlLoadingScreenState extends State<HuddlLoadingScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? HuddlColors.darkBackground : HuddlColors.white;
     final textColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
-    final subColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
 
     return Scaffold(
       backgroundColor: bg,

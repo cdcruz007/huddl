@@ -1888,7 +1888,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
     // ── Figma design tokens ────────────────────────────────────────
     const Color filterText  = Color(0xFF42464C); // Figma: dark text
-    const Color sectionText = Color(0xFF42464C); // Figma: "Black" grayscale
 
     return Column(
       children: [
@@ -3174,7 +3173,6 @@ class _EventsTabState extends State<_EventsTab> {
         _evDistanceKm != 10.0;
 
     const Color filterText  = Color(0xFF42464C);
-    const Color sectionText = Color(0xFF42464C);
 
     return Column(
       children: [

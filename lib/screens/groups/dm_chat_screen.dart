@@ -43,8 +43,7 @@ import '../../widgets/upgrade_prompt.dart';
 const Color _kMyBubble    = HuddlColors.primary;
 // Received-bubble: light grey (Figma spec #F5F5F5)
 const Color _kTheirBubble = Color(0xFFF5F5F5);
-// Timestamp colour (Figma spec #999999)
-const Color _kTimestamp   = Color(0xFF999999);
+
 
 /// Maps borough member IDs to realistic profile photo URLs
 const Map<String, String> _kMemberProfilePhotos = {

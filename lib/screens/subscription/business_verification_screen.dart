@@ -221,7 +221,6 @@ class _BusinessVerificationScreenState
   // ── Step 1 — Details form ─────────────────────────────────────────────────
 
   Widget _buildStep1(BuildContext context) {
-    final hc = context.hc;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       child: Column(
@@ -396,7 +395,6 @@ class _BusinessVerificationScreenState
   // ── Step 2 — Success ──────────────────────────────────────────────────────
 
   Widget _buildStep2(BuildContext context) {
-    final hc = context.hc;
     return Center(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),

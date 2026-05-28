@@ -129,7 +129,6 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
   }
 
   Widget _buildRow(String label, String value, {Color? valueColor}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),

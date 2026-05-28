@@ -56,8 +56,7 @@ import '../../constants/app_text_styles.dart';
 const Color _kMyBubble  = HuddlColors.primary;  // #E8724A
 // Received-bubble colour is now adaptive via context.hc.surfaceAlt
 // (#F7F5F2 light / #2C2C2C dark) — see _ChatBubble.build()
-// Timestamp / secondary text
-const Color _kTimestamp = Color(0xFF999999);
+
 
 class GroupChatScreen extends StatefulWidget {
   /// Fires the groupId string whenever the current user sends any message

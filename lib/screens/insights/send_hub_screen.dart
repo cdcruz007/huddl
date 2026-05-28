@@ -537,7 +537,6 @@ class _NumberedStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -576,7 +575,6 @@ class _RightItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -1116,7 +1114,6 @@ class _SendAiConsentGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       child: Column(
@@ -2827,7 +2824,6 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Icon(icon, size: 15, color: _kSendAccent),

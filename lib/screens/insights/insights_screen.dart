@@ -212,7 +212,6 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textPrimary;
     return Container(
       color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),

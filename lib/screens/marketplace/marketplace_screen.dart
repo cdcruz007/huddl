@@ -5050,7 +5050,6 @@ class _AirbnbChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hc = context.hc;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -5120,7 +5119,6 @@ class _MultiSelectChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hc = context.hc;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
