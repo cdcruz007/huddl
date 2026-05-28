@@ -2114,7 +2114,8 @@ class _HomeScreenState extends State<HomeScreen>
             errorBuilder: (_, __, ___) => _discoverImageFallback(item.type, hc))
         : _discoverImageFallback(item.type, hc);
 
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.97,
       onTap: item.onTap,
       child: Container(
         width: 200,
@@ -3742,7 +3743,8 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 10),
           // Full-width card
-          GestureDetector(
+          ScaleOnPress(
+            scale: 0.98,
             onTap: () { HuddlAnimations.selectionClick(); _switchToTab(2); },
             child: Container(
               decoration: BoxDecoration(
@@ -4143,7 +4145,8 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildGoingEventFeedCard(_SmartFeedItem item, dynamic hc) {
     final event = item.event!;
     final eventMap = event.toMap();
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -4549,7 +4552,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// Group suggestion card
   Widget _buildGroupFeedCard(_SmartFeedItem item, dynamic hc) {
     final g = item.group!;
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: () {
         setState(() => _groupTaps++);
         _switchToTab(1);

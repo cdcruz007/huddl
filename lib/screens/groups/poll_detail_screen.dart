@@ -540,47 +540,52 @@ class _PollCardBody extends StatelessWidget {
                   : () => isMulti
                       ? onToggleMulti(opt.id)
                       : onSelectSingle(opt.id),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
-                constraints: const BoxConstraints(minHeight: 48),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? HuddlColors.primary.withValues(alpha: 0.1)
-                      : context.hc.scaffold,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
+              child: AnimatedScale(
+                scale: selected ? 1.02 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutBack,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  constraints: const BoxConstraints(minHeight: 48),
+                  decoration: BoxDecoration(
                     color: selected
-                        ? HuddlColors.primary
-                        : HuddlColors.divider,
-                    width: selected ? 1.5 : 1.0,
+                        ? HuddlColors.primary.withValues(alpha: 0.1)
+                        : context.hc.scaffold,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected
+                          ? HuddlColors.primary
+                          : HuddlColors.divider,
+                      width: selected ? 1.5 : 1.0,
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    // Checkbox (multi) or Radio (single) — min 48dp tap target
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: isMulti
-                          ? _CheckIcon(selected: selected)
-                          : _RadioIcon(selected: selected),
-                    ),
-                    const SizedBox(width: 12),
-                    if (poll.isCalendarMode)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 6),
-                        child: Icon(Icons.calendar_today_outlined,
-                            size: 14, color: HuddlColors.textHint),
+                    child: Row(
+                    children: [
+                      // Checkbox (multi) or Radio (single) — min 48dp tap target
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: isMulti
+                            ? _CheckIcon(selected: selected)
+                            : _RadioIcon(selected: selected),
                       ),
-                    Expanded(
-                      child: Text(
-                        opt.label,
-                        style: HuddlText.body(),
+                      const SizedBox(width: 12),
+                      if (poll.isCalendarMode)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 6),
+                          child: Icon(Icons.calendar_today_outlined,
+                              size: 14, color: HuddlColors.textHint),
+                        ),
+                      Expanded(
+                        child: Text(
+                          opt.label,
+                          style: HuddlText.body(),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -870,13 +875,21 @@ class _ResultBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: total > 0 ? option.voteCount / total : 0,
-              backgroundColor: HuddlColors.divider,
-              color: isHighlighted ? HuddlColors.primary : HuddlColors.textHint,
-              minHeight: 5,
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(
+              begin: 0.0,
+              end: total > 0 ? option.voteCount / total : 0.0,
+            ),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: value,
+                backgroundColor: HuddlColors.divider,
+                color: isHighlighted ? HuddlColors.primary : const Color(0xFF1C1C1E),
+                minHeight: 5,
+              ),
             ),
           ),
         ],
@@ -1154,7 +1167,11 @@ class PollResultsScreen extends StatelessWidget {
           // voter UIDs for this option — only creator sees names
           final voterUids = isCreator ? poll.votersForOption(opt.id) : <String>[];
 
-          return Container(
+          return AnimatedScale(
+            scale: isMyVote ? 1.02 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutBack,
+            child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1191,15 +1208,23 @@ class PollResultsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: total > 0 ? opt.voteCount / total : 0,
-                    backgroundColor: HuddlColors.divider,
-                    color: isMyVote
-                        ? HuddlColors.primary
-                        : HuddlColors.textHint,
-                    minHeight: 6,
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    begin: 0.0,
+                    end: total > 0 ? opt.voteCount / total : 0.0,
+                  ),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) => ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: value,
+                      backgroundColor: HuddlColors.divider,
+                      color: isMyVote
+                          ? HuddlColors.primary
+                          : const Color(0xFF1C1C1E),
+                      minHeight: 6,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1218,6 +1243,7 @@ class PollResultsScreen extends StatelessWidget {
                       )),
                 ],
               ],
+            ),
             ),
           );
         }),
@@ -1882,7 +1908,11 @@ class PollDetailScreen extends StatelessWidget {
             final count = poll.votesFor(i);
             final pct = total > 0 ? (count / total * 100).round() : 0;
             final isMyVote = poll.myVotes.contains(i);
-            return Container(
+            return AnimatedScale(
+              scale: isMyVote ? 1.02 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1906,21 +1936,30 @@ class PollDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: total > 0 ? count / total : 0,
-                      backgroundColor: HuddlColors.divider,
-                      color: isMyVote
-                          ? HuddlColors.primary
-                          : HuddlColors.textHint,
-                      minHeight: 6,
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: 0.0,
+                      end: total > 0 ? count / total : 0.0,
+                    ),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) => ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: value,
+                        backgroundColor: HuddlColors.divider,
+                        color: isMyVote
+                            ? HuddlColors.primary
+                            : const Color(0xFF1C1C1E),
+                        minHeight: 6,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text('$count vote${count != 1 ? 's' : ''}',
                       style: HuddlText.caption(color: context.hc.textTertiary)),
                 ],
+              ),
               ),
             );
           }),

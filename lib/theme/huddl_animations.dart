@@ -491,6 +491,8 @@ class CardSkeleton extends StatelessWidget {
 
 // =============================================================================
 // JOIN BUTTON — animated Join → Joined state transition
+// Parameterised colours so the same widget serves groups (orange confirmed),
+// services/events (nearBlack confirmed), and any future variant.
 // =============================================================================
 class JoinButton extends StatefulWidget {
   const JoinButton({
@@ -499,12 +501,18 @@ class JoinButton extends StatefulWidget {
     required this.onTap,
     this.label = 'Join',
     this.joinedLabel = 'Joined',
+    this.joinedColor = const Color(0xFF1C1C1E),     // nearBlack — confirmed state
+    this.unJoinedColor = const Color(0xFFF7F7F7),   // light grey — available state
+    this.unJoinedTextColor = const Color(0xFF1C1C1E),
   });
 
   final bool isJoined;
   final VoidCallback onTap;
   final String label;
   final String joinedLabel;
+  final Color joinedColor;
+  final Color unJoinedColor;
+  final Color unJoinedTextColor;
 
   @override
   State<JoinButton> createState() => _JoinButtonState();
@@ -550,16 +558,9 @@ class _JoinButtonState extends State<JoinButton>
       animation: _progress,
       builder: (_, __) {
         final t = _progress.value;
-        final bg = Color.lerp(
-          const Color(0xFFF7F7F7),
-          const Color(0xFFFF965C),
-          t,
-        )!;
-        final fg = Color.lerp(
-          const Color(0xFF1A1A1A),
-          Colors.white,
-          t,
-        )!;
+        // Lerp between caller-supplied colours
+        final bg = Color.lerp(widget.unJoinedColor, widget.joinedColor, t)!;
+        final fg = Color.lerp(widget.unJoinedTextColor, Colors.white, t)!;
 
         return GestureDetector(
           onTap: () {
@@ -571,10 +572,11 @@ class _JoinButtonState extends State<JoinButton>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: bg,
-              borderRadius: BorderRadius.circular(999),
+              // Pill shape — join pills are always pill-shaped
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: t > 0.5
-                    ? const Color(0xFFFF965C)
+                    ? widget.joinedColor.withValues(alpha: 0.3)
                     : const Color(0xFFE8E8E8),
               ),
             ),

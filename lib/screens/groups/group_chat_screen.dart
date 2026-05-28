@@ -109,6 +109,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final BlockService _blockService = BlockService();
   final VoiceMessageService _voiceSvc = VoiceMessageService.instance;
   bool _isVoiceRecording = false;
+  bool _sendPulse = false;
 
   /// Whether the user has changed borough and this is an old-borough default group
   bool _canLeaveGroup = false;
@@ -1113,6 +1114,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     _messageController.clear();
     _fireMessageSentNotifier();
+    setState(() => _sendPulse = true);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _sendPulse = false);
+    });
 
     // ── Safety pre-filter: Layer 1 (local blocklist) + Layer 2 (AI) ────────
     final safetyResult = await MessageSafetyService().classify(text);
@@ -4176,14 +4181,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   if (hasText) {
                     return GestureDetector(
                       onTap: _sendMessage,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: HuddlColors.primary,
-                          shape: BoxShape.circle,
+                      child: AnimatedScale(
+                        scale: _sendPulse ? 1.25 : 1.0,
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: HuddlColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
                         ),
-                        child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
                       ),
                     );
                   }

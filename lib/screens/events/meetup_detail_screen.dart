@@ -716,51 +716,73 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
             ),
           ],
         ),
-        child: HuddlButton(
-          label: _hasEnded
-              ? 'Ended'
-              : _isFull
-                  ? 'Full'
-                  : _meetup.isGoing
-                      ? 'Joined'
-                      : 'Join',
-          variant: _meetup.isGoing
-              ? HuddlButtonVariant.confirmed
-              : HuddlButtonVariant.primary,
-          leadingIcon: _hasEnded
-              ? Icons.event_busy_outlined
-              : _isFull
-                  ? Icons.group_off_outlined
-                  : _meetup.isGoing
-                      ? Icons.check_circle
-                      : Icons.group_add_outlined,
-          onPressed: (_isFull || _hasEnded) ? null : () {
-            HapticFeedback.mediumImpact();
-            if (!_meetup.isGoing) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "You're going to \${_meetup.title}!",
-                          style: HuddlText.body(color: Colors.white),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(scale: animation, child: child),
+          ),
+          child: ElevatedButton.icon(
+            key: ValueKey(_meetup.isGoing),
+            onPressed: (_isFull && !_meetup.isGoing) || _hasEnded ? null : () {
+              HapticFeedback.mediumImpact();
+              if (!_meetup.isGoing) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "You're going to ${_meetup.title}!",
+                            style: HuddlText.body(color: Colors.white),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    backgroundColor: HuddlColors.nearBlack,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    duration: const Duration(seconds: 3),
                   ),
-                  backgroundColor: HuddlColors.textDark,
-                  behavior: SnackBarBehavior.floating,
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-            }
-            _toggleGoing();
-          },
+                );
+              }
+              _toggleGoing();
+            },
+            icon: Icon(
+              _hasEnded
+                  ? Icons.event_busy_outlined
+                  : _isFull
+                      ? Icons.group_off_outlined
+                      : _meetup.isGoing
+                          ? Icons.check_circle
+                          : Icons.group_add_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
+            label: Text(
+              _hasEnded
+                  ? 'Ended'
+                  : _isFull && !_meetup.isGoing
+                      ? 'Full'
+                      : _meetup.isGoing
+                          ? "You're going!"
+                          : "Count me in",
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _meetup.isGoing
+                  ? const Color(0xFF1C1C1E)
+                  : HuddlColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
+            ),
+          ),
         ),
       ),
 

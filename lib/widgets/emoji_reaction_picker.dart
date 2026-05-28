@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
+import '../theme/huddl_animations.dart';
 import '../constants/app_text_styles.dart';
 
 /// The 6 quick-access emojis shown in the floating bar above a message.
@@ -128,7 +129,9 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
     return Semantics(
       label: 'React with $emoji',
       button: true,
-      child: GestureDetector(
+      child: ScaleOnPress(
+        scale: 0.85,
+        duration: const Duration(milliseconds: 100),
         onTap: () => Navigator.pop(context, emoji),
         child: Container(
           width: 48,
@@ -238,7 +241,9 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
               ),
               itemCount: emojis.length,
               itemBuilder: (ctx, i) {
-                return GestureDetector(
+                return ScaleOnPress(
+                  scale: 0.85,
+                  duration: const Duration(milliseconds: 100),
                   onTap: () => Navigator.pop(context, emojis[i]),
                   child: Container(
                     alignment: Alignment.center,

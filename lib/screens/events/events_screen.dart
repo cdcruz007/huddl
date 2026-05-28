@@ -4718,7 +4718,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                             style: HuddlText.caption(),
                           ),
                         ),
-                        // Join / Joined / Full / Restricted button — Groups-style
+                        // Join / Joined / Full / Restricted button — JoinButton (animated pill)
                         Semantics(
                           label: isRestricted
                               ? 'Restricted meetup'
@@ -4728,43 +4728,23 @@ class _MeetupCardState extends State<_MeetupCard> {
                                       ? 'You are going to ${meetup.title}'
                                       : 'Join ${meetup.title}',
                           button: !meetup.isGoing,
-                          child: ScaleOnPress(
-                            haptic: false,
-                            onTap: meetup.isGoing ? null : () {
+                          child: JoinButton(
+                            isJoined: meetup.isGoing,
+                            onTap: (isRestricted || _isFull) ? () {} : () {
                               HuddlAnimations.mediumTap();
                               widget.onView?.call();
                               if (isRestricted) {
                                 widget.onAccessDenied?.call();
                                 return;
                               }
-                              if (_isFull && !meetup.isGoing) return; // Full — block join
+                              if (_isFull && !meetup.isGoing) return;
                               _handleJoin(context);
                             },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isRestricted
-                                    ? const Color(0xFFF0F0F0)
-                                    : _isFull && !meetup.isGoing
-                                        ? const Color(0xFFF0F0F0)
-                                        : meetup.isGoing
-                                            ? const Color(0xFFF0F0F0)
-                                            : HuddlColors.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                isRestricted
-                                    ? 'Restricted'
-                                    : _isFull && !meetup.isGoing
-                                        ? 'Full'
-                                        : meetup.isGoing
-                                            ? 'Joined'
-                                            : 'Join',
-                                style: HuddlText.body(weight: FontWeight.w600),
-                              ),
-                            ),
+                            label: isRestricted ? 'Restricted' : _isFull ? 'Full' : 'Join',
+                            joinedLabel: 'Joined',
+                            joinedColor: const Color(0xFF1C1C1E),
+                            unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                            unJoinedTextColor: HuddlColors.primary,
                           ),
                         ),
                       ],
@@ -5112,46 +5092,16 @@ class _EventListCardState extends State<_EventListCard> {
                         style: HuddlText.caption(),
                       ),
                     ),
-                    // Join / Going pill — taps directly join without opening detail
-                    ScaleOnPress(
-                      haptic: false,
-                      onTap: () => isGoing
-                          ? null // already going — tap does nothing (or could toggle off)
-                          : _handleJoinFromCard(
-                              eventId, event['title'] as String? ?? 'this event'),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: isGoing
-                              ? HuddlColors.nearBlack
-                              : HuddlColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _joiningInProgress
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: HuddlColors.primary),
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (isGoing) ...[
-                                    const Icon(Icons.check_circle,
-                                        size: 13, color: Colors.white),
-                                    const SizedBox(width: 4),
-                                  ],
-                                  Text(
-                                    isGoing ? 'Going' : 'Join',
-                                    style: HuddlText.body(weight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                      ),
+                    // Join / Going pill — JoinButton (animated pill)
+                    JoinButton(
+                      isJoined: isGoing,
+                      onTap: isGoing ? () {} : () => _handleJoinFromCard(
+                          eventId, event['title'] as String? ?? 'this event'),
+                      label: 'Going',
+                      joinedLabel: 'Going ✓',
+                      joinedColor: const Color(0xFF1C1C1E),
+                      unJoinedColor: const Color(0xFFF7F7F7),
+                      unJoinedTextColor: const Color(0xFF1C1C1E),
                     ),
                   ],
                 ),

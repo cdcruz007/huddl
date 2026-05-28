@@ -2922,9 +2922,9 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, '
           '${item.ageStage.shortLabel}, ${item.sellerLocation}.',
       button: true,
-      child: InkWell(
+      child: ScaleOnPress(
+        scale: 0.97,
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -3177,9 +3177,9 @@ class _MarketItemCardState extends State<_MarketItemCard> {
         onLongPress: () {
           if (widget.onDismiss != null) widget.onDismiss!();
         },
-        child: InkWell(
+        child: ScaleOnPress(
+          scale: 0.98,
           onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(20),
           child: Container(
             margin: const EdgeInsets.only(bottom: 18),
             decoration: BoxDecoration(
@@ -3472,9 +3472,9 @@ class _MarketSearchRow extends StatelessWidget {
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
     final priceColor = item.isFree ? HuddlColors.success : _kMarketBlue;
 
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.99,
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         color: hc.surface,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -3667,7 +3667,8 @@ class _MarketListCardState extends State<_MarketListCard> {
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
     final priceColor = item.isFree ? HuddlColors.success : _kMarketBlue;
 
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: widget.onTap,
       child: Container(
         // Full-width card — same shape/shadow as Groups discover card
@@ -3966,7 +3967,8 @@ class _MarketGridCardState extends State<_MarketGridCard> {
     return Semantics(
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, ${item.sellerLocation}',
       button: true,
-      child: GestureDetector(
+      child: ScaleOnPress(
+        scale: 0.97,
         onTap: widget.onTap,
         child: ColoredBox(
           color: isDark ? hc.surface : const Color(0xFFF7F5F2),

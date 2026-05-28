@@ -1247,32 +1247,32 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
             ],
             // ── Endorse / Endorsed pill — hidden for own listing ─────────
             if (FirebaseAuth.instance.currentUser?.uid != widget.listing.ownerUid)
-              ScaleOnPress(
-                haptic: false,
-                onTap: _endorsing ? null : _toggleEndorse,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _hasEndorsed
-                        ? const Color(0xFFF0F0F0)
-                        : HuddlColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedOpacity(
+                    opacity: _endorsing ? 0.4 : 1.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: JoinButton(
+                      isJoined: _hasEndorsed,
+                      onTap: _endorsing ? () {} : _toggleEndorse,
+                      label: 'Endorse',
+                      joinedLabel: 'Endorsed',
+                      joinedColor: const Color(0xFF1C1C1E),
+                      unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                      unJoinedTextColor: HuddlColors.primary,
+                    ),
                   ),
-                  child: _endorsing
-                      ? SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
-                          ),
-                        )
-                      : Text(
-                          _hasEndorsed ? 'Endorsed' : 'Endorse',
-                          style: HuddlText.body(weight: FontWeight.w600),
-                        ),
-                ),
+                  if (_endorsing)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(HuddlColors.primary),
+                      ),
+                    ),
+                ],
               ),
           ],
         ),

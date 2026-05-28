@@ -103,6 +103,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final BlockService _blockService = BlockService();
   final VoiceMessageService _voiceSvc = VoiceMessageService.instance;
   bool _isVoiceRecording = false;
+  bool _sendPulse = false;
 
   List<DirectMessage> _messages = [];
   bool _isLoading = true;
@@ -421,6 +422,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
     _messageController.clear();
     HapticFeedback.lightImpact();
+    setState(() => _sendPulse = true);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _sendPulse = false);
+    });
 
     if (_isRealUser) {
       // ── Real user: send via Firestore ──────────────────────────────────
@@ -1408,14 +1413,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         HapticFeedback.lightImpact();
                         _sendMessage();
                       },
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(
-                          color: HuddlColors.primary,
-                          shape: BoxShape.circle,
+                      child: AnimatedScale(
+                        scale: _sendPulse ? 1.25 : 1.0,
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: HuddlColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
                         ),
-                        child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
                       ),
                     );
                   }

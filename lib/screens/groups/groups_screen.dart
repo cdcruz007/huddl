@@ -5908,32 +5908,21 @@ class _DiscoverGroupCard extends StatelessWidget {
                           style: HuddlText.caption(),
                         ),
                       ),
-                      // Join / Joined / Restricted button — grey pill (Figma)
+                      // Join / Joined / Restricted button — JoinButton (animated pill)
                       Semantics(
                         label: isJoined ? 'Already joined ${group.name}' : (!canAccess ? 'Restricted group' : 'Join ${group.name}'),
                         button: !isJoined,
-                        child: ScaleOnPress(
-                          haptic: false,
-                          onTap: isJoined ? null : () {
+                        child: JoinButton(
+                          isJoined: isJoined,
+                          onTap: isJoined ? () {} : () {
                             HuddlAnimations.mediumTap();
                             onJoinTap();
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isJoined
-                                  ? const Color(0xFFF0F0F0)
-                                  : (!canAccess
-                                      ? const Color(0xFFF0F0F0)
-                                      : HuddlColors.primary.withValues(alpha: 0.12)),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
-                              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.primary),
-                            ),
-                          ),
+                          label: !canAccess ? 'Restricted' : 'Join',
+                          joinedLabel: 'Joined',
+                          joinedColor: const Color(0xFF1C1C1E),
+                          unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                          unJoinedTextColor: HuddlColors.primary,
                         ),
                       ),
                     ],

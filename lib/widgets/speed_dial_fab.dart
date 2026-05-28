@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
+import '../theme/huddl_animations.dart';
 import '../constants/app_text_styles.dart';
 
 // =============================================================================
@@ -221,19 +222,23 @@ class _DialItem extends StatelessWidget {
             scale: animation.value.clamp(0.0, 1.0),
             child: child,
           ),
-          child: Material(
-            color:       color,
-            borderRadius: BorderRadius.circular(16),
-            elevation:   3,
-            child: InkWell(
-              onTap:        onPressed,
-              borderRadius: BorderRadius.circular(16),
-              splashColor:  Colors.white.withValues(alpha: 0.2),
-              child: SizedBox(
-                width:  48,
-                height: 48,
-                child: Icon(icon, color: Colors.white, size: 22),
+          child: FabScaleOnPress(
+            onTap: onPressed,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1F000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
               ),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
           ),
         ),
