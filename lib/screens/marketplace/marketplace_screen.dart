@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
@@ -1161,7 +1162,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     // Push the create-listing screen.
     final result = await Navigator.push<RehomeItem>(
       context,
-      MaterialPageRoute(builder: (_) => const CreateListingScreen()),
+      HuddlSpringPageRoute(page: const CreateListingScreen()),
     );
 
     // Dismiss the overlay if it is still displayed.
@@ -1178,15 +1179,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     _ai.recordView(item);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),
+      HuddlSpringPageRoute(page: ItemDetailScreen(item: item)),
     );
   }
 
   void _openEditListing(RehomeItem item) async {
     final result = await Navigator.push<RehomeItem>(
       context,
-      MaterialPageRoute(
-        builder: (_) => CreateListingScreen(existingItem: item),
+      HuddlSpringPageRoute(
+        page: CreateListingScreen(existingItem: item),
       ),
     );
     if (result != null && mounted) {

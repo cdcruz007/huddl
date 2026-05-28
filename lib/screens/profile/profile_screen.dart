@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/animations/huddl_loading_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -675,8 +677,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: context.hc.scaffold,
-        body: Center(
-            child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
+        body: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: HuddlSkeletonProfile(),
+        ),
       );
     }
 
@@ -5105,8 +5109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(c);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const BoroughDebugScreen()),
+                HuddlSpringPageRoute(
+                    page: const BoroughDebugScreen()),
               );
             }),
           const SizedBox(height: 16),

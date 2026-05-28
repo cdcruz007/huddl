@@ -15,6 +15,7 @@ import '../../widgets/common/huddl_button.dart';
 
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
+import '../../widgets/animations/huddl_loading_states.dart';
 import '../../widgets/huddl_character.dart';
 
 // =============================================================================
@@ -720,9 +721,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   if (snap.connectionState == ConnectionState.waiting &&
                       !snap.hasData &&
                       !_streamTimedOut) {
-                    return const Center(
-                        child: CircularProgressIndicator(
-                            color: HuddlColors.textTertiary));
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                      child: HuddlSkeletonFeed(cardCount: 2),
+                    );
                   }
                   // On timeout, error, or empty Firestore result → seed data
                   final all = (snap.hasError ||
@@ -2375,10 +2377,8 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             const SizedBox(height: 10),
             if (_loadingEndorsements)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                    child:
-                        CircularProgressIndicator(color: HuddlColors.primary)),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                child: HuddlSkeletonFeed(cardCount: 2),
               )
             else if (_endorsements.isEmpty)
               Padding(

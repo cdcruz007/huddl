@@ -52,6 +52,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../theme/huddl_animations.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -1401,8 +1402,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void _openThread(ChatMessage msg) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => ThreadReplyScreen(
+      HuddlSpringPageRoute(
+        page: ThreadReplyScreen(
           rootMessage: msg,
           groupId: widget.groupId,
           groupName: widget.groupName,
@@ -4234,8 +4235,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (_pollCreating) return; // creation lock — prevent double-tap
     final result = await Navigator.push<PollData>(
       context,
-      MaterialPageRoute(
-        builder: (_) => CreatePollScreen(groupName: widget.groupName),
+      HuddlSpringPageRoute(
+        page: CreatePollScreen(groupName: widget.groupName),
       ),
     );
     if (result == null || !mounted) return;
@@ -4518,8 +4519,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PollDetailScreen(
+      HuddlSpringPageRoute(
+        page: PollDetailScreen(
           poll: poll,
           onDeletePoll: () => _deletePoll(poll.id),
         ),

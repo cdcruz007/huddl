@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
 import '../../services/default_group_service.dart';
@@ -163,7 +164,7 @@ class EventsScreenState extends State<EventsScreen>
   void _navigateToCreateMeetup() async {
     final newMeetup = await Navigator.push<Meetup>(
       context,
-      MaterialPageRoute(builder: (_) => const CreateMeetupScreen()),
+      HuddlSpringPageRoute(page: const CreateMeetupScreen()),
     );
     if (newMeetup != null && mounted) {
       Navigator.push(
@@ -267,9 +268,8 @@ class EventsScreenState extends State<EventsScreen>
                           Navigator.pop(ctx);
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  MeetupDetailScreen(meetup: meetup),
+                            HuddlSpringPageRoute(
+                              page: MeetupDetailScreen(meetup: meetup),
                             ),
                           );
                         },
@@ -303,9 +303,8 @@ class EventsScreenState extends State<EventsScreen>
                           Navigator.pop(ctx);
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  EventDetailScreen(event: event.toMap()),
+                            HuddlSpringPageRoute(
+                              page: EventDetailScreen(event: event.toMap()),
                             ),
                           );
                         },
@@ -2412,16 +2411,15 @@ class _ImGoingCard extends StatelessWidget {
                   if (item.isMeetup && item.meetup != null) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => MeetupDetailScreen(meetup: item.meetup!),
+                      HuddlSpringPageRoute(
+                        page: MeetupDetailScreen(meetup: item.meetup!),
                       ),
                     );
                   } else if (item.event != null) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            EventDetailScreen(event: item.event!.toMap()),
+                      HuddlSpringPageRoute(
+                        page: EventDetailScreen(event: item.event!.toMap()),
                       ),
                     );
                   }
@@ -4254,8 +4252,8 @@ class _MeetupSearchRow extends StatelessWidget {
         if (!canAccess) { onAccessDenied?.call(); return; }
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => MeetupDetailScreen(meetup: meetup),
+          HuddlSpringPageRoute(
+            page: MeetupDetailScreen(meetup: meetup),
           ),
         );
       },

@@ -6,6 +6,8 @@ import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/animations/huddl_loading_states.dart';
 import '../../constants/app_text_styles.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -1698,8 +1700,9 @@ class _MessagesTabState extends State<_MessagesTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: HuddlColors.textTertiary),
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: HuddlSkeletonFeed(cardCount: 4),
       );
     }
 
@@ -2029,8 +2032,8 @@ class _MessagesTabState extends State<_MessagesTab> {
         HuddlAnimations.selectionClick();
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => GroupChatScreen(
+          HuddlSpringPageRoute(
+            page: GroupChatScreen(
               groupId: summary.groupId,
               groupName: summary.groupName,
               groupImageUrl: imageUrl,
@@ -6195,7 +6198,10 @@ class _SavedTabState extends State<_SavedTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: HuddlColors.textTertiary));
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: HuddlSkeletonFeed(cardCount: 2),
+      );
     }
 
     final hasAny = _svc.savedMessages.isNotEmpty ||

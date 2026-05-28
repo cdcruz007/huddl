@@ -494,6 +494,109 @@ class HuddlSkeletonFeed extends StatelessWidget {
   }
 }
 
+/// Profile screen skeleton — avatar strip + 3 stat boxes + 2 section rows.
+class HuddlSkeletonProfile extends StatefulWidget {
+  const HuddlSkeletonProfile({super.key});
+
+  @override
+  State<HuddlSkeletonProfile> createState() => _HuddlSkeletonProfileState();
+}
+
+class _HuddlSkeletonProfileState extends State<HuddlSkeletonProfile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _shimmerCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedBuilder(
+      animation: _shimmerCtrl,
+      builder: (_, __) {
+        final grad = LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: isDark
+              ? [const Color(0xFF2A2A2A), const Color(0xFF3E3E3E), const Color(0xFF2A2A2A)]
+              : [const Color(0xFFEEEEEE), const Color(0xFFF8F8F8), const Color(0xFFEEEEEE)],
+          stops: [
+            (_shimmerCtrl.value - 1).clamp(0.0, 1.0),
+            _shimmerCtrl.value.clamp(0.0, 1.0),
+            (_shimmerCtrl.value + 1).clamp(0.0, 1.0),
+          ],
+        );
+
+        Widget box(double w, double h, {double r = 10}) => Container(
+              width: w,
+              height: h,
+              decoration: BoxDecoration(
+                gradient: grad,
+                borderRadius: BorderRadius.circular(r),
+              ),
+            );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar + name strip
+            Row(children: [
+              box(72, 72, r: 36),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  box(140, 16),
+                  const SizedBox(height: 8),
+                  box(100, 12),
+                ]),
+              ),
+            ]),
+            const SizedBox(height: 20),
+            // Stat strip — 3 boxes
+            Row(children: [
+              Expanded(child: box(double.infinity, 56, r: 12)),
+              const SizedBox(width: 10),
+              Expanded(child: box(double.infinity, 56, r: 12)),
+              const SizedBox(width: 10),
+              Expanded(child: box(double.infinity, 56, r: 12)),
+            ]),
+            const SizedBox(height: 20),
+            // Section header
+            box(120, 14),
+            const SizedBox(height: 12),
+            // Row of small cards
+            Row(children: [
+              Expanded(child: box(double.infinity, 80, r: 12)),
+              const SizedBox(width: 10),
+              Expanded(child: box(double.infinity, 80, r: 12)),
+            ]),
+            const SizedBox(height: 20),
+            // Another section header
+            box(100, 14),
+            const SizedBox(height: 12),
+            box(double.infinity, 72, r: 12),
+            const SizedBox(height: 10),
+            box(double.infinity, 72, r: 12),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class HuddlSkeletonCard extends StatefulWidget {
   const HuddlSkeletonCard({super.key, this.imageHeight = 220});
   final double imageHeight;
