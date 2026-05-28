@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -43,31 +42,6 @@ const List<String> _kMarketAvatarPool = [
   'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=48&q=70',
 ];
 
-// _adaptiveText kept for call-site compatibility — wraps GoogleFonts.poppins.
-// New code should use HuddlText directly.
-// _adaptiveText kept for call-site compatibility — wraps GoogleFonts.poppins.
-// New code should use HuddlText directly.
-TextStyle _adaptiveText({
-  double fontSize = 14,
-  FontWeight fontWeight = FontWeight.w400,
-  Color? color,
-  double? height,
-  FontStyle? fontStyle,
-  double? letterSpacing,
-  TextDecoration? decoration,
-  Color? decorationColor,
-}) {
-  return GoogleFonts.poppins(
-    fontSize: fontSize,
-    fontWeight: fontWeight,
-    color: color,
-    height: height,
-    fontStyle: fontStyle,
-    letterSpacing: letterSpacing,
-    decoration: decoration,
-    decorationColor: decorationColor,
-  );
-}
 
 // =============================================================================
 // INVISIBLE AI ENGINE — learns silently, surfaces results naturally
@@ -1245,21 +1219,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Delist this item?',
-                  style: _adaptiveText(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.heading(color: hc.textPrimary),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Are you sure you want to delist "${item.title}"? This will remove it from the marketplace.',
                   textAlign: TextAlign.center,
-                  style: _adaptiveText(
-                    fontSize: 14,
-                    color: hc.textSecondary,
-                    height: 1.5,
-                  ),
+                  style: HuddlText.body(color: hc.textSecondary).copyWith(height: 1.5),
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -1396,11 +1362,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   header: true,
                   child: Text(
                     'Market',
-                    style: _adaptiveText(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
+                    style: HuddlText.heading(color: hc.textPrimary),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1456,8 +1418,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                 setState(() => _searchQuery = val);
                               },
                               onSubmitted: (_) => _searchFocus.unfocus(),
-                              style: _adaptiveText(
-                                  fontSize: 13, color: hc.textPrimary),
+                              style: HuddlText.caption(color: hc.textPrimary),
                               decoration: InputDecoration(
                                 hintText: _ai.smartPlaceholder(),
                                 border: InputBorder.none,
@@ -1465,9 +1426,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                 focusedBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                                 isDense: true,
-                                hintStyle: _adaptiveText(
-                                    fontSize: 13,
-                                    color: hc.textTertiary),
+                                hintStyle: HuddlText.caption(color: hc.textTertiary),
                               ),
                             ),
                           ),
@@ -1783,7 +1742,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               alignment: Alignment.centerLeft,
               child: Text(
                 '${filtered.length} listing${filtered.length == 1 ? '' : 's'}${q.isNotEmpty ? ' matching "$_searchQuery"' : ''}',
-                style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                style: HuddlText.caption(color: hc.textTertiary),
               ),
             ),
           ),
@@ -1866,7 +1825,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               child: Center(
                 child: Text(
                   'Listings are ordered by what needs your attention first.',
-                  style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                  style: HuddlText.caption(color: hc.textTertiary),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -1919,11 +1878,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     Expanded(
                       child: Text(
                         _ai.sellPrompt(),
-                        style: _adaptiveText(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: hc.textPrimary,
-                        ),
+                        style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w500),
                       ),
                     ),
                     Icon(Icons.arrow_forward_ios,
@@ -1981,19 +1936,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               children: [
                 Text(
                   title,
-                  style: _adaptiveText(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   '${listings.length}',
-                  style: _adaptiveText(
-                    fontSize: 12,
-                    color: hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(color: hc.textTertiary),
                 ),
             ],
           ),
@@ -2029,11 +1977,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             'Sold history',
-            style: _adaptiveText(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: hc.textTertiary,
-            ),
+            style: HuddlText.caption(color: hc.textTertiary, weight: FontWeight.w500),
           ),
         ),
         ...soldItems.map((item) => _SellListingTile(
@@ -2063,11 +2007,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               children: [
                 Text(
                   'Offers',
-                  style: _adaptiveText(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600),
                 ),
                 const SizedBox(width: 6),
                 Container(
@@ -2078,11 +2018,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ),
                   child: Text(
                     '${offers.length}',
-                    style: _adaptiveText(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textSecondary,
-                    ),
+                    style: HuddlText.caption(color: HuddlColors.textSecondary, weight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -2176,18 +2112,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             children: [
                               Text(
                                 isAccept ? 'Accept offer' : 'Decline offer',
-                                style: _adaptiveText(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: shc.textPrimary,
-                                ),
+                                style: HuddlText.heading(color: shc.textPrimary),
                               ),
                               Text(
                                 '${offer.buyerName} · ${offer.amountDisplay} for ${offer.itemTitle}',
-                                style: _adaptiveText(
-                                  fontSize: 12,
-                                  color: shc.textTertiary,
-                                ),
+                                style: HuddlText.caption(color: shc.textTertiary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -2201,11 +2130,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     // ── Optional message ─────────────────────────────────
                     Text(
                       'Send a message (optional)',
-                      style: _adaptiveText(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: shc.textSecondary,
-                      ),
+                      style: HuddlText.caption(color: shc.textSecondary, weight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -2220,17 +2145,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         maxLines: 3,
                         minLines: 2,
                         maxLength: 200,
-                        style: _adaptiveText(fontSize: 14, color: shc.textPrimary),
+                        style: HuddlText.body(color: shc.textPrimary),
                         decoration: InputDecoration(
                           hintText: isAccept
                               ? 'e.g. "Great! Please get in touch to arrange pick-up."'
                               : 'e.g. "Sorry, I\'ve had another offer."',
-                          hintStyle: _adaptiveText(
-                              fontSize: 13, color: shc.textTertiary),
+                          hintStyle: HuddlText.caption(color: shc.textTertiary),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.all(14),
-                          counterStyle: _adaptiveText(
-                              fontSize: 11, color: shc.textTertiary),
+                          counterStyle: HuddlText.caption(color: shc.textTertiary),
                         ),
                         onChanged: (_) => setSheetState(() {}),
                       ),
@@ -2240,11 +2163,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     // ── Quick-reply suggestions ──────────────────────────
                     Text(
                       'Quick replies',
-                      style: _adaptiveText(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: shc.textTertiary,
-                      ),
+                      style: HuddlText.caption(color: shc.textTertiary, weight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     ...quickReplies.map((reply) => GestureDetector(
@@ -2274,12 +2193,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             ),
                             child: Text(
                               reply,
-                              style: _adaptiveText(
-                                fontSize: 13,
-                                color: msgController.text == reply
+                              style: HuddlText.caption(color: msgController.text == reply
                                     ? accentColor
-                                    : shc.textSecondary,
-                              ),
+                                    : shc.textSecondary),
                             ),
                           ),
                         )),
@@ -2459,10 +2375,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(item.title,
-                            style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                            style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                           Text(item.priceDisplay,
-                            style: _adaptiveText(fontSize: 13, color: _kMarketBlue, fontWeight: FontWeight.w500)),
+                            style: HuddlText.caption(color: _kMarketBlue, weight: FontWeight.w500)),
                         ],
                       ),
                     ),
@@ -2575,11 +2491,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         leading: Icon(icon, size: 22,
             color: isDestructive ? HuddlColors.error : hc.textSecondary),
         title: Text(label,
-          style: _adaptiveText(
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-            color: isDestructive ? HuddlColors.error : hc.textPrimary,
-          )),
+          style: HuddlText.body(color: isDestructive ? HuddlColors.error : hc.textPrimary)),
         onTap: onTap,
         minTileHeight: 48,
       ),
@@ -2624,7 +2536,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               alignment: Alignment.centerLeft,
               child: Text(
                 '${saved.length} saved item${saved.length == 1 ? '' : 's'}${q.isNotEmpty ? ' matching "$_searchQuery"' : ''}',
-                style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                style: HuddlText.caption(color: hc.textTertiary),
               ),
             ),
           ),
@@ -2938,11 +2850,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                               const SizedBox(width: 3),
                               Text(
                                 '$photoCount',
-                                style: _adaptiveText(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                                style: HuddlText.caption(color: Colors.white, weight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -2961,11 +2869,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         ),
                         child: Text(
                           item.isFree ? 'Free' : item.condition.label,
-                          style: _adaptiveText(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: HuddlText.caption(color: Colors.white, weight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -3017,23 +2921,14 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                           Expanded(
                             child: Text(
                               item.category.label.toUpperCase(),
-                              style: _adaptiveText(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: hc.textTertiary,
-                                letterSpacing: 0.3,
-                              ),
+                              style: HuddlText.caption(color: hc.textTertiary, weight: FontWeight.w600).copyWith(letterSpacing: 0.3),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Text(
                             item.priceDisplay,
-                            style: _adaptiveText(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: item.isFree ? HuddlColors.success : _kMarketBlue,
-                            ),
+                            style: HuddlText.body(color: item.isFree ? HuddlColors.success : _kMarketBlue, weight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -3042,12 +2937,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                       Expanded(
                         child: Text(
                           item.title,
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: hc.textPrimary,
-                            height: 1.25,
-                          ),
+                          style: HuddlText.caption(color: hc.textPrimary, weight: FontWeight.w600).copyWith(height: 1.25),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -3064,10 +2954,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                               item.sellerLocation.isNotEmpty
                                   ? item.sellerLocation
                                   : 'Near you',
-                              style: _adaptiveText(
-                                fontSize: 11,
-                                color: hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(color: hc.textTertiary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -3245,23 +3132,15 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           const SizedBox(width: 5),
                           Text(
                             item.category.label.toUpperCase(),
-                            style: _adaptiveText(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: hc.textTertiary,
-                            ),
+                            style: HuddlText.caption(color: hc.textTertiary, weight: FontWeight.w600),
                           ),
                           const Spacer(),
                           // Price — right-aligned in category row
                           Text(
                             item.priceDisplay,
-                            style: _adaptiveText(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: item.isFree
+                            style: HuddlText.body(color: item.isFree
                                   ? HuddlColors.nearBlack
-                                  : _kMarketBlue,
-                            ),
+                                  : _kMarketBlue, weight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -3269,11 +3148,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                       // Title
                       Text(
                         item.title,
-                        style: _adaptiveText(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: hc.textPrimary,
-                        ),
+                        style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w700),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -3287,10 +3162,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           Expanded(
                             child: Text(
                               '${item.ageStage.shortLabel} \u2022 ${item.sellerLocation}',
-                              style: _adaptiveText(
-                                fontSize: 12,
-                                color: hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(color: hc.textTertiary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -3343,10 +3215,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                       Expanded(
                         child: Text(
                           'Near you',
-                          style: _adaptiveText(
-                            fontSize: 12,
-                            color: hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(color: hc.textTertiary),
                         ),
                       ),
                       // Action pill — matches Events "Join" pill exactly
@@ -3359,11 +3228,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                         ),
                         child: Text(
                           'Message',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                          ),
+                          style: HuddlText.caption(color: HuddlColors.textDark, weight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -3461,12 +3326,7 @@ class _MarketSearchRow extends StatelessWidget {
                   // Category label — small caps
                   Text(
                     item.category.label.toUpperCase(),
-                    style: _adaptiveText(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textTertiary,
-                      letterSpacing: 0.4,
-                    ),
+                    style: HuddlText.caption(color: hc.textTertiary, weight: FontWeight.w600).copyWith(letterSpacing: 0.4),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -3474,12 +3334,7 @@ class _MarketSearchRow extends StatelessWidget {
                   // Title
                   Text(
                     item.title,
-                    style: _adaptiveText(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textPrimary,
-                      height: 1.25,
-                    ),
+                    style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600).copyWith(height: 1.25),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -3495,10 +3350,7 @@ class _MarketSearchRow extends StatelessWidget {
                           item.sellerLocation.isNotEmpty
                               ? item.sellerLocation
                               : 'Near you',
-                          style: _adaptiveText(
-                              fontSize: 11,
-                              color: hc.textTertiary,
-                              fontStyle: FontStyle.italic),
+                          style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -3540,11 +3392,7 @@ class _MarketSearchRow extends StatelessWidget {
                     ),
                     child: Text(
                       badgeLabel,
-                      style: _adaptiveText(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: badgeFg,
-                      ),
+                      style: HuddlText.caption(color: badgeFg, weight: FontWeight.w600),
                     ),
                   );
                 }),
@@ -3560,11 +3408,7 @@ class _MarketSearchRow extends StatelessWidget {
                   ),
                   child: Text(
                     priceStr,
-                    style: _adaptiveText(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: priceColor,
-                    ),
+                    style: HuddlText.caption(color: priceColor, weight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -3680,7 +3524,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                       ),
                       child: Text(
                         widget.isOwn ? 'Your listing' : item.condition.label,
-                        style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+                        style: HuddlText.caption(color: Colors.white, weight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -3701,7 +3545,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                             const SizedBox(width: 3),
                             Text(
                               '${item.imageUrls.length}',
-                              style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
+                              style: HuddlText.caption(color: Colors.white, weight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -3720,12 +3564,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                   // Category label — small uppercase grey (Groups pattern)
                   Text(
                     item.category.label.toUpperCase(),
-                    style: _adaptiveText(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textTertiary,
-                      letterSpacing: 0.5,
-                    ),
+                    style: HuddlText.caption(color: hc.textTertiary, weight: FontWeight.w600).copyWith(letterSpacing: 0.5),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -3733,12 +3572,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                   // Title — bold dark
                   Text(
                     item.title,
-                    style: _adaptiveText(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textPrimary,
-                      height: 1.3,
-                    ),
+                    style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600).copyWith(height: 1.3),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -3752,11 +3586,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         Expanded(
                           child: Text(
                             item.sellerLocation,
-                            style: _adaptiveText(
-                              fontSize: 12,
-                              color: hc.textTertiary,
-                              fontStyle: FontStyle.italic,
-                            ),
+                            style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -3806,7 +3636,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                       Expanded(
                         child: Text(
                           'Near you',
-                          style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                          style: HuddlText.caption(color: hc.textTertiary),
                         ),
                       ),
                       // Save heart (hidden for own listings)
@@ -3831,11 +3661,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         ),
                         child: Text(
                           priceStr,
-                          style: _adaptiveText(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: priceColor,
-                          ),
+                          style: HuddlText.body(color: priceColor, weight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -4156,11 +3982,7 @@ class _MarketBadgePill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: _adaptiveText(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
+        style: HuddlText.caption(color: Colors.white, weight: FontWeight.w700),
       ),
     );
   }
@@ -4343,11 +4165,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                 ),
                                 child: Text(
                                   'Sold',
-                                  style: _adaptiveText(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
+                                  style: HuddlText.caption(color: Colors.white, weight: FontWeight.w600),
                                 ),
                               ),
                             ),
@@ -4363,13 +4181,9 @@ class _SellListingTileState extends State<_SellListingTile>
                                 Expanded(
                                   child: Text(
                                     item.title,
-                                    style: _adaptiveText(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: widget.isSold
+                                    style: HuddlText.body(color: widget.isSold
                                           ? hc.textTertiary
-                                          : hc.textPrimary,
-                                    ),
+                                          : hc.textPrimary, weight: FontWeight.w500),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -4394,24 +4208,17 @@ class _SellListingTileState extends State<_SellListingTile>
                               children: [
                                 Text(
                                   item.priceDisplay,
-                                  style: _adaptiveText(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: widget.isSold
+                                  style: HuddlText.body(color: widget.isSold
                                         ? hc.textTertiary
                                         : item.isFree
                                             ? HuddlColors.nearBlack
-                                            : _kMarketBlue,
-                                  ),
+                                            : _kMarketBlue, weight: FontWeight.w600),
                                 ),
                                 const SizedBox(width: 8),
                                 ExcludeSemantics(
                                   child: Text(
                                     '${item.viewCount} views \u2022 ${item.timeAgo}',
-                                    style: _adaptiveText(
-                                      fontSize: 11,
-                                      color: hc.textTertiary,
-                                    ),
+                                    style: HuddlText.caption(color: hc.textTertiary),
                                   ),
                                 ),
                               ],
@@ -4462,11 +4269,7 @@ class _SellListingTileState extends State<_SellListingTile>
                               Expanded(
                                 child: Text(
                                   insight.text,
-                                  style: _adaptiveText(
-                                    fontSize: 12,
-                                    color: _insightColor(insight.type),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: HuddlText.caption(color: _insightColor(insight.type), weight: FontWeight.w500),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -4556,11 +4359,7 @@ class _SellListingTileState extends State<_SellListingTile>
             children: [
               Text(
                 'Delist',
-                style: _adaptiveText(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.error,
-                ),
+                style: HuddlText.caption(color: HuddlColors.error, weight: FontWeight.w600),
               ),
               const SizedBox(width: 6),
               const Icon(Icons.delete_outline, size: 20, color: HuddlColors.error),
@@ -4641,11 +4440,7 @@ class _SmartOfferTile extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Accept',
-              style: _adaptiveText(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.success,
-              ),
+              style: HuddlText.caption(color: HuddlColors.success, weight: FontWeight.w600),
             ),
           ],
         ),
@@ -4663,11 +4458,7 @@ class _SmartOfferTile extends StatelessWidget {
           children: [
             Text(
               'Decline',
-              style: _adaptiveText(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.error,
-              ),
+              style: HuddlText.caption(color: HuddlColors.error, weight: FontWeight.w600),
             ),
             const SizedBox(width: 6),
             const Icon(Icons.close, size: 20, color: HuddlColors.error),
@@ -4711,10 +4502,7 @@ class _SmartOfferTile extends StatelessWidget {
                       children: [
                         RichText(
                           text: TextSpan(
-                            style: _adaptiveText(
-                              fontSize: 13.5,
-                              color: hc.textPrimary,
-                            ),
+                            style: HuddlText.caption(color: hc.textPrimary),
                             children: [
                               TextSpan(
                                 text: offer.buyerName,
@@ -4733,7 +4521,7 @@ class _SmartOfferTile extends StatelessWidget {
                         ),
                         Text(
                           'for ${offer.itemTitle}',
-                          style: _adaptiveText(fontSize: 12, color: hc.textTertiary),
+                          style: HuddlText.caption(color: hc.textTertiary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -4755,11 +4543,7 @@ class _SmartOfferTile extends StatelessWidget {
                         Flexible(
                           child: Text(
                             aiSummary,
-                            style: _adaptiveText(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: sentColor,
-                            ),
+                            style: HuddlText.caption(color: sentColor, weight: FontWeight.w500),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -4786,11 +4570,7 @@ class _SmartOfferTile extends StatelessWidget {
                         ),
                         child: Text(
                           'Decline',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(color: hc.textSecondary, weight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -4814,11 +4594,7 @@ class _SmartOfferTile extends StatelessWidget {
                         ),
                         child: Text(
                           'Accept',
-                          style: _adaptiveText(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.success,
-                          ),
+                          style: HuddlText.caption(color: HuddlColors.success, weight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -4832,10 +4608,7 @@ class _SmartOfferTile extends StatelessWidget {
                   child: ExcludeSemantics(
                     child: Text(
                       'Swipe to respond',
-                      style: _adaptiveText(
-                        fontSize: 10,
-                        color: hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(color: hc.textTertiary),
                     ),
                   ),
                 ),
