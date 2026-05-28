@@ -445,7 +445,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     final id = 'ev_${DateTime.now().millisecondsSinceEpoch}';
 
     // Map category to color/icon for Event model
-    // Airbnb rule: no per-category colour coding — nearBlack for all types
+    // Design rule: no per-category colour coding — nearBlack for all types
     const Color catColor = HuddlColors.nearBlack;
     IconData catIcon = Icons.event;
     for (final cat in _categories) {

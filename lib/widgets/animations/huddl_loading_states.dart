@@ -4,10 +4,10 @@ import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
 // =============================================================================
-// HUDDL LOADING STATES — Airbnb-inspired illustrated loading screens
+// HUDDL LOADING STATES — illustrated loading screens
 // =============================================================================
 //
-// AIRBNB PATTERN (from screenshots):
+// Huddl loading pattern:
 //   • White screen, centered 3D illustration, short copy beneath
 //   • "We're getting your reservation ready" — animated dot dot dot
 //   • "Reviewing payment details" — payment terminal illustration
@@ -149,12 +149,12 @@ class _HuddlLoadingScreenState extends State<HuddlLoadingScreen>
 
             const SizedBox(height: 40),
 
-            // Airbnb-style 3-dot bounce loader
+            // 3-dot bounce loader
             const SizedBox(height: 8),
             HuddlThreeDotsLoader(color: textColor),
             const SizedBox(height: 32),
 
-            // Message — clean, no trailing dots (Airbnb shows dots separately above text)
+            // Message — clean, no trailing dots ( shows dots separately above text)
             Text(
               widget.message,
               textAlign: TextAlign.center,
@@ -699,15 +699,15 @@ class _HuddlSkeletonCardState extends State<HuddlSkeletonCard>
 }
 
 // =============================================================================
-// HUDDL THREE DOTS LOADER — Airbnb "•••" bounce animation
+// HUDDL THREE DOTS LOADER — standard "•••" bounce animation
 // =============================================================================
 //
-// Exact match to Airbnb's loading screen pattern:
+// Exact match to standard's loading screen pattern:
 //   • 3 circular dots in a horizontal row
 //   • Sequential bounce animation: dot 1 → dot 2 → dot 3 → repeat
 //   • 360ms per cycle, 120ms stagger between dots
 //   • Scale: 1.0 → 1.5 → 1.0 per dot (spring-like feel)
-//   • Dots are nearBlack (matches Airbnb's dark dot color)
+//   • Dots are nearBlack (matches standard's dark dot color)
 //
 // Usage:
 //   HuddlThreeDotsLoader()                         // default nearBlack
@@ -816,7 +816,7 @@ class _HuddlThreeDotsLoaderState extends State<HuddlThreeDotsLoader>
 }
 
 // =============================================================================
-// HUDDL PROCESS LOADING SCREEN — Airbnb "Reviewing payment" style
+// HUDDL PROCESS LOADING SCREEN — standard "Reviewing payment" style
 // =============================================================================
 //
 // Full-screen white overlay with:
@@ -854,7 +854,7 @@ class HuddlProcessLoadingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Airbnb 3-dot bounce
+              //  3-dot bounce
               const HuddlThreeDotsLoader(
                 dotSize: 10,
                 spacing: 8,

@@ -2102,7 +2102,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// Specialised "Don't Forget" card — identical hero/body to _buildDiscoverCard
   /// but renders the countdown badge prominently in amber + a "Going ✓" strip.
   Widget _buildDontForgetCard(_DiscoverItem item, dynamic hc, bool isDark) {
-    // Airbnb rule: all type pills nearBlack — no per-type colour coding
+    // Design rule: all type pills nearBlack — no per-type colour coding
     final pillLabel = switch (item.type) {
       _DiscoverType.meetup  => 'MEETUP',
       _DiscoverType.event   => 'EVENT',
@@ -2392,7 +2392,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// A single unified Discover card — image hero + type pill + title + subtitle.
   Widget _buildDiscoverCard(_DiscoverItem item, dynamic hc, bool isDark) {
     // Type pill colour + label
-    // Airbnb rule: all type pills nearBlack — no per-type colour coding
+    // Design rule: all type pills nearBlack — no per-type colour coding
     final (pillLabel, pillColor) = switch (item.type) {
       _DiscoverType.group   => ('GROUP',   HuddlColors.nearBlack),
       _DiscoverType.meetup  => ('MEETUP',  HuddlColors.nearBlack),
@@ -2517,7 +2517,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _discoverImageFallback(_DiscoverType type, dynamic hc) {
-    // Airbnb rule: fallback icon colours all nearBlack
+    // Design rule: fallback icon colours all nearBlack
     final (icon, color) = switch (type) {
       _DiscoverType.group  => (Icons.people_outline,     HuddlColors.nearBlack),
       _DiscoverType.meetup => (Icons.place_outlined,     HuddlColors.nearBlack),
@@ -2531,11 +2531,11 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Groups carousel ───────────────────────────────────────────────────────
-  // ── UX-02: Groups carousel — HuddlMosaicPhotoCard (Airbnb experiences style)
+  // ── UX-02: Groups carousel — HuddlMosaicPhotoCard
   //
   // Group model only has a single imageUrl, so we compose a 4-image mosaic by
   // pairing the group's own photo with 3 category-matched Pexels stock images.
-  // This gives the Airbnb "experience collage" feel without requiring the data
+  // Mosaic collage layout without requiring extra data
   // model to be changed.
   // ignore: unused_element
   Widget _buildGroupsCarousel(dynamic hc) {
@@ -4030,7 +4030,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Full-width hero card for the next upcoming meetup the user is attending.
   /// Sits between the greeting row and the AI catch-up card — high-impact,
-  /// photography-first, Airbnb-inspired layout.
+  /// photography-first card layout.
   Widget _buildHeroMeetupCard(Meetup meetup, dynamic hc, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -4936,12 +4936,12 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Color _feedIconColor(FeedItemType t) {
-    // Airbnb rule: no per-type colour coding — all nearBlack for visual calm
+    // Design rule: no per-type colour coding — all nearBlack for visual calm
     return HuddlColors.nearBlack;
   }
 
   Color _feedIconBg(FeedItemType t) {
-    // Airbnb rule: uniform neutral grey — no tinted/coloured icon containers
+    // Design rule: uniform neutral grey — no tinted/coloured icon containers
     return const Color(0xFFF7F7F7);
   }
 
@@ -7106,12 +7106,12 @@ class _ActivityDetailSheet extends StatelessWidget {
   }
 
   Color _colorForType(FeedItemType t) {
-    // Airbnb rule: no per-type colour — all nearBlack
+    // Design rule: no per-type colour — all nearBlack
     return HuddlColors.nearBlack;
   }
 
   Color _bgForType(FeedItemType t) {
-    // Airbnb rule: uniform neutral grey — no tinted backgrounds
+    // Design rule: uniform neutral grey — no tinted backgrounds
     return const Color(0xFFF7F7F7);
   }
 

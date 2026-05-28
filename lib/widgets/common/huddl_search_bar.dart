@@ -6,7 +6,7 @@ import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 
 // =============================================================================
-// HUDDL SEARCH BAR — Airbnb-inspired animated pill that expands on tap
+// HUDDL SEARCH BAR — animated pill that expands on tap
 // =============================================================================
 //
 // USAGE — Collapsed (home screen):
@@ -24,7 +24,7 @@ import '../../theme/huddl_animations.dart';
 //
 // ANIMATION PRINCIPLE:
 //   The pill morphs into a full-screen search using a Hero widget +
-//   spring-physics AnimationController. Matches Airbnb's search expansion
+//   spring-physics AnimationController
 //   pattern but adapted for huddl's community discovery context.
 //
 // Cross-platform: iOS + Android + Web.

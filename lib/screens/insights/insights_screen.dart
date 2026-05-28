@@ -1678,7 +1678,7 @@ class _CategoryBadge extends StatelessWidget {
         ),
         child: Text(
           _label,
-          style: HuddlText.label(),
+          style: HuddlText.label(color: Colors.white),
         ),
       );
     }

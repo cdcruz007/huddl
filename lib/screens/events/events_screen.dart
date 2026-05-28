@@ -1096,7 +1096,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           // ══ DESIGN TOKENS — Figma styleguide exact ════════════
           const Color bgSheet      = Colors.white;
           const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          const Color chipIcon     = Color(0xFF42464C); // nearBlack — replaces blue (Airbnb rule)
+          const Color chipIcon     = Color(0xFF42464C); // nearBlack — uniform icon colour
           const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
           const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
           const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page background = unselected chip
@@ -3473,7 +3473,7 @@ class _EventsTabState extends State<_EventsTab> {
           // ══ DESIGN TOKENS — Figma styleguide exact ════════════
           const Color bgSheet      = Colors.white;
           const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          const Color chipIcon     = Color(0xFF42464C); // nearBlack — replaces blue (Airbnb rule)
+          const Color chipIcon     = Color(0xFF42464C); // nearBlack — uniform icon colour
           const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
           const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
           const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page bg = unselected chip
@@ -4538,7 +4538,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                             ),
                             child: Text(
                               'New',
-                              style: HuddlText.caption(weight: FontWeight.w700),
+                              style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -4558,7 +4558,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                                 const SizedBox(width: 3),
                                 Text(
                                   'Private',
-                                  style: HuddlText.caption(weight: FontWeight.w700),
+                                  style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
                                 ),
                               ],
                             ),
@@ -4580,7 +4580,10 @@ class _MeetupCardState extends State<_MeetupCard> {
                       ),
                       child: Text(
                         priceText,
-                        style: HuddlText.caption(weight: FontWeight.w700),
+                        style: HuddlText.caption(
+                          weight: FontWeight.w700,
+                          color: isFree ? Colors.white : HuddlColors.nearBlack,
+                        ),
                       ),
                     ),
                   ),
@@ -4915,7 +4918,7 @@ class _EventListCardState extends State<_EventListCard> {
                             ),
                             child: Text(
                               'New',
-                              style: HuddlText.caption(weight: FontWeight.w700),
+                              style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
                             ),
                           ),
                         // Type badge: "Online" only — shown for virtual events; in-person needs no label
@@ -4929,7 +4932,7 @@ class _EventListCardState extends State<_EventListCard> {
                             ),
                             child: Text(
                               'Online',
-                              style: HuddlText.caption(weight: FontWeight.w700),
+                              style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
                             ),
                           ),
                         ],
@@ -4950,7 +4953,10 @@ class _EventListCardState extends State<_EventListCard> {
                       ),
                       child: Text(
                         priceLabel,
-                        style: HuddlText.caption(weight: FontWeight.w700),
+                        style: HuddlText.caption(
+                          weight: FontWeight.w700,
+                          color: isFree ? Colors.white : HuddlColors.nearBlack,
+                        ),
                       ),
                     ),
                   ),

@@ -837,7 +837,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       children: [
                         // ══ SECTION: Recommended quick-filters ══════════
-                        // Airbnb-style icon tiles row (like Free cancellation / Self check-in / Washer)
+                        // Icon tiles row (key amenities/attributes)
                         Text('Recommended for you',
                           style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 12),
@@ -906,7 +906,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         Text('Condition',
                           style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 8),
-                        _AirbnbChip(
+                        _FilterChip(
                           label: 'Any',
                           isSelected: sheetCond == null,
                           onTap: () {
@@ -917,7 +917,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         ),
                         ...ItemCondition.values.map((cond) => Padding(
                           padding: const EdgeInsets.only(top: 6),
-                          child: _AirbnbChip(
+                          child: _FilterChip(
                             label: cond.label,
                             isSelected: sheetCond == cond,
                             onTap: () {
@@ -934,7 +934,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         Text('Age group',
                           style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 8),
-                        _AirbnbChip(
+                        _FilterChip(
                           label: 'Any age',
                           isSelected: sheetAge == null,
                           onTap: () {
@@ -945,7 +945,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         ),
                         ...AgeStage.values.map((age) => Padding(
                           padding: const EdgeInsets.only(top: 6),
-                          child: _AirbnbChip(
+                          child: _FilterChip(
                             label: age.shortLabel,
                             isSelected: sheetAge == age,
                             onTap: () {
@@ -1140,7 +1140,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   void _openCreateListing() async {
     HuddlAnimations.mediumTap();
 
-    // Show the Airbnb-style "getting things ready" overlay while the listing
+    // Show the "getting things ready" overlay while the listing
     // screen initialises.  We capture the overlay's navigator context so we
     // can dismiss it precisely after the push resolves.
     if (!mounted) return;
@@ -3718,7 +3718,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
     final hasImage = item.imageUrls.isNotEmpty && item.imageUrls.first.isNotEmpty;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Airbnb-quality grid card:
+    // High-quality grid card:
     // • No card border or shadow — clean edge-to-edge photo grid
     // • Photo fills top ~62% with consistent aspect ratio
     // • Single nearBlack pill badge top-left (condition or "Yours")
@@ -4611,11 +4611,11 @@ class _SmartOfferTile extends StatelessWidget {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// AIRBNB-QUALITY FILTER WIDGETS
+// FILTER WIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ── _FilterIconTile ──────────────────────────────────────────────────────────
-// Airbnb-style bordered square tile with icon + label.
+// Bordered square tile with icon + label.
 // Used in "Recommended for you" quick-filter row inside the filter sheet.
 // Selected state: nearBlack border + nearBlack icon/text on white bg.
 // Unselected: 1px divider border, grey icon/text.
@@ -4640,7 +4640,7 @@ class _FilterIconTile extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         height: 90,
         decoration: BoxDecoration(
-          // Warm peach tint when selected — like Airbnb's category tiles
+          // Warm peach tint when selected
           color: isSelected
               ? HuddlColors.primaryPale.withValues(alpha: 0.35)
               : Colors.white,
@@ -4674,7 +4674,7 @@ class _FilterIconTile extends StatelessWidget {
 }
 
 // ── _SegmentedPriceControl ───────────────────────────────────────────────────
-// Airbnb "Type of place" style 3-segment control.
+// 3-segment selection control.
 // Segments: All / Free / Paid — with clear border and animated fill.
 class _SegmentedPriceControl extends StatelessWidget {
   final PriceType? selected;
@@ -4745,15 +4745,15 @@ class _SegmentedPriceControl extends StatelessWidget {
   }
 }
 
-// ── _AirbnbChip (kept as alias → _FilterToggleRow) ──────────────────────────
+// ── _FilterChip (kept as alias → _FilterToggleRow) ──────────────────────────
 // Replaced pill design with a clean full-width row toggle.
 // Shows label left-aligned + check icon right when selected.
-class _AirbnbChip extends StatelessWidget {
+class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _AirbnbChip({
+  const _FilterChip({
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -4815,7 +4815,7 @@ class _AirbnbChip extends StatelessWidget {
 }
 
 // ── _MultiSelectChip ─────────────────────────────────────────────────────────
-// Same visual style as _AirbnbChip but uses a square checkbox tick instead of
+// Same visual style as _FilterChip but uses a square checkbox tick instead of
 // a radio dot — signals multi-select semantics to the user.
 class _MultiSelectChip extends StatelessWidget {
   final String label;
@@ -4856,7 +4856,7 @@ class _MultiSelectChip extends StatelessWidget {
                 style: HuddlText.body(),
               ),
             ),
-            // Square checkbox — visually distinct from radio-style _AirbnbChip
+            // Square checkbox — visually distinct from radio-style _FilterChip
             AnimatedContainer(
               duration: const Duration(milliseconds: 140),
               width: 22,
@@ -4882,7 +4882,7 @@ class _MultiSelectChip extends StatelessWidget {
 }
 
 // ── _PriceHistogram ──────────────────────────────────────────────────────────
-// Airbnb-style price distribution histogram shown above the range slider.
+// Price distribution histogram shown above the range slider.
 // Bars inside the selected range are nearBlack; outside are light grey.
 class _PriceHistogram extends StatelessWidget {
   final double low;

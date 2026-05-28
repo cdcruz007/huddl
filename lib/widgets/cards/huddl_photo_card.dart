@@ -4,7 +4,7 @@ import '../../theme/huddl_animations.dart';
 import '../../constants/app_text_styles.dart';
 
 // =============================================================================
-// HUDDL PHOTO CARD — Airbnb-inspired photography-first card system
+// HUDDL PHOTO CARD — photography-first card system
 // =============================================================================
 //
 // THREE LAYOUTS:
@@ -12,13 +12,13 @@ import '../../constants/app_text_styles.dart';
 // 1. HuddlSinglePhotoCard — full-bleed hero image, minimal text below
 //    → Use for meetups, events, featured groups
 //
-// 2. HuddlMosaicPhotoCard — 2×2 grid photo collage (Airbnb experiences style)
+// 2. HuddlMosaicPhotoCard — 2×2 grid photo collage
 //    → Use for groups with multiple photos, experience cards
 //
 // 3. HuddlHorizontalCard — left photo + right text (compact list view)
 //    → Use in search results, compact feeds
 //
-// DESIGN PRINCIPLES (derived from Airbnb analysis):
+// DESIGN PRINCIPLES:
 //   • Photography fills the card — text is minimal, below the fold
 //   • No card borders — shadow provides depth instead
 //   • Corner radius: 14dp (softer than current huddl 16dp)
@@ -220,7 +220,7 @@ class _HuddlSinglePhotoCardState extends State<HuddlSinglePhotoCard>
   }
 }
 
-// ── 2. Mosaic 2×2 photo card (Airbnb experiences style) ──────────────────────
+// ── 2. Mosaic 2×2 photo card ────────────────────────────────────────────────────
 
 class HuddlMosaicPhotoCard extends StatefulWidget {
   const HuddlMosaicPhotoCard({

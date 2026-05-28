@@ -5311,7 +5311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
     if (!mounted) return;
-    // ── Airbnb-style photo setup sheet ──────────────────────────────────────
+    // ── Photo setup sheet ──────────────────────────────────────────────────────
     // Dark background, circular preview, "Edit photo" text link, pink ••• button
     showModalBottomSheet<void>(
       context: context,
@@ -5321,7 +5321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF1A1A1A), // dark bg — Airbnb profile setup style
+          color: Color(0xFF1A1A1A), // dark bg — profile setup style
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -5366,7 +5366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Stack(
                     alignment: Alignment.topCenter,
                     children: [
-                      // Coral accent line above circle — signature Airbnb detail
+                      // Coral accent line above circle
                       Positioned(
                         top: -4,
                         child: Container(
@@ -5402,7 +5402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // "Edit photo" text link (Airbnb bottom-left)
+                    // "Edit photo" text link (bottom-left)
                     GestureDetector(
                       onTap: () {
                         Navigator.pop(ctx);
@@ -5411,7 +5411,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Text('Edit photo',
                         style: HuddlText.body(color: Colors.white).copyWith(decoration: TextDecoration.underline)),
                     ),
-                    // Pink ••• button (Airbnb bottom-right)
+                    // Options ••• button (bottom-right)
                     GestureDetector(
                       onTap: () {
                         // Show options popup
@@ -5474,7 +5474,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF385C), // Airbnb coral pink
+                          color: const Color(0xFFFF385C),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
@@ -5503,7 +5503,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Fallback avatar for dark background (used in Airbnb photo preview)
+  // Fallback avatar for dark background
   Widget _fallbackAvatarDark() {
     // Show gender-appropriate illustrated avatar on dark background.
     // Dad → John.png, Mum/other → Emma.png

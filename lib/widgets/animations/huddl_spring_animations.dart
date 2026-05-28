@@ -3,7 +3,7 @@ import 'package:flutter/physics.dart';
 import '../../theme/huddl_colors.dart';
 
 // =============================================================================
-// HUDDL SPRING ANIMATIONS — physics-based motion matching Airbnb quality
+// HUDDL SPRING ANIMATIONS — physics-based motion
 // =============================================================================
 //
 // USAGE:
@@ -23,14 +23,14 @@ import '../../theme/huddl_colors.dart';
 //   Navigator.push(context, HuddlSpringPageRoute(page: DetailScreen()))
 //
 // DESIGN PRINCIPLE:
-//   Airbnb uses spring physics throughout — not just linear easing.
+//   Spring physics throughout — not just linear easing.
 //   SpringSimulation mimics real-world physics: slight overshoot → settle.
 //   Damping 0.8 = subtle bounce. 1.0 = critically damped (no bounce).
 //   Stiffness 180 = medium snap. 400+ = fast snap.
 //
 // =============================================================================
 
-// ── Spring constants matching Airbnb's motion language ───────────────────────
+// ── Spring constants ───────────────────────────────────────────────────────────
 
 class HuddlSprings {
   HuddlSprings._();
