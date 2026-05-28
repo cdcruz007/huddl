@@ -10,6 +10,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 
 class VerificationScreen extends StatefulWidget {
@@ -289,17 +290,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   size: 22, color: HuddlColors.onboardingOrange),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text('Almost there!',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  style: HuddlText.heading()),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'We had a small hiccup setting up your account. '
           'Please go back and start the sign-up process again — '
           'it only takes a moment.',
-          style: TextStyle(fontSize: 14, height: 1.55),
+          style: HuddlText.body().copyWith(height: 1.55),
         ),
         actions: [
           HuddlButton(

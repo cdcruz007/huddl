@@ -5,6 +5,7 @@ import '../../services/onboarding_data_service.dart';
 import '../legal/terms_of_service_screen.dart';
 import '../legal/privacy_policy_detail_screen.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
 
@@ -462,14 +463,14 @@ class _PasswordInput extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16, top: 8),
             child: Text(
               hint,
-              style: TextStyle(fontSize: 11, color: HuddlColors.disabledText),
+              style: HuddlText.caption(color: HuddlColors.disabledText),
             ),
           ),
           TextField(
             controller: controller,
             obscureText: obscure,
             onChanged: onChanged,
-            style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
+            style: HuddlText.body(color: Theme.of(context).colorScheme.onSurface),
             decoration: InputDecoration(
               border: InputBorder.none,
               contentPadding:

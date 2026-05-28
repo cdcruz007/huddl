@@ -350,19 +350,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   size: 22, color: HuddlColors.textSecondary),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 'No account found',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: HuddlText.heading(),
               ),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'We couldn\'t find a Huddl account linked to this number.\n\n'
           'Join Huddl to connect with local parents — it only takes a couple '
           'of minutes to get set up.',
-          style: TextStyle(fontSize: 14, height: 1.55),
+          style: HuddlText.body().copyWith(height: 1.55),
         ),
         actions: [
           TextButton(

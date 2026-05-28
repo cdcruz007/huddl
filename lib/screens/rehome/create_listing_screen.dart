@@ -178,7 +178,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               title: const Text('Choose from gallery',
                   style: TextStyle(fontWeight: FontWeight.w500)),
               subtitle: Text('Select multiple photos',
-                  style: TextStyle(fontSize: 12, color: context.hc.textTertiary)),
+                  style: HuddlText.caption(color: context.hc.textTertiary)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickMultipleFromGallery();

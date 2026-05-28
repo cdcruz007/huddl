@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
 
@@ -187,7 +188,7 @@ class _ParentTypeCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: HuddlColors.disabledText),
+                    style: HuddlText.caption(color: HuddlColors.disabledText),
                   ),
                 ],
               ),

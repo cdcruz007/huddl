@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 
 // Soft salmon/peach matching the supplied screenshots: light warm coral.
@@ -113,9 +114,9 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'Already have an account? ',
-                  style: TextStyle(fontSize: 14, color: HuddlColors.disabledText),
+                  style: HuddlText.body(color: HuddlColors.disabledText),
                 ),
                 Semantics(
                   label: 'already_have_account',

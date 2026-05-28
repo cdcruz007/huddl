@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
 
@@ -231,10 +232,10 @@ class _UnderlineInput extends StatelessWidget {
         onChanged: onChanged,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
-        style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
+        style: HuddlText.body(color: Theme.of(context).colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 16, color: HuddlColors.disabledText),
+          hintStyle: HuddlText.body(color: HuddlColors.disabledText),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
