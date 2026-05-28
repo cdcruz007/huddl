@@ -485,6 +485,7 @@ class _FloatingNavItem extends StatefulWidget {
   final bool isFirst;
   final bool isLast;
   final VoidCallback onTap;
+  final bool hasUnread;
 
   const _FloatingNavItem({
     required this.tab,
@@ -494,6 +495,7 @@ class _FloatingNavItem extends StatefulWidget {
     required this.isFirst,
     required this.isLast,
     required this.onTap,
+    this.hasUnread = false,
   });
 
   @override
@@ -505,6 +507,7 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
   late AnimationController _ctrl;
   late Animation<double> _scale;
   late Animation<double> _iconOpacity;
+  late Animation<Offset> _labelSlide;
 
   bool get _isActive => widget.index == widget.currentIndex;
 
@@ -521,6 +524,10 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
       TweenSequenceItem(tween: Tween(begin: 1.22, end: 1.0), weight: 65),
     ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
     _iconOpacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
+    _labelSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
   }
 
   @override
@@ -597,17 +604,45 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
                             child: Icon(widget.tab.activeIcon,
                                 size: 22, color: activeColor),
                           ),
+                          // Notification badge — top-right of icon
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: AnimatedScale(
+                              scale: widget.hasUnread ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOutBack,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: HuddlColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 2),
-                  // Label
-                  Text(
-                    widget.tab.label,
-                    style: HuddlText.label(color: labelColor),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  // Label — fades and slides up on activation
+                  FadeTransition(
+                    opacity: _iconOpacity,
+                    child: SlideTransition(
+                      position: _labelSlide,
+                      child: AnimatedOpacity(
+                        opacity: _isActive ? 1.0 : 0.55,
+                        duration: const Duration(milliseconds: 200),
+                        child: Text(
+                          widget.tab.label,
+                          style: HuddlText.label(color: labelColor),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               );

@@ -424,26 +424,41 @@ class EventsScreenState extends State<EventsScreen>
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
                     tabs: [
-                      Tab(child: _TabLabel(
-                        text: 'Groups',
+                      Tab(child: _AnimatedDiscoverTab(
+                        icon: Icons.people_outline,
+                        activeIcon: Icons.people,
+                        label: 'Groups',
+                        isSelected: _selectedTab == 0,
                         count: _groupCount > 0 ? _groupCount : null,
                       )),
-                      Tab(child: _TabLabel(
-                        text: 'Meetups',
+                      Tab(child: _AnimatedDiscoverTab(
+                        icon: Icons.location_on_outlined,
+                        activeIcon: Icons.location_on,
+                        label: 'Meetups',
+                        isSelected: _selectedTab == 1,
                         count: _meetupService.meetups.isNotEmpty
                             ? _meetupService.meetups.length : null,
                       )),
-                      Tab(child: _TabLabel(
-                        text: 'Events',
+                      Tab(child: _AnimatedDiscoverTab(
+                        icon: Icons.calendar_today_outlined,
+                        activeIcon: Icons.calendar_today,
+                        label: 'Events',
+                        isSelected: _selectedTab == 2,
                         count: _eventCount > 0 ? _eventCount : null,
                       )),
-                      const Tab(text: 'Services'),
-                      const Tab(text: 'Insights'),
+                      Tab(child: _AnimatedDiscoverTab(
+                        icon: Icons.storefront_outlined,
+                        activeIcon: Icons.storefront,
+                        label: 'Services',
+                        isSelected: _selectedTab == 3,
+                      )),
+                      Tab(child: _AnimatedDiscoverTab(
+                        icon: Icons.lightbulb_outline,
+                        activeIcon: Icons.lightbulb,
+                        label: 'Insights',
+                        isSelected: _selectedTab == 4,
+                      )),
                     ],
-                    labelColor: HuddlColors.primary,
-                    unselectedLabelColor: HuddlColors.textHint,
-                    labelStyle: HuddlText.caption(weight: FontWeight.w600),
-                    unselectedLabelStyle: HuddlText.caption(),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorWeight: 2.5,
@@ -5701,6 +5716,130 @@ class _HistogramPainter extends CustomPainter {
 }
 
 // ─── Tab label with optional count badge ─────────────────────────────────────
+// =============================================================================
+// ANIMATED DISCOVER TAB — icon + label with spring scale on selection.
+// =============================================================================
+class _AnimatedDiscoverTab extends StatefulWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final int? count;
+  final bool isSelected;
+
+  const _AnimatedDiscoverTab({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isSelected,
+    this.count,
+  });
+
+  @override
+  State<_AnimatedDiscoverTab> createState() => _AnimatedDiscoverTabState();
+}
+
+class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _colorT;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: widget.isSelected ? 1.0 : 0.0,
+    );
+    _scale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.18), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.18, end: 1.0), weight: 70),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    _colorT = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedDiscoverTab old) {
+    super.didUpdateWidget(old);
+    if (!old.isSelected && widget.isSelected) {
+      _ctrl.forward(from: 0);
+    } else if (old.isSelected && !widget.isSelected) {
+      _ctrl.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final active   = HuddlColors.primary;
+    final inactive = HuddlColors.textHint;
+
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final color = Color.lerp(inactive, active, _colorT.value)!;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Transform.scale(
+              scale: _scale.value,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: (1.0 - _colorT.value).clamp(0.0, 1.0),
+                    child: Icon(widget.icon, size: 20, color: inactive),
+                  ),
+                  Opacity(
+                    opacity: _colorT.value.clamp(0.0, 1.0),
+                    child: Icon(widget.activeIcon, size: 20, color: active),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 3),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.label,
+                  style: HuddlText.caption(
+                    color: color,
+                    weight: widget.isSelected
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                  ),
+                ),
+                if (widget.count != null && widget.count! > 0) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${widget.count}',
+                      style: HuddlText.label(color: active),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _TabLabel extends StatelessWidget {
   final String text;
   final int? count; // null = no badge shown

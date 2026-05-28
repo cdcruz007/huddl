@@ -151,9 +151,19 @@ class _HomeScreenState extends State<HomeScreen>
   int _groupTaps = 0;
   int _marketTaps = 0;
 
+  // ── Hero parallax scroll ──────────────────────────────────────────────────
+  final ScrollController _heroScrollCtrl = ScrollController();
+  double _heroScrollOffset = 0.0;
+
   @override
   void initState() {
     super.initState();
+    _heroScrollCtrl.addListener(() {
+      final offset = _heroScrollCtrl.offset;
+      if ((offset - _heroScrollOffset).abs() > 1.0) {
+        setState(() => _heroScrollOffset = offset.clamp(0.0, 300.0));
+      }
+    });
     _greetingAnimCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -182,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _authStateSub?.cancel();
     _notifStreamSub?.cancel();
+    _heroScrollCtrl.dispose();
     _greetingAnimCtrl.dispose();
     _postController.dispose();
     super.dispose();
@@ -1100,6 +1111,7 @@ class _HomeScreenState extends State<HomeScreen>
           color: HuddlColors.textTertiary,
           onRefresh: _loadData,
           child: CustomScrollView(
+            controller: _heroScrollCtrl,
             slivers: [
               // ── Pinned App Bar + Feed Header ─────────────────────
               // SliverPersistentHeader with a fixed-height delegate gives
@@ -4024,14 +4036,14 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildHeroMeetupCard(Meetup meetup, dynamic hc, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: HuddlSinglePhotoCard(
+      child: HuddlParallaxPhotoCard(
         imageUrl: meetup.imageUrl,
         title: meetup.title,
         subtitle: '${meetup.dateDisplay} · ${meetup.timeDisplay}',
-        badge: meetup.isGoing ? 'Going' : null,
-        stat: '${meetup.attendeeCount}',
+        badge: meetup.isGoing ? 'Going ✓' : null,
+        stat: meetup.attendeeCount > 0 ? '${meetup.attendeeCount} going' : null,
         statIcon: Icons.people_outline,
-        showSaveButton: false,
+        scrollOffset: _heroScrollOffset,
         aspectRatio: 1.65,
         onTap: () => Navigator.of(context).push(
           HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),

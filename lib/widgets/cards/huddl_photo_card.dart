@@ -613,3 +613,129 @@ class _HeartButtonState extends State<_HeartButton>
     );
   }
 }
+
+// =============================================================================
+// HUDDL PARALLAX PHOTO CARD — hero card with scroll-driven parallax.
+// =============================================================================
+
+class HuddlParallaxPhotoCard extends StatelessWidget {
+  const HuddlParallaxPhotoCard({
+    super.key,
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+    required this.scrollOffset,
+    this.badge,
+    this.stat,
+    this.statIcon,
+    this.onTap,
+    this.aspectRatio = 1.65,
+  });
+
+  final String imageUrl;
+  final String title;
+  final String subtitle;
+  final double scrollOffset;
+  final String? badge;
+  final String? stat;
+  final IconData? statIcon;
+  final VoidCallback? onTap;
+  final double aspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    final parallaxOffset = scrollOffset * -0.28;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              OverflowBox(
+                maxHeight: double.infinity,
+                child: Transform.translate(
+                  offset: Offset(0, parallaxOffset),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.width /
+                        aspectRatio *
+                        1.20,
+                    width: double.infinity,
+                    child: _HuddlPhotoImage(url: imageUrl),
+                  ),
+                ),
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0x88000000)],
+                    stops: [0.45, 1.0],
+                  ),
+                ),
+              ),
+              if (badge != null)
+                Positioned(
+                  top: 12, left: 12,
+                  child: _HuddlBadge(label: badge!),
+                ),
+              if (stat != null)
+                Positioned(
+                  top: 12, right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (statIcon != null) ...[
+                          Icon(statIcon, size: 12,
+                              color: HuddlColors.nearBlack),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          stat!,
+                          style: HuddlText.caption(
+                              color: HuddlColors.nearBlack,
+                              weight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Positioned(
+                bottom: 12, left: 12, right: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: HuddlText.heading(color: Colors.white),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: HuddlText.caption(color: Colors.white70),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
