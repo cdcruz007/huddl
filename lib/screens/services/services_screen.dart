@@ -1666,32 +1666,11 @@ class _ListingCardState extends State<_ListingCard> {
                   ),
                   // Endorse pill — hidden for own listing
                   if (FirebaseAuth.instance.currentUser?.uid != widget.listing.ownerUid)
-                    ScaleOnPress(
-                      haptic: false,
-                      onTap: _endorsing ? null : _toggleEndorse,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _hasEndorsed
-                              ? const Color(0xFFF0F0F0)
-                              : HuddlColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _endorsing
-                            ? SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
-                                ),
-                              )
-                            : Text(
-                                _hasEndorsed ? 'Endorsed' : 'Endorse',
-                                style: HuddlText.body(weight: FontWeight.w600),
-                              ),
-                      ),
+                    JoinButton(
+                      isJoined: _hasEndorsed,
+                      onTap: _endorsing ? () {} : _toggleEndorse,
+                      label: 'Endorse',
+                      joinedLabel: 'Endorsed',
                     ),
                 ],
               ),

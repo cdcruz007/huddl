@@ -51,6 +51,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../theme/huddl_animations.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -6025,7 +6026,9 @@ class _ChatBubble extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ...kQuickEmojis.map((emoji) => GestureDetector(
+                      ...kQuickEmojis.map((emoji) => ScaleOnPress(
+                        scale: 0.82,
+                        duration: const Duration(milliseconds: 100),
                         onTap: () {
                           Navigator.pop(c);
                           capturedOnTapReaction?.call(emoji);

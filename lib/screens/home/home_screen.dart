@@ -3970,7 +3970,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     final categoryLabel = _nudgeCategoryLabel(nudge.type).toUpperCase();
 
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: () => _handleNudgeTap(nudge),
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -4026,7 +4027,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// Meetup the user is attending
   Widget _buildMeetupFeedCard(_SmartFeedItem item, dynamic hc) {
     final meetup = item.meetup!;
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: () {
         setState(() => _meetupTaps++);
         Navigator.of(context).push(
@@ -4262,7 +4264,8 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildSuggestedMeetupCard(
       _SmartFeedItem item, dynamic hc) {
     final meetup = item.meetup!;
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: () {
         setState(() => _meetupTaps++);
         Navigator.of(context).push(
@@ -4604,7 +4607,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// Community activity card
   Widget _buildCommunityFeedCard(_SmartFeedItem item, dynamic hc) {
     final f = item.feedItem!;
-    return GestureDetector(
+    return ScaleOnPress(
+      scale: 0.98,
       onTap: () => _onFeedItemTap(f),
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
