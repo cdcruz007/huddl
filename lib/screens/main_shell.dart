@@ -110,6 +110,27 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           notifRecipId == _activeDmRecipientId;
       if (alreadyInGroup || alreadyInDm) return;
 
+      // Only surface FCM messages that have a recognised user-facing type.
+      // Backend operational/error messages (e.g. duplicate-email conflicts,
+      // welcome-email idempotency failures) arrive with no type or an unknown
+      // type and must never be shown verbatim to the user.
+      const kUserFacingTypes = {
+        'new_group_message',
+        'new_dm',
+        'voice_message_dm',
+        'group_event',
+        'meetup_cancelled',
+        'marketplace_offer',
+        'marketplace_offer_response',
+        'marketplace_item_sold',
+        'group_join_request',
+        'group_joined',
+        'mention',
+        'reaction',
+        'new_follower',
+      };
+      if (!kUserFacingTypes.contains(notifType)) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
