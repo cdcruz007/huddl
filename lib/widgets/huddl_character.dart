@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 
 // =============================================================================
-// HUDDL CHARACTER — icon-only version (illustrations removed)
+// HUDDL CHARACTER — PNG illustration + icon fallback
 // =============================================================================
 
 /// The emotional states of the Huddl character.
@@ -17,8 +17,30 @@ enum HuddlMood {
   noticeboard,  // Noticeboard empty state
 }
 
-/// The Huddl character — renders a mood-mapped icon.
-/// Illustrations have been removed; this now uses Material icons only.
+/// Maps each mood to the matching PNG illustration asset path.
+String? _illustrationForMood(HuddlMood mood) {
+  switch (mood) {
+    case HuddlMood.neutral:
+      return 'assets/illustrations/search_found.png';
+    case HuddlMood.celebrating:
+      return 'assets/illustrations/celebrating.png';
+    case HuddlMood.curious:
+      return 'assets/illustrations/questions.png';
+    case HuddlMood.supportive:
+      return 'assets/illustrations/community_wave.png';
+    case HuddlMood.waving:
+      return 'assets/illustrations/waving_phone.png';
+    case HuddlMood.locked:
+      return 'assets/illustrations/security.png';
+    case HuddlMood.upgrade:
+      return 'assets/illustrations/growth.png';
+    case HuddlMood.noticeboard:
+      return 'assets/illustrations/announcement.png';
+  }
+}
+
+/// The Huddl character — renders a PNG illustration if available,
+/// falling back to a Material icon inside a circular container.
 class HuddlCharacter extends StatelessWidget {
   const HuddlCharacter({
     super.key,
@@ -65,9 +87,20 @@ class HuddlCharacter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final illustrationPath = _illustrationForMood(mood);
+
+    if (illustrationPath != null) {
+      return Image.asset(
+        illustrationPath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      );
+    }
+
+    // Fallback: icon in circular container
     final double iconSize = size * 0.6;
     final double containerSize = size * 0.85;
-
     return Container(
       width: containerSize,
       height: containerSize,
@@ -85,7 +118,7 @@ class HuddlCharacter extends StatelessWidget {
 }
 
 // =============================================================================
-// HUDDL EMPTY STATE — full empty state with icon + copy + optional CTA
+// HUDDL EMPTY STATE — full empty state with illustration + copy + optional CTA
 // =============================================================================
 
 class HuddlEmptyState extends StatelessWidget {
@@ -96,7 +129,7 @@ class HuddlEmptyState extends StatelessWidget {
     required this.subtitle,
     this.ctaLabel,
     this.onCtaTap,
-    this.characterSize = 120,
+    this.characterSize = 160,
   });
 
   final HuddlMood mood;

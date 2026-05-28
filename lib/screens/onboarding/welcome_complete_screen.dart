@@ -223,7 +223,20 @@ class WelcomeCompleteScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+
+            // -- Illustration --
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Image.asset(
+                  'assets/illustrations/community_wave.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             // -- Let's go! button --
             Padding(

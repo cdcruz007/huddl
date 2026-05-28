@@ -22,16 +22,19 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       title: 'Welcome to Huddl!',
       subtitle: 'The app for ALL parents,',
       body: 'Connect with parents who are at the same stage of their parenting journey as you.',
+      illustration: 'assets/illustrations/group_celebration.png',
     ),
     _PageData(
       title: 'Join local community groups and build trusted networks',
       subtitle: null,
       body: 'Connect with like-minded people. Others are here to share their story.',
+      illustration: 'assets/illustrations/chat_high_five.png',
     ),
     _PageData(
       title: 'You are the Mum and Dad next door',
       subtitle: null,
       body: "At Huddl, you're not just another person on a forum filled with strangers.",
+      illustration: 'assets/illustrations/dancing.png',
     ),
   ];
 
@@ -152,10 +155,16 @@ class _CarouselPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // Illustration removed
-          const SizedBox(height: 32),
-
-          const SizedBox(height: 20),
+          // Illustration
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Image.asset(
+                data.illustration,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
 
           // Title
           Text(
@@ -235,9 +244,11 @@ class _PageData {
   final String title;
   final String? subtitle;
   final String body;
+  final String illustration;
   const _PageData({
     required this.title,
     required this.subtitle,
     required this.body,
+    required this.illustration,
   });
 }

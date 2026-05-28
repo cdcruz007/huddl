@@ -85,6 +85,17 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     const SizedBox(height: 14),
 
                     const SizedBox(height: 24),
+
+                    // Illustration — two figures reaching toward each other
+                    Center(
+                      child: Image.asset(
+                        'assets/illustrations/handshake.png',
+                        height: 180,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

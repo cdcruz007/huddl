@@ -2,50 +2,56 @@ import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import 'huddl_button.dart';
 
-/// Illustration asset paths — kept as constants for call-site compatibility.
-/// Illustrations have been removed from the UI; these values are unused
-/// by the rendering layer but retained so call sites don't need updating.
+/// Illustration asset paths — mapped to new PNG library.
 abstract class HuddlIllustration {
-  static const chat = 'assets/illustrations/huddl_celebrating.svg';
-  static const community = 'assets/illustrations/onboarding_02_community.svg';
-  static const meetup = 'assets/illustrations/onboarding_03_neighbours.svg';
-  static const events = 'assets/illustrations/huddl_waving.svg';
-  static const feed = 'assets/illustrations/onboarding_01_welcome.svg';
-  static const marketplace = 'assets/illustrations/huddl_noticeboard.svg';
-  static const marketplaceEmpty = 'assets/illustrations/huddl_supportive.svg';
-  static const groupsEmpty = 'assets/illustrations/huddl_neutral.svg';
-  static const saved = 'assets/illustrations/huddl_curious.svg';
-  static const auth = 'assets/illustrations/huddl_locked.svg';
-  static const upgrade = 'assets/illustrations/huddl_upgrade.svg';
+  static const chat        = 'assets/illustrations/chatting.png';
+  static const community   = 'assets/illustrations/community_wave.png';
+  static const meetup      = 'assets/illustrations/group_celebration.png';
+  static const events      = 'assets/illustrations/calendar.png';
+  static const feed        = 'assets/illustrations/waving_phone.png';
+  static const marketplace = 'assets/illustrations/announcement.png';
+  static const marketplaceEmpty = 'assets/illustrations/search_found.png';
+  static const groupsEmpty = 'assets/illustrations/search_found.png';
+  static const saved       = 'assets/illustrations/search_found.png';
+  static const auth        = 'assets/illustrations/security.png';
+  static const upgrade     = 'assets/illustrations/growth.png';
 }
 
-/// Maps legacy illustration paths to a representative icon.
+/// Maps illustration path to a representative fallback icon.
 IconData _iconForIllustration(String illustration) {
-  if (illustration.contains('celebrating')) return Icons.celebration_outlined;
-  if (illustration.contains('community')) return Icons.people_outline_rounded;
-  if (illustration.contains('neighbours') || illustration.contains('meetup')) {
+  if (illustration.contains('chatting') || illustration.contains('chat')) {
+    return Icons.chat_bubble_outline_rounded;
+  }
+  if (illustration.contains('community') || illustration.contains('wave')) {
+    return Icons.people_outline_rounded;
+  }
+  if (illustration.contains('group') || illustration.contains('celebration')) {
     return Icons.groups_outlined;
+  }
+  if (illustration.contains('calendar') || illustration.contains('event')) {
+    return Icons.event_outlined;
   }
   if (illustration.contains('waving') || illustration.contains('welcome')) {
     return Icons.waving_hand_outlined;
   }
-  if (illustration.contains('noticeboard') || illustration.contains('marketplace')) {
+  if (illustration.contains('announcement') || illustration.contains('marketplace')) {
     return Icons.campaign_outlined;
   }
-  if (illustration.contains('supportive')) return Icons.favorite_border_rounded;
-  if (illustration.contains('neutral')) return Icons.people_outline_rounded;
-  if (illustration.contains('curious') || illustration.contains('search')) {
+  if (illustration.contains('search') || illustration.contains('found')) {
     return Icons.search_rounded;
   }
-  if (illustration.contains('locked') || illustration.contains('auth')) {
+  if (illustration.contains('security') || illustration.contains('auth') || illustration.contains('locked')) {
     return Icons.lock_outline_rounded;
   }
-  if (illustration.contains('upgrade')) return Icons.star_border_rounded;
+  if (illustration.contains('growth') || illustration.contains('upgrade')) {
+    return Icons.star_border_rounded;
+  }
   return Icons.image_not_supported_outlined;
 }
 
 /// A consistent empty state widget used across Huddl.
-/// Illustrations removed — renders a Material icon + title + subtitle.
+/// Renders the PNG illustration asset if path ends with .png,
+/// otherwise falls back to a Material icon in a circular container.
 class HuddlEmptyState extends StatelessWidget {
   final String illustration;
   final String title;
@@ -66,8 +72,7 @@ class HuddlEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double iconSize = illustrationHeight * 0.45;
-    final double containerSize = illustrationHeight * 0.75;
+    final isPng = illustration.endsWith('.png');
 
     return Center(
       child: Padding(
@@ -75,20 +80,27 @@ class HuddlEmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ── Icon container ───────────────────────────────────────
-            Container(
-              width: containerSize,
-              height: containerSize,
-              decoration: const BoxDecoration(
-                color: HuddlColors.inputBg,
-                shape: BoxShape.circle,
+            // ── Illustration or icon ─────────────────────────────────
+            if (isPng)
+              Image.asset(
+                illustration,
+                height: illustrationHeight,
+                fit: BoxFit.contain,
+              )
+            else
+              Container(
+                width: illustrationHeight * 0.75,
+                height: illustrationHeight * 0.75,
+                decoration: const BoxDecoration(
+                  color: HuddlColors.inputBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _iconForIllustration(illustration),
+                  size: illustrationHeight * 0.45,
+                  color: HuddlColors.textTertiary,
+                ),
               ),
-              child: Icon(
-                _iconForIllustration(illustration),
-                size: iconSize,
-                color: HuddlColors.textTertiary,
-              ),
-            ),
 
             const SizedBox(height: 24),
 

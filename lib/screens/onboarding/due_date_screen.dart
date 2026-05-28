@@ -119,9 +119,18 @@ class _DueDateScreenState extends State<DueDateScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                    const SizedBox(height: 16),
+                    // ── Illustration ──────────────────────────────────
+                    Center(
+                      child: Image.asset(
+                        'assets/illustrations/parent_baby.png',
+                        height: 180,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

@@ -75,9 +75,18 @@ class _ChildInfoScreenState extends State<ChildInfoScreen> {
                           fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    const SizedBox(height: 24),
+                    // Illustration — family group with geometric shapes
+                    Center(
+                      child: Image.asset(
+                        'assets/illustrations/group_celebration.png',
+                        height: 160,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
 
                     // Child inputs
                     ...List.generate(_children.length, (i) {
