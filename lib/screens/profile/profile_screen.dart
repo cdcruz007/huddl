@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
+import '../../theme/huddl_animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -684,22 +685,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
+    final hc = context.hc;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: context.hc.scaffold,
+      backgroundColor: hc.scaffold,
       body: SafeArea(
         child: RefreshIndicator(
           color: HuddlColors.textTertiary,
           onRefresh: _loadProfileData,
-          child: SingleChildScrollView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              children: [
-                // ── Name-repair banner ──────────────────────────────────
-                // Shown when the user's name is missing or is a phone-number
-                // placeholder left by the automatic self-repair after a
-                // Firestore name-overwrite bug. Tapping it opens Edit Profile.
-                if (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
-                  GestureDetector(
+            slivers: [
+              // ── Name-repair banner ──────────────────────────────────
+              if (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
+                SliverToBoxAdapter(
+                  child: GestureDetector(
                     onTap: _showEditProfileSheet,
                     child: Container(
                       width: double.infinity,
@@ -722,423 +723,511 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                // ── Profile header ──────────────────────────────────────
+                ),
+              // ── Identity header ─────────────────────────────────────
+              SliverToBoxAdapter(child: _buildIdentityHeader(hc, isDark)),
+
+              // ── Stat strip ──────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _buildStatStrip(hc),
+                ),
+              ),
+
+              // ── App Rating & Feedback card ───────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildFeedbackCard(),
+                ),
+              ),
+
+              // ── About me ────────────────────────────────────────────
+              if (_bio != null && _bio!.trim().isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Container(
+                      width: double.infinity,
+                      color: hc.surface,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('About me',
+                              style: HuddlText.body(
+                                  weight: FontWeight.w600,
+                                  color: hc.textTertiary)),
+                          const SizedBox(height: 8),
+                          Text(_bio!,
+                              style: HuddlText.body(color: hc.textPrimary)
+                                  .copyWith(height: 1.5)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // ── My Groups horizontal scroll ──────────────────────────
+              if (_userGroups.isNotEmpty || _discoveredGroups.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildMyGroupsSection(hc),
+                  ),
+                ),
+
+              // ── Upcoming section ─────────────────────────────────────
+              if (_userMeetups.isNotEmpty || _userEvents.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildUpcomingSection(hc),
+                  ),
+                ),
+
+              // ── Quick actions grid ────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _buildQuickActionsGrid(hc),
+                ),
+              ),
+
+              // ── Subscription + usage ──────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildSubscriptionCard(),
+                ),
+              ),
+              SliverToBoxAdapter(child: _buildUsageSection(hc)),
+
+              // ── Settings entry row ────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildSettingsEntryRow(hc),
+                ),
+              ),
+
+              // ── Logout + version ──────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    Container(
+                      color: hc.surface,
+                      child: ListTile(
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16),
+                        leading: const Icon(Icons.logout,
+                            color: HuddlColors.error),
+                        title: Text('Log out',
+                            style: HuddlText.body(
+                                color: HuddlColors.error)),
+                        onTap: _confirmLogout,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text('Version $_appVersion',
+                          style: HuddlText.caption(
+                              color: hc.textTertiary)),
+                    ),
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Section builders ─────────────────────────────────────────────────────────
+
+  /// Community identity header — avatar, name, location, stage badge.
+  Widget _buildIdentityHeader(HuddlContextColors hc, bool isDark) {
+    return Container(
+      color: hc.surface,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('My Profile', style: HuddlText.display()),
+              IconButton(
+                icon: Icon(Icons.settings_outlined,
+                    color: hc.textPrimary),
+                onPressed: _openSettingsSheet,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Avatar + camera badge
+          GestureDetector(
+            onTap: _changeProfilePhoto,
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                _buildAvatar(),
                 Container(
-                  color: context.hc.surface,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'My Profile',
-                            style: HuddlText.display(),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.settings_outlined,
-                                color: context.hc.textPrimary),
-                            onPressed: _openSettingsSheet,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: _changeProfilePhoto,
-                        child: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            _buildAvatar(),
-                            Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: HuddlColors.textDark,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: context.hc.surface, width: 2),
-                              ),
-                              child: const Icon(Icons.camera_alt,
-                                  size: 14, color: HuddlColors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: _showEditProfileSheet,
-                            child: Text(
-                                (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
-                                    ? 'Tap to add name'
-                                    : _name,
-                                style: HuddlText.display(color: (_name.isEmpty || _name == 'User' || _name.startsWith('+')) ? context.hc.textTertiary : context.hc.textPrimary),
-                            ),
-                          ),
-                          if (_subscriptionService.isPaid) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: _subscriptionService.isPartner
-                                    ? HuddlColors.nearBlack
-                                    : HuddlColors.primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _subscriptionService.isPartner
-                                        ? Icons.verified_outlined
-                                        : Icons.home_outlined,
-                                    color: context.hc.surface,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    _subscriptionService.isPartner ? 'PARTNER' : 'PLUS',
-                                    style: HuddlText.label(color: HuddlColors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.location_on_outlined,
-                              size: 16, color: HuddlColors.textHint),
-                          const SizedBox(width: 4),
-                          Text(_borough,
-                              style: HuddlText.body(color: context.hc.textTertiary)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      if (_stageLabel.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: HuddlColors.divider,
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(_stageLabel,
-                              style: HuddlText.caption(color: HuddlColors.textDark),
-                              textAlign: TextAlign.center),
-                        ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _StatItem(
-                              count: '$_totalGroupCount', label: 'Groups'),
-                          Container(
-                              width: 1, height: 32, color: context.hc.divider),
-                          _StatItem(
-                              count: '${_children.length}',
-                              label:
-                                  _children.length == 1 ? 'Child' : 'Children'),
-                          Container(
-                              width: 1, height: 32, color: context.hc.divider),
-                          _StatItem(
-                            count: _parentType.toLowerCase() == 'mum'
-                                ? 'Mum'
-                                : _parentType.toLowerCase() == 'dad'
-                                    ? 'Dad'
-                                    : _parentType.isNotEmpty
-                                        ? _parentType[0].toUpperCase() +
-                                            _parentType.substring(1)
-                                        : '-',
-                            label: 'Role',
-                          ),
-                        ],
-                      ),
-                    ],
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.textDark,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: hc.surface, width: 2),
                   ),
+                  child: const Icon(Icons.camera_alt,
+                      size: 14, color: HuddlColors.white),
                 ),
-
-                const SizedBox(height: 8),
-
-                // ── App Rating & Feedback card ─────────────────────────
-                _buildFeedbackCard(),
-
-                const SizedBox(height: 8),
-
-                // ── About me section ─────────────────────────────────────
-                if (_bio != null && _bio!.trim().isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    color: context.hc.surface,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('About me',
-                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
-                        const SizedBox(height: 8),
-                        Text(_bio!,
-                            style: HuddlText.body(color: context.hc.textPrimary).copyWith(height: 1.5)),
-                      ],
-                    ),
-                  ),
-                if (_bio != null && _bio!.trim().isNotEmpty)
-                  const SizedBox(height: 8),
-
-                // ── My groups horizontal card list ───────────────────────
-                if (_userGroups.isNotEmpty || _discoveredGroups.isNotEmpty)
-                  Container(
-                    color: context.hc.surface,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: Row(
-                            children: [
-                              Text('My Groups',
-                                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: _showMyGroupsSheet,
-                                child: Text('See all $_totalGroupCount',
-                                    style: HuddlText.caption(color: HuddlColors.textTertiary)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 88,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.only(right: 16),
-                            children: [
-                              ..._userGroups.map((g) => _GroupCard(group: g)),
-                              ..._discoveredGroups.map((g) => _GroupCard(group: g)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (_userGroups.isNotEmpty || _discoveredGroups.isNotEmpty)
-                  const SizedBox(height: 8),
-
-                // ── Subscription section ──────────────────────────────────
-                _buildSubscriptionCard(),
-                // P11: Usage progress bars
-                _buildUsageSection(context.hc),
-                const SizedBox(height: 8),
-
-                // ── Account section ──────────────────────────────────────
-                _MenuSection(
-                  title: 'Account',
-                  items: [
-                    _MenuItem(
-                      icon: Icons.person_outline,
-                      title: 'Edit profile',
-                      onTap: _showEditProfileSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.child_care,
-                      title: 'Stage of life',
-                      subtitle: _stageLabel.isNotEmpty ? _stageLabel : null,
-                      onTap: _showStageOfLifeSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.location_on_outlined,
-                      title: 'Location',
-                      subtitle: '$_borough${_postcode != null ? ' ($_postcode)' : ''}',
-                      onTap: _showLocationSheet,
-                    ),
-                    if (_phone != null)
-                      _MenuItem(
-                        icon: Icons.phone_outlined,
-                        title: 'Phone',
-                        subtitle: _phone,
-                        onTap: _showPhoneSheet,
-                      ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                _MenuSection(
-                  title: 'Activity',
-                  items: [
-                    _MenuItem(
-                      icon: Icons.people_outline,
-                      title: 'My Groups',
-                      trailing: _CountBadge(count: _totalGroupCount),
-                      onTap: _showMyGroupsSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.event_outlined,
-                      title: 'My Meetups',
-                      trailing: _CountBadge(count: _userMeetups.length),
-                      onTap: _showMyEventsSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.storefront_outlined,
-                      title: 'My listings',
-                      trailing: _CountBadge(count: RehomeService().myListings.length),
-                      onTap: _showMyListingsSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.bookmark_border,
-                      title: 'Saved',
-                      onTap: _showSavedSheet,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                // ── Partner section (shown to Partner subscribers) ───────
-                if (_subscriptionService.isPartner) ...[
-                  _MenuSection(
-                    title: 'Partner',
-                    items: [
-                      _MenuItem(
-                        icon: Icons.store_outlined,
-                        title: 'Business Profile',
-                        subtitle: 'Your public Partner listing page',
-                        onTap: () => Navigator.pushNamed(
-                            context, '/partner_profile'),
-                      ),
-                      _MenuItem(
-                        icon: Icons.bar_chart_outlined,
-                        title: 'Analytics',
-                        subtitle: 'Views, clicks & endorsement trends',
-                        onTap: () => Navigator.pushNamed(
-                            context, '/partner_analytics'),
-                      ),
-                      if (!_subscriptionService.isBusinessVerified)
-                        _MenuItem(
-                          icon: Icons.verified_outlined,
-                          title: 'Verify Your Business',
-                          subtitle: 'Required to activate Partner features',
-                          onTap: () => Navigator.pushNamed(
-                              context, '/business_verification'),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
-                _MenuSection(
-                  title: 'Settings',
-                  items: [
-                    _MenuItem(
-                      icon: Icons.notifications_outlined,
-                      title: 'Notifications',
-                      onTap: _showNotificationsSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.lock_outline,
-                      title: 'Privacy',
-                      onTap: _showPrivacySheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.key_outlined,
-                      title: 'Change password',
-                      onTap: _showChangePasswordSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.feedback_outlined,
-                      title: 'Feedback',
-                      subtitle: 'Tell us what you think',
-                      onTap: _openFeedbackScreen,
-                    ),
-                    if (_isAdmin)
-                      _MenuItem(
-                        icon: Icons.shield_outlined,
-                        title: 'Admin Dashboard',
-                        subtitle: 'Review user reports',
-                        onTap: () => Navigator.pushNamed(context, '/admin'),
-                      ),
-                    _MenuItem(
-                      icon: Icons.help_outline,
-                      title: 'Help & Support',
-                      onTap: _showHelpSheet,
-                    ),
-                    _MenuItem(
-                      icon: Icons.school_outlined,
-                      title: 'Run Tutorial',
-                      subtitle: 'Walk through the app again',
-                      onTap: _rerunTutorial,
-                    ),
-                    _MenuItem(
-                      icon: Icons.info_outline,
-                      title: 'About Huddl',
-                      onTap: _showAboutSheet,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                _MenuSection(
-                  title: 'Legal',
-                  items: [
-                    _MenuItem(
-                      icon: Icons.description_outlined,
-                      title: 'Terms of Service',
-                      onTap: () => launchUrl(
-                        Uri.parse('https://www.huddlapp.co.uk/terms-of-service.html'),
-                        mode: LaunchMode.externalApplication,
-                      ),
-                    ),
-                    _MenuItem(
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'Privacy Policy',
-                      onTap: () => launchUrl(
-                        Uri.parse('https://www.huddlapp.co.uk/privacy-policy.html'),
-                        mode: LaunchMode.externalApplication,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                // Logout
-                Container(
-                  color: context.hc.surface,
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                    leading:
-                        const Icon(Icons.logout, color: HuddlColors.error),
-                    title: Text('Log out',
-                        style: HuddlText.body(color: HuddlColors.error)),
-                    onTap: _confirmLogout,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text('Version $_appVersion',
-                      style: HuddlText.caption(color: context.hc.textTertiary)),
-                ),
-                const SizedBox(height: 80),
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          // Name row + tier badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: _showEditProfileSheet,
+                child: Text(
+                  (_name.isEmpty ||
+                          _name == 'User' ||
+                          _name.startsWith('+'))
+                      ? 'Tap to add name'
+                      : _name,
+                  style: HuddlText.display(
+                      color: (_name.isEmpty ||
+                              _name == 'User' ||
+                              _name.startsWith('+'))
+                          ? hc.textTertiary
+                          : hc.textPrimary),
+                ),
+              ),
+              if (_subscriptionService.isPaid) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _subscriptionService.isPartner
+                        ? HuddlColors.nearBlack
+                        : HuddlColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _subscriptionService.isPartner
+                            ? Icons.verified_outlined
+                            : Icons.home_outlined,
+                        color: hc.surface,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        _subscriptionService.isPartner ? 'PARTNER' : 'PLUS',
+                        style: HuddlText.label(color: HuddlColors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Borough
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.location_on_outlined,
+                  size: 16, color: HuddlColors.textHint),
+              const SizedBox(width: 4),
+              Text(_borough,
+                  style: HuddlText.body(color: hc.textTertiary)),
+            ],
+          ),
+          // Stage badge
+          if (_stageLabel.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F7F7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: HuddlColors.divider),
+              ),
+              child: Text(_stageLabel,
+                  style: HuddlText.caption(color: HuddlColors.textDark),
+                  textAlign: TextAlign.center),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Three-stat strip: Groups | Children | Role.
+  Widget _buildStatStrip(HuddlContextColors hc) {
+    final roleLabel = _parentType.toLowerCase() == 'mum'
+        ? 'Mum'
+        : _parentType.toLowerCase() == 'dad'
+            ? 'Dad'
+            : _parentType.isNotEmpty
+                ? _parentType[0].toUpperCase() + _parentType.substring(1)
+                : '-';
+    return Container(
+      decoration: BoxDecoration(
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: hc.divider),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _StatItem(count: '$_totalGroupCount', label: 'Groups'),
+          Container(width: 1, height: 32, color: hc.divider),
+          _StatItem(
+              count: '${_children.length}',
+              label: _children.length == 1 ? 'Child' : 'Children'),
+          Container(width: 1, height: 32, color: hc.divider),
+          _StatItem(count: roleLabel, label: 'Role'),
+        ],
+      ),
+    );
+  }
+
+  /// Horizontal group chip scroll.
+  Widget _buildMyGroupsSection(HuddlContextColors hc) {
+    return Container(
+      color: hc.surface,
+      padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Row(
+              children: [
+                Text('My Groups',
+                    style: HuddlText.body(
+                        weight: FontWeight.w600,
+                        color: hc.textPrimary)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _showMyGroupsSheet,
+                  child: Text('See all $_totalGroupCount',
+                      style: HuddlText.caption(
+                          color: HuddlColors.textTertiary)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 88,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 16),
+              children: [
+                ..._userGroups.map((g) => _GroupCard(group: g)),
+                ..._discoveredGroups.map((g) => _GroupCard(group: g)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Next 2 upcoming meetups / events.
+  Widget _buildUpcomingSection(HuddlContextColors hc) {
+    final upcomingMeetups = _userMeetups.take(2).toList();
+    return Container(
+      color: hc.surface,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Upcoming',
+                  style: HuddlText.body(
+                      weight: FontWeight.w600, color: hc.textPrimary)),
+              const Spacer(),
+              GestureDetector(
+                onTap: _showMyEventsSheet,
+                child: Text('See all',
+                    style: HuddlText.caption(
+                        color: HuddlColors.textTertiary)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...upcomingMeetups.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ScaleOnPress(
+                  scale: 0.98,
+                  onTap: () {},
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: hc.surfaceAlt,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.people_outline,
+                              size: 22, color: HuddlColors.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(m.title,
+                                  style: HuddlText.body(
+                                      weight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                              Text(
+                                  '${m.dateDisplay} \u00b7 ${m.timeDisplay}',
+                                  style: HuddlText.caption(
+                                      color: hc.textTertiary)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            size: 18, color: hc.textTertiary),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
+          if (upcomingMeetups.isEmpty)
+            Center(
+              child: Text('No upcoming meetups yet',
+                  style: HuddlText.caption(color: hc.textTertiary)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 2×2 quick action grid: Find Parents, Marketplace, Noticeboard, Invite.
+  Widget _buildQuickActionsGrid(HuddlContextColors hc) {
+    final actions = [
+      (Icons.people_outline, 'Find Parents', HuddlColors.primary,
+          () => Navigator.pushNamed(context, '/connect')),
+      (Icons.storefront_outlined, 'Marketplace', HuddlColors.nearBlack,
+          () => Navigator.pushNamed(context, '/marketplace')),
+      (Icons.campaign_outlined, 'Noticeboard', HuddlColors.success,
+          () => Navigator.pushNamed(context, '/noticeboard')),
+      (Icons.person_add_alt_1_outlined, 'Invite Friend',
+          HuddlColors.warning, _showInviteFriendSheet),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Quick Actions',
+            style: HuddlText.body(
+                weight: FontWeight.w600, color: hc.textPrimary)),
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 2.4,
+          children: actions.map((a) {
+            final (icon, label, color, onTap) = a;
+            return ScaleOnPress(
+              scale: 0.96,
+              onTap: onTap,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: hc.divider),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, size: 16, color: color),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(label,
+                        style: HuddlText.caption(
+                            weight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
+      ],
+    );
+  }
+
+  /// Single settings entry row — opens the existing settings sheet.
+  Widget _buildSettingsEntryRow(HuddlContextColors hc) {
+    return Container(
+      color: hc.surface,
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            leading: Icon(Icons.settings_outlined, color: hc.textPrimary),
+            title: Text('Settings',
+                style: HuddlText.body(color: hc.textPrimary)),
+            subtitle: Text('Account, privacy, notifications',
+                style: HuddlText.caption(color: hc.textTertiary)),
+            trailing:
+                Icon(Icons.chevron_right, color: hc.textTertiary, size: 18),
+            onTap: _openSettingsSheet,
+          ),
+          if (_subscriptionService.isPartner) ...[
+            Divider(height: 1, color: hc.divider),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              leading: Icon(Icons.store_outlined, color: hc.textPrimary),
+              title: Text('Partner Dashboard',
+                  style: HuddlText.body(color: hc.textPrimary)),
+              subtitle: Text('Profile, analytics & verification',
+                  style: HuddlText.caption(color: hc.textTertiary)),
+              trailing: Icon(Icons.chevron_right,
+                  color: hc.textTertiary, size: 18),
+              onTap: () =>
+                  Navigator.pushNamed(context, '/partner_profile'),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -4915,6 +5004,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+
+  void _showInviteFriendSheet() {
+    Share.share(
+      'Join me on Huddl — the community app for local parents! Download it now 🎉',
+      subject: 'Join Huddl',
+    );
+  }
 
   void _showHelpSheet() {
     _showSheet(
