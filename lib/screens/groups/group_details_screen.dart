@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -886,12 +887,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     // Navigate to dedicated polls screen
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => GroupPollsScreen(
-                          groupId: widget.groupId,
-                          groupName: _editableName,
-                        ),
-                      ),
+                      HuddlSpringPageRoute(page: GroupPollsScreen(
+                        groupId: widget.groupId,
+                        groupName: _editableName,
+                      )),
                     );
                   },
                 ),
@@ -1097,8 +1096,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     Navigator.pop(c);
                     Navigator.push(
                       ctx,
-                      MaterialPageRoute(
-                        builder: (_) => EditGroupScreen(
+                      HuddlSpringPageRoute(page: EditGroupScreen(
                           groupId: widget.groupId,
                           groupName: _editableName,
                           groupDescription: _editableDescription,
@@ -1124,12 +1122,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     Navigator.pop(c);
                     Navigator.push(
                       ctx,
-                      MaterialPageRoute(
-                        builder: (_) => ManageAdminsScreen(
-                          groupId: widget.groupId,
-                          groupName: _editableName,
-                        ),
-                      ),
+                      HuddlSpringPageRoute(page: ManageAdminsScreen(
+                        groupId: widget.groupId,
+                        groupName: _editableName,
+                      )),
                     );
                   },
                 ),

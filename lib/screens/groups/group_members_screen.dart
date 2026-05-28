@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
@@ -329,12 +330,10 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                                 onAdminManage: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ManageAdminsScreen(
-                                        groupId: widget.groupId,
-                                        groupName: widget.groupName,
-                                      ),
-                                    ),
+                                    HuddlSpringPageRoute(page: ManageAdminsScreen(
+                                      groupId: widget.groupId,
+                                      groupName: widget.groupName,
+                                    )),
                                   );
                                 },
                               );

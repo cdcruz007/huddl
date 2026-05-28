@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -370,9 +371,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       Navigator.pop(ctx);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => EditMeetupScreen(meetup: _meetup),
-                        ),
+                        HuddlSpringPageRoute(page: EditMeetupScreen(meetup: _meetup)),
                       );
                     },
                   ),

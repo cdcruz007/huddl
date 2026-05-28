@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/poll_service.dart';
 import 'poll_detail_screen.dart';
@@ -99,9 +100,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
   void _viewPollDetails(ActivePoll poll) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PollDetailScreen(poll: poll),
-      ),
+      HuddlSpringPageRoute(page: PollDetailScreen(poll: poll)),
     );
   }
 

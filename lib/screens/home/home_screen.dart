@@ -992,9 +992,7 @@ class _HomeScreenState extends State<HomeScreen>
         },
         onNavigateToMeetup: (Meetup meetup) {
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MeetupDetailScreen(meetup: meetup),
-            ),
+            HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),
           );
         },
         onMarkAllRead: () {
@@ -1037,9 +1035,7 @@ class _HomeScreenState extends State<HomeScreen>
             .toList();
         if (match.isNotEmpty) {
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MeetupDetailScreen(meetup: match.first),
-            ),
+            HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: match.first)),
           );
         } else {
           _switchToTab(2);
@@ -4062,9 +4058,7 @@ class _HomeScreenState extends State<HomeScreen>
       onTap: () {
         setState(() => _meetupTaps++);
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => MeetupDetailScreen(meetup: meetup),
-          ),
+          HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),
         );
       },
       child: Container(
@@ -4154,9 +4148,7 @@ class _HomeScreenState extends State<HomeScreen>
       scale: 0.98,
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => EventDetailScreen(event: eventMap),
-          ),
+          HuddlSpringPageRoute(page: EventDetailScreen(event: eventMap)),
         );
       },
       child: Container(
@@ -4299,9 +4291,7 @@ class _HomeScreenState extends State<HomeScreen>
       onTap: () {
         setState(() => _meetupTaps++);
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => MeetupDetailScreen(meetup: meetup),
-          ),
+          HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),
         );
       },
       child: Container(

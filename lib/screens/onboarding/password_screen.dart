@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/onboarding_data_service.dart';
 import '../legal/terms_of_service_screen.dart';
@@ -243,10 +244,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                                       ..onTap = () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const TermsOfServiceScreen(),
-                                          ),
+                                          HuddlSpringPageRoute(page: const TermsOfServiceScreen()),
                                         );
                                       },
                                   ),
@@ -262,10 +260,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                                       ..onTap = () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const PrivacyPolicyDetailScreen(),
-                                          ),
+                                          HuddlSpringPageRoute(page: const PrivacyPolicyDetailScreen()),
                                         );
                                       },
                                   ),

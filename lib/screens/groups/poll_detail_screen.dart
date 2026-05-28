@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -352,12 +353,10 @@ class _FirestorePollCardState extends State<FirestorePollCard> {
   void _openResults(BuildContext context, FirestorePoll poll) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PollResultsScreen(
-          pollId: widget.pollId,
-          onDeletePoll: poll.isCreatedByMe ? widget.onDeletePoll : null,
-        ),
-      ),
+      HuddlSpringPageRoute(page: PollResultsScreen(
+        pollId: widget.pollId,
+        onDeletePoll: poll.isCreatedByMe ? widget.onDeletePoll : null,
+      )),
     );
   }
 }

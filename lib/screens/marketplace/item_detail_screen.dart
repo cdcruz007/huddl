@@ -3,8 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/huddl_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,13 +24,12 @@ const Color _kMarketBlue = HuddlColors.nearBlack;
 
 // =============================================================================
 // _adaptiveText — delegates to HuddlText type ramp.
-// fontSize param is retained for call-site compatibility but the output
-// is snapped to the nearest ramp level: >=20→display, >=15→heading,
-// >=13→body, else caption/label.
+// fontSize param is retained for call-site compatibility; output is snapped
+// to the nearest ramp level: >=20→display, >=15→heading, >=13→body, else caption.
 // =============================================================================
 TextStyle _adaptiveText({
   double fontSize = 14,
-  FontWeight fontWeight = FontWeight.w400,
+  FontWeight? fontWeight,
   Color? color,
   double? height,
   FontStyle? fontStyle,
@@ -37,10 +37,17 @@ TextStyle _adaptiveText({
   TextDecoration? decoration,
   Color? decorationColor,
 }) {
-  return GoogleFonts.poppins(
-    fontSize: fontSize,
-    fontWeight: fontWeight,
-    color: color,
+  final TextStyle base;
+  if (fontSize >= 20) {
+    base = HuddlText.display(color: color).copyWith(fontWeight: fontWeight);
+  } else if (fontSize >= 15) {
+    base = HuddlText.heading(color: color).copyWith(fontWeight: fontWeight);
+  } else if (fontSize >= 13) {
+    base = HuddlText.body(color: color, weight: fontWeight);
+  } else {
+    base = HuddlText.caption(color: color, weight: fontWeight);
+  }
+  return base.copyWith(
     height: height,
     fontStyle: fontStyle,
     letterSpacing: letterSpacing,
@@ -1066,9 +1073,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   void _openEditListing() async {
     final result = await Navigator.push<RehomeItem>(
       context,
-      MaterialPageRoute(
-        builder: (_) => CreateListingScreen(existingItem: item),
-      ),
+      HuddlSpringPageRoute(page: CreateListingScreen(existingItem: item)),
     );
     if (result != null && mounted) {
       setState(() {});

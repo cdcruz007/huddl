@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
@@ -888,9 +889,7 @@ class _WisdomCard extends StatelessWidget {
   void _openArticle(BuildContext context) {
     AiKnowledgeFlywheelService().recordView(article.id);
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _WisdomArticleScreen(article: article),
-      ),
+      HuddlSpringPageRoute(page: _WisdomArticleScreen(article: article)),
     );
   }
 }
@@ -911,9 +910,9 @@ class _ExpertCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => _ExpertArticleScreen(article: article),
-        ));
+        Navigator.of(context).push(
+          HuddlSpringPageRoute(page: _ExpertArticleScreen(article: article)),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
