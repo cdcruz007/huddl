@@ -9,6 +9,7 @@ import '../../widgets/huddl_character.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});
@@ -241,43 +242,31 @@ class WelcomeCompleteScreen extends StatelessWidget {
             // -- Let's go! button --
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    HuddlAnimations.heavyTap();
-                    _fireWelcomeEmail();
-                    // 🎉 Tutorial complete celebration overlay
-                    try {
-                      final uid = FirebaseAuth.instance.currentUser?.uid;
-                      if (uid != null) {
-                        final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
-                        final achievements = (doc.data()?['achievements'] as Map?) ?? {};
-                        if (achievements['tutorialComplete'] != true) {
-                          await FirebaseFirestore.instance.doc('users/$uid')
-                              .set({'achievements': {'tutorialComplete': true}}, SetOptions(merge: true));
-                          if (context.mounted) {
-                            await HuddlCelebrationOverlay.show(context,
-                                message: 'Welcome to Huddl! Your community awaits 🏡');
-                          }
+              child: HuddlButton(
+                label: "Let's go!",
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
+                onPressed: () async {
+                  HuddlAnimations.heavyTap();
+                  _fireWelcomeEmail();
+                  // 🎉 Tutorial complete celebration overlay
+                  try {
+                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                    if (uid != null) {
+                      final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
+                      final achievements = (doc.data()?['achievements'] as Map?) ?? {};
+                      if (achievements['tutorialComplete'] != true) {
+                        await FirebaseFirestore.instance.doc('users/$uid')
+                            .set({'achievements': {'tutorialComplete': true}}, SetOptions(merge: true));
+                        if (context.mounted) {
+                          await HuddlCelebrationOverlay.show(context,
+                              message: 'Welcome to Huddl! Your community awaits 🏡');
                         }
                       }
-                    } catch (_) { /* non-critical */ }
-                    if (context.mounted) Navigator.pushNamed(context, '/add_photo');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    'Let\'s go!',
-                    style: HuddlText.heading(),
-                  ),
-                ),
+                    }
+                  } catch (_) { /* non-critical */ }
+                  if (context.mounted) Navigator.pushNamed(context, '/add_photo');
+                },
               ),
             ),
           ],

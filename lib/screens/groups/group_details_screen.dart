@@ -17,6 +17,7 @@ import 'group_polls_screen.dart';
 import 'edit_group_screen.dart';
 import 'manage_admins_screen.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 
@@ -314,7 +315,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                 contact['name'] as String,
                                 style: HuddlText.body(),
                               ),
-                              trailing: OutlinedButton(
+                              trailing: HuddlButton(
+                                label: 'Invite',
+                                variant: HuddlButtonVariant.secondary,
+                                fullWidth: false,
                                 onPressed: () {
                                   Navigator.pop(ctx);
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -328,18 +332,6 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                     ),
                                   );
                                 },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                      color: HuddlColors.divider),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20)),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 4),
-                                ),
-                                child: Text(
-                                  'Invite',
-                                  style: HuddlText.body(),
-                                ),
                               ),
                             );
                           },
@@ -515,62 +507,32 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Primary action: Open Chat (joined) or Join (not joined)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isJoining
-                    ? null
-                    : _isJoined
-                        ? () => Navigator.pushNamed(context, '/group_chat', arguments: {
-                              'groupId': widget.groupId,
-                              'groupName': _editableName,
-                              'groupImageUrl': widget.groupImageUrl,
-                            })
-                        : _joinGroup,
-                icon: _isJoining
-                    ? const SizedBox(
-                        width: 20, height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : Icon(
-                        _isJoined ? Icons.chat_bubble_outline : Icons.group_add_outlined,
-                        color: context.hc.surface,
-                        size: 20,
-                      ),
-                label: Text(
-                  _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join',
-                  style: HuddlText.body(weight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isJoined ? HuddlColors.nearBlack : HuddlColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26)),
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  elevation: 0,
-                ),
-              ),
+            HuddlButton(
+              label: _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join',
+              variant: _isJoined ? HuddlButtonVariant.confirmed : HuddlButtonVariant.primary,
+              leadingIcon: _isJoined ? Icons.chat_bubble_outline : Icons.group_add_outlined,
+              isLoading: _isJoining,
+              fullWidth: true,
+              onPressed: _isJoining
+                  ? null
+                  : _isJoined
+                      ? () => Navigator.pushNamed(context, '/group_chat', arguments: {
+                            'groupId': widget.groupId,
+                            'groupName': _editableName,
+                            'groupImageUrl': widget.groupImageUrl,
+                          })
+                      : _joinGroup,
             ),
             // Invite row — only for private-group admins/creators when already joined
             if (_isJoined && widget.isPrivate && _isAdmin) ...
               [
                 const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _showInviteMembersSheet,
-                    icon: const Icon(Icons.person_add_outlined,
-                        color: HuddlColors.textDark, size: 18),
-                    label: Text(
-                      'Invite Members',
-                      style: HuddlText.body(weight: FontWeight.w600),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: HuddlColors.divider),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(26)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
+                HuddlButton(
+                  label: 'Invite Members',
+                  variant: HuddlButtonVariant.secondary,
+                  leadingIcon: Icons.person_add_outlined,
+                  fullWidth: true,
+                  onPressed: _showInviteMembersSheet,
                 ),
               ],
             // Helper text when not yet joined
@@ -1413,24 +1375,16 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(c).padding.bottom + 16),
                   child: Column(
                     children: [
-                      SizedBox(
-                        width: double.infinity, height: 52,
-                        child: ElevatedButton(
-                          onPressed: selectedSuccessorId == null ? null : () async {
-                            Navigator.pop(c);
-                            await _executeAdminHandoff(ctx, selectedSuccessorId!, selectedSuccessorName!);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.primary,
-                            disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.4),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            selectedSuccessorName != null ? 'Leave and assign ${selectedSuccessorName!}' : 'Leave and assign',
-                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white),
-                          ),
-                        ),
+                      HuddlButton(
+                        label: selectedSuccessorName != null
+                            ? 'Leave and assign ${selectedSuccessorName!}'
+                            : 'Leave and assign',
+                        variant: HuddlButtonVariant.primary,
+                        fullWidth: true,
+                        onPressed: selectedSuccessorId == null ? null : () async {
+                          Navigator.pop(c);
+                          await _executeAdminHandoff(ctx, selectedSuccessorId!, selectedSuccessorName!);
+                        },
                       ),
                       const SizedBox(height: 12),
                       GestureDetector(

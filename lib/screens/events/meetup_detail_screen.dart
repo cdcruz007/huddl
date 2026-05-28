@@ -722,8 +722,26 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
             opacity: animation,
             child: ScaleTransition(scale: animation, child: child),
           ),
-          child: ElevatedButton.icon(
+          child: HuddlButton(
             key: ValueKey(_meetup.isGoing),
+            label: _hasEnded
+                ? 'Ended'
+                : _isFull && !_meetup.isGoing
+                    ? 'Full'
+                    : _meetup.isGoing
+                        ? "You're going!"
+                        : "Count me in",
+            variant: _meetup.isGoing
+                ? HuddlButtonVariant.confirmed
+                : HuddlButtonVariant.primary,
+            leadingIcon: _hasEnded
+                ? Icons.event_busy_outlined
+                : _isFull
+                    ? Icons.group_off_outlined
+                    : _meetup.isGoing
+                        ? Icons.check_circle
+                        : Icons.group_add_outlined,
+            fullWidth: true,
             onPressed: (_isFull && !_meetup.isGoing) || _hasEnded ? null : () {
               HapticFeedback.mediumImpact();
               if (!_meetup.isGoing) {
@@ -752,36 +770,6 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               }
               _toggleGoing();
             },
-            icon: Icon(
-              _hasEnded
-                  ? Icons.event_busy_outlined
-                  : _isFull
-                      ? Icons.group_off_outlined
-                      : _meetup.isGoing
-                          ? Icons.check_circle
-                          : Icons.group_add_outlined,
-              color: Colors.white,
-              size: 20,
-            ),
-            label: Text(
-              _hasEnded
-                  ? 'Ended'
-                  : _isFull && !_meetup.isGoing
-                      ? 'Full'
-                      : _meetup.isGoing
-                          ? "You're going!"
-                          : "Count me in",
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _meetup.isGoing
-                  ? const Color(0xFF1C1C1E)
-                  : HuddlColors.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
-            ),
           ),
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 /// Data model for a created poll
 class PollData {
@@ -481,24 +482,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           const SizedBox(height: 36),
 
           // Create button
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _canCreate ? _create : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                disabledBackgroundColor:
-                    HuddlColors.primary.withValues(alpha: 0.35),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25)),
-                elevation: 0,
-              ),
-              child: Text(
-                'Create Poll',
-                style: HuddlText.body(weight: FontWeight.w600),
-              ),
-            ),
+          HuddlButton(
+            label: 'Create Poll',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: true,
+            onPressed: _canCreate ? _create : null,
           ),
           const SizedBox(height: 40),
         ],

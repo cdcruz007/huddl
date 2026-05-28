@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 
 
 /// Shown when a user enters a postcode outside the Cambridge launch area.
@@ -86,33 +87,16 @@ class NotAvailableScreen extends StatelessWidget {
               const SizedBox(height: 36),
 
               // ── OK button → back to splash ─────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Remove all routes and go back to the very beginning
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/splash',
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.onboardingOrange,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              HuddlButton(
+                label: 'OK',
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/splash',
+                    (route) => false,
+                  );
+                },
               ),
 
               SizedBox(height: size.height * 0.05),

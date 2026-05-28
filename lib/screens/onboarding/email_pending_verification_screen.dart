@@ -18,6 +18,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/backend_api_service.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -297,34 +298,14 @@ class _EmailPendingVerificationScreenState
               child: Column(
                 children: [
                   // Resend button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_resending || _resendCooldown) ? null : _resendEmail,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        disabledBackgroundColor:
-                            HuddlColors.primary.withValues(alpha: 0.4),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: _resending
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(
-                              _resendCooldown
-                                  ? 'Resend in ${_resendCooldownSecs}s'
-                                  : 'Resend verification email',
-                              style: HuddlText.body(weight: FontWeight.w600),
-                            ),
-                    ),
+                  HuddlButton(
+                    label: _resendCooldown
+                        ? 'Resend in ${_resendCooldownSecs}s'
+                        : 'Resend verification email',
+                    variant: HuddlButtonVariant.primary,
+                    isLoading: _resending,
+                    fullWidth: true,
+                    onPressed: (_resending || _resendCooldown) ? null : _resendEmail,
                   ),
 
                   const SizedBox(height: 12),

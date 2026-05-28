@@ -267,17 +267,11 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             child: Text('No, cancel my plan',
                 style: HuddlText.body(color: HuddlColors.error)),
           ),
-          ElevatedButton(
+          HuddlButton(
+            label: 'Pause Instead',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: false,
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              foregroundColor: HuddlColors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text('Pause Instead',
-                style: HuddlText.body(weight: FontWeight.w600)),
           ),
         ],
       ),

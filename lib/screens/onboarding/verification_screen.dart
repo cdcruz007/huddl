@@ -9,6 +9,7 @@ import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../widgets/onboarding_progress_bar.dart';
+import '../../widgets/common/huddl_button.dart';
 
 
 class VerificationScreen extends StatefulWidget {
@@ -301,26 +302,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
           style: TextStyle(fontSize: 14, height: 1.55),
         ),
         actions: [
-          ElevatedButton(
+          HuddlButton(
+            label: 'Start again',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: false,
             onPressed: () {
               Navigator.of(ctx).pop();
-              // Clear stale data and restart onboarding from the carousel
               OnboardingDataService().clear();
               Navigator.pushNamedAndRemoveUntil(
                 context, '/onboarding', (route) => false);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.onboardingOrange,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              elevation: 0,
-            ),
-            child: const Text('Start again',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15)),
           ),
         ],
       ),

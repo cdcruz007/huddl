@@ -9,6 +9,7 @@ import '../../services/invitation_service.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/huddl_character.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 class NoticeboardScreen extends StatefulWidget {
   const NoticeboardScreen({super.key});
@@ -101,22 +102,16 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                 onChanged: (_) => setSheet(() {}),
               )),
             Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SizedBox(width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: controller.text.trim().isEmpty ? null : () {
-                    final content = controller.text.trim();
-                    Navigator.pop(ctx);
-                    _postToBoroughNoticeboard(content);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary, foregroundColor: Colors.white,
-                    disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 13), elevation: 0,
-                  ),
-                  child: Text('Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                      style: HuddlText.body(weight: FontWeight.w600)),
-                ))),
+              child: HuddlButton(
+                label: 'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
+                onPressed: controller.text.trim().isEmpty ? null : () {
+                  final content = controller.text.trim();
+                  Navigator.pop(ctx);
+                  _postToBoroughNoticeboard(content);
+                },
+              )),
           ])),
         ),
       )),

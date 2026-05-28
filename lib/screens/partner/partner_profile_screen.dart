@@ -168,13 +168,11 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
               Text(_error!,
                   style: HuddlText.body(color: hc.textSecondary)),
               const SizedBox(height: 16),
-              ElevatedButton(
+              HuddlButton(
+                label: 'Retry',
+                variant: HuddlButtonVariant.primary,
+                fullWidth: false,
                 onPressed: _loadData,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary),
-                child: Text('Retry',
-                    style:
-                        HuddlText.body(color: Colors.white)),
               ),
             ],
           ),
@@ -430,30 +428,21 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
             ],
             const SizedBox(height: 16),
             if (listing.externalBookingUrl?.isNotEmpty == true)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: Text('Book / Enquire',
-                      style: HuddlText.body(weight: FontWeight.w600)),
-                  onPressed: () async {
-                    final url = listing.externalBookingUrl!;
-                    final hasScheme = url.startsWith('http://') ||
-                        url.startsWith('https://');
-                    final uri = Uri.parse(hasScheme ? url : 'https://$url');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    }
-                  },
-                ),
+              HuddlButton(
+                label: 'Book / Enquire',
+                variant: HuddlButtonVariant.primary,
+                leadingIcon: Icons.open_in_new_rounded,
+                fullWidth: true,
+                onPressed: () async {
+                  final url = listing.externalBookingUrl!;
+                  final hasScheme = url.startsWith('http://') ||
+                      url.startsWith('https://');
+                  final uri = Uri.parse(hasScheme ? url : 'https://$url');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri,
+                        mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
           ],
         ),

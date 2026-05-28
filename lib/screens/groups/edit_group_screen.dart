@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 class EditGroupScreen extends StatefulWidget {
   final String groupId;
@@ -373,29 +374,12 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           color: context.hc.surface,
           padding: EdgeInsets.fromLTRB(
               20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
-          child: SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: (!_hasChanges || _isSaving) ? null : _saveChanges,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                disabledBackgroundColor:
-                    HuddlColors.primary.withValues(alpha: 0.4),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26)),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 22, height: 22,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text(
-                      'Save changes',
-                      style: HuddlText.body(weight: FontWeight.w600, color: Colors.white),
-                    ),
-            ),
+          child: HuddlButton(
+            label: 'Save changes',
+            variant: HuddlButtonVariant.primary,
+            isLoading: _isSaving,
+            fullWidth: true,
+            onPressed: (!_hasChanges || _isSaving) ? null : _saveChanges,
           ),
         ),
         body: _isLoading

@@ -8,6 +8,7 @@ import '../../services/send_navigator_service.dart';
 import '../../theme/huddl_colors.dart';
 import 'package:intl/intl.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
@@ -1231,23 +1232,11 @@ class _SendAiConsentGate extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ── Consent button ────────────────────────────────────────────
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onConsent,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kSendAccent,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                'I understand — open the AI Advisor',
-                style: HuddlText.body(weight: FontWeight.w600),
-              ),
-            ),
+          HuddlButton(
+            label: 'I understand — open the AI Advisor',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: true,
+            onPressed: onConsent,
           ),
           const SizedBox(height: 12),
           Center(
@@ -1476,22 +1465,11 @@ class _CrisisInterceptSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ── Dismiss ───────────────────────────────────────────────────
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                side:
-                    BorderSide(color: HuddlColors.inputBorderLight),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                'Go back',
-                style: HuddlText.body(color: HuddlColors.textSecondary),
-              ),
-            ),
+          HuddlButton(
+            label: 'Go back',
+            variant: HuddlButtonVariant.secondary,
+            fullWidth: true,
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
@@ -2319,7 +2297,10 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
               child: Text('Cancel',
                   style: HuddlText.body()),
             ),
-            ElevatedButton(
+            HuddlButton(
+              label: 'Add',
+              variant: HuddlButtonVariant.primary,
+              fullWidth: false,
               onPressed: () async {
                 if (titleCtrl.text.trim().isEmpty) return;
                 final deadline = SendDeadline(
@@ -2337,13 +2318,6 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kSendAccent,
-                foregroundColor: Colors.white,
-                elevation: 0,
-              ),
-              child: Text('Add',
-                  style: HuddlText.body(weight: FontWeight.w600)),
             ),
           ],
         ),
@@ -2388,23 +2362,12 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                 ),
               ),
               const SizedBox(width: 4),
-              ElevatedButton.icon(
+              HuddlButton(
+                label: 'Add',
+                variant: HuddlButtonVariant.primary,
+                leadingIcon: Icons.add,
+                fullWidth: false,
                 onPressed: _showAddDialog,
-                icon: const Icon(Icons.add, size: 14),
-                label: Text('Add',
-                    style: HuddlText.caption(weight: FontWeight.w600)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kSendAccent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
               ),
             ],
           ),

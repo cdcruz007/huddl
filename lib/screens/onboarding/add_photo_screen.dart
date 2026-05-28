@@ -8,6 +8,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/photo_upload_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // ── UX-09: Immersive dark profile photo setup ─────────────────────────────────
 //
@@ -320,51 +321,22 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
               child: Column(
                 children: [
                   // Add / change photo — white outlined
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _showPickerOptions,
-                      icon: const Icon(Icons.camera_alt_outlined, size: 20),
-                      label: Text(
-                        hasPhoto ? 'Change photo' : 'Add photo',
-                        style: HuddlText.body(),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.35),
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
+                  HuddlButton(
+                    label: hasPhoto ? 'Change photo' : 'Add photo',
+                    variant: HuddlButtonVariant.secondary,
+                    leadingIcon: Icons.camera_alt_outlined,
+                    fullWidth: true,
+                    onPressed: _isLoading ? null : _showPickerOptions,
                   ),
 
                   const SizedBox(height: 12),
 
                   // Continue — primary orange filled
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _continue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        disabledBackgroundColor:
-                            HuddlColors.primary.withValues(alpha: 0.4),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        'Continue',
-                        style: HuddlText.body(weight: FontWeight.w600),
-                      ),
-                    ),
+                  HuddlButton(
+                    label: 'Continue',
+                    variant: HuddlButtonVariant.primary,
+                    fullWidth: true,
+                    onPressed: _isLoading ? null : _continue,
                   ),
                 ],
               ),

@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 class ManageAdminsScreen extends StatefulWidget {
   final String groupId;
@@ -553,18 +554,11 @@ class _AdminTile extends StatelessWidget {
         trailing: isCurrentUser
             ? Text('(You)',
                 style: HuddlText.caption(color: context.hc.textTertiary))
-            : OutlinedButton(
+            : HuddlButton(
+                label: actionLabel,
+                variant: HuddlButtonVariant.secondary,
+                fullWidth: false,
                 onPressed: onAction,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: actionColor,
-                  side: BorderSide(color: actionColor.withValues(alpha: 0.5)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(actionLabel,
-                  style: HuddlText.caption(weight: FontWeight.w600, color: actionColor)),
               ),
       ),
     );
