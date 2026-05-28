@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
@@ -121,15 +120,6 @@ class _DueDateScreenState extends State<DueDateScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
-                    // ── Illustration ──────────────────────────────────
-                    Expanded(
-                      child: SvgPicture.asset(
-                        'assets/illustrations/onboarding_07_duedate.svg',
-                        fit: BoxFit.contain,
-                        placeholderBuilder: (_) => const SizedBox.shrink(),
-                      ),
-                    ),
 
                     const SizedBox(height: 16),
                   ],

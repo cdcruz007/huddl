@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
@@ -192,9 +191,10 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Column(
           children: [
-            SvgPicture.asset(
-              'assets/illustrations/huddl_neutral.svg',
-              height: 140,
+            Icon(
+              Icons.bar_chart_outlined,
+              size: 72,
+              color: HuddlColors.textTertiary,
             ),
             const SizedBox(height: 20),
             Text(

@@ -168,8 +168,6 @@ class CopilotWelcomeState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(
         children: [
-          HuddlCharacter(mood: HuddlMood.waving, size: 140),
-          const SizedBox(height: 20),
           Text(
             'Hi $firstName! 👋 What\'s on your mind?',
             style: theme.textTheme.headlineSmall?.copyWith(

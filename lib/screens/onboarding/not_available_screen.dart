@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme/huddl_colors.dart';
 
 
@@ -23,17 +22,13 @@ class NotAvailableScreen extends StatelessWidget {
               // ── Top spacer ────────────────────────────────────────────
               SizedBox(height: size.height * 0.06),
 
-              // ── Illustration ──────────────────────────────────────────
+              // ── Icon ──────────────────────────────────────────────────
               Expanded(
                 child: Center(
-                  child: SvgPicture.asset(
-                    'assets/illustrations/huddl_noticeboard.svg',
-                    fit: BoxFit.contain,
-                    placeholderBuilder: (_) => Icon(
-                      Icons.campaign_outlined,
-                      size: 120,
-                      color: HuddlColors.onboardingOrange.withValues(alpha: 0.6),
-                    ),
+                  child: Icon(
+                    Icons.campaign_outlined,
+                    size: 120,
+                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.6),
                   ),
                 ),
               ),

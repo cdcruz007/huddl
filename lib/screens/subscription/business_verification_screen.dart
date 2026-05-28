@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../services/business_verification_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/underlined_text_field.dart';
@@ -401,9 +400,10 @@ class _BusinessVerificationScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SvgPicture.asset(
-              'assets/illustrations/huddl_celebrating.svg',
-              height: 180,
+            const Icon(
+              Icons.verified_outlined,
+              size: 80,
+              color: HuddlColors.primary,
             ),
             const SizedBox(height: 24),
             Text(

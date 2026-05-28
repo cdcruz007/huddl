@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
@@ -84,17 +83,6 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                       onTap: () => setState(() => _selected = 'Dad'),
                     ),
                     const SizedBox(height: 14),
-
-                    // Illustration at bottom
-                    const SizedBox(height: 12),
-                    Center(
-                      child: SvgPicture.asset(
-                        'assets/illustrations/onboarding_05_role.svg',
-                        height: 140,
-                        fit: BoxFit.contain,
-                        placeholderBuilder: (_) => const SizedBox(height: 140),
-                      ),
-                    ),
 
                     const SizedBox(height: 24),
                   ],

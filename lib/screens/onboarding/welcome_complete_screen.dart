@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/backend_api_service.dart';
@@ -224,19 +223,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
               ),
             ),
 
-            // -- Illustration --
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SvgPicture.asset(
-                  'assets/illustrations/onboarding_14_welcomein.svg',
-                  fit: BoxFit.contain,
-                  placeholderBuilder: (_) => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
+            const SizedBox(height: 32),
 
             // -- Let's go! button --
             Padding(

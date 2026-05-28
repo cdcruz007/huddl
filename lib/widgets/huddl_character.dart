@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 // =============================================================================
-// HUDDL CHARACTER — updated with locked + upgrade moods (Phase 2 audit)
+// HUDDL CHARACTER — icon-only version (illustrations removed)
 // =============================================================================
 
 /// The emotional states of the Huddl character.
@@ -15,17 +14,11 @@ enum HuddlMood {
   waving,       // Onboarding welcome, tutorial start, co-pilot greeting
   locked,       // Subscription gate — feature not available on current plan
   upgrade,      // Post-upgrade celebration moment
-  noticeboard,  // Noticeboard empty state — character holding megaphone
+  noticeboard,  // Noticeboard empty state
 }
 
-/// The Huddl character — a consistent illustrated figure used across
-/// all empty states, onboarding screens, tutorial cards, and celebration moments.
-///
-/// Usage:
-///   HuddlCharacter(mood: HuddlMood.waving, size: 160)
-///   HuddlCharacter(mood: HuddlMood.locked, size: 120)
-///   HuddlCharacter(mood: HuddlMood.upgrade, size: 160)
-///   HuddlCharacter(mood: HuddlMood.noticeboard, size: 140)
+/// The Huddl character — renders a mood-mapped icon.
+/// Illustrations have been removed; this now uses Material icons only.
 class HuddlCharacter extends StatelessWidget {
   const HuddlCharacter({
     super.key,
@@ -34,81 +27,67 @@ class HuddlCharacter extends StatelessWidget {
   });
 
   final HuddlMood mood;
-
-  /// The rendered size (width = height * 0.833 to maintain 200:240 aspect ratio).
   final double size;
 
-  String get _assetPath {
+  IconData get _icon {
     switch (mood) {
       case HuddlMood.neutral:
-        return 'assets/illustrations/huddl_neutral.svg';
+        return Icons.people_outline_rounded;
       case HuddlMood.celebrating:
-        return 'assets/illustrations/huddl_celebrating.svg';
+        return Icons.celebration_outlined;
       case HuddlMood.curious:
-        return 'assets/illustrations/huddl_curious.svg';
+        return Icons.search_rounded;
       case HuddlMood.supportive:
-        return 'assets/illustrations/huddl_supportive.svg';
+        return Icons.favorite_border_rounded;
       case HuddlMood.waving:
-        return 'assets/illustrations/huddl_waving.svg';
+        return Icons.waving_hand_outlined;
       case HuddlMood.locked:
-        return 'assets/illustrations/huddl_locked.svg';
+        return Icons.lock_outline_rounded;
       case HuddlMood.upgrade:
-        return 'assets/illustrations/huddl_upgrade.svg';
+        return Icons.star_border_rounded;
       case HuddlMood.noticeboard:
-        return 'assets/illustrations/huddl_noticeboard.svg';
+        return Icons.campaign_outlined;
+    }
+  }
+
+  Color get _iconColor {
+    switch (mood) {
+      case HuddlMood.locked:
+        return HuddlColors.textTertiary;
+      case HuddlMood.upgrade:
+        return HuddlColors.primary;
+      case HuddlMood.celebrating:
+        return HuddlColors.primary;
+      default:
+        return HuddlColors.textTertiary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Maintain 200:240 aspect ratio (width:height)
-    final double width = size * (200 / 240);
+    final double iconSize = size * 0.6;
+    final double containerSize = size * 0.85;
 
-    return SvgPicture.asset(
-      _assetPath,
-      width: width,
-      height: size,
-      semanticsLabel: _semanticsLabel,
+    return Container(
+      width: containerSize,
+      height: containerSize,
+      decoration: BoxDecoration(
+        color: HuddlColors.inputBg,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        _icon,
+        size: iconSize,
+        color: _iconColor,
+      ),
     );
-  }
-
-  String get _semanticsLabel {
-    switch (mood) {
-      case HuddlMood.neutral:
-        return 'Huddl character';
-      case HuddlMood.celebrating:
-        return 'Huddl character celebrating';
-      case HuddlMood.curious:
-        return 'Huddl character looking curious';
-      case HuddlMood.supportive:
-        return 'Huddl character offering support';
-      case HuddlMood.waving:
-        return 'Huddl character waving hello';
-      case HuddlMood.locked:
-        return 'Huddl character holding a lock';
-      case HuddlMood.upgrade:
-        return 'Huddl character celebrating an upgrade';
-      case HuddlMood.noticeboard:
-        return 'Huddl character with a megaphone';
-    }
   }
 }
 
 // =============================================================================
-// HUDDL EMPTY STATE — full empty state with character + copy + optional CTA
+// HUDDL EMPTY STATE — full empty state with icon + copy + optional CTA
 // =============================================================================
 
-/// A full empty state screen using the Huddl character.
-/// Use this across all empty states in the app for visual consistency.
-///
-/// Usage:
-///   HuddlEmptyState(
-///     mood: HuddlMood.waving,
-///     title: 'No groups yet',
-///     subtitle: 'Join a group to connect with parents near you',
-///     ctaLabel: 'Find groups',
-///     onCtaTap: () => _switchToTab(2),
-///   )
 class HuddlEmptyState extends StatelessWidget {
   const HuddlEmptyState({
     super.key,
@@ -189,8 +168,6 @@ class HuddlEmptyState extends StatelessWidget {
 // HuddlCelebrationOverlay — full-screen confetti celebration
 // =============================================================================
 
-/// Displays a temporary full-screen celebration overlay with confetti and a
-/// message. Automatically dismisses after 2.5 seconds.
 class HuddlCelebrationOverlay {
   static Future<void> show(
     BuildContext context, {

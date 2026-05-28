@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
@@ -77,14 +76,6 @@ class _ChildInfoScreenState extends State<ChildInfoScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-
-                    // Illustration
-                    SvgPicture.asset(
-                      'assets/illustrations/onboarding_08_child.svg',
-                      height: 160,
-                      fit: BoxFit.contain,
-                      placeholderBuilder: (_) => const SizedBox(height: 160),
-                    ),
 
                     const SizedBox(height: 24),
 
