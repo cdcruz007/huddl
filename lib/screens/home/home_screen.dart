@@ -1134,6 +1134,14 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
 
+              // ── Hero Meetup Card — next upcoming meetup, 'all' only ──
+              if (!_isLoading &&
+                  _activeFeedFilter == 'all' &&
+                  _upcomingMeetups.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildHeroMeetupCard(_upcomingMeetups.first, hc, isDark),
+                ),
+
               // ── AI Catch-Up Summary Card — 'all' only ─────────────
               if (!_isLoading && _activeFeedFilter == 'all')
                 SliverToBoxAdapter(
@@ -4019,6 +4027,28 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             Icon(Icons.chevron_right, size: 18, color: subtitleColor),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Full-width hero card for the next upcoming meetup the user is attending.
+  /// Sits between the greeting row and the AI catch-up card — high-impact,
+  /// photography-first, Airbnb-inspired layout.
+  Widget _buildHeroMeetupCard(Meetup meetup, dynamic hc, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: HuddlSinglePhotoCard(
+        imageUrl: meetup.imageUrl,
+        title: meetup.title,
+        subtitle: '${meetup.dateDisplay} · ${meetup.timeDisplay}',
+        badge: meetup.isGoing ? 'Going' : null,
+        stat: '${meetup.attendeeCount}',
+        statIcon: Icons.people_outline,
+        showSaveButton: false,
+        aspectRatio: 1.65,
+        onTap: () => Navigator.of(context).push(
+          HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),
         ),
       ),
     );
