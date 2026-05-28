@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // Soft salmon/peach matching the supplied screenshots: light warm coral.
 // 0xFFFCA878 == HuddlColors.primary (inlined to keep this file self-contained).
@@ -101,27 +102,9 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
             // ── Get started button ───────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _next,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.onboardingOrange,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Get started!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              child: HuddlButton(
+                label: 'Get started!',
+                onPressed: _next,
               ),
             ),
 

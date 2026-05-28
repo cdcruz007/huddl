@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/tutorial_service.dart';
+import '../../constants/app_text_styles.dart';
 
 /// Lightweight, translucent tutorial overlay that walks the user through each
 /// tab while keeping the actual screen fully visible underneath.
@@ -214,12 +214,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                       ),
                       child: Text(
                         'Skip',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.95),
-                        ),
-                      ),
+                        style: HuddlText.body(color: Colors.white.withValues(alpha: 0.95))),
                     ),
                   ),
                 ),
@@ -346,22 +341,12 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                       children: [
                         Text(
                           _step.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                            letterSpacing: 0.5,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           _step.headline,
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                            height: 1.2,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary),
                         ),
                       ],
                     ),
@@ -376,11 +361,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                     ),
                     child: Text(
                       '${_current + 1}/${_steps.length}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.textSecondary,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -391,12 +372,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
               // ── Body text (short) ───────────────────────────
               Text(
                 _step.body,
-                style: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w400,
-                  color: HuddlColors.textSecondary,
-                  height: 1.45,
-                ),
+                style: HuddlText.caption(color: HuddlColors.textSecondary),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -473,11 +449,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                         children: [
                           Text(
                             isLast ? 'Get started' : 'Next',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                           if (!isLast) ...[
                             const SizedBox(width: 4),

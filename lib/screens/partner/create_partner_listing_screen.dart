@@ -12,8 +12,8 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 import '../../theme/huddl_colors.dart';
 import '../../services/local_services_service.dart';
@@ -121,11 +121,7 @@ class _CreatePartnerListingScreenState
         leading: BackButton(color: HuddlColors.nearBlack),
         title: Text(
           'Create Partner Listing',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.nearBlack,
-          ),
+          style: HuddlText.heading(),
         ),
         actions: [
           if (_submitting)
@@ -141,11 +137,7 @@ class _CreatePartnerListingScreenState
               onPressed: _submit,
               child: Text(
                 'Publish',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ),
         ],
@@ -174,11 +166,7 @@ class _CreatePartnerListingScreenState
                     child: Text(
                       'Partner listings get priority placement and show a '
                       'verified badge in the directory.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: HuddlColors.primary,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.caption(color: HuddlColors.primary),
                     ),
                   ),
                 ],
@@ -226,7 +214,7 @@ class _CreatePartnerListingScreenState
                           value: c,
                           child: Text(
                             c.displayName,
-                            style: GoogleFonts.poppins(fontSize: 14),
+                            style: HuddlText.body(),
                           ),
                         ),
                       )
@@ -287,10 +275,7 @@ class _CreatePartnerListingScreenState
             const SizedBox(height: 6),
             Text(
               'Parents will see a "Book Now" button linking to this URL.',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: HuddlColors.textTertiary,
-              ),
+              style: HuddlText.caption(),
             ),
 
             const SizedBox(height: 32),
@@ -319,12 +304,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: HuddlColors.textTertiary,
-        letterSpacing: 0.5,
-      ),
+      style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary),
     );
   }
 }
@@ -358,11 +338,10 @@ class _Field extends StatelessWidget {
           maxLines: maxLines,
           keyboardType: keyboardType,
           validator: validator,
-          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.nearBlack),
+          style: HuddlText.body(color: HuddlColors.nearBlack),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.poppins(
-                fontSize: 13, color: HuddlColors.textHint),
+            hintStyle: HuddlText.body(color: HuddlColors.textHint),
             filled: true,
             fillColor: Colors.white,
             contentPadding:

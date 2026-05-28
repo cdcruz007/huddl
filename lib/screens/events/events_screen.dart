@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../services/meetup_service.dart';
@@ -32,6 +31,7 @@ import '../../widgets/huddl_character.dart';
 import '../../services/subscription_service.dart';
 import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -210,11 +210,7 @@ class EventsScreenState extends State<EventsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Upcoming Reminders',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.heading(),
                 ),
                 const SizedBox(height: 12),
                 if (goingMeetups.isEmpty && goingEvents.isEmpty)
@@ -229,18 +225,12 @@ class EventsScreenState extends State<EventsScreen>
                           const SizedBox(height: 12),
                           Text(
                             'No upcoming reminders',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.body(),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'RSVP to meetups or register for events',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                         ],
                       ),
@@ -262,19 +252,13 @@ class EventsScreenState extends State<EventsScreen>
                         ),
                         title: Text(
                           meetup.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: HuddlText.body(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
                           '${meetup.dateDisplay} · ${meetup.timeDisplay}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                         trailing: Icon(Icons.chevron_right,
                             color: context.hc.textTertiary, size: 20),
@@ -304,19 +288,13 @@ class EventsScreenState extends State<EventsScreen>
                         ),
                         title: Text(
                           event.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: HuddlText.body(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
                           '${event.dateDisplay} · ${event.timeDisplay}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                         trailing: Icon(Icons.chevron_right,
                             color: context.hc.textTertiary, size: 20),
@@ -364,11 +342,7 @@ class EventsScreenState extends State<EventsScreen>
                         children: [
                           Text(
                             'Discover',
-                            style: GoogleFonts.poppins(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.display(),
                           ),
                           const SizedBox(width: 8),
                           // Borough chip — always nearBlack (scope shown in tab label)
@@ -466,8 +440,8 @@ class EventsScreenState extends State<EventsScreen>
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
-                    labelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-                    unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400),
+                    labelStyle: HuddlText.caption(weight: FontWeight.w600),
+                    unselectedLabelStyle: HuddlText.caption(),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorWeight: 2.5,
@@ -1070,11 +1044,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             Expanded(
               child: Text(
                 isGroup ? 'Group Members Only' : 'Private Meetup',
-                style: GoogleFonts.poppins(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
               ),
             ),
           ],
@@ -1083,21 +1053,14 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           isGroup
               ? 'This meetup is only open to members of ${meetup.groupName ?? 'a specific group'}. Join the group first to access this meetup.'
               : 'This meetup is private and only open to invited members. Ask the organiser for an invitation.',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: context.hc.textSecondary,
-            height: 1.5,
-          ),
+          style: HuddlText.body(color: context.hc.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'OK',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textTertiary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
           ),
         ],
@@ -1145,11 +1108,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             padding: const EdgeInsets.only(bottom: 14),
             child: Text(
               title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
           );
 
@@ -1190,11 +1149,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     const SizedBox(width: 14),
                     Text(
                       label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        color: textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -1266,11 +1221,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             Row(
                               children: [
                                 Text('Smart Sort',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14, fontWeight: FontWeight.w700,
-                                    color: sheetSortBy == 'smartSort'
-                                        ? orange : textPrimary,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w700),
                                 ),
                                 const SizedBox(width: 6),
                                 Container(
@@ -1281,17 +1232,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text('AI',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9, fontWeight: FontWeight.w700,
-                                      color: Colors.white, letterSpacing: 0.5,
-                                    ),
+                                    style: HuddlText.label(color: Colors.white),
                                   ),
                                 ),
                               ],
                             ),
                             Text('Personalised to your profile',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: textSecGray)),
+                              style: HuddlText.caption(color: textSecGray)),
                           ],
                         ),
                       ),
@@ -1313,10 +1260,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               color: orange.withValues(alpha: 0.18)),
                         ),
                         child: Text(f,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11, fontWeight: FontWeight.w500,
-                            color: orange,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       )).toList(),
                     ),
@@ -1325,8 +1269,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   Text(
                     'Meetups are ranked by how well they match your profile — '
                     'location, parenting stage, interests, and activity.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11, color: textSecGray, height: 1.45),
+                    style: HuddlText.caption(color: textSecGray).copyWith(height: 1.45),
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: dividerColor),
@@ -1346,10 +1289,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           sheetSmartSort
                               ? 'AI ranking active'
                               : 'AI ranking off — showing default order',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, fontWeight: FontWeight.w500,
-                            color: sheetSmartSort ? orange : textSecGray,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ),
                       Transform.scale(
@@ -1375,8 +1315,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     Row(
                       children: [
                         Text('Match quality',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, color: textSecGray)),
+                          style: HuddlText.caption(color: textSecGray)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: ClipRRect(
@@ -1392,10 +1331,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         ),
                         const SizedBox(width: 8),
                         Text('${sampleScore.round()}%',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11, fontWeight: FontWeight.w600,
-                            color: orange,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -1441,11 +1377,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     ],
                     Text(
                       label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? Colors.white : textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -1469,11 +1401,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     Expanded(
                       child: Text(
                         label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: textPrimary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                     // Custom radio button
@@ -1582,11 +1510,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 child: Text(
                                   'Filter and sort',
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w600),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1604,12 +1528,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 },
                                 child: Text(
                                   'RESET',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: orange,
-                                    letterSpacing: 0.3,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w600, color: orange),
                                 ),
                               ),
                             ],
@@ -1634,11 +1553,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             children: [
                               Text(
                                 'Distance',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: textPrimary,
-                                ),
+                                style: HuddlText.heading(),
                               ),
                               // Live selected-value badge
                               Container(
@@ -1651,11 +1566,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                   sheetDistanceKm >= 50
                                       ? 'Up to 50 km'
                                       : 'Within ${sheetDistanceKm.toInt()} km',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: orange,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w600),
                                 ),
                               ),
                             ],
@@ -1697,17 +1608,11 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('1 km',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
                                 Text('25 km',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
                                 Text('50 km',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
                               ],
                             ),
                           ),
@@ -1740,7 +1645,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                             : _locationStatus == LocationStatus.serviceDisabled
                                                 ? 'Enable location services to filter by distance.'
                                                 : 'Tap to enable location and filter by distance.',
-                                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF757575)),
+                                        style: HuddlText.caption(color: const Color(0xFF757575)),
                                       ),
                                     ),
                                     const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFBDBDBD)),
@@ -1753,11 +1658,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
                           // ══ SECTION 3 — SHOW MEETUPS FOR (checkboxes) ═════
                           Text('Show meetups for',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                           const SizedBox(height: 10),
                           ..._audienceLabels.map(checkboxRow),
@@ -1797,11 +1698,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               Expanded(
                                 child: Text(
                                   'Show only free events',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: textPrimary,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w700),
                                 ),
                               ),
                               Switch(
@@ -1856,30 +1753,18 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                             children: [
                                               Text(
                                                 'Date range',
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 12,
-                                                  color: textSecGray,
-                                                  fontWeight: FontWeight.w400,
-                                                ),
+                                                style: HuddlText.caption(color: textSecGray),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
                                                 dateLabel,
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 15,
-                                                  color: textPrimary,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                                                style: HuddlText.body(color: textPrimary),
                                               ),
                                             ],
                                           )
                                         : Text(
                                             'Date range',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 14,
-                                              color: textSecGray,
-                                              fontWeight: FontWeight.w400,
-                                            ),
+                                            style: HuddlText.body(color: textSecGray),
                                           ),
                                   ),
                                   Icon(Icons.calendar_month_outlined, color: orange, size: 22),
@@ -1891,11 +1776,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
                           // ══ SECTION 7 — SORT BY ════════════════
                           Text('Sort by',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                           const SizedBox(height: 10),
                           smartSortCard,
@@ -1954,12 +1835,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               activeCount > 0
                                   ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}'
                                   : 'Show results',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w600, color: Colors.white),
                             ),
                           ),
                         ),
@@ -2044,13 +1920,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       textAlignVertical: TextAlignVertical.center,
                       onChanged: (v) =>
                           setState(() => _localSearchQuery = v),
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: filterText),
+                      style: HuddlText.body(color: filterText),
                       decoration: InputDecoration(
                         hintText: 'Search meetups',
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: HuddlColors.textTertiary),
+                        hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -2146,13 +2019,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                         _filterPillLabel.isNotEmpty
                                     ? _filterPillLabel
                                     : 'Filter and sort',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: _hasActiveFilter
-                                      ? HuddlColors.primary
-                                      : filterText,
-                                ),
+                                style: HuddlText.body(),
                               ),
                             ],
                           ),
@@ -2185,10 +2052,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 size: 14, color: HuddlColors.primary),
                             const SizedBox(width: 5),
                             Text(_selectedParticipant,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.primary)),
+                                style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.primary)),
                             const SizedBox(width: 6),
                             GestureDetector(
                               onTap: () {
@@ -2210,11 +2074,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 // Section label
                 Text(
                   'Suggested for you',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: sectionText,
-                  ),
+                  style: HuddlText.display(),
                 ),
                 // Distance indicator
                 const SizedBox(height: 4),
@@ -2228,11 +2088,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     const SizedBox(width: 4),
                     Text(
                       _distanceLabel,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: HuddlColors.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ],
                 ),
@@ -2484,20 +2340,18 @@ class _ImGoingCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           isPast ? 'Clear from history?' : 'Cancel attendance?',
-          style: GoogleFonts.poppins(
-            fontSize: 17, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
+          style: HuddlText.heading(color: context.hc.textPrimary),
         ),
         content: Text(
           isPast
               ? 'Remove "${item.title}" from your past events list?'
               : 'You will be removed from "${item.title}" and the organiser will be notified.',
-          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+          style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Keep', style: GoogleFonts.poppins(
-              fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textTertiary)),
+            child: Text('Keep', style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -2511,7 +2365,7 @@ class _ImGoingCard extends StatelessWidget {
             ),
             child: Text(
               isPast ? 'Clear' : 'Cancel',
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.white),
+              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white),
             ),
           ),
         ],
@@ -2541,7 +2395,7 @@ class _ImGoingCard extends StatelessWidget {
             Icon(Icons.close, color: context.hc.surface, size: 22),
             const SizedBox(height: 2),
             Text(isPast ? 'Clear' : 'Cancel',
-              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+              style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white)),
           ],
         ),
       ),
@@ -2610,11 +2464,7 @@ class _ImGoingCard extends StatelessWidget {
                                       Flexible(
                                         child: Text(
                                           item.title,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: context.hc.textPrimary,
-                                          ),
+                                          style: HuddlText.body(weight: FontWeight.w600),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -2630,11 +2480,7 @@ class _ImGoingCard extends StatelessWidget {
                                           ),
                                           child: Text(
                                             'Meetup',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w600,
-                                              color: context.hc.textSecondary,
-                                            ),
+                                            style: HuddlText.label(),
                                           ),
                                         ),
                                       ],
@@ -2652,11 +2498,7 @@ class _ImGoingCard extends StatelessWidget {
                                   ),
                                   child: Text(
                                     item.countdownLabel,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: _countdownColor(item.daysUntil, isPast),
-                                    ),
+                                    style: HuddlText.label(),
                                   ),
                                 ),
                               ],
@@ -2669,11 +2511,7 @@ class _ImGoingCard extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     '${item.dateDisplay}  \u00b7  ${item.timeDisplay}  \u00b7  ${item.location}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: context.hc.textTertiary,
-                                      fontWeight: FontWeight.w400,
-                                    ),
+                                    style: HuddlText.caption(color: context.hc.textTertiary),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -2691,11 +2529,7 @@ class _ImGoingCard extends StatelessWidget {
                                       ),
                                       child: Text(
                                         '${item.attendees}',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.hc.surface,
-                                        ),
+                                        style: HuddlText.label(),
                                       ),
                                     ),
                                   ),
@@ -2921,16 +2755,12 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
             const SizedBox(height: 12),
             Text(
               'No results for "$_searchQuery"',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: context.hc.textSecondary,
-              ),
+              style: HuddlText.body(),
             ),
             const SizedBox(height: 6),
             Text(
               'Try a different keyword',
-              style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+              style: HuddlText.body(color: context.hc.textTertiary),
             ),
           ],
         ),
@@ -3155,7 +2985,7 @@ class _EventsTabState extends State<_EventsTab> {
           SnackBar(
             content: Text(
               'Found $count new events near you',
-              style: GoogleFonts.poppins(fontSize: 13),
+              style: HuddlText.body(),
             ),
             backgroundColor: HuddlColors.textDark,
             behavior: SnackBarBehavior.floating,
@@ -3398,13 +3228,7 @@ class _EventsTabState extends State<_EventsTab> {
                               const SizedBox(width: 8),
                               Text(
                                 hasActiveFilter ? 'Filter and sort •' : 'Filter and sort',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: hasActiveFilter
-                                      ? HuddlColors.primary
-                                      : filterText,
-                                ),
+                                style: HuddlText.body(),
                               ),
                             ],
                           ),
@@ -3428,11 +3252,7 @@ class _EventsTabState extends State<_EventsTab> {
                               horizontal: 4, vertical: 8),
                           child: Text(
                             'Clear',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textTertiary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -3459,13 +3279,10 @@ class _EventsTabState extends State<_EventsTab> {
                           textAlignVertical: TextAlignVertical.center,
                           onChanged: (v) =>
                               setState(() => _localSearchQuery = v),
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: filterText),
+                          style: HuddlText.body(color: filterText),
                           decoration: InputDecoration(
                             hintText: 'Search events',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: HuddlColors.textTertiary),
+                            hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
@@ -3498,11 +3315,7 @@ class _EventsTabState extends State<_EventsTab> {
               // Section label — mirrors Meetups pattern
               Text(
                 _localSearchQuery.isEmpty ? 'Suggested for you' : 'Search results',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: sectionText,
-                ),
+                style: HuddlText.display(),
               ),
               // ── Distance indicator ──────────────────────────────────────
               // Shows the active radius (or "Online") below the section header.
@@ -3521,11 +3334,7 @@ class _EventsTabState extends State<_EventsTab> {
                     const SizedBox(width: 4),
                     Text(
                       _evDistanceLabel,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: HuddlColors.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ],
                 ),
@@ -3550,10 +3359,7 @@ class _EventsTabState extends State<_EventsTab> {
                 const SizedBox(width: 8),
                 Text(
                   'Finding events for you\u2026',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.nearBlack,
-                      fontWeight: FontWeight.w500),
+                  style: HuddlText.caption(color: HuddlColors.nearBlack),
                 ),
               ],
             ),
@@ -3691,11 +3497,7 @@ class _EventsTabState extends State<_EventsTab> {
             padding: const EdgeInsets.only(bottom: 14),
             child: Text(
               title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
           );
 
@@ -3736,11 +3538,7 @@ class _EventsTabState extends State<_EventsTab> {
                     const SizedBox(width: 14),
                     Text(
                       label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        color: textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -3812,11 +3610,7 @@ class _EventsTabState extends State<_EventsTab> {
                             Row(
                               children: [
                                 Text('Smart Sort',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14, fontWeight: FontWeight.w700,
-                                    color: sheetSortBy == 'smartSort'
-                                        ? orange : textPrimary,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w700),
                                 ),
                                 const SizedBox(width: 6),
                                 Container(
@@ -3827,17 +3621,13 @@ class _EventsTabState extends State<_EventsTab> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text('AI',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9, fontWeight: FontWeight.w700,
-                                      color: Colors.white, letterSpacing: 0.5,
-                                    ),
+                                    style: HuddlText.label(color: Colors.white),
                                   ),
                                 ),
                               ],
                             ),
                             Text('Personalised to your profile',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: textSecGray)),
+                              style: HuddlText.caption(color: textSecGray)),
                           ],
                         ),
                       ),
@@ -3859,10 +3649,7 @@ class _EventsTabState extends State<_EventsTab> {
                               color: orange.withValues(alpha: 0.18)),
                         ),
                         child: Text(f,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11, fontWeight: FontWeight.w500,
-                            color: orange,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       )).toList(),
                     ),
@@ -3871,8 +3658,7 @@ class _EventsTabState extends State<_EventsTab> {
                   Text(
                     'Events are ranked by how well they match your profile — '
                     'location, parenting stage, interests, and activity.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11, color: textSecGray, height: 1.45),
+                    style: HuddlText.caption(color: textSecGray).copyWith(height: 1.45),
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: dividerColor),
@@ -3892,10 +3678,7 @@ class _EventsTabState extends State<_EventsTab> {
                           sheetSmartSort
                               ? 'AI ranking active'
                               : 'AI ranking off — showing default order',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, fontWeight: FontWeight.w500,
-                            color: sheetSmartSort ? orange : textSecGray,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ),
                       Transform.scale(
@@ -3921,8 +3704,7 @@ class _EventsTabState extends State<_EventsTab> {
                     Row(
                       children: [
                         Text('Match quality',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, color: textSecGray)),
+                          style: HuddlText.caption(color: textSecGray)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: ClipRRect(
@@ -3938,10 +3720,7 @@ class _EventsTabState extends State<_EventsTab> {
                         ),
                         const SizedBox(width: 8),
                         Text('${evSampleScore.round()}%',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11, fontWeight: FontWeight.w600,
-                            color: orange,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -3980,11 +3759,7 @@ class _EventsTabState extends State<_EventsTab> {
                     ],
                     Text(
                       label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? Colors.white : textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -4007,10 +3782,7 @@ class _EventsTabState extends State<_EventsTab> {
                   children: [
                     Expanded(
                       child: Text(label,
-                          style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              color: textPrimary)),
+                          style: HuddlText.body(color: textPrimary)),
                     ),
                     Container(
                       width: 22, height: 22,
@@ -4111,10 +3883,7 @@ class _EventsTabState extends State<_EventsTab> {
                               Expanded(
                                 child: Text('Filter and sort',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: textPrimary)),
+                                    style: HuddlText.body(weight: FontWeight.w600, color: textPrimary)),
                               ),
                               const SizedBox(width: 12),
                               GestureDetector(
@@ -4138,11 +3907,7 @@ class _EventsTabState extends State<_EventsTab> {
                                   });
                                 },
                                 child: Text('RESET',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: orange,
-                                        letterSpacing: 0.3)),
+                                    style: HuddlText.body(weight: FontWeight.w600, color: orange).copyWith(letterSpacing: 0.3)),
                               ),
                             ],
                           ),
@@ -4165,10 +3930,7 @@ class _EventsTabState extends State<_EventsTab> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('Distance',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: textPrimary)),
+                                  style: HuddlText.heading(color: textPrimary)),
                               // Live selected-value badge
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -4180,10 +3942,7 @@ class _EventsTabState extends State<_EventsTab> {
                                   sheetDistanceKm >= 50
                                       ? 'Up to 50 km'
                                       : 'Within ${sheetDistanceKm.toInt()} km',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: orange),
+                                  style: HuddlText.body(weight: FontWeight.w600, color: orange),
                                 ),
                               ),
                             ],
@@ -4217,17 +3976,11 @@ class _EventsTabState extends State<_EventsTab> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('1 km',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
                                 Text('25 km',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
                                 Text('50 km',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
                               ],
                             ),
                           ),
@@ -4260,7 +4013,7 @@ class _EventsTabState extends State<_EventsTab> {
                                             : _evLocationStatus == LocationStatus.serviceDisabled
                                                 ? 'Enable location services to filter by distance.'
                                                 : 'Tap to enable location and filter by distance.',
-                                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF757575)),
+                                        style: HuddlText.caption(color: const Color(0xFF757575)),
                                       ),
                                     ),
                                     const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFBDBDBD)),
@@ -4297,10 +4050,7 @@ class _EventsTabState extends State<_EventsTab> {
                           Row(children: [
                             Expanded(
                               child: Text('Show only free events',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: textPrimary)),
+                                  style: HuddlText.body(weight: FontWeight.w700, color: textPrimary)),
                             ),
                             Switch(
                               value: sheetFreeOnly,
@@ -4353,20 +4103,14 @@ class _EventsTabState extends State<_EventsTab> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text('Date range',
-                                              style: GoogleFonts.poppins(
-                                                  fontSize: 12,
-                                                  color: textSecGray)),
+                                              style: HuddlText.caption(color: textSecGray)),
                                           const SizedBox(height: 2),
                                           Text(dateLabel,
-                                              style: GoogleFonts.poppins(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: textPrimary)),
+                                              style: HuddlText.body(color: textPrimary)),
                                         ],
                                       )
                                     : Text('Date range',
-                                        style: GoogleFonts.poppins(
-                                            fontSize: 14, color: textSecGray)),
+                                        style: HuddlText.body(color: textSecGray)),
                                 ),
                                 Icon(Icons.calendar_month_outlined,
                                     color: orange, size: 22),
@@ -4436,11 +4180,7 @@ class _EventsTabState extends State<_EventsTab> {
                               activeCount > 0
                                   ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}'
                                   : 'Show results',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2),
+                              style: HuddlText.body(weight: FontWeight.w600, color: Colors.white).copyWith(letterSpacing: 0.2),
                             ),
                           ),
                         ),
@@ -4493,11 +4233,7 @@ class _SectionLabel extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: context.hc.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w700),
           ),
         ],
       ),
@@ -4562,12 +4298,7 @@ class _MeetupSearchRow extends StatelessWidget {
                   // Category + date — small caps
                   Text(
                     '${meetup.category.toUpperCase()}  ·  ${meetup.dateDisplay.toUpperCase()}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textTertiary,
-                      letterSpacing: 0.4,
-                    ),
+                    style: HuddlText.label(color: context.hc.textTertiary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4575,11 +4306,7 @@ class _MeetupSearchRow extends StatelessWidget {
                   // Title
                   Text(
                     meetup.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4587,10 +4314,7 @@ class _MeetupSearchRow extends StatelessWidget {
                   // Location + attendee count
                   Text(
                     '${meetup.location}  ·  ${meetup.attendeeCount} attending',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4614,11 +4338,7 @@ class _MeetupSearchRow extends StatelessWidget {
               ),
               child: Text(
                 isJoined ? 'Joined' : 'Join',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isJoined ? Colors.white : context.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ),
           ],
@@ -4643,11 +4363,7 @@ class _MeetupSearchPlaceholder extends StatelessWidget {
       child: Center(
         child: Text(
           title.isNotEmpty ? title[0].toUpperCase() : 'M',
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: HuddlColors.textDark,
-          ),
+          style: HuddlText.display(),
         ),
       ),
     );
@@ -4702,7 +4418,7 @@ class _MeetupCardState extends State<_MeetupCard> {
               Expanded(
                 child: Text(
                   "You're going to \${meetup.title}!",
-                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                  style: HuddlText.body(color: Colors.white),
                 ),
               ),
             ],
@@ -4857,11 +4573,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                             ),
                             child: Text(
                               'New',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w700),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -4881,11 +4593,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                                 const SizedBox(width: 3),
                                 Text(
                                   'Private',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
+                                  style: HuddlText.caption(weight: FontWeight.w700),
                                 ),
                               ],
                             ),
@@ -4907,11 +4615,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                       ),
                       child: Text(
                         priceText,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isFree ? Colors.white : HuddlColors.nearBlack,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -4932,11 +4636,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                         const SizedBox(width: 5),
                         Text(
                           '$dateStr  ·  $timeStr',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: _cardMeta,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -4945,12 +4645,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                     // Title
                     Text(
                       meetup.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: _cardText,
-                        height: 1.25,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w700, color: _cardText),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -4965,8 +4660,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                         Expanded(
                           child: Text(
                             meetup.location,
-                            style: GoogleFonts.poppins(
-                                fontSize: 12.5, color: _cardMeta),
+                            style: HuddlText.caption(color: _cardMeta),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -5023,10 +4717,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                         Expanded(
                           child: Text(
                             '${meetup.attendeeCount} attending',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: _cardMeta,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                         ),
                         // Join / Joined / Full / Restricted button — Groups-style
@@ -5073,17 +4764,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                                         : meetup.isGoing
                                             ? 'Joined'
                                             : 'Join',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isRestricted
-                                      ? HuddlColors.textHint
-                                      : _isFull && !meetup.isGoing
-                                          ? HuddlColors.textTertiary
-                                          : meetup.isGoing
-                                              ? HuddlColors.textTertiary
-                                              : HuddlColors.primary,
-                                ),
+                                style: HuddlText.body(weight: FontWeight.w600),
                               ),
                             ),
                           ),
@@ -5142,7 +4823,7 @@ class _EventListCardState extends State<_EventListCard> {
                 Expanded(
                   child: Text(
                     "You're going to $title!",
-                    style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                    style: HuddlText.body(color: Colors.white),
                   ),
                 ),
               ],
@@ -5289,11 +4970,7 @@ class _EventListCardState extends State<_EventListCard> {
                             ),
                             child: Text(
                               'New',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w700),
                             ),
                           ),
                         // Type badge: "Online" only — shown for virtual events; in-person needs no label
@@ -5307,11 +4984,7 @@ class _EventListCardState extends State<_EventListCard> {
                             ),
                             child: Text(
                               'Online',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -5332,11 +5005,7 @@ class _EventListCardState extends State<_EventListCard> {
                       ),
                       child: Text(
                         priceLabel,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isFree ? Colors.white : eventTypeBlue,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -5357,11 +5026,7 @@ class _EventListCardState extends State<_EventListCard> {
                         const SizedBox(width: 5),
                         Text(
                           '${event['date'] as String}  ·  ${event['time'] as String}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: HuddlColors.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -5369,12 +5034,7 @@ class _EventListCardState extends State<_EventListCard> {
                     // Bold event title — 2-line max
                     Text(
                       event['title'] as String,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary,
-                        height: 1.25,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -5391,10 +5051,7 @@ class _EventListCardState extends State<_EventListCard> {
                         Expanded(
                           child: Text(
                             event['location'] as String,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.5,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.caption(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -5454,10 +5111,7 @@ class _EventListCardState extends State<_EventListCard> {
                     Expanded(
                       child: Text(
                         '$attendees attending',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ),
                     // Join / Going pill — taps directly join without opening detail
@@ -5495,13 +5149,7 @@ class _EventListCardState extends State<_EventListCard> {
                                   ],
                                   Text(
                                     isGoing ? 'Going' : 'Join',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: isGoing
-                                          ? Colors.white
-                                          : HuddlColors.primary,
-                                    ),
+                                    style: HuddlText.body(weight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -5576,22 +5224,16 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         const SizedBox(width: 5),
         Text(
           'Pick',
-          style: GoogleFonts.poppins(
-            fontSize: 10, color: context.hc.textTertiary, fontWeight: FontWeight.w500),
+          style: HuddlText.label(color: context.hc.textTertiary),
         ),
         const Spacer(),
         if (_localFeedback != null)
           Text(
             _localFeedback! ? 'Liked' : 'Not for me',
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              color: _localFeedback! ? HuddlColors.primary : context.hc.textTertiary,
-              fontWeight: FontWeight.w500,
-            ),
+            style: HuddlText.label(color: _localFeedback! ? HuddlColors.primary : context.hc.textTertiary),
           )
         else ...[
-          Text('Helpful?', style: GoogleFonts.poppins(
-            fontSize: 10, color: context.hc.textTertiary)),
+          Text('Helpful?', style: HuddlText.label(color: context.hc.textTertiary)),
           const SizedBox(width: 6),
           GestureDetector(
             onTap: () => _submit(true),
@@ -5607,8 +5249,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
                 children: [
                   const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.primary),
                   const SizedBox(width: 3),
-                  Text('Yes', style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
+                  Text('Yes', style: HuddlText.label(color: HuddlColors.nearBlack)),
                 ],
               ),
             ),
@@ -5629,8 +5270,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
                   Icon(Icons.thumb_down_alt_outlined, size: 12,
                     color: context.hc.textTertiary.withValues(alpha: 0.7)),
                   const SizedBox(width: 3),
-                  Text('No', style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w500, color: context.hc.textTertiary)),
+                  Text('No', style: HuddlText.label(color: context.hc.textTertiary)),
                 ],
               ),
             ),
@@ -5732,12 +5372,7 @@ class _FilterChipState extends State<_FilterChip>
             ),
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 250),
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w400,
-                // WCAG fix: white on primary (7.1:1) instead of dark (3.1:1)
-                color: widget.isSelected ? HuddlColors.white : context.hc.textSecondary,
-              ),
+              style: HuddlText.body(color: widget.isSelected ? Colors.white : HuddlColors.nearBlack),
               child: Text(widget.label),
             ),
           ),
@@ -6010,12 +5645,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                 children: [
                   Text(
                     nudge.text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: hc.textPrimary,
-                      height: 1.4,
-                    ),
+                    style: HuddlText.caption(color: hc.textPrimary),
                   ),
                   if (onAction != null && nudge.actionLabel != null) ...[
                     const SizedBox(height: 6),
@@ -6026,11 +5656,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                       },
                       child: Text(
                         nudge.actionLabel!,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -6173,11 +5799,7 @@ class _TabLabel extends StatelessWidget {
           ),
           child: Text(
             '$count',
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: HuddlColors.primary,
-            ),
+            style: HuddlText.label(),
           ),
         ),
       ],

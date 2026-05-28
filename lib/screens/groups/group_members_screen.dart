@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/user_privacy_prefs_service.dart';
 import 'manage_admins_screen.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
 const Color _kOnline = HuddlColors.success;
@@ -202,15 +202,11 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
           children: [
             Text(
               'Members',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
             Text(
               _isLoading ? 'Loading...' : '${_members.length} member${_members.length == 1 ? '' : 's'}',
-              style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+              style: HuddlText.caption(color: context.hc.textTertiary),
             ),
           ],
         ),
@@ -240,7 +236,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                     child: TextField(
                       onChanged: (val) => setState(() => _searchQuery = val),
                       textAlignVertical: TextAlignVertical.center,
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                      style: HuddlText.body(color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search members',
                         border: InputBorder.none,
@@ -248,7 +244,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                         focusedBorder: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         isDense: true,
-                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                        hintStyle: HuddlText.body(color: context.hc.textTertiary),
                       ),
                     ),
                   ),
@@ -278,11 +274,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                       ),
                       child: Text(
                         f,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? HuddlColors.white : HuddlColors.textSecondary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                   ),
@@ -305,8 +297,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                               Icon(Icons.refresh, size: 40, color: context.hc.textTertiary),
                               const SizedBox(height: 12),
                               Text(_error!,
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 14, color: context.hc.textTertiary),
+                                  style: HuddlText.body(color: context.hc.textTertiary),
                                   textAlign: TextAlign.center),
                             ],
                           ),
@@ -316,8 +307,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                         ? Center(
                             child: Text(
                               _searchQuery.isNotEmpty ? 'No members found' : 'No members yet',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, color: context.hc.textTertiary),
+                              style: HuddlText.body(color: context.hc.textTertiary),
                             ),
                           )
                         : ListView.separated(
@@ -403,7 +393,7 @@ class _MemberTile extends StatelessWidget {
             ListTile(
               leading: Icon(Icons.shield_outlined, color: context.hc.textPrimary),
               title: Text('Make admin',
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
+                style: HuddlText.body(color: context.hc.textPrimary)),
               onTap: () {
                 Navigator.pop(c);
                 onAdminManage?.call();
@@ -413,7 +403,7 @@ class _MemberTile extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.person_remove_outlined, color: HuddlColors.error),
               title: Text('Remove from group',
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                style: HuddlText.body(color: HuddlColors.error)),
               onTap: () {
                 Navigator.pop(c);
                 _confirmRemove(context);
@@ -437,11 +427,11 @@ class _MemberTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Remove ${member.name}?',
-                style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                style: HuddlText.heading(color: context.hc.textPrimary),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text('Remove ${member.name} from this group? They will need to rejoin if they want to participate.',
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
@@ -452,7 +442,7 @@ class _MemberTile extends StatelessWidget {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, false),
                       child: Text('Cancel',
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -460,7 +450,7 @@ class _MemberTile extends StatelessWidget {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, true),
                       child: Text('Remove',
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],
@@ -519,8 +509,7 @@ class _MemberTile extends StatelessWidget {
           children: [
             Text(
               member.name,
-              style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
+              style: HuddlText.body(color: context.hc.textPrimary),
             ),
             if (member.role == 'admin') ...[
               const SizedBox(width: 8),
@@ -532,8 +521,7 @@ class _MemberTile extends StatelessWidget {
                 ),
                 child: Text(
                   'Admin',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                  style: HuddlText.label(color: HuddlColors.textDark),
                 ),
               ),
             ],
@@ -543,8 +531,7 @@ class _MemberTile extends StatelessWidget {
           member.borough.isNotEmpty
               ? '${member.isOnline ? 'Online' : 'Offline'} · ${member.borough}'
               : (member.isOnline ? 'Online' : 'Offline'),
-          style: GoogleFonts.poppins(
-            fontSize: 12, color: member.isOnline ? _kOnline : context.hc.textTertiary),
+          style: HuddlText.caption(color: member.isOnline ? _kOnline : context.hc.textTertiary),
         ),
         // Section 6E: show ⋮ button for admin users (not on own row)
         trailing: _canActOnMember

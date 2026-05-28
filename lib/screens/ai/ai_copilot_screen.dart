@@ -2,7 +2,6 @@ import 'dart:async';
 import '../../services/browser_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/ai_copilot_service.dart';
@@ -10,6 +9,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
+import '../../constants/app_text_styles.dart';
 
 
 // =============================================================================
@@ -234,7 +234,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           isFreeTier
               ? 'Daily limit reached ($_dailyLimit chats). Upgrade to Huddl Plus for 25 chats/day!'
               : "You've reached your $_dailyLimit daily AI chats. Resets at midnight.",
-          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+          style: HuddlText.body(color: Colors.white),
         ),
         backgroundColor:
             isFreeTier ? HuddlColors.primary : HuddlColors.textDark,
@@ -303,11 +303,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         children: [
           Text(
             'huddl Assistant',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: hc.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w700),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -325,12 +321,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               const SizedBox(width: 5),
               Text(
                 _copilot.isOnline ? 'Online' : 'Offline mode',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: _copilot.isOnline
-                      ? HuddlColors.success
-                      : HuddlColors.textHint,
-                ),
+                style: HuddlText.caption(),
               ),
             ],
           ),
@@ -379,21 +370,13 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 ? 'Hi $_firstName! 👋 What\'s on your mind?'
                 : 'Hi there! 👋 What\'s on your mind?',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: hc.textPrimary,
-            ),
+            style: HuddlText.display(),
           ),
           const SizedBox(height: 8),
           Text(
             'I know your family, your area, and what\'s on locally. Ask me anything.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: hc.textSecondary,
-              height: 1.5,
-            ),
+            style: HuddlText.body(color: hc.textSecondary),
           ),
           const SizedBox(height: 24),
 
@@ -413,11 +396,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           // §2B: Quick actions — curated, AI-unique only
           Text(
             'Quick actions',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: hc.textSecondary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -487,11 +466,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             Flexible(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: HuddlColors.textDark,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: HuddlText.body(color: HuddlColors.textDark),
               ),
             ),
           ],
@@ -529,11 +504,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             const SizedBox(width: 6),
             Text(
               action.label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: hc.textPrimary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),
@@ -579,11 +550,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         ),
         child: Text(
           msg.text,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.white,
-            height: 1.4,
-          ),
+          style: HuddlText.body(color: Colors.white),
         ),
       ),
     );
@@ -640,11 +607,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                       padding: const EdgeInsets.only(top: 4, left: 4),
                       child: Text(
                         'Tap to retry',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.textTertiary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: HuddlText.caption(color: HuddlColors.textTertiary),
                       ),
                     ),
                   ),
@@ -670,8 +633,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('• ',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14, color: hc.textSecondary)),
+                    style: HuddlText.body(color: hc.textSecondary)),
                 Expanded(
                     child: _buildBoldText(content, hc, 14)),
               ],
@@ -683,12 +645,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             padding: const EdgeInsets.only(bottom: 3),
             child: Text(
               line.replaceAll('**', ''),
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: hc.textPrimary,
-                height: 1.4,
-              ),
+              style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
             ),
           );
         }
@@ -707,10 +664,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     for (int i = 0; i < parts.length; i++) {
       spans.add(TextSpan(
         text: parts[i],
-        style: GoogleFonts.poppins(
+        style: HuddlText.body(color: hc.textPrimary).copyWith(
           fontSize: fontSize,
           fontWeight: i.isOdd ? FontWeight.w700 : FontWeight.w400,
-          color: hc.textPrimary,
           height: 1.4,
         ),
       ));
@@ -775,10 +731,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       child: Text(
         '$remaining AI chat${remaining == 1 ? '' : 's'} remaining today',
         textAlign: TextAlign.center,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          color: remaining <= 1 ? HuddlColors.error : HuddlColors.textTertiary,
-        ),
+        style: HuddlText.caption(),
       ),
     );
   }
@@ -807,16 +760,12 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               onSubmitted: _sendMessage,
               enabled: !_isTyping,
               textAlignVertical: TextAlignVertical.center,
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: hc.textPrimary),
+              style: HuddlText.body(color: hc.textPrimary),
               decoration: InputDecoration(
                 hintText: _isTyping
                     ? 'huddl is thinking...'
                     : 'Ask me anything...',
-                hintStyle: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: hc.textTertiary,
-                    fontStyle: FontStyle.italic),
+                hintStyle: HuddlText.body(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                 filled: true,
                 fillColor: hc.scaffold,
                 contentPadding: const EdgeInsets.symmetric(

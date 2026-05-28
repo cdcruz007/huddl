@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
+import '../constants/app_text_styles.dart';
 
 /// The type of attachment the user wants to send.
 enum AttachAction { camera, gallery, document, location, contact }
@@ -140,11 +140,7 @@ class _AttachIcon extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: context.hc.textSecondary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),

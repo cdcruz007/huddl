@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/ai_listing_service.dart';
 import '../../services/rehome_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI LISTING GENERATOR — Bottom sheet for AI-powered listing creation
@@ -104,7 +104,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
       SnackBar(
         content: Text(
           'Listed! "${_draft!.suggestedTitle}" is now live on Market',
-          style: GoogleFonts.poppins(fontSize: 13),
+          style: HuddlText.body(),
         ),
         backgroundColor: HuddlColors.success,
         behavior: SnackBarBehavior.floating,
@@ -158,16 +158,11 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         children: [
                           Text(
                             'Smart Listing',
-                            style: GoogleFonts.poppins(
-                              fontSize: 20, fontWeight: FontWeight.w700,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.display(),
                           ),
                           Text(
                             'Photo to listing in 15 seconds',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12, color: context.hc.textSecondary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                         ],
                       ),
@@ -227,17 +222,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         const SizedBox(height: 16),
                         Text(
                           'Looking at your photo...',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14, fontWeight: FontWeight.w500,
-                            color: HuddlColors.aiBlue,
-                          ),
+                          style: HuddlText.body(),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Identifying product, pricing, and category',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, color: context.hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -257,17 +247,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         const SizedBox(height: 12),
                         Text(
                           'Tap to take a photo',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16, fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'We\'ll fill in the details for you',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, color: context.hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -278,18 +263,15 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
         // Hint text field
         Text(
           'Or describe what you\'re selling',
-          style: GoogleFonts.poppins(
-            fontSize: 13, fontWeight: FontWeight.w500,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.body(),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _hintController,
-          style: GoogleFonts.poppins(fontSize: 14),
+          style: HuddlText.body(),
           decoration: InputDecoration(
             hintText: 'e.g. "Bugaboo Fox 3 pushchair" or "baby clothes 0-3m"',
-            hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+            hintStyle: HuddlText.body(color: context.hc.textTertiary),
             filled: true,
             fillColor: context.hc.scaffold,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -307,10 +289,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
         // Quick items
         Text(
           'Popular items to list',
-          style: GoogleFonts.poppins(
-            fontSize: 13, fontWeight: FontWeight.w500,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.body(),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -347,9 +326,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           children: [
             Icon(icon, size: 16, color: HuddlColors.aiBlue),
             const SizedBox(width: 6),
-            Text(label, style: GoogleFonts.poppins(
-              fontSize: 12, color: context.hc.textPrimary,
-            )),
+            Text(label, style: HuddlText.caption()),
           ],
         ),
       ),
@@ -379,10 +356,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 const SizedBox(width: 6),
                 Text(
                   'Details filled in automatically',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w600,
-                    color: HuddlColors.success,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
               ],
             ),
@@ -405,7 +379,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(draft.safetyNote!,
-                    style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.error)),
+                    style: HuddlText.caption(color: HuddlColors.error)),
                 ),
               ],
             ),
@@ -429,9 +403,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Smart Pricing', style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary,
-              )),
+              Text('Smart Pricing', style: HuddlText.body(weight: FontWeight.w600)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -440,15 +412,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Suggested price',
-                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary)),
+                          style: HuddlText.caption(color: context.hc.textSecondary)),
                         Row(
                           children: [
                             Text(
                               '\u00A3${draft.suggestedPrice.toStringAsFixed(0)}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 28, fontWeight: FontWeight.w700,
-                                color: HuddlColors.success,
-                              ),
+                              style: HuddlText.display(),
                             ),
                             const SizedBox(width: 8),
                             Container(
@@ -459,10 +428,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                               ),
                               child: Text(
                                 '${draft.savingsPercent}% off retail',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11, fontWeight: FontWeight.w600,
-                                  color: HuddlColors.success,
-                                ),
+                                style: HuddlText.caption(weight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -474,14 +440,10 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text('Retail price',
-                        style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary)),
+                        style: HuddlText.label(color: context.hc.textTertiary)),
                       Text(
                         '\u00A3${draft.retailPrice.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16, fontWeight: FontWeight.w500,
-                          color: context.hc.textTertiary,
-                          decoration: TextDecoration.lineThrough,
-                        ),
+                        style: HuddlText.body(color: context.hc.textTertiary),
                       ),
                     ],
                   ),
@@ -512,7 +474,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                               : comp.priceVerdict == 'above_avg'
                                   ? 'Slightly above average. Consider lowering for faster sale.'
                                   : 'Fair price for ${draft.suggestedCategory.label} in your area',
-                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                          style: HuddlText.caption(color: context.hc.textSecondary),
                         ),
                       ),
                     ],
@@ -546,9 +508,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
               color: context.hc.scaffold,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text('#$tag', style: GoogleFonts.poppins(
-              fontSize: 11, color: context.hc.textSecondary,
-            )),
+            child: Text('#$tag', style: HuddlText.caption()),
           )).toList(),
         ),
         const SizedBox(height: 24),
@@ -571,10 +531,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                    child: Text('Start Over', style: GoogleFonts.poppins(
-                      fontSize: 14, fontWeight: FontWeight.w600,
-                      color: context.hc.textSecondary,
-                    )),
+                    child: Text('Start Over', style: HuddlText.body(weight: FontWeight.w600)),
                   ),
                 ),
               ),
@@ -596,10 +553,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                       children: [
                         Icon(Icons.publish, color: context.hc.surface, size: 20),
                         const SizedBox(width: 8),
-                        Text('Publish Listing', style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w600,
-                          color: context.hc.surface,
-                        )),
+                        Text('Publish Listing', style: HuddlText.body(weight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -617,14 +571,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.poppins(
-          fontSize: 12, fontWeight: FontWeight.w500, color: context.hc.textSecondary,
-        )),
+        Text(label, style: HuddlText.caption()),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
           maxLines: maxLines,
-          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+          style: HuddlText.body(color: context.hc.textPrimary),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, size: 18, color: HuddlColors.aiBlue),
             filled: true,
@@ -651,12 +603,8 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
         children: [
           Icon(icon, size: 18, color: HuddlColors.aiBlue),
           const SizedBox(height: 4),
-          Text(value, style: GoogleFonts.poppins(
-            fontSize: 10, fontWeight: FontWeight.w600, color: context.hc.textPrimary,
-          ), textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
-          Text(label, style: GoogleFonts.poppins(
-            fontSize: 9, color: context.hc.textTertiary,
-          )),
+          Text(value, style: HuddlText.label(), textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
+          Text(label, style: HuddlText.label()),
         ],
       ),
     );

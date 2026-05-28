@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/invitation_service.dart';
 import '../../services/dm_service.dart';
@@ -11,6 +10,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/direct_message.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
+import '../../constants/app_text_styles.dart';
 
 /// Represents a forwarding target — either a DM contact or a group.
 class _ForwardTarget {
@@ -542,22 +542,14 @@ class _ForwardSheetState extends State<_ForwardSheet>
               children: [
                 Text(
                   'Send to',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.heading(),
                 ),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.textTertiary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ),
               ],
@@ -586,12 +578,10 @@ class _ForwardSheetState extends State<_ForwardSheet>
                   child: TextField(
                     controller: _searchCtrl,
                     textAlignVertical: TextAlignVertical.center,
-                    style: GoogleFonts.poppins(
-                        fontSize: 14, color: context.hc.textPrimary),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search list',
-                      hintStyle: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textTertiary),
+                      hintStyle: HuddlText.body(color: context.hc.textTertiary),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       isDense: true,
@@ -634,14 +624,8 @@ class _ForwardSheetState extends State<_ForwardSheet>
               dividerColor: Colors.transparent,
               labelColor: Colors.white,
               unselectedLabelColor: context.hc.textSecondary,
-              labelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              labelStyle: HuddlText.caption(weight: FontWeight.w600),
+              unselectedLabelStyle: HuddlText.caption(),
               tabs: [
                 Tab(
                   height: 36,
@@ -717,10 +701,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
               const SizedBox(height: 12),
               Text(
                 emptyLabel,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.body(),
               ),
             ],
           ),
@@ -805,11 +786,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -823,7 +800,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                           Flexible(
                             child: Text(
                               '$dateDisplay${timeDisplay.isNotEmpty ? '  ⏰ $timeDisplay' : ''}',
-                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                              style: HuddlText.caption(color: context.hc.textSecondary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -841,7 +818,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                           Flexible(
                             child: Text(
                               location,
-                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                              style: HuddlText.caption(color: context.hc.textTertiary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -896,11 +873,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 children: [
                   Text(
                     name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -912,7 +885,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                         const SizedBox(width: 4),
                         Text(
                           '$memberCount members',
-                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                          style: HuddlText.caption(color: context.hc.textSecondary),
                         ),
                       ],
                     ),
@@ -922,7 +895,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         description,
-                        style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                        style: HuddlText.caption(color: context.hc.textTertiary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -979,22 +952,14 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       const SizedBox(width: 4),
                       Text(
                         'Event',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.textDark,
-                        ),
+                        style: HuddlText.label(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1008,7 +973,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                           Flexible(
                             child: Text(
                               '$date${time.isNotEmpty ? '  \u23f0 $time' : ''}',
-                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                              style: HuddlText.caption(color: context.hc.textSecondary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1026,7 +991,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                           Flexible(
                             child: Text(
                               location,
-                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                              style: HuddlText.caption(color: context.hc.textTertiary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1076,20 +1041,13 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 children: [
                   Text(
                     'Photo',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                   if (widget.messageText.isNotEmpty &&
                       widget.messageText != 'Photo')
                     Text(
                       widget.messageText,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textSecondary,
-                      ),
+                      style: HuddlText.caption(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1126,10 +1084,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
             Expanded(
               child: Text(
                 widget.locationLabel ?? 'Shared location',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: context.hc.textSecondary,
-                ),
+                style: HuddlText.body(),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1167,19 +1122,12 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 children: [
                   Text(
                     widget.contactName!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                   if (widget.contactPhone != null)
                     Text(
                       widget.contactPhone!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                 ],
               ),
@@ -1214,10 +1162,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
             Expanded(
               child: Text(
                 widget.documentName!,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: context.hc.textSecondary,
-                ),
+                style: HuddlText.body(),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1243,10 +1188,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
           Expanded(
             child: Text(
               widget.messageText,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: context.hc.textSecondary,
-              ),
+              style: HuddlText.body(),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1291,21 +1233,14 @@ class _ForwardContactTile extends StatelessWidget {
               children: [
                 Text(
                   target.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.body(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (target.isGroup)
                   Text(
                     'Group',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
               ],
             ),
@@ -1373,22 +1308,14 @@ class _ForwardContactTile extends StatelessWidget {
               errorBuilder: (_, __, ___) => Center(
                 child: Text(
                   target.name.isNotEmpty ? target.name[0].toUpperCase() : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
+                  style: HuddlText.heading(),
                 ),
               ),
             )
           : Center(
               child: Text(
                 target.name.isNotEmpty ? target.name[0].toUpperCase() : '?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
+                style: HuddlText.heading(),
               ),
             ),
     );
@@ -1432,10 +1359,8 @@ class _ForwardContactTile extends StatelessWidget {
       child: Center(
         child: Text(
           initials,
-          style: GoogleFonts.poppins(
+          style: HuddlText.caption(weight: FontWeight.w600, color: Colors.white).copyWith(
             fontSize: size * (initials.length > 1 ? 0.30 : 0.38),
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
             letterSpacing: 0.5,
           ),
         ),
@@ -1501,12 +1426,7 @@ class _ForwardContactTile extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: textColor,
-            letterSpacing: 0.5,
-          ),
+          style: HuddlText.caption(weight: FontWeight.w700, color: textColor),
         ),
       ),
     );

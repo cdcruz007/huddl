@@ -5,11 +5,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../constants/app_text_styles.dart';
 
 class ManageAdminsScreen extends StatefulWidget {
   final String groupId;
@@ -316,11 +316,11 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(title,
-                style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                style: HuddlText.heading(color: context.hc.textPrimary),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text(body,
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
@@ -331,7 +331,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, false),
                       child: Text('Cancel',
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -339,7 +339,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, true),
                       child: Text(confirmLabel,
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: confirmColor)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: confirmColor)),
                     ),
                   ),
                 ],
@@ -372,8 +372,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         ),
         title: Text(
           'Manage admins',
-          style: GoogleFonts.poppins(
-            fontSize: 17, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
+          style: HuddlText.heading(color: context.hc.textPrimary),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -393,7 +392,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                         Icon(Icons.refresh, size: 40, color: context.hc.textTertiary),
                         const SizedBox(height: 12),
                         Text(_error!,
-                          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                          style: HuddlText.body(color: context.hc.textTertiary),
                           textAlign: TextAlign.center),
                       ],
                     ),
@@ -414,7 +413,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Text('No admins found.',
-              style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary)),
+              style: HuddlText.body(color: context.hc.textTertiary)),
           )
         else
           ..._admins.map((admin) => _AdminTile(
@@ -432,7 +431,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Text('Choose members to promote to admin',
-            style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+            style: HuddlText.body(color: context.hc.textSecondary)),
         ),
 
         // Search field (shown when > 10 members)
@@ -454,11 +453,11 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                   Expanded(
                     child: TextField(
                       onChanged: (v) => setState(() => _memberSearch = v),
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                      style: HuddlText.body(color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search members',
                         border: InputBorder.none,
-                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                        hintStyle: HuddlText.body(color: context.hc.textTertiary),
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       ),
@@ -476,7 +475,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
               _members.isEmpty
                   ? 'All members are already admins.'
                   : 'No members match your search.',
-              style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary)),
+              style: HuddlText.body(color: context.hc.textTertiary)),
           )
         else
           ..._filteredMembers.map((member) => _AdminTile(
@@ -497,11 +496,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
     child: Text(
       text,
-      style: GoogleFonts.poppins(
-        fontSize: 13, fontWeight: FontWeight.w700,
-        color: context.hc.textTertiary,
-        letterSpacing: 0.5,
-      ),
+      style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textTertiary),
     ),
   );
 }
@@ -539,9 +534,7 @@ class _AdminTile extends StatelessWidget {
           children: [
             Text(
               member.name,
-              style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w500,
-                color: context.hc.textPrimary),
+              style: HuddlText.body(color: context.hc.textPrimary),
             ),
             if (member.isCreator) ...[
               const SizedBox(width: 6),
@@ -552,14 +545,14 @@ class _AdminTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text('Creator',
-                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
+                  style: HuddlText.label(color: HuddlColors.nearBlack)),
               ),
             ],
           ],
         ),
         trailing: isCurrentUser
             ? Text('(You)',
-                style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary))
+                style: HuddlText.caption(color: context.hc.textTertiary))
             : OutlinedButton(
                 onPressed: onAction,
                 style: OutlinedButton.styleFrom(
@@ -571,7 +564,7 @@ class _AdminTile extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(actionLabel,
-                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: actionColor)),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: actionColor)),
               ),
       ),
     );

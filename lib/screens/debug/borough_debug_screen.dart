@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../services/borough_cache_service.dart';
 import '../../services/borough_analytics_service.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // BOROUGH DEBUG PANEL  — STEP 12
@@ -55,10 +55,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
         elevation: 0,
         title: Text(
           'Borough Debug',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: isDark ? HuddlColors.white : HuddlColors.textDark,
-          ),
+          style: HuddlText.body(weight: FontWeight.w600),
         ),
         iconTheme: IconThemeData(
           color: isDark ? HuddlColors.white : HuddlColors.textDark,
@@ -122,11 +119,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
         children: [
           Text(
             title,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           ...children,
@@ -146,24 +139,14 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
             flex: 2,
             child: Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: isDark
-                    ? HuddlColors.darkTextSecondary
-                    : HuddlColors.textSecondary,
-              ),
+              style: HuddlText.caption(),
             ),
           ),
           Expanded(
             flex: 3,
             child: Text(
               value,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: valueColor ??
-                    (isDark ? HuddlColors.white : HuddlColors.textDark),
-              ),
+              style: HuddlText.caption(color: HuddlColors.textDark),
             ),
           ),
         ],

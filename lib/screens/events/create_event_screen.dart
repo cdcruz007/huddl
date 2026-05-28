@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/event_service.dart';
@@ -15,6 +14,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/subscription_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE EVENT — single-page scrollable form matching target design screenshots
@@ -184,8 +184,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               leading: Icon(_isCreating ? Icons.hourglass_top : Icons.save_outlined,
                   color: context.hc.textPrimary),
               title: Text(_isCreating ? 'Saving...' : 'Save as draft',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500)),
+                  style: HuddlText.body()),
               onTap: _isCreating ? null : () {
                 Navigator.pop(ctx);
                 if (_isFormValid) _createEvent();
@@ -195,10 +194,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               leading: const Icon(Icons.delete_outline,
                   color: HuddlColors.error),
               title: Text('Discard',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.error)),
+                  style: HuddlText.body(color: HuddlColors.error)),
               onTap: () {
                 Navigator.pop(ctx);
                 Navigator.pop(context);
@@ -330,10 +326,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
             ),
             Text('Add event photo',
-                style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -558,11 +551,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         centerTitle: true,
         title: Text(
           'Create event',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         actions: [
           Padding(
@@ -618,9 +607,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   Row(
                     children: [
                       Text('Online event',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: context.hc.textSecondary)),
+                          style: HuddlText.body(color: context.hc.textSecondary)),
                       const SizedBox(width: 8),
                       Transform.scale(
                         scale: 0.8,
@@ -746,9 +733,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     _checkbox(_isFree),
                     const SizedBox(width: 10),
                     Text('Free',
-                        style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(color: context.hc.textPrimary)),
                   ],
                 ),
               ),
@@ -779,15 +764,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 controller: _descriptionCtrl,
                 maxLines: 4,
                 textInputAction: TextInputAction.done,
-                style: GoogleFonts.poppins(
-                    fontSize: 14, color: context.hc.textPrimary),
+                style: HuddlText.body(color: context.hc.textPrimary),
                 decoration: InputDecoration(
                   hintText:
                       'e.g. what people can expect, who this is for.',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: context.hc.textTertiary,
-                      height: 1.4),
+                  hintStyle: HuddlText.body(color: context.hc.textTertiary).copyWith(height: 1.4),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: HuddlColors.gray300),
@@ -851,9 +832,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(key,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: context.hc.textPrimary)),
+                          style: HuddlText.body(color: context.hc.textPrimary)),
                       Transform.scale(
                         scale: 0.8,
                         child: CupertinoSwitch(
@@ -894,12 +873,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         _maxAttendees != null
                             ? '$_maxAttendees people'
                             : 'Max number of people',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: _maxAttendees != null
-                              ? HuddlColors.textDark
-                              : HuddlColors.textHint,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                     GestureDetector(
@@ -995,10 +969,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         size: 14, color: Colors.white),
                     const SizedBox(width: 4),
                     Text('Change',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white)),
+                        style: HuddlText.caption(color: Colors.white)),
                   ]),
                 ),
               ),
@@ -1054,10 +1025,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: 10),
             Text('Click to add photo',
-                style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.textTertiary)),
+                style: HuddlText.body(color: HuddlColors.textTertiary)),
           ],
         ),
       ),
@@ -1078,11 +1046,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Widget _sectionLabel(String text) {
     return Text(
       text,
-      style: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        color: context.hc.textPrimary,
-      ),
+      style: HuddlText.body(weight: FontWeight.w700),
     );
   }
 
@@ -1098,14 +1062,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       keyboardType: keyboardType,
       onChanged: (_) { setState(() {}); _saveDraft(); },
       style:
-          GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+          HuddlText.body(color: context.hc.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.poppins(
-            fontSize: 14, color: context.hc.textTertiary),
+        hintStyle: HuddlText.body(color: context.hc.textTertiary),
         prefixText: prefix,
-        prefixStyle: GoogleFonts.poppins(
-            fontSize: 14, color: context.hc.textPrimary),
+        prefixStyle: HuddlText.body(color: context.hc.textPrimary),
         border: UnderlineInputBorder(
           borderSide: BorderSide(color: HuddlColors.gray300),
         ),
@@ -1145,12 +1107,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             Expanded(
               child: Text(
                 value ?? hint,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: value != null
-                      ? HuddlColors.textDark
-                      : HuddlColors.textHint,
-                ),
+                style: HuddlText.body(),
               ),
             ),
             Icon(icon, size: 20, color: iconColor),
@@ -1180,10 +1137,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.body(),
               ),
             ),
             const Icon(Icons.add, size: 20, color: HuddlColors.textDark),
@@ -1223,11 +1177,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? HuddlColors.primary : HuddlColors.textSecondary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),
@@ -1310,16 +1260,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                   const SizedBox(height: 2),
                   Text(description,
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                          height: 1.3)),
+                      style: HuddlText.caption(color: context.hc.textTertiary).copyWith(height: 1.3)),
                 ],
               ),
             ),
@@ -1347,10 +1291,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             Expanded(
               child: Text(
                 'You don\'t belong to any groups yet. Join a group first to create group events.',
-                style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.textDark,
-                    height: 1.3),
+                style: HuddlText.caption(color: HuddlColors.textDark).copyWith(height: 1.3),
               ),
             ),
           ],
@@ -1374,14 +1315,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           value: _selectedGroupId,
           isExpanded: true,
           hint: Text('Select a group',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textTertiary)),
+              style: HuddlText.body(color: context.hc.textTertiary)),
           icon: Icon(Icons.keyboard_arrow_down,
               color: _selectedGroupId != null
                   ? HuddlColors.primary
                   : HuddlColors.textHint),
           style:
-              GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
+              HuddlText.body(color: context.hc.textPrimary),
           items: _userGroups.map((g) {
             return DropdownMenuItem(
               value: g.id,
@@ -1403,8 +1343,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   Expanded(
                     child: Text(g.name,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: context.hc.textPrimary)),
+                        style: HuddlText.body(color: context.hc.textPrimary)),
                   ),
                 ],
               ),

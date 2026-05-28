@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/huddl_colors.dart';
 import '../services/rehome_service.dart';
 import '../screens/marketplace/item_detail_screen.dart';
+import '../constants/app_text_styles.dart';
 
 /// A clickable item for sale card that appears in chats
 /// Tapping it navigates to the ItemDetailScreen
@@ -101,11 +101,7 @@ class ItemInviteCard extends StatelessWidget {
                       // Title
                       Text(
                         title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -115,11 +111,7 @@ class ItemInviteCard extends StatelessWidget {
                         children: [
                           Text(
                             priceDisplay,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w700),
                           ),
                           const SizedBox(width: 8),
                           Container(
@@ -131,11 +123,7 @@ class ItemInviteCard extends StatelessWidget {
                             ),
                             child: Text(
                               condition,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.nearBlack,
-                              ),
+                              style: HuddlText.label(),
                             ),
                           ),
                         ],
@@ -151,10 +139,7 @@ class ItemInviteCard extends StatelessWidget {
                           ),
                           child: Text(
                             ageStage,
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: hc.textSecondary,
-                            ),
+                            style: HuddlText.label(),
                           ),
                         ),
                       ],
@@ -169,10 +154,7 @@ class ItemInviteCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 sellerName,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: hc.textTertiary,
-                                ),
+                                style: HuddlText.caption(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -189,10 +171,7 @@ class ItemInviteCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 sellerLocation,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: hc.textTertiary,
-                                ),
+                                style: HuddlText.caption(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -212,11 +191,7 @@ class ItemInviteCard extends StatelessWidget {
                         child: Text(
                           'Tap to view item',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                     ],

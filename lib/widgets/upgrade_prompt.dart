@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'common/huddl_button.dart';
 import '../theme/huddl_colors.dart';
 import '../models/subscription.dart';
 import '../services/subscription_service.dart';
+import '../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UPGRADE PROMPT — reusable paywall dialog shown when a gated feature is hit
@@ -81,16 +82,12 @@ class _UpgradePromptSheet extends StatelessWidget {
               const SizedBox(height: 20),
 
               Text('Upgrade to Unlock',
-                  style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.display(color: context.hc.textPrimary)),
               const SizedBox(height: 8),
 
               Text(message,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textSecondary)),
+                  style: HuddlText.body(color: context.hc.textSecondary)),
               const SizedBox(height: 24),
 
               // Quick tier previews
@@ -165,10 +162,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Try Huddl Plus free for 7 days — no card required',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textPrimary),
+                          style: HuddlText.caption(color: context.hc.textPrimary),
                         ),
                       ),
                     ],
@@ -178,35 +172,19 @@ class _UpgradePromptSheet extends StatelessWidget {
               ],
 
               // View all plans
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context, false);
-                    Navigator.pushNamed(context, '/subscription_plans',
-                        arguments: {'gateMessage': message});
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    foregroundColor: HuddlColors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text('View All Plans',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
-                ),
+              HuddlButton(
+                label: 'View All Plans',
+                onPressed: () {
+                  Navigator.pop(context, false);
+                  Navigator.pushNamed(context, '/subscription_plans',
+                      arguments: {'gateMessage': message});
+                },
               ),
-              const SizedBox(height: 8),
-              TextButton(
+              const SizedBox(height: 4),
+              HuddlButton(
+                label: 'Maybe Later',
+                variant: HuddlButtonVariant.ghost,
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Maybe Later',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textTertiary)),
               ),
             ],
           ),
@@ -262,23 +240,16 @@ class _QuickTierPreview extends StatelessWidget {
                   Row(
                     children: [
                       Text(name,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                       const SizedBox(width: 6),
                       Text(price,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: color)),
+                          style: HuddlText.caption(color: color)),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     benefits.join(' \u2022 '),
-                    style: GoogleFonts.poppins(
-                        fontSize: 11, color: context.hc.textSecondary),
+                    style: HuddlText.caption(color: context.hc.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -323,10 +294,7 @@ class UpgradeBanner extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.nearBlack)),
+                  style: HuddlText.body(color: HuddlColors.nearBlack)),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -335,10 +303,7 @@ class UpgradeBanner extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('Upgrade',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: Colors.white)),
             ),
           ],
         ),

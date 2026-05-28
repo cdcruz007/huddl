@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
@@ -22,6 +21,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/ai_api_helper.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
@@ -201,10 +201,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               ),
             ),
             Text('Add group photo',
-                style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -355,11 +352,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       Expanded(
                         child: Text(
                           'Invite members',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.heading(),
                         ),
                       ),
                       if (_selectedMemberIds.isNotEmpty)
@@ -372,11 +365,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           ),
                           child: Text(
                             '${_selectedMemberIds.length} selected',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textTertiary,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                         ),
                     ],
@@ -386,11 +375,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     'Select members in ${_userBorough ?? 'your borough'} to invite.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textTertiary,
-                      height: 1.4,
-                    ),
+                    style: HuddlText.caption(color: context.hc.textTertiary),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -429,11 +414,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               children: [
                                 Text(
                                   member.name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: context.hc.textPrimary,
-                                  ),
+                                  style: HuddlText.body(),
                                 ),
                                 const SizedBox(width: 4),
                                 GestureDetector(
@@ -474,12 +455,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     ),
                     child: TextField(
                       controller: _memberSearchController,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textPrimary),
+                      style: HuddlText.body(color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search members...',
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textTertiary),
+                        hintStyle: HuddlText.body(color: context.hc.textTertiary),
                         prefixIcon: Icon(Icons.search,
                             size: 20, color: context.hc.textTertiary),
                         suffixIcon: _memberSearchQuery.isNotEmpty
@@ -553,20 +532,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                   children: [
                                     Text(
                                       member.name,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.hc.textPrimary,
-                                      ),
+                                      style: HuddlText.body(),
                                     ),
                                     Text(
                                       member.parentType == 'mum'
                                           ? 'Mum'
                                           : 'Dad',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: context.hc.textTertiary,
-                                      ),
+                                      style: HuddlText.caption(),
                                     ),
                                   ],
                                 ),
@@ -646,7 +618,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     : MemberAvatar(name: member.name, size: 28, parentType: member.parentType),
                   label: Text(
                     member.name,
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                    style: HuddlText.caption(),
                   ),
                   deleteIcon: const Icon(Icons.close, size: 16),
                   onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
@@ -689,12 +661,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       _selectedMemberIds.isEmpty
                           ? 'Select members to invite'
                           : '${_selectedMemberIds.length} member${_selectedMemberIds.length == 1 ? '' : 's'} selected',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: _selectedMemberIds.isNotEmpty
-                            ? HuddlColors.textDark
-                            : HuddlColors.textHint,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ),
                   Icon(
@@ -713,11 +680,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 'Members from ${_userBorough!}',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: context.hc.textTertiary,
-                  fontStyle: FontStyle.italic,
-                ),
+                style: HuddlText.caption(color: context.hc.textTertiary),
               ),
             ),
         ],
@@ -1047,32 +1010,21 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             Expanded(
               child: Text(
                 'Group Name Taken',
-                style: GoogleFonts.poppins(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
               ),
             ),
           ],
         ),
         content: Text(
           'A group with this name already exists. Please use an alternative name.',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: context.hc.textSecondary,
-            height: 1.5,
-          ),
+          style: HuddlText.body(color: context.hc.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'OK',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textTertiary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
           ),
         ],
@@ -1131,10 +1083,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 Expanded(
                                   child: Text(
                                     'A similar group already exists: ${_similarGroupNames.join(', ')}. Consider joining it instead.',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: _accentOrange,
-                                        height: 1.4),
+                                    style: HuddlText.caption(color: _accentOrange).copyWith(height: 1.4),
                                   ),
                                 ),
                               ],
@@ -1171,9 +1120,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                     _checkbox(isChecked),
                                     const SizedBox(width: 10),
                                     Text(label,
-                                        style: GoogleFonts.poppins(
-                                            fontSize: 14,
-                                            color: context.hc.textPrimary)),
+                                        style: HuddlText.body(color: context.hc.textPrimary)),
                                   ],
                                 ),
                               ),
@@ -1325,11 +1272,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       centerTitle: true,
       title: Text(
         'Create group',
-        style: GoogleFonts.poppins(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: _sectionText,
-        ),
+        style: HuddlText.heading(),
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
@@ -1373,11 +1316,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         strokeWidth: 2.5, color: Colors.white))
                 : Text(
                     'Create group',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: _isValid ? Colors.white : const Color(0xFF9E9E9E),
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600, color: _isValid ? Colors.white : const Color(0xFF9E9E9E)),
                   ),
           ),
         ),
@@ -1421,10 +1360,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           color: Colors.white, size: 16),
                       const SizedBox(width: 6),
                       Text('Change photo',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white)),
+                          style: HuddlText.body(color: Colors.white)),
                     ],
                   ),
                 ),
@@ -1461,20 +1397,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             const SizedBox(height: 10),
             Text(
               'Click to add group photo',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6C6C6C),
-              ),
-            ),
+              style: HuddlText.body(color: Color(0xFF6C6C6C))),
             if (_showImageError) ...[
               const SizedBox(height: 4),
               Text(
                 'A group image is required',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: HuddlColors.error,
-                ),
+                style: HuddlText.caption(),
               ),
             ],
           ],
@@ -1489,11 +1417,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Widget _sectionHeader(String text) {
     return Text(
       text,
-      style: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: _sectionText,
-      ),
+      style: HuddlText.body(weight: FontWeight.w700),
     );
   }
 
@@ -1518,10 +1442,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         keyboardType: keyboardType,
         textInputAction:
             maxLines == 1 ? TextInputAction.next : TextInputAction.newline,
-        style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
+        style: HuddlText.body(color: _sectionText),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
+          hintStyle: HuddlText.body(color: _hintGray),
           isDense: true,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1569,10 +1493,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             Expanded(
               child: Text(
                 'You don\'t belong to any groups yet. Join a group first to use group privacy.',
-                style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.textDark,
-                    height: 1.3),
+                style: HuddlText.caption(color: HuddlColors.textDark).copyWith(height: 1.3),
               ),
             ),
           ],
@@ -1596,14 +1517,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           value: _selectedParentGroupId,
           isExpanded: true,
           hint: Text('Select a parent group',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textTertiary)),
+              style: HuddlText.body(color: context.hc.textTertiary)),
           icon: Icon(Icons.keyboard_arrow_down,
               color: _selectedParentGroupId != null
                   ? HuddlColors.primary
                   : HuddlColors.textHint),
           style:
-              GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
+              HuddlText.body(color: context.hc.textPrimary),
           items: _userGroups.map((g) {
             return DropdownMenuItem(
               value: g.id,
@@ -1625,8 +1545,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   Expanded(
                     child: Text(g.name,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: context.hc.textPrimary)),
+                        style: HuddlText.body(color: context.hc.textPrimary)),
                   ),
                 ],
               ),
@@ -1694,16 +1613,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                   const SizedBox(height: 2),
                   Text(description,
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                          height: 1.3)),
+                      style: HuddlText.caption(color: context.hc.textTertiary).copyWith(height: 1.3)),
                 ],
               ),
             ),

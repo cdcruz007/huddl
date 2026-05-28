@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── Thread reply data model ─────────────────────────────────────────────────
 class ThreadReply {
@@ -163,11 +163,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
         ),
         title: Text(
           'Reply to $senderName',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.body(weight: FontWeight.w600),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -192,10 +188,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                     children: [
                       Text(
                         '${_replies.length} ${_replies.length == 1 ? 'reply' : 'replies'}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -204,10 +197,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                       const SizedBox(width: 12),
                       Text(
                         _formatDateSeparator(_replies.first.timestamp),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ],
                   ),
@@ -240,11 +230,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
             padding: const EdgeInsets.only(bottom: 4, left: 4),
             child: Text(
               widget.rootMessage.senderName,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: context.hc.textTertiary,
-              ),
+              style: HuddlText.caption(),
             ),
           ),
         Align(
@@ -275,11 +261,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
               children: [
                 Text(
                   widget.rootMessage.message,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: context.hc.textPrimary,
-                    height: 1.4,
-                  ),
+                  style: HuddlText.body(color: context.hc.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -287,10 +269,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                   children: [
                     Text(
                       _formatTime(widget.rootMessage.timestamp),
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        color: context.hc.textTertiary,
-                      ),
+                      style: HuddlText.label(),
                     ),
                   ],
                 ),
@@ -317,11 +296,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
               padding: const EdgeInsets.only(bottom: 3, left: 4),
               child: Text(
                 reply.senderName,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.caption(),
               ),
             ),
           Align(
@@ -354,11 +329,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                   children: [
                     Text(
                       reply.message,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: context.hc.textPrimary,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.body(color: context.hc.textPrimary),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -366,10 +337,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                       children: [
                         Text(
                           _formatTime(reply.timestamp),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ],
                     ),
@@ -406,7 +374,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
             ListTile(
               leading: Icon(Icons.copy_outlined, color: context.hc.textPrimary),
               title: Text('Copy text',
-                  style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  style: HuddlText.body()),
               onTap: () {
                 Navigator.pop(c);
                 Clipboard.setData(ClipboardData(text: reply.message));
@@ -469,11 +437,11 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.send,
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                style: HuddlText.body(color: context.hc.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Reply in thread...',
                   hintStyle:
-                      GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                      HuddlText.body(color: context.hc.textTertiary),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,

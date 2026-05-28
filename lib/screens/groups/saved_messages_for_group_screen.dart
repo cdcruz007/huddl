@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/saved_message_service.dart';
+import '../../constants/app_text_styles.dart';
 
 /// A full-screen page showing saved messages filtered for a specific group.
 /// Accessible from the 3-dot menu → "Saved messages" in a group chat.
@@ -74,18 +74,11 @@ class _SavedMessagesForGroupScreenState
           children: [
             Text(
               'Saved Messages',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
             Text(
               widget.groupName,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: context.hc.textTertiary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),
@@ -124,20 +117,12 @@ class _SavedMessagesForGroupScreenState
               const SizedBox(height: 20),
               Text(
                 'No saved messages',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
               ),
               const SizedBox(height: 10),
               Text(
                 'You have no saved messages currently.\nLong press on any message in this group to save it.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -190,19 +175,12 @@ class _SavedMessagesForGroupScreenState
                     Expanded(
                       child: Text(
                         msg.senderName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                     Text(
                       _formatDate(msg.savedAt),
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ],
                 ),
@@ -210,11 +188,7 @@ class _SavedMessagesForGroupScreenState
                 // Message text
                 Text(
                   msg.message,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: context.hc.textSecondary,
-                    height: 1.4,
-                  ),
+                  style: HuddlText.body(color: context.hc.textSecondary),
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -222,10 +196,7 @@ class _SavedMessagesForGroupScreenState
                 // Original timestamp
                 Text(
                   'Sent ${_formatDate(msg.timestamp)}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: context.hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),

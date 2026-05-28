@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../screens/groups/group_details_screen.dart';
+import '../constants/app_text_styles.dart';
 
 /// A clickable group card that appears in chats
 /// Tapping it navigates to the GroupDetailsScreen
@@ -145,11 +145,7 @@ class GroupInviteCard extends StatelessWidget {
                       // Group name
                       Text(
                         name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -158,10 +154,7 @@ class GroupInviteCard extends StatelessWidget {
                       if (description.isNotEmpty)
                         Text(
                           description,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -174,10 +167,7 @@ class GroupInviteCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             '$memberCount members',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: hc.textTertiary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                           if (creatorName.isNotEmpty) ...[
                             const SizedBox(width: 12),
@@ -187,10 +177,7 @@ class GroupInviteCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 creatorName,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: hc.textTertiary,
-                                ),
+                                style: HuddlText.caption(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -208,10 +195,7 @@ class GroupInviteCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               borough,
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(),
                             ),
                           ],
                         ),
@@ -228,11 +212,7 @@ class GroupInviteCard extends StatelessWidget {
                         child: Text(
                           'Tap to view group',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                     ],

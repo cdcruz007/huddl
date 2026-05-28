@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -17,6 +16,7 @@ import '../../services/firestore_service.dart';
 import 'group_polls_screen.dart';
 import 'edit_group_screen.dart';
 import 'manage_admins_screen.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 
@@ -178,7 +178,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               Expanded(
                 child: Text(
                   'Joined ${widget.groupName}! Go to Messages tab to start chatting.',
-                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                  style: HuddlText.body(),
                 ),
               ),
             ],
@@ -258,11 +258,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         children: [
                           Text(
                             'Invite Members',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.heading(),
                           ),
                           const Spacer(),
                           TextButton.icon(
@@ -273,11 +269,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             icon: const Icon(Icons.link, size: 18, color: HuddlColors.textDark),
                             label: Text(
                               'Share link',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.textTertiary,
-                              ),
+                              style: HuddlText.body(),
                             ),
                           ),
                         ],
@@ -296,18 +288,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               const SizedBox(height: 12),
                               Text(
                                 'No contacts yet',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: context.hc.textTertiary,
-                                ),
+                                style: HuddlText.body(),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Share the group link to invite members',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: context.hc.textTertiary,
-                                ),
+                                style: HuddlText.caption(),
                               ),
                             ],
                           ),
@@ -326,10 +312,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                   name: contact['name'] as String, size: 40),
                               title: Text(
                                 contact['name'] as String,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: HuddlText.body(),
                               ),
                               trailing: OutlinedButton(
                                 onPressed: () {
@@ -355,11 +338,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                 ),
                                 child: Text(
                                   'Invite',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: HuddlColors.textSecondary,
-                                  ),
+                                  style: HuddlText.body(),
                                 ),
                               ),
                             );
@@ -433,21 +412,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               const SizedBox(height: 18),
               Text(
                 'Leave this group?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'We are sad to see you go, but you can always come back or find another group that interests you in the Discover tab.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -463,11 +434,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -508,11 +475,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                       child: Text(
                         'Leave',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.error,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -576,11 +539,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                 label: Text(
                   _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.surface,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isJoined ? HuddlColors.nearBlack : HuddlColors.primary,
@@ -603,11 +562,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         color: HuddlColors.textDark, size: 18),
                     label: Text(
                       'Invite Members',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: HuddlColors.divider),
@@ -624,8 +579,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Join to start chatting with this group',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textTertiary),
+                  style: HuddlText.caption(color: context.hc.textTertiary),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -686,11 +640,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'You created this group',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.nearBlack,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -706,11 +656,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     ),
                     child: Text(
                       _extractCategory(_editableName),
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.textTertiary,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -719,15 +665,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   _isEditing
                       ? TextField(
                           controller: _nameEditController,
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.display(),
                           decoration: InputDecoration(
                             hintText: 'Group name',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 22, color: context.hc.textTertiary),
+                            hintStyle: HuddlText.display(color: context.hc.textTertiary),
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
                                   color: HuddlColors.divider),
@@ -739,11 +680,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         )
                       : Text(
                           _editableName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.display(),
                         ),
                   const SizedBox(height: 8),
 
@@ -758,8 +695,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       const SizedBox(width: 4),
                       Text(
                         widget.isPrivate ? 'Private group' : 'Public group',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: context.hc.textSecondary),
+                        style: HuddlText.body(color: context.hc.textSecondary),
                       ),
                       const SizedBox(width: 16),
                       Icon(Icons.people_outline,
@@ -767,8 +703,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       const SizedBox(width: 4),
                       Text(
                         '$memberCount member${memberCount != 1 ? 's' : ''}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: context.hc.textSecondary),
+                        style: HuddlText.body(color: context.hc.textSecondary),
                       ),
                     ],
                   ),
@@ -792,11 +727,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     children: [
                       Text(
                         'About',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                       GestureDetector(
                         onTap: () =>
@@ -816,15 +747,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           controller: _descEditController,
                           maxLines: null,
                           textInputAction: TextInputAction.done,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: context.hc.textSecondary,
-                            height: 1.5,
-                          ),
+                          style: HuddlText.body(color: context.hc.textSecondary),
                           decoration: InputDecoration(
                             hintText: 'Group description',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 14, color: context.hc.textTertiary),
+                            hintStyle: HuddlText.body(color: context.hc.textTertiary),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
@@ -838,11 +764,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         )
                       : Text(
                           description,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: context.hc.textSecondary,
-                            height: 1.5,
-                          ),
+                          style: HuddlText.body(color: context.hc.textSecondary),
                           maxLines: _aboutExpanded ? null : 3,
                           overflow:
                               _aboutExpanded ? null : TextOverflow.ellipsis,
@@ -867,11 +789,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     children: [
                       Text(
                         'Members ($memberCount)',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -885,8 +803,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         },
                         child: Text(
                           'See all',
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: HuddlColors.textTertiary),
+                          style: HuddlText.body(color: HuddlColors.textTertiary),
                         ),
                       ),
                     ],
@@ -911,9 +828,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 'You',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: context.hc.textSecondary),
+                                style: HuddlText.caption(color: context.hc.textSecondary),
                               ),
                             ],
                           ),
@@ -929,11 +844,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           alignment: Alignment.center,
                           child: Text(
                             '$memberCount member${memberCount != 1 ? 's' : ''}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textTertiary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -964,12 +875,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                   title: Text(
                     'Saved Messages',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                   ),
                   subtitle: Text(
                     '$savedCount saved message${savedCount != 1 ? 's' : ''}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    style: HuddlText.caption(color: context.hc.textTertiary),
                   ),
                   trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
                   onTap: () {
@@ -1003,12 +913,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                   title: Text(
                     'Polls',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                   ),
                   subtitle: Text(
                     'View group polls',
-                    style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    style: HuddlText.caption(color: context.hc.textTertiary),
                   ),
                   trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
                   onTap: () {
@@ -1125,7 +1034,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     Expanded(
                       child: Text(
                         'Join this group to access member features.',
-                        style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4),
+                        style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                       ),
                     ),
                   ],
@@ -1134,12 +1043,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               const SizedBox(height: 4),
               ListTile(
                 leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
-                title: Text('Share group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                title: Text('Share group', style: HuddlText.body()),
                 onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
               ListTile(
                 leading: Icon(Icons.group_add_outlined, color: HuddlColors.textDark),
-                title: Text('Join group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                title: Text('Join group', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textDark)),
                 onTap: () { Navigator.pop(c); _joinGroup(); },
               ),
             ],
@@ -1164,7 +1073,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       Expanded(
                         child: Text(
                           'You\'re an admin of this group',
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack, height: 1.4),
+                          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack).copyWith(height: 1.4),
                         ),
                       ),
                     ],
@@ -1187,7 +1096,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       Expanded(
                         child: Text(
                           'This is a public group. Group details cannot be changed by any member.',
-                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4),
+                          style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                         ),
                       ),
                     ],
@@ -1210,7 +1119,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       Expanded(
                         child: Text(
                           'Only admins can edit group details.',
-                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4),
+                          style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                         ),
                       ),
                     ],
@@ -1221,7 +1130,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               if (_isAdmin) ...[
                 ListTile(
                   leading: Icon(Icons.edit_outlined, color: context.hc.textPrimary),
-                  title: Text('Edit group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  title: Text('Edit group', style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
                     Navigator.push(
@@ -1248,7 +1157,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 ),
                 ListTile(
                   leading: Icon(Icons.manage_accounts_outlined, color: context.hc.textPrimary),
-                  title: Text('Manage admins', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  title: Text('Manage admins', style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
                     Navigator.push(
@@ -1267,7 +1176,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               // ── ALL MEMBERS options ───────────────────────────────────
               ListTile(
                 leading: Icon(Icons.notifications_outlined, color: context.hc.textPrimary),
-                title: Text('Mute notifications', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                title: Text('Mute notifications', style: HuddlText.body()),
                 onTap: () {
                   Navigator.pop(c);
                   ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Notifications muted')));
@@ -1275,7 +1184,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.bookmark_outline, color: context.hc.textPrimary),
-                title: Text('Saved messages', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                title: Text('Saved messages', style: HuddlText.body()),
                 onTap: () {
                   Navigator.pop(c);
                   Navigator.pushNamed(ctx, '/saved_messages_for_group', arguments: {
@@ -1286,7 +1195,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
-                title: Text('Share group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                title: Text('Share group', style: HuddlText.body()),
                 onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
 
@@ -1294,14 +1203,14 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               if (_isAdmin)
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: HuddlColors.error),
-                  title: Text('Delete group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                  title: Text('Delete group', style: HuddlText.body(color: HuddlColors.error)),
                   onTap: () { Navigator.pop(c); _confirmDeleteGroup(ctx); },
                 ),
 
               // ── Leave group (admin → admin leave flow, member → standard) ─
               ListTile(
                 leading: const Icon(Icons.exit_to_app, color: HuddlColors.error),
-                title: Text('Leave group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                title: Text('Leave group', style: HuddlText.body(color: HuddlColors.error)),
                 onTap: () {
                   Navigator.pop(c);
                   if (_isAdmin) {
@@ -1371,12 +1280,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
               const SizedBox(height: 18),
               Text('Leave and delete this group?',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                style: HuddlText.heading(color: context.hc.textPrimary),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text(
                 'You\'re the only member. Leaving will permanently delete this group and all its content. This cannot be undone.',
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
@@ -1386,7 +1295,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
-                      child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                      child: Text('Cancel', style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -1396,7 +1305,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         Navigator.pop(c);
                         await _executeGroupDelete(ctx);
                       },
-                      child: Text('Delete group', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                      child: Text('Delete group', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],
@@ -1434,7 +1343,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text('Who should take over as admin?',
-                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                    style: HuddlText.heading(color: context.hc.textPrimary),
                     textAlign: TextAlign.center),
                 ),
                 const SizedBox(height: 8),
@@ -1442,7 +1351,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     'Pick a member to become the new admin, or we\'ll automatically assign the most active member.',
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.5),
+                    style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                     textAlign: TextAlign.center),
                 ),
                 const SizedBox(height: 12),
@@ -1485,8 +1394,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(mname, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
-                                        Text('$msgCount messages', style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
+                                        Text(mname, style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
+                                        Text('$msgCount messages', style: HuddlText.caption(color: context.hc.textTertiary)),
                                       ],
                                     ),
                                   ),
@@ -1519,7 +1428,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           ),
                           child: Text(
                             selectedSuccessorName != null ? 'Leave and assign ${selectedSuccessorName!}' : 'Leave and assign',
-                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white),
                           ),
                         ),
                       ),
@@ -1530,13 +1439,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           await _executeAutoPromotion(ctx);
                         },
                         child: Text('Skip — assign automatically',
-                          style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary,
-                            decoration: TextDecoration.underline)),
+                          style: HuddlText.body(color: context.hc.textSecondary).copyWith(decoration: TextDecoration.underline)),
                       ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: () => Navigator.pop(c),
-                        child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary)),
+                        child: Text('Cancel', style: HuddlText.body(color: context.hc.textTertiary)),
                       ),
                     ],
                   ),
@@ -1739,12 +1647,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
               const SizedBox(height: 18),
               Text('Delete this group?',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                style: HuddlText.heading(color: context.hc.textPrimary),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text(
                 'This will permanently delete the group, all messages, and remove all $memberCount member${memberCount == 1 ? '' : 's'}. This cannot be undone.',
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
@@ -1754,7 +1662,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
-                      child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                      child: Text('Cancel', style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -1764,7 +1672,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         Navigator.pop(c);
                         await _executeGroupDelete(ctx);
                       },
-                      child: Text('Delete group', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                      child: Text('Delete group', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],

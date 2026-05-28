@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,9 +7,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../widgets/common/huddl_button.dart';
 import '../../services/event_service.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/invisible_ai_service.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── matchReasonIcons: maps Cloud Function icon keys → Flutter IconData ──────
 // Keys match the strings written by the generateEventRecommendations CF.
@@ -333,11 +334,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           ),
                           child: Text(
                             isFree ? 'Free' : (e['price'] as String? ?? ''),
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.surface,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w700),
                           ),
                         ),
                         if (isOnline) ...[
@@ -355,11 +352,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   'Online',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.hc.surface,
-                                  ),
+                                  style: HuddlText.caption(weight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -384,11 +377,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           const SizedBox(width: 4),
                           Text(
                             organiser,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.surface,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                         ],
                       ),
@@ -414,12 +403,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     children: [
                       Text(
                         e['title'] as String? ?? 'Event',
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                          height: 1.3,
-                        ),
+                        style: HuddlText.display(color: context.hc.textPrimary),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -434,18 +418,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             children: [
                               Text(
                                 'Organised by',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: context.hc.textTertiary,
-                                ),
+                                style: HuddlText.caption(),
                               ),
                               Text(
                                 organiser,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textPrimary,
-                                ),
+                                style: HuddlText.body(weight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -536,20 +513,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     children: [
                       Text(
                         'About this event',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         e['description'] as String? ?? 'No description provided.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: context.hc.textSecondary,
-                          height: 1.6,
-                        ),
+                        style: HuddlText.body(color: context.hc.textSecondary),
                       ),
                     ],
                   ),
@@ -598,7 +567,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
         child: SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
+          child: HuddlButton(
+            label: _hasEnded ? 'Ended' : (_isRegistered ? 'Going' : 'Join'),
+            variant: _isRegistered ? HuddlButtonVariant.confirmed : HuddlButtonVariant.primary,
+            leadingIcon: _hasEnded
+                ? Icons.event_busy
+                : (_isRegistered ? Icons.check_circle : Icons.group_add_outlined),
             // Disabled when event has ended
             onPressed: _hasEnded ? null : () async {
               HapticFeedback.mediumImpact();
@@ -637,8 +611,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               isNowGoing
                                   ? 'You\'re going to $eventTitle!'
                                   : 'You\'ve left this event.',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13, color: Colors.white),
+                              style: HuddlText.body(color: Colors.white),
                             ),
                           ),
                         ],
@@ -655,35 +628,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 }
               }
             },
-            icon: Icon(
-              _hasEnded
-                  ? Icons.event_busy
-                  : _isRegistered
-                      ? Icons.check_circle
-                      : Icons.group_add_outlined,
-              color: context.hc.surface,
-              size: 20,
-            ),
-            label: Text(
-              _hasEnded ? 'Ended' : (_isRegistered ? 'Going' : 'Join'),
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: context.hc.surface,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _hasEnded
-                  ? context.hc.textTertiary
-                  : (_isRegistered ? HuddlColors.nearBlack : color),
-              disabledBackgroundColor: context.hc.textTertiary,
-              disabledForegroundColor: Colors.white70,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(26),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              elevation: 0,
-            ),
           ),
         ),
       ),
@@ -718,8 +662,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Expanded(
                 child: Text(
                   'Summary',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
                 ),
               ),
               // ✨ Discover Something New badge — shown when AI flags novelty
@@ -738,10 +681,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const SizedBox(width: 4),
                       Text(
                         'Discover Something New',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10, fontWeight: FontWeight.w600,
-                          color: const Color(0xFF856404)),
-                      ),
+                        style: HuddlText.label(color: const Color(0xFF856404))),
                     ],
                   ),
                 )
@@ -754,8 +694,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   child: Text(
                     summary.vibe,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.nearBlack),
+                    style: HuddlText.label(color: HuddlColors.nearBlack),
                   ),
                 ),
             ],
@@ -776,8 +715,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 Expanded(
                   child: Text(
                     summary.suitability,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.nearBlack),
+                    style: HuddlText.caption(color: HuddlColors.nearBlack),
                   ),
                 ),
               ],
@@ -807,8 +745,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       Expanded(
                         child: Text(
                           h,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, color: context.hc.textSecondary, height: 1.4),
+                          style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                         ),
                       ),
                     ],
@@ -845,8 +782,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Expanded(
                 child: Text(
                   'Was this recommendation helpful?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
+                  style: HuddlText.body(color: context.hc.textPrimary),
                 ),
               ),
             ],
@@ -874,10 +810,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       _userFeedback!
                           ? 'Thanks! We\u2019ll show more events like this.'
                           : 'Got it \u2014 we\u2019ll adjust future recommendations.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: _userFeedback! ? HuddlColors.nearBlack : context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ),
                 ],
@@ -906,8 +839,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         children: [
                           const Icon(Icons.thumb_up_alt_outlined, size: 18, color: HuddlColors.nearBlack),
                           const SizedBox(width: 8),
-                          Text('Yes, helpful', style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
+                          Text('Yes, helpful', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
                         ],
                       ),
                     ),
@@ -935,8 +867,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           Icon(Icons.thumb_down_alt_outlined, size: 18,
                             color: context.hc.textTertiary.withValues(alpha: 0.7)),
                           const SizedBox(width: 8),
-                          Text('Not for me', style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.textTertiary)),
+                          Text('Not for me', style: HuddlText.body(color: context.hc.textTertiary)),
                         ],
                       ),
                     ),
@@ -947,7 +878,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           const SizedBox(height: 8),
           Text(
             'Your feedback helps us show you more of what suits your family',
-            style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary),
+            style: HuddlText.label(color: context.hc.textTertiary),
           ),
         ],
       ),
@@ -986,18 +917,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   children: [
                     Text(
                       'Why we recommend this',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     Text(
                       'Matched to your family',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ],
                 ),
@@ -1010,11 +934,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 child: Text(
                   '$scorePercent% match',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w700),
                 ),
               ),
             ],
@@ -1045,10 +965,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Expanded(
                       child: Text(
                         label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w500,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                   ],
@@ -1076,10 +993,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Expanded(
                       child: Text(
                         reason.label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w500,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                   ],
@@ -1124,18 +1038,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   children: [
                     Text(
                       'Newly found for you',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     Text(
                       'Spotted from local listings and community boards',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ],
                 ),
@@ -1174,10 +1081,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         children: [
                           Text(
                             'Discovered on',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.label(),
                           ),
                           GestureDetector(
                             onTap: sourceUrl.isNotEmpty
@@ -1185,14 +1089,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 : null,
                             child: Text(
                               sourceName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.nearBlack,
-                                decoration: sourceUrl.isNotEmpty
-                                    ? TextDecoration.underline
-                                    : TextDecoration.none,
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack),
                             ),
                           ),
                         ],
@@ -1211,11 +1108,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'New Find',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -1237,11 +1130,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       Expanded(
                         child: Text(
                           'We search local listings, council sites, and community boards daily to find events near you.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textSecondary,
-                            height: 1.4,
-                          ),
+                          style: HuddlText.caption(color: context.hc.textSecondary),
                         ),
                       ),
                     ],
@@ -1275,11 +1164,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         children: [
           Text(
             'What to expect',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           ...bullets.map((bullet) => _ExpectItem(
@@ -1323,21 +1208,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             children: [
               Text(
                 'Who\'s going',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
               Text(
                 attendeeCount == 0
                     ? 'Be the first!'
                     : '$attendeeCount ${attendeeCount == 1 ? 'person' : 'people'}',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: attendeeCount == 0 ? color : context.hc.textTertiary,
-                  fontWeight: attendeeCount == 0 ? FontWeight.w600 : FontWeight.w400,
-                ),
+                style: HuddlText.body(color: attendeeCount == 0 ? color : context.hc.textTertiary),
               ),
             ],
           ),
@@ -1358,10 +1235,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   Text(
                     'No one has RSVP\'d yet.\nBe the first to go!',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -1415,21 +1289,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   children: [
                     Text(
                       _isRegistered ? 'You\'re going!' : '$attendeeCount going',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _isRegistered ? color : context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     if (attendeeCount > 0 || _isRegistered)
                       Text(
                         _isRegistered
                             ? (attendeeCount > 1 ? '+ ${attendeeCount - 1} others' : 'Be the first!')
                             : '${attendeeCount == 1 ? '1 parent' : '$attendeeCount parents'} attending',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                   ],
                 ),
@@ -1477,18 +1344,11 @@ class _DetailRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.caption(),
               ),
             ],
           ),
@@ -1519,10 +1379,7 @@ class _ExpectItem extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             text,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: context.hc.textSecondary,
-            ),
+            style: HuddlText.body(),
           ),
         ],
       ),

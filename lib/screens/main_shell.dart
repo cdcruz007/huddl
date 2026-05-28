@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../theme/huddl_colors.dart';
@@ -16,6 +15,7 @@ import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
+import '../constants/app_text_styles.dart';
 // huddl_spring_animations used via home_screen.dart (HuddlSpringPageRoute on nav pushes)
 
 class MainShell extends StatefulWidget {
@@ -584,13 +584,7 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
                   // Label
                   Text(
                     widget.tab.label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 9,
-                      fontWeight:
-                          _isActive ? FontWeight.w700 : FontWeight.w400,
-                      color: labelColor,
-                      letterSpacing: _isActive ? 0.1 : 0,
-                    ),
+                    style: HuddlText.label(color: labelColor),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),

@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 import 'send_hub_screen.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── UHD hero images per article ID (sourced from Pexels / Unsplash) ─────────
 const Map<String, String> _kArticleHeroImages = {
@@ -224,11 +224,7 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 'Insights',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
+                style: HuddlText.display(),
               ),
               const Spacer(),
               if (kDebugMode) _PendingReviewBadge(),
@@ -259,10 +255,10 @@ class _Header extends StatelessWidget {
               child: TextField(
                 controller: searchController,
                 autofocus: true,
-                style: GoogleFonts.poppins(fontSize: 14),
+                style: HuddlText.body(),
                 decoration: InputDecoration(
                   hintText: 'Search insights…',
-                  hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                  hintStyle: HuddlText.body(color: HuddlColors.textHint),
                   prefixIcon: const Icon(Icons.search, color: HuddlColors.textTertiary, size: 20),
                   suffixIcon: ValueListenableBuilder<TextEditingValue>(
                     valueListenable: searchController,
@@ -308,8 +304,8 @@ class _Header extends StatelessWidget {
             labelColor: HuddlColors.primary,
             unselectedLabelColor: HuddlColors.textHint,
             labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-            labelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400),
+            labelStyle: HuddlText.caption(weight: FontWeight.w600),
+            unselectedLabelStyle: HuddlText.caption(),
             indicatorColor: HuddlColors.primary,
             indicatorWeight: 2.5,
             indicatorSize: TabBarIndicatorSize.label,
@@ -388,13 +384,7 @@ class _FilterSortRow extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 (sortActive || hasFilter) ? _sortLabel : 'Filter & Sort',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: (sortActive || hasFilter)
-                      ? Colors.white
-                      : HuddlColors.textSecondary,
-                ),
+                style: HuddlText.body(color: (sortActive || hasFilter) ? Colors.white : HuddlColors.textSecondary),
               ),
             ],
           ),
@@ -444,7 +434,7 @@ class _SortSheet extends StatelessWidget {
               const Icon(Icons.tune_rounded, size: 18, color: HuddlColors.textTertiary),
               const SizedBox(width: 8),
               Text('Sort by',
-                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: HuddlText.body(weight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 16),
@@ -475,11 +465,7 @@ class _SortSheet extends StatelessWidget {
                         color: selected ? HuddlColors.primary : HuddlColors.textSecondary),
                     const SizedBox(width: 12),
                     Text(label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        color: selected ? HuddlColors.primary : HuddlColors.textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                     if (selected) ...[
                       const Spacer(),
@@ -764,11 +750,7 @@ class _WisdomCard extends StatelessWidget {
                   const SizedBox(width: 5),
                   Text(
                     'Insights',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w600),
                   ),
                   const Spacer(),
                   _CategoryBadge(category: article.category),
@@ -818,23 +800,12 @@ class _WisdomCard extends StatelessWidget {
                 children: [
                   Text(
                     article.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? HuddlColors.darkTextPrimary
-                          : HuddlColors.textPrimary,
-                      height: 1.3,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textPrimary),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     article.summary,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: HuddlColors.textSecondary,
-                      height: 1.45,
-                    ),
+                    style: HuddlText.body(color: HuddlColors.textSecondary),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -865,21 +836,14 @@ class _WisdomCard extends StatelessWidget {
                           article.contributorFirstName.isNotEmpty
                               ? article.contributorFirstName[0].toUpperCase()
                               : 'P',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                       const SizedBox(width: 7),
                       Expanded(
                         child: Text(
                           article.contributorCredit,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: HuddlColors.textSecondary,
-                          ),
+                          style: HuddlText.caption(),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -894,10 +858,7 @@ class _WisdomCard extends StatelessWidget {
                           const SizedBox(width: 3),
                           Text(
                             '${article.upvotes}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: HuddlColors.textHint,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                         ],
                       ),
@@ -911,11 +872,7 @@ class _WisdomCard extends StatelessWidget {
                         ),
                         child: Text(
                           'Read →',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.nearBlack,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -1030,11 +987,7 @@ class _ExpertCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             article.source,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -1053,15 +1006,7 @@ class _ExpertCard extends StatelessWidget {
                     right: 12,
                     child: Text(
                       article.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        height: 1.25,
-                        shadows: [
-                          Shadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 4),
-                        ],
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w700, color: Colors.white).copyWith(height: 1.25),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1077,13 +1022,7 @@ class _ExpertCard extends StatelessWidget {
                 children: [
                   Text(
                     article.summary,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: isDark
-                          ? HuddlColors.darkTextSecondary
-                          : HuddlColors.textSecondary,
-                      height: 1.5,
-                    ),
+                    style: HuddlText.body(color: HuddlColors.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1109,7 +1048,7 @@ class _ExpertCard extends StatelessWidget {
                       const SizedBox(width: 5),
                       Text(
                         'Expert guide',
-                        style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                        style: HuddlText.caption(color: HuddlColors.textHint),
                       ),
                       const Spacer(),
                       Container(
@@ -1120,11 +1059,7 @@ class _ExpertCard extends StatelessWidget {
                         ),
                         child: Text(
                           'Read →',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.nearBlack,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -1195,11 +1130,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
               ),
               label: Text(
                 _upvoted ? 'Helpful!' : 'Helpful',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: _upvoted ? HuddlColors.error : HuddlColors.textSecondary,
-                ),
+                style: HuddlText.body(),
               ),
             ),
           ),
@@ -1228,11 +1159,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                       const SizedBox(width: 4),
                       Text(
                         'Insights',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -1245,14 +1172,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
             // Title
             Text(
               article.title,
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? HuddlColors.darkTextPrimary
-                    : HuddlColors.textPrimary,
-                height: 1.25,
-              ),
+              style: HuddlText.display(color: HuddlColors.textPrimary),
             ),
             const SizedBox(height: 10),
             // Contributor credit
@@ -1276,11 +1196,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                       article.contributorFirstName.isNotEmpty
                           ? article.contributorFirstName[0].toUpperCase()
                           : 'P',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1290,20 +1206,11 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                       children: [
                         Text(
                           article.contributorCredit,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? HuddlColors.darkTextPrimary
-                                : HuddlColors.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                         Text(
                           'Shared in ${article.groupName}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: HuddlColors.textHint,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -1315,13 +1222,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
             // Body
             Text(
               article.body,
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                height: 1.65,
-                color: isDark
-                    ? HuddlColors.darkTextSecondary
-                    : HuddlColors.textDark,
-              ),
+              style: HuddlText.body().copyWith(height: 1.65),
             ),
             const SizedBox(height: 20),
             // Tags
@@ -1345,10 +1246,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                 const SizedBox(width: 4),
                 Text(
                   '${article.upvotes + (_upvoted ? 1 : 0)} parents found this helpful',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: HuddlColors.textHint,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),
@@ -1467,7 +1365,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                             const Icon(Icons.verified_rounded, size: 12, color: Colors.white),
                             const SizedBox(width: 4),
                             Text(article.source,
-                              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                              style: HuddlText.caption(weight: FontWeight.w600, color: Colors.white)),
                           ],
                         ),
                       ),
@@ -1479,29 +1377,19 @@ class _ExpertArticleScreen extends StatelessWidget {
                   // Title
                   Text(
                     article.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 22, fontWeight: FontWeight.w700,
-                      color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.textPrimary,
-                      height: 1.25,
-                    ),
+                    style: HuddlText.display(color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.textPrimary),
                   ),
                   const SizedBox(height: 8),
                   // Summary
                   Text(
                     article.summary,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14, fontWeight: FontWeight.w500,
-                      color: HuddlColors.textSecondary, height: 1.5,
-                    ),
+                    style: HuddlText.body(color: HuddlColors.textSecondary),
                   ),
                   const SizedBox(height: 20),
                   // Body
                   Text(
                     article.body,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15, height: 1.65,
-                      color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.textDark,
-                    ),
+                    style: HuddlText.body().copyWith(height: 1.65),
                   ),
                   // Tags
                   if (article.tags.isNotEmpty) ...[
@@ -1542,16 +1430,11 @@ class _ExpertArticleScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Read the full guide',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13, fontWeight: FontWeight.w600,
-                                      color: HuddlColors.nearBlack,
-                                    ),
+                                    style: HuddlText.body(weight: FontWeight.w600),
                                   ),
                                   Text(
                                     'at ${article.source}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11, color: HuddlColors.textSecondary,
-                                    ),
+                                    style: HuddlText.caption(),
                                   ),
                                 ],
                               ),
@@ -1603,11 +1486,7 @@ class _PendingReviewBadge extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '$count to review',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.warningDark,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
               ],
             ),
@@ -1669,10 +1548,7 @@ class _ReviewQueueSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Pending Review (${articles.length})',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -1714,28 +1590,19 @@ class _ReviewCard extends StatelessWidget {
         children: [
           Text(
             article.title,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: HuddlText.body(),
           ),
           const SizedBox(height: 4),
           Text(
             article.summary,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: HuddlColors.textSecondary,
-            ),
+            style: HuddlText.caption(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
           Text(
             'From: ${article.groupName} · ${article.contributorCredit}',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: HuddlColors.textHint,
-            ),
+            style: HuddlText.caption(),
           ),
           const SizedBox(height: 10),
           Row(
@@ -1813,9 +1680,7 @@ class _CategoryBadge extends StatelessWidget {
         ),
         child: Text(
           _label,
-          style: GoogleFonts.poppins(
-            fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white,
-          ),
+          style: HuddlText.label(),
         ),
       );
     }
@@ -1827,9 +1692,7 @@ class _CategoryBadge extends StatelessWidget {
       ),
       child: Text(
         _label,
-        style: GoogleFonts.poppins(
-          fontSize: 10, fontWeight: FontWeight.w600, color: color,
-        ),
+        style: HuddlText.label(),
       ),
     );
   }
@@ -1858,10 +1721,7 @@ class _Tag extends StatelessWidget {
       ),
       child: Text(
         '#$label',
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          color: teal ? HuddlColors.nearBlack : HuddlColors.textSecondary,
-        ),
+        style: HuddlText.caption(),
       ),
     );
     if (onTap == null) return chip;
@@ -1897,21 +1757,13 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               title,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textSecondary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: HuddlColors.textHint,
-                height: 1.5,
-              ),
+              style: HuddlText.body(color: HuddlColors.textHint),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1938,8 +1790,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               message,
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: HuddlColors.textHint),
+              style: HuddlText.body(color: HuddlColors.textHint),
               textAlign: TextAlign.center,
             ),
           ],

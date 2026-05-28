@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../constants/app_text_styles.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 
@@ -136,11 +136,7 @@ class _HuddlSearchPillState extends State<HuddlSearchPill>
           Expanded(
             child: Text(
               '${widget.hint} ${widget.borough}',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: hintColor,
-                fontStyle: FontStyle.italic,
-              ),
+              style: HuddlText.body(color: hintColor),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -299,19 +295,10 @@ class _HuddlSearchExpandedState extends State<HuddlSearchExpanded>
                                   HuddlAnimations.mediumTap();
                                   widget.onSubmit(q);
                                 },
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  color: textColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: HuddlText.body(color: textColor),
                                 decoration: InputDecoration(
                                   hintText: 'Search parents, groups, meetups…',
-                                  hintStyle: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: isDark
-                                        ? HuddlColors.darkTextTertiary
-                                        : HuddlColors.textHint,
-                                  ),
+                                  hintStyle: HuddlText.body(),
                                   border: InputBorder.none,
                                   isDense: true,
                                   contentPadding:
@@ -431,23 +418,12 @@ class _SuggestionTile extends StatelessWidget {
                 children: [
                   Text(
                     suggestion.label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? HuddlColors.darkTextPrimary
-                          : HuddlColors.textDark,
-                    ),
+                    style: HuddlText.body(),
                   ),
                   if (suggestion.sublabel != null)
                     Text(
                       suggestion.sublabel!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: isDark
-                            ? HuddlColors.darkTextTertiary
-                            : HuddlColors.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                 ],
               ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../constants/app_text_styles.dart';
 
 /// Data model for a created poll
 class PollData {
@@ -170,19 +170,12 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                       onTap: () => Navigator.pop(ctx),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                     Text(
                       'Choose date and time',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -193,11 +186,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                       },
                       child: Text(
                         'Done',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -267,11 +256,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         ),
         title: Text(
           'Create Poll',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         centerTitle: true,
         actions: [
@@ -281,12 +266,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               onPressed: _canCreate ? _create : null,
               child: Text(
                 'POST',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      _canCreate ? HuddlColors.primary : HuddlColors.textHint,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ),
           ),
@@ -314,11 +294,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 Expanded(
                   child: Text(
                     'Poll for: ${widget.groupName}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ),
               ],
@@ -329,11 +305,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           // Question
           Text(
             'What is your question?',
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           _buildField(
@@ -364,11 +336,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 Expanded(
                   child: Text(
                     'Calendar',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ),
                 Switch(
@@ -384,11 +352,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           // Options
           Text(
             'Options',
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           ...List.generate(_optionCtrls.length, (i) {
@@ -406,11 +370,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                     child: Center(
                       child: Text(
                         '${i + 1}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -440,11 +400,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   size: 20, color: HuddlColors.textDark),
               label: Text(
                 'Add poll option',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: HuddlColors.textDark,
-                ),
+                style: HuddlText.body(),
               ),
               style: TextButton.styleFrom(alignment: Alignment.centerLeft),
             ),
@@ -453,11 +409,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           // Expiration date
           Text(
             'Expiration date',
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           GestureDetector(
@@ -484,12 +436,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                     _expiresAt != null
                         ? _formatExpiry(_expiresAt!)
                         : 'Choose date and time',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: _expiresAt != null
-                          ? HuddlColors.textDark
-                          : HuddlColors.textHint,
-                    ),
+                    style: HuddlText.body(),
                   ),
                   const Spacer(),
                   if (_expiresAt != null)
@@ -520,8 +467,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 Expanded(
                   child: Text(
                     'Allow multiple answers',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14, color: context.hc.textPrimary),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                   ),
                 ),
                 Switch(
@@ -550,11 +496,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               ),
               child: Text(
                 'Create Poll',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.surface,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ),
           ),
@@ -583,12 +525,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 date != null
                     ? _formatDateTime(date)
                     : 'Choose date and time',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: date != null
-                      ? HuddlColors.textDark
-                      : HuddlColors.textHint,
-                ),
+                style: HuddlText.body(),
               ),
             ),
             Icon(
@@ -617,12 +554,12 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         controller: controller,
         maxLines: maxLines,
         style:
-            GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+            HuddlText.body(color: context.hc.textPrimary),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle:
-              GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+              HuddlText.body(color: context.hc.textTertiary),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

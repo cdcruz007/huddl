@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // HUDDL PHOTO CARD — Airbnb-inspired photography-first card system
@@ -175,27 +175,14 @@ class _HuddlSinglePhotoCardState extends State<HuddlSinglePhotoCard>
                       children: [
                         Text(
                           widget.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? HuddlColors.darkTextPrimary
-                                : HuddlColors.textDark,
-                            height: 1.3,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textDark),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           widget.subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: isDark
-                                ? HuddlColors.darkTextSecondary
-                                : HuddlColors.textSecondary,
-                            height: 1.4,
-                          ),
+                          style: HuddlText.body(color: HuddlColors.textSecondary),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -218,13 +205,7 @@ class _HuddlSinglePhotoCardState extends State<HuddlSinglePhotoCard>
                         const SizedBox(width: 2),
                         Text(
                           widget.stat!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? HuddlColors.darkTextPrimary
-                                : HuddlColors.textDark,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -389,25 +370,14 @@ class _HuddlMosaicPhotoCardState extends State<HuddlMosaicPhotoCard>
                       children: [
                         Text(
                           widget.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? HuddlColors.darkTextPrimary
-                                : HuddlColors.textDark,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           widget.subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: isDark
-                                ? HuddlColors.darkTextSecondary
-                                : HuddlColors.textSecondary,
-                          ),
+                          style: HuddlText.body(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -425,13 +395,7 @@ class _HuddlMosaicPhotoCardState extends State<HuddlMosaicPhotoCard>
                                 : HuddlColors.textDark),
                         const SizedBox(width: 2),
                         Text(widget.stat!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? HuddlColors.darkTextPrimary
-                                  : HuddlColors.textDark,
-                            )),
+                            style: HuddlText.body(weight: FontWeight.w600)),
                       ],
                     ),
                   ],
@@ -489,23 +453,12 @@ class HuddlHorizontalCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? HuddlColors.darkTextPrimary
-                          : HuddlColors.textDark,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
                 Text(subtitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: isDark
-                          ? HuddlColors.darkTextSecondary
-                          : HuddlColors.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis),
               ],
@@ -574,11 +527,7 @@ class _HuddlBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: HuddlColors.textDark,
-        ),
+        style: HuddlText.caption(weight: FontWeight.w600),
       ),
     );
   }

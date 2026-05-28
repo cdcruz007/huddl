@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/local_services_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // PARTNER BUSINESS PROFILE SCREEN
@@ -165,8 +165,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                   size: 48, color: HuddlColors.error),
               const SizedBox(height: 16),
               Text(_error!,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: hc.textSecondary)),
+                  style: HuddlText.body(color: hc.textSecondary)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadData,
@@ -174,7 +173,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                     backgroundColor: HuddlColors.primary),
                 child: Text('Retry',
                     style:
-                        GoogleFonts.poppins(color: Colors.white)),
+                        HuddlText.body(color: Colors.white)),
               ),
             ],
           ),
@@ -231,11 +230,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                         child: Center(
                           child: Text(
                             _initial,
-                            style: GoogleFonts.poppins(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                            style: HuddlText.display(),
                           ),
                         ),
                       ),
@@ -246,11 +241,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                             _businessName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.nearBlack,
-                            ),
+                            style: HuddlText.heading(),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -277,11 +268,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     'HMRC Verified',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.primary,
-                                    ),
+                                    style: HuddlText.caption(weight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -299,11 +286,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                                 const SizedBox(width: 3),
                                 Text(
                                   _boroughLabel,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: HuddlColors.nearBlack
-                                        .withValues(alpha: 0.7),
-                                  ),
+                                  style: HuddlText.caption(),
                                 ),
                               ],
                             ),
@@ -328,11 +311,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _aboutText,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: context.hc.textSecondary,
-                      height: 1.5,
-                    ),
+                    style: HuddlText.body(color: context.hc.textSecondary),
                   ),
                   const SizedBox(height: 24),
 
@@ -407,7 +386,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
             label: Text(
               'Book / Enquire',
               style:
-                  GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
+                  HuddlText.body(weight: FontWeight.w600),
             ),
             onPressed: () async {
               final hasScheme =
@@ -451,18 +430,14 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
               ),
             ),
             Text(listing.name,
-                style: GoogleFonts.poppins(
-                    fontSize: 18, fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.heading(color: context.hc.textPrimary)),
             const SizedBox(height: 4),
             Text(listing.category.displayName,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: context.hc.textSecondary)),
+                style: HuddlText.body(color: context.hc.textSecondary)),
             if (listing.description.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(listing.description,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textSecondary, height: 1.5)),
+                  style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5)),
             ],
             const SizedBox(height: 16),
             if (listing.externalBookingUrl?.isNotEmpty == true)
@@ -478,8 +453,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                   ),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
                   label: Text('Book / Enquire',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
+                      style: HuddlText.body(weight: FontWeight.w600)),
                   onPressed: () async {
                     final url = listing.externalBookingUrl!;
                     final hasScheme = url.startsWith('http://') ||
@@ -511,11 +485,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: GoogleFonts.poppins(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-        color: context.hc.textPrimary,
-      ),
+      style: HuddlText.body(weight: FontWeight.w700),
     );
   }
 }
@@ -550,12 +520,7 @@ class _ListingMiniCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     listing.category.displayName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.primary,
-                      letterSpacing: 0.3,
-                    ),
+                    style: HuddlText.label(color: HuddlColors.primary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -565,11 +530,7 @@ class _ListingMiniCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               listing.name,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: hc.textPrimary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -577,8 +538,7 @@ class _ListingMiniCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 listing.tagline,
-                style: GoogleFonts.poppins(
-                    fontSize: 11, color: hc.textSecondary),
+                style: HuddlText.caption(color: hc.textSecondary),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -590,11 +550,7 @@ class _ListingMiniCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '${listing.endorsementCount}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: HuddlText.caption(color: HuddlColors.primary),
                 ),
               ],
             ),
@@ -630,21 +586,13 @@ class _EndorsementRow extends StatelessWidget {
                 backgroundColor: HuddlColors.primary.withValues(alpha: 0.15),
                 child: Text(
                   e.firstName.isNotEmpty ? e.firstName[0].toUpperCase() : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: HuddlColors.primary,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w700),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 e.credit,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: hc.textPrimary,
-                ),
+                style: HuddlText.caption(weight: FontWeight.w600),
               ),
             ],
           ),
@@ -652,12 +600,7 @@ class _EndorsementRow extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '"${e.quote}"',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontStyle: FontStyle.italic,
-                color: hc.textSecondary,
-                height: 1.4,
-              ),
+              style: HuddlText.body(color: hc.textSecondary).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
           // Owner reply
@@ -680,12 +623,7 @@ class _EndorsementRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       e.ownerReply!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textSecondary,
-                        fontStyle: FontStyle.italic,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.caption(color: context.hc.textSecondary).copyWith(fontStyle: FontStyle.italic),
                     ),
                   ),
                 ],

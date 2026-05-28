@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/browser_storage.dart';
 import '../../services/send_navigator_service.dart';
 import '../../theme/huddl_colors.dart';
 import 'package:intl/intl.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
@@ -186,14 +186,7 @@ class _SendHeader extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'SEND Navigator',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? HuddlColors.darkTextPrimary
-                            : HuddlColors.textPrimary,
-                        height: 1.1,
-                      ),
+                      style: HuddlText.heading(color: HuddlColors.textPrimary),
                     ),
                   ),
                 ],
@@ -210,10 +203,8 @@ class _SendHeader extends StatelessWidget {
             indicatorWeight: 2.5,
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
-            labelStyle: GoogleFonts.poppins(
-                fontSize: 12, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 12, fontWeight: FontWeight.w400),
+            labelStyle: HuddlText.caption(weight: FontWeight.w600),
+            unselectedLabelStyle: HuddlText.caption(),
             padding: EdgeInsets.zero,
             labelPadding: const EdgeInsets.symmetric(horizontal: 12),
             tabs: const [
@@ -245,18 +236,8 @@ class _Disclaimer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Compact footer with tappable IPSEA link and tel: crisis number.
-    final baseStyle = GoogleFonts.poppins(
-      fontSize: 10,
-      color: HuddlColors.textHint,
-      height: 1.3,
-    );
-    final linkStyle = GoogleFonts.poppins(
-      fontSize: 10,
-      color: HuddlColors.nearBlack,
-      height: 1.3,
-      decoration: TextDecoration.underline,
-      decorationColor: HuddlColors.nearBlack,
-    );
+    final baseStyle = HuddlText.label(color: HuddlColors.textHint);
+    final linkStyle = HuddlText.label(color: HuddlColors.nearBlack).copyWith(height: 1.3, decoration: TextDecoration.underline);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
       child: RichText(
@@ -413,11 +394,7 @@ class _StagePickerItem extends StatelessWidget {
               child: Center(
                 child: Text(
                   '${stage.index + 1}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : color,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w700),
                 ),
               ),
             ),
@@ -428,20 +405,11 @@ class _StagePickerItem extends StatelessWidget {
                 children: [
                   Text(
                     stage.displayTitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? HuddlColors.darkTextPrimary
-                          : HuddlColors.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                   Text(
                     stage.subtitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.textHint,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -496,11 +464,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
               Expanded(
                 child: Text(
                   g.timelineNote,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: HuddlColors.warningDark,
-                    height: 1.5,
-                  ),
+                  style: HuddlText.caption(color: HuddlColors.warningDark),
                 ),
               ),
             ],
@@ -545,11 +509,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
                 Expanded(
                   child: Text(
                     g.templateLetterHint!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.nearBlack,
-                      height: 1.5,
-                    ),
+                    style: HuddlText.caption(color: HuddlColors.nearBlack),
                   ),
                 ),
               ],
@@ -593,11 +553,7 @@ class _NumberedStep extends StatelessWidget {
             child: Center(
               child: Text(
                 '$number',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: _kSendAccent,
-                ),
+                style: HuddlText.label(),
               ),
             ),
           ),
@@ -605,13 +561,7 @@ class _NumberedStep extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: isDark
-                    ? HuddlColors.darkTextSecondary
-                    : HuddlColors.textDark,
-                height: 1.5,
-              ),
+              style: HuddlText.body(color: HuddlColors.textDark),
             ),
           ),
         ],
@@ -641,13 +591,7 @@ class _RightItem extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: isDark
-                    ? HuddlColors.darkTextSecondary
-                    : HuddlColors.textDark,
-                height: 1.5,
-              ),
+              style: HuddlText.body(color: HuddlColors.textDark),
             ),
           ),
         ],
@@ -704,13 +648,7 @@ class _ResourceCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   resource.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? HuddlColors.darkTextPrimary
-                        : HuddlColors.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
               ),
             ],
@@ -718,11 +656,7 @@ class _ResourceCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             resource.description,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: HuddlColors.textSecondary,
-              height: 1.45,
-            ),
+            style: HuddlText.caption(color: HuddlColors.textSecondary),
           ),
           if (resource.phone != null) ...[
             const SizedBox(height: 6),
@@ -736,11 +670,7 @@ class _ResourceCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     resource.phone!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.nearBlack,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -757,12 +687,7 @@ class _ResourceCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     resource.url,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.nearBlack,
-                      decoration: TextDecoration.underline,
-                      decorationColor: HuddlColors.nearBlack,
-                    ),
+                    style: HuddlText.caption(color: HuddlColors.nearBlack).copyWith(decoration: TextDecoration.underline),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -1056,15 +981,15 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
       builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Clear conversation?',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+            style: HuddlText.body(weight: FontWeight.w700)),
         content: Text(
           'This will delete all messages in this session.',
-          style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary),
+          style: HuddlText.body(color: HuddlColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+            child: Text('Cancel', style: HuddlText.body(color: HuddlColors.textHint)),
           ),
           TextButton(
             onPressed: () {
@@ -1078,8 +1003,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
               });
             },
             child: Text('Clear',
-                style: GoogleFonts.poppins(
-                    color: HuddlColors.error, fontWeight: FontWeight.w600)),
+                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
           ),
         ],
       ),
@@ -1215,13 +1139,7 @@ class _SendAiConsentGate extends StatelessWidget {
           Center(
             child: Text(
               'Before you use the AI Advisor',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? HuddlColors.darkTextPrimary
-                    : HuddlColors.textPrimary,
-              ),
+              style: HuddlText.heading(),
               textAlign: TextAlign.center,
             ),
           ),
@@ -1229,8 +1147,7 @@ class _SendAiConsentGate extends StatelessWidget {
           Center(
             child: Text(
               'Please read this short notice carefully',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: HuddlColors.textHint),
+              style: HuddlText.body(color: HuddlColors.textHint),
               textAlign: TextAlign.center,
             ),
           ),
@@ -1310,13 +1227,7 @@ class _SendAiConsentGate extends StatelessWidget {
               onTap: () => Navigator.pushNamed(context, '/privacy'),
               child: Text(
                 'Read Huddl\'s full Privacy Policy →',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: _kSendAccent,
-                  fontWeight: FontWeight.w500,
-                  decoration: TextDecoration.underline,
-                  decorationColor: _kSendAccent,
-                ),
+                style: HuddlText.body(color: _kSendAccent).copyWith(decoration: TextDecoration.underline),
               ),
             ),
           ),
@@ -1337,8 +1248,7 @@ class _SendAiConsentGate extends StatelessWidget {
               ),
               child: Text(
                 'I understand — open the AI Advisor',
-                style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w600),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ),
           ),
@@ -1346,8 +1256,7 @@ class _SendAiConsentGate extends StatelessWidget {
           Center(
             child: Text(
               'You can withdraw consent at any time in Profile → Privacy Settings.',
-              style: GoogleFonts.poppins(
-                  fontSize: 11, color: HuddlColors.textHint, height: 1.4),
+              style: HuddlText.caption(color: HuddlColors.textHint).copyWith(height: 1.4),
               textAlign: TextAlign.center,
             ),
           ),
@@ -1399,24 +1308,12 @@ class _ConsentSection extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? HuddlColors.darkTextPrimary
-                        : HuddlColors.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   body,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: isDark
-                        ? HuddlColors.darkTextSecondary
-                        : HuddlColors.textSecondary,
-                    height: 1.5,
-                  ),
+                  style: HuddlText.caption(color: HuddlColors.textSecondary),
                 ),
               ],
             ),
@@ -1464,11 +1361,7 @@ class _AiDisclaimerStripState extends State<_AiDisclaimerStrip> {
           Expanded(
             child: Text(
               'AI — not legal advice. Verify with IPSEA or Contact before acting.',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: HuddlColors.warningDark,
-                height: 1.3,
-              ),
+              style: HuddlText.caption(color: HuddlColors.warningDark),
             ),
           ),
           GestureDetector(
@@ -1532,11 +1425,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
 
           Text(
             'You\'re not alone',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: _kSendCrimson,
-            ),
+            style: HuddlText.heading(),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -1544,11 +1433,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
             'It sounds like things might be very hard right now. '
             'Please reach out to one of these services — '
             'real people are ready to help.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textSecondary,
-              height: 1.55,
-            ),
+            style: HuddlText.body(color: HuddlColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -1607,10 +1492,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
               ),
               child: Text(
                 'Go back',
-                style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.textSecondary),
+                style: HuddlText.body(color: HuddlColors.textSecondary),
               ),
             ),
           ),
@@ -1664,27 +1546,15 @@ class _CrisisContactCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: HuddlColors.textHint,
-                      fontWeight: FontWeight.w500),
+                  style: HuddlText.label(color: HuddlColors.textHint),
                 ),
                 Text(
                   name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? HuddlColors.darkTextPrimary
-                        : HuddlColors.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 Text(
                   detail,
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: color),
+                  style: HuddlText.body(weight: FontWeight.w600, color: color),
                 ),
               ],
             ),
@@ -1809,11 +1679,7 @@ class _SegmentButton extends StatelessWidget {
               Flexible(
                 child: Text(
                   label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive ? activeColor : HuddlColors.textSecondary,
-                  ),
+                  style: HuddlText.caption(),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -1857,11 +1723,7 @@ class _StageContextPill extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 80),
               child: Text(
                 stage.displayTitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w500,
-                  color: _kSendAccent,
-                ),
+                style: HuddlText.label(),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -1941,8 +1803,7 @@ class _EmptyChat extends StatelessWidget {
       return Center(
         child: Text(
           'Type a question below to get started',
-          style: GoogleFonts.poppins(
-              fontSize: 13, color: HuddlColors.textHint),
+          style: HuddlText.body(color: HuddlColors.textHint),
           textAlign: TextAlign.center,
         ),
       );
@@ -1983,12 +1844,7 @@ class _EmptyChat extends StatelessWidget {
                   Expanded(
                     child: Text(
                       question,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: HuddlColors.textDark,
-                        fontWeight: FontWeight.w500,
-                        height: 1.3,
-                      ),
+                      style: HuddlText.body(color: HuddlColors.textDark),
                     ),
                   ),
                   Icon(Icons.arrow_forward_ios_rounded,
@@ -2016,7 +1872,7 @@ class _ChatBubble extends StatelessWidget {
       SnackBar(
         content: Text(
           'Copied to clipboard',
-          style: GoogleFonts.poppins(fontSize: 13),
+          style: HuddlText.body(),
         ),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -2061,44 +1917,27 @@ class _ChatBubble extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     msg.isConfigError ? 'AI not available' : 'Connection failed',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.error,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w600),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 msg.text,
-                style: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  height: 1.45,
-                  color: isDark
-                      ? HuddlColors.darkTextSecondary
-                      : HuddlColors.textSecondary,
-                ),
+                style: HuddlText.caption().copyWith(height: 1.45),
               ),
               if (!msg.isConfigError) ...[
                 const SizedBox(height: 6),
                 Text(
                   'Tap the send button to try again.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.textHint,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  style: HuddlText.caption(color: HuddlColors.textHint),
                 ),
               ],
               if (msg.isConfigError) ...[
                 const SizedBox(height: 6),
                 Text(
                   'For SEND advice now: IPSEA ipsea.org.uk · 01799 582030',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.textHint,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ],
@@ -2148,15 +1987,7 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 child: Text(
                   msg.text,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    height: 1.5,
-                    color: msg.isUser
-                        ? Colors.white
-                        : (isDark
-                            ? HuddlColors.darkTextPrimary
-                            : HuddlColors.textDark),
-                  ),
+                  style: HuddlText.body(color: HuddlColors.textDark).copyWith(height: 1.5),
                 ),
               ),
             ),
@@ -2166,10 +1997,7 @@ class _ChatBubble extends StatelessWidget {
                   left: 4, right: 4),
               child: Text(
                 timeLabel,
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: HuddlColors.textHint,
-                ),
+                style: HuddlText.label(),
               ),
             ),
           ],
@@ -2280,12 +2108,11 @@ class _ChatInputBar extends StatelessWidget {
               maxLines: 4,
               minLines: 1,
               textCapitalization: TextCapitalization.sentences,
-              style: GoogleFonts.poppins(fontSize: 14),
+              style: HuddlText.body(),
               onSubmitted: (_) => onSend(),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: GoogleFonts.poppins(
-                    fontSize: 13, color: HuddlColors.textHint),
+                hintStyle: HuddlText.body(color: HuddlColors.textHint),
                 filled: true,
                 fillColor: isDark
                     ? HuddlColors.darkSurfaceVariant
@@ -2412,7 +2239,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx2, setDialogState) => AlertDialog(
           title: Text('Add deadline',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+              style: HuddlText.body(weight: FontWeight.w700)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -2422,7 +2249,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                   decoration: InputDecoration(
                     labelText: 'Title',
                     labelStyle:
-                        GoogleFonts.poppins(fontSize: 13),
+                        HuddlText.body(),
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -2432,7 +2259,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                   decoration: InputDecoration(
                     labelText: 'Description',
                     labelStyle:
-                        GoogleFonts.poppins(fontSize: 13),
+                        HuddlText.body(),
                     border: const OutlineInputBorder(),
                   ),
                   maxLines: 2,
@@ -2444,7 +2271,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                   decoration: InputDecoration(
                     labelText: 'Category',
                     labelStyle:
-                        GoogleFonts.poppins(fontSize: 13),
+                        HuddlText.body(),
                     border: const OutlineInputBorder(),
                   ),
                   items: DeadlineCategory.values
@@ -2452,7 +2279,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                             value: c,
                             child: Text(c.displayLabel,
                                 style:
-                                    GoogleFonts.poppins(fontSize: 13)),
+                                    HuddlText.body()),
                           ))
                       .toList(),
                   onChanged: (v) {
@@ -2469,12 +2296,10 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                       size: 18),
                   title: Text(
                     _formatDate(pickedDate),
-                    style: GoogleFonts.poppins(fontSize: 13),
+                    style: HuddlText.body(),
                   ),
                   subtitle: Text('Tap to change',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.textHint)),
+                      style: HuddlText.caption(color: HuddlColors.textHint)),
                   onTap: () async {
                     final d = await showDatePicker(
                       context: ctx2,
@@ -2495,7 +2320,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(fontSize: 13)),
+                  style: HuddlText.body()),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -2521,8 +2346,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                 elevation: 0,
               ),
               child: Text('Add',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: HuddlText.body(weight: FontWeight.w600)),
             ),
           ],
         ),
@@ -2555,10 +2379,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
             children: [
               Text(
                 '${_deadlines.where((d) => !d.isCompleted).length} upcoming',
-                style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textSecondary),
+                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary),
               ),
               const Spacer(),
               TextButton(
@@ -2566,9 +2387,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                     setState(() => _showCompleted = !_showCompleted),
                 child: Text(
                   _showCompleted ? 'Hide done' : 'Show done',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: _kSendAccent),
+                  style: HuddlText.caption(color: _kSendAccent),
                 ),
               ),
               const SizedBox(width: 4),
@@ -2576,9 +2395,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                 onPressed: _showAddDialog,
                 icon: const Icon(Icons.add, size: 14),
                 label: Text('Add',
-                    style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
+                    style: HuddlText.caption(weight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kSendAccent,
                   foregroundColor: Colors.white,
@@ -2607,18 +2424,12 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                       const SizedBox(height: 12),
                       Text(
                         'No upcoming deadlines',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textSecondary),
+                        style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Tap "Add" to track EHCP reviews,\nschool applications, or appeal windows.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: HuddlColors.textHint,
-                            height: 1.5),
+                        style: HuddlText.body(color: HuddlColors.textHint).copyWith(height: 1.5),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -2729,27 +2540,12 @@ class _DeadlineCard extends StatelessWidget {
                 children: [
                   Text(
                     deadline.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: deadline.isCompleted
-                          ? HuddlColors.textHint
-                          : (isDark
-                              ? HuddlColors.darkTextPrimary
-                              : HuddlColors.textPrimary),
-                      decoration: deadline.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     deadline.description,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.textHint,
-                      height: 1.4,
-                    ),
+                    style: HuddlText.caption(color: HuddlColors.textHint),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2763,11 +2559,7 @@ class _DeadlineCard extends StatelessWidget {
                             : days == 0
                                 ? 'Due today'
                                 : 'In $days day${days == 1 ? '' : 's'} — ${_formatDate(deadline.date)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: color,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -2866,15 +2658,7 @@ class _SupportDirectoryTabState extends State<_SupportDirectoryTab> {
                   ),
                   child: Text(
                     n.displayLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                      color: isSelected
-                          ? Colors.white
-                          : HuddlColors.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ),
               );
@@ -2966,25 +2750,13 @@ class _DirectoryCard extends StatelessWidget {
                   children: [
                     Text(
                       resource.name,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? HuddlColors.darkTextPrimary
-                            : HuddlColors.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w700),
                     ),
                     Text(
                       resource.isCharity
                           ? 'Charity'
                           : 'Government / Official',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        color: resource.isCharity
-                            ? _kSendCrimson
-                            : HuddlColors.nearBlack,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: HuddlText.label(color: HuddlColors.nearBlack),
                     ),
                   ],
                 ),
@@ -2994,11 +2766,7 @@ class _DirectoryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             resource.description,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textSecondary,
-              height: 1.5,
-            ),
+            style: HuddlText.body(color: HuddlColors.textSecondary),
           ),
           if (resource.phone != null) ...[
             const SizedBox(height: 8),
@@ -3015,11 +2783,7 @@ class _DirectoryCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       resource.phone!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.nearBlack,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -3040,12 +2804,7 @@ class _DirectoryCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       resource.url,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: HuddlColors.nearBlack,
-                        decoration: TextDecoration.underline,
-                        decorationColor: HuddlColors.nearBlack,
-                      ),
+                      style: HuddlText.caption(color: HuddlColors.nearBlack).copyWith(decoration: TextDecoration.underline),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -3076,13 +2835,7 @@ class _SectionLabel extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? HuddlColors.darkTextPrimary
-                  : HuddlColors.textPrimary,
-            ),
+            style: HuddlText.body(weight: FontWeight.w700),
           ),
         ),
       ],

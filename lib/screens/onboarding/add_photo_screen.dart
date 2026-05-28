@@ -3,11 +3,11 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/photo_upload_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── UX-09: Immersive dark profile photo setup ─────────────────────────────────
 //
@@ -94,11 +94,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
               ),
               Text(
                 'Add a profile photo',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+                style: HuddlText.body(weight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
               _darkSheetTile(
@@ -139,10 +135,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
       ),
       title: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w500,
-          color: Colors.white,
-        ),
+        style: HuddlText.body(),
       ),
       onTap: onTap,
     );
@@ -221,11 +214,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                   ),
                   Text(
                     'Preview',
-                    style: GoogleFonts.poppins(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: HuddlText.heading(),
                   ),
                 ],
               ),
@@ -306,11 +295,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
             // ── Headline + subtitle ─────────────────────────────────────────
             Text(
               hasPhoto ? 'Looking good!' : 'Add a photo',
-              style: GoogleFonts.poppins(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+              style: HuddlText.display(),
               textAlign: TextAlign.center,
             ),
 
@@ -322,11 +307,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                 hasPhoto
                     ? 'Your neighbours will recognise you instantly.'
                     : 'Don\'t be just a name – share your smile with us too.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.55),
-                  height: 1.55,
-                ),
+                style: HuddlText.body(color: Colors.white.withValues(alpha: 0.55)),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -347,10 +328,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                       icon: const Icon(Icons.camera_alt_outlined, size: 20),
                       label: Text(
                         hasPhoto ? 'Change photo' : 'Add photo',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: HuddlText.body(),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
@@ -384,11 +362,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                       ),
                       child: Text(
                         'Continue',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 /// Demo photo gallery URLs for the image picker.
 /// In a real app these would come from the device camera roll.
@@ -78,11 +78,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
         ),
         title: Text(
           'Gallery',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         actions: [
           if (_selectedIndices.isNotEmpty)
@@ -99,12 +95,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
                   ),
                   child: Text(
                     'DONE',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.surface,
-                      letterSpacing: 0.5,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w700, color: context.hc.surface),
                   ),
                 ),
               ),
@@ -171,11 +162,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
                       alignment: Alignment.center,
                       child: Text(
                         '${_selectedIndices.toList().indexOf(index) + 1}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w700),
                       ),
                     ),
                   ),

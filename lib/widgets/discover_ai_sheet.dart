@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/discover_ai_service.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // DISCOVER AI ASSISTANT BOTTOM SHEET
@@ -194,18 +194,11 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       children: [
                         Text(
                           'Discover Assistant',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700),
                         ),
                         Text(
                           'Find groups, filter, or just ask',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -228,11 +221,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                           const SizedBox(width: 3),
                           Text(
                             'Smart',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.nearBlack,
-                            ),
+                            style: HuddlText.label(),
                           ),
                         ],
                       ),
@@ -264,23 +253,12 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       child: TextField(
                         controller: _inputController,
                         focusNode: _inputFocus,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(),
                         decoration: InputDecoration(
                           hintText: _isListening
                               ? 'Listening...'
                               : 'Try "find sleep groups" or "popular"...',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: _isListening
-                                ? HuddlColors.nearBlack
-                                : HuddlColors.textHint,
-                            fontStyle: _isListening
-                                ? FontStyle.italic
-                                : FontStyle.normal,
-                          ),
+                          hintStyle: HuddlText.body(color: HuddlColors.textHint),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                           isDense: true,
@@ -360,12 +338,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                   children: [
                     Text(
                       'Suggested actions',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textTertiary,
-                        letterSpacing: 0.3,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary),
                     ),
                     const SizedBox(width: 6),
                     Icon(Icons.auto_awesome,
@@ -418,18 +391,11 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                             const Spacer(),
                             Text(
                               action.label,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                             ),
                             Text(
                               action.description,
-                              style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                color: context.hc.textTertiary,
-                              ),
+                              style: HuddlText.label(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -451,12 +417,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                   children: [
                     Text(
                       'Try asking for',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textTertiary,
-                        letterSpacing: 0.3,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary),
                     ),
                   ],
                 ),
@@ -487,18 +448,11 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                               children: [
                                 Text(
                                   s.query,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: context.hc.textPrimary,
-                                  ),
+                                  style: HuddlText.body(),
                                 ),
                                 Text(
                                   s.reason,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: context.hc.textTertiary,
-                                  ),
+                                  style: HuddlText.caption(),
                                 ),
                               ],
                             ),
@@ -532,11 +486,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                         Expanded(
                           child: Text(
                             widget.contextExplanation,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.nearBlack,
-                              height: 1.3,
-                            ),
+                            style: HuddlText.caption(color: HuddlColors.nearBlack),
                           ),
                         ),
                       ],
@@ -564,11 +514,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                     Expanded(
                       child: Text(
                         'Tap \u{1F44D} or \u{1F44E} on group cards to help us show you better matches.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.nearBlack,
-                          height: 1.3,
-                        ),
+                        style: HuddlText.caption(color: HuddlColors.nearBlack),
                       ),
                     ),
                   ],

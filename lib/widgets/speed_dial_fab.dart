@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // SPEED DIAL FAB — Huddl floating action menu
@@ -209,13 +209,7 @@ class _DialItem extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? HuddlColors.darkTextPrimary
-                    : HuddlColors.textDark,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
           ),
         ),

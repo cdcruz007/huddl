@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/user_journey_map.dart';
+import '../../constants/app_text_styles.dart';
 
 /// An in-app visual user-journey-map screen.
 ///
@@ -35,11 +35,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
         ),
         title: Text(
           'User Journey Maps',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         centerTitle: true,
       ),
@@ -76,13 +72,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                             ),
                             child: Text(
                               j.personaName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: selected
-                                    ? HuddlColors.white
-                                    : hc.textSecondary,
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -116,11 +106,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                       backgroundColor: HuddlColors.primary,
                       child: Text(
                         journey.personaName[0],
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.surface,
-                        ),
+                        style: HuddlText.display(),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -130,29 +116,17 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                         children: [
                           Text(
                             journey.personaLabel,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Age ${journey.ageRange}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textSecondary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             journey.bio,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textSecondary,
-                              height: 1.4,
-                            ),
+                            style: HuddlText.caption(color: context.hc.textSecondary),
                           ),
                         ],
                       ),
@@ -171,11 +145,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                   children: [
                     Text(
                       'Emotional arc',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -204,11 +174,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Text(
                   'Journey stages',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -229,11 +195,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   'Pain points mitigated',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -250,11 +212,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                 child: Text(
                   'Competitor analysis',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -290,11 +248,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
       ),
       child: Text(
         emotion,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        style: HuddlText.caption(weight: FontWeight.w600),
       ),
     );
   }
@@ -377,33 +331,21 @@ class _StageCard extends StatelessWidget {
                           ),
                           child: Text(
                             '${index + 1}. ${stage.name}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                         ),
                         const Spacer(),
                         if (stage.emotionalState != null)
                           Text(
                             stage.emotionalState!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontStyle: FontStyle.italic,
-                              color: hc.textTertiary,
-                            ),
+                            style: HuddlText.label().copyWith(fontStyle: FontStyle.italic),
                           ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                       stage.description,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: hc.textPrimary,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.body(color: hc.textPrimary),
                     ),
                     if (stage.touchpoints.isNotEmpty) ...[
                       const SizedBox(height: 8),
@@ -427,11 +369,7 @@ class _StageCard extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     tp,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      color: hc.textSecondary,
-                                      height: 1.4,
-                                    ),
+                                    style: HuddlText.caption(color: hc.textSecondary),
                                   ),
                                 ),
                               ],
@@ -478,11 +416,7 @@ class _PainPointTile extends StatelessWidget {
               children: [
                 Text(
                   point.issue,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Row(
@@ -494,11 +428,7 @@ class _PainPointTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         point.mitigation,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.nearBlack,
-                          height: 1.4,
-                        ),
+                        style: HuddlText.caption(color: HuddlColors.nearBlack),
                       ),
                     ),
                   ],
@@ -554,11 +484,7 @@ class _CompetitorTile extends StatelessWidget {
                 ),
               Text(
                 entry.name,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isHuddl ? HuddlColors.primary : hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ],
           ),
@@ -572,11 +498,7 @@ class _CompetitorTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   entry.strength,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: hc.textSecondary,
-                    height: 1.3,
-                  ),
+                  style: HuddlText.caption(color: hc.textSecondary),
                 ),
               ),
             ],
@@ -592,11 +514,7 @@ class _CompetitorTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     entry.weakness,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: hc.textSecondary,
-                      height: 1.3,
-                    ),
+                    style: HuddlText.caption(color: hc.textSecondary),
                   ),
                 ),
               ],

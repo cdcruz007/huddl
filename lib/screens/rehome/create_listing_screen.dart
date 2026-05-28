@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../widgets/image_editor_widget.dart';
@@ -16,6 +15,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // CREATE / EDIT LISTING SCREEN — age-stage-first posting flow
@@ -164,10 +164,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
             ),
             Text('Add photos',
-                style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -507,9 +504,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
                     child: Text('Keep editing',
-                        style: GoogleFonts.poppins(
-                            color: _orange,
-                            fontWeight: FontWeight.w600)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: _orange)),
                   ),
                   TextButton(
                     onPressed: () {
@@ -517,9 +512,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       Navigator.pop(context); // close wizard
                     },
                     child: Text('Discard',
-                        style: GoogleFonts.poppins(
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: Colors.red)),
                   ),
                 ],
               ),
@@ -529,10 +522,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             child: Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: _orange)),
+                  style: HuddlText.body(color: _orange)),
             ),
           ),
         ),
@@ -546,11 +536,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   : _step == 1
                       ? 'What are you selling?'
                       : 'Item details',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: _sectionTxt,
-          ),
+          style: HuddlText.heading(),
         ),
         // NO AppBar bottom — progress bar lives in the body so it doesn't
         // produce an orange line above the blue photo banner on step 2.
@@ -600,11 +586,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: Text(
                     'Select the age group this item is suited for.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: context.hc.textSecondary,
-                      height: 1.5,
-                    ),
+                    style: HuddlText.body(color: context.hc.textSecondary),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -647,11 +629,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: Text(
                     'Select a category for your item.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: context.hc.textSecondary,
-                      height: 1.5,
-                    ),
+                    style: HuddlText.body(color: context.hc.textSecondary),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -719,19 +697,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                                 children: [
                                   Text(
                                     cond.label,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
-                                    ),
+                                    style: HuddlText.body(weight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     cond.description,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: context.hc.textTertiary,
-                                    ),
+                                    style: HuddlText.caption(),
                                   ),
                                 ],
                               ),
@@ -794,23 +765,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                           Expanded(
                             child: Text(
                               '${_selectedAge?.shortLabel ?? ''} • ${_selectedCategory?.label ?? ''} • ${_selectedCondition?.label ?? ''}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: _orange,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: HuddlText.body(color: _orange),
                             ),
                           ),
                           if (_isEditing)
                             GestureDetector(
                               onTap: () => setState(() => _step = 0),
                               child: Text('Edit',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _orange,
-                                  decoration: TextDecoration.underline,
-                                ),
+                                style: HuddlText.caption(weight: FontWeight.w600, color: _orange),
                               ),
                             ),
                         ],
@@ -877,11 +839,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                                 ),
                                 child: Text(
                                   'Free',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: _isFree ? Colors.white : _hintGray,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w600),
                                 ),
                               ),
                             ),
@@ -930,11 +888,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   Widget _sectionLabel(String text) {
     return Text(
       text,
-      style: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: _sectionTxt,
-      ),
+      style: HuddlText.body(weight: FontWeight.w700),
     );
   }
 
@@ -960,14 +914,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         keyboardType: keyboardType,
         enabled: enabled,
         textInputAction: maxLines == 1 ? TextInputAction.next : TextInputAction.newline,
-        style: GoogleFonts.poppins(fontSize: 15, color: _sectionTxt),
+        style: HuddlText.body(color: _sectionTxt),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
+          hintStyle: HuddlText.body(color: _hintGray),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
-          errorStyle: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.error),
+          errorStyle: HuddlText.caption(color: HuddlColors.error),
         ),
         validator: validator,
         onChanged: onChanged,
@@ -998,20 +952,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               const SizedBox(height: 12),
               Text(
                 'Click to add photos',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
+                style: HuddlText.body(),
               ),
               const SizedBox(height: 4),
               Text(
                 'Take photos or choose from gallery',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
+                style: HuddlText.caption(color: Colors.white.withValues(alpha: 0.8))),
             ],
           ),
         ),
@@ -1064,11 +1010,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     ),
                     child: Text(
                       '${_currentImagePage + 1}/${_pickedImages.length}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ),
                 ),
@@ -1112,10 +1054,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       const Icon(Icons.add_a_photo, size: 14, color: Colors.white),
                       const SizedBox(width: 4),
                       Text('Add more',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white)),
+                          style: HuddlText.caption(color: Colors.white)),
                     ]),
                   ),
                 ),
@@ -1192,11 +1131,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   child: Center(
                     child: Text(
                       'Back',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: _hintGray,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ),
                 ),
@@ -1237,11 +1172,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                         )
                       : Text(
                           label,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: enabled ? Colors.white : HuddlColors.textTertiary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -1313,19 +1244,12 @@ class _AgeStageCard extends StatelessWidget {
                 children: [
                   Text(
                     age.label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     age.shortLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -1398,11 +1322,7 @@ class _CategoryListTile extends StatelessWidget {
             Expanded(
               child: Text(
                 category.label,
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
             ),
             if (isSelected)

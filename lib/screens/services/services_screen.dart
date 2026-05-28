@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../constants/app_text_styles.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -183,11 +183,7 @@ Widget _buildStarDisplay(double rating, {int count = 0, double size = 13}) {
       const SizedBox(width: 4),
       Text(
         count > 0 ? '${rating.toStringAsFixed(1)} ($count)' : rating.toStringAsFixed(1),
-        style: GoogleFonts.poppins(
-          fontSize: size - 1,
-          fontWeight: FontWeight.w600,
-          color: HuddlColors.textSecondary,
-        ),
+        style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textSecondary),
       ),
     ],
   );
@@ -600,13 +596,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                 hasActiveFilter
                                     ? _selectedCategory!.displayName
                                     : 'Filter by category',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: hasActiveFilter
-                                      ? HuddlColors.primary
-                                      : filterText,
-                                ),
+                                style: HuddlText.body(),
                               ),
                             ],
                           ),
@@ -621,11 +611,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           },
                           child: Text(
                             'Clear',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textSecondary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -635,11 +621,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   // Section label
                   Text(
                     'Suggested for you',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: filterText,
-                    ),
+                    style: HuddlText.display(),
                   ),
                   const SizedBox(height: 4),
                 ],
@@ -674,14 +656,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               textAlignVertical: TextAlignVertical.center,
                               onChanged: (v) =>
                                   setState(() => _searchQuery = v.trim()),
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, color: filterText),
+                              style: HuddlText.body(color: filterText),
                               decoration: InputDecoration(
                                 hintText: 'Search services…',
-                                hintStyle: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: HuddlColors.textTertiary,
-                                ),
+                                hintStyle: HuddlText.body(),
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -721,11 +699,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       padding: const EdgeInsets.only(left: 12),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.textSecondary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                   ),
@@ -856,11 +830,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             ),
             Text(
               'Filter by category',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.hc.textPrimary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             _CategorySheetTile(
@@ -931,11 +901,7 @@ class _CategorySheetTile extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? HuddlColors.primary : hc.textPrimary,
-                ),
+                style: HuddlText.body(),
               ),
             ),
             if (selected)
@@ -970,11 +936,7 @@ class _ServiceCategoryInitial extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       _initial,
-      style: GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: color,
-      ),
+      style: HuddlText.heading(),
     );
   }
 }
@@ -997,11 +959,7 @@ class _BadgePill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
+        style: HuddlText.caption(weight: FontWeight.w700),
       ),
     );
   }
@@ -1123,14 +1081,13 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
             backgroundColor: context.hc.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Endorse ${widget.listing.name}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: HuddlText.body(weight: FontWeight.w700)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Your rating (optional)',
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                 const SizedBox(height: 6),
                 Center(
                   child: _StarRatingPicker(
@@ -1140,16 +1097,16 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                 ),
                 const SizedBox(height: 14),
                 Text('Add a personal note (optional)',
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                    style: HuddlText.body(color: context.hc.textSecondary)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: ctrl,
                   maxLines: 3,
                   maxLength: 120,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: HuddlText.body(),
                   decoration: InputDecoration(
                     hintText: '"Reliable, insured, brilliant with our kids"',
-                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    hintStyle: HuddlText.caption(color: context.hc.textTertiary),
                     filled: true,
                     fillColor: context.hc.inputBg,
                     border: OutlineInputBorder(
@@ -1163,7 +1120,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
               TextButton(
                   onPressed: () => Navigator.pop(ctx, null),
                   child: Text('Cancel',
-                      style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+                      style: HuddlText.body(color: context.hc.textSecondary))),
               HuddlButton(
                 label: 'Endorse',
                 onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
@@ -1221,11 +1178,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                   child: Center(
                     child: Text(
                       listing.name.isNotEmpty ? listing.name[0].toUpperCase() : 'S',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: catColor,
-                      ),
+                      style: HuddlText.display(),
                     ),
                   ),
                 ),
@@ -1239,33 +1192,21 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                 children: [
                   Text(
                     listing.category.displayName.toUpperCase(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textTertiary,
-                      letterSpacing: 0.4,
-                    ),
+                    style: HuddlText.label(color: context.hc.textTertiary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     listing.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$locationText  ·  $countText',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1298,11 +1239,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                   ),
                   child: Text(
                     'Book Now',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -1333,11 +1270,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                         )
                       : Text(
                           _hasEndorsed ? 'Endorsed' : 'Endorse',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: _hasEndorsed ? HuddlColors.textTertiary : HuddlColors.primary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -1437,14 +1370,13 @@ class _ListingCardState extends State<_ListingCard> {
             backgroundColor: context.hc.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Endorse ${widget.listing.name}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: HuddlText.body(weight: FontWeight.w700)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Your rating (optional)',
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                 const SizedBox(height: 6),
                 Center(
                   child: _StarRatingPicker(
@@ -1454,16 +1386,16 @@ class _ListingCardState extends State<_ListingCard> {
                 ),
                 const SizedBox(height: 14),
                 Text('Add a personal note (optional)',
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                    style: HuddlText.body(color: context.hc.textSecondary)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: ctrl,
                   maxLines: 3,
                   maxLength: 120,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: HuddlText.body(),
                   decoration: InputDecoration(
                     hintText: '"Reliable, insured, brilliant with our kids"',
-                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    hintStyle: HuddlText.caption(color: context.hc.textTertiary),
                     filled: true,
                     fillColor: context.hc.inputBg,
                     border: OutlineInputBorder(
@@ -1477,7 +1409,7 @@ class _ListingCardState extends State<_ListingCard> {
               TextButton(
                   onPressed: () => Navigator.pop(ctx, null),
                   child: Text('Cancel',
-                      style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+                      style: HuddlText.body(color: context.hc.textSecondary))),
               HuddlButton(
                 label: 'Endorse',
                 onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
@@ -1637,11 +1569,7 @@ class _ListingCardState extends State<_ListingCard> {
                           const SizedBox(width: 4),
                           Text(
                             'Partner',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -1673,22 +1601,13 @@ class _ListingCardState extends State<_ListingCard> {
                   // Category row — small uppercase label (no emoji — Huddl design standard)
                   Text(
                     listing.category.displayName.toUpperCase(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: HuddlColors.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                   const SizedBox(height: 6),
                   // Bold listing name — 2-line max (mirrors Event title style)
                   Text(
                     listing.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary,
-                      height: 1.25,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1706,10 +1625,7 @@ class _ListingCardState extends State<_ListingCard> {
                               : (listing.tagline.isNotEmpty
                                   ? listing.tagline
                                   : listing.borough),
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.5,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1739,10 +1655,7 @@ class _ListingCardState extends State<_ListingCard> {
                       children: [
                         Text(
                           _count > 0 ? '$_count endorsed' : '0 endorsements',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                         if (listing.communityRating != null) ...[
                           const SizedBox(height: 2),
@@ -1776,13 +1689,7 @@ class _ListingCardState extends State<_ListingCard> {
                               )
                             : Text(
                                 _hasEndorsed ? 'Endorsed' : 'Endorse',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: _hasEndorsed
-                                      ? HuddlColors.textTertiary
-                                      : HuddlColors.primary,
-                                ),
+                                style: HuddlText.body(weight: FontWeight.w600),
                               ),
                       ),
                     ),
@@ -1813,10 +1720,7 @@ class _InlineTagChip extends StatelessWidget {
       ),
       child: Text(
         tag,
-        style: GoogleFonts.poppins(
-            fontSize: 10,
-            color: hc.textSecondary,
-            fontWeight: FontWeight.w500),
+        style: HuddlText.label(color: hc.textSecondary),
       ),
     );
   }
@@ -1850,11 +1754,7 @@ class _VerifiedBadge extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             tier.badgeLabel,
-            style: GoogleFonts.poppins(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: HuddlText.label(),
           ),
         ],
       ),
@@ -1942,14 +1842,13 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             backgroundColor: context.hc.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Endorse ${widget.listing.name}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: HuddlText.body(weight: FontWeight.w700)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Your rating (optional)',
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                 const SizedBox(height: 6),
                 Center(
                   child: _StarRatingPicker(
@@ -1959,16 +1858,16 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 ),
                 const SizedBox(height: 14),
                 Text('Add a personal note (optional)',
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                    style: HuddlText.body(color: context.hc.textSecondary)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: ctrl,
                   maxLines: 3,
                   maxLength: 120,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: HuddlText.body(),
                   decoration: InputDecoration(
                     hintText: '"Reliable, insured, brilliant with our kids"',
-                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    hintStyle: HuddlText.caption(color: context.hc.textTertiary),
                     filled: true,
                     fillColor: context.hc.inputBg,
                     border: OutlineInputBorder(
@@ -1981,7 +1880,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, null),
-                  child: Text('Cancel', style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+                  child: Text('Cancel', style: HuddlText.body(color: context.hc.textSecondary))),
               HuddlButton(
                 label: 'Endorse',
                 onPressed: () => Navigator.pop(ctx, {'quote': ctrl.text.trim(), 'rating': pickedRating}),
@@ -2064,9 +1963,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 16),
               Text('Respond to endorsement',
-                  style: GoogleFonts.poppins(
-                      fontSize: 16, fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               UnderlinedTextField(
                 controller: controller,
@@ -2159,18 +2056,13 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     children: [
                       Text(
                         listing.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: hc.textPrimary,
-                        ),
+                        style: HuddlText.heading(),
                       ),
                       Row(
                         children: [
                           Text(
                             listing.category.displayName,
-                            style: GoogleFonts.poppins(
-                                fontSize: 13, color: hc.textSecondary),
+                            style: HuddlText.body(color: hc.textSecondary),
                           ),
                           const SizedBox(width: 6),
                           if (_isParentSource(listing.listingSource))
@@ -2187,11 +2079,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                           ),
                           child: Text(
                             'View business profile →',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.primary,
-                              decoration: TextDecoration.underline,
-                            ),
+                            style: HuddlText.caption(color: HuddlColors.primary),
                           ),
                         ),
                     ],
@@ -2222,11 +2110,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                       backgroundColor: HuddlColors.nearBlack.withValues(alpha: 0.15),
                       child: Text(
                         listing.parentName![0].toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.nearBlack,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w700),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -2236,18 +2120,10 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                         children: [
                           Text(
                             'Recommended by',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.nearBlack.withValues(alpha: 0.8),
-                            ),
-                          ),
+                            style: HuddlText.caption(color: HuddlColors.nearBlack.withValues(alpha: 0.8))),
                           Text(
                             listing.parentName!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.nearBlack,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -2284,11 +2160,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                               const SizedBox(width: 5),
                               Text(
                                 'Message',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                                style: HuddlText.caption(weight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -2305,21 +2177,12 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               if (listing.tagline.isNotEmpty) ...[
                 Text(
                   'About',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textTertiary,
-                    letterSpacing: 0.5,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: hc.textTertiary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   listing.tagline,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: hc.textSecondary,
-                    height: 1.45,
-                  ),
+                  style: HuddlText.body(color: hc.textSecondary),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -2335,11 +2198,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     Expanded(
                       child: Text(
                         listing.tagline,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: hc.textSecondary,
-                          height: 1.4,
-                        ),
+                        style: HuddlText.body(color: hc.textSecondary),
                       ),
                     ),
                   ],
@@ -2351,8 +2210,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             if (listing.description.isNotEmpty) ...[
               Text(
                 listing.description,
-                style: GoogleFonts.poppins(
-                    fontSize: 14, color: hc.textSecondary, height: 1.5),
+                style: HuddlText.body(color: hc.textSecondary).copyWith(height: 1.5),
               ),
               const SizedBox(height: 12),
             ],
@@ -2396,12 +2254,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                         Text(
                           '${listing.communityRating!.toStringAsFixed(1)} community rating'
                           '${listing.ratingCount > 0 ? " (${listing.ratingCount})" : ""}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF795548),
-                          ),
-                        ),
+                          style: HuddlText.caption(weight: FontWeight.w600, color: const Color(0xFF795548))),
                       ],
                     ),
                   ),
@@ -2523,11 +2376,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               children: [
                 Text(
                   'Parent Endorsements',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w700),
                 ),
                 const SizedBox(width: 6),
                 Container(
@@ -2539,11 +2388,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   ),
                   child: Text(
                     '$_endorseCount',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.nearBlack,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -2561,8 +2406,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'No endorsements yet — be the first local parent to vouch!',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13, color: hc.textSecondary),
+                  style: HuddlText.body(color: hc.textSecondary),
                 ),
               )
             else
@@ -2616,22 +2460,14 @@ class _EndorsementTile extends StatelessWidget {
                   endorsement.firstName.isNotEmpty
                       ? endorsement.firstName[0].toUpperCase()
                       : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: HuddlColors.nearBlack,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w700),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   endorsement.credit,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
               ),
               // Per-endorsement star rating pill
@@ -2649,12 +2485,7 @@ class _EndorsementTile extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         '${endorsement.rating}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF795548),
-                        ),
-                      ),
+                        style: HuddlText.caption(weight: FontWeight.w700, color: const Color(0xFF795548))),
                     ],
                   ),
                 ),
@@ -2664,21 +2495,13 @@ class _EndorsementTile extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '"${endorsement.quote}"',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontStyle: FontStyle.italic,
-                color: hc.textSecondary,
-                height: 1.4,
-              ),
+              style: HuddlText.body(color: hc.textSecondary).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
           const SizedBox(height: 4),
           Text(
             _relativeTime(endorsement.createdAt),
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: hc.textTertiary,
-            ),
+            style: HuddlText.caption(),
           ),
           // 6d — Owner reply — v4 spec: surfaceAlt + subdirectory icon + italic
           if (endorsement.ownerReply != null) ...[
@@ -2700,12 +2523,7 @@ class _EndorsementTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       endorsement.ownerReply!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textSecondary,
-                        fontStyle: FontStyle.italic,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.caption(color: context.hc.textSecondary).copyWith(fontStyle: FontStyle.italic),
                     ),
                   ),
                 ],
@@ -2723,11 +2541,7 @@ class _EndorsementTile extends StatelessWidget {
                 onPressed: onReplyTap,
                 child: Text(
                   'Respond',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: HuddlColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: HuddlText.caption(color: HuddlColors.primary),
                 ),
               ),
             ),
@@ -2761,8 +2575,7 @@ class _StatPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: GoogleFonts.poppins(
-                fontSize: 12, fontWeight: FontWeight.w600, color: color),
+            style: HuddlText.caption(weight: FontWeight.w600, color: color),
           ),
         ],
       ),
@@ -2804,7 +2617,7 @@ class _ContactRow extends StatelessWidget {
               child: Text(
                 label,
                 style:
-                    GoogleFonts.poppins(fontSize: 13, color: hc.textPrimary),
+                    HuddlText.body(color: hc.textPrimary),
               ),
             ),
             Icon(Icons.open_in_new, size: 14, color: hc.textTertiary),
@@ -2976,16 +2789,11 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                       children: [
                         Text(
                           'Add a Service',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700),
                         ),
                         Text(
                           'Paste a WhatsApp message or add manually',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: hc.textSecondary),
+                          style: HuddlText.caption(color: hc.textSecondary),
                         ),
                       ],
                     ),
@@ -3014,11 +2822,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                       Expanded(
                         child: Text(
                           'AI Extraction',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -3027,15 +2831,11 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                   TextField(
                     controller: _chatPasteCtrl,
                     maxLines: 4,
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: hc.textPrimary),
+                    style: HuddlText.body(color: hc.textPrimary),
                     decoration: InputDecoration(
                       hintText:
                           '"Has anyone used Sandra at Clean2Perfection? She\'s insured, reliable — 07700 900123"',
-                      hintStyle: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: hc.textTertiary,
-                          fontStyle: FontStyle.italic),
+                      hintStyle: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                       filled: true,
                       fillColor: hc.inputBg,
                       border: OutlineInputBorder(
@@ -3066,11 +2866,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                             Expanded(
                               child: Text(
                                 'Your name in the borough (optional)',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.nearBlack,
-                                ),
+                                style: HuddlText.caption(weight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -3078,20 +2874,15 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                         const SizedBox(height: 4),
                         Text(
                           'So other parents can message you about this recommendation.',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.nearBlack.withValues(alpha: 0.85),
-                              height: 1.4),
+                          style: HuddlText.caption(color: HuddlColors.nearBlack.withValues(alpha: 0.85)).copyWith(height: 1.4),
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _parentNameCtrl,
-                          style: GoogleFonts.poppins(
-                              fontSize: 13, color: hc.textPrimary),
+                          style: HuddlText.body(color: hc.textPrimary),
                           decoration: InputDecoration(
                             hintText: 'e.g. Sarah from Chesterton',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 12, color: hc.textTertiary),
+                            hintStyle: HuddlText.caption(color: hc.textTertiary),
                             filled: true,
                             fillColor: hc.inputBg,
                             border: OutlineInputBorder(
@@ -3130,8 +2921,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                         _extracting
                             ? 'Analysing\u2026'
                             : 'Extract recommendations',
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600, fontSize: 14),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                       onPressed: _extracting ? null : _runExtraction,
                     ),
@@ -3146,8 +2936,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                       ),
                       child: Text(
                         _extractError!,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: HuddlColors.warningDark),
+                        style: HuddlText.body(color: HuddlColors.warningDark),
                       ),
                     ),
                   ],
@@ -3155,11 +2944,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                     const SizedBox(height: 16),
                     Text(
                       '${_extracted.length} recommendation${_extracted.length > 1 ? 's' : ''} found',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w700),
                     ),
                     const SizedBox(height: 8),
                     ..._extracted.map((r) => _ExtractedRecommendationCard(
@@ -3203,11 +2988,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                   const SizedBox(width: 6),
                   Text(
                     _showManual ? 'Hide manual form' : 'Or add manually',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textSecondary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -3302,9 +3083,7 @@ class _ExtractedRecommendationCardState
                 color: HuddlColors.success, size: 20),
             const SizedBox(width: 8),
             Text('${rec.name} added!',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.success)),
+                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.success)),
           ],
         ),
       );
@@ -3326,11 +3105,7 @@ class _ExtractedRecommendationCardState
               Expanded(
                 child: Text(
                   rec.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w700),
                 ),
               ),
               Container(
@@ -3343,12 +3118,7 @@ class _ExtractedRecommendationCardState
                 ),
                 child: Text(
                   rec.confidence,
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _confidenceColor(rec.confidence),
-                  ),
-                ),
+                  style: HuddlText.label(color: _confidenceColor(rec.confidence))),
               ),
             ],
           ),
@@ -3356,11 +3126,7 @@ class _ExtractedRecommendationCardState
             const SizedBox(height: 6),
             Text(
               '"${rec.quote}"',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-                color: hc.textSecondary,
-              ),
+              style: HuddlText.caption().copyWith(fontStyle: FontStyle.italic),
             ),
           ],
           if (rec.tags.isNotEmpty) ...[
@@ -3463,11 +3229,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
           children: [
             Text(
               'Add manually',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: hc.textPrimary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
             _FormField(
@@ -3489,7 +3251,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
                                 style: const TextStyle(fontSize: 16)),
                             const SizedBox(width: 8),
                             Text(cat.displayName,
-                                style: GoogleFonts.poppins(fontSize: 13)),
+                                style: HuddlText.body()),
                           ],
                         ),
                       ))
@@ -3498,8 +3260,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
                   setState(() => _category = cat ?? ServiceCategory.other),
               decoration: InputDecoration(
                 labelText: 'Category',
-                labelStyle: GoogleFonts.poppins(
-                    fontSize: 13, color: hc.textSecondary),
+                labelStyle: HuddlText.body(color: hc.textSecondary),
                 filled: true,
                 fillColor: hc.inputBg,
                 border: OutlineInputBorder(
@@ -3561,21 +3322,14 @@ class _ManualAddFormState extends State<_ManualAddForm> {
                       const SizedBox(width: 6),
                       Text(
                         'Your recommendation (optional)',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.nearBlack,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Add your name so other parents can message you about your experience with this provider.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        color: HuddlColors.nearBlack.withValues(alpha: 0.85),
-                        height: 1.4),
+                    style: HuddlText.caption(color: HuddlColors.nearBlack.withValues(alpha: 0.85)).copyWith(height: 1.4),
                   ),
                   const SizedBox(height: 10),
                   _FormField(
@@ -3627,14 +3381,12 @@ class _FormField extends StatelessWidget {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
-      style: GoogleFonts.poppins(fontSize: 13, color: hc.textPrimary),
+      style: HuddlText.body(color: hc.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle:
-            GoogleFonts.poppins(fontSize: 13, color: hc.textSecondary),
-        hintStyle:
-            GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary),
+        labelStyle: HuddlText.body(color: hc.textSecondary),
+        hintStyle: HuddlText.caption(color: hc.textTertiary),
         filled: true,
         fillColor: hc.inputBg,
         border: OutlineInputBorder(
@@ -3642,7 +3394,7 @@ class _FormField extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
         errorStyle:
-            GoogleFonts.poppins(fontSize: 11, color: HuddlColors.error),
+            HuddlText.caption(color: HuddlColors.error),
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
@@ -12,6 +11,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/places_autocomplete_field.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EDIT MEETUP — pre-populated form using existing meetup data
@@ -404,16 +404,16 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         builder: (ctx) => AlertDialog(
           backgroundColor: context.hc.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('Discard changes?', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
-          content: Text('Your edits will be lost if you go back now.', style: GoogleFonts.poppins(fontSize: 14, color: _hintGray)),
+          title: Text('Discard changes?', style: HuddlText.heading()),
+          content: Text('Your edits will be lost if you go back now.', style: HuddlText.body(color: _hintGray)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Keep editing', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: _accentOrange)),
+              child: Text('Keep editing', style: HuddlText.body(weight: FontWeight.w600, color: _accentOrange)),
             ),
             TextButton(
               onPressed: () { Navigator.pop(ctx); Navigator.pop(context); },
-              child: Text('Discard', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: HuddlColors.error)),
+              child: Text('Discard', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
             ),
           ],
         ),
@@ -532,7 +532,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
       centerTitle: true,
       title: Text(
         'Edit meetup',
-        style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: _sectionText),
+        style: HuddlText.heading(color: _sectionText),
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
@@ -570,10 +570,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
                 ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                 : Text(
                     'Save changes',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16, fontWeight: FontWeight.w600,
-                      color: canSave ? Colors.white : HuddlColors.textTertiary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
           ),
         ),
@@ -582,7 +579,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
   }
 
   Widget _sectionHeader(String text) {
-    return Text(text, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: _sectionText));
+    return Text(text, style: HuddlText.body(weight: FontWeight.w700, color: _sectionText));
   }
 
   Widget _buildGrayField({
@@ -603,10 +600,10 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         maxLines: maxLines,
         maxLength: maxLength,
         keyboardType: keyboardType,
-        style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
+        style: HuddlText.body(color: _sectionText),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
+          hintStyle: HuddlText.body(color: _hintGray),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
@@ -658,7 +655,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               children: [
                 const Icon(Icons.wifi, size: 18, color: HuddlColors.textDark),
                 const SizedBox(width: 10),
-                Text('Online meetup', style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark, fontWeight: FontWeight.w500)),
+                Text('Online meetup', style: HuddlText.body(color: HuddlColors.textDark)),
               ],
             ),
           ),
@@ -678,7 +675,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               ),
             ),
             const SizedBox(width: 6),
-            Text('Online meetup', style: GoogleFonts.poppins(fontSize: 14, color: _sectionText)),
+            Text('Online meetup', style: HuddlText.body(color: _sectionText)),
           ],
         ),
       ],
@@ -730,11 +727,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
           children: [
             Expanded(child: Text(
               hasValue ? value : hint,
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                color: hasValue ? _sectionText : _hintGray,
-                fontWeight: hasValue ? FontWeight.w500 : FontWeight.w400,
-              ),
+              style: HuddlText.body(color: hasValue ? _sectionText : _hintGray),
             )),
             Icon(icon, size: 18, color: HuddlColors.textDark),
           ],
@@ -750,7 +743,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Repeat', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: _sectionText)),
+            Text('Repeat', style: HuddlText.body(weight: FontWeight.w700, color: _sectionText)),
             Transform.scale(
               scale: 0.85,
               child: CupertinoSwitch(
@@ -771,9 +764,9 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
                 value: _repeatFrequency,
                 isExpanded: true,
                 icon: Icon(Icons.keyboard_arrow_down, color: _sectionText.withValues(alpha: 0.6)),
-                style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
+                style: HuddlText.body(color: _sectionText),
                 items: _repeatOptions.where((o) => o != 'Does not repeat').map((o) =>
-                    DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 15, color: _sectionText)))).toList(),
+                    DropdownMenuItem(value: o, child: Text(o, style: HuddlText.body(color: _sectionText)))).toList(),
                 onChanged: (v) { if (v != null) setState(() { _repeatFrequency = v; _isDirty = true; }); },
               ),
             ),
@@ -793,7 +786,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
             children: [
               _squareCheckbox(_isFree),
               const SizedBox(width: 12),
-              Text('Free', style: GoogleFonts.poppins(fontSize: 15, color: _sectionText)),
+              Text('Free', style: HuddlText.body(color: _sectionText)),
             ],
           ),
         ),
@@ -805,16 +798,16 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 14),
-                  child: Text('£', style: GoogleFonts.poppins(fontSize: 15, color: _sectionText.withValues(alpha: 0.6))),
+                  child: Text('£', style: HuddlText.body(color: _sectionText.withValues(alpha: 0.6))),
                 ),
                 Expanded(
                   child: TextField(
                     controller: _priceCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
+                    style: HuddlText.body(color: _sectionText),
                     decoration: InputDecoration(
                       hintText: ' Price',
-                      hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
+                      hintStyle: HuddlText.body(color: _hintGray),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
                       border: InputBorder.none,
@@ -837,10 +830,10 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         controller: _descriptionCtrl,
         maxLines: 5,
         minLines: 3,
-        style: GoogleFonts.poppins(fontSize: 14, color: _sectionText),
+        style: HuddlText.body(color: _sectionText),
         decoration: InputDecoration(
           hintText: 'Meetup description',
-          hintStyle: GoogleFonts.poppins(fontSize: 14, color: _hintGray),
+          hintStyle: HuddlText.body(color: _hintGray),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
@@ -877,7 +870,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               children: [
                 Icon(icon, size: 14, color: selected ? Colors.white : _accentBlue),
                 const SizedBox(width: 6),
-                Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: selected ? Colors.white : _sectionText)),
+                Text(label, style: HuddlText.body(color: selected ? Colors.white : _sectionText)),
               ],
             ),
           ),
@@ -900,7 +893,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
                 children: [
                   _squareCheckbox(checked),
                   const SizedBox(width: 14),
-                  Text(key, style: GoogleFonts.poppins(fontSize: 15, color: _sectionText)),
+                  Text(key, style: HuddlText.body(color: _sectionText)),
                 ],
               ),
             ),
@@ -922,8 +915,8 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               child: DropdownButton<String>(
                 value: _selectedGroupId,
                 isExpanded: true,
-                hint: Text('Select a group', style: GoogleFonts.poppins(fontSize: 14, color: _hintGray)),
-                items: _userGroups.map((g) => DropdownMenuItem(value: g.id, child: Text(g.name, style: GoogleFonts.poppins(fontSize: 14)))).toList(),
+                hint: Text('Select a group', style: HuddlText.body(color: _hintGray)),
+                items: _userGroups.map((g) => DropdownMenuItem(value: g.id, child: Text(g.name, style: HuddlText.body()))).toList(),
                 onChanged: (id) {
                   final group = _userGroups.firstWhere((g) => g.id == id, orElse: () => _userGroups.first);
                   setState(() { _selectedGroupId = id; _selectedGroupName = group.name; _isDirty = true; });
@@ -968,8 +961,8 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: _sectionText)),
-                  Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: _hintGray)),
+                  Text(title, style: HuddlText.body(weight: FontWeight.w600, color: _sectionText)),
+                  Text(subtitle, style: HuddlText.caption(color: _hintGray)),
                 ],
               ),
             ),
@@ -1017,7 +1010,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
         children: [
           const Icon(Icons.add_photo_alternate_outlined, color: Colors.white, size: 48),
           const SizedBox(height: 12),
-          Text('Click to add photo', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+          Text('Click to add photo', style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
         ],
       ),
     );

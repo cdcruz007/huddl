@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/poll_service.dart';
 import 'poll_detail_screen.dart';
+import '../../constants/app_text_styles.dart';
 
 // ignore: unused_import
 import '../../widgets/huddl_widgets.dart';
@@ -144,10 +144,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
             onPressed: () => Navigator.pop(context),
           ),
           title: Text('Polls',
-              style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: hc.textPrimary)),
+              style: HuddlText.heading(color: hc.textPrimary)),
         ),
         body: const Center(
             child: CircularProgressIndicator(color: HuddlColors.textTertiary)),
@@ -168,19 +165,11 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
           children: [
             Text(
               'Polls',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: hc.textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
             Text(
               widget.groupName,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: hc.textSecondary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),
@@ -189,14 +178,8 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
           labelColor: HuddlColors.primary,
           unselectedLabelColor: hc.textTertiary,
           indicatorColor: HuddlColors.primary,
-          labelStyle: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          labelStyle: HuddlText.caption(weight: FontWeight.w600),
+          unselectedLabelStyle: HuddlText.caption(),
           tabs: [
             Tab(text: 'Active (${_activePolls.length})'),
             Tab(text: 'Closed (${_closedPolls.length})'),
@@ -229,21 +212,14 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
             const SizedBox(height: 16),
             Text(
               isActive ? 'No polls yet' : 'No closed polls',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: hc.textSecondary,
-              ),
+              style: HuddlText.body(),
             ),
             const SizedBox(height: 8),
             Text(
               isActive
                   ? 'Polls created in this group will\nappear here for everyone to vote on.'
                   : 'Expired or deleted polls will appear here',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: hc.textTertiary,
-              ),
+              style: HuddlText.body(),
             ),
           ],
         ),

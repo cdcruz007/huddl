@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import '../theme/huddl_colors.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // PLACES AUTOCOMPLETE FIELD
@@ -196,10 +196,10 @@ class _PlacesAutocompleteFieldState extends State<PlacesAutocompleteField> {
           TextField(
             controller: widget.controller,
             focusNode: _focus,
-            style: GoogleFonts.poppins(fontSize: 15, color: const Color(0xFF42464C)),
+            style: HuddlText.body(color: const Color(0xFF42464C)),
             decoration: InputDecoration(
               hintText: 'Add a location or address',
-              hintStyle: GoogleFonts.poppins(fontSize: 15, color: const Color(0xFFB0B0B0)),
+              hintStyle: HuddlText.body(color: const Color(0xFFB0B0B0)),
               isDense: true,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -290,10 +290,7 @@ class _SuggestionList extends StatelessWidget {
                           children: [
                             Text(
                               p.mainText,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF42464C)),
+                              style: HuddlText.body(color: const Color(0xFF42464C)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -301,9 +298,7 @@ class _SuggestionList extends StatelessWidget {
                               const SizedBox(height: 1),
                               Text(
                                 p.secondaryText,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: const Color(0xFF949494)),
+                                style: HuddlText.caption(color: const Color(0xFF949494)),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),

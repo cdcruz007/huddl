@@ -17,11 +17,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../services/backend_api_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 class EmailPendingVerificationScreen extends StatefulWidget {
   const EmailPendingVerificationScreen({super.key});
@@ -174,11 +174,7 @@ class _EmailPendingVerificationScreenState
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Text(
                         'huddl',
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: HuddlColors.primary,
-                        ),
+                        style: HuddlText.display(),
                       ),
                     ),
 
@@ -203,11 +199,7 @@ class _EmailPendingVerificationScreenState
 
                     Text(
                       'Check your inbox!',
-                      style: GoogleFonts.poppins(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: HuddlColors.textDark,
-                      ),
+                      style: HuddlText.display(),
                       textAlign: TextAlign.center,
                     ),
 
@@ -215,11 +207,7 @@ class _EmailPendingVerificationScreenState
 
                     Text(
                       'We\'ve sent a verification email to',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        color: HuddlColors.textSecondary,
-                        height: 1.5,
-                      ),
+                      style: HuddlText.body(color: HuddlColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
 
@@ -227,11 +215,7 @@ class _EmailPendingVerificationScreenState
 
                     Text(
                       _masked(_email),
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w700),
                       textAlign: TextAlign.center,
                     ),
 
@@ -239,11 +223,7 @@ class _EmailPendingVerificationScreenState
 
                     Text(
                       'Tap the \u201cVerify My Email\u201d button in the email to unlock Huddl and meet your neighbours.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: HuddlColors.textSecondary,
-                        height: 1.65,
-                      ),
+                      style: HuddlText.body(color: HuddlColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
 
@@ -264,10 +244,7 @@ class _EmailPendingVerificationScreenState
                         const SizedBox(width: 10),
                         Text(
                           'Waiting for verification\u2026',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: HuddlColors.textSecondary,
-                          ),
+                          style: HuddlText.body(),
                         ),
                       ],
                     ),
@@ -293,11 +270,7 @@ class _EmailPendingVerificationScreenState
                           Expanded(
                             child: Text(
                               'Can\'t find it? Check your spam or junk folder.',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: HuddlColors.textDark,
-                                height: 1.4,
-                              ),
+                              style: HuddlText.body(color: HuddlColors.textDark),
                             ),
                           ),
                         ],
@@ -309,14 +282,7 @@ class _EmailPendingVerificationScreenState
                       const SizedBox(height: 16),
                       Text(
                         _resendMessage!,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: _resendMessage!.startsWith('Email sent')
-                              ? HuddlColors.success
-                              : Colors.redAccent,
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
-                        ),
+                        style: HuddlText.body(color: _resendMessage!.startsWith('Email sent') ? Colors.green : Colors.redAccent),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -356,11 +322,7 @@ class _EmailPendingVerificationScreenState
                               _resendCooldown
                                   ? 'Resend in ${_resendCooldownSecs}s'
                                   : 'Resend verification email',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w600),
                             ),
                     ),
                   ),
@@ -375,10 +337,7 @@ class _EmailPendingVerificationScreenState
                     ),
                     child: Text(
                       'Wrong email address? Start over',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: HuddlColors.textSecondary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ),
                 ],
@@ -398,18 +357,17 @@ class _EmailPendingVerificationScreenState
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Start over?',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+            style: HuddlText.body(weight: FontWeight.w700)),
         content: Text(
           'This will sign you out and return you to the start of the '
           'sign-up flow so you can enter a different email address.',
-          style: GoogleFonts.poppins(
-              fontSize: 14, color: HuddlColors.textSecondary),
+          style: HuddlText.body(color: HuddlColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(color: HuddlColors.textSecondary)),
+                style: HuddlText.body(color: HuddlColors.textSecondary)),
           ),
           TextButton(
             onPressed: () async {
@@ -417,8 +375,7 @@ class _EmailPendingVerificationScreenState
               await _signOutAndRestart();
             },
             child: Text('Start over',
-                style: GoogleFonts.poppins(
-                    color: Colors.redAccent, fontWeight: FontWeight.w600)),
+                style: HuddlText.body(weight: FontWeight.w600, color: Colors.redAccent)),
           ),
         ],
       ),

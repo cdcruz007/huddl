@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../services/ai_learning_engine_service.dart';
 import '../../services/daily_ai_refresh_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // LEARNING MATURITY UI INDICATOR  — PARENT CONCIERGE EDITION (Step 14)
@@ -122,33 +122,19 @@ class LearningMaturityIndicator extends StatelessWidget {
                   children: [
                     Text(
                       _maturityTitle(maturity),
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                     ),
                     if (showLabel)
                       Text(
                         label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: isDark
-                              ? HuddlColors.darkTextSecondary
-                              : HuddlColors.textSecondary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                   ],
                 ),
               ),
               Text(
                 '${(progress * 100).round()}%',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _maturityColor(maturity),
-                ),
-              ),
+                style: HuddlText.caption(weight: FontWeight.w600, color: _maturityColor(maturity))),
             ],
           ),
           const SizedBox(height: 10),
@@ -165,10 +151,7 @@ class LearningMaturityIndicator extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             _maturityHint(maturity),
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary,
-            ),
+            style: HuddlText.label(),
           ),
         ],
       ),
@@ -267,11 +250,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
               children: [
                 Text(
                   'AI Knowledge Refresh',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
                 Text(
                   lastRefresh != null
@@ -279,10 +258,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
                           ? 'Refresh available now'
                           : 'Next refresh in ${timeUntil.inHours}h ${timeUntil.inMinutes % 60}m'
                       : 'Not yet refreshed',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary,
-                  ),
+                  style: HuddlText.label(),
                 ),
               ],
             ),

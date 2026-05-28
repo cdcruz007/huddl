@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/huddl_user_service.dart';
@@ -7,6 +6,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../constants/app_text_styles.dart';
 
 /// Screen that lists all real borough members from Firestore so the user can
 /// pick one to start a direct message conversation with.
@@ -123,11 +123,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
         ),
         title: Text(
           'New Message',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -150,8 +146,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                         Text(
                           _error!,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: context.hc.textTertiary),
+                          style: HuddlText.body(color: context.hc.textTertiary),
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton(
@@ -184,12 +179,10 @@ class _NewDMScreenState extends State<NewDMScreen> {
                               child: TextField(
                                 controller: _searchController,
                                 textAlignVertical: TextAlignVertical.center,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14, color: context.hc.textPrimary),
+                                style: HuddlText.body(color: context.hc.textPrimary),
                                 decoration: InputDecoration(
                                   hintText: 'Search members...',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: 14, color: context.hc.textTertiary),
+                                  hintStyle: HuddlText.body(color: context.hc.textTertiary),
                                   border: InputBorder.none,
                                   contentPadding:
                                       const EdgeInsets.symmetric(vertical: 10),
@@ -223,12 +216,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                             const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Text(
                           'Parents in $_borough',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textTertiary,
-                            letterSpacing: 0.3,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary),
                         ),
                       ),
 
@@ -246,11 +234,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                                     _allMembers.isEmpty
                                         ? 'No other members in $_borough yet'
                                         : 'No members found',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.hc.textPrimary,
-                                    ),
+                                    style: HuddlText.body(weight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -258,9 +242,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                                         ? 'Invite friends in your area to join Huddl!'
                                         : 'Try a different search term.',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: context.hc.textTertiary),
+                                    style: HuddlText.body(color: context.hc.textTertiary),
                                   ),
                                 ],
                               ),
@@ -330,19 +312,12 @@ class _MemberTile extends StatelessWidget {
                 children: [
                   Text(
                     member.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _parentTypeLabel(member.parentType, member.stagesOfLife),
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
+import '../../widgets/common/huddl_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../widgets/huddl_character.dart';
@@ -45,6 +45,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../services/rehome_service.dart';
 import 'dart:io';
+import '../../constants/app_text_styles.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -500,10 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Text('Subscription',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textTertiary)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
             ],
           ),
           const SizedBox(height: 10),
@@ -545,17 +543,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           children: [
                             Text(planLabel,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.hc.textPrimary)),
+                                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                           ],
                         ),
                         const SizedBox(height: 1),
                         Text(subtitle,
-                            style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: context.hc.textSecondary)),
+                            style: HuddlText.caption(color: context.hc.textSecondary)),
                       ],
                     ),
                   ),
@@ -568,10 +561,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text('Upgrade',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.white)),
+                          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white)),
                     )
                   else
                     Icon(Icons.chevron_right,
@@ -603,10 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(children: [
             Expanded(
               child: Text(label,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: hc.textSecondary)),
+                  style: HuddlText.caption(color: hc.textSecondary)),
             ),
             if (isUnlimited)
               Container(
@@ -620,17 +607,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 child: Text('Unlimited',
-                    style: GoogleFonts.poppins(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.success)),
+                    style: HuddlText.label(color: HuddlColors.success)),
               )
             else
               Text('$used / $max',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isNearLimit ? HuddlColors.error : hc.textTertiary)),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: isNearLimit ? HuddlColors.error : hc.textTertiary)),
           ]),
           const SizedBox(height: 6),
           ClipRRect(
@@ -660,15 +641,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Your plan usage',
-              style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: hc.textPrimary)),
+              style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary)),
           const SizedBox(height: 4),
           Text('This month',
-              style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: hc.textTertiary)),
+              style: HuddlText.caption(color: hc.textTertiary)),
           const SizedBox(height: 14),
           usageRow('Groups joined', ss.groupsJoined, limits.maxGroups),
           usageRow('Messages sent', ss.messagesThisMonth, limits.maxMessagesPerMonth),
@@ -681,10 +657,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
               child: Text('Upgrade for unlimited AI →',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.primary,
-                      fontWeight: FontWeight.w500)),
+                  style: HuddlText.caption(color: HuddlColors.primary)),
             ),
           ],
           const SizedBox(height: 8),
@@ -736,10 +709,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Expanded(
                             child: Text(
                               'Tap here to add your name to complete your profile',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: HuddlColors.textDark,
-                                  fontWeight: FontWeight.w500),
+                              style: HuddlText.body(color: HuddlColors.textDark),
                             ),
                           ),
                           const Icon(Icons.chevron_right,
@@ -759,11 +729,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             'My Profile',
-                            style: GoogleFonts.poppins(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.display(),
                           ),
                           IconButton(
                             icon: Icon(Icons.settings_outlined,
@@ -804,12 +770,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
                                     ? 'Tap to add name'
                                     : _name,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    color: (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
-                                        ? HuddlColors.textTertiary
-                                        : context.hc.textPrimary)),
+                                style: HuddlText.display(color: (_name.isEmpty || _name == 'User' || _name.startsWith('+')) ? context.hc.textTertiary : context.hc.textPrimary),
+                            ),
                           ),
                           if (_subscriptionService.isPaid) ...[
                             const SizedBox(width: 6),
@@ -835,10 +797,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(width: 3),
                                   Text(
                                     _subscriptionService.isPartner ? 'PARTNER' : 'PLUS',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        color: HuddlColors.white),
+                                    style: HuddlText.label(color: HuddlColors.white),
                                   ),
                                 ],
                               ),
@@ -854,8 +813,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               size: 16, color: HuddlColors.textHint),
                           const SizedBox(width: 4),
                           Text(_borough,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, color: context.hc.textTertiary)),
+                              style: HuddlText.body(color: context.hc.textTertiary)),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -872,10 +830,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           child: Text(_stageLabel,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textDark),
+                              style: HuddlText.caption(color: HuddlColors.textDark),
                               textAlign: TextAlign.center),
                         ),
                       const SizedBox(height: 20),
@@ -926,16 +881,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('About me',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textTertiary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
                         const SizedBox(height: 8),
                         Text(_bio!,
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: context.hc.textPrimary,
-                                height: 1.5)),
+                            style: HuddlText.body(color: context.hc.textPrimary).copyWith(height: 1.5)),
                       ],
                     ),
                   ),
@@ -955,18 +904,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Row(
                             children: [
                               Text('My Groups',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.hc.textPrimary)),
+                                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                               const Spacer(),
                               GestureDetector(
                                 onTap: _showMyGroupsSheet,
                                 child: Text('See all $_totalGroupCount',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: HuddlColors.textTertiary,
-                                        fontWeight: FontWeight.w500)),
+                                    style: HuddlText.caption(color: HuddlColors.textTertiary)),
                               ),
                             ],
                           ),
@@ -1176,10 +1119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leading:
                         const Icon(Icons.logout, color: HuddlColors.error),
                     title: Text('Log out',
-                        style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.error)),
+                        style: HuddlText.body(color: HuddlColors.error)),
                     onTap: _confirmLogout,
                   ),
                 ),
@@ -1188,8 +1128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text('Version $_appVersion',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: context.hc.textTertiary)),
+                      style: HuddlText.caption(color: context.hc.textTertiary)),
                 ),
                 const SizedBox(height: 80),
               ],
@@ -1239,12 +1178,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
                   onChanged: (_) => setLocal(() {}),
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textPrimary),
+                  style: HuddlText.body(color: context.hc.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Name',
-                    labelStyle: GoogleFonts.poppins(
-                        fontSize: 14, color: context.hc.textTertiary),
+                    labelStyle: HuddlText.body(color: context.hc.textTertiary),
                     prefixIcon: Icon(Icons.person_outline,
                         size: 20, color: context.hc.textTertiary),
                     border: OutlineInputBorder(
@@ -1269,12 +1206,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   maxLength: 200,
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: (_) => setLocal(() {}),
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textPrimary),
+                  style: HuddlText.body(color: context.hc.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'About me',
-                    labelStyle: GoogleFonts.poppins(
-                        fontSize: 14, color: context.hc.textTertiary),
+                    labelStyle: HuddlText.body(color: context.hc.textTertiary),
                     prefixIcon: Icon(Icons.edit_note,
                         size: 20, color: context.hc.textTertiary),
                     border: OutlineInputBorder(
@@ -1287,8 +1222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     // Built-in counter shows e.g. "47/200"
-                    counterStyle: GoogleFonts.poppins(
-                        fontSize: 11, color: context.hc.textTertiary),
+                    counterStyle: HuddlText.caption(color: context.hc.textTertiary),
                   ),
                 ),
               ),
@@ -1296,11 +1230,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ── Save Changes — only active when dirty ──
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isDirty
-                        ? () async {
+                child: HuddlButton(
+                  label: 'Save Changes',
+                  onPressed: isDirty
+                      ? () async {
                             final newName = nameCtrl.text.trim();
                             final newBio  = bioCtrl.text.trim().isEmpty
                                 ? null
@@ -1327,22 +1260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _snack('Profile updated');
                             }
                           }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      disabledBackgroundColor:
-                          HuddlColors.primary.withValues(alpha: 0.35),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                    ),
-                    child: Text('Save Changes',
-                        style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                  ),
+                      : null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -1415,16 +1333,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _parentType.isNotEmpty
                                   ? 'I am a ${_parentType[0].toUpperCase()}${_parentType.substring(1)}'
                                   : 'Parent type not set',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textPrimary),
+                              style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
                             ),
                             if (parentTypeLocked)
                               Text(
                                 'Set during sign-up and cannot be changed',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 11, color: context.hc.textTertiary),
+                                style: HuddlText.caption(color: context.hc.textTertiary),
                               ),
                           ],
                         ),
@@ -1443,17 +1357,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text('My journey',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
               ),
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text('Select all that apply to you',
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: context.hc.textTertiary)),
+                    style: HuddlText.caption(color: context.hc.textTertiary)),
               ),
               const SizedBox(height: 12),
 
@@ -1503,10 +1413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 14),
                           Expanded(
                             child: Text(entry.$2,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: isOn ? FontWeight.w600 : FontWeight.w500,
-                                    color: context.hc.textPrimary)),
+                                style: HuddlText.body(color: context.hc.textPrimary)),
                           ),
                           Container(
                             width: 24,
@@ -1537,10 +1444,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text('Expected due year',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -1562,10 +1466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Text('Select due year',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: context.hc.textPrimary)),
+                                    style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
                               ),
                               Expanded(
                                 child: ListView.separated(
@@ -1577,14 +1478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     final isSel = selectedDueYear == y;
                                     return ListTile(
                                       title: Text(y,
-                                          style: GoogleFonts.poppins(
-                                              fontSize: 16,
-                                              fontWeight: isSel
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500,
-                                              color: isSel
-                                                  ? HuddlColors.primary
-                                                  : HuddlColors.textDark)),
+                                          style: HuddlText.body(weight: FontWeight.w500, color: HuddlColors.textDark)),
                                       trailing: isSel
                                           ? const Icon(Icons.check_circle,
                                               color: HuddlColors.primary)
@@ -1620,11 +1514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             selectedDueYear.isNotEmpty
                                 ? selectedDueYear
                                 : 'Select year',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: selectedDueYear.isNotEmpty
-                                    ? HuddlColors.textDark
-                                    : HuddlColors.textHint),
+                            style: HuddlText.body(color: HuddlColors.textHint),
                           ),
                           const Spacer(),
                           Icon(Icons.keyboard_arrow_down,
@@ -1644,10 +1534,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     children: [
                       Text('Children',
-                          style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.textPrimary)),
+                          style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
                       const Spacer(),
                       GestureDetector(
                         onTap: () {
@@ -1669,10 +1556,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   size: 16, color: HuddlColors.textDark),
                               const SizedBox(width: 4),
                               Text('Add child',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.textDark)),
+                                  style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark)),
                             ],
                           ),
                         ),
@@ -1706,10 +1590,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             child: Center(
                               child: Text('${i + 1}',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: HuddlColors.nearBlack)),
+                                  style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.nearBlack)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -1717,11 +1598,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: TextField(
                               controller: nameC,
                               onChanged: (v) => childrenList[i]['name'] = v,
-                              style: GoogleFonts.poppins(fontSize: 13),
+                              style: HuddlText.body(),
                               decoration: InputDecoration(
                                 hintText: 'Name',
-                                hintStyle: GoogleFonts.poppins(
-                                    fontSize: 13, color: context.hc.textTertiary),
+                                hintStyle: HuddlText.body(color: context.hc.textTertiary),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 10),
@@ -1744,11 +1624,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               keyboardType: TextInputType.number,
                               onChanged: (v) =>
                                   childrenList[i]['birthday'] = v,
-                              style: GoogleFonts.poppins(fontSize: 13),
+                              style: HuddlText.body(),
                               decoration: InputDecoration(
                                 hintText: 'Year',
-                                hintStyle: GoogleFonts.poppins(
-                                    fontSize: 13, color: context.hc.textTertiary),
+                                hintStyle: HuddlText.body(color: context.hc.textTertiary),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 10),
@@ -1791,66 +1670,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ── Save button ────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: selected.isEmpty
-                        ? null
-                        : () async {
-                            // OTP verification for stage of life changes
-                            Navigator.pop(c);
-                            final verified = await _verifyWithOtp(
-                                'update your stage of life');
-                            if (!verified) {
-                              _snack('Stage of life change cancelled');
-                              return;
-                            }
+                child: HuddlButton(
+                  label: 'Save Changes',
+                  onPressed: selected.isEmpty
+                      ? null
+                      : () async {
+                          // OTP verification for stage of life changes
+                          Navigator.pop(c);
+                          final verified = await _verifyWithOtp(
+                              'update your stage of life');
+                          if (!verified) {
+                            _snack('Stage of life change cancelled');
+                            return;
+                          }
 
-                            // Save to onboarding (parent type stays locked)
-                            _onboarding.setStagesOfLife(selected.toList());
-                            if (selectedDueYear.isNotEmpty) {
-                              _onboarding.setDueDate(selectedDueYear);
-                            }
-                            final validChildren = childrenList
-                                .where((ch) =>
-                                    (ch['name'] ?? '').isNotEmpty ||
-                                    (ch['birthday'] ?? '').isNotEmpty)
-                                .toList();
-                            _onboarding.setChildren(validChildren);
+                          // Save to onboarding (parent type stays locked)
+                          _onboarding.setStagesOfLife(selected.toList());
+                          if (selectedDueYear.isNotEmpty) {
+                            _onboarding.setDueDate(selectedDueYear);
+                          }
+                          final validChildren = childrenList
+                              .where((ch) =>
+                                  (ch['name'] ?? '').isNotEmpty ||
+                                  (ch['birthday'] ?? '').isNotEmpty)
+                              .toList();
+                          _onboarding.setChildren(validChildren);
 
-                            setState(() {
-                              _stagesOfLife = selected.toList();
-                              _dueDate = selectedDueYear.isEmpty
-                                  ? null
-                                  : selectedDueYear;
-                              _children = validChildren;
-                            });
+                          setState(() {
+                            _stagesOfLife = selected.toList();
+                            _dueDate = selectedDueYear.isEmpty
+                                ? null
+                                : selectedDueYear;
+                            _children = validChildren;
+                          });
 
-                            // Recreate default groups for updated stages
-                            // This ensures new groups appear in the Messages tab
-                            await _groupService.recreateGroupsForStages(
-                              userId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
-                              stages: selected.toList(),
-                              postcode: _postcode,
-                            );
-                            await _loadProfileData();
-                            _snack(
-                                'Stage of life updated \u2014 your groups have been refreshed');
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      disabledBackgroundColor:
-                          HuddlColors.primary.withValues(alpha: 0.3),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      elevation: 0,
-                    ),
-                    child: Text('Save Changes',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w600)),
-                  ),
+                          // Recreate default groups for updated stages
+                          // This ensures new groups appear in the Messages tab
+                          await _groupService.recreateGroupsForStages(
+                            userId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
+                            stages: selected.toList(),
+                            postcode: _postcode,
+                          );
+                          await _loadProfileData();
+                          _snack(
+                              'Stage of life updated \u2014 your groups have been refreshed');
+                        },
                 ),
               ),
               const SizedBox(height: 16),
@@ -1892,8 +1756,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: Text(
                         'Changing your postcode will update your borough and default groups. Only Cambridge postcodes are accepted.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12, color: HuddlColors.textDark, height: 1.4),
+                        style: HuddlText.caption(color: HuddlColors.textDark).copyWith(height: 1.4),
                       ),
                     ),
                   ],
@@ -1904,8 +1767,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text('Current: $_borough${_postcode != null ? ' ($_postcode)' : ''}',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textSecondary)),
+                  style: HuddlText.body(color: context.hc.textSecondary)),
             ),
             const SizedBox(height: 16),
             Padding(
@@ -1945,38 +1807,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 16),
                             Text('We\u2019re not in your area yet',
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: context.hc.textPrimary)),
+                                style: HuddlText.heading(color: context.hc.textPrimary)),
                             const SizedBox(height: 10),
                             Text(
                               'Huddl is currently only available in the Cambridge area. We\u2019re expanding soon \u2014 stay tuned!',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: context.hc.textSecondary,
-                                  height: 1.5),
+                              style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                             ),
                             const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () => Navigator.pop(dCtx),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: HuddlColors.primary,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24)),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  elevation: 0,
-                                ),
-                                child: Text('OK',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white)),
-                              ),
+                            HuddlButton(
+                              label: 'OK',
+                              onPressed: () => Navigator.pop(dCtx),
                             ),
                           ],
                         ),
@@ -2085,10 +1926,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Expanded(
                         child: Text(
                           'You can opt to remove yourself from your previous $previousBorough borough groups below.',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: HuddlColors.textDark,
-                              height: 1.4),
+                          style: HuddlText.caption(color: HuddlColors.textDark).copyWith(height: 1.4),
                         ),
                       ),
                     ],
@@ -2109,13 +1947,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const EdgeInsets.symmetric(horizontal: 12),
                         leading: _groupAvatar(g.imageUrl, 40),
                         title: Text(g.name,
-                            style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textPrimary)),
+                            style: HuddlText.body(color: context.hc.textPrimary)),
                         subtitle: Text('${g.memberCount} members',
-                            style: GoogleFonts.poppins(
-                                fontSize: 11, color: context.hc.textTertiary)),
+                            style: HuddlText.caption(color: context.hc.textTertiary)),
                         trailing: TextButton(
                           onPressed: () async {
                             final left = await _groupService.leaveGroup(
@@ -2137,8 +1971,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 horizontal: 12, vertical: 4),
                           ),
                           child: Text('Leave',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12, fontWeight: FontWeight.w600)),
+                              style: HuddlText.caption(weight: FontWeight.w600)),
                         ),
                       ),
                     ),
@@ -2146,17 +1979,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(c),
-                    style: TextButton.styleFrom(
-                      foregroundColor: HuddlColors.textSecondary,
-                    ),
-                    child: Text('Keep all groups',
-                        style: GoogleFonts.poppins(
-                            fontSize: 14, fontWeight: FontWeight.w500)),
-                  ),
+                child: HuddlButton(
+                  label: 'Keep all groups',
+                  variant: HuddlButtonVariant.ghost,
+                  onPressed: () => Navigator.pop(c),
                 ),
               ),
               const SizedBox(height: 16),
@@ -2220,10 +2046,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Text(
                             'Changing your phone number updates your Huddl login. '
                             'An SMS code will be sent to the new number to confirm.',
-                            style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: HuddlColors.primaryDark,
-                                height: 1.4),
+                            style: HuddlText.caption(color: HuddlColors.primaryDark).copyWith(height: 1.4),
                           ),
                         ),
                       ],
@@ -2245,20 +2068,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           border: Border.all(color: ctx.hc.divider),
                         ),
                         child: Text('+44',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, color: ctx.hc.textPrimary)),
+                            style: HuddlText.body(color: ctx.hc.textPrimary)),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: phoneCtrl,
                           keyboardType: TextInputType.phone,
-                          style: GoogleFonts.poppins(fontSize: 14),
+                          style: HuddlText.body(),
                           enabled: !isBusy,
                           decoration: InputDecoration(
                             hintText: 'New phone number',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 14, color: ctx.hc.textTertiary),
+                            hintStyle: HuddlText.body(color: ctx.hc.textTertiary),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide:
@@ -2280,75 +2101,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(errorText!,
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: HuddlColors.error,
-                            fontWeight: FontWeight.w500)),
+                        style: HuddlText.caption(color: HuddlColors.error)),
                   ),
                 ],
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: isBusy
-                          ? const SizedBox(
-                              width: 16, height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.send_outlined, size: 18),
-                      label: Text(isBusy ? 'Sending SMS…' : 'Send verification code',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      onPressed: isBusy
-                          ? null
-                          : () async {
-                              String raw = phoneCtrl.text.trim();
-                              if (raw.isEmpty) {
-                                setLocal(() => errorText =
-                                    'Please enter a phone number.');
-                                return;
-                              }
-                              if (raw.startsWith('+44')) { raw = raw.substring(3); }
-                              else if (raw.startsWith('44')) { raw = raw.substring(2); }
-                              if (raw.length < 7) {
-                                setLocal(() => errorText =
-                                    'Please enter a valid UK phone number.');
-                                return;
-                              }
-                              final full = '+44$raw';
+                  child: HuddlButton(
+                    label: isBusy ? 'Sending SMS…' : 'Send verification code',
+                    isLoading: isBusy,
+                    leadingIcon: Icons.send_outlined,
+                    onPressed: isBusy
+                        ? null
+                        : () async {
+                            String raw = phoneCtrl.text.trim();
+                            if (raw.isEmpty) {
+                              setLocal(() => errorText =
+                                  'Please enter a phone number.');
+                              return;
+                            }
+                            if (raw.startsWith('+44')) { raw = raw.substring(3); }
+                            else if (raw.startsWith('44')) { raw = raw.substring(2); }
+                            if (raw.length < 7) {
+                              setLocal(() => errorText =
+                                  'Please enter a valid UK phone number.');
+                              return;
+                            }
+                            final full = '+44$raw';
+                            setLocal(() {
+                              isBusy = true;
+                              errorText = null;
+                              pendingFullPhone = full;
+                            });
+                            final result = await FirebaseAuthService()
+                                .sendPhoneUpdateOtp(full);
+                            if (!ctx.mounted) return;
+                            if (result.status == PhoneAuthStatus.codeSent) {
                               setLocal(() {
-                                isBusy = true;
-                                errorText = null;
-                                pendingFullPhone = full;
+                                step = 'otp';
+                                isBusy = false;
                               });
-                              final result = await FirebaseAuthService()
-                                  .sendPhoneUpdateOtp(full);
-                              if (!ctx.mounted) return;
-                              if (result.status == PhoneAuthStatus.codeSent) {
-                                setLocal(() {
-                                  step = 'otp';
-                                  isBusy = false;
-                                });
-                              } else {
-                                setLocal(() {
-                                  isBusy = false;
-                                  errorText = result.errorMessage ??
-                                      'Failed to send SMS. Please try again.';
-                                });
-                              }
-                            },
+                            } else {
+                              setLocal(() {
+                                isBusy = false;
+                                errorText = result.errorMessage ??
+                                    'Failed to send SMS. Please try again.';
+                              });
+                            }
+                          },
                     ),
-                  ),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -2364,10 +2165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
                   'Enter the 6-digit code sent to $pendingFullPhone',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: ctx.hc.textSecondary,
-                      height: 1.4),
+                  style: HuddlText.body(color: ctx.hc.textSecondary).copyWith(height: 1.4),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -2381,10 +2179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   maxLength: 6,
                   textAlign: TextAlign.center,
                   enabled: !isBusy,
-                  style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 8),
+                  style: HuddlText.display().copyWith(letterSpacing: 8),
                   decoration: InputDecoration(
                     hintText: '------',
                     counterText: '',
@@ -2411,10 +2206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(errorText!,
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: HuddlColors.error,
-                          fontWeight: FontWeight.w500),
+                      style: HuddlText.caption(color: HuddlColors.error),
                       textAlign: TextAlign.center),
                 ),
               ],
@@ -2422,44 +2214,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Confirm button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: isBusy
-                        ? const SizedBox(
-                            width: 16, height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.check_circle_outline, size: 18),
-                    label: Text(isBusy ? 'Verifying…' : 'Confirm new number',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w600)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                    ),
-                    onPressed: isBusy
-                        ? null
-                        : () async {
-                            final code = otpCtrl.text.trim();
-                            if (code.length < 6) {
-                              setLocal(() => errorText =
-                                  'Please enter the full 6-digit code.');
-                              return;
-                            }
-                            setLocal(() {
-                              isBusy = true;
-                              errorText = null;
-                            });
-                            final err = await FirebaseAuthService()
-                                .confirmPhoneUpdate(
-                              smsCode: code,
-                              newPhoneNumber: pendingFullPhone,
-                            );
+                child: HuddlButton(
+                  label: isBusy ? 'Verifying…' : 'Confirm new number',
+                  isLoading: isBusy,
+                  leadingIcon: Icons.check_circle_outline,
+                  onPressed: isBusy
+                      ? null
+                      : () async {
+                          final code = otpCtrl.text.trim();
+                          if (code.length < 6) {
+                            setLocal(() => errorText =
+                                'Please enter the full 6-digit code.');
+                            return;
+                          }
+                          setLocal(() {
+                            isBusy = true;
+                            errorText = null;
+                          });
+                          final err = await FirebaseAuthService()
+                              .confirmPhoneUpdate(
+                            smsCode: code,
+                            newPhoneNumber: pendingFullPhone,
+                          );
                             if (!ctx.mounted) return;
                             if (err == null) {
                               // Success — update local state and close sheet
@@ -2477,7 +2253,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               });
                             }
                           },
-                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -2491,8 +2266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           errorText = null;
                         }),
                 child: Text('← Use a different number',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: HuddlColors.textTertiary)),
+                    style: HuddlText.body(color: HuddlColors.textTertiary)),
               ),
               const SizedBox(height: 12),
             ],
@@ -2571,10 +2345,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'To protect your account we\'ll send a one-time code '
                             'to your registered phone number ($_phone) before '
                             'allowing the change.',
-                            style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: HuddlColors.primaryDark,
-                                height: 1.4),
+                            style: HuddlText.caption(color: HuddlColors.primaryDark).copyWith(height: 1.4),
                           ),
                         ),
                       ],
@@ -2587,10 +2358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(errorText!,
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: HuddlColors.error,
-                            fontWeight: FontWeight.w500)),
+                        style: HuddlText.caption(color: HuddlColors.error)),
                   ),
                 ],
 
@@ -2599,63 +2367,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Send OTP button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: isBusy
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.send_outlined, size: 18),
-                      label: Text(
-                          isBusy ? 'Sending code…' : 'Send verification code',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      onPressed: isBusy
-                          ? null
-                          : () async {
-                              final phoneVal = _phone ?? '';
-                              if (phoneVal.isEmpty) {
-                                setLocal(() => errorText =
-                                    'No phone number found on your account.');
-                                return;
-                              }
+                  child: HuddlButton(
+                    label: isBusy ? 'Sending code…' : 'Send verification code',
+                    isLoading: isBusy,
+                    leadingIcon: Icons.send_outlined,
+                    onPressed: isBusy
+                        ? null
+                        : () async {
+                            final phoneVal = _phone ?? '';
+                            if (phoneVal.isEmpty) {
+                              setLocal(() => errorText =
+                                  'No phone number found on your account.');
+                              return;
+                            }
+                            setLocal(() {
+                              isBusy = true;
+                              errorText = null;
+                              step = 'sending';
+                            });
+                            // Reuse verifyPhoneNumber — same SMS path as login
+                            final result = await FirebaseAuthService()
+                                .verifyPhoneNumber(phoneVal);
+                            if (!ctx.mounted) return;
+                            if (result.status == PhoneAuthStatus.codeSent ||
+                                result.status ==
+                                    PhoneAuthStatus.verified) {
                               setLocal(() {
-                                isBusy = true;
-                                errorText = null;
-                                step = 'sending';
+                                step = 'otp';
+                                isBusy = false;
                               });
-                              // Reuse verifyPhoneNumber — same SMS path as login
-                              final result = await FirebaseAuthService()
-                                  .verifyPhoneNumber(phoneVal);
-                              if (!ctx.mounted) return;
-                              if (result.status == PhoneAuthStatus.codeSent ||
-                                  result.status ==
-                                      PhoneAuthStatus.verified) {
-                                setLocal(() {
-                                  step = 'otp';
-                                  isBusy = false;
-                                });
-                              } else {
-                                setLocal(() {
-                                  isBusy = false;
-                                  step = 'entry';
-                                  errorText = result.errorMessage ??
-                                      'Failed to send SMS. Please try again.';
-                                });
-                              }
-                            },
-                    ),
+                            } else {
+                              setLocal(() {
+                                isBusy = false;
+                                step = 'entry';
+                                errorText = result.errorMessage ??
+                                    'Failed to send SMS. Please try again.';
+                              });
+                            }
+                          },
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -2677,10 +2426,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Enter the 6-digit code sent to $_phone, then choose a '
                     'new password.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: ctx.hc.textSecondary,
-                        height: 1.4),
+                    style: HuddlText.body(color: ctx.hc.textSecondary).copyWith(height: 1.4),
                   ),
                 ),
 
@@ -2695,14 +2441,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     maxLength: 6,
                     textAlign: TextAlign.center,
                     enabled: !isBusy,
-                    style: GoogleFonts.poppins(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 8),
+                    style: HuddlText.display().copyWith(letterSpacing: 8),
                     decoration: InputDecoration(
                       labelText: 'Verification code',
-                      labelStyle:
-                          GoogleFonts.poppins(fontSize: 13),
+                      labelStyle: HuddlText.body(color: HuddlColors.textTertiary),
                       hintText: '------',
                       counterText: '',
                       border: OutlineInputBorder(
@@ -2728,10 +2470,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     controller: newPwCtrl,
                     obscureText: !newPwVisible,
                     enabled: !isBusy,
-                    style: GoogleFonts.poppins(fontSize: 14),
+                    style: HuddlText.body(),
                     decoration: InputDecoration(
                       labelText: 'New password',
-                      labelStyle: GoogleFonts.poppins(fontSize: 13),
+                      labelStyle: HuddlText.caption(),
                       prefixIcon: const Icon(Icons.lock_reset_outlined,
                           size: 20),
                       suffixIcon: IconButton(
@@ -2747,8 +2489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       helperText:
                           'Min 8 chars, 1 uppercase, 1 number, 1 special character',
-                      helperStyle: GoogleFonts.poppins(
-                          fontSize: 10, color: ctx.hc.textTertiary),
+                      helperStyle: HuddlText.label(color: ctx.hc.textTertiary),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
@@ -2772,10 +2513,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     controller: confirmCtrl,
                     obscureText: !confirmPwVisible,
                     enabled: !isBusy,
-                    style: GoogleFonts.poppins(fontSize: 14),
+                    style: HuddlText.body(),
                     decoration: InputDecoration(
                       labelText: 'Confirm new password',
-                      labelStyle: GoogleFonts.poppins(fontSize: 13),
+                      labelStyle: HuddlText.caption(),
                       prefixIcon: const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -2809,10 +2550,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(errorText!,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: HuddlColors.error,
-                            fontWeight: FontWeight.w500)),
+                        style: HuddlText.caption(color: HuddlColors.error)),
                   ),
                 ],
 
@@ -2821,107 +2559,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Change Password CTA
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: isBusy
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.check_circle_outline,
-                              size: 18),
-                      label: Text(
-                          isBusy ? 'Updating…' : 'Change Password',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      onPressed: isBusy
-                          ? null
-                          : () async {
-                              final code   = otpCtrl.text.trim();
-                              final newPw  = newPwCtrl.text;
-                              final confPw = confirmCtrl.text;
+                  child: HuddlButton(
+                    label: isBusy ? 'Updating…' : 'Change Password',
+                    isLoading: isBusy,
+                    leadingIcon: Icons.check_circle_outline,
+                    onPressed: isBusy
+                        ? null
+                        : () async {
+                            final code   = otpCtrl.text.trim();
+                            final newPw  = newPwCtrl.text;
+                            final confPw = confirmCtrl.text;
 
-                              // Client-side validation
-                              if (code.length < 6) {
-                                setLocal(() => errorText =
-                                    'Please enter the full 6-digit code.');
-                                return;
-                              }
-                              if (newPw.isEmpty) {
-                                setLocal(() =>
-                                    errorText = 'Please enter a new password.');
-                                return;
-                              }
-                              if (!isValidPassword(newPw)) {
-                                setLocal(() => errorText =
-                                    'Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character.');
-                                return;
-                              }
-                              if (newPw != confPw) {
-                                setLocal(() =>
-                                    errorText = 'Passwords do not match.');
-                                return;
-                              }
+                            // Client-side validation
+                            if (code.length < 6) {
+                              setLocal(() => errorText =
+                                  'Please enter the full 6-digit code.');
+                              return;
+                            }
+                            if (newPw.isEmpty) {
+                              setLocal(() =>
+                                  errorText = 'Please enter a new password.');
+                              return;
+                            }
+                            if (!isValidPassword(newPw)) {
+                              setLocal(() => errorText =
+                                  'Password must be at least 8 characters, include 1 uppercase letter, 1 number, and 1 special character.');
+                              return;
+                            }
+                            if (newPw != confPw) {
+                              setLocal(() =>
+                                  errorText = 'Passwords do not match.');
+                              return;
+                            }
 
+                            setLocal(() {
+                              isBusy = true;
+                              errorText = null;
+                            });
+
+                            // Step 1 — Verify the OTP (re-auth, no session change)
+                            final authErr = await FirebaseAuthService()
+                                .reAuthWithOtp(smsCode: code);
+
+                            if (!ctx.mounted) return;
+
+                            if (authErr != null) {
                               setLocal(() {
-                                isBusy = true;
-                                errorText = null;
+                                isBusy = false;
+                                errorText = authErr.contains('invalid')
+                                    ? 'Incorrect code. Please check and try again.'
+                                    : authErr;
                               });
+                              return;
+                            }
 
-                              // Step 1 — Verify the OTP (re-auth, no session change)
-                              final authErr = await FirebaseAuthService()
-                                  .reAuthWithOtp(smsCode: code);
-
+                            // Step 2 — Persist the new password to Firestore
+                            // (phone-only auth: no Firebase Auth password to update)
+                            try {
+                              final uid = FirebaseAuth.instance.currentUser?.uid;
+                              if (uid != null) {
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(uid)
+                                    .update({
+                                  'passwordUpdatedAt':
+                                      FieldValue.serverTimestamp(),
+                                  'updatedAt':
+                                      FieldValue.serverTimestamp(),
+                                });
+                              }
                               if (!ctx.mounted) return;
-
-                              if (authErr != null) {
-                                setLocal(() {
-                                  isBusy = false;
-                                  errorText = authErr.contains('invalid')
-                                      ? 'Incorrect code. Please check and try again.'
-                                      : authErr;
-                                });
-                                return;
-                              }
-
-                              // Step 2 — Persist the new password to Firestore
-                              // (phone-only auth: no Firebase Auth password to update)
-                              try {
-                                final uid = FirebaseAuth.instance.currentUser?.uid;
-                                if (uid != null) {
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(uid)
-                                      .update({
-                                    'passwordUpdatedAt':
-                                        FieldValue.serverTimestamp(),
-                                    'updatedAt':
-                                        FieldValue.serverTimestamp(),
-                                  });
-                                }
-                                if (!ctx.mounted) return;
-                                Navigator.pop(c);
-                                _snack('Password changed successfully.');
-                              } catch (e) {
-                                if (!ctx.mounted) return;
-                                setLocal(() {
-                                  isBusy = false;
-                                  errorText =
-                                      'Something went wrong. Please try again.';
-                                });
-                              }
-                            },
-                    ),
+                              Navigator.pop(c);
+                              _snack('Password changed successfully.');
+                            } catch (e) {
+                              if (!ctx.mounted) return;
+                              setLocal(() {
+                                isBusy = false;
+                                errorText =
+                                    'Something went wrong. Please try again.';
+                              });
+                            }
+                          },
                   ),
                 ),
 
@@ -2937,8 +2655,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             errorText = null;
                           }),
                   child: Text('← Resend code',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13, color: HuddlColors.textTertiary)),
+                      style: HuddlText.body(color: HuddlColors.textTertiary)),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -2975,13 +2692,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 return ListTile(
                   leading: _groupAvatar(g.imageUrl, 44),
                   title: Text(g.name,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(color: context.hc.textPrimary)),
                   subtitle: Text('${g.memberCount} members',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: context.hc.textTertiary)),
+                      style: HuddlText.caption(color: context.hc.textTertiary)),
                   trailing: Icon(Icons.chevron_right,
                       color: context.hc.textTertiary),
                   onTap: () {
@@ -3057,12 +2770,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Center(
         child: Text(
           initials,
-          style: GoogleFonts.poppins(
-            fontSize: size * 0.36,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.primary,
-            height: 1.0,
-          ),
+          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.primary).copyWith(fontSize: size * 0.36, height: 1.0),
         ),
       ),
     );
@@ -3133,14 +2841,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 return ListTile(
                   leading: _meetupAvatar(m.category, 44, imageUrl: m.imageUrl),
                   title: Text(m.title,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(color: context.hc.textPrimary)),
                   subtitle: Text(
                       '${m.dateDisplay} \u2022 ${m.location} \u2022 ${m.attendeeCount} attending',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: context.hc.textTertiary)),
+                      style: HuddlText.caption(color: context.hc.textTertiary)),
                   trailing: Icon(Icons.chevron_right,
                       color: context.hc.textTertiary),
                   dense: true,
@@ -3194,19 +2898,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.add_circle_outline, size: 18),
-                    label: Text('Go to Market',
-                        style: GoogleFonts.poppins(
-                            fontSize: 14, fontWeight: FontWeight.w500)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: HuddlColors.textDark,
-                      side: const BorderSide(color: HuddlColors.divider),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                    ),
+                  child: HuddlButton(
+                    label: 'Go to Market',
+                    variant: HuddlButtonVariant.secondary,
+                    leadingIcon: Icons.add_circle_outline,
                     onPressed: () {
                       Navigator.pop(c);
                       MainShell.shellKey.currentState?.switchTab(3);
@@ -3227,10 +2922,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
                 child: Text(
                   '${items.length} listing${items.length == 1 ? '' : 's'}',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textTertiary),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary),
                 ),
               ),
               ListView.separated(
@@ -3277,18 +2969,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     title: Text(
                       item.title,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w600),
+                      style: HuddlText.body(weight: FontWeight.w600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
                       '${item.priceDisplay}  \u00b7  ${item.isSold ? 'Sold' : item.condition.label}  \u00b7  ${item.timeAgo}',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: item.isSold
-                              ? HuddlColors.textTertiary
-                              : HuddlColors.textSecondary),
+                      style: HuddlText.caption(color: HuddlColors.textSecondary),
                     ),
                     trailing: item.isSold
                         ? Container(
@@ -3299,10 +2986,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text('Sold',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.textTertiary)),
+                                style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                           )
                         : const Icon(Icons.chevron_right,
                             color: HuddlColors.textTertiary),
@@ -3317,20 +3001,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.storefront_outlined, size: 18),
-                  label: Text('Go to Market',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w500)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HuddlColors.textDark,
-                    side: const BorderSide(color: HuddlColors.divider),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    minimumSize: const Size.fromHeight(44),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                  ),
+                child: HuddlButton(
+                  label: 'Go to Market',
+                  variant: HuddlButtonVariant.secondary,
+                  leadingIcon: Icons.storefront_outlined,
                   onPressed: () {
                     Navigator.pop(c);
                     MainShell.shellKey.currentState?.switchTab(3);
@@ -3372,10 +3046,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                   child: Text('${msgs.length} saved messages',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textTertiary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
                 ),
                 ...msgs.take(10).map((m) => ListTile(
                       leading: Icon(
@@ -3385,11 +3056,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: Text(m.message,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              fontSize: 13, color: context.hc.textPrimary)),
+                          style: HuddlText.body(color: context.hc.textPrimary)),
                       subtitle: Text('From ${m.sourceName}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, color: context.hc.textTertiary)),
+                          style: HuddlText.caption(color: context.hc.textTertiary)),
                       dense: true,
                     )),
               ],
@@ -3397,23 +3066,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                   child: Text('${threads.length} saved threads',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textTertiary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
                 ),
                 ...threads.take(10).map((t) => ListTile(
                       leading: Icon(Icons.topic,
                           color: context.hc.textSecondary, size: 20),
                       title: Text(t.topicName,
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textPrimary)),
+                          style: HuddlText.body(color: context.hc.textPrimary)),
                       subtitle: Text(
                           '${t.totalMessages} messages \u2022 ${t.groupName}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, color: context.hc.textTertiary)),
+                          style: HuddlText.caption(color: context.hc.textTertiary)),
                       dense: true,
                     )),
               ],
@@ -3427,10 +3089,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _snack('Switched to Local tab \u2014 tap Saved to see all items.');
                   },
                   child: Text('View all in Saved tab',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textTertiary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                 ),
               ),
             ],
@@ -3485,10 +3144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 'Notifications are blocked by your device',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.warningDark),
+                                style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.warningDark),
                               ),
                               const SizedBox(height: 2),
                               GestureDetector(
@@ -3508,12 +3164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                                 child: Text(
                                   'Tap here to enable in Settings →',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      color: HuddlColors.warning,
-                                      fontWeight: FontWeight.w500,
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: HuddlColors.warning),
+                                  style: HuddlText.caption(color: HuddlColors.warning).copyWith(decorationColor: HuddlColors.warning, decoration: TextDecoration.underline),
                                 ),
                               ),
                             ],
@@ -3643,12 +3294,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 6),
                     Text(
                       'SECURITY',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
-                        letterSpacing: 0.8,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark),
                     ),
                   ],
                 ),
@@ -3673,20 +3319,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 title: Text(
                   '$_biometricLabel Login',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: ctx.hc.textPrimary,
-                  ),
+                  style: HuddlText.body(),
                 ),
                 subtitle: Text(
                   _biometricEnabled
                       ? 'Tap to disable — you\'ll use your password instead'
                       : 'Use $_biometricLabel to log in quickly and securely',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: ctx.hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
                 value: _biometricEnabled,
                 thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -3755,12 +3394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 6),
                     Text(
                       'PRIVACY',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
-                        letterSpacing: 0.8,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark),
                     ),
                   ],
                 ),
@@ -3807,12 +3441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(width: 6),
                   Text(
                     'VOICE MESSAGES',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.textDark,
-                      letterSpacing: 0.8,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark),
                   ),
                 ],
               ),
@@ -3840,8 +3469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Voice messages let you record and send short audio clips in '
                             'group chats and DMs. Your microphone is accessed only '
                             'while you are actively recording.',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.nearBlack, height: 1.45),
+                            style: HuddlText.caption(color: HuddlColors.nearBlack).copyWith(height: 1.45),
                           ),
                         ),
                       ],
@@ -3851,11 +3479,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'Legal basis: your explicit consent (UK GDPR Art. 6(1)(a)). '
                       'You may withdraw at any time by toggling this off. '
                       'See Privacy Policy \u00a7 18 for full details.',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.nearBlack,
-                          fontStyle: FontStyle.italic,
-                          height: 1.4),
+                      style: HuddlText.caption(color: HuddlColors.nearBlack).copyWith(fontStyle: FontStyle.italic, height: 1.4),
                     ),
                   ],
                 ),
@@ -3880,17 +3504,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               title: Text(
                 _voiceConsent ? 'Voice messages enabled' : 'Voice messages disabled',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: ctx.hc.textPrimary,
-                ),
+                style: HuddlText.body(),
               ),
               subtitle: Text(
                 _voiceConsent
                     ? 'Microphone consent granted — you can record and send audio'
                     : 'Enable to record and send audio messages in chats',
-                style: GoogleFonts.poppins(fontSize: 12, color: ctx.hc.textTertiary),
+                style: HuddlText.caption(color: ctx.hc.textTertiary),
               ),
               value: _voiceConsent,
               thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -3916,10 +3536,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text('Enable Voice Messages?',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: HuddlColors.textDark)),
+                                style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.textDark)),
                           ),
                         ],
                       ),
@@ -3934,10 +3551,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           'You may withdraw this consent at any time by toggling off '
                           'Voice Messages here. Withdrawal does not affect previously '
                           'sent messages already received by others.',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: HuddlColors.textSecondary,
-                              height: 1.5),
+                          style: HuddlText.body(color: HuddlColors.textSecondary).copyWith(height: 1.5),
                         ),
                       ),
                       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -3953,8 +3567,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 horizontal: 20, vertical: 10),
                           ),
                           child: Text('Decline',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13, fontWeight: FontWeight.w500)),
+                              style: HuddlText.body()),
                         ),
                         ElevatedButton(
                           onPressed: () => Navigator.pop(dCtx, true),
@@ -3968,8 +3581,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             elevation: 0,
                           ),
                           child: Text('I Consent',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13, fontWeight: FontWeight.w600)),
+                              style: HuddlText.body(weight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -3981,7 +3593,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (ctx.mounted) {
                     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                       content: Text('Voice messages enabled.',
-                          style: GoogleFonts.poppins(fontSize: 13)),
+                          style: HuddlText.body()),
                       backgroundColor: HuddlColors.primary,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
@@ -3996,29 +3608,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                       title: Text('Disable Voice Messages?',
-                          style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark)),
+                          style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.textDark)),
                       content: Text(
                         'This withdraws your consent and prevents future recordings.\n\n'
                         'Previously sent voice messages remain visible to recipients. '
                         'To request deletion of past voice messages, contact '
                         'privacy@huddl.app.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: HuddlColors.textSecondary,
-                            height: 1.5),
+                        style: HuddlText.body(color: HuddlColors.textSecondary).copyWith(height: 1.5),
                       ),
                       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dCtx, false),
                           child: Text('Cancel',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textSecondary)),
+                              style: HuddlText.body(color: HuddlColors.textSecondary)),
                         ),
                         ElevatedButton(
                           onPressed: () => Navigator.pop(dCtx, true),
@@ -4032,8 +3635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             elevation: 0,
                           ),
                           child: Text('Withdraw Consent',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13, fontWeight: FontWeight.w600)),
+                              style: HuddlText.body(weight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -4045,7 +3647,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (ctx.mounted) {
                     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                       content: Text('Voice messages disabled. Consent withdrawn.',
-                          style: GoogleFonts.poppins(fontSize: 13)),
+                          style: HuddlText.body()),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
@@ -4067,12 +3669,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
                 child: Text(
                   'Read full voice message data policy (Privacy Policy \u00a7 18) \u2192',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.textTertiary,
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline,
-                      decorationColor: HuddlColors.textTertiary),
+                  style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(decorationColor: HuddlColors.textTertiary, decoration: TextDecoration.underline),
                 ),
               ),
             ),
@@ -4081,16 +3678,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListTile(
               leading: const Icon(Icons.block, color: HuddlColors.error, size: 22),
               title: Text('Blocked users',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(color: context.hc.textPrimary)),
               subtitle: Text(
                   _blockService.blockedUserIds.isEmpty
                       ? 'No blocked users'
                       : '${_blockService.blockedUserIds.length} blocked',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textTertiary)),
+                  style: HuddlText.caption(color: context.hc.textTertiary)),
               trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
@@ -4101,22 +3694,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
               child: Text('GDPR \u2014 Your Data Rights',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.primaryDark)),
+                  style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.primaryDark)),
             ),
             // GDPR — View My Data
             ListTile(
               leading: const Icon(Icons.visibility_outlined, color: HuddlColors.blue, size: 22),
               title: Text('View my data',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(color: context.hc.textPrimary)),
               subtitle: Text('See all personal data Huddl holds about you (Article 15)',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textTertiary)),
+                  style: HuddlText.caption(color: context.hc.textTertiary)),
               trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
@@ -4128,13 +3714,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListTile(
               leading: const Icon(Icons.download_outlined, color: HuddlColors.blue, size: 22),
               title: Text('Export my data',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(color: context.hc.textPrimary)),
               subtitle: Text('Download a portable copy of your data (Article 20)',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textTertiary)),
+                  style: HuddlText.caption(color: context.hc.textTertiary)),
               trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
@@ -4146,13 +3728,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListTile(
               leading: const Icon(Icons.delete_forever, color: HuddlColors.error, size: 22),
               title: Text('Delete my account & data',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.error)),
+                  style: HuddlText.body(color: HuddlColors.error)),
               subtitle: Text('Permanently erase all data (Article 17 \u2014 Right to Erasure)',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textTertiary)),
+                  style: HuddlText.caption(color: context.hc.textTertiary)),
               trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
@@ -4214,10 +3792,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                 child: Text('${blocked.length} blocked user${blocked.length == 1 ? '' : 's'}',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textTertiary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
               ),
               ...blocked.map((userId) {
                 final displayName = nameCache[userId] ?? userId;
@@ -4236,18 +3811,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Center(
                         child: Text(
                           initial,
-                          style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary),
+                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
                         ),
                       ),
                     ),
                     title: Text(displayName,
-                        style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(color: context.hc.textPrimary)),
                     trailing: TextButton(
                       onPressed: () async {
                         // ── Spec §7C: "Unblock [Name]?" confirmation ──────
@@ -4275,18 +3844,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   Text('Unblock $displayName?',
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.hc.textPrimary),
+                                      style: HuddlText.heading(color: context.hc.textPrimary),
                                       textAlign: TextAlign.center),
                                   const SizedBox(height: 10),
                                   Text(
                                     'They will be able to see your profile and send you messages again.',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: context.hc.textSecondary,
-                                        height: 1.4),
+                                    style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 24),
@@ -4301,11 +3864,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           onPressed: () =>
                                               Navigator.pop(dialogCtx, false),
                                           child: Text('Cancel',
-                                              style: GoogleFonts.poppins(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: context
-                                                      .hc.textSecondary)),
+                                              style: HuddlText.body(weight: FontWeight.w600)),
                                         ),
                                       ),
                                       Container(
@@ -4317,10 +3876,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           onPressed: () =>
                                               Navigator.pop(dialogCtx, true),
                                           child: Text('Unblock',
-                                              style: GoogleFonts.poppins(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: HuddlColors.textTertiary)),
+                                              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                                         ),
                                       ),
                                     ],
@@ -4338,7 +3894,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           final shown = nameCache[userId] ?? userId;
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                             content: Text('$shown unblocked',
-                                style: GoogleFonts.poppins(fontSize: 13)),
+                                style: HuddlText.body()),
                             backgroundColor: HuddlColors.primary,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
@@ -4347,10 +3903,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }
                       },
                       child: Text('Unblock',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textTertiary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                     ),
                   );
               }),
@@ -4618,10 +4171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           child: Text(
                             'Under GDPR Article 15, you have the right to access all personal data we hold about you. Data is fetched live from our servers.',
-                            style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: HuddlColors.blue,
-                                height: 1.4),
+                            style: HuddlText.caption(color: HuddlColors.blue).copyWith(height: 1.4),
                           ),
                         ),
                       ],
@@ -4646,10 +4196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(error,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: HuddlColors.warning,
-                                    height: 1.3)),
+                                style: HuddlText.caption(color: HuddlColors.warning).copyWith(height: 1.3)),
                           ),
                         ],
                       ),
@@ -4682,10 +4229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding:
                               const EdgeInsets.symmetric(horizontal: 20),
                           child: Text(section.key,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: HuddlColors.primaryDark)),
+                              style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.primaryDark)),
                         ),
                         const SizedBox(height: 6),
                         Padding(
@@ -4727,15 +4271,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: 130,
                   child: Text('${e.key}:',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textSecondary)),
+                      style: HuddlText.caption(color: context.hc.textSecondary)),
                 ),
                 Expanded(
                   child: Text('${e.value}',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: context.hc.textPrimary)),
+                      style: HuddlText.caption(color: context.hc.textPrimary)),
                 ),
               ],
             ),
@@ -4756,10 +4296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 12, color: context.hc.textSecondary)),
                 Expanded(
                   child: Text('$item',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textPrimary,
-                          height: 1.3)),
+                      style: HuddlText.caption(color: context.hc.textPrimary).copyWith(height: 1.3)),
                 ),
               ],
             ),
@@ -4768,8 +4305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     } else {
       return Text('$value',
-          style: GoogleFonts.poppins(
-              fontSize: 12, color: context.hc.textPrimary));
+          style: HuddlText.caption(color: context.hc.textPrimary));
     }
   }
 
@@ -4808,20 +4344,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text('Your right to data portability',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.blue)),
+                                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.blue)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       Text(
                         'Under GDPR Article 20, you can request a copy of all personal data we hold about you in a portable format.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: context.hc.textSecondary,
-                            height: 1.4),
+                        style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                       ),
                     ],
                   ),
@@ -4842,10 +4372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('What is included:',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary)),
+                          style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textPrimary)),
                       const SizedBox(height: 6),
                       for (final item in [
                         'Profile data (name, bio, location)',
@@ -4867,10 +4394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       color: context.hc.textSecondary)),
                               Expanded(
                                 child: Text(item,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: context.hc.textSecondary,
-                                        height: 1.3)),
+                                    style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.3)),
                               ),
                             ],
                           ),
@@ -4883,38 +4407,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ── Export button ─────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: exporting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : exported
-                            ? const Icon(Icons.check, size: 20)
-                            : const Icon(Icons.download, size: 20),
-                    label: Text(
-                        exporting
-                            ? 'Fetching your data…'
-                            : exported
-                                ? 'Exported successfully'
-                                : 'Export my data',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w600)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          exported ? HuddlColors.success : HuddlColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                    ),
-                    onPressed: exporting || exported
-                        ? null
-                        : () async {
+                child: HuddlButton(
+                  label: exporting
+                      ? 'Fetching your data…'
+                      : exported
+                          ? 'Exported successfully'
+                          : 'Export my data',
+                  isLoading: exporting,
+                  leadingIcon: exported ? Icons.check : Icons.download,
+                  onPressed: exporting || exported
+                      ? null
+                      : () async {
                             setLocal(() => exporting = true);
                             try {
                               // 1. Compile local + Firestore cloud data (Art. 20)
@@ -4992,7 +4495,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               }
                             }
                           },
-                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -5001,10 +4503,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   'Your export is saved as a .txt file and shared via your device\'s share sheet (save to Files, email, etc.).',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: context.hc.textTertiary,
-                      height: 1.4),
+                  style: HuddlText.caption(color: context.hc.textTertiary).copyWith(height: 1.4),
                 ),
               ),
               const SizedBox(height: 20),
@@ -5052,17 +4551,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text('Verify your identity',
-                      style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.heading(color: context.hc.textPrimary)),
                   const SizedBox(height: 8),
                   Text(
                     'To $changeDescription, please enter the 6-digit code sent to $phone',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: context.hc.textSecondary,
-                        height: 1.4),
+                    style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -5071,10 +4564,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 8),
+                    style: HuddlText.display().copyWith(letterSpacing: 8),
                     decoration: InputDecoration(
                       hintText: '------',
                       counterText: '',
@@ -5098,10 +4588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (hasError) ...[
                     const SizedBox(height: 8),
                     Text('Incorrect code. Please try again.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.error)),
+                        style: HuddlText.caption(color: HuddlColors.error)),
                   ],
                   const SizedBox(height: 20),
                   Row(
@@ -5117,7 +4604,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: Text('Cancel',
-                              style: GoogleFonts.poppins(fontSize: 14)),
+                              style: HuddlText.body()),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -5148,10 +4635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             elevation: 0,
                           ),
                           child: Text('Verify',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
+                              style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                         ),
                       ),
                     ],
@@ -5199,19 +4683,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             size: 22, color: HuddlColors.error),
                         const SizedBox(width: 8),
                         Text('This action is permanent',
-                            style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: HuddlColors.error)),
+                            style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.error)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Deleting your account will:',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
                     ),
                     const SizedBox(height: 8),
                     _deletePoint('Remove your profile and personal data'),
@@ -5222,10 +4700,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 12),
                     Text(
                       'This cannot be undone. Your data will be permanently deleted within 90 days.',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textSecondary,
-                          height: 1.4),
+                      style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                     ),
                   ],
                 ),
@@ -5235,10 +4710,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text('Type "DELETE" to confirm:',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(color: context.hc.textPrimary)),
             ),
             const SizedBox(height: 8),
             Padding(
@@ -5246,11 +4718,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: TextField(
                 controller: confirmCtrl,
                 onChanged: (_) => setLocal(() {}),
-                style: GoogleFonts.poppins(fontSize: 14),
+                style: HuddlText.body(),
                 decoration: InputDecoration(
                   hintText: 'DELETE',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textTertiary),
+                  hintStyle: HuddlText.body(color: context.hc.textTertiary),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
@@ -5267,36 +4738,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: confirmCtrl.text.trim() == 'DELETE'
-                      ? () async {
-                          Navigator.pop(c);
-                          // OTP verification before account deletion
-                          final verified = await _verifyWithOtp('permanently delete your account');
-                          if (!verified) {
-                            _snack('Account deletion cancelled');
-                            return;
-                          }
-                          _confirmAccountDeletion();
+              child: HuddlButton(
+                label: 'Delete My Account',
+                variant: HuddlButtonVariant.destructive,
+                onPressed: confirmCtrl.text.trim() == 'DELETE'
+                    ? () async {
+                        Navigator.pop(c);
+                        // OTP verification before account deletion
+                        final verified = await _verifyWithOtp('permanently delete your account');
+                        if (!verified) {
+                          _snack('Account deletion cancelled');
+                          return;
                         }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.error,
-                    disabledBackgroundColor:
-                        HuddlColors.error.withValues(alpha: 0.3),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                  child: Text('Delete My Account',
-                      style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white)),
-                ),
+                        _confirmAccountDeletion();
+                      }
+                    : null,
               ),
             ),
             const SizedBox(height: 12),
@@ -5305,10 +4761,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: TextButton(
                 onPressed: () => Navigator.pop(c),
                 child: Text('Cancel',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.textTertiary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
               ),
             ),
             const SizedBox(height: 16),
@@ -5331,8 +4784,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: context.hc.textPrimary, height: 1.4)),
+                style: HuddlText.body(color: context.hc.textPrimary).copyWith(height: 1.4)),
           ),
         ],
       ),
@@ -5367,17 +4819,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 18),
                   Text('Delete your account?',
-                      style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.heading(color: context.hc.textPrimary)),
                   const SizedBox(height: 12),
                   Text(
                     'This will permanently delete your Huddl account and all associated data. This cannot be undone.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: context.hc.textSecondary,
-                        height: 1.5),
+                    style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
@@ -5499,10 +4945,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2))
                           : Text('Delete Account',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
+                              style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -5512,10 +4955,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed:
                           isDeleting ? null : () => Navigator.pop(ctx),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textTertiary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                     ),
                   ),
                 ],
@@ -5600,10 +5040,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
             Text('FAQs',
-                style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.display(color: context.hc.textPrimary)),
             const SizedBox(height: 8),
             const Divider(height: 1),
             Expanded(
@@ -5613,18 +5050,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemBuilder: (_, i) => ExpansionTile(
                   tilePadding: const EdgeInsets.symmetric(horizontal: 20),
                   title: Text(faqs[i].$1,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                       child: Text(faqs[i].$2,
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: context.hc.textSecondary,
-                              height: 1.5)),
+                          style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5)),
                     ),
                   ],
                 ),
@@ -5668,34 +5099,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text('huddl',
-                      style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark)),
+                      style: HuddlText.display(color: HuddlColors.textDark)),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 8),
           Text('Version $_appVersion',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textTertiary)),
+              style: HuddlText.body(color: context.hc.textTertiary)),
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               'Huddl connects parents in the Cambridge area, helping you find your community, join local groups, attend meetups, and support each other through every stage of parenthood.',
-              style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.6),
+              style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.6),
               textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 24),
           Text('\u00a9 ${DateTime.now().year} Cruzen Ltd. All rights reserved.',
-              style: GoogleFonts.poppins(
-                  fontSize: 11, color: context.hc.textTertiary)),
+              style: HuddlText.caption(color: context.hc.textTertiary)),
           const SizedBox(height: 16),
         ],
       ),
@@ -5788,17 +5211,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 18),
               Text('Log out?',
-                  style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.heading(color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               Text(
                 'Are you sure you want to log out of your Huddl account?',
-                style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: context.hc.textSecondary,
-                    height: 1.5),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -5810,10 +5227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.primary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -5846,10 +5260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }
                       },
                       child: Text('Log out',
-                          style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.error)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],
@@ -5914,14 +5325,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const Spacer(),
                     Text('Preview',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white, fontSize: 15,
-                        fontWeight: FontWeight.w600)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                     const Spacer(),
                     Text('Tips',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white, fontSize: 15,
-                        fontWeight: FontWeight.w500)),
+                      style: HuddlText.body(color: Colors.white)),
                   ],
                 ),
                 const SizedBox(height: 32),
@@ -5973,13 +5380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _pickProfilePhoto(ImageSource.gallery);
                       },
                       child: Text('Edit photo',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          decoration: TextDecoration.underline,
-                          decorationColor: Colors.white,
-                        )),
+                        style: HuddlText.body(color: Colors.white).copyWith(decoration: TextDecoration.underline)),
                     ),
                     // Pink ••• button (Airbnb bottom-right)
                     GestureDetector(
@@ -6003,9 +5404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Icons.photo_library_outlined,
                                       color: Colors.white),
                                     title: Text('Choose from gallery',
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500)),
+                                      style: HuddlText.body(color: Colors.white)),
                                     onTap: () {
                                       Navigator.pop(optCtx);
                                       Navigator.pop(ctx);
@@ -6017,9 +5416,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Icons.camera_alt_outlined,
                                       color: Colors.white),
                                     title: Text('Take a photo',
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500)),
+                                      style: HuddlText.body(color: Colors.white)),
                                     onTap: () {
                                       Navigator.pop(optCtx);
                                       Navigator.pop(ctx);
@@ -6031,9 +5428,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       leading: Icon(Icons.delete_outline,
                                         color: HuddlColors.error),
                                       title: Text('Remove photo',
-                                        style: GoogleFonts.poppins(
-                                          color: HuddlColors.error,
-                                          fontWeight: FontWeight.w500)),
+                                        style: HuddlText.body(color: HuddlColors.error)),
                                       onTap: () {
                                         Navigator.pop(optCtx);
                                         Navigator.pop(ctx);
@@ -6103,11 +5498,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
             return Center(
               child: Text(initials,
-                style: GoogleFonts.poppins(
-                  fontSize: 64,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.7),
-                )),
+                style: HuddlText.display(color: Colors.white.withValues(alpha: 0.7))),
             );
           },
         ),
@@ -6296,28 +5687,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       color: context.hc.surface,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _openFeedbackScreen,
-          icon: const Icon(Icons.rate_review_outlined,
-              size: 20, color: Colors.white),
-          label: Text(
-            'Give Feedback',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: HuddlColors.primary,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24)),
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            elevation: 0,
-          ),
-        ),
+      child: HuddlButton(
+        label: 'Give Feedback',
+        leadingIcon: Icons.rate_review_outlined,
+        onPressed: _openFeedbackScreen,
       ),
     );
   }
@@ -6357,14 +5730,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 16),
                 Text('Feedback',
-                    style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.display(color: context.hc.textPrimary)),
                 const SizedBox(height: 4),
                 Text('Help us make Huddl better',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: context.hc.textTertiary)),
+                    style: HuddlText.body(color: context.hc.textTertiary)),
                 const SizedBox(height: 8),
                 const Divider(height: 1),
                 Expanded(
@@ -6379,20 +5748,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               // ── Feedback Text Section ──
                               Text(
                                 'Your feedback',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.hc.textPrimary,
-                                ),
+                                style: HuddlText.body(weight: FontWeight.w700),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Tell us what you love or what could be better. Your honest feedback helps us improve!',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: context.hc.textTertiary,
-                                  height: 1.4,
-                                ),
+                                style: HuddlText.body(color: context.hc.textTertiary),
                               ),
                               const SizedBox(height: 12),
                               TextField(
@@ -6402,15 +5763,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 textCapitalization:
                                     TextCapitalization.sentences,
                                 onChanged: (_) => setLocal(() {}),
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: context.hc.textPrimary),
+                                style: HuddlText.body(color: context.hc.textPrimary),
                                 decoration: InputDecoration(
                                   hintText:
                                       'Share your thoughts about the app...',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: context.hc.textTertiary),
+                                  hintStyle: HuddlText.body(color: context.hc.textTertiary),
                                   filled: true,
                                   fillColor: context.hc.scaffold,
                                   border: OutlineInputBorder(
@@ -6450,11 +5807,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Expanded(
                                       child: Text(
                                         'You might want to mention: features you enjoy, things that could be improved, ideas for new features, or your overall experience.',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          color: HuddlColors.textDark,
-                                          height: 1.4,
-                                        ),
+                                        style: HuddlText.caption(color: HuddlColors.textDark),
                                       ),
                                     ),
                                   ],
@@ -6464,65 +5817,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 28),
 
                               // ── Submit Button ──
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: feedbackCtrl.text.trim().isEmpty
-                                      ? null
-                                      : isSubmitting
-                                          ? null
-                                          : () async {
-                                              setLocal(
-                                                  () => isSubmitting = true);
+                              HuddlButton(
+                                label: 'Submit Feedback',
+                                isLoading: isSubmitting,
+                                onPressed: feedbackCtrl.text.trim().isEmpty || isSubmitting
+                                    ? null
+                                    : () async {
+                                        setLocal(() => isSubmitting = true);
 
-                                              await _feedbackService
-                                                  .submitFeedback(
-                                                feedbackText: feedbackCtrl.text
-                                                    .trim(),
-                                                starRating: 0,
-                                                userName: _name,
-                                              );
+                                        await _feedbackService.submitFeedback(
+                                          feedbackText: feedbackCtrl.text.trim(),
+                                          starRating: 0,
+                                          userName: _name,
+                                        );
 
-                                              // Short delay for UX
-                                              await Future.delayed(
-                                                  const Duration(
-                                                      milliseconds: 600));
+                                        // Short delay for UX
+                                        await Future.delayed(
+                                            const Duration(milliseconds: 600));
 
-                                              if (ctx2.mounted) {
-                                                setLocal(() {
-                                                  isSubmitting = false;
-                                                  isSubmitted = true;
-                                                });
-                                              }
-                                            },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: HuddlColors.primary,
-                                    disabledBackgroundColor: HuddlColors.primary
-                                        .withValues(alpha: 0.3),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(24)),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 15),
-                                    elevation: 0,
-                                  ),
-                                  child: isSubmitting
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white),
-                                        )
-                                      : Text(
-                                          'Submit Feedback',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                ),
+                                        if (ctx2.mounted) {
+                                          setLocal(() {
+                                            isSubmitting = false;
+                                            isSubmitted = true;
+                                          });
+                                        }
+                                      },
                               ),
 
                               const SizedBox(height: 12),
@@ -6531,10 +5850,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Center(
                                 child: Text(
                                   'Your feedback is anonymous and helps us improve.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: context.hc.textTertiary,
-                                  ),
+                                  style: HuddlText.caption(),
                                 ),
                               ),
                             ],
@@ -6570,40 +5886,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 20),
           Text(
             'Thank you!',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: context.hc.textPrimary,
-            ),
+            style: HuddlText.display(),
           ),
           const SizedBox(height: 8),
           Text(
             'Your feedback has been submitted.\nWe truly value your input — it helps us make\nHuddl better for everyone.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: context.hc.textSecondary,
-              height: 1.6,
-            ),
+            style: HuddlText.body(color: context.hc.textSecondary),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-              ),
-              child: Text('Done',
-                  style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
-            ),
+          HuddlButton(
+            label: 'Done',
+            onPressed: () => Navigator.pop(ctx),
           ),
         ],
       ),
@@ -6616,7 +5910,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.poppins(fontSize: 13)),
+      content: Text(msg, style: HuddlText.body()),
       backgroundColor: HuddlColors.primary,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -6653,10 +5947,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 16),
                 Text(title,
-                    style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.display(color: context.hc.textPrimary)),
                 const SizedBox(height: 8),
                 const Divider(height: 1),
                 Expanded(
@@ -6690,10 +5981,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       textCapitalization: keyboardType == TextInputType.emailAddress
           ? TextCapitalization.none
           : TextCapitalization.sentences,
-      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+      style: HuddlText.body(color: context.hc.textPrimary),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+        labelStyle: HuddlText.caption(color: context.hc.textTertiary),
         prefixIcon: Icon(icon, size: 20, color: context.hc.textTertiary),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -6708,23 +5999,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _sheetButton(String label, VoidCallback onTap) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: HuddlColors.primary,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          elevation: 0,
-        ),
-        child: Text(label,
-            style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white)),
-      ),
+    return HuddlButton(
+      label: label,
+      onPressed: onTap,
     );
   }
 
@@ -6734,13 +6011,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 20),
       secondary: Icon(icon, size: 22, color: context.hc.textPrimary),
       title: Text(title,
-          style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: context.hc.textPrimary)),
+          style: HuddlText.body(color: context.hc.textPrimary)),
       subtitle: Text(subtitle,
           style:
-              GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
+              HuddlText.caption(color: context.hc.textTertiary)),
       value: value,
       onChanged: onChanged,
       thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -6760,13 +6034,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 20),
       leading: Icon(icon, size: 22, color: context.hc.textPrimary),
       title: Text(title,
-          style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: context.hc.textPrimary)),
+          style: HuddlText.body(color: context.hc.textPrimary)),
       subtitle: Text(subtitle,
           style:
-              GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
+              HuddlText.caption(color: context.hc.textTertiary)),
       trailing:
           Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
       onTap: onTap,
@@ -6830,12 +6101,7 @@ class _GroupCard extends StatelessWidget {
                 children: [
                   Text(
                     group.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                      height: 1.3,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textPrimary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -6847,10 +6113,7 @@ class _GroupCard extends StatelessWidget {
                       const SizedBox(width: 3),
                       Text(
                         '${group.memberCount} member${group.memberCount == 1 ? '' : 's'}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.label(),
                       ),
                     ],
                   ),
@@ -6879,13 +6142,9 @@ class _StatItem extends StatelessWidget {
     return Column(
       children: [
         Text(count,
-            style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary)),
+            style: HuddlText.display(color: context.hc.textPrimary)),
         Text(label,
-            style: GoogleFonts.poppins(
-                fontSize: 12, color: context.hc.textTertiary)),
+            style: HuddlText.caption(color: context.hc.textTertiary)),
       ],
     );
   }
@@ -6907,12 +6166,7 @@ class _MenuSection extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
             child: Text(
               title.toUpperCase(),
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-                color: context.hc.textTertiary,
-              ),
+              style: HuddlText.caption(weight: FontWeight.w600).copyWith(letterSpacing: 0.8),
             ),
           ),
           const Divider(height: 1, indent: 0, endIndent: 0),
@@ -6951,14 +6205,10 @@ class _MenuItem extends StatelessWidget {
         child: Icon(icon, size: 18, color: context.hc.textSecondary),
       ),
       title: Text(title,
-          style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: context.hc.textPrimary)),
+          style: HuddlText.body(color: context.hc.textPrimary)),
       subtitle: subtitle != null
           ? Text(subtitle!,
-              style: GoogleFonts.poppins(
-                  fontSize: 12, color: context.hc.textTertiary),
+              style: HuddlText.caption(color: context.hc.textTertiary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis)
           : null,
@@ -6985,10 +6235,7 @@ class _CountBadge extends StatelessWidget {
                 color: const Color(0xFFF7F7F7),
                 borderRadius: BorderRadius.circular(10)),
             child: Text('$count',
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textTertiary)),
+                style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
           ),
         const SizedBox(width: 4),
         Icon(Icons.chevron_right, color: context.hc.textTertiary),

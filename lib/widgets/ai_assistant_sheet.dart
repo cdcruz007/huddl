@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/messages_ai_service.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // AI ASSISTANT BOTTOM SHEET
@@ -169,16 +169,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     children: [
                       Text(
                         'Huddl',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16, fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w700),
                       ),
                       Text(
                         'Ask me anything or try a voice command',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11, color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ],
                   ),
@@ -195,10 +190,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     children: [
                       const Icon(Icons.verified, size: 12, color: HuddlColors.success),
                       const SizedBox(width: 3),
-                      Text('Smart', style: GoogleFonts.poppins(
-                        fontSize: 10, fontWeight: FontWeight.w600,
-                        color: HuddlColors.nearBlack,
-                      )),
+                      Text('Smart', style: HuddlText.label()),
                     ],
                   ),
                 ),
@@ -228,14 +220,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     child: TextField(
                       controller: _inputController,
                       focusNode: _inputFocus,
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                      style: HuddlText.body(color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: _isListening ? 'Listening...' : 'Type a command or question...',
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: _isListening ? HuddlColors.nearBlack : context.hc.textTertiary,
-                          fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
-                        ),
+                        hintStyle: HuddlText.body(color: _isListening ? HuddlColors.nearBlack : context.hc.textTertiary),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                         isDense: true,
@@ -296,10 +284,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Text('Suggested actions', style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w600,
-                    color: context.hc.textTertiary, letterSpacing: 0.3,
-                  )),
+                  Text('Suggested actions', style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary)),
                   const SizedBox(width: 6),
                   Icon(Icons.auto_awesome, size: 12, color: context.hc.textTertiary),
                 ],
@@ -337,10 +322,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Text('Try searching for', style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w600,
-                    color: context.hc.textTertiary, letterSpacing: 0.3,
-                  )),
+                  Text('Try searching for', style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary)),
                 ],
               ),
             ),
@@ -363,13 +345,8 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.query, style: GoogleFonts.poppins(
-                            fontSize: 14, fontWeight: FontWeight.w500,
-                            color: context.hc.textPrimary,
-                          )),
-                          Text(s.reason, style: GoogleFonts.poppins(
-                            fontSize: 11, color: context.hc.textTertiary,
-                          )),
+                          Text(s.query, style: HuddlText.body()),
+                          Text(s.reason, style: HuddlText.caption()),
                         ],
                       ),
                     ),
@@ -398,9 +375,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                   Expanded(
                     child: Text(
                       'Suggestions improve as you use them. Tap \u{1F44D} or \u{1F44E} on any suggestion.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.nearBlack, height: 1.3,
-                      ),
+                      style: HuddlText.caption(color: HuddlColors.nearBlack),
                     ),
                   ),
                 ],
@@ -453,13 +428,8 @@ class _QuickActionChip extends StatelessWidget {
           children: [
             Icon(_icon, size: 18, color: HuddlColors.textDark),
             const Spacer(),
-            Text(action.label, style: GoogleFonts.poppins(
-              fontSize: 12, fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            )),
-            Text(action.description, style: GoogleFonts.poppins(
-              fontSize: 9, color: context.hc.textTertiary,
-            ), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(action.label, style: HuddlText.caption(weight: FontWeight.w600)),
+            Text(action.description, style: HuddlText.label(), maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),

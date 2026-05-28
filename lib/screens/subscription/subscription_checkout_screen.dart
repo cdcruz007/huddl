@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTION CHECKOUT — multi-platform payment integration
@@ -158,7 +159,7 @@ class _SubscriptionCheckoutScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage ?? 'Payment failed. Please try again.',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
+              style: HuddlText.body(color: HuddlColors.white)),
           backgroundColor: HuddlColors.error,
         ),
       );
@@ -170,7 +171,7 @@ class _SubscriptionCheckoutScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Subscription restored!',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
+              style: HuddlText.body(color: HuddlColors.white)),
           backgroundColor: HuddlColors.textDark,
         ),
       );
@@ -200,7 +201,7 @@ class _SubscriptionCheckoutScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please agree to the terms to continue',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
+              style: HuddlText.body(color: HuddlColors.white)),
           backgroundColor: HuddlColors.error,
         ),
       );
@@ -233,7 +234,7 @@ class _SubscriptionCheckoutScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Could not schedule plan change. Please try again.',
-                  style: GoogleFonts.poppins(color: HuddlColors.white)),
+                  style: HuddlText.body(color: HuddlColors.white)),
               backgroundColor: HuddlColors.error,
             ),
           );
@@ -280,10 +281,7 @@ class _SubscriptionCheckoutScreenState
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Checkout',
-            style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary)),
+            style: HuddlText.heading(color: context.hc.textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -317,10 +315,7 @@ class _SubscriptionCheckoutScreenState
                                 Expanded(
                                   child: Text(
                                     'Scheduled Plan Change',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.nearBlack),
+                                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack),
                                   ),
                                 ),
                               ],
@@ -330,19 +325,14 @@ class _SubscriptionCheckoutScreenState
                               'This change will take effect at the start of '
                               'your next billing cycle. You\'ll keep full access '
                               'to your current plan until then.',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: context.hc.textSecondary),
+                              style: HuddlText.caption(color: context.hc.textSecondary),
                             ),
                             if (_subService.daysUntilRenewal > 0) ...[
                               const SizedBox(height: 4),
                               Text(
                                 '${_subService.daysUntilRenewal} days remaining '
                                 'in your current billing period.',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: HuddlColors.nearBlack),
+                                style: HuddlText.caption(color: HuddlColors.nearBlack),
                               ),
                             ],
                           ],
@@ -357,10 +347,7 @@ class _SubscriptionCheckoutScreenState
 
                     // Billing period selector
                     Text('Billing Period',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                     const SizedBox(height: 10),
                     _BillingOptionTile(
                       label: 'Monthly',
@@ -386,10 +373,7 @@ class _SubscriptionCheckoutScreenState
 
                     // ── Payment method section ──────────────────────────
                     Text('Payment Method',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                     const SizedBox(height: 10),
                     _PaymentMethodsSection(paymentService: _payService),
 
@@ -397,10 +381,7 @@ class _SubscriptionCheckoutScreenState
 
                     // What you get
                     Text('What\'s Included',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                     const SizedBox(height: 10),
                     ..._plan.highlights.map((h) => Padding(
                           padding: const EdgeInsets.only(bottom: 6),
@@ -415,9 +396,7 @@ class _SubscriptionCheckoutScreenState
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(h,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: context.hc.textSecondary)),
+                                    style: HuddlText.body(color: context.hc.textSecondary)),
                               ),
                             ],
                           ),
@@ -449,26 +428,16 @@ class _SubscriptionCheckoutScreenState
                             child: Text.rich(
                               TextSpan(
                                 text: 'I agree to the ',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: context.hc.textSecondary),
+                                style: HuddlText.caption(color: context.hc.textSecondary),
                                 children: [
                                   TextSpan(
                                     text: 'Terms of Service',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.textTertiary,
-                                        decoration: TextDecoration.underline),
+                                    style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline),
                                   ),
                                   const TextSpan(text: ' and '),
                                   TextSpan(
                                     text: 'Privacy Policy',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.textTertiary,
-                                        decoration: TextDecoration.underline),
+                                    style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline),
                                   ),
                                   const TextSpan(text: '. '),
                                 ],
@@ -489,8 +458,7 @@ class _SubscriptionCheckoutScreenState
                         'charged to your ${_payService.paymentMethodName} account. '
                         'You can manage or cancel your subscription in your '
                         'device\u2019s account settings at any time.',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: context.hc.textTertiary),
+                        style: HuddlText.caption(color: context.hc.textTertiary),
                       ),
                     ),
                   ],
@@ -521,10 +489,7 @@ class _SubscriptionCheckoutScreenState
                         Expanded(
                           child: Text(
                             'Waiting for payment confirmation…',
-                            style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.nearBlack),
+                            style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack),
                           ),
                         ),
                       ],
@@ -533,8 +498,7 @@ class _SubscriptionCheckoutScreenState
                     Text(
                       'Complete your payment in the browser tab that just opened. '
                       'This screen will update automatically once your payment is confirmed.',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11, color: context.hc.textSecondary),
+                      style: HuddlText.caption(color: context.hc.textSecondary),
                     ),
                     if (_payService.lastCheckoutUrl != null) ...[
                       const SizedBox(height: 8),
@@ -547,10 +511,7 @@ class _SubscriptionCheckoutScreenState
                         icon: const Icon(Icons.open_in_browser,
                             size: 16, color: HuddlColors.nearBlack),
                         label: Text('Re-open payment page',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.nearBlack)),
+                            style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
                         style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
@@ -583,96 +544,36 @@ class _SubscriptionCheckoutScreenState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Total',
-                            style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                         Text(
                           _displayPriceString,
-                          style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark),
+                          style: HuddlText.heading(color: HuddlColors.textDark),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _isProcessing ? null : _completePurchase,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: color,
-                          foregroundColor: HuddlColors.white,
-                          disabledBackgroundColor:
-                              color.withValues(alpha: 0.5),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: _isProcessing
-                            ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: context.hc.surface,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _payService.status ==
-                                            PaymentStatus.verifying
-                                        ? 'Verifying...'
-                                        : 'Processing...',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.white),
-                                  ),
-                                ],
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _isScheduled
-                                        ? Icons.schedule
-                                        : (_payService.isWeb
-                                            ? Icons.lock_outline
-                                            : Icons.payment),
-                                    size: 18,
-                                    color: context.hc.surface,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _isScheduled
-                                        ? 'Schedule ${_plan.name}'
-                                        : 'Subscribe to ${_plan.name}',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                      ),
+                    HuddlButton(
+                      label: _isProcessing
+                          ? (_payService.status == PaymentStatus.verifying
+                              ? 'Verifying...'
+                              : 'Processing...')
+                          : (_isScheduled
+                              ? 'Schedule ${_plan.name}'
+                              : 'Subscribe to ${_plan.name}'),
+                      onPressed: _isProcessing ? null : _completePurchase,
+                      isLoading: _isProcessing,
+                      leadingIcon: _isProcessing
+                          ? null
+                          : (_isScheduled
+                              ? Icons.schedule
+                              : (_payService.isWeb ? Icons.lock_outline : Icons.payment)),
                     ),
                     // Restore purchases link (Apple 3.1.1 requirement)
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: _isProcessing ? null : _restorePurchases,
                       child: Text('Restore Purchases',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textTertiary)),
+                          style: HuddlText.caption(color: context.hc.textTertiary)),
                     ),
                   ],
                 ),
@@ -691,7 +592,7 @@ class _SubscriptionCheckoutScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('No previous purchases found.',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
+              style: HuddlText.body(color: HuddlColors.white)),
           backgroundColor: HuddlColors.textHint,
         ),
       );
@@ -759,8 +660,7 @@ class _PaymentMethodsSection extends StatelessWidget {
                           'Huddl never stores your card details.'
                         : 'Payment is processed securely by your app store. '
                           'Huddl never sees or stores your payment details.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.nearBlack),
+                    style: HuddlText.caption(color: HuddlColors.nearBlack),
                   ),
                 ),
               ],
@@ -801,8 +701,7 @@ class _PaymentMethodsSection extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(label,
-              style: GoogleFonts.poppins(
-                  fontSize: 9, color: HuddlColors.textTertiary)),
+              style: HuddlText.label(color: HuddlColors.textTertiary)),
         ],
       ),
     );
@@ -828,10 +727,7 @@ class _PaymentBadge extends StatelessWidget {
           Icon(_iconForMethod(method), size: 14, color: HuddlColors.nearBlack),
           const SizedBox(width: 4),
           Text(method.displayName,
-              style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.nearBlack)),
+              style: HuddlText.label(color: HuddlColors.nearBlack)),
         ],
       ),
     );
@@ -876,13 +772,9 @@ class _PaymentProviderRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(method.displayName,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
               Text(method.description,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textSecondary)),
+                  style: HuddlText.caption(color: context.hc.textSecondary)),
             ],
           ),
         ),
@@ -952,14 +844,10 @@ class _OrderSummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(plan.name,
-                    style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.heading(color: context.hc.textPrimary)),
                 const SizedBox(height: 2),
                 Text(plan.tagline,
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: context.hc.textSecondary)),
+                    style: HuddlText.caption(color: context.hc.textSecondary)),
               ],
             ),
           ),
@@ -1012,13 +900,9 @@ class _BillingOptionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                   Text(price,
-                      style: GoogleFonts.poppins(
-                          fontSize: 13, color: context.hc.textSecondary)),
+                      style: HuddlText.body(color: context.hc.textSecondary)),
                 ],
               ),
             ),
@@ -1031,10 +915,7 @@ class _BillingOptionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(savingsText!,
-                    style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.nearBlack)),
+                    style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
               ),
           ],
         ),
@@ -1071,37 +952,19 @@ class _SuccessDialog extends StatelessWidget {
             Text(
               'Welcome to ${plan.name}!',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary),
+              style: HuddlText.display(color: context.hc.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               'Your subscription is now active. Enjoy all your new features!',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textSecondary),
+              style: HuddlText.body(color: context.hc.textSecondary),
             ),
 
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: HuddlColors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text('Start Exploring',
-                    style: GoogleFonts.poppins(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
+            HuddlButton(
+              label: 'Start Exploring',
+              onPressed: () => Navigator.pop(context),
             ),
           ],
         ),
@@ -1153,18 +1016,14 @@ class _ScheduledSuccessDialog extends StatelessWidget {
             Text(
               'Plan Change Scheduled!',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary),
+              style: HuddlText.display(color: context.hc.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               'You\'ll switch to ${plan.name} on $dateStr. '
               'Until then, you keep full access to your current plan.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textSecondary),
+              style: HuddlText.body(color: context.hc.textSecondary),
             ),
             const SizedBox(height: 12),
             Container(
@@ -1182,33 +1041,16 @@ class _ScheduledSuccessDialog extends StatelessWidget {
                   Flexible(
                     child: Text(
                       'You can change or cancel this anytime before $dateStr.',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: color),
+                      style: HuddlText.caption(color: color),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: HuddlColors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text('Got It',
-                    style: GoogleFonts.poppins(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
+            HuddlButton(
+              label: 'Got It',
+              onPressed: () => Navigator.pop(context),
             ),
           ],
         ),

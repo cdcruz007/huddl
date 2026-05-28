@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../widgets/common/huddl_button.dart';
 
 /// OTP verification screen shown after successful phone login.
 /// Calls FirebaseAuthService.verifySmsCode() to validate the real SMS code
@@ -192,31 +193,17 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
               style: TextStyle(color: HuddlColors.disabledText),
             ),
           ),
-          ElevatedButton(
+          HuddlButton(
+            label: 'Join Huddl',
+            fullWidth: false,
             onPressed: () {
               Navigator.of(ctx).pop();
-              // Full onboarding journey: carousel → name → parent type → etc.
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/onboarding',
                 (route) => false,
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.onboardingOrange,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Join Huddl',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15),
-            ),
           ),
         ],
       ),

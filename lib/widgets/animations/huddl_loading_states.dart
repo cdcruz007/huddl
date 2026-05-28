@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // HUDDL LOADING STATES — Airbnb-inspired illustrated loading screens
@@ -159,12 +159,7 @@ class _HuddlLoadingScreenState extends State<HuddlLoadingScreen>
             Text(
               widget.message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                color: textColor,
-                height: 1.4,
-              ),
+              style: HuddlText.display(color: textColor),
             ),
 
             if (widget.submessage != null) ...[
@@ -172,10 +167,7 @@ class _HuddlLoadingScreenState extends State<HuddlLoadingScreen>
               Text(
                 widget.submessage!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: subColor,
-                ),
+                style: HuddlText.body(),
               ),
             ],
           ],
@@ -770,22 +762,14 @@ class HuddlProcessLoadingOverlay extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: HuddlColors.nearBlack,
-                  height: 1.4,
-                ),
+                style: HuddlText.heading(color: HuddlColors.nearBlack),
               ),
               if (submessage != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   submessage!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: HuddlColors.textSecondary,
-                  ),
+                  style: HuddlText.body(),
                 ),
               ],
             ],

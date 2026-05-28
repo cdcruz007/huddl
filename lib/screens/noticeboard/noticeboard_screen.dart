@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../services/announcement_service.dart';
@@ -9,6 +8,7 @@ import '../../services/postcode_service.dart';
 import '../../services/invitation_service.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/huddl_character.dart';
+import '../../constants/app_text_styles.dart';
 
 class NoticeboardScreen extends StatefulWidget {
   const NoticeboardScreen({super.key});
@@ -45,7 +45,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Posted to ${_borough.isNotEmpty ? _borough : 'community'} community',
-              style: GoogleFonts.poppins(fontSize: 13)),
+              style: HuddlText.body()),
           backgroundColor: HuddlColors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -59,7 +59,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to post. Please try again.', style: GoogleFonts.poppins(fontSize: 13)),
+          content: Text('Failed to post. Please try again.', style: HuddlText.body()),
           backgroundColor: HuddlColors.error,
           behavior: SnackBarBehavior.floating,
         ));
@@ -85,19 +85,19 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
             const HuddlBottomSheetHandle(),
             Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Text('Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: hc.textPrimary))),
+                  style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary))),
             Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: TextField(
                 controller: controller, autofocus: true, maxLength: 280, maxLines: 5, minLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Share something with your neighbours...',
-                  hintStyle: GoogleFonts.poppins(fontSize: 14, color: hc.textTertiary),
+                  hintStyle: HuddlText.body(color: hc.textTertiary),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: hc.divider)),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: hc.divider)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: HuddlColors.primary)),
                   filled: true, fillColor: hc.scaffold, contentPadding: const EdgeInsets.all(12),
                 ),
-                style: GoogleFonts.poppins(fontSize: 14, color: hc.textPrimary),
+                style: HuddlText.body(color: hc.textPrimary),
                 onChanged: (_) => setSheet(() {}),
               )),
             Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -115,7 +115,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 13), elevation: 0,
                   ),
                   child: Text('Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                      style: HuddlText.body(weight: FontWeight.w600)),
                 ))),
           ])),
         ),
@@ -126,7 +126,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
   void _dismissAnnouncement(Announcement ann) {
     _announcementService.delete(ann.id);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Post removed', style: GoogleFonts.poppins(fontSize: 13)),
+      content: Text('Post removed', style: HuddlText.body()),
       backgroundColor: HuddlColors.textDark,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -148,9 +148,9 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
         ),
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${_borough.isNotEmpty ? _borough : 'Borough'} Noticeboard',
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: hc.textPrimary)),
+              style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary)),
           if (_memberCount > 0)
-            Text('$_memberCount+ parents', style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
+            Text('$_memberCount+ parents', style: HuddlText.caption(color: hc.textTertiary)),
         ]),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -173,7 +173,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
               Icon(Icons.campaign_outlined, size: 20, color: hc.textTertiary),
               const SizedBox(width: 10),
               Expanded(child: Text('Post something to ${_borough.isNotEmpty ? _borough : 'your community'}...',
-                  style: GoogleFonts.poppins(fontSize: 13, color: hc.textTertiary, fontStyle: FontStyle.italic))),
+                  style: HuddlText.body(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic))),
               Container(padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(9)),
                 child: const Icon(Icons.send_rounded, size: 14, color: Colors.white)),
@@ -223,16 +223,16 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
         Row(children: [
           CircleAvatar(backgroundColor: HuddlColors.orangeIconBg, radius: 18,
             child: Text(ann.authorName.isNotEmpty ? ann.authorName[0].toUpperCase() : '?',
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: HuddlColors.primary))),
+                style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.primary))),
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(ann.authorName, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary)),
-            Text(timeAgo, style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
+            Text(ann.authorName, style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary)),
+            Text(timeAgo, style: HuddlText.caption(color: hc.textTertiary)),
           ])),
           if (ann.isPinned) Icon(Icons.push_pin, size: 14, color: HuddlColors.textTertiary),
         ]),
         const SizedBox(height: 10),
-        Text(ann.content, style: GoogleFonts.poppins(fontSize: 14, color: hc.textPrimary, height: 1.45)),
+        Text(ann.content, style: HuddlText.body(color: hc.textPrimary).copyWith(height: 1.45)),
         const SizedBox(height: 12),
         Row(children: [
           _actionBtn(icon: ann.isLiked ? Icons.favorite : Icons.favorite_border,
@@ -256,7 +256,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
       child: Row(children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 4),
-        Text(label, style: GoogleFonts.poppins(fontSize: 12, color: color)),
+        Text(label, style: HuddlText.caption(color: color)),
       ]),
     );
   }
@@ -265,18 +265,18 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
     return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       const HuddlCharacter(mood: HuddlMood.waving, size: 80),
       const SizedBox(height: 16),
-      Text('No posts yet', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: hc.textPrimary)),
+      Text('No posts yet', style: HuddlText.heading(color: hc.textPrimary)),
       const SizedBox(height: 8),
       Text('Be the first to post something to\n${_borough.isNotEmpty ? _borough : 'your community'}',
           textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(fontSize: 14, color: hc.textTertiary, height: 1.4)),
+          style: HuddlText.body(color: hc.textTertiary).copyWith(height: 1.4)),
       const SizedBox(height: 24),
       ElevatedButton(
         onPressed: _openComposerSheet,
         style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), elevation: 0),
-        child: Text('Post to community', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+        child: Text('Post to community', style: HuddlText.body(weight: FontWeight.w600)),
       ),
     ]));
   }

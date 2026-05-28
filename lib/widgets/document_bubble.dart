@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/media_attach_service.dart';
+import '../constants/app_text_styles.dart';
 
 /// A chat bubble that displays a document/file attachment, styled like
 /// WhatsApp's document message UI.
@@ -102,21 +102,14 @@ class DocumentBubble extends StatelessWidget {
                       children: [
                         Text(
                           fileName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         if (sizeStr.isNotEmpty)
                           Text(
                             '$ext  $sizeStr',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                       ],
                     ),
@@ -171,10 +164,7 @@ class DocumentBubble extends StatelessWidget {
                       Flexible(
                         child: Text(
                           uploadError!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.red,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ),
                     ],
@@ -189,10 +179,7 @@ class DocumentBubble extends StatelessWidget {
               alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
               child: Text(
                 _formatTime(timestamp),
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.label(),
               ),
             ),
           ],

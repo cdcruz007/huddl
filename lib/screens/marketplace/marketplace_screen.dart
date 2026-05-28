@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 import '../../services/rehome_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/huddl_notification_service.dart';
@@ -41,9 +43,10 @@ const List<String> _kMarketAvatarPool = [
   'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=48&q=70',
 ];
 
-// =============================================================================
-// PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
-// =============================================================================
+// _adaptiveText kept for call-site compatibility — wraps GoogleFonts.poppins.
+// New code should use HuddlText directly.
+// _adaptiveText kept for call-site compatibility — wraps GoogleFonts.poppins.
+// New code should use HuddlText directly.
 TextStyle _adaptiveText({
   double fontSize = 14,
   FontWeight fontWeight = FontWeight.w400,
@@ -824,9 +827,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         Row(
                           children: [
                             Text('Filter and sort',
-                              style: GoogleFonts.poppins(
-                                fontSize: 18, fontWeight: FontWeight.w700,
-                                color: shc.textPrimary)),
+                              style: HuddlText.heading(color: shc.textPrimary)),
                             const Spacer(),
                             if (hasAny)
                               GestureDetector(
@@ -843,11 +844,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                   });
                                 },
                                 child: Text('Clear all',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    decoration: TextDecoration.underline,
-                                    color: shc.textSecondary,
-                                    fontWeight: FontWeight.w500)),
+                                  style: HuddlText.body(color: shc.textSecondary).copyWith(decoration: TextDecoration.underline)),
                               ),
                           ],
                         ),
@@ -865,9 +862,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         // ══ SECTION: Recommended quick-filters ══════════
                         // Airbnb-style icon tiles row (like Free cancellation / Self check-in / Washer)
                         Text('Recommended for you',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: shc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -918,9 +913,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
                         // ══ SECTION: Price type (segmented control) ══════
                         Text('Type',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: shc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 10),
                         _SegmentedPriceControl(
                           selected: sheetPrice,
@@ -934,9 +927,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
                         // ══ SECTION: Condition ═══════════════════════════
                         Text('Condition',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: shc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 8),
                         _AirbnbChip(
                           label: 'Any',
@@ -964,9 +955,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
                         // ══ SECTION: Age group ═══════════════════════════
                         Text('Age group',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: shc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 8),
                         _AirbnbChip(
                           label: 'Any age',
@@ -996,26 +985,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         Row(
                           children: [
                             Text('Price range',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13, fontWeight: FontWeight.w600,
-                                color: shc.textSecondary)),
+                              style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                             const Spacer(),
                             Text(
                               sheetPriceRange.start == 0 && sheetPriceRange.end >= 500
                                   ? 'Any price'
                                   : '£${sheetPriceRange.start.toInt()} – £${sheetPriceRange.end >= 500 ? "500+" : sheetPriceRange.end.toInt().toString()}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: shc.textTertiary,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: HuddlText.caption(color: shc.textTertiary),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text('Listing price, excluding delivery',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11, color: shc.textTertiary)),
+                          style: HuddlText.caption(color: shc.textTertiary)),
                         const SizedBox(height: 10),
                         // Histogram bars
                         _PriceHistogram(
@@ -1054,9 +1036,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
                         // ══ SECTION: Sort by ════════════════════════════
                         Text('Sort by',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: shc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                         const SizedBox(height: 10),
                         ...sortOptions.asMap().entries.map((entry) {
                           final idx = entry.key;
@@ -1082,15 +1062,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Text(label,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                        color: isSelected
-                                            ? HuddlColors.primary
-                                            : shc.textPrimary,
-                                      )),
+                                      style: HuddlText.body()),
                                   ),
                                   Container(
                                     width: 22, height: 22,
@@ -1118,9 +1090,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         Row(
                           children: [
                             Text('Category',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13, fontWeight: FontWeight.w600,
-                                color: shc.textSecondary)),
+                              style: HuddlText.body(weight: FontWeight.w600, color: shc.textSecondary)),
                             const Spacer(),
                             if (sheetCats.isNotEmpty)
                               GestureDetector(
@@ -1130,13 +1100,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                   setState(() => _selectedCategories = {});
                                 },
                                 child: Text('Clear',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: HuddlColors.primary,
-                                    fontWeight: FontWeight.w500,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: HuddlColors.primary,
-                                  )),
+                                  style: HuddlText.caption(color: HuddlColors.primary).copyWith(decoration: TextDecoration.underline)),
                               ),
                           ],
                         ),
@@ -1178,27 +1142,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   // ── Orange "Show items" CTA ────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HuddlAnimations.mediumTap();
-                          setState(() => _sortIndex = sheetSortIndex);
-                          Navigator.pop(ctx);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
-                        ),
-                        child: Text('Show items',
-                          style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                      ),
+                    child: HuddlButton(
+                      label: 'Show items',
+                      onPressed: () {
+                        HuddlAnimations.mediumTap();
+                        setState(() => _sortIndex = sheetSortIndex);
+                        Navigator.pop(ctx);
+                      },
                     ),
                   ),
                 ],
@@ -1318,23 +1268,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       child: Semantics(
                         label: 'Cancel delisting',
                         button: true,
-                        child: OutlinedButton(
+                        child: HuddlButton(
+                          label: 'Cancel',
+                          variant: HuddlButtonVariant.secondary,
                           onPressed: () => Navigator.pop(ctx),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: hc.divider),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            minimumSize: const Size(0, 48),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            style: _adaptiveText(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: hc.textPrimary,
-                            ),
-                          ),
                         ),
                       ),
                     ),
@@ -1343,7 +1280,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       child: Semantics(
                         label: 'Confirm delist ${item.title}',
                         button: true,
-                        child: ElevatedButton(
+                        child: HuddlButton(
+                          label: 'Delist',
+                          variant: HuddlButtonVariant.destructive,
                           onPressed: () {
                             HuddlAnimations.mediumTap();
                             Navigator.pop(ctx);
@@ -1352,38 +1291,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               SnackBar(
                                 content: Row(
                                   children: [
-                                    const Icon(Icons.check_circle,
-                                        color: Colors.white, size: 18),
+                                    const Icon(Icons.check_circle, color: Colors.white, size: 18),
                                     const SizedBox(width: 8),
-                                    Expanded(
-                                        child: Text(
-                                            '"${item.title}" has been delisted')),
+                                    Expanded(child: Text('"${item.title}" has been delisted')),
                                   ],
                                 ),
                                 backgroundColor: HuddlColors.textDark,
                                 behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 duration: const Duration(seconds: 2),
                               ),
                             );
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.error,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                            minimumSize: const Size(0, 48),
-                          ),
-                          child: Text(
-                            'Delist',
-                            style: _adaptiveText(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
                         ),
                       ),
                     ),
@@ -1580,11 +1499,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     },
                     child: Text(
                       'Cancel',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.textSecondary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ),
                 ],
@@ -1602,8 +1517,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
             labelColor: HuddlColors.primary,
             unselectedLabelColor: HuddlColors.textHint,
-            labelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
+            labelStyle: HuddlText.caption(weight: FontWeight.w600),
+            unselectedLabelStyle: HuddlText.caption(),
             indicatorColor: HuddlColors.primary,
             indicatorSize: TabBarIndicatorSize.label,
             indicatorWeight: 2.5,
@@ -1700,13 +1615,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         const SizedBox(width: 8),
                         Text(
                           pillLabel,
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: hasActiveSortOrFilter
-                                ? HuddlColors.primary
-                                : hc.textPrimary,
-                          ),
+                          style: HuddlText.body(),
                         ),
                       ],
                     ),
@@ -1718,11 +1627,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 liveRegion: true,
                 child: Text(
                   '${items.length} item${items.length == 1 ? '' : 's'}${_hasActiveFilters ? ' · filtered' : ''}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: hc.textTertiary,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: HuddlText.caption(color: hc.textTertiary),
                 ),
               ),
             ],
@@ -2043,13 +1948,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       const SizedBox(width: 48), // align under text
                       Text(
                         '$usedListings / $maxListings listings used',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: usedListings >= maxListings
-                              ? Colors.red.shade400
-                              : HuddlColors.textTertiary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: HuddlText.caption(color: HuddlColors.textTertiary),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -2401,30 +2300,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       children: [
                         // Cancel
                         Expanded(
-                          child: OutlinedButton(
+                          child: HuddlButton(
+                            label: 'Cancel',
+                            variant: HuddlButtonVariant.secondary,
                             onPressed: () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              side: BorderSide(color: shc.divider),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: Text(
-                              'Cancel',
-                              style: _adaptiveText(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: shc.textSecondary,
-                              ),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         // Confirm action
                         Expanded(
                           flex: 2,
-                          child: ElevatedButton(
+                          child: HuddlButton(
+                            label: actionLabel,
+                            variant: isAccept ? HuddlButtonVariant.primary : HuddlButtonVariant.destructive,
                             onPressed: () {
                               final msg = msgController.text.trim().isEmpty
                                   ? null
@@ -2522,23 +2410,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                 }
                               }
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: accentColor,
-                              foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: Text(
-                              actionLabel,
-                              style: _adaptiveText(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
                           ),
                         ),
                       ],
@@ -4046,10 +3917,7 @@ class _MarketPhotoFallback extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               item.category.label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: HuddlColors.textHint,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),
@@ -4129,12 +3997,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                         ),
                         child: Text(
                           widget.isOwn ? 'Yours' : item.condition.label,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            letterSpacing: 0.1,
-                          ),
+                          style: HuddlText.label(color: Colors.white),
                         ),
                       ),
                     ),
@@ -4186,12 +4049,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                         item.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: hc.textPrimary,
-                          height: 1.28,
-                        ),
+                        style: HuddlText.body(color: hc.textPrimary),
                       ),
                       const SizedBox(height: 5),
                       // Price — bold, nearBlack, prominent
@@ -4199,13 +4057,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                         item.isFree
                             ? 'Free'
                             : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: item.isFree
-                              ? const Color(0xFF2D6A4F) // subtle green for free
-                              : HuddlColors.nearBlack,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       // Location — small, muted, no icon clutter
@@ -4215,11 +4067,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                             : 'Near you',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: hc.textTertiary,
-                          fontWeight: FontWeight.w400,
-                        ),
+                        style: HuddlText.caption(color: hc.textTertiary),
                       ),
                     ],
                   ),
@@ -5105,14 +4953,7 @@ class _FilterIconTile extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected
-                    ? HuddlColors.primary            // orange label when active
-                    : HuddlColors.textSecondary,
-                height: 1.25,
-              ),
+              style: HuddlText.caption(color: HuddlColors.textSecondary),
             ),
           ],
         ),
@@ -5182,14 +5023,7 @@ class _SegmentedPriceControl extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected
-                        ? Colors.white
-                        : HuddlColors.textPrimary,
-                  ),
+                  style: HuddlText.body(),
                 ),
               ),
             ),
@@ -5240,13 +5074,7 @@ class _AirbnbChip extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected
-                      ? HuddlColors.primary
-                      : hc.textPrimary,
-                ),
+                style: HuddlText.body(),
               ),
             ),
             if (isSelected)
@@ -5316,11 +5144,7 @@ class _MultiSelectChip extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? HuddlColors.primary : hc.textPrimary,
-                ),
+                style: HuddlText.body(),
               ),
             ),
             // Square checkbox — visually distinct from radio-style _AirbnbChip

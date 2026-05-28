@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/borough_scope_guard.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // BOROUGH BADGE & HEADER WIDGETS (Step 6)
@@ -80,11 +80,7 @@ class BoroughBadge extends StatelessWidget {
             const SizedBox(width: 3),
             Text(
               'UK-wide',
-              style: GoogleFonts.poppins(
-                fontSize: fontSize,
-                fontWeight: FontWeight.w500,
-                color: HuddlColors.textTertiary,
-              ),
+              style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(fontSize: fontSize),
             ),
           ],
         ),
@@ -114,11 +110,7 @@ class BoroughBadge extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             boroughName,
-            style: GoogleFonts.poppins(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w500,
-              color: textColor,
-            ),
+            style: HuddlText.caption(color: textColor).copyWith(fontSize: fontSize),
           ),
         ],
       ),
@@ -201,11 +193,7 @@ class BoroughScopeChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
+            style: HuddlText.caption(),
           ),
         ],
       ),
@@ -282,11 +270,7 @@ class BoroughHeader extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
+              style: HuddlText.caption(),
             ),
           ),
         ],
@@ -342,13 +326,7 @@ class BoroughGateMessage extends StatelessWidget {
             child: Text(
               '$featureLabel is limited to $myBorough. '
               'Only parents in your borough can see and interact with this content.',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: isDark
-                    ? HuddlColors.darkTextSecondary
-                    : HuddlColors.textSecondary,
-                height: 1.4,
-              ),
+              style: HuddlText.caption(color: HuddlColors.textSecondary),
             ),
           ),
         ],

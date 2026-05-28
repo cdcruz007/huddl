@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
@@ -63,36 +63,7 @@ const String _userGroupsKey = 'user_created_groups_v1';
 // ── Persistence key for groups the user has explicitly left ─────────────
 const String _leftGroupsKey = 'left_groups_v1';
 
-/// Platform-adaptive font family: SF Pro on iOS, Poppins elsewhere (P2).
-TextStyle _adaptiveText({
-  double fontSize = 14,
-  FontWeight fontWeight = FontWeight.w400,
-  Color? color,
-  double? height,
-  FontStyle? fontStyle,
-  double? letterSpacing,
-}) {
-  final bool isApple = !kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS);
-  if (isApple) {
-    return TextStyle(
-      fontFamily: '.SF Pro Text',
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      color: color,
-      height: height,
-      fontStyle: fontStyle,
-      letterSpacing: letterSpacing,
-    );
-  }
-  return GoogleFonts.poppins(
-    fontSize: fontSize,
-    fontWeight: fontWeight,
-    color: color,
-    height: height,
-    fontStyle: fontStyle,
-    letterSpacing: letterSpacing,
-  );
-}
+
 
 class GroupsScreen extends StatefulWidget {
   const GroupsScreen({super.key});
@@ -176,11 +147,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                       children: [
                         Text(
                           'Connect',
-                          style: _adaptiveText(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.display(color: context.hc.textPrimary),
                         ),
                         const SizedBox(width: 8),
                         const BoroughScopeChip(feature: HuddlFeature.chat),
@@ -229,9 +196,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                                       autofocus: false,
                                       onChanged: (val) =>
                                           _searchNotifier.value = val,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          color: context.hc.textPrimary),
+                                      style: HuddlText.body(color: context.hc.textPrimary),
                                       decoration: InputDecoration(
                                         hintText: _searchHint,
                                         border: InputBorder.none,
@@ -239,9 +204,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                                         focusedBorder: InputBorder.none,
                                         contentPadding: EdgeInsets.zero,
                                         isDense: true,
-                                        hintStyle: GoogleFonts.poppins(
-                                            fontSize: 13,
-                                            color: context.hc.textTertiary),
+                                        hintStyle: HuddlText.body(color: context.hc.textTertiary),
                                       ),
                                     ),
                                   ),
@@ -269,11 +232,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                             onTap: _clearSearch,
                             child: Text(
                               'Cancel',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.textSecondary,
-                              ),
+                              style: HuddlText.body(),
                             ),
                           ),
                         ],
@@ -291,10 +250,8 @@ class _GroupsScreenState extends State<GroupsScreen>
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
-                    labelStyle: GoogleFonts.poppins(
-                        fontSize: 13, fontWeight: FontWeight.w600),
-                    unselectedLabelStyle: GoogleFonts.poppins(
-                        fontSize: 13, fontWeight: FontWeight.w400),
+                    labelStyle: HuddlText.caption(weight: FontWeight.w600),
+                    unselectedLabelStyle: HuddlText.caption(),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorWeight: 2.5,
@@ -1220,11 +1177,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                               child: Center(
                                 child: Text(
                                   'Filter and sort',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: context.hc.textPrimary,
-                                  ),
+                                  style: HuddlText.heading(),
                                 ),
                               ),
                             ),
@@ -1237,11 +1190,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                 padding: const EdgeInsets.all(8),
                                 child: Text(
                                   'RESET',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.textTertiary,
-                                  ),
+                                  style: HuddlText.body(weight: FontWeight.w600),
                                 ),
                               ),
                             ),
@@ -1252,11 +1201,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         // ── Show section ────────────────────────────────
                         Text(
                           'Show',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                         const SizedBox(height: 10),
                         ..._messageFilterOptions.asMap().entries.map((entry) {
@@ -1295,15 +1240,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                   const SizedBox(width: 12),
                                   Text(
                                     label,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                      color: isSelected
-                                          ? HuddlColors.primary
-                                          : context.hc.textPrimary,
-                                    ),
+                                    style: HuddlText.body(),
                                   ),
                                   const Spacer(),
                                   if (isSelected)
@@ -1530,21 +1467,13 @@ class _MessagesTabState extends State<_MessagesTab> {
               const SizedBox(height: 18),
               Text(
                 'Leave this group?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'We are sad to see you go, but you can always come back or find another group that interests you in the Discover tab.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -1553,19 +1482,10 @@ class _MessagesTabState extends State<_MessagesTab> {
               Row(
                 children: [
                   Expanded(
-                    child: TextButton(
+                    child: HuddlButton(
+                      label: 'Cancel',
+                      variant: HuddlButtonVariant.ghost,
                       onPressed: () => Navigator.pop(c),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary,
-                        ),
-                      ),
                     ),
                   ),
                   Container(
@@ -1574,25 +1494,20 @@ class _MessagesTabState extends State<_MessagesTab> {
                     color: context.hc.divider,
                   ),
                   Expanded(
-                    child: TextButton(
+                    child: HuddlButton(
+                      label: 'Leave',
+                      variant: HuddlButtonVariant.destructive,
                       onPressed: () async {
                         Navigator.pop(c);
                         final onboarding = OnboardingDataService();
                         await onboarding.initialize();
                         final userName = onboarding.name ?? 'You';
 
-                        // 1. Remove from invitation service (joined-via-Discover groups)
                         await _invitationService.leaveGroup(group.id, userName);
-
-                        // 2. Remove from user-created groups storage
                         await _removeFromUserCreatedGroups(group.id);
-
-                        // 3. Remove from DefaultGroupService memberships (default/assigned groups)
                         final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
                         final userId = firebaseUid ?? 'user_${onboarding.name?.hashCode ?? 0}';
                         await _groupService.leaveGroup(userId, group.id);
-
-                        // 4. Persist this group ID so it never gets re-joined on reload
                         await _persistLeftGroup(group.id);
 
                         setState(() {
@@ -1611,17 +1526,6 @@ class _MessagesTabState extends State<_MessagesTab> {
                           );
                         }
                       },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Leave',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.error,
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -1822,9 +1726,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Suggested', style: GoogleFonts.poppins(
-                          fontSize: 11, fontWeight: FontWeight.w500, color: context.hc.textTertiary,
-                    )),
+                    Text('Suggested', style: HuddlText.caption()),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 6,
@@ -1850,9 +1752,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                             children: [
                               Text(s.icon, style: const TextStyle(fontSize: 12)),
                               const SizedBox(width: 4),
-                              Text(s.query, style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.textDark, fontWeight: FontWeight.w500,
-                              )),
+                              Text(s.query, style: HuddlText.caption(color: HuddlColors.textDark)),
                             ],
                           ),
                         ),
@@ -1935,13 +1835,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                 const SizedBox(width: 8),
                                 Text(
                                   pillLabel,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: hasActive
-                                        ? HuddlColors.primary
-                                        : context.hc.textPrimary,
-                                  ),
+                                  style: HuddlText.body(),
                                 ),
                               ],
                             ),
@@ -2062,16 +1956,11 @@ class _MessagesTabState extends State<_MessagesTab> {
                       children: [
                         Text(
                           'Catch up on your chats',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700),
                         ),
                         Text(
                           '$totalUnread new message${totalUnread == 1 ? '' : 's'} across ${summaries.length} group${summaries.length == 1 ? '' : 's'}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11, color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ),
@@ -2189,10 +2078,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                       Expanded(
                         child: Text(
                           summary.groupName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w700),
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -2205,10 +2091,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         ),
                         child: Text(
                           '${summary.unreadCount} new',
-                          style: GoogleFonts.poppins(
-                            fontSize: 9, fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ),
                     ],
@@ -2227,11 +2110,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         : summary.overviewText;
                     return Text(
                       previewText,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textSecondary,
-                        height: 1.35,
-                      ),
+                      style: HuddlText.caption(color: context.hc.textSecondary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     );
@@ -2255,8 +2134,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                 const Icon(Icons.priority_high_rounded, size: 9, color: HuddlColors.primary),
                                 const SizedBox(width: 3),
                                 Text('Needs reply',
-                                    style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary)),
+                                    style: HuddlText.label(color: HuddlColors.primary)),
                               ],
                             ),
                           ),
@@ -2274,7 +2152,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                               ),
                               child: Text(
                                 topic,
-                                style: GoogleFonts.poppins(fontSize: 9, color: context.hc.textTertiary),
+                                style: HuddlText.label(color: context.hc.textTertiary),
                               ),
                             ),
                           ),
@@ -2293,10 +2171,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           Expanded(
                             child: Text(
                               summary.upcomingPlanNote!,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10, color: HuddlColors.nearBlack,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: HuddlText.label(color: HuddlColors.nearBlack),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -2341,15 +2216,12 @@ class _MessagesTabState extends State<_MessagesTab> {
               children: [
                 Text(
                   'Building your catch-up summary…',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w600,
-                    color: context.hc.textSecondary,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'AI is reading your group chats',
-                  style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary),
+                  style: HuddlText.label(color: context.hc.textTertiary),
                 ),
               ],
             ),
@@ -2395,18 +2267,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                   const Icon(Icons.info_outline, size: 16, color: HuddlColors.warningDark),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(_errorMessage, style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.warningDark,
-                    )),
+                    child: Text(_errorMessage, style: HuddlText.caption()),
                   ),
                   Semantics(
                     label: 'Retry loading groups',
                     button: true,
                     child: GestureDetector(
                       onTap: _loadGroups,
-                      child: Text('Retry', style: GoogleFonts.poppins(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textTertiary,
-                      )),
+                      child: Text('Retry', style: HuddlText.caption(weight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -2418,10 +2286,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           if (_pendingInvitations.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-              child: Text('Invitations', style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w600,
-                color: context.hc.textTertiary, letterSpacing: 0.3,
-              )),
+              child: Text('Invitations', style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary)),
             ),
             ..._pendingInvitations.map((inv) => _InvitationCard(
                   invitation: inv,
@@ -2529,10 +2394,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(insight.insightText, style: GoogleFonts.poppins(
-                          fontSize: 10, color: HuddlColors.textTertiary,
-                          fontStyle: FontStyle.italic,
-                        )),
+                        Text(insight.insightText, style: HuddlText.label(color: HuddlColors.textTertiary)),
                         const Spacer(),
                         // Feedback buttons
                         _AiFeedbackRow(
@@ -2607,17 +2469,12 @@ class _MessagesTabState extends State<_MessagesTab> {
               const SizedBox(height: 16),
               Text(
                 'No results found',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
                 'Try a different search term',
-                style: GoogleFonts.poppins(
-                    fontSize: 14, color: context.hc.textTertiary),
+                style: HuddlText.body(color: context.hc.textTertiary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -2704,11 +2561,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           convDeepResults.first),
                       child: Text(
                         '${convDeepResults.length - 3} more results in this chat',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: HuddlColors.textTertiary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: HuddlText.caption(color: HuddlColors.textTertiary),
                       ),
                     ),
                   ),
@@ -2752,22 +2605,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                             first.conversationName.isNotEmpty
                                 ? first.conversationName[0].toUpperCase()
                                 : '?',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                         ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           first.conversationName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -2781,11 +2626,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         ),
                         child: Text(
                           '${results.length}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textTertiary,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ),
                     ],
@@ -2806,11 +2647,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           _navigateToSearchResult(results.first),
                       child: Text(
                         '${results.length - 3} more results',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: HuddlColors.textTertiary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: HuddlText.caption(color: HuddlColors.textTertiary),
                       ),
                     ),
                   ),
@@ -2840,10 +2677,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   const SizedBox(width: 8),
                   Text(
                     'Searching within messages...',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -2926,12 +2760,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             children: [
               Text(
                 'Are you sure you want to permanently delete this conversation?',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textPrimary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -2940,24 +2769,17 @@ class _MessagesTabState extends State<_MessagesTab> {
               Row(
                 children: [
                   Expanded(
-                    child: TextButton(
+                    child: HuddlButton(
+                      label: 'Cancel',
+                      variant: HuddlButtonVariant.ghost,
                       onPressed: () => Navigator.pop(c),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
-                      ),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
-                    child: TextButton(
+                    child: HuddlButton(
+                      label: 'Delete',
+                      variant: HuddlButtonVariant.destructive,
                       onPressed: () async {
                         Navigator.pop(c);
                         if (item.isGroup) {
@@ -2985,17 +2807,6 @@ class _MessagesTabState extends State<_MessagesTab> {
                           );
                         }
                       },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Delete',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.error,
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -3203,12 +3014,7 @@ class _GroupMessageRow extends StatelessWidget {
                                 Flexible(
                                   child: Text(
                                     group.name,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight:
-                                          hasUnread ? FontWeight.w600 : FontWeight.w500,
-                                      color: context.hc.textPrimary,
-                                    ),
+                                    style: HuddlText.body(),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -3224,11 +3030,7 @@ class _GroupMessageRow extends StatelessWidget {
                                     ),
                                     child: Text(
                                       'Private Group',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.hc.textSecondary,
-                                      ),
+                                      style: HuddlText.label(),
                                     ),
                                   ),
                                 ],
@@ -3243,12 +3045,7 @@ class _GroupMessageRow extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             _formatTime(group.lastMessageTime),
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: hasUnread ? HuddlColors.primary : context.hc.textTertiary,
-                              fontWeight:
-                                  hasUnread ? FontWeight.w600 : FontWeight.w400,
-                            ),
+                            style: HuddlText.caption(color: hasUnread ? HuddlColors.primary : context.hc.textTertiary),
                           ),
                         ],
                       ),
@@ -3258,12 +3055,7 @@ class _GroupMessageRow extends StatelessWidget {
                           Expanded(
                             child: Text(
                               group.lastMessage ?? 'Tap to start a conversation',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: hasUnread ? HuddlColors.textSecondary : context.hc.textTertiary,
-                                fontWeight:
-                                    hasUnread ? FontWeight.w500 : FontWeight.w400,
-                              ),
+                              style: HuddlText.caption(color: hasUnread ? HuddlColors.textSecondary : context.hc.textTertiary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -3281,11 +3073,7 @@ class _GroupMessageRow extends StatelessWidget {
                                 ),
                                 child: Text(
                                   '${group.unreadCount}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.hc.surface,
-                                  ),
+                                  style: HuddlText.label(),
                                 ),
                               ),
                             ),
@@ -3373,11 +3161,7 @@ class _InvitationCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             invitation.groupName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -3391,11 +3175,7 @@ class _InvitationCard extends StatelessWidget {
                           ),
                           child: Text(
                             'Invite',
-                            style: GoogleFonts.poppins(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
-                            ),
+                            style: HuddlText.label(),
                           ),
                         ),
                       ],
@@ -3403,10 +3183,7 @@ class _InvitationCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${invitation.invitedByName} invited you to join',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ],
                 ),
@@ -3417,11 +3194,7 @@ class _InvitationCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               invitation.groupDescription,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: context.hc.textSecondary,
-                height: 1.4,
-              ),
+              style: HuddlText.caption(color: context.hc.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -3569,12 +3342,7 @@ class _DMMessageRow extends StatelessWidget {
                           Expanded(
                             child: Text(
                               conversation.recipientName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight:
-                                    hasUnread ? FontWeight.w600 : FontWeight.w500,
-                                color: context.hc.textPrimary,
-                              ),
+                              style: HuddlText.body(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -3587,14 +3355,7 @@ class _DMMessageRow extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             _formatTime(conversation.lastMessageTime),
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: hasUnread
-                                  ? HuddlColors.primary
-                                  : HuddlColors.textHint,
-                              fontWeight:
-                                  hasUnread ? FontWeight.w600 : FontWeight.w400,
-                            ),
+                            style: HuddlText.caption(color: HuddlColors.textHint),
                           ),
                         ],
                       ),
@@ -3605,25 +3366,12 @@ class _DMMessageRow extends StatelessWidget {
                             child: conversation.isTyping
                                 ? Text(
                                     'typing...',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontStyle: FontStyle.italic,
-                                      color: HuddlColors.nearBlack,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: HuddlText.caption(color: HuddlColors.nearBlack).copyWith(fontStyle: FontStyle.italic),
                                   )
                                 : Text(
                                     conversation.lastMessage ??
                                         'Tap to start chatting',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: hasUnread
-                                          ? HuddlColors.textSecondary
-                                          : HuddlColors.textHint,
-                                      fontWeight: hasUnread
-                                          ? FontWeight.w500
-                                          : FontWeight.w400,
-                                    ),
+                                    style: HuddlText.caption(color: HuddlColors.textHint),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -3641,11 +3389,7 @@ class _DMMessageRow extends StatelessWidget {
                                 ),
                                 child: Text(
                                   '${conversation.unreadCount}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.hc.surface,
-                                  ),
+                                  style: HuddlText.label(),
                                 ),
                               ),
                             ),
@@ -3869,12 +3613,7 @@ class _GroupAvatar extends StatelessWidget {
       child: Center(
         child: Text(
           initials,
-          style: GoogleFonts.poppins(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 0.5,
-          ),
+          style: HuddlText.caption(weight: FontWeight.w600, color: Colors.white).copyWith(fontSize: fontSize, letterSpacing: 0.5),
         ),
       ),
     );
@@ -4622,11 +4361,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             Expanded(
               child: Text(
                 isGroupTier ? 'Group Members Only' : 'Private Group',
-                style: GoogleFonts.poppins(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
               ),
             ),
           ],
@@ -4635,21 +4370,14 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           isGroupTier
               ? 'This group is only open to members of ${group.parentGroupName ?? 'a specific group'}. Join that group first to access this one.'
               : 'This group is private and only open to invited members. Ask the group admin for an invitation.',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: context.hc.textSecondary,
-            height: 1.5,
-          ),
+          style: HuddlText.body(color: context.hc.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'OK',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textTertiary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
           ),
         ],
@@ -4866,7 +4594,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               Expanded(
                 child: Text(
                   'Joined ${group.name}! Go to Messages tab to start chatting.',
-                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                  style: HuddlText.body(),
                 ),
               ),
             ],
@@ -4954,10 +4682,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               Expanded(
                                 child: Center(
                                   child: Text('Filter and sort',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18, fontWeight: FontWeight.w700,
-                                      color: context.hc.textPrimary,
-                                    ),
+                                    style: HuddlText.heading(),
                                   ),
                                 ),
                               ),
@@ -4976,11 +4701,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(8),
                                     child: Text('RESET',
-                                      style: _adaptiveText(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.textTertiary,
-                                      ),
+                                      style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textTertiary),
                                     ),
                                   ),
                                 ),
@@ -4991,10 +4712,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 
                           // ── "Show groups for" checkboxes ─────────────
                           Text('Show groups for',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16, fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                           const SizedBox(height: 10),
                           ..._audienceLabels.map((label) {
@@ -5042,11 +4760,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       ),
                                       const SizedBox(width: 14),
                                       Text(label,
-                                        style: _adaptiveText(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w400,
-                                          color: context.hc.textPrimary,
-                                        ),
+                                        style: HuddlText.body(color: context.hc.textPrimary),
                                       ),
                                     ],
                                   ),
@@ -5060,10 +4774,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           // ║  SORT BY                                     ║
                           // ╚══════════════════════════════════════════════╝
                           Text('Sort by',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16, fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                           const SizedBox(height: 10),
 
@@ -5129,15 +4840,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       ),
                                       const SizedBox(width: 10),
                                       Text(option,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight: isActive
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                          color: isActive
-                                              ? HuddlColors.primary
-                                              : HuddlColors.textDark,
-                                        ),
+                                        style: HuddlText.body(),
                                       ),
                                       const Spacer(),
                                       if (isActive)
@@ -5184,10 +4887,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           ),
                         ),
                         child: Text('Apply',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16, fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -5270,13 +4970,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       Row(
                         children: [
                           Text('Smart Sort',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected
-                                  ? HuddlColors.primary
-                                  : HuddlColors.textDark,
-                            ),
+                            style: HuddlText.body(weight: FontWeight.w700),
                           ),
                           const SizedBox(width: 6),
                           // AI badge
@@ -5290,21 +4984,13 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text('AI',
-                              style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
+                              style: HuddlText.label(color: Colors.white),
                             ),
                           ),
                         ],
                       ),
                       Text('Personalised to your profile',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ],
                   ),
@@ -5331,11 +5017,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             Text(
               'Groups are ranked by how well they match your profile — '
               'borough, parenting stage, interests, and activity.',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: HuddlColors.textSecondary,
-                height: 1.45,
-              ),
+              style: HuddlText.caption(color: HuddlColors.textSecondary),
             ),
 
             const SizedBox(height: 12),
@@ -5360,13 +5042,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     smartEnabled
                         ? 'AI ranking active'
                         : 'AI ranking off — showing default order',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: smartEnabled
-                          ? HuddlColors.primary
-                          : HuddlColors.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ),
                 Transform.scale(
@@ -5388,10 +5064,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               Row(
                 children: [
                   Text('Match quality',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -5409,11 +5082,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   ),
                   const SizedBox(width: 8),
                   Text('${sampleScore.round()}%',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -5460,11 +5129,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         ),
       ),
       child: Text(label,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: HuddlColors.textDark,
-        ),
+        style: HuddlText.caption(),
       ),
     );
   }
@@ -5512,7 +5177,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text('Could not load your profile. Showing all groups.',
-                          style: _adaptiveText(fontSize: 11, color: HuddlColors.warningDark)),
+                          style: HuddlText.caption(color: HuddlColors.warningDark)),
                       ),
                       Semantics(
                         label: 'Retry loading profile',
@@ -5521,9 +5186,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           onTap: _loadUserProfile,
                           child: Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Text('Retry', style: _adaptiveText(
-                              fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textTertiary,
-                            )),
+                            child: Text('Retry', style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                           ),
                         ),
                       ),
@@ -5583,13 +5246,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       : hasActiveFilters
                                           ? 'Filter and sort · $_selectedSort'
                                           : 'Filter and sort',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: hasActiveFilters
-                                        ? HuddlColors.primary
-                                        : context.hc.textPrimary,
-                                  ),
+                                  style: HuddlText.body(),
                                 ),
                               ],
                             ),
@@ -5643,12 +5300,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       }
                                     });
                                   },
-                                  style: _adaptiveText(
-                                      fontSize: 14, color: context.hc.textPrimary),
+                                  style: HuddlText.body(color: context.hc.textPrimary),
                                   decoration: InputDecoration(
                                     hintText: 'Search groups',
-                                    hintStyle: _adaptiveText(
-                                        fontSize: 14, color: context.hc.textTertiary),
+                                    hintStyle: HuddlText.body(color: context.hc.textTertiary),
                                     border: InputBorder.none,
                                     enabledBorder: InputBorder.none,
                                     focusedBorder: InputBorder.none,
@@ -5711,10 +5366,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             children: [
                               Icon(Icons.search, size: 11, color: HuddlColors.nearBlack),
                               const SizedBox(width: 4),
-                              Text(s.query, style: _adaptiveText(
-                                fontSize: 11, fontWeight: FontWeight.w500,
-                                color: HuddlColors.nearBlack,
-                              )),
+                              Text(s.query, style: HuddlText.caption(weight: FontWeight.w500, color: HuddlColors.nearBlack)),
                             ],
                           ),
                         ),
@@ -5745,7 +5397,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(contextLine,
-                              style: _adaptiveText(fontSize: 11, color: context.hc.textSecondary)),
+                              style: HuddlText.caption(color: context.hc.textSecondary)),
                           ),
                           // Dismiss banner
                           Semantics(
@@ -5785,11 +5437,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     children: [
                       Text(
                         'Suggested for you',
-                        style: _adaptiveText(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.heading(color: context.hc.textPrimary),
                       ),
                     ],
                   ),
@@ -5803,12 +5451,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   child: Text(
                     'SUGGESTED GROUPS',
-                    style: _adaptiveText(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textTertiary,
-                      letterSpacing: 0.6,
-                    ),
+                    style: HuddlText.label(color: context.hc.textTertiary),
                   ),
                 ),
               ),
@@ -5877,12 +5520,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     // Category label — uppercase light grey
                                     Text(
                                       group.targetAudience.join(', ').toUpperCase(),
-                                      style: _adaptiveText(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.hc.textTertiary,
-                                        letterSpacing: 0.4,
-                                      ),
+                                      style: HuddlText.label(color: context.hc.textTertiary),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -5890,11 +5528,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     // Group name — bold dark
                                     Text(
                                       group.name,
-                                      style: _adaptiveText(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.hc.textPrimary,
-                                      ),
+                                      style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -5902,10 +5536,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     // Member count
                                     Text(
                                       '${group.memberCount} members',
-                                      style: _adaptiveText(
-                                        fontSize: 12,
-                                        color: context.hc.textTertiary,
-                                      ),
+                                      style: HuddlText.caption(color: context.hc.textTertiary),
                                     ),
                                   ],
                                 ),
@@ -5931,11 +5562,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     ),
                                     child: Text(
                                       'Join',
-                                      style: _adaptiveText(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.hc.textPrimary,
-                                      ),
+                                      style: HuddlText.body(color: context.hc.textPrimary),
                                     ),
                                   ),
                                 ),
@@ -6110,11 +5737,7 @@ class _SearchResultPlaceholder extends StatelessWidget {
       child: Center(
         child: Text(
           initial,
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: HuddlColors.textTertiary,
-          ),
+          style: HuddlText.display(),
         ),
       ),
     );
@@ -6213,12 +5836,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                     group.targetAudience.isNotEmpty
                         ? group.targetAudience.join(', ').toUpperCase()
                         : _privacyTagLabel.toUpperCase(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textTertiary,
-                      letterSpacing: 0.5,
-                    ),
+                    style: HuddlText.label(color: context.hc.textTertiary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -6226,11 +5844,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                   // Group name — bold, dark
                   Text(
                     group.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -6239,12 +5853,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       group.aiTagline!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: context.hc.textTertiary,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      style: HuddlText.caption(color: context.hc.textTertiary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -6296,10 +5905,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${group.memberCount} members',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ),
                       // Join / Joined / Restricted button — grey pill (Figma)
@@ -6325,15 +5931,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                             ),
                             child: Text(
                               isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isJoined
-                                    ? HuddlColors.textTertiary
-                                    : (!canAccess
-                                        ? HuddlColors.textHint
-                                        : HuddlColors.primary),
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.primary),
                             ),
                           ),
                         ),
@@ -6664,7 +6262,7 @@ class _SavedTabState extends State<_SavedTab> {
                   child: TextField(
                     controller: _searchCtrl,
                     onChanged: (v) => setState(() => _localQuery = v),
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search topics, messages, senders…',
                       border: InputBorder.none,
@@ -6672,8 +6270,7 @@ class _SavedTabState extends State<_SavedTab> {
                       focusedBorder: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
                       isDense: true,
-                      hintStyle: GoogleFonts.poppins(
-                          fontSize: 13, color: context.hc.textTertiary),
+                      hintStyle: HuddlText.body(color: context.hc.textTertiary),
                     ),
                   ),
                 ),
@@ -6777,11 +6374,7 @@ class _SavedTabState extends State<_SavedTab> {
             Expanded(
               child: Text(
                 topic,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: ctx.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w700),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -6796,11 +6389,7 @@ class _SavedTabState extends State<_SavedTab> {
               ),
               child: Text(
                 '$count',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: ctx.hc.textSecondary,
-                ),
+                style: HuddlText.caption(weight: FontWeight.w600),
               ),
             ),
             Icon(
@@ -6853,15 +6442,12 @@ class _SavedTabState extends State<_SavedTab> {
           const SizedBox(height: 12),
           Text(
             'No results for "$q"',
-            style: GoogleFonts.poppins(
-              fontSize: 15, fontWeight: FontWeight.w500,
-              color: context.hc.textSecondary,
-            ),
+            style: HuddlText.body(),
           ),
           const SizedBox(height: 6),
           Text(
             'Try searching by topic, message text, sender or group',
-            style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+            style: HuddlText.body(color: context.hc.textTertiary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -6959,19 +6545,14 @@ class _SavedTabState extends State<_SavedTab> {
             children: [
               Text(
                 'Delete this saved thread?',
-                style: GoogleFonts.poppins(
-                  fontSize: 16, fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Only this thread is deleted. Other saves under '
                 '"${thread.topicName}" are not affected.',
-                style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textSecondary, height: 1.4,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -6983,9 +6564,7 @@ class _SavedTabState extends State<_SavedTab> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600,
-                              color: context.hc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -7007,9 +6586,7 @@ class _SavedTabState extends State<_SavedTab> {
                         }
                       },
                       child: Text('Delete',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600,
-                              color: HuddlColors.error)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],
@@ -7084,11 +6661,7 @@ class _SavedMessageCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               'From ${savedMessage.sourceName}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.textSecondary,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -7100,10 +6673,7 @@ class _SavedMessageCard extends StatelessWidget {
                 ),
                 Text(
                   _formatSavedTime(savedMessage.savedAt),
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: context.hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),
@@ -7126,30 +6696,19 @@ class _SavedMessageCard extends StatelessWidget {
                     children: [
                       Text(
                         savedMessage.senderName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _formatMessageTime(savedMessage.timestamp),
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.label(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     savedMessage.message,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: context.hc.textPrimary,
-                      height: 1.4,
-                    ),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -7165,10 +6724,7 @@ class _SavedMessageCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   'Tap to go to ${isGroup ? 'group' : 'conversation'}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: context.hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),
@@ -7252,11 +6808,7 @@ class _SavedThreadCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               savedThread.topicName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: HuddlColors.nearBlack,
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w700),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -7268,10 +6820,7 @@ class _SavedThreadCard extends StatelessWidget {
                         savedThread.replies.isEmpty
                             ? 'Message from ${savedThread.groupName}'
                             : 'Thread from ${savedThread.groupName}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -7280,10 +6829,7 @@ class _SavedThreadCard extends StatelessWidget {
                 ),
                 Text(
                   _formatSavedTime(savedThread.savedAt),
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: context.hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),
@@ -7306,30 +6852,19 @@ class _SavedThreadCard extends StatelessWidget {
                     children: [
                       Text(
                         savedThread.rootSenderName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _formatMessageTime(savedThread.rootTimestamp),
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.label(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     savedThread.rootMessageText,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: context.hc.textPrimary,
-                      height: 1.4,
-                    ),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -7359,29 +6894,18 @@ class _SavedThreadCard extends StatelessWidget {
                                   children: [
                                     Text(
                                       reply.senderName,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.hc.textPrimary,
-                                      ),
+                                      style: HuddlText.caption(weight: FontWeight.w600),
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       _formatMessageTime(reply.timestamp),
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        color: context.hc.textTertiary,
-                                      ),
+                                      style: HuddlText.label(),
                                     ),
                                   ],
                                 ),
                                 Text(
                                   reply.message,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: context.hc.textSecondary,
-                                    height: 1.3,
-                                  ),
+                                  style: HuddlText.caption(color: context.hc.textSecondary),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -7396,11 +6920,7 @@ class _SavedThreadCard extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 6, left: 10),
                         child: Text(
                           '+${savedThread.replies.length - 3} more ${savedThread.replies.length - 3 == 1 ? 'reply' : 'replies'}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.primary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ),
                   ],
@@ -7418,10 +6938,7 @@ class _SavedThreadCard extends StatelessWidget {
                   savedThread.replies.isEmpty
                       ? 'Tap to go to group'
                       : 'Tap to open thread in group',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: context.hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),
@@ -7511,11 +7028,7 @@ class _SavedEventCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               'Saved Event',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.primary,
-                              ),
+                              style: HuddlText.label(),
                             ),
                           ],
                         ),
@@ -7534,11 +7047,7 @@ class _SavedEventCard extends StatelessWidget {
                           savedEvent.isFree
                               ? 'Free'
                               : (savedEvent.price.isNotEmpty ? savedEvent.price : 'Paid'),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: savedEvent.isFree ? HuddlColors.nearBlack : HuddlColors.textTertiary,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ),
                     ],
@@ -7547,11 +7056,7 @@ class _SavedEventCard extends StatelessWidget {
                   // Title
                   Text(
                     savedEvent.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -7568,10 +7073,7 @@ class _SavedEventCard extends StatelessWidget {
                             savedEvent.time.isNotEmpty
                                 ? '${savedEvent.date} · ${savedEvent.time}'
                                 : savedEvent.date,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: context.hc.textSecondary,
-                            ),
+                            style: HuddlText.caption(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -7593,10 +7095,7 @@ class _SavedEventCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           savedEvent.isOnline ? 'Online event' : savedEvent.location,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -7612,10 +7111,7 @@ class _SavedEventCard extends StatelessWidget {
                       const SizedBox(width: 3),
                       Text(
                         'Tap to view event',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.label(),
                       ),
                     ],
                   ),
@@ -7759,11 +7255,7 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
                               const SizedBox(height: 2),
                               Text(
                                 widget.isUnread ? 'Read' : 'Unread',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: HuddlText.label(color: Colors.white),
                               ),
                             ],
                           ),
@@ -7786,11 +7278,7 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
                               const SizedBox(height: 2),
                               Text(
                                 widget.swipeLeftLabel,
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: HuddlText.label(color: Colors.white),
                               ),
                             ],
                           ),
@@ -7836,11 +7324,7 @@ class _ActionTile extends StatelessWidget {
       leading: Icon(icon, color: color ?? context.hc.textPrimary),
       title: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: color ?? context.hc.textPrimary,
-        ),
+        style: HuddlText.body(),
       ),
       onTap: onTap,
     );
@@ -7865,12 +7349,7 @@ class _SearchSectionHeader extends StatelessWidget {
         children: [
           Text(
             title.toUpperCase(),
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: context.hc.textTertiary,
-              letterSpacing: 0.8,
-            ),
+            style: HuddlText.caption(weight: FontWeight.w700, color: context.hc.textTertiary),
           ),
           const SizedBox(width: 6),
           Container(
@@ -7881,11 +7360,7 @@ class _SearchSectionHeader extends StatelessWidget {
             ),
             child: Text(
               '$count',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textTertiary,
-              ),
+              style: HuddlText.caption(weight: FontWeight.w600),
             ),
           ),
         ],
@@ -7939,19 +7414,12 @@ class _DeepSearchResultRow extends StatelessWidget {
                     children: [
                       Text(
                         result.senderName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                       const Spacer(),
                       Text(
                         timeFormat(result.timestamp),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ],
                   ),
@@ -7983,7 +7451,7 @@ class _HighlightedText extends StatelessWidget {
     if (query.isEmpty) {
       return Text(
         text,
-        style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+        style: HuddlText.caption(color: context.hc.textTertiary),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       );
@@ -7999,24 +7467,19 @@ class _HighlightedText extends StatelessWidget {
       if (idx == -1) {
         spans.add(TextSpan(
           text: text.substring(start),
-          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+          style: HuddlText.caption(color: context.hc.textTertiary),
         ));
         break;
       }
       if (idx > start) {
         spans.add(TextSpan(
           text: text.substring(start, idx),
-          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+          style: HuddlText.caption(color: context.hc.textTertiary),
         ));
       }
       spans.add(TextSpan(
         text: text.substring(idx, idx + query.length),
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: HuddlColors.textDark,
-          backgroundColor: const Color(0xFFF7F7F7),
-        ),
+        style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark).copyWith(backgroundColor: const Color(0xFFF7F7F7)),
       ));
       start = idx + query.length;
     }

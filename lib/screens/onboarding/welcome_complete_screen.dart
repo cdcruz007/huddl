@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../widgets/onboarding_progress_bar.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/backend_api_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -10,6 +9,7 @@ import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_character.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../constants/app_text_styles.dart';
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});
@@ -52,11 +52,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
             // -- Title --
             Text(
               'Welcome to Huddl!',
-              style: GoogleFonts.poppins(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+              style: HuddlText.display(color: HuddlColors.nearBlack),
               textAlign: TextAlign.center,
             ),
 
@@ -86,12 +82,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: HuddlColors.success,
-                              height: 1.4,
-                            ),
+                            style: HuddlText.body(color: HuddlColors.success),
                             children: [
                               const TextSpan(text: 'You\'ve been added to '),
                               TextSpan(
@@ -138,11 +129,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Your groups',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primaryDark,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 10),
                       ...groupNames.map(
@@ -166,12 +153,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                    height: 1.3,
-                                  ),
+                                  style: HuddlText.body(color: HuddlColors.nearBlack),
                                 ),
                               ),
                             ],
@@ -212,11 +194,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                         child: Center(
                           child: Text(
                             '$groupCount',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: HuddlColors.textDark,
-                            ),
+                            style: HuddlText.heading(),
                           ),
                         ),
                       ),
@@ -226,11 +204,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                           groupCount == 1
                               ? 'community group ready for you'
                               : 'community groups ready for you',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: HuddlText.body(color: HuddlColors.nearBlack),
                         ),
                       ),
                     ],
@@ -245,11 +219,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
                 'Before we start, let your neighbours know you!',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: HuddlColors.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: HuddlColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -305,11 +275,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                   ),
                   child: Text(
                     'Let\'s go!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.white,
-                    ),
+                    style: HuddlText.heading(),
                   ),
                 ),
               ),

@@ -75,6 +75,11 @@ dependency_overrides:
   # record 6.0.0 ships record_linux 1.3.0 — pin it here so pub resolver uses
   # the correct version on all platforms (iOS build also resolves sub-packages).
   record_linux: 1.3.0
+  # record_web 1.x has a method signature mismatch with record_platform_interface 1.5.0.
+  # record_platform_interface 1.5.0 added {bool request = true} to hasPermission but
+  # record_web 1.x never implemented it. Pin platform_interface to 1.4.0 to fix web build.
+  record_platform_interface: 1.4.0
+  record_web: 1.1.8
 
 dev_dependencies:
   flutter_test:

@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/meetup_service.dart';
 import '../screens/events/meetup_detail_screen.dart';
+import '../constants/app_text_styles.dart';
 
 /// A clickable meetup card that appears in DM and group chats
 /// instead of a text notification message. Tapping it navigates
@@ -137,11 +137,7 @@ class MeetupInviteCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               category,
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.surface,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -177,11 +173,7 @@ class MeetupInviteCard extends StatelessWidget {
                                       privacy == MeetupPrivacy.group
                                           ? 'Group'
                                           : 'Private',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.hc.surface,
-                                      ),
+                                      style: HuddlText.label(),
                                     ),
                                   ],
                                 ),
@@ -197,11 +189,7 @@ class MeetupInviteCard extends StatelessWidget {
                               isFree
                                   ? 'Free'
                                   : '\u00A3${price is num ? price.toStringAsFixed(0) : ''}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.surface,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -223,11 +211,7 @@ class MeetupInviteCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               '$attendeeCount${maxAttendees != null ? '/$maxAttendees' : ''} going',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.surface,
-                              ),
+                              style: HuddlText.caption(),
                             ),
                           ],
                         ),
@@ -244,11 +228,7 @@ class MeetupInviteCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -261,11 +241,7 @@ class MeetupInviteCard extends StatelessWidget {
                           const SizedBox(width: 5),
                           Text(
                             dateDisplay,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textSecondary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                           const SizedBox(width: 10),
                           Icon(Icons.access_time,
@@ -274,10 +250,7 @@ class MeetupInviteCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               timeDisplay,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: context.hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -294,10 +267,7 @@ class MeetupInviteCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               location,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: context.hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -315,22 +285,14 @@ class MeetupInviteCard extends StatelessWidget {
                               organiser.isNotEmpty
                                   ? organiser[0].toUpperCase()
                                   : '?',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: catStyle.color,
-                              ),
+                              style: HuddlText.label(),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Organised by $organiser',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textSecondary,
-                              ),
+                              style: HuddlText.caption(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -349,11 +311,7 @@ class MeetupInviteCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   'View',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: catStyle.color,
-                                  ),
+                                  style: HuddlText.caption(weight: FontWeight.w600),
                                 ),
                               ],
                             ),

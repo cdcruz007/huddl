@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/backup_restore_service.dart';
+import '../../constants/app_text_styles.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -123,18 +124,14 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: context.hc.surface,
         title: Text('Paste backup file',
-            style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.hc.textPrimary)),
+            style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Open your backup file, copy all its contents, then paste them below.',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textSecondary, height: 1.5),
+              style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -142,8 +139,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
               maxLines: 5,
               decoration: InputDecoration(
                 hintText: '{ "_huddl_backup": true, ... }',
-                hintStyle: GoogleFonts.poppins(
-                    fontSize: 12, color: context.hc.textTertiary),
+                hintStyle: HuddlText.caption(color: context.hc.textTertiary),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: context.hc.divider)),
@@ -164,10 +160,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           TextButton(
             onPressed: () => Navigator.pop(c),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textSecondary)),
+                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -178,8 +171,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             ),
             onPressed: () => Navigator.pop(c, ctrl.text.trim()),
             child: Text('Restore',
-                style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
+                style: HuddlText.body(weight: FontWeight.w600)),
           ),
         ],
       ),
@@ -199,10 +191,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                 color: HuddlColors.primary, size: 22),
             const SizedBox(width: 8),
             Text('Restore backup?',
-                style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
           ],
         ),
         content: Column(
@@ -211,8 +200,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           children: [
             Text(
               'This will overwrite your current app data with the backup from:',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textSecondary, height: 1.5),
+              style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
             ),
             const SizedBox(height: 10),
             _InfoRow(label: 'Backup date', value: created),
@@ -229,11 +217,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
               child: Text(
                 'Current data will be replaced. This cannot be undone.\n'
                 'Restart the app after restoring.',
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: HuddlColors.error,
-                    fontWeight: FontWeight.w500,
-                    height: 1.5),
+                style: HuddlText.caption(color: HuddlColors.error).copyWith(height: 1.5),
               ),
             ),
           ],
@@ -242,10 +226,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           TextButton(
             onPressed: () => Navigator.pop(c, false),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textSecondary)),
+                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -256,8 +237,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             ),
             onPressed: () => Navigator.pop(c, true),
             child: Text('Yes, restore',
-                style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
+                style: HuddlText.body(weight: FontWeight.w600)),
           ),
         ],
       ),
@@ -269,7 +249,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg,
-          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white)),
+          style: HuddlText.body(color: Colors.white)),
       backgroundColor: HuddlColors.error,
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
@@ -286,7 +266,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           Expanded(
               child: Text(msg,
                   style:
-                      GoogleFonts.poppins(fontSize: 13, color: Colors.white))),
+                      HuddlText.body(color: Colors.white))),
         ],
       ),
       backgroundColor: HuddlColors.textDark,
@@ -319,10 +299,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text('Backup & Restore',
-            style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: Colors.white)),
+            style: HuddlText.heading(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -495,24 +472,15 @@ class _AutoBackupStatusCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
                 const SizedBox(height: 4),
                 Text(desc,
-                    style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textSecondary,
-                        height: 1.4)),
+                    style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4)),
                 if (lastManualBackup != null) ...[
                   const SizedBox(height: 6),
                   Text(
                     'Last manual backup: ${_fmt(lastManualBackup!)}',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: HuddlColors.nearBlack,
-                        fontWeight: FontWeight.w500),
+                    style: HuddlText.caption(color: HuddlColors.nearBlack),
                   ),
                 ],
               ],
@@ -595,16 +563,10 @@ class _ActionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
                     const SizedBox(height: 3),
                     Text(subtitle,
-                        style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textSecondary,
-                            height: 1.4)),
+                        style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4)),
                   ],
                 ),
               ),
@@ -630,8 +592,7 @@ class _ActionCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w600),
+                      textStyle: HuddlText.caption(weight: FontWeight.w600),
                     ),
                     onPressed: onTap,
                     child: Text(buttonLabel),
@@ -700,15 +661,11 @@ class _ExportResultSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Backup created',
-                        style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
                     if (metadata != null)
                       Text(
                         '${metadata!.keyCount} items • $fileName',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12, color: context.hc.textSecondary),
+                        style: HuddlText.caption(color: context.hc.textSecondary),
                       ),
                   ],
                 ),
@@ -717,17 +674,13 @@ class _ExportResultSheet extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text('Save your backup',
-              style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary)),
+              style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
           const SizedBox(height: 8),
           Text(
             'Copy the backup below and save it to a safe location — your Files '
             'app, email, or cloud storage. You can use it to restore your data '
             'at any time.',
-            style: GoogleFonts.poppins(
-                fontSize: 12, color: context.hc.textSecondary, height: 1.5),
+            style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
 
@@ -762,8 +715,7 @@ class _ExportResultSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                textStyle:
-                    GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                textStyle: HuddlText.body(weight: FontWeight.w600),
               ),
               icon: const Icon(Icons.copy, size: 18),
               label: const Text('Copy backup to clipboard'),
@@ -783,10 +735,7 @@ class _ExportResultSheet extends StatelessWidget {
             child: TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('Done',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textSecondary)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
             ),
           ),
         ],
@@ -837,14 +786,9 @@ class _StorageDetailCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(items[i].$1,
-                            style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                         Text(items[i].$2,
-                            style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: context.hc.textSecondary)),
+                            style: HuddlText.caption(color: context.hc.textSecondary)),
                       ],
                     ),
                   ),
@@ -897,10 +841,7 @@ class _TipsCard extends StatelessWidget {
                   color: HuddlColors.primary, size: 18),
               const SizedBox(width: 8),
               Text('Tips',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.primary)),
+                  style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.primary)),
             ],
           ),
           const SizedBox(height: 10),
@@ -916,10 +857,7 @@ class _TipsCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(tip,
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: HuddlColors.textSecondary,
-                          height: 1.5)),
+                      style: HuddlText.caption(color: HuddlColors.textSecondary).copyWith(height: 1.5)),
                 ),
               ],
             ),
@@ -942,11 +880,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         title.toUpperCase(),
-        style: GoogleFonts.poppins(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: context.hc.textTertiary,
-            letterSpacing: 0.8),
+        style: HuddlText.caption(weight: FontWeight.w700, color: context.hc.textTertiary).copyWith(letterSpacing: 0.8),
       );
 }
 
@@ -988,16 +922,10 @@ class _InfoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
                 const SizedBox(height: 6),
                 Text(body,
-                    style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textSecondary,
-                        height: 1.5)),
+                    style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.5)),
               ],
             ),
           ),
@@ -1019,13 +947,9 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         children: [
           Text('$label: ',
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textSecondary)),
+              style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textSecondary)),
           Text(value,
-              style: GoogleFonts.poppins(
-                  fontSize: 12, color: context.hc.textPrimary)),
+              style: HuddlText.caption(color: context.hc.textPrimary)),
         ],
       ),
     );

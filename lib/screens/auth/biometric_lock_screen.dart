@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_character.dart';
 import '../../services/biometric_auth_service.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../constants/app_text_styles.dart';
 
 /// Shown on app launch when the user has biometric login enabled.
 /// The user must authenticate with Face ID / fingerprint (or device PIN)
@@ -129,11 +129,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
               // ── Title ──────────────────────────────────────────────────
               Text(
                 _hasFailed ? 'Try again' : 'Welcome back',
-                style: GoogleFonts.poppins(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                style: HuddlText.display(color: HuddlColors.nearBlack),
                 textAlign: TextAlign.center,
               ),
 
@@ -144,11 +140,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
                 _hasFailed
                     ? 'Authentication failed. Tap the icon to try again.'
                     : 'Use $_biometricLabel to log in to Huddl',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  color: HuddlColors.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: HuddlColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
 
@@ -189,13 +181,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
                         _isAuthenticating
                             ? 'Verifying…'
                             : 'Use $_biometricLabel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: _hasFailed
-                              ? HuddlColors.error
-                              : HuddlColors.primary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -209,11 +195,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
                 onPressed: _usePasswordInstead,
                 child: Text(
                   'Use password instead',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: HuddlColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: HuddlText.body(color: HuddlColors.textSecondary),
                 ),
               ),
 

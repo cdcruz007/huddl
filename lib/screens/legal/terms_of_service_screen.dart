@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});
@@ -21,11 +21,7 @@ class TermsOfServiceScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(
           'Terms of Service',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
       ),
       body: SingleChildScrollView(
@@ -793,16 +789,11 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
               children: [
                 Text(
                   'Last Updated: May 2026',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primaryDark,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 Text(
                   'Version 2.1 - Voice Message Terms Added',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textSecondary),
+                  style: HuddlText.caption(color: HuddlColors.textSecondary),
                 ),
               ],
             ),
@@ -830,8 +821,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
               Expanded(
                 child: Text(
                   'Important Legal Notice',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                  style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textDark),
                 ),
               ),
             ],
@@ -839,14 +829,12 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
           const SizedBox(height: 10),
           Text(
             'PLEASE READ THESE TERMS OF SERVICE CAREFULLY. BY ACCESSING, DOWNLOADING, INSTALLING, OR USING HUDDL, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE LEGALLY BOUND BY THESE TERMS. IF YOU DO NOT AGREE, YOU MUST NOT USE THE SERVICE.',
-            style: GoogleFonts.poppins(
-                fontSize: 13, color: HuddlColors.textSecondary, height: 1.55, fontWeight: FontWeight.w500),
+            style: HuddlText.body(color: HuddlColors.textSecondary).copyWith(height: 1.55),
           ),
           const SizedBox(height: 10),
           Text(
             'These Terms include comprehensive limitations of liability, disclaimers of warranties, indemnification obligations, dispute resolution provisions, and other important legal terms that affect your rights.',
-            style: GoogleFonts.poppins(
-                fontSize: 12, color: HuddlColors.textSecondary, height: 1.5, fontStyle: FontStyle.italic),
+            style: HuddlText.caption(color: HuddlColors.textSecondary).copyWith(fontStyle: FontStyle.italic, height: 1.5),
           ),
         ],
       ),
@@ -859,17 +847,12 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: HuddlColors.textDark,
-          ),
+          style: HuddlText.body(weight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         Text(
           content,
-          style: GoogleFonts.poppins(
-              fontSize: 13, color: HuddlColors.textSecondary, height: 1.6),
+          style: HuddlText.body(color: HuddlColors.textSecondary).copyWith(height: 1.6),
         ),
         const SizedBox(height: 20),
         Divider(color: HuddlColors.divider, height: 1),
@@ -896,11 +879,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
               Expanded(
                 child: Text(
                   'By using Huddl, you agree to:',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primaryDark,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
               ),
             ],
@@ -916,12 +895,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
           const SizedBox(height: 10),
           Text(
             'These Terms provide maximum legal protection to Cruzen Ltd. You use the Service entirely at your own risk.',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: HuddlColors.textSecondary,
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w500,
-            ),
+            style: HuddlText.caption(color: HuddlColors.textSecondary).copyWith(fontStyle: FontStyle.italic),
           ),
         ],
       ),
@@ -933,11 +907,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: HuddlColors.textDark,
-        ),
+        style: HuddlText.body(),
       ),
     );
   }

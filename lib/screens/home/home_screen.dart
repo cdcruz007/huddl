@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../constants/app_text_styles.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
-import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
@@ -737,7 +737,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text('Shared with $targetName',
-                          style: GoogleFonts.poppins(fontSize: 13)),
+                          style: HuddlText.body()),
                     ),
                   ],
                 ),
@@ -780,7 +780,7 @@ class _HomeScreenState extends State<HomeScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: Text('Welcome message sent to $recipientName!',
-                    style: GoogleFonts.poppins(fontSize: 13)),
+                    style: HuddlText.body()),
               ),
             ],
           ),
@@ -877,11 +877,7 @@ class _HomeScreenState extends State<HomeScreen>
       leading: Icon(icon, color: color ?? context.hc.textPrimary, size: 22),
       title: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: color ?? context.hc.textPrimary,
-        ),
+        style: HuddlText.body(),
       ),
       onTap: onTap,
     );
@@ -894,15 +890,15 @@ class _HomeScreenState extends State<HomeScreen>
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Delete post?',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            style: HuddlText.body(weight: FontWeight.w600)),
         content: Text('This action cannot be undone.',
-            style: GoogleFonts.poppins(fontSize: 14)),
+            style: HuddlText.body()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
                 style:
-                    GoogleFonts.poppins(color: context.hc.textSecondary)),
+                    HuddlText.body(color: context.hc.textSecondary)),
           ),
           TextButton(
             onPressed: () {
@@ -916,7 +912,7 @@ class _HomeScreenState extends State<HomeScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Post deleted',
-                      style: GoogleFonts.poppins(fontSize: 13)),
+                      style: HuddlText.body()),
                   backgroundColor: HuddlColors.textDark,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -925,7 +921,7 @@ class _HomeScreenState extends State<HomeScreen>
               );
             },
             child: Text('Delete',
-                style: GoogleFonts.poppins(color: HuddlColors.error)),
+                style: HuddlText.body(color: HuddlColors.error)),
           ),
         ],
       ),
@@ -943,7 +939,7 @@ class _HomeScreenState extends State<HomeScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Post hidden',
-            style: GoogleFonts.poppins(fontSize: 13)),
+            style: HuddlText.body()),
         backgroundColor: HuddlColors.textDark,
         behavior: SnackBarBehavior.floating,
         shape:
@@ -1254,19 +1250,11 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           TextSpan(
             text: 'h',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: HuddlColors.primary,
-            ),
+            style: HuddlText.display(),
           ),
           TextSpan(
             text: 'uddl',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack,
-            ),
+            style: HuddlText.display(),
           ),
         ],
       ),
@@ -1366,20 +1354,12 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Text(
                     'Your Feed',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
+                    style: HuddlText.display(),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'RSVP to events & meetups to see personalised updates',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: hc.textTertiary,
-                      height: 1.35,
-                    ),
+                    style: HuddlText.caption(color: hc.textTertiary),
                   ),
                 ],
               ),
@@ -1456,20 +1436,11 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Text(
                   '$_greeting,',
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w400,
-                    color: hc.textSecondary,
-                  ),
+                  style: HuddlText.display(),
                 ),
                 Text(
                   _name.isNotEmpty ? _name : 'there',
-                  style: GoogleFonts.poppins(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: hc.textPrimary,
-                    height: 1.1,
-                  ),
+                  style: HuddlText.display(color: hc.textPrimary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1489,17 +1460,12 @@ class _HomeScreenState extends State<HomeScreen>
               if (_borough.isNotEmpty)
                 Text(
                   _borough,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
-                  ),
+                  style: HuddlText.caption(weight: FontWeight.w600),
                 ),
               if (_borough.isNotEmpty && _boroughMembers.isNotEmpty)
                 Text(
                   ' · ',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: hc.textTertiary),
+                  style: HuddlText.caption(color: hc.textTertiary),
                 ),
               Expanded(
                 child: Text(
@@ -1509,8 +1475,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ? 'Your local community'
                           : 'Your area',
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: hc.textTertiary),
+                  style: HuddlText.caption(color: hc.textTertiary),
                 ),
               ),
             ],
@@ -1551,18 +1516,11 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w700),
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: hc.textTertiary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ),
@@ -1575,11 +1533,7 @@ class _HomeScreenState extends State<HomeScreen>
               onTap: () { HuddlAnimations.selectionClick(); onSeeAll(); },
               child: Text(
                 'See all',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: HuddlColors.primary,
-                ),
+                style: HuddlText.body(),
               ),
             ),
           ),
@@ -1623,15 +1577,11 @@ class _HomeScreenState extends State<HomeScreen>
                   children: [
                     Text(
                       'Noticeboard',
-                      style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: hc.textPrimary),
+                      style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
                     ),
                     Text(
                       '${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11, color: hc.textTertiary),
+                      style: HuddlText.caption(color: hc.textTertiary),
                     ),
                   ],
                 ),
@@ -1644,11 +1594,7 @@ class _HomeScreenState extends State<HomeScreen>
                 },
                 child: Text(
                   'See all',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.primary,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ),
             ],
@@ -1688,10 +1634,7 @@ class _HomeScreenState extends State<HomeScreen>
                     Expanded(
                       child: Text(
                         topNudge.title,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: hc.textSecondary,
-                            height: 1.35),
+                        style: HuddlText.body(color: hc.textSecondary).copyWith(height: 1.35),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1745,10 +1688,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Text(
                           'No posts yet — be the first to share something with '
                           '${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: hc.textTertiary,
-                              height: 1.4),
+                          style: HuddlText.caption(color: hc.textTertiary).copyWith(height: 1.4),
                           maxLines: 2,
                         ),
                       ),
@@ -1900,18 +1840,11 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Text(
                           "Here's what you missed",
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700),
                         ),
                         Text(
                           lastSeenLabel,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: hc.textTertiary,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ],
                     ),
@@ -1966,11 +1899,7 @@ class _HomeScreenState extends State<HomeScreen>
                             Expanded(
                               child: Text(
                                 item.label,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: hc.textPrimary,
-                                ),
+                                style: HuddlText.body(),
                               ),
                             ),
                             Icon(Icons.chevron_right_rounded,
@@ -1992,8 +1921,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(width: 6),
                     Text(
                       "You're all caught up! Scroll down to explore.",
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: hc.textSecondary),
+                      style: HuddlText.caption(color: hc.textSecondary),
                     ),
                   ],
                 ),
@@ -2130,20 +2058,12 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Text(
                   "Nothing confirmed yet",
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   "RSVP to a meetup or event and it'll appear here with a countdown.",
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: hc.textSecondary,
-                    height: 1.35,
-                  ),
+                  style: HuddlText.caption(color: hc.textSecondary),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -2161,11 +2081,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     child: Text(
                       'Browse events →',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -2248,11 +2164,7 @@ class _HomeScreenState extends State<HomeScreen>
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(pillLabel,
-                          style: GoogleFonts.poppins(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.4)),
+                          style: HuddlText.label(color: Colors.white).copyWith(letterSpacing: 0.4)),
                     ),
                   ),
                   // Countdown badge — top-right, outlined pill
@@ -2272,13 +2184,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                         child: Text(item.badge!,
-                            style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: item.badge == 'Today!'
-                                    ? Colors.redAccent
-                                    : HuddlColors.primary,
-                                letterSpacing: 0.2)),
+                            style: HuddlText.label().copyWith(letterSpacing: 0.2)),
                       ),
                     ),
                 ],
@@ -2297,11 +2203,7 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(width: 4),
                   Text(
                     "You're going!",
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
-                    ),
+                    style: HuddlText.label(),
                   ),
                 ],
               ),
@@ -2316,11 +2218,7 @@ class _HomeScreenState extends State<HomeScreen>
                     // Title
                     Text(
                       item.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2328,10 +2226,7 @@ class _HomeScreenState extends State<HomeScreen>
                     // Date / location subtitle
                     Text(
                       item.subtitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        color: hc.textSecondary,
-                      ),
+                      style: HuddlText.label(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2365,13 +2260,7 @@ class _HomeScreenState extends State<HomeScreen>
                             const SizedBox(width: 4),
                             Text(
                               item.badge!,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: item.badge == 'Today!'
-                                    ? Colors.redAccent
-                                    : HuddlColors.primary,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -2568,11 +2457,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       child: Text(
                         pillLabel,
-                        style: GoogleFonts.poppins(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.4),
+                        style: HuddlText.label(color: Colors.white).copyWith(letterSpacing: 0.4),
                       ),
                     ),
                   ),
@@ -2588,10 +2473,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         child: Text(
                           item.badge!,
-                          style: GoogleFonts.poppins(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.nearBlack),
+                          style: HuddlText.label(color: HuddlColors.nearBlack),
                         ),
                       ),
                     ),
@@ -2608,20 +2490,13 @@ class _HomeScreenState extends State<HomeScreen>
                   children: [
                     Text(
                       item.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       item.subtitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: hc.textSecondary,
-                      ),
+                      style: HuddlText.caption(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2881,7 +2756,7 @@ class _HomeScreenState extends State<HomeScreen>
                               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
                             child: Text(e.dateDisplay,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                              style: HuddlText.label(color: Colors.white)),
                           ),
                         ),
                         // Going badge — top-right
@@ -2897,7 +2772,7 @@ class _HomeScreenState extends State<HomeScreen>
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
                                 const Icon(Icons.check_circle, size: 10, color: Colors.white),
                                 const SizedBox(width: 3),
-                                Text('Going', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
+                                Text('Going', style: HuddlText.label(color: Colors.white)),
                               ]),
                             ),
                           ),
@@ -2911,11 +2786,11 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(e.category.toUpperCase(),
-                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          style: HuddlText.label(color: hc.textTertiary).copyWith(letterSpacing: 0.5),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 3),
                         Text(e.title,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                         if (e.location.isNotEmpty) ...[  
                           const SizedBox(height: 3),
@@ -2923,7 +2798,7 @@ class _HomeScreenState extends State<HomeScreen>
                             Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
                             const SizedBox(width: 2),
                             Expanded(child: Text(e.location,
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                              style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                               maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ]),
                         ],
@@ -2932,7 +2807,7 @@ class _HomeScreenState extends State<HomeScreen>
                           _buildAvatarStack(e.id.hashCode, hc),
                           const SizedBox(width: 5),
                           Expanded(child: Text('${e.attendees} attending',
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                            style: HuddlText.label(color: hc.textTertiary))),
                           _buildActionPill(
                             isGoing ? 'Going ✓' : 'Book',
                             isGoing ? HuddlColors.nearBlack : HuddlColors.primary,
@@ -3013,7 +2888,7 @@ class _HomeScreenState extends State<HomeScreen>
                               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
                             child: Text(s.category.displayName,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
+                              style: HuddlText.label(color: Colors.white)),
                           ),
                         ),
                       ],
@@ -3026,16 +2901,16 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(s.category.displayName.toUpperCase(),
-                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          style: HuddlText.label(color: hc.textTertiary).copyWith(letterSpacing: 0.5),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 3),
                         Text(s.name,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                         if (s.tagline.isNotEmpty) ...[  
                           const SizedBox(height: 3),
                           Text(s.tagline,
-                            style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                            style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                         ],
                         const SizedBox(height: 10),
@@ -3044,7 +2919,7 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 5),
                           Expanded(child: Text(
                             s.endorsementCount > 0 ? '${s.endorsementCount} endorsed' : 'Recommended',
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                            style: HuddlText.label(color: hc.textTertiary))),
                           _buildActionPill('View', HuddlColors.primary, hc),
                         ]),
                       ],
@@ -3138,7 +3013,7 @@ class _HomeScreenState extends State<HomeScreen>
                               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
                             child: Text(item.condition.label,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                              style: HuddlText.label(color: Colors.white)),
                           ),
                         ),
                       ],
@@ -3151,11 +3026,11 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(item.category.label.toUpperCase(),
-                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          style: HuddlText.label(color: hc.textTertiary).copyWith(letterSpacing: 0.5),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 3),
                         Text(item.title,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                         if (item.sellerLocation.isNotEmpty) ...[
                           const SizedBox(height: 3),
@@ -3163,7 +3038,7 @@ class _HomeScreenState extends State<HomeScreen>
                             Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
                             const SizedBox(width: 2),
                             Expanded(child: Text(item.sellerLocation,
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                              style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
                               maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ]),
                         ],
@@ -3172,7 +3047,7 @@ class _HomeScreenState extends State<HomeScreen>
                           _buildAvatarStack(item.id.hashCode, hc),
                           const SizedBox(width: 5),
                           Expanded(child: Text('Near you',
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                            style: HuddlText.label(color: hc.textTertiary))),
                           // Price pill
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -3183,7 +3058,7 @@ class _HomeScreenState extends State<HomeScreen>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(priceStr,
-                              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: priceColor)),
+                              style: HuddlText.caption(weight: FontWeight.w700, color: priceColor)),
                           ),
                         ]),
                       ],
@@ -3253,11 +3128,7 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: HuddlColors.textDark,
-        ),
+        style: HuddlText.caption(),
       ),
     );
   }
@@ -3294,7 +3165,7 @@ class _HomeScreenState extends State<HomeScreen>
             Icon(icon, size: 24, color: hc.textTertiary),
             const SizedBox(height: 6),
             Text(message,
-                style: GoogleFonts.poppins(fontSize: 13, color: hc.textTertiary)),
+                style: HuddlText.body(color: hc.textTertiary)),
           ],
         ),
       ),
@@ -3349,18 +3220,12 @@ class _HomeScreenState extends State<HomeScreen>
                   hintText: _aiPostHint.isNotEmpty
                       ? _aiPostHint
                       : 'Ask huddl assistant anything...',
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: hc.textTertiary,
-                  ),
+                  hintStyle: HuddlText.body(),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: hc.textPrimary,
-                ),
+                style: HuddlText.body(),
                 textAlignVertical: TextAlignVertical.center,
                 maxLines: 2,
                 minLines: 1,
@@ -3427,11 +3292,7 @@ class _HomeScreenState extends State<HomeScreen>
               Expanded(
                 child: Text(
                   'Post something to ${_borough.isNotEmpty ? _borough : 'your community'}...',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: hc.textTertiary,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  style: HuddlText.body(color: hc.textTertiary),
                 ),
               ),
               Container(
@@ -3477,10 +3338,7 @@ class _HomeScreenState extends State<HomeScreen>
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                       child: Text(
                         'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary),
+                        style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
                       ),
                     ),
                     Padding(
@@ -3494,8 +3352,7 @@ class _HomeScreenState extends State<HomeScreen>
                         decoration: InputDecoration(
                           hintText:
                               "Share something with your ${_borough.isNotEmpty ? _borough : 'community'} neighbours...",
-                          hintStyle: GoogleFonts.poppins(
-                              fontSize: 14, color: hc.textTertiary),
+                          hintStyle: HuddlText.body(color: hc.textTertiary),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: hc.divider),
@@ -3513,8 +3370,7 @@ class _HomeScreenState extends State<HomeScreen>
                           fillColor: hc.scaffold,
                           contentPadding: const EdgeInsets.all(12),
                         ),
-                        style: GoogleFonts.poppins(
-                            fontSize: 14, color: hc.textPrimary),
+                        style: HuddlText.body(color: hc.textPrimary),
                         onChanged: (_) => setSheetState(() {}),
                       ),
                     ),
@@ -3543,8 +3399,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           child: Text(
                             'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600),
+                            style: HuddlText.body(weight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -3573,7 +3428,7 @@ class _HomeScreenState extends State<HomeScreen>
                 Expanded(
                   child: Text(
                     'Posted to ${_borough.isNotEmpty ? _borough : 'community'} community',
-                    style: GoogleFonts.poppins(fontSize: 13),
+                    style: HuddlText.body(),
                   ),
                 ),
               ],
@@ -3602,7 +3457,7 @@ class _HomeScreenState extends State<HomeScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to post. Please try again.',
-                style: GoogleFonts.poppins(fontSize: 13)),
+                style: HuddlText.body()),
             backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -3646,15 +3501,11 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Text(
                           'Welcome to ${_borough.isNotEmpty ? _borough : 'Huddl'}!',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: hc.textPrimary),
+                          style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
                         ),
                         Text(
                           "Here's how to get the most out of huddl",
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: hc.textTertiary),
+                          style: HuddlText.caption(color: hc.textTertiary),
                         ),
                       ],
                     ),
@@ -3737,8 +3588,7 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(width: 10),
           Expanded(
             child: Text(title,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: hc.textPrimary)),
+                style: HuddlText.body(color: hc.textPrimary)),
           ),
           GestureDetector(
             onTap: onTap,
@@ -3751,10 +3601,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               child: Text(
                 ctaLabel,
-                style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white),
+                style: HuddlText.caption(weight: FontWeight.w600, color: Colors.white),
               ),
             ),
           ),
@@ -3881,22 +3728,14 @@ class _HomeScreenState extends State<HomeScreen>
               const SizedBox(width: 8),
               Text(
                 'Today for you',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: hc.textPrimary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w700),
               ),
               const Spacer(),
               GestureDetector(
                 onTap: () { HuddlAnimations.selectionClick(); _switchToTab(2); },
                 child: Text(
                   'See all',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.primary,
-                  ),
+                  style: HuddlText.body(),
                 ),
               ),
             ],
@@ -3965,12 +3804,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           child: Text(
                             category.toUpperCase(),
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: candidateColor,
-                              letterSpacing: 0.5,
-                            ),
+                            style: HuddlText.label(color: candidateColor),
                           ),
                         ),
                         // Reason tag pill — personalisation signal
@@ -3984,21 +3818,14 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                             child: Text(
                               _reasonTag,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: hc.textTertiary,
-                              ),
+                              style: HuddlText.label(),
                             ),
                           ),
                         ],
                         const SizedBox(height: 6),
                         Text(
                           title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w700),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -4012,10 +3839,7 @@ class _HomeScreenState extends State<HomeScreen>
                               Expanded(
                                 child: Text(
                                   location,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: hc.textSecondary,
-                                  ),
+                                  style: HuddlText.caption(),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -4043,10 +3867,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                             child: Text(
                               ctaLabel,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: HuddlText.body(),
                             ),
                           ),
                         ),
@@ -4077,7 +3898,7 @@ class _HomeScreenState extends State<HomeScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Preferences saved',
-                  style: GoogleFonts.poppins(fontSize: 13)),
+                  style: HuddlText.body()),
               backgroundColor: HuddlColors.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -4203,31 +4024,18 @@ class _HomeScreenState extends State<HomeScreen>
                   // Category label — tells the user what this card is
                   Text(
                     categoryLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: labelColor,
-                      letterSpacing: 0.6,
-                    ),
+                    style: HuddlText.label(color: labelColor),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     nudge.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: titleColor,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     nudge.subtitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: subtitleColor,
-                      height: 1.3,
-                    ),
+                    style: HuddlText.caption(color: subtitleColor),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4295,11 +4103,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         child: Text(
                           item.reason,
-                          style: GoogleFonts.poppins(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -4312,31 +4116,20 @@ class _HomeScreenState extends State<HomeScreen>
                           size: 14, color: HuddlColors.success),  // teal
                       const SizedBox(width: 3),
                       Text('Going',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.success,            // teal
-                          )),
+                          style: HuddlText.label()),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     meetup.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${meetup.timeDisplay} \u00B7 ${meetup.attendeeCount} going',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -4422,11 +4215,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         child: Text(
                           item.reason,
-                          style: GoogleFonts.poppins(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.nearBlack,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -4439,21 +4228,13 @@ class _HomeScreenState extends State<HomeScreen>
                           size: 14, color: HuddlColors.success),  // teal
                       const SizedBox(width: 3),
                       Text('Going',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.success,            // teal
-                          )),
+                          style: HuddlText.label()),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     event.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4467,10 +4248,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Expanded(
                         child: Text(
                           '${event.dateDisplay} \u00B7 ${event.timeDisplay}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -4488,10 +4266,7 @@ class _HomeScreenState extends State<HomeScreen>
                         Expanded(
                           child: Text(
                             event.location,
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.label(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -4552,11 +4327,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Text(
                     meetup.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4565,10 +4336,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Expanded(
                         child: Text(
                           '${meetup.dateDisplay} \u00B7 ${item.reason}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -4610,11 +4378,7 @@ class _HomeScreenState extends State<HomeScreen>
                 color: context.hc.textSecondary, size: 20),
             const SizedBox(height: 2),
             Text('Hide',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textSecondary,
-                )),
+                style: HuddlText.label()),
           ],
         ),
       ),
@@ -4659,11 +4423,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Expanded(
                             child: Text(
                               a.authorName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary,
-                              ),
+                              style: HuddlText.body(weight: FontWeight.w600),
                             ),
                           ),
                           if (a.isPinned)
@@ -4683,11 +4443,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       color: context.hc.textTertiary),
                                   const SizedBox(width: 2),
                                   Text('Pinned',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.hc.textTertiary,
-                                      )),
+                                      style: HuddlText.label()),
                                 ],
                               ),
                             ),
@@ -4697,10 +4453,7 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           Text(
                             a.timeAgo,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                           const SizedBox(width: 6),
                           // AI reason
@@ -4721,10 +4474,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 const SizedBox(width: 3),
                                 Text(
                                   item.reason,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 9,
-                                    color: HuddlColors.primary,
-                                  ),
+                                  style: HuddlText.label(),
                                 ),
                               ],
                             ),
@@ -4757,11 +4507,7 @@ class _HomeScreenState extends State<HomeScreen>
               a.content.length > 120
                   ? '${a.content.substring(0, 120)}...'
                   : a.content,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: context.hc.textPrimary,
-                height: 1.45,
-              ),
+              style: HuddlText.body(color: context.hc.textPrimary),
             ),
             const SizedBox(height: 8),
             // Compact action row
@@ -4840,11 +4586,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Text(
                     g.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4855,10 +4597,7 @@ class _HomeScreenState extends State<HomeScreen>
                       const SizedBox(width: 4),
                       Text(
                         item.reason,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                       const SizedBox(width: 6),
                       BoroughBadge(
@@ -4878,11 +4617,7 @@ class _HomeScreenState extends State<HomeScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('View',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textTertiary,
-                  )),
+                  style: HuddlText.caption(weight: FontWeight.w600)),
             ),
           ],
         ),
@@ -4930,11 +4665,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Text(
                     f.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -4942,10 +4673,7 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       Text(
                         f.timeAgo,
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.label(),
                       ),
                       if (item.reason.isNotEmpty) ...[
                         const SizedBox(width: 4),
@@ -4961,10 +4689,7 @@ class _HomeScreenState extends State<HomeScreen>
                         Flexible(
                           child: Text(
                             item.reason,
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: context.hc.textTertiary,
-                            ),
+                            style: HuddlText.label(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -4986,11 +4711,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               child: Text(
                 _feedTypeLabel(f.type),
-                style: GoogleFonts.poppins(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                  color: _feedIconColor(f.type),
-                ),
+                style: HuddlText.label(color: _feedIconColor(f.type)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -5044,11 +4765,7 @@ class _HomeScreenState extends State<HomeScreen>
                 Expanded(
                   child: Text(
                     partnerName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textSecondary,
-                    ),
+                    style: HuddlText.caption(weight: FontWeight.w600),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -5060,11 +4777,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   child: Text(
                     'Promoted',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: HuddlColors.warningDark,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: HuddlText.label(color: HuddlColors.warningDark),
                   ),
                 ),
               ],
@@ -5073,21 +4786,13 @@ class _HomeScreenState extends State<HomeScreen>
             // Title
             Text(
               title,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: hc.textPrimary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
             if (subtitle.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: hc.textSecondary,
-                  height: 1.4,
-                ),
+                style: HuddlText.caption(color: hc.textSecondary),
               ),
             ],
             const SizedBox(height: 12),
@@ -5109,10 +4814,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   child: Text(
                     ctaLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ),
               ),
@@ -5156,14 +4858,7 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(width: 4),
                 Text(
                   label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive
-                        ? HuddlColors.primary
-                        : HuddlColors.textHint,
-                  ),
+                  style: HuddlText.caption(),
                 ),
               ],
             ],
@@ -5546,19 +5241,12 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                             children: [
                               Text(
                                 ann.authorName,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: hc.textPrimary,
-                                ),
+                                style: HuddlText.caption(weight: FontWeight.w600),
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 ann.timeAgo,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  color: hc.textTertiary,
-                                ),
+                                style: HuddlText.label(),
                               ),
                             ],
                           ),
@@ -5566,11 +5254,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                           // Content — truncated when collapsed
                           Text(
                             ann.content,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: hc.textSecondary,
-                              height: 1.4,
-                            ),
+                            style: HuddlText.body(color: hc.textSecondary),
                             maxLines: _expanded ? null : 2,
                             overflow: _expanded
                                 ? TextOverflow.visible
@@ -5690,11 +5374,7 @@ class _ActionButton extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: HuddlText.caption(color: color),
               ),
             ],
           ],
@@ -5874,9 +5554,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
                   Icon(Icons.tune, color: hc.textTertiary, size: 20),
                   const SizedBox(width: 8),
                   Text('Feed Preferences',
-                      style: GoogleFonts.poppins(
-                          fontSize: 17, fontWeight: FontWeight.w600,
-                          color: hc.textPrimary)),
+                      style: HuddlText.heading(color: hc.textPrimary)),
                 ],
               ),
             ),
@@ -5885,7 +5563,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Choose which content appears in your feed.',
-                style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
+                style: HuddlText.caption(color: hc.textSecondary),
               ),
             ),
             const SizedBox(height: 12),
@@ -5918,9 +5596,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text('Save Preferences',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w600,
-                          color: Colors.white)),
+                      style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                 ),
               ),
             ),
@@ -5948,13 +5624,10 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w500,
-                          color: enabled ? hc.textPrimary : hc.textTertiary)),
+                      style: HuddlText.body(color: enabled ? hc.textPrimary : hc.textTertiary)),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: GoogleFonts.poppins(
-                          fontSize: 11, color: hc.textTertiary)),
+                      style: HuddlText.caption(color: hc.textTertiary)),
                 ],
               ),
             ),
@@ -6089,19 +5762,12 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 children: [
                   Text(
                     'Comments',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textPrimary,
-                    ),
+                    style: HuddlText.heading(),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '(${_comments.length})',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: hc.textTertiary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -6158,19 +5824,12 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                       children: [
                                         Text(
                                           c.authorName,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: isReply ? 12 : 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: hc.textPrimary,
-                                          ),
+                                          style: HuddlText.caption(weight: FontWeight.w600, color: hc.textPrimary),
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
                                           c.timeAgo,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            color: hc.textTertiary,
-                                          ),
+                                          style: HuddlText.caption(),
                                         ),
                                       ],
                                     ),
@@ -6187,22 +5846,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         ),
                                         child: Text(
                                           '@${c.replyToName}',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: HuddlColors.textSecondary,
-                                          ),
+                                          style: HuddlText.caption(weight: FontWeight.w600),
                                         ),
                                       ),
                                     ],
                                     const SizedBox(height: 4),
                                     Text(
                                       c.content,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: isReply ? 12 : 13,
-                                        color: hc.textPrimary,
-                                        height: 1.4,
-                                      ),
+                                      style: HuddlText.caption(color: hc.textPrimary).copyWith(height: 1.4),
                                     ),
                                     const SizedBox(height: 6),
                                     // Like + Reply row
@@ -6239,12 +5890,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                                   const SizedBox(width: 4),
                                                   Text(
                                                     '${c.likes}',
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 11,
-                                                      color: c.isLiked
-                                                          ? HuddlColors.accentCoral
-                                                          : HuddlColors.textHint,
-                                                    ),
+                                                    style: HuddlText.caption(),
                                                   ),
                                                 ],
                                               ),
@@ -6264,14 +5910,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                               child: Center(
                                                 child: Text(
                                                   'Reply',
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: _replyingTo ==
-                                                            c.authorName
-                                                        ? HuddlColors.textSecondary
-                                                        : HuddlColors.textHint,
-                                                  ),
+                                                  style: HuddlText.caption(),
                                                 ),
                                               ),
                                             ),
@@ -6302,10 +5941,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     Expanded(
                       child: Text(
                         'Replying to @$_replyingTo',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: HuddlColors.textSecondary,
-                            fontWeight: FontWeight.w500),
+                        style: HuddlText.caption(color: HuddlColors.textSecondary),
                       ),
                     ),
                     GestureDetector(
@@ -6330,8 +5966,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         hintText: _replyingTo != null
                             ? 'Reply to @$_replyingTo…'
                             : 'Write a comment…',
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: hc.textTertiary),
+                        hintStyle: HuddlText.body(color: hc.textTertiary),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide(color: hc.divider),
@@ -6352,8 +5987,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                             horizontal: 16, vertical: 10),
                         isDense: true,
                       ),
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: hc.textPrimary),
+                      style: HuddlText.body(color: hc.textPrimary),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
                     ),
@@ -6727,11 +6361,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                     const SizedBox(width: 8),
                     Text(
                       'Notifications',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.heading(),
                     ),
                     if (unread > 0) ...[
                       const SizedBox(width: 8),
@@ -6744,11 +6374,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                         ),
                         child: Text(
                           '$unread',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -6759,12 +6385,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                           : null,
                       child: Text(
                         'Mark all read',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: unread > 0
-                              ? HuddlColors.primary
-                              : HuddlColors.textHint,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                   ],
@@ -6812,19 +6433,12 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                                     _showUnreadOnly
                                         ? 'No unread notifications'
                                         : 'No notifications yet',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                      color: context.hc.textSecondary,
-                                    ),
+                                    style: HuddlText.body(),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "You're all caught up!",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: context.hc.textTertiary,
-                                    ),
+                                    style: HuddlText.body(),
                                   ),
                                 ],
                               ),
@@ -6872,14 +6486,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight:
-                selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected
-                ? HuddlColors.primary
-                : HuddlColors.textSecondary,
-          ),
+          style: HuddlText.caption(),
         ),
       ),
     );
@@ -6953,13 +6560,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: isRead
-                            ? FontWeight.w400
-                            : FontWeight.w600,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(weight: FontWeight.w600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -6967,10 +6568,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                       const SizedBox(height: 2),
                       Text(
                         body,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -6985,15 +6583,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                 children: [
                   Text(
                     timeAgo,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: isRead
-                          ? HuddlColors.textHint
-                          : HuddlColors.primary,
-                      fontWeight: isRead
-                          ? FontWeight.w400
-                          : FontWeight.w600,
-                    ),
+                    style: HuddlText.label(color: HuddlColors.primary),
                   ),
                   const SizedBox(height: 4),
                   if (!isRead)
@@ -7144,11 +6734,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                 const SizedBox(width: 8),
                 Text(
                   'Share with...',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.heading(),
                 ),
               ],
             ),
@@ -7160,8 +6746,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
               onChanged: (v) => setState(() => _search = v),
               decoration: InputDecoration(
                 hintText: 'Search groups or members...',
-                hintStyle: GoogleFonts.poppins(
-                    fontSize: 14, color: context.hc.textTertiary),
+                hintStyle: HuddlText.body(color: context.hc.textTertiary),
                 prefixIcon: Icon(Icons.search,
                     size: 20, color: context.hc.textTertiary),
                 filled: true,
@@ -7174,8 +6759,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                     horizontal: 16, vertical: 10),
                 isDense: true,
               ),
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textPrimary),
+              style: HuddlText.body(color: context.hc.textPrimary),
             ),
           ),
           const SizedBox(height: 12),
@@ -7185,10 +6769,8 @@ class _SharePostSheetState extends State<_SharePostSheet>
             unselectedLabelColor: HuddlColors.textHint,
             indicatorColor: HuddlColors.textDark,
             indicatorSize: TabBarIndicatorSize.label,
-            labelStyle: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w400),
+            labelStyle: HuddlText.caption(weight: FontWeight.w600),
+            unselectedLabelStyle: HuddlText.caption(),
             tabs: const [Tab(text: 'Groups'), Tab(text: 'Members')],
           ),
           Divider(height: 1, color: context.hc.divider),
@@ -7202,9 +6784,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                           padding: const EdgeInsets.all(32),
                           child: Text(
                             'No groups to share with yet',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: context.hc.textTertiary),
+                            style: HuddlText.body(color: context.hc.textTertiary),
                           ),
                         ),
                       )
@@ -7230,19 +6810,13 @@ class _SharePostSheetState extends State<_SharePostSheet>
                             ),
                             title: Text(
                               g.name,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textPrimary,
-                              ),
+                              style: HuddlText.body(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Text(
                               '${g.memberCount} members',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: context.hc.textTertiary),
+                              style: HuddlText.caption(color: context.hc.textTertiary),
                             ),
                             trailing: _sending
                                 ? const SizedBox(
@@ -7264,11 +6838,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                                     ),
                                     child: Text(
                                       'Share',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.hc.surface,
-                                      ),
+                                      style: HuddlText.caption(weight: FontWeight.w600),
                                     ),
                                   ),
                             onTap: _sending
@@ -7283,9 +6853,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                           padding: const EdgeInsets.all(32),
                           child: Text(
                             'No members in ${widget.borough} to share with',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: context.hc.textTertiary),
+                            style: HuddlText.body(color: context.hc.textTertiary),
                           ),
                         ),
                       )
@@ -7307,17 +6875,11 @@ class _SharePostSheetState extends State<_SharePostSheet>
                             ),
                             title: Text(
                               m.name,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textPrimary,
-                              ),
+                              style: HuddlText.body(),
                             ),
                             subtitle: Text(
                               widget.borough,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: context.hc.textTertiary),
+                              style: HuddlText.caption(color: context.hc.textTertiary),
                             ),
                             trailing: _sending
                                 ? const SizedBox(
@@ -7339,11 +6901,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                                     ),
                                     child: Text(
                                       'Send',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.hc.surface,
-                                      ),
+                                      style: HuddlText.caption(weight: FontWeight.w600),
                                     ),
                                   ),
                             onTap: _sending
@@ -7442,20 +7000,12 @@ class _ActivityDetailSheet extends StatelessWidget {
                     children: [
                       Text(
                         item.title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.heading(),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _typeLabelForType(item.type),
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: _colorForType(item.type),
-                        ),
+                        style: HuddlText.body(color: _colorForType(item.type)),
                       ),
                     ],
                   ),
@@ -7535,9 +7085,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                       },
                       child: Text(
                         _actionLabel(item.type),
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -7561,17 +7109,10 @@ class _ActivityDetailSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.textTertiary,
-                  )),
+                  style: HuddlText.caption()),
               const SizedBox(height: 2),
               Text(value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: HuddlColors.textDark,
-                  )),
+                  style: HuddlText.body()),
             ],
           ),
         ),

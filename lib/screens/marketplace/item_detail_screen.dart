@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,7 +23,10 @@ import '../groups/forward_message_sheet.dart';
 const Color _kMarketBlue = HuddlColors.nearBlack;
 
 // =============================================================================
-// PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
+// _adaptiveText — delegates to HuddlText type ramp.
+// fontSize param is retained for call-site compatibility but the output
+// is snapped to the nearest ramp level: >=20→display, >=15→heading,
+// >=13→body, else caption/label.
 // =============================================================================
 TextStyle _adaptiveText({
   double fontSize = 14,
@@ -35,21 +38,6 @@ TextStyle _adaptiveText({
   TextDecoration? decoration,
   Color? decorationColor,
 }) {
-  final bool isApple =
-      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
-  if (isApple) {
-    return TextStyle(
-      fontFamily: '.SF Pro Text',
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      color: color,
-      height: height,
-      fontStyle: fontStyle,
-      letterSpacing: letterSpacing,
-      decoration: decoration,
-      decorationColor: decorationColor,
-    );
-  }
   return GoogleFonts.poppins(
     fontSize: fontSize,
     fontWeight: fontWeight,
@@ -504,39 +492,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Semantics(
-                      label: 'Send offer to seller',
-                      button: true,
-                      child: ElevatedButton(
-                        onPressed: sending ? null : submitOffer,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
-                          disabledBackgroundColor:
-                              HuddlColors.primary.withValues(alpha: 0.5),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(26)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
-                          minimumSize: const Size(0, 48),
-                        ),
-                        child: sending
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : Text(
-                                item.isFree ? 'Request item' : 'Send offer',
-                                style: _adaptiveText(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
+                  Semantics(
+                    label: 'Send offer to seller',
+                    button: true,
+                    child: HuddlButton(
+                      label: item.isFree ? 'Request item' : 'Send offer',
+                      onPressed: sending ? null : submitOffer,
+                      isLoading: sending,
                     ),
                   ),
                 ],
@@ -632,63 +594,37 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: selectedType == null
-                            ? null
-                            : () async {
-                                Navigator.pop(ctx);
-                                final ok =
-                                    await _reportService.submitReport(
-                                  contentId: item.id,
-                                  targetUserId: item.sellerId,
-                                  type: selectedType!,
-                                  context: ReportContext.listing,
-                                  chatName: item.title,
-                                );
-                                if (mounted) {
-                                  if (ok) {
-                                    setState(() => _hasAlreadyReported = true);
-                                  }
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                      content: Text(ok
-                                          ? 'Report submitted. Thank you for keeping Huddl safe.'
-                                          : 'Could not submit report. Please try again.'),
-                                      backgroundColor: ok
-                                          ? HuddlColors.nearBlack
-                                          : HuddlColors.error,
-                                      behavior:
-                                          SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                    ),
-                                  );
+                    HuddlButton(
+                      label: 'Submit report',
+                      variant: HuddlButtonVariant.destructive,
+                      onPressed: selectedType == null
+                          ? null
+                          : () async {
+                              Navigator.pop(ctx);
+                              final ok = await _reportService.submitReport(
+                                contentId: item.id,
+                                targetUserId: item.sellerId,
+                                type: selectedType!,
+                                context: ReportContext.listing,
+                                chatName: item.title,
+                              );
+                              if (mounted) {
+                                if (ok) {
+                                  setState(() => _hasAlreadyReported = true);
                                 }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.error,
-                          disabledBackgroundColor:
-                              HuddlColors.error.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(26)),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
-                          minimumSize: const Size(0, 48),
-                        ),
-                        child: Text(
-                          'Submit report',
-                          style: _adaptiveText(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(ok
+                                        ? 'Report submitted. Thank you for keeping Huddl safe.'
+                                        : 'Could not submit report. Please try again.'),
+                                    backgroundColor: ok ? HuddlColors.nearBlack : HuddlColors.error,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                );
+                              }
+                            },
                     ),
                   ],
                 ),
@@ -1176,7 +1112,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Semantics(
             label: 'Mark item as sold',
             button: true,
-            child: OutlinedButton.icon(
+            child: HuddlButton(
+              label: 'Mark sold',
+              variant: HuddlButtonVariant.secondary,
+              leadingIcon: Icons.sell_outlined,
               onPressed: () {
                 HapticFeedback.mediumImpact();
                 _service.markSold(item.id);
@@ -1184,37 +1123,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle,
-                            color: Colors.white, size: 18),
+                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
-                        Expanded(
-                            child: Text('"${item.title}" marked as sold')),
+                        Expanded(child: Text('"${item.title}" marked as sold')),
                       ],
                     ),
                     backgroundColor: HuddlColors.textDark,
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 );
               },
-              icon: const Icon(Icons.sell_outlined, size: 18),
-              label: Text(
-                'Mark sold',
-                style: _adaptiveText(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: HuddlColors.textDark,
-                side: const BorderSide(color: HuddlColors.divider, width: 1.5),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                minimumSize: const Size(0, 48),
-              ),
             ),
           ),
         ),
@@ -1223,26 +1142,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Semantics(
             label: 'Edit this listing',
             button: true,
-            child: ElevatedButton.icon(
+            child: HuddlButton(
+              label: 'Edit listing',
+              leadingIcon: Icons.edit_outlined,
               onPressed: _openEditListing,
-              icon: const Icon(Icons.edit_outlined,
-                  size: 18, color: Colors.white),
-              label: Text(
-                'Edit listing',
-                style: _adaptiveText(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-                minimumSize: const Size(0, 48),
-              ),
             ),
           ),
         ),
@@ -1282,7 +1185,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Semantics(
             label: 'Relist this item for sale',
             button: true,
-            child: ElevatedButton.icon(
+            child: HuddlButton(
+              label: 'Relist item',
+              leadingIcon: Icons.refresh,
               onPressed: () {
                 HapticFeedback.mediumImpact();
                 _service.relistItem(item.id);
@@ -1290,39 +1195,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle,
-                            color: Colors.white, size: 18),
+                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
-                        Expanded(
-                            child:
-                                Text('"${item.title}" is back on sale')),
+                        Expanded(child: Text('"${item.title}" is back on sale')),
                       ],
                     ),
                     backgroundColor: HuddlColors.textDark,
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 );
               },
-              icon:
-                  const Icon(Icons.refresh, size: 18, color: Colors.white),
-              label: Text(
-                'Relist item',
-                style: _adaptiveText(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-                minimumSize: const Size(0, 48),
-              ),
             ),
           ),
         ),

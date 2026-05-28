@@ -8,12 +8,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/image_editor_widget.dart';
+import '../../constants/app_text_styles.dart';
 
 class EditGroupScreen extends StatefulWidget {
   final String groupId;
@@ -132,8 +132,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 color: context.hc.divider, borderRadius: BorderRadius.circular(2)),
             ),
             Text('Change group photo',
-              style: GoogleFonts.poppins(
-                fontSize: 16, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
+              style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -145,7 +144,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 child: const Icon(Icons.photo_library_outlined, color: HuddlColors.textDark),
               ),
               title: Text('Choose from gallery',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                style: HuddlText.body()),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickFrom(ImageSource.gallery);
@@ -163,7 +162,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                   child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.textDark),
                 ),
                 title: Text('Take a photo',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  style: HuddlText.body()),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFrom(ImageSource.camera);
@@ -230,14 +229,11 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Discard changes?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18, fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary),
+                style: HuddlText.heading(color: context.hc.textPrimary),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text('Your edits won\'t be saved.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
@@ -248,9 +244,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, false),
                       child: Text('Keep editing',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -258,9 +252,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, true),
                       child: Text('Discard',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w600,
-                          color: HuddlColors.error)),
+                        style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],
@@ -369,9 +361,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           ),
           title: Text(
             'Edit group',
-            style: GoogleFonts.poppins(
-              fontSize: 17, fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary),
+            style: HuddlText.heading(color: context.hc.textPrimary),
           ),
           centerTitle: true,
           bottom: PreferredSize(
@@ -403,10 +393,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                           strokeWidth: 2, color: Colors.white))
                   : Text(
                       'Save changes',
-                      style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white),
+                      style: HuddlText.body(weight: FontWeight.w600, color: Colors.white),
                     ),
             ),
           ),
@@ -431,8 +418,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                       TextFormField(
                         controller: _nameCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, color: context.hc.textPrimary),
+                        style: HuddlText.body(color: context.hc.textPrimary),
                         decoration: _inputDecoration(
                             'e.g. Hackney Toddler Playgroup'),
                         validator: (v) => (v == null || v.trim().isEmpty)
@@ -450,8 +436,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                       TextFormField(
                         controller: _descCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, color: context.hc.textPrimary),
+                        style: HuddlText.body(color: context.hc.textPrimary),
                         decoration: _inputDecoration(
                             'e.g. who this group is for, activities planned…'),
                         maxLines: 4,
@@ -545,11 +530,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Change photo',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -613,15 +594,12 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
   Widget _sectionLabel(String text) => Text(
     text,
-    style: GoogleFonts.poppins(
-      fontSize: 14, fontWeight: FontWeight.w600,
-      color: context.hc.textPrimary),
+    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
   );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.poppins(
-        fontSize: 14, color: context.hc.textTertiary),
+    hintStyle: HuddlText.body(color: context.hc.textTertiary),
     filled: true,
     fillColor: context.hc.surface,
     contentPadding:
@@ -642,8 +620,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: HuddlColors.error),
     ),
-    counterStyle: GoogleFonts.poppins(
-        fontSize: 11, color: context.hc.textTertiary),
+    counterStyle: HuddlText.caption(color: context.hc.textTertiary),
   );
 
   Widget _audienceCheckbox(String option) {
@@ -675,11 +652,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             const SizedBox(width: 12),
             Text(
               option,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: context.hc.textPrimary,
-                fontWeight:
-                    selected ? FontWeight.w500 : FontWeight.w400),
+              style: HuddlText.body(color: context.hc.textPrimary),
             ),
           ],
         ),
@@ -725,20 +698,12 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? HuddlColors.primary
-                          : context.hc.textPrimary),
+                    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     description,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textSecondary,
-                      height: 1.4),
+                    style: HuddlText.caption(color: context.hc.textSecondary).copyWith(height: 1.4),
                   ),
                 ],
               ),

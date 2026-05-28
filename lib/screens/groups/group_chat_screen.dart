@@ -4,7 +4,6 @@ import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_character.dart';
@@ -50,6 +49,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../constants/app_text_styles.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -1477,16 +1477,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Saved Threads',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.heading(),
                     ),
                     const Spacer(),
                     Text(
                       '${threads.length}',
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                      style: HuddlText.body(color: context.hc.textTertiary),
                     ),
                   ],
                 ),
@@ -1510,18 +1506,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         const SizedBox(height: 16),
                         Text(
                           'No saved threads',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                         const SizedBox(height: 8),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 48),
                           child: Text(
                             'Long press on a message with replies and select "Save reply thread" to save it under a topic.',
-                            style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary),
+                            style: HuddlText.body(color: context.hc.textSecondary),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -1549,11 +1541,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         ),
                         title: Text(
                           thread.topicName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(weight: FontWeight.w600),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1561,7 +1549,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             const SizedBox(height: 2),
                             Text(
                               thread.rootMessageText,
-                              style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
+                              style: HuddlText.caption(color: context.hc.textSecondary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1572,12 +1560,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   '${thread.totalMessages} messages',
-                                  style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                                  style: HuddlText.caption(color: context.hc.textTertiary),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _formatSavedDate(thread.savedAt),
-                                  style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                                  style: HuddlText.caption(color: context.hc.textTertiary),
                                 ),
                               ],
                             ),
@@ -1661,11 +1649,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     Expanded(
                       child: Text(
                         thread.topicName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.heading(),
                       ),
                     ),
                     TextButton.icon(
@@ -1679,7 +1663,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       },
                       icon: const Icon(Icons.open_in_new, size: 16),
                       label: Text('Go to group',
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                          style: HuddlText.caption(weight: FontWeight.w600)),
                       style: TextButton.styleFrom(foregroundColor: HuddlColors.textTertiary),
                     ),
                   ],
@@ -1691,12 +1675,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   children: [
                     Text(
                       '${thread.groupName}',
-                      style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                      style: HuddlText.caption(color: context.hc.textTertiary),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '${thread.totalMessages} messages',
-                      style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                      style: HuddlText.caption(color: context.hc.textTertiary),
                     ),
                   ],
                 ),
@@ -1726,23 +1710,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             children: [
                               Text(
                                 thread.rootSenderName,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textDark,
-                                ),
+                                style: HuddlText.body(weight: FontWeight.w600),
                               ),
                               const Spacer(),
                               Text(
                                 _formatSavedDate(thread.rootTimestamp),
-                                style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                                style: HuddlText.caption(color: context.hc.textTertiary),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             thread.rootMessageText,
-                            style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary, height: 1.4),
+                            style: HuddlText.body(color: context.hc.textPrimary).copyWith(height: 1.4),
                           ),
                         ],
                       ),
@@ -1769,23 +1749,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 children: [
                                   Text(
                                     reply.isMe ? 'You' : reply.senderName,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.hc.textPrimary,
-                                    ),
+                                    style: HuddlText.caption(weight: FontWeight.w600),
                                   ),
                                   const Spacer(),
                                   Text(
                                     _formatSavedDate(reply.timestamp),
-                                    style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary),
+                                    style: HuddlText.label(color: context.hc.textTertiary),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 reply.message,
-                                style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary, height: 1.4),
+                                style: HuddlText.body(color: context.hc.textPrimary).copyWith(height: 1.4),
                               ),
                             ],
                           ),
@@ -1823,21 +1799,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               const SizedBox(height: 18),
               Text(
                 'Unsend message?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'Choose how you want to unsend this message.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -1868,7 +1836,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   },
                   icon: const Icon(Icons.group_outlined, size: 20),
                   label: Text('Unsend for everyone',
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                      style: HuddlText.body(weight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.error,
                     foregroundColor: Colors.white,
@@ -1906,7 +1874,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   },
                   icon: const Icon(Icons.person_outline, size: 20),
                   label: Text('Unsend just for me',
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                      style: HuddlText.body(weight: FontWeight.w600)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: HuddlColors.textDark,
                     side: BorderSide(color: context.hc.divider),
@@ -1920,8 +1888,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(c),
                 child: Text('Cancel',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textTertiary)),
+                    style: HuddlText.body(color: context.hc.textTertiary)),
               ),
             ],
           ),
@@ -1971,11 +1938,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(height: 18),
                     Text(
                       threadReplies.isEmpty ? 'Save message' : 'Save reply thread',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.heading(),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
@@ -1983,10 +1946,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       threadReplies.isEmpty
                           ? 'Save this message under a topic'
                           : '${threadReplies.length + 1} messages in this thread',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: context.hc.textSecondary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                     const SizedBox(height: 16),
                     // Thread preview
@@ -2005,15 +1965,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         children: [
                           Text(
                             rootMsg.senderName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                           Text(
                             rootMsg.message,
-                            style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
+                            style: HuddlText.caption(color: context.hc.textSecondary),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -2021,11 +1977,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           if (threadReplies.isNotEmpty)
                           Text(
                             '+ ${threadReplies.length} ${threadReplies.length == 1 ? 'reply' : 'replies'}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: HuddlColors.nearBlack,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                         ],
                       ),
@@ -2038,11 +1990,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'Save under existing topic',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(weight: FontWeight.w600),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -2080,13 +2028,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 ),
                                 child: Text(
                                   name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: selected
-                                        ? HuddlColors.white
-                                        : HuddlColors.nearBlack,
-                                  ),
+                                  style: HuddlText.caption(),
                                 ),
                               ),
                             );
@@ -2101,17 +2043,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       controller: topicController,
                       autofocus: existingTopics.isEmpty,
                       textCapitalization: TextCapitalization.sentences,
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                      style: HuddlText.body(color: context.hc.textPrimary),
                       onChanged: (_) => setDialogState(() {}),
                       decoration: InputDecoration(
                         labelText: 'Topic name',
-                        labelStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textTertiary),
+                        labelStyle: HuddlText.body(color: context.hc.textTertiary),
                         hintText: existingTopics.isEmpty
                             ? 'e.g. Thursday cafe meetup'
                             : 'New topic or pick one above',
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textTertiary),
+                        hintStyle: HuddlText.body(color: context.hc.textTertiary),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: context.hc.divider),
@@ -2159,8 +2099,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             Expanded(
                               child: Text(
                                 'Saved as a new item under "${topicController.text.trim()}" — existing saves are untouched',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: HuddlColors.primary),
+                                style: HuddlText.caption(color: HuddlColors.primary),
                               ),
                             ),
                           ],
@@ -2181,10 +2120,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             child: Text('Cancel',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.textSecondary)),
+                                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -2205,10 +2141,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             ),
                             child: Text(
                               threadReplies.isEmpty ? 'Save message' : 'Save thread',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.white),
+                              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white),
                             ),
                           ),
                         ),
@@ -2287,11 +2220,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               const SizedBox(height: 18),
               Text(
                 isBlocked ? 'Unblock $memberName?' : 'Block $memberName?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -2299,11 +2228,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 isBlocked
                     ? 'Their messages will be visible in this group again.'
                     : 'Their messages will be hidden from you in this group and DMs.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -2318,8 +2243,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -2350,8 +2274,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         elevation: 0,
                       ),
                       child: Text(isBlocked ? 'Unblock' : 'Block',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white)),
                     ),
                   ),
                 ],
@@ -2393,8 +2316,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     Expanded(
                       child: Text(
                         'Report $targetName',
-                        style: GoogleFonts.poppins(
-                            fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                        style: HuddlText.heading(color: context.hc.textPrimary),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -2403,7 +2325,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Why are you reporting this user?',
-                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.4),
+                  style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 RadioGroup<ReportType>(
@@ -2424,7 +2346,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             ),
                             Expanded(
                               child: Text(type.label,
-                                  style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary)),
+                                  style: HuddlText.body(color: context.hc.textPrimary)),
                             ),
                           ],
                         ),
@@ -2444,8 +2366,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text('Cancel',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2485,8 +2406,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           elevation: 0,
                         ),
                         child: Text('Report',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -2527,15 +2447,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 12),
                     Text(
                       'Report message',
-                      style: GoogleFonts.poppins(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                      style: HuddlText.heading(color: context.hc.textPrimary),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Why are you reporting this message from $senderName?',
-                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.4),
+                  style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 RadioGroup<ReportType>(
@@ -2555,7 +2474,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               activeColor: HuddlColors.primary,
                             ),
                             Text(type.label,
-                                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary)),
+                                style: HuddlText.body(color: context.hc.textPrimary)),
                           ],
                         ),
                       ),
@@ -2574,8 +2493,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text('Cancel',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2616,8 +2534,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           elevation: 0,
                         ),
                         child: Text('Report',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -2659,12 +2576,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Add Member', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
+              child: Text('Add Member', style: HuddlText.heading(color: context.hc.textPrimary)),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text('Select a member from your borough to add to this private group.',
-                style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                style: HuddlText.body(color: context.hc.textSecondary)),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -2677,7 +2594,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   final m = availableMembers[i];
                   return ListTile(
                     leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
-                    title: Text(m.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
+                    title: Text(m.name, style: HuddlText.body(color: context.hc.textPrimary)),
                     trailing: SizedBox(
                       width: 80,
                       height: 34,
@@ -2692,7 +2609,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, elevation: 0, padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                        child: Text('Add', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                        child: Text('Add', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white)),
                       ),
                     ),
                   );
@@ -2731,18 +2648,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Remove Member', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
+              child: Text('Remove Member', style: HuddlText.heading(color: context.hc.textPrimary)),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text('Select a member to remove from this private group.',
-                style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                style: HuddlText.body(color: context.hc.textSecondary)),
             ),
             const SizedBox(height: 12),
             if (removable.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(32),
-                child: Text('No members to remove.', style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary)),
+                child: Text('No members to remove.', style: HuddlText.body(color: context.hc.textTertiary)),
               )
             else
               Expanded(
@@ -2755,7 +2672,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     final m = removable[i];
                     return ListTile(
                       leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
-                      title: Text(m.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
+                      title: Text(m.name, style: HuddlText.body(color: context.hc.textPrimary)),
                       trailing: SizedBox(
                         width: 90,
                         height: 34,
@@ -2766,7 +2683,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           },
                           style: OutlinedButton.styleFrom(side: const BorderSide(color: HuddlColors.error), padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                          child: Text('Remove', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                          child: Text('Remove', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
                         ),
                       ),
                     );
@@ -2784,12 +2701,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       context: context,
       builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Remove ${member.name}?', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 17)),
+        title: Text('Remove ${member.name}?', style: HuddlText.heading()),
         content: Text('${member.name} will be removed from this private group and will no longer be able to see group messages.',
-          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5)),
+          style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+            child: Text('Cancel', style: HuddlText.body(color: context.hc.textSecondary))),
           TextButton(
             onPressed: () {
               Navigator.pop(c);
@@ -2799,7 +2716,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               );
             },
-            child: Text('Remove', style: GoogleFonts.poppins(color: HuddlColors.error, fontWeight: FontWeight.w600)),
+            child: Text('Remove', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
           ),
         ],
       ),
@@ -2836,7 +2753,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 children: [
                   Icon(Icons.admin_panel_settings, size: 24, color: context.hc.textPrimary),
                   const SizedBox(width: 10),
-                  Text('Add Admin', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
+                  Text('Add Admin', style: HuddlText.heading(color: context.hc.textPrimary)),
                 ],
               ),
             ),
@@ -2844,7 +2761,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Admins can add and remove members, edit group details, and manage the group.',
-                style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.4),
+                style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
               ),
             ),
             const SizedBox(height: 12),
@@ -2855,7 +2772,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   children: [
                     Icon(Icons.admin_panel_settings_outlined, size: 48, color: context.hc.textTertiary),
                     const SizedBox(height: 12),
-                    Text('All members are already admins.', style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary)),
+                    Text('All members are already admins.', style: HuddlText.body(color: context.hc.textTertiary)),
                   ],
                 ),
               )
@@ -2870,8 +2787,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     final m = nonAdmins[i];
                     return ListTile(
                       leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
-                      title: Text(m.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
-                      subtitle: Text('Member', style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
+                      title: Text(m.name, style: HuddlText.body(color: context.hc.textPrimary)),
+                      subtitle: Text('Member', style: HuddlText.caption(color: context.hc.textTertiary)),
                       trailing: SizedBox(
                         width: 110,
                         height: 34,
@@ -2881,7 +2798,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             _confirmMakeAdmin(m);
                           },
                           icon: const Icon(Icons.shield_outlined, size: 16, color: HuddlColors.white),
-                          label: Text('Make Admin', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                          label: Text('Make Admin', style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white)),
                           style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
                         ),
@@ -2901,14 +2818,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       context: context,
       builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Make ${member.name} an admin?', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 17)),
+        title: Text('Make ${member.name} an admin?', style: HuddlText.heading()),
         content: Text(
           '${member.name} will have admin rights including adding/removing members and editing group details.',
-          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+          style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.5),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+            child: Text('Cancel', style: HuddlText.body(color: context.hc.textSecondary))),
           TextButton(
             onPressed: () {
               Navigator.pop(c);
@@ -2935,7 +2852,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ),
               );
             },
-            child: Text('Confirm', style: GoogleFonts.poppins(color: HuddlColors.nearBlack, fontWeight: FontWeight.w600)),
+            child: Text('Confirm', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
           ),
         ],
       ),
@@ -2967,21 +2884,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               const SizedBox(height: 18),
               Text(
                 'Leave this group?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'We are sad to see you go, but you can always come back or find another group that interests you in the Discover tab.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -2997,11 +2906,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -3064,11 +2969,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
                       child: Text(
                         'Leave',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.error,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -3114,21 +3015,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               const SizedBox(height: 18),
               Text(
                 'Cannot share this group',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'Default community groups are automatically assigned based on each member\'s onboarding journey. They cannot be shared manually.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -3145,11 +3038,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   ),
                   child: Text(
                     'Understood',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.surface,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -3207,11 +3096,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         Expanded(
                           child: Text(
                             'Share with members',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.textPrimary,
-                            ),
+                            style: HuddlText.heading(),
                           ),
                         ),
                       ],
@@ -3222,7 +3107,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
                       'Share this group with members in your borough',
-                      style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+                      style: HuddlText.body(color: context.hc.textTertiary),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -3237,7 +3122,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       padding: const EdgeInsets.all(32),
                       child: Text(
                         'No other members in $borough yet',
-                        style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                        style: HuddlText.body(color: context.hc.textTertiary),
                         textAlign: TextAlign.center,
                       ),
                     )
@@ -3259,26 +3144,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                                     child: Text(
                                       member.name.isNotEmpty ? member.name[0] : '?',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary,
-                                      ),
+                                      style: HuddlText.body(weight: FontWeight.w600),
                                     ),
                                   ),
                             title: Text(
                               member.name,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textPrimary,
-                              ),
+                              style: HuddlText.body(),
                             ),
                             subtitle: Text(
                               member.parentType == 'mum' ? 'Mum' : 'Dad',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: context.hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(),
                             ),
                             trailing: const Icon(Icons.send, size: 20, color: HuddlColors.textDark),
                             onTap: () {
@@ -3368,21 +3243,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               const SizedBox(height: 18),
               Text(
                 'Cannot share with $memberName',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'This group is set up for "$requiredProfile" profiles. $memberName does not match this parent profile and cannot be added to the group.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
+                style: HuddlText.body(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -3399,11 +3266,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   ),
                   child: Text(
                     'OK',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.surface,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -3451,10 +3314,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     _searchMatches.isEmpty
                         ? 'No results'
                         : '${_currentMatchIndex + 1} of ${_searchMatches.length}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                   const Spacer(),
                   if (_searchMatches.isNotEmpty) ...[
@@ -3827,11 +3687,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                             const SizedBox(width: 4),
                                             Text(
                                               '${_threadReplies[msg.id]!.length} ${_threadReplies[msg.id]!.length == 1 ? 'reply' : 'replies'}',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: HuddlColors.textDark,
-                                              ),
+                                              style: HuddlText.caption(weight: FontWeight.w600),
                                             ),
                                             const SizedBox(width: 4),
                                             Icon(Icons.chevron_right, size: 14, color: HuddlColors.textDark),
@@ -3904,10 +3760,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       title: TextField(
         controller: _searchController,
         autofocus: true,
-        style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+        style: HuddlText.body(color: context.hc.textPrimary),
         decoration: InputDecoration(
           hintText: 'Search messages...',
-          hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+          hintStyle: HuddlText.body(color: context.hc.textTertiary),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -3952,20 +3808,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 children: [
                   Text(
                     widget.groupName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     'Tap here for group info',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -4048,11 +3897,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             child: Center(
                               child: Text(
                                 '$_activePollCount',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w700,
-                                  color: HuddlColors.white,
-                                ),
+                                style: HuddlText.label(),
                               ),
                             ),
                           ),
@@ -4062,11 +3907,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Active Polls',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
-                    ),
+                    style: HuddlText.body(),
                   ),
                   if (_activePollCount > 0) ...[
                     const Spacer(),
@@ -4079,11 +3920,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
                       child: Text(
                         '$_activePollCount active',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textTertiary,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -4103,11 +3940,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Share group',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -4121,11 +3954,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Group details',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -4139,11 +3968,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Saved messages',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -4157,11 +3982,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Saved threads',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary,
-                    ),
+                    style: HuddlText.body(),
                   ),
                 ],
               ),
@@ -4176,11 +3997,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 12),
                     Text(
                       'Add member',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -4194,11 +4011,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 12),
                     Text(
                       'Remove member',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.error,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -4212,11 +4025,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 12),
                     Text(
                       'Add admin',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -4231,11 +4040,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     const SizedBox(width: 12),
                     Text(
                       'Leave group',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.error,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -4347,11 +4152,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     maxLines: null,
                     keyboardType: TextInputType.multiline,
                     textInputAction: TextInputAction.send,
-                    style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
                       hintStyle:
-                          GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                          HuddlText.body(color: context.hc.textTertiary),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -4699,7 +4504,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               Expanded(
                 child: Text(
                   msg,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: HuddlText.body(),
                 ),
               ),
             ],
@@ -4736,17 +4541,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Delete Poll',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: HuddlText.body(weight: FontWeight.w600),
         ),
         content: Text(
           'Are you sure you want to delete this poll? All votes will be lost and no users will be able to see or update the poll.',
-          style: GoogleFonts.poppins(fontSize: 14),
+          style: HuddlText.body(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(color: context.hc.textTertiary)),
+                style: HuddlText.body(color: context.hc.textTertiary)),
           ),
           TextButton(
             onPressed: () {
@@ -4761,8 +4566,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               _pollService.savePolls(widget.groupId, List.from(_polls));
             },
             child: Text('Delete',
-                style: GoogleFonts.poppins(
-                    color: HuddlColors.error, fontWeight: FontWeight.w600)),
+                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
           ),
         ],
       ),
@@ -5247,7 +5051,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               permission == LocationPermission.deniedForever
                   ? 'Location permission permanently denied. Enable it in Settings.'
                   : 'Location permission denied.',
-              style: GoogleFonts.poppins(fontSize: 13),
+              style: HuddlText.body(),
             ),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
@@ -5285,7 +5089,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
             const SizedBox(width: 12),
-            Text('Getting your location…', style: GoogleFonts.poppins(fontSize: 13)),
+            Text('Getting your location…', style: HuddlText.body()),
           ],
         ),
         backgroundColor: HuddlColors.primary,
@@ -5329,7 +5133,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             isPermissionIssue
                 ? 'Location permission denied. Please allow location access in Settings.'
                 : 'Could not get your location. Make sure location is enabled and try again.',
-            style: GoogleFonts.poppins(fontSize: 13),
+            style: HuddlText.body(),
           ),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
@@ -5454,7 +5258,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           SnackBar(
             content: Text(
               'Contacts access is restricted on this device.',
-              style: GoogleFonts.poppins(fontSize: 13),
+              style: HuddlText.body(),
             ),
             backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
@@ -5483,7 +5287,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       SnackBar(
         content: Text(
           'Contacts permission is needed to share a contact card.',
-          style: GoogleFonts.poppins(fontSize: 13),
+          style: HuddlText.body(),
         ),
         backgroundColor: HuddlColors.error,
         behavior: SnackBarBehavior.floating,
@@ -5508,11 +5312,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             const SizedBox(width: 10),
             Text(
               'Contacts Access',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: ctx.hc.textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
           ],
         ),
@@ -5520,18 +5320,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           'Huddl needs access to your contacts so you can share '
           'contact cards in group and direct message chats.\n\n'
           'Please open Settings and enable Contacts for Huddl.',
-          style: GoogleFonts.poppins(fontSize: 14, color: ctx.hc.textSecondary, height: 1.5),
+          style: HuddlText.body(color: ctx.hc.textSecondary).copyWith(height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: ctx.hc.textSecondary,
-              ),
+              style: HuddlText.body(),
             ),
           ),
           ElevatedButton(
@@ -5547,7 +5343,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             },
             child: Text(
               'Open Settings',
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
           ),
         ],
@@ -5603,40 +5399,40 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 Center(
                   child: Text(
                     'Share Contact',
-                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: ctx.hc.textPrimary),
+                    style: HuddlText.heading(color: ctx.hc.textPrimary),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text('Name', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: ctx.hc.textSecondary)),
+                Text('Name', style: HuddlText.body(weight: FontWeight.w600, color: ctx.hc.textSecondary)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameCtrl,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     hintText: 'Contact name',
-                    hintStyle: GoogleFonts.poppins(color: HuddlColors.textHint),
+                    hintStyle: HuddlText.body(color: HuddlColors.textHint),
                     filled: true,
                     fillColor: ctx.hc.inputBg,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  style: GoogleFonts.poppins(fontSize: 15),
+                  style: HuddlText.body(),
                 ),
                 const SizedBox(height: 14),
-                Text('Phone number', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: ctx.hc.textSecondary)),
+                Text('Phone number', style: HuddlText.body(weight: FontWeight.w600, color: ctx.hc.textSecondary)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     hintText: '+44 7700 900000',
-                    hintStyle: GoogleFonts.poppins(color: HuddlColors.textHint),
+                    hintStyle: HuddlText.body(color: HuddlColors.textHint),
                     filled: true,
                     fillColor: ctx.hc.inputBg,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  style: GoogleFonts.poppins(fontSize: 15),
+                  style: HuddlText.body(),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -5654,7 +5450,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       if (n.isEmpty) return; // name required
                       Navigator.pop(ctx, {'name': n, 'phone': p});
                     },
-                    child: Text('Share', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600)),
+                    child: Text('Share', style: HuddlText.body(weight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -6055,11 +5851,7 @@ class _SystemMessageBubble extends StatelessWidget {
               Flexible(
                 child: Text(
                   message.message,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                    color: context.hc.textSecondary,
-                  ),
+                  style: HuddlText.caption().copyWith(fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -6175,11 +5967,7 @@ class _ChatBubble extends StatelessWidget {
                             onTap: onAvatarTap,
                             child: Text(
                               message.senderName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: HuddlColors.primary,  // #E8724A (Figma spec)
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w700),
                             ),
                           ),
                         ),
@@ -6207,11 +5995,7 @@ class _ChatBubble extends StatelessWidget {
                                 ? _buildHighlightedText(context, message.message, searchQuery, isMe: isMe)
                                 : Text(
                                     message.message,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      color: isMe ? HuddlColors.white : context.hc.textPrimary,
-                                      height: 1.4,
-                                    ),
+                                    style: HuddlText.body(color: isMe ? HuddlColors.white : context.hc.textPrimary),
                                   ),
                           ],
                         ),
@@ -6233,10 +6017,7 @@ class _ChatBubble extends StatelessWidget {
                             ],
                             Text(
                               _formatTime(message.timestamp),
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: _kTimestamp,
-                              ),
+                              style: HuddlText.caption(),
                             ),
                             if (isMe && messageStatus != null) ...[
                               const SizedBox(width: 4),
@@ -6327,10 +6108,7 @@ class _ChatBubble extends StatelessWidget {
                       Expanded(
                         child: Text(
                           capturedMessage.message,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: hc.textSecondary,
-                          ),
+                          style: HuddlText.caption(),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -6383,7 +6161,7 @@ class _ChatBubble extends StatelessWidget {
                   ),
                   title: Text(
                     capturedIsSaved ? 'Unsave message' : (capturedOnSaveThread != null ? 'Save message & thread' : 'Save message'),
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: HuddlText.body(),
                   ),
                   onTap: () {
                     Navigator.pop(c);
@@ -6393,7 +6171,7 @@ class _ChatBubble extends StatelessWidget {
                 ListTile(
                   leading: Icon(Icons.copy_outlined, color: hc.textPrimary),
                   title: Text('Copy text',
-                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                      style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
                     capturedOnCopy?.call();
@@ -6402,7 +6180,7 @@ class _ChatBubble extends StatelessWidget {
                 ListTile(
                   leading: Icon(Icons.forum_outlined, color: hc.textPrimary),
                   title: Text('Reply in thread',
-                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                      style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
                     capturedOnReply?.call();
@@ -6411,7 +6189,7 @@ class _ChatBubble extends StatelessWidget {
                 ListTile(
                   leading: Icon(Icons.forward_outlined, color: hc.textPrimary),
                   title: Text('Forward',
-                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                      style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
                     capturedOnForward?.call();
@@ -6421,8 +6199,7 @@ class _ChatBubble extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
                     title: Text('Unsend message',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                        style: HuddlText.body(color: HuddlColors.error)),
                     onTap: () {
                       Navigator.pop(c);
                       capturedOnUnsend.call();
@@ -6432,7 +6209,7 @@ class _ChatBubble extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.topic_outlined, color: HuddlColors.nearBlack),
                     title: Text('Save reply thread',
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                        style: HuddlText.body()),
                     onTap: () {
                       Navigator.pop(c);
                       capturedOnSaveThread.call();
@@ -6446,8 +6223,7 @@ class _ChatBubble extends StatelessWidget {
                     ),
                     title: Text(
                       capturedIsBlockedUser ? 'Unblock ${capturedMessage.senderName}' : 'Block ${capturedMessage.senderName}',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                      style: HuddlText.body(color: HuddlColors.error),
                     ),
                     onTap: () {
                       Navigator.pop(c);
@@ -6459,8 +6235,7 @@ class _ChatBubble extends StatelessWidget {
                     leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
                     title: Text(
                       'Report message',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                      style: HuddlText.body(color: HuddlColors.error),
                     ),
                     onTap: () {
                       Navigator.pop(c);
@@ -6472,8 +6247,7 @@ class _ChatBubble extends StatelessWidget {
                     leading: const Icon(Icons.person_off_outlined, color: HuddlColors.error),
                     title: Text(
                       'Report ${capturedMessage.senderName}',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                      style: HuddlText.body(color: HuddlColors.error),
                     ),
                     onTap: () {
                       Navigator.pop(c);
@@ -6493,8 +6267,7 @@ class _ChatBubble extends StatelessWidget {
     final baseColor = isMe ? HuddlColors.white : context.hc.textPrimary;
     if (query.isEmpty) {
       return Text(text,
-          style: GoogleFonts.poppins(
-              fontSize: 14, color: baseColor, height: 1.4));
+          style: HuddlText.body(color: baseColor).copyWith(height: 1.4));
     }
     final spans = <TextSpan>[];
     final lower = text.toLowerCase();
@@ -6525,8 +6298,7 @@ class _ChatBubble extends StatelessWidget {
     }
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.poppins(
-            fontSize: 14, color: baseColor, height: 1.4),
+        style: HuddlText.body(color: baseColor).copyWith(height: 1.4),
         children: spans,
       ),
     );
@@ -6578,19 +6350,12 @@ class _GroupDeletedMessageBubble extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'This message was deleted',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.body().copyWith(fontStyle: FontStyle.italic),
               ),
               const SizedBox(width: 8),
               Text(
                 _fmtTime(timestamp),
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.label(),
               ),
             ],
           ),
@@ -6756,11 +6521,7 @@ class _SenderAvatarState extends State<_SenderAvatar> {
             child: Center(
               child: Text(
                 initial,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: HuddlColors.white,
-                ),
+                style: HuddlText.body(weight: FontWeight.w700),
               ),
             ),
           );
@@ -6837,7 +6598,7 @@ class _TimestampDivider extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               _formatDate(timestamp),
-              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+              style: HuddlText.caption(color: context.hc.textTertiary),
             ),
           ),
           Expanded(child: Divider(color: context.hc.divider)),
@@ -7050,11 +6811,7 @@ class _GroupImageBubble extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       senderName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.primary,  // orange sender name (Figma)
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w700),
                     ),
                   ),
                 Stack(
@@ -7160,10 +6917,7 @@ class _GroupImageBubble extends StatelessWidget {
                         ),
                         child: Text(
                           _fmtTime(timestamp),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white,
-                          ),
+                          style: HuddlText.label(),
                         ),
                       ),
                     ),
@@ -7366,11 +7120,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       widget.senderName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.primary,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w700),
                     ),
                   ),
                 Container(
@@ -7484,11 +7234,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                                         ],
                                         Text(
                                           stillLive ? 'LIVE' : 'ENDED',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                          ),
+                                          style: HuddlText.label(),
                                         ),
                                       ],
                                     ),
@@ -7516,18 +7262,12 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                               Expanded(
                                 child: Text(
                                   widget.locationName ?? 'My location',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: context.hc.textPrimary,
-                                  ),
+                                  style: HuddlText.body(),
                                 ),
                               ),
                               Text(
                                 _fmtTime(widget.timestamp),
-                                style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    color: context.hc.textTertiary),
+                                style: HuddlText.label(color: context.hc.textTertiary),
                               ),
                             ],
                           ),
@@ -7552,12 +7292,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                                   stillLive
                                       ? 'Updating · $_countdownLabel left'
                                       : 'Live sharing ended',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: stillLive
-                                        ? HuddlColors.nearBlack
-                                        : context.hc.textTertiary,
-                                  ),
+                                  style: HuddlText.caption(),
                                 ),
                               ],
                             ),
@@ -7573,11 +7308,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                               const SizedBox(width: 4),
                               Text(
                                 'Open in Google Maps',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textDark,
-                                ),
+                                style: HuddlText.caption(),
                               ),
                             ],
                           ),
@@ -7609,11 +7340,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                                   const SizedBox(width: 6),
                                   Text(
                                     'Stop sharing',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.error,
-                                    ),
+                                    style: HuddlText.caption(weight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -7694,18 +7421,11 @@ class _LiveLocationDurationSheet extends StatelessWidget {
                     children: [
                       Text(
                         'Share Live Location',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w700),
                       ),
                       Text(
                         'Your movement will be visible to the group',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ],
                   ),
@@ -7737,11 +7457,7 @@ class _LiveLocationDurationSheet extends StatelessWidget {
                     const SizedBox(width: 14),
                     Text(
                       opt.label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textPrimary,
-                      ),
+                      style: HuddlText.body(),
                     ),
                     const Spacer(),
                     Icon(Icons.chevron_right,
@@ -7839,11 +7555,7 @@ class _GroupAttachSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: context.hc.textSecondary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
         ),

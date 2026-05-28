@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../services/payment_service.dart';
+import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MANAGE SUBSCRIPTION — view usage, change plan, cancel, restore
@@ -80,7 +81,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             restored
                 ? 'Subscription restored!'
                 : 'No previous purchases found.',
-            style: GoogleFonts.poppins(color: HuddlColors.white),
+            style: HuddlText.body(color: HuddlColors.white),
           ),
           backgroundColor: restored ? HuddlColors.nearBlack : HuddlColors.textHint,
         ),
@@ -101,7 +102,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
           SnackBar(
             content: Text(
                 'Subscription paused for 1 month. Welcome back anytime!',
-                style: GoogleFonts.poppins(color: HuddlColors.white)),
+                style: HuddlText.body(color: HuddlColors.white)),
             backgroundColor: HuddlColors.textDark,
           ),
         );
@@ -125,7 +126,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
         SnackBar(
           content: Text(
               'Subscription cancelled. You\'ll keep access until the billing period ends.',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
+              style: HuddlText.body(color: HuddlColors.white)),
           backgroundColor: HuddlColors.textHint,
         ),
       );
@@ -138,16 +139,14 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Cancel via Your Store',
-            style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'To cancel your subscription, please go to your device settings:',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: context.hc.textSecondary),
+              style: HuddlText.body(color: context.hc.textSecondary),
             ),
             const SizedBox(height: 16),
             if (defaultTargetPlatform == TargetPlatform.iOS) ...[
@@ -166,10 +165,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             const SizedBox(height: 12),
             Text(
               'Your current plan will remain active until the end of your billing period.',
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: context.hc.textTertiary),
+              style: HuddlText.caption(color: context.hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
         ),
@@ -177,8 +173,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Got it',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.primary)),
           ),
           if (defaultTargetPlatform == TargetPlatform.iOS)
             TextButton(
@@ -187,8 +182,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 _openAppStoreSubscriptions();
               },
               child: Text('Open Settings',
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
             )
           else
             TextButton(
@@ -197,8 +191,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 _openGooglePlaySubscriptions();
               },
               child: Text('Open Play Store',
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, color: HuddlColors.nearBlack)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
             ),
         ],
       ),
@@ -235,8 +228,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Wait \u2014 how about a free pause?',
-            style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -256,14 +248,10 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('1-Month Free Pause',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                         Text(
                           'Keep your data & groups. Resume when you\'re ready \u2014 no charge during the pause.',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: context.hc.textSecondary),
+                          style: HuddlText.caption(color: context.hc.textSecondary),
                         ),
                       ],
                     ),
@@ -277,8 +265,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('No, cancel my plan',
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: HuddlColors.error)),
+                style: HuddlText.body(color: HuddlColors.error)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -290,7 +277,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   borderRadius: BorderRadius.circular(12)),
             ),
             child: Text('Pause Instead',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: HuddlText.body(weight: FontWeight.w600)),
           ),
         ],
       ),
@@ -314,10 +301,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Subscription',
-            style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary)),
+            style: HuddlText.heading(color: context.hc.textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -354,10 +338,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
 
               // Usage section
               Text('Your Usage',
-                  style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
                 icon: Icons.people_outline,
@@ -411,10 +392,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
 
               // AI Usage section
               Text('AI Usage',
-                  style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary)),
+                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
                 icon: Icons.star_rounded,
@@ -486,34 +464,17 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                           color: HuddlColors.textDark, size: 36),
                       const SizedBox(height: 12),
                       Text('Unlock Your Full Community',
-                          style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary)),
+                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                       const SizedBox(height: 6),
                       Text(
                         'Unlimited groups, DMs, meetups, and full AI suite \u2014 from just \u00A34.99/mo.',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: context.hc.textSecondary),
+                        style: HuddlText.body(color: context.hc.textSecondary),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _navigateToPlans,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.primary,
-                            foregroundColor: HuddlColors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                          ),
-                          child: Text('View Plans',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 15, fontWeight: FontWeight.w600)),
-                        ),
+                      HuddlButton(
+                        label: 'View Plans',
+                        onPressed: _navigateToPlans,
                       ),
                     ],
                   ),
@@ -531,79 +492,46 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                           )
                         : const Icon(Icons.restore, size: 18),
                     label: Text('Restore Purchases',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.textTertiary)),
+                        style: HuddlText.body(color: context.hc.textTertiary)),
                   ),
                 ),
               ] else ...[
                 // Change plan / Cancel
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _navigateToPlans,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: HuddlColors.primary,
-                      side: const BorderSide(color: HuddlColors.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: Text('Change Plan',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15, fontWeight: FontWeight.w600)),
-                  ),
+                HuddlButton(
+                  label: 'Change Plan',
+                  variant: HuddlButtonVariant.secondary,
+                  onPressed: _navigateToPlans,
                 ),
                 const SizedBox(height: 10),
                 // Manage via store
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      if (kIsWeb) {
-                        _payService.openSubscriptionManagement();
-                      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-                        _openAppStoreSubscriptions();
-                      } else {
-                        _openGooglePlaySubscriptions();
-                      }
-                    },
-                    icon: Icon(
-                      kIsWeb
-                          ? Icons.credit_card
-                          : (defaultTargetPlatform == TargetPlatform.iOS
-                              ? Icons.apple
-                              : Icons.g_mobiledata),
-                      size: 20,
-                    ),
-                    label: Text(
-                      kIsWeb
-                          ? 'Manage via Stripe'
-                          : (defaultTargetPlatform == TargetPlatform.iOS
-                              ? 'Manage in App Store'
-                              : 'Manage in Google Play'),
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: HuddlColors.textDark,
-                      side: const BorderSide(color: HuddlColors.gray300),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
+                HuddlButton(
+                  label: kIsWeb
+                      ? 'Manage via Stripe'
+                      : (defaultTargetPlatform == TargetPlatform.iOS
+                          ? 'Manage in App Store'
+                          : 'Manage in Google Play'),
+                  variant: HuddlButtonVariant.secondary,
+                  leadingIcon: kIsWeb
+                      ? Icons.credit_card
+                      : (defaultTargetPlatform == TargetPlatform.iOS
+                          ? Icons.apple
+                          : Icons.g_mobiledata),
+                  onPressed: () {
+                    if (kIsWeb) {
+                      _payService.openSubscriptionManagement();
+                    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+                      _openAppStoreSubscriptions();
+                    } else {
+                      _openGooglePlaySubscriptions();
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
                 Center(
-                  child: TextButton(
+                  child: HuddlButton(
+                    label: 'Cancel Subscription',
+                    variant: HuddlButtonVariant.destructive,
                     onPressed: _cancelSubscription,
-                    child: Text('Cancel Subscription',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.error)),
                   ),
                 ),
               ],
@@ -642,16 +570,12 @@ class _StepRow extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Text(step,
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark)),
+                style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark)),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(text,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: context.hc.textPrimary)),
+                style: HuddlText.body(color: context.hc.textPrimary)),
           ),
         ],
       ),
@@ -697,16 +621,12 @@ class _PaymentInfoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Billed via ${paymentService.paymentMethodName}',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                 Text(
                   kIsWeb
                       ? 'Managed through your Stripe account'
                       : 'Managed through your ${defaultTargetPlatform == TargetPlatform.iOS ? 'Apple ID' : 'Google'} account',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.hc.textSecondary),
+                  style: HuddlText.caption(color: context.hc.textSecondary),
                 ),
               ],
             ),
@@ -748,18 +668,14 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text('We\'re sorry to see you go',
-          style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary)),
+          style: HuddlText.heading(color: context.hc.textPrimary)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Help us improve \u2014 what\'s your main reason for cancelling?',
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: context.hc.textSecondary)),
+                style: HuddlText.body(color: context.hc.textSecondary)),
             const SizedBox(height: 12),
             ..._reasons.map((r) => GestureDetector(
                   onTap: () => setState(() => _selectedReason = r),
@@ -778,8 +694,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
                         ),
                         const SizedBox(width: 10),
                         Text(r,
-                            style: GoogleFonts.poppins(
-                                fontSize: 13, color: context.hc.textPrimary)),
+                            style: HuddlText.body(color: context.hc.textPrimary)),
                       ],
                     ),
                   ),
@@ -790,14 +705,13 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
                 controller: _otherCtrl,
                 decoration: InputDecoration(
                   hintText: 'Tell us more...',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 13, color: context.hc.textTertiary),
+                  hintStyle: HuddlText.body(color: context.hc.textTertiary),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.all(12),
                 ),
                 maxLines: 2,
-                style: GoogleFonts.poppins(fontSize: 13),
+                style: HuddlText.body(),
               ),
             ],
           ],
@@ -807,7 +721,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context, null),
           child: Text('Never mind',
-              style: GoogleFonts.poppins(color: context.hc.textTertiary)),
+              style: HuddlText.body(color: context.hc.textTertiary)),
         ),
         TextButton(
           onPressed: _selectedReason != null
@@ -818,10 +732,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
                       : _selectedReason)
               : null,
           child: Text('Continue',
-              style: GoogleFonts.poppins(
-                  color: _selectedReason != null
-                      ? HuddlColors.error
-                      : HuddlColors.textLight)),
+              style: HuddlText.body(color: HuddlColors.textLight)),
         ),
       ],
     );
@@ -882,10 +793,7 @@ class _CurrentPlanCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(subscription.tierDisplayName,
-                            style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: context.hc.textPrimary)),
+                            style: HuddlText.heading(color: context.hc.textPrimary)),
 
 
                       ],
@@ -896,16 +804,11 @@ class _CurrentPlanCard extends StatelessWidget {
                         subscription.cancelledAtPeriodEnd
                             ? 'Cancels ${_formatDate(subscription.renewalDate!)}'
                             : 'Auto-renews ${_formatDate(subscription.renewalDate!)}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: subscription.cancelledAtPeriodEnd
-                                ? HuddlColors.error
-                                : context.hc.textSecondary),
+                        style: HuddlText.caption(color: context.hc.textSecondary),
                       )
                     else
                       Text('Free plan \u2014 upgrade anytime',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: context.hc.textTertiary)),
+                          style: HuddlText.caption(color: context.hc.textTertiary)),
                   ],
                 ),
               ),
@@ -921,10 +824,7 @@ class _CurrentPlanCard extends StatelessWidget {
                     subscription.billingPeriod == BillingPeriod.annual
                         ? 'Annual'
                         : 'Monthly',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: accentColor),
+                    style: HuddlText.caption(weight: FontWeight.w600, color: accentColor),
                   ),
                 ),
             ],
@@ -995,21 +895,10 @@ class _UsageCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(label,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.textPrimary)),
+                        style: HuddlText.body(color: context.hc.textPrimary)),
                     Text(
                       isUnlimited ? '$used / \u221E' : '$used / $limit',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isAtLimit
-                            ? HuddlColors.error
-                            : isNearLimit
-                                ? HuddlColors.warning
-                                : HuddlColors.textSecondary,
-                      ),
+                      style: HuddlText.caption(weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -1074,10 +963,7 @@ class _ManageScheduledBanner extends StatelessWidget {
                   isCancellation
                       ? 'Subscription cancelling'
                       : 'Plan change scheduled',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: color),
+                  style: HuddlText.body(weight: FontWeight.w600, color: color),
                 ),
               ),
             ],
@@ -1086,18 +972,14 @@ class _ManageScheduledBanner extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               subscription.scheduledChangeSummary!,
-              style: GoogleFonts.poppins(
-                  fontSize: 12, color: context.hc.textSecondary),
+              style: HuddlText.caption(color: context.hc.textSecondary),
             ),
           ],
           if (subscription.daysUntilRenewal > 0) ...[
             const SizedBox(height: 2),
             Text(
               '${subscription.daysUntilRenewal} days remaining in current period',
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textTertiary),
+              style: HuddlText.caption(color: context.hc.textTertiary),
             ),
           ],
           const SizedBox(height: 10),
@@ -1111,10 +993,7 @@ class _ManageScheduledBanner extends StatelessWidget {
               ),
               child: Text(
                 isCancellation ? 'Undo Cancellation' : 'Revert to Current Plan',
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: color),
+                style: HuddlText.caption(weight: FontWeight.w600, color: color),
               ),
             ),
           ),

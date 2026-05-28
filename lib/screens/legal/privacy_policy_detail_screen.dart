@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 
 class PrivacyPolicyDetailScreen extends StatelessWidget {
   const PrivacyPolicyDetailScreen({super.key});
@@ -21,11 +21,7 @@ class PrivacyPolicyDetailScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(
           'Privacy Policy',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
       ),
       body: SingleChildScrollView(
@@ -977,16 +973,11 @@ For any questions about voice message data processing, contact our Data Protecti
               children: [
                 Text(
                   'Last Updated: June 2026',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primaryDark,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 Text(
                   'Version 2.2 — SEND AI Navigator & Special Category Data Added',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textSecondary),
+                  style: HuddlText.caption(color: HuddlColors.textSecondary),
                 ),
               ],
             ),
@@ -1015,17 +1006,12 @@ For any questions about voice message data processing, contact our Data Protecti
               children: [
                 Text(
                   'Fully GDPR & CCPA Compliant',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: HuddlColors.nearBlack,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'This Privacy Policy complies with UK GDPR, EU GDPR, Data Protection Act 2018, CCPA, and international data protection standards. Your privacy rights are fully protected.',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: HuddlColors.textSecondary, height: 1.5),
+                  style: HuddlText.caption(color: HuddlColors.textSecondary).copyWith(height: 1.5),
                 ),
               ],
             ),
@@ -1053,8 +1039,7 @@ For any questions about voice message data processing, contact our Data Protecti
               Expanded(
                 child: Text(
                   'Your Privacy Matters',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                  style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textDark),
                 ),
               ),
             ],
@@ -1062,14 +1047,12 @@ For any questions about voice message data processing, contact our Data Protecti
           const SizedBox(height: 10),
           Text(
             'Huddl ("we", "us", "our"), operated by Cruzen Ltd, is committed to protecting your privacy and personal data. This Privacy Policy explains in detail how we collect, use, share, protect, and retain your information when you use our Service.',
-            style: GoogleFonts.poppins(
-                fontSize: 13, color: HuddlColors.textSecondary, height: 1.55),
+            style: HuddlText.body(color: HuddlColors.textSecondary).copyWith(height: 1.55),
           ),
           const SizedBox(height: 8),
           Text(
             'By using Huddl, you acknowledge that you have read, understood, and agree to the data practices described in this Privacy Policy.',
-            style: GoogleFonts.poppins(
-                fontSize: 12, color: HuddlColors.textSecondary, height: 1.5, fontWeight: FontWeight.w500),
+            style: HuddlText.caption(color: HuddlColors.textSecondary).copyWith(height: 1.5),
           ),
         ],
       ),
@@ -1082,17 +1065,12 @@ For any questions about voice message data processing, contact our Data Protecti
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: HuddlColors.textDark,
-          ),
+          style: HuddlText.body(weight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         Text(
           content,
-          style: GoogleFonts.poppins(
-              fontSize: 13, color: HuddlColors.textSecondary, height: 1.6),
+          style: HuddlText.body(color: HuddlColors.textSecondary).copyWith(height: 1.6),
         ),
         const SizedBox(height: 20),
         Divider(color: HuddlColors.divider, height: 1),
@@ -1119,11 +1097,7 @@ For any questions about voice message data processing, contact our Data Protecti
               Expanded(
                 child: Text(
                   'Your Data Protection Rights Summary',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primaryDark,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
               ),
             ],
@@ -1140,22 +1114,12 @@ For any questions about voice message data processing, contact our Data Protecti
           const SizedBox(height: 12),
           Text(
             'Exercise your rights:\n• In-App: Profile → Privacy & Security → Data Rights\n• Email: privacy@huddl.app\n• Response within 30 days',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: HuddlColors.textSecondary,
-              fontStyle: FontStyle.italic,
-              height: 1.5,
-            ),
+            style: HuddlText.caption(color: HuddlColors.textSecondary).copyWith(fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 8),
           Text(
             'We take your privacy seriously and are committed to transparency, accountability, and compliance with all applicable data protection laws.',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: HuddlColors.textSecondary,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
-            ),
+            style: HuddlText.caption(color: HuddlColors.textSecondary),
           ),
         ],
       ),
@@ -1167,11 +1131,7 @@ For any questions about voice message data processing, contact our Data Protecti
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: HuddlColors.textDark,
-        ),
+        style: HuddlText.body(),
       ),
     );
   }

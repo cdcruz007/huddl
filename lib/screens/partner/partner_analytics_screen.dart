@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // PARTNER ANALYTICS SCREEN
@@ -95,11 +96,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
         ),
         title: Text(
           'Reach analytics',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         centerTitle: true,
         actions: [
@@ -130,17 +127,13 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
           const SizedBox(height: 16),
           Text(
             _error!,
-            style: GoogleFonts.poppins(
-                fontSize: 14, color: context.hc.textSecondary),
+            style: HuddlText.body(color: context.hc.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          HuddlButton(
+            label: 'Retry',
             onPressed: _loadAnalytics,
-            style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary),
-            child: Text('Retry',
-                style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
       ),
@@ -157,11 +150,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
           // Subtitle
           Text(
             'How parents are finding and engaging with your business',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: hc.textSecondary,
-              height: 1.4,
-            ),
+            style: HuddlText.body(color: hc.textSecondary),
           ),
           const SizedBox(height: 20),
 
@@ -211,11 +200,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
             Text(
               'Your analytics will appear here once parents\nstart viewing your listings.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: context.hc.textSecondary,
-                height: 1.5,
-              ),
+              style: HuddlText.body(color: context.hc.textSecondary),
             ),
           ],
         ),
@@ -239,11 +224,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
       children: [
         Text(
           'Overview',
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: hc.textPrimary,
-          ),
+          style: HuddlText.body(weight: FontWeight.w700),
         ),
         const SizedBox(height: 16),
         Container(
@@ -272,8 +253,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
         const SizedBox(height: 12),
         Text(
           'All-time totals',
-          style: GoogleFonts.poppins(
-              fontSize: 11, color: hc.textTertiary),
+          style: HuddlText.caption(color: hc.textTertiary),
         ),
       ],
     );
@@ -320,20 +300,12 @@ class _MetricCard extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.textHint,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '$value',
-                    style: GoogleFonts.poppins(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.primary,
-                      height: 1.0,
-                    ),
+                    style: HuddlText.display(color: HuddlColors.primary),
                   ),
                 ],
               ),
@@ -374,11 +346,7 @@ class _BarItem extends StatelessWidget {
       children: [
         Text(
           '$value',
-          style: GoogleFonts.poppins(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.primary,
-          ),
+          style: HuddlText.caption(weight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
         AnimatedContainer(
@@ -394,10 +362,7 @@ class _BarItem extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 10,
-            color: context.hc.textSecondary,
-          ),
+          style: HuddlText.label(),
         ),
       ],
     );

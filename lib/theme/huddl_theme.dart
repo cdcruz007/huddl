@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'huddl_colors.dart';
+import '../constants/app_text_styles.dart';
 
 class HuddlTheme {
   // ========================================================================
@@ -27,11 +28,7 @@ class HuddlTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: HuddlColors.textDark),
-        titleTextStyle: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: HuddlColors.textDark,
-        ),
+        titleTextStyle: HuddlText.heading(color: HuddlColors.textDark),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: HuddlColors.white,
@@ -91,11 +88,7 @@ class HuddlTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: HuddlColors.darkTextPrimary),
-        titleTextStyle: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: HuddlColors.darkTextPrimary,
-        ),
+        titleTextStyle: HuddlText.heading(color: HuddlColors.darkTextPrimary),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: HuddlColors.darkSurface,
@@ -136,34 +129,52 @@ class HuddlTheme {
   // Shared helpers (DRY)
   // ========================================================================
 
-  static TextTheme _lightTextTheme() => GoogleFonts.poppinsTextTheme().copyWith(
-    headlineLarge:  GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600, color: HuddlColors.textDark, height: 1.3, letterSpacing: -0.5),
-    headlineMedium: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w600, color: HuddlColors.textDark, height: 1.3, letterSpacing: -0.3),
-    headlineSmall:  GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w600, color: HuddlColors.textDark, height: 1.3, letterSpacing: -0.2),
-    titleLarge:     GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w500, color: HuddlColors.textPrimary, height: 1.4, letterSpacing: -0.2),
-    titleMedium:    GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark, height: 1.4, letterSpacing: -0.1),
-    titleSmall:     GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark, height: 1.4),
-    bodyLarge:      GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w400, color: HuddlColors.textDark, height: 1.5),
-    bodyMedium:     GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400, color: HuddlColors.textSecondary, height: 1.5),
-    bodySmall:      GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w400, color: HuddlColors.textTertiary, height: 1.4),
-    labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: HuddlColors.white, height: 1.4),
-    labelMedium:    GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark, height: 1.4),
-    labelSmall:     GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w400, color: HuddlColors.textTertiary, height: 1.4, letterSpacing: 0.3),
+  static TextTheme _lightTextTheme() => TextTheme(
+    // Display → headlineLarge
+    headlineLarge:  HuddlText.display(),
+
+    // Heading → all title slots collapse to 17/600
+    headlineMedium: HuddlText.heading(),
+    headlineSmall:  HuddlText.heading(),
+    titleLarge:     HuddlText.heading(),
+    titleMedium:    HuddlText.heading(),
+    titleSmall:     HuddlText.heading(color: HuddlColors.textSecondary),
+
+    // Body → bodyLarge (nearBlack), bodyMedium (textSecondary)
+    bodyLarge:      HuddlText.body(color: HuddlColors.nearBlack),
+    bodyMedium:     HuddlText.body(),
+
+    // Caption / Label
+    bodySmall:      HuddlText.caption(),
+    labelSmall:     HuddlText.label(),
+
+    // Button text — handled by HuddlButton, kept for legacy Material widgets
+    labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+    labelMedium:    HuddlText.caption(weight: FontWeight.w500),
   );
 
-  static TextTheme _darkTextTheme() => GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).copyWith(
-    headlineLarge:  GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600, color: HuddlColors.darkTextPrimary, height: 1.3),
-    headlineMedium: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w600, color: HuddlColors.darkTextPrimary, height: 1.3),
-    headlineSmall:  GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w600, color: HuddlColors.darkTextPrimary, height: 1.3),
-    titleLarge:     GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w500, color: HuddlColors.darkTextPrimary, height: 1.4),
-    titleMedium:    GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.darkTextPrimary, height: 1.4),
-    titleSmall:     GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.darkTextPrimary, height: 1.4),
-    bodyLarge:      GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w400, color: HuddlColors.darkTextPrimary, height: 1.5),
-    bodyMedium:     GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400, color: HuddlColors.darkTextSecondary, height: 1.5),
-    bodySmall:      GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w400, color: HuddlColors.darkTextTertiary, height: 1.4),
-    labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: HuddlColors.white, height: 1.4),
-    labelMedium:    GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.darkTextPrimary, height: 1.4),
-    labelSmall:     GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w400, color: HuddlColors.darkTextTertiary, height: 1.4),
+  static TextTheme _darkTextTheme() => TextTheme(
+    // Display → headlineLarge
+    headlineLarge:  HuddlText.display(color: HuddlColors.darkTextPrimary),
+
+    // Heading → all title slots collapse to 17/600
+    headlineMedium: HuddlText.heading(color: HuddlColors.darkTextPrimary),
+    headlineSmall:  HuddlText.heading(color: HuddlColors.darkTextPrimary),
+    titleLarge:     HuddlText.heading(color: HuddlColors.darkTextPrimary),
+    titleMedium:    HuddlText.heading(color: HuddlColors.darkTextPrimary),
+    titleSmall:     HuddlText.heading(color: HuddlColors.darkTextSecondary),
+
+    // Body
+    bodyLarge:      HuddlText.body(color: HuddlColors.darkTextPrimary),
+    bodyMedium:     HuddlText.body(color: HuddlColors.darkTextSecondary),
+
+    // Caption / Label
+    bodySmall:      HuddlText.caption(color: HuddlColors.darkTextTertiary),
+    labelSmall:     HuddlText.label(color: HuddlColors.darkTextTertiary),
+
+    // Button text
+    labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+    labelMedium:    HuddlText.caption(color: HuddlColors.darkTextSecondary, weight: FontWeight.w500),
   );
 
   static InputDecorationTheme _inputTheme({

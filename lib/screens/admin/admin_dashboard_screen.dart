@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../constants/app_text_styles.dart';
 // report_service.dart enums (ReportType/ReportContext) not needed client-side here
 
 // =============================================================================
@@ -206,11 +206,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         title: Text(
           'Report Dashboard',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+          style: HuddlText.heading(color: context.hc.textPrimary),
         ),
         centerTitle: true,
       ),
@@ -245,19 +241,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 20),
             Text(
               'Not authorised',
-              style: GoogleFonts.poppins(
-                fontSize: 20, fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+              style: HuddlText.display(color: context.hc.textPrimary),
             ),
             const SizedBox(height: 10),
             Text(
               'This area is restricted to Huddl moderators.\n'
               'If you believe this is an error, contact the engineering team.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 14, color: HuddlColors.disabledText, height: 1.6,
-              ),
+              style: HuddlText.body(color: HuddlColors.disabledText),
             ),
           ],
         ),
@@ -279,11 +270,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: FilterChip(
               label: Text(
                 f.label,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                ),
+                style: HuddlText.body(color: selected ? Colors.white : context.hc.textPrimary),
               ),
               selected: selected,
               onSelected: (_) => setState(() => _filter = f),
@@ -325,7 +312,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     'See the comment at the top of admin_dashboard_screen.dart '
                     'for the exact rule syntax.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.disabledText, height: 1.6),
+                    style: HuddlText.caption(color: HuddlColors.disabledText).copyWith(height: 1.6),
                   ),
                 ],
               ),
@@ -351,9 +338,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'No ${_filter.label.toLowerCase()} reports',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16, color: HuddlColors.disabledText, fontWeight: FontWeight.w500,
-                  ),
+                  style: HuddlText.body(color: HuddlColors.disabledText),
                 ),
               ],
             ),
@@ -580,14 +565,11 @@ class _ReportCardState extends State<_ReportCard> {
                       // fall back to raw type string for older reports
                       Text(
                         docReason ?? type.replaceAll('_', ' ').toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary),
                       ),
                       Text(
                         _contextLabel(ctx),
-                        style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.disabledText),
+                        style: HuddlText.caption(color: HuddlColors.disabledText),
                       ),
                     ],
                   ),
@@ -600,10 +582,7 @@ class _ReportCardState extends State<_ReportCard> {
                   ),
                   child: Text(
                     status.toUpperCase(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 10, fontWeight: FontWeight.w700,
-                      color: _statusColor(status),
-                    ),
+                    style: HuddlText.label(color: _statusColor(status)),
                   ),
                 ),
               ],
@@ -674,11 +653,7 @@ class _ReportCardState extends State<_ReportCard> {
                     ),
                     child: Text(
                       docMsgPreview,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        height: 1.45,
-                      ),
+                      style: HuddlText.caption(color: context.hc.textPrimary),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -728,9 +703,7 @@ class _ReportCardState extends State<_ReportCard> {
                   const SizedBox(width: 4),
                   Text(
                     _showRawIds ? 'Hide technical IDs' : 'Show technical IDs',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.disabledText,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),
@@ -810,12 +783,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: GoogleFonts.poppins(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: HuddlColors.disabledText,
-        letterSpacing: 0.6,
-      ),
+      style: HuddlText.label(color: HuddlColors.disabledText),
     );
   }
 }
@@ -837,7 +805,7 @@ class _LoadingRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           'Loading…',
-          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.disabledText),
+          style: HuddlText.caption(color: HuddlColors.disabledText),
         ),
       ],
     );
@@ -867,7 +835,7 @@ class _DetailRow extends StatelessWidget {
           width: icon != null ? 46 : 100,
           child: Text(
             label,
-            style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.disabledText),
+            style: HuddlText.caption(color: HuddlColors.disabledText),
           ),
         ),
         Expanded(
@@ -879,11 +847,7 @@ class _DetailRow extends StatelessWidget {
                     fontFamily: 'monospace',
                     color: HuddlColors.textDark,
                   )
-                : GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
-                  ),
+                : HuddlText.caption(color: context.hc.textPrimary),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -946,16 +910,12 @@ class _ActionSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Take Action',
-            style: GoogleFonts.poppins(
-              fontSize: 18, fontWeight: FontWeight.w700,
-            ),
+            style: HuddlText.heading(),
           ),
           const SizedBox(height: 6),
           Text(
             'Select the moderation action for this report.',
-            style: GoogleFonts.poppins(
-              fontSize: 13, color: HuddlColors.disabledText,
-            ),
+            style: HuddlText.body(),
           ),
           const SizedBox(height: 20),
           ...actions.map((a) => Padding(
@@ -989,12 +949,9 @@ class _ActionSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(a.label,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, fontWeight: FontWeight.w600,
-                                  color: a.color)),
+                              style: HuddlText.body(weight: FontWeight.w600, color: a.color)),
                           Text(a.sublabel,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: HuddlColors.disabledText)),
+                              style: HuddlText.caption(color: HuddlColors.disabledText)),
                         ],
                       ),
                     ),
@@ -1007,8 +964,7 @@ class _ActionSheet extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(
-                    fontSize: 14, color: HuddlColors.disabledText)),
+                style: HuddlText.body(color: HuddlColors.disabledText)),
           ),
         ],
       ),
@@ -1045,9 +1001,7 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w600, color: color,
-              ),
+              style: HuddlText.caption(weight: FontWeight.w600),
             ),
           ],
         ),

@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../screens/events/event_detail_screen.dart';
+import '../constants/app_text_styles.dart';
 
 /// A clickable event card that appears in DM and group chats when an event
 /// is shared. Tapping it navigates to the EventDetailScreen.
@@ -101,11 +101,7 @@ class EventInviteCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               _formatCategory(category),
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.white,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -133,11 +129,7 @@ class EventInviteCard extends StatelessWidget {
                                     const SizedBox(width: 3),
                                     Text(
                                       'Online',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.white,
-                                      ),
+                                      style: HuddlText.label(),
                                     ),
                                   ],
                                 ),
@@ -155,11 +147,7 @@ class EventInviteCard extends StatelessWidget {
                                   : (price is String && price.isNotEmpty
                                       ? price
                                       : (price is num ? '\u00A3${price.toStringAsFixed(0)}' : 'Paid')),
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.white,
-                              ),
+                              style: HuddlText.caption(weight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -182,11 +170,7 @@ class EventInviteCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 '$attendees going',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.white,
-                                ),
+                                style: HuddlText.caption(),
                               ),
                             ],
                           ),
@@ -208,22 +192,14 @@ class EventInviteCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             'Shared an event',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: catStyle.color,
-                            ),
+                            style: HuddlText.label(),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -236,11 +212,7 @@ class EventInviteCard extends StatelessWidget {
                           const SizedBox(width: 5),
                           Text(
                             date,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textSecondary,
-                            ),
+                            style: HuddlText.caption(),
                           ),
                           if (time.isNotEmpty) ...[
                             const SizedBox(width: 10),
@@ -250,10 +222,7 @@ class EventInviteCard extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 time,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: context.hc.textTertiary,
-                                ),
+                                style: HuddlText.caption(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -271,10 +240,7 @@ class EventInviteCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               isOnline ? 'Online event' : location,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: context.hc.textTertiary,
-                              ),
+                              style: HuddlText.caption(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -290,22 +256,14 @@ class EventInviteCard extends StatelessWidget {
                             backgroundColor: catStyle.color.withValues(alpha: 0.15),
                             child: Text(
                               organiser.isNotEmpty ? organiser[0].toUpperCase() : 'E',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: catStyle.color,
-                              ),
+                              style: HuddlText.label(),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               organiser.isNotEmpty ? 'By $organiser' : 'Event',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: context.hc.textSecondary,
-                              ),
+                              style: HuddlText.caption(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -324,11 +282,7 @@ class EventInviteCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   'View',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: catStyle.color,
-                                  ),
+                                  style: HuddlText.caption(weight: FontWeight.w600),
                                 ),
                               ],
                             ),

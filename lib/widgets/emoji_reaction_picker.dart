@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
+import '../constants/app_text_styles.dart';
 
 /// The 6 quick-access emojis shown in the floating bar above a message.
 const List<String> kQuickEmojis = ['❤️', '😂', '😮', '😢', '👍', '🙏'];
@@ -174,11 +174,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
               children: [
                 Text(
                   'Choose a reaction',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 const Spacer(),
                 IconButton(
@@ -223,11 +219,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                     ),
                     child: Text(
                       cat,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ),
                 );
@@ -321,11 +313,7 @@ class EmojiReactionDisplay extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         '${entry.value}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary,
-                        ),
+                        style: HuddlText.caption(weight: FontWeight.w600),
                       ),
                     ],
                   ],

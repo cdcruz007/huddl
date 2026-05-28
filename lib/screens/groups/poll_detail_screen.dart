@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../services/firestore_service.dart';
 import '../../theme/huddl_colors.dart';
 import 'create_poll_screen.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIRESTORE POLL MODEL
@@ -449,11 +449,7 @@ class _PollCardBody extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   'You created this poll — results are live',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: HuddlText.caption(color: HuddlColors.primary),
                 ),
               ],
             ),
@@ -471,11 +467,7 @@ class _PollCardBody extends StatelessWidget {
               onTap: onViewResults,
               child: Text(
                 'Full results',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
-                ),
+                style: HuddlText.caption(weight: FontWeight.w600),
               ),
             ),
           ),
@@ -534,12 +526,7 @@ class _PollCardBody extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4, bottom: 8),
               child: Text(
                 'Select all that apply',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: HuddlColors.primary.withValues(alpha: 0.8),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+                style: HuddlText.caption(color: HuddlColors.primary.withValues(alpha: 0.8))),
             )
           else
             const SizedBox(height: 12),
@@ -590,13 +577,7 @@ class _PollCardBody extends StatelessWidget {
                     Expanded(
                       child: Text(
                         opt.label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(),
                       ),
                     ),
                   ],
@@ -632,11 +613,7 @@ class _PollCardBody extends StatelessWidget {
                       )
                     : Text(
                         'Submit vote',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
               ),
             ),
@@ -672,11 +649,7 @@ class _PollCardBody extends StatelessWidget {
               onTap: onViewResults,
               child: Text(
                 'View results',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.caption(),
               ),
             ),
           ),
@@ -756,11 +729,7 @@ class _PollHeader extends StatelessWidget {
         Expanded(
           child: Text(
             'Poll by ${poll.createdByName}',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: context.hc.textTertiary,
-            ),
+            style: HuddlText.caption(),
           ),
         ),
         if (badge != null)
@@ -775,11 +744,7 @@ class _PollHeader extends StatelessWidget {
             ),
             child: Text(
               badge!,
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: badgeColor ?? HuddlColors.primary,
-              ),
+              style: HuddlText.label(),
             ),
           ),
         // Creator 3-dot menu
@@ -808,11 +773,7 @@ class _PollHeader extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(
                       'Delete Poll',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.error,
-                      ),
+                      style: HuddlText.body(),
                     ),
                   ],
                 ),
@@ -835,11 +796,7 @@ class _PollQuestion extends StatelessWidget {
       children: [
         Text(
           poll.question,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.body(weight: FontWeight.w600),
         ),
         if (poll.isCalendarMode)
           Padding(
@@ -852,11 +809,7 @@ class _PollQuestion extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   'Calendar poll',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: HuddlColors.primary.withValues(alpha: 0.7),
-                  ),
-                ),
+                  style: HuddlText.caption(color: HuddlColors.primary.withValues(alpha: 0.7))),
               ],
             ),
           ),
@@ -902,31 +855,17 @@ class _ResultBar extends StatelessWidget {
               Expanded(
                 child: Text(
                   option.label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight:
-                        isHighlighted ? FontWeight.w600 : FontWeight.w400,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.body(),
                 ),
               ),
               Text(
                 '$pct%',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isHighlighted
-                      ? HuddlColors.primary
-                      : context.hc.textSecondary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w700),
               ),
               const SizedBox(width: 6),
               Text(
                 '(${option.voteCount})',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: context.hc.textTertiary,
-                ),
+                style: HuddlText.caption(),
               ),
             ],
           ),
@@ -968,8 +907,7 @@ class _PollFooter extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
-                fontSize: 11, color: context.hc.textTertiary),
+            style: HuddlText.caption(color: context.hc.textTertiary),
           ),
           if (poll.closesAt != null) ...[
             const SizedBox(width: 10),
@@ -983,12 +921,7 @@ class _PollFooter extends StatelessWidget {
               poll.isExpired
                   ? 'Poll closed'
                   : 'Closes ${_relativeTime(poll.closesAt!)}',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: poll.isExpired
-                    ? HuddlColors.error
-                    : context.hc.textTertiary,
-              ),
+              style: HuddlText.caption(),
             ),
           ],
           const Spacer(),
@@ -1097,11 +1030,7 @@ class PollResultsScreen extends StatelessWidget {
             ),
             title: Text(
               'Poll Results',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
+              style: HuddlText.heading(),
             ),
             centerTitle: true,
             actions: [
@@ -1130,9 +1059,7 @@ class PollResultsScreen extends StatelessWidget {
               : missing
                   ? Center(
                       child: Text('Poll not found',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              color: context.hc.textTertiary)))
+                          style: HuddlText.body(color: context.hc.textTertiary)))
                   : _buildBody(context, FirestorePoll.fromDoc(snap.data!)),
         );
       },
@@ -1177,40 +1104,26 @@ class PollResultsScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Created by ${poll.createdByName}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textTertiary),
+                          style: HuddlText.caption(color: context.hc.textTertiary),
                         ),
                         if (poll.isExpired)
                           Text(
                             'Poll closed',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.error,
-                            ),
+                            style: HuddlText.caption(weight: FontWeight.w600),
                           ),
                       ],
                     ),
                   ),
                   Text(
                     '${poll.totalVoters} voter${poll.totalVoters != 1 ? 's' : ''}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
               Text(
                 poll.question,
-                style: GoogleFonts.poppins(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
+                style: HuddlText.heading(),
               ),
               if (poll.isCalendarMode)
                 Padding(
@@ -1223,11 +1136,7 @@ class PollResultsScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         'Calendar poll',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: HuddlColors.primary.withValues(alpha: 0.7),
-                        ),
-                      ),
+                        style: HuddlText.caption(color: HuddlColors.primary.withValues(alpha: 0.7))),
                     ],
                   ),
                 ),
@@ -1272,22 +1181,12 @@ class PollResultsScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         opt.label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.body(weight: FontWeight.w600),
                       ),
                     ),
                     Text(
                       '$pct%',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isMyVote
-                            ? HuddlColors.primary
-                            : HuddlColors.textDark,
-                      ),
+                      style: HuddlText.heading(),
                     ),
                   ],
                 ),
@@ -1306,8 +1205,7 @@ class PollResultsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   '${opt.voteCount} vote${opt.voteCount != 1 ? 's' : ''}',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: context.hc.textTertiary),
+                  style: HuddlText.caption(color: context.hc.textTertiary),
                 ),
                 // Voter avatars — creator only
                 if (voterUids.isNotEmpty) ...[
@@ -1339,11 +1237,7 @@ class PollResultsScreen extends StatelessWidget {
                   color: Colors.white, size: 20),
               label: Text(
                 'Delete Poll',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: HuddlColors.error,
@@ -1422,8 +1316,7 @@ class _VoterRowState extends State<_VoterRow> {
         const SizedBox(width: 8),
         Text(
           name,
-          style: GoogleFonts.poppins(
-              fontSize: 13, color: context.hc.textSecondary),
+          style: HuddlText.body(color: context.hc.textSecondary),
         ),
       ],
     );
@@ -1432,11 +1325,7 @@ class _VoterRowState extends State<_VoterRow> {
   Widget _initials(String name) => Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.primary,
-          ),
+          style: HuddlText.caption(weight: FontWeight.w600),
         ),
       );
 }
@@ -1514,10 +1403,7 @@ class PollCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Poll by ${poll.creatorName}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ),
                 if (expired)
@@ -1530,11 +1416,7 @@ class PollCard extends StatelessWidget {
                     ),
                     child: Text(
                       'Expired',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.error,
-                      ),
+                      style: HuddlText.label(),
                     ),
                   ),
                 PopupMenuButton<String>(
@@ -1576,7 +1458,7 @@ class PollCard extends StatelessWidget {
                                 color: context.hc.textPrimary),
                             const SizedBox(width: 12),
                             Text(poll.isPinned ? 'Unpin' : 'Pin poll',
-                                style: GoogleFonts.poppins(fontSize: 14)),
+                                style: HuddlText.body()),
                           ]),
                         ));
                       }
@@ -1587,7 +1469,7 @@ class PollCard extends StatelessWidget {
                               size: 20, color: context.hc.textPrimary),
                           const SizedBox(width: 12),
                           Text('See Results',
-                              style: GoogleFonts.poppins(fontSize: 14)),
+                              style: HuddlText.body()),
                         ]),
                       ));
                       items.add(PopupMenuItem<String>(
@@ -1597,8 +1479,7 @@ class PollCard extends StatelessWidget {
                               size: 20, color: HuddlColors.error),
                           const SizedBox(width: 12),
                           Text('Delete Poll',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, color: HuddlColors.error)),
+                              style: HuddlText.body(color: HuddlColors.error)),
                         ]),
                       ));
                     }
@@ -1610,11 +1491,7 @@ class PollCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               poll.data.question,
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
+              style: HuddlText.body(weight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             if (isCreator)
@@ -1634,10 +1511,7 @@ class PollCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       'You created this poll',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.primary,
-                          fontWeight: FontWeight.w500),
+                      style: HuddlText.caption(color: HuddlColors.primary),
                     ),
                   ],
                 ),
@@ -1689,24 +1563,13 @@ class PollCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           poll.data.options[i],
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.body(),
                         ),
                       ),
                       if (isCreator || hasVoted) ...[
                         Text(
                           '$count ($pct%)',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: selected
-                                ? HuddlColors.primary
-                                : context.hc.textTertiary,
-                          ),
+                          style: HuddlText.caption(),
                         ),
                       ],
                     ],
@@ -1724,8 +1587,7 @@ class PollCard extends StatelessWidget {
                   isCreator
                       ? '${poll.totalVotes} vote${poll.totalVotes != 1 ? 's' : ''}'
                       : (hasVoted ? 'Vote recorded' : 'Tap to vote'),
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.hc.textTertiary),
+                  style: HuddlText.caption(color: context.hc.textTertiary),
                 ),
                 if (poll.data.expiresAt != null) ...[
                   const SizedBox(width: 12),
@@ -1739,12 +1601,7 @@ class PollCard extends StatelessWidget {
                     expired
                         ? 'Poll expired'
                         : 'Closes ${_relativeTime(poll.data.expiresAt!)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: expired
-                          ? HuddlColors.error
-                          : context.hc.textTertiary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
                 const Spacer(),
@@ -1753,11 +1610,7 @@ class PollCard extends StatelessWidget {
                     onTap: onViewDetails,
                     child: Text(
                       'View results',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.textTertiary,
-                      ),
+                      style: HuddlText.caption(),
                     ),
                   ),
               ],
@@ -1851,11 +1704,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                     Expanded(
                       child: Text(
                         'Active Polls',
-                        style: GoogleFonts.poppins(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                        style: HuddlText.heading(),
                       ),
                     ),
                     IconButton(
@@ -1873,9 +1722,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                 child: (activePolls.isEmpty && expiredPolls.isEmpty)
                     ? Center(
                         child: Text('No polls yet',
-                            style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                color: context.hc.textTertiary)))
+                            style: HuddlText.body(color: context.hc.textTertiary)))
                     : ListView(
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(
@@ -1983,11 +1830,7 @@ class PollDetailScreen extends StatelessWidget {
         ),
         title: Text(
           'Poll Results',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         centerTitle: true,
         actions: [
@@ -2022,25 +1865,15 @@ class PollDetailScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text('Created by ${poll.creatorName}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textTertiary)),
+                          style: HuddlText.caption(color: context.hc.textTertiary)),
                     ),
                     Text('$total vote${total != 1 ? 's' : ''}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        )),
+                        style: HuddlText.body(weight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 14),
                 Text(poll.data.question,
-                    style: GoogleFonts.poppins(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary,
-                    )),
+                    style: HuddlText.heading()),
               ],
             ),
           ),
@@ -2066,18 +1899,10 @@ class PollDetailScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(poll.data.options[i],
-                            style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary)),
+                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
                       ),
                       Text('$pct%',
-                          style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: isMyVote
-                                  ? HuddlColors.primary
-                                  : HuddlColors.textDark)),
+                          style: HuddlText.heading(color: HuddlColors.textDark)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -2094,8 +1919,7 @@ class PollDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text('$count vote${count != 1 ? 's' : ''}',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: context.hc.textTertiary)),
+                      style: HuddlText.caption(color: context.hc.textTertiary)),
                 ],
               ),
             );
@@ -2113,10 +1937,7 @@ class PollDetailScreen extends StatelessWidget {
                 icon: const Icon(Icons.delete_outline,
                     color: Colors.white, size: 20),
                 label: Text('Delete Poll',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: HuddlColors.error,
                   shape: RoundedRectangleBorder(

@@ -1,9 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/browser_storage.dart';
 import '../theme/huddl_colors.dart';
+import 'common/huddl_button.dart';
+import '../constants/app_text_styles.dart';
 
 // =============================================================================
 // CHAT SAFETY NOTICE
@@ -88,11 +89,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
             Text(
               'Huddl keeps chats safe',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: isDark ? HuddlColors.white : HuddlColors.textDark,
-              ),
+              style: HuddlText.heading(),
             ),
             const SizedBox(height: 12),
 
@@ -101,11 +98,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
               'We want Huddl to feel like a trusted space for every parent. '
               'A few things happen in the background to help keep it that way.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                height: 1.55,
-                color: isDark ? HuddlColors.textSecondary : HuddlColors.textSecondary,
-              ),
+              style: HuddlText.body().copyWith(height: 1.55),
             ),
             const SizedBox(height: 16),
 
@@ -130,20 +123,12 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: isDark ? HuddlColors.textHint : HuddlColors.textHint,
-                ),
+                style: HuddlText.caption(),
                 children: [
                   const TextSpan(text: 'Full details in our '),
                   TextSpan(
                     text: 'Privacy Policy',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.textTertiary,
-                      decoration: TextDecoration.underline,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline),
                     recognizer: TapGestureRecognizer()..onTap = _launchPrivacy,
                   ),
                   const TextSpan(text: '.'),
@@ -153,27 +138,9 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
             const SizedBox(height: 20),
 
             // ── Dismiss button ────────────────────────────────────────────
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => _dismiss(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  foregroundColor: HuddlColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Got it, thanks',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+            HuddlButton(
+              label: 'Got it, thanks',
+              onPressed: () => _dismiss(context),
             ),
           ],
         ),
@@ -198,11 +165,7 @@ class _BulletRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              height: 1.5,
-              color: isDark ? HuddlColors.textSecondary : HuddlColors.textSecondary,
-            ),
+            style: HuddlText.caption().copyWith(height: 1.5),
           ),
         ),
       ],
@@ -251,11 +214,7 @@ class ChatSafetyStrip extends StatelessWidget {
           Expanded(
             child: Text(
               'Huddl keeps this a safe space for families.',
-              style: GoogleFonts.poppins(
-                fontSize: 10.5,
-                color: isDark ? HuddlColors.textHint : HuddlColors.textSecondary,
-                height: 1.3,
-              ),
+              style: HuddlText.label(color: isDark ? HuddlColors.textHint : HuddlColors.textSecondary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -264,12 +223,7 @@ class ChatSafetyStrip extends StatelessWidget {
             onTap: () => _showFullNotice(context),
             child: Text(
               'About this',
-              style: GoogleFonts.poppins(
-                fontSize: 10.5,
-                color: HuddlColors.textTertiary,
-                fontWeight: FontWeight.w600,
-                decoration: TextDecoration.underline,
-              ),
+              style: HuddlText.label(color: HuddlColors.textTertiary),
             ),
           ),
         ],

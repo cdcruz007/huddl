@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
@@ -980,19 +979,12 @@ class _BiometricLoginButton extends StatelessWidget {
               children: [
                 Text(
                   'Use $label',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textPrimary,
-                  ),
+                  style: HuddlText.body(weight: FontWeight.w600),
                 ),
                 if (_maskedPhone.isNotEmpty)
                   Text(
                     _maskedPhone,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
               ],
             ),

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/voice_message_service.dart';
+import '../constants/app_text_styles.dart';
 
 /// A WhatsApp-style voice message bubble with play/pause, waveform, and timer.
 /// Used in both DM and group chat screens.
@@ -190,13 +190,11 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
               // Duration / position
               Text(
                 timeStr,
-                style: GoogleFonts.poppins(fontSize: 10, color: textColor.withValues(alpha: 0.8)),
-              ),
+                style: HuddlText.label(color: textColor.withValues(alpha: 0.8))),
               // Message timestamp
               Text(
                 _formatTime(widget.timestamp),
-                style: GoogleFonts.poppins(fontSize: 10, color: textColor.withValues(alpha: 0.7)),
-              ),
+                style: HuddlText.label(color: textColor.withValues(alpha: 0.7))),
             ],
           ),
         ],
@@ -341,21 +339,14 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
           // Timer
           Text(
             timeStr,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.error,
-            ),
+            style: HuddlText.body(weight: FontWeight.w600),
           ),
           const SizedBox(width: 8),
           // Swipe hint
           Expanded(
             child: Text(
               '< Swipe to cancel',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
+              style: HuddlText.caption(color: HuddlColors.textTertiary),
             ),
           ),
           // Send button

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../services/business_verification_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/underlined_text_field.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 // =============================================================================
 // BUSINESS VERIFICATION SCREEN
@@ -133,11 +133,7 @@ class _BusinessVerificationScreenState
                 : const SizedBox.shrink()),
         title: Text(
           'Business verification',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: hc.textPrimary,
-          ),
+          style: HuddlText.heading(),
         ),
         centerTitle: true,
       ),
@@ -173,20 +169,12 @@ class _BusinessVerificationScreenState
         children: [
           Text(
             'Verify your business',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: hc.textPrimary,
-            ),
+            style: HuddlText.display(),
           ),
           const SizedBox(height: 8),
           Text(
             'Choose how your business is registered with HMRC',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: hc.textSecondary,
-              height: 1.4,
-            ),
+            style: HuddlText.body(color: hc.textSecondary),
           ),
           const SizedBox(height: 28),
           _StageCard(
@@ -245,11 +233,7 @@ class _BusinessVerificationScreenState
                 : _entityType == BusinessEntityType.vatRegistered
                     ? 'VAT registration details'
                     : 'Sole trader declaration',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: hc.textPrimary,
-            ),
+            style: HuddlText.display(),
           ),
           const SizedBox(height: 24),
           // Entity-specific form via IndexedStack
@@ -286,11 +270,7 @@ class _BusinessVerificationScreenState
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: HuddlColors.error,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.body(color: HuddlColors.error),
                     ),
                   ),
                 ],
@@ -387,11 +367,7 @@ class _BusinessVerificationScreenState
             'I accept full legal responsibility for all services and events '
             'I promote through Huddl. I understand that Huddl is a promotional '
             'platform only and accepts no liability for the services or events I list.',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              height: 1.5,
-              color: hc.textSecondary,
-            ),
+            style: HuddlText.caption().copyWith(height: 1.5),
           ),
         ),
         CheckboxListTile(
@@ -400,7 +376,7 @@ class _BusinessVerificationScreenState
               setState(() => _declarationConfirmed = v ?? false),
           title: Text(
             'I confirm the above declaration is true',
-            style: GoogleFonts.poppins(fontSize: 13),
+            style: HuddlText.body(),
           ),
           activeColor: HuddlColors.primary,
           controlAffinity: ListTileControlAffinity.leading,
@@ -434,31 +410,20 @@ class _BusinessVerificationScreenState
             const SizedBox(height: 24),
             Text(
               'Business verified',
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: hc.textPrimary,
-              ),
+              style: HuddlText.display(),
             ),
             const SizedBox(height: 8),
             if (_verifiedName != null)
               Text(
                 _verifiedName!,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
-                ),
+                style: HuddlText.body(weight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             const SizedBox(height: 8),
             Text(
               'Your HMRC-verified badge is now active on all your listings.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: hc.textSecondary,
-              ),
+              style: HuddlText.body(),
             ),
             const SizedBox(height: 32),
             HuddlButton(
@@ -545,19 +510,12 @@ class _StageCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: selected ? HuddlColors.primary : hc.textPrimary,
-                    ),
+                    style: HuddlText.body(weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: hc.textSecondary,
-                    ),
+                    style: HuddlText.caption(),
                   ),
                 ],
               ),

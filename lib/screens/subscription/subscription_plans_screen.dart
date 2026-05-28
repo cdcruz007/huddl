@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../services/payment_service.dart';
+import '../../widgets/common/huddl_button.dart';
+import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTION PLANS — tier comparison & purchase screen
@@ -49,7 +50,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Subscription reactivated! Your plan will continue to renew.',
-                style: GoogleFonts.poppins(color: HuddlColors.white)),
+                style: HuddlText.body(color: HuddlColors.white)),
             backgroundColor: HuddlColors.textDark,
           ),
         );
@@ -67,7 +68,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Scheduled change revoked. Your current plan continues.',
-                style: GoogleFonts.poppins(color: HuddlColors.white)),
+                style: HuddlText.body(color: HuddlColors.white)),
             backgroundColor: HuddlColors.textDark,
           ),
         );
@@ -88,7 +89,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Subscription cancelled. You keep full access until $summary.',
-                  style: GoogleFonts.poppins(color: HuddlColors.white)),
+                  style: HuddlText.body(color: HuddlColors.white)),
               backgroundColor: HuddlColors.primary,
             ),
           );
@@ -101,7 +102,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Reverted to Welcome plan',
-                  style: GoogleFonts.poppins(color: HuddlColors.white)),
+                  style: HuddlText.body(color: HuddlColors.white)),
               backgroundColor: HuddlColors.textDark,
             ),
           );
@@ -162,16 +163,14 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Cancel Subscription?',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   renewalInfo,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: context.hc.textSecondary),
+                  style: HuddlText.body(color: context.hc.textSecondary),
                 ),
                 if (_service.daysUntilRenewal > 0) ...[
                   const SizedBox(height: 12),
@@ -189,8 +188,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         Expanded(
                           child: Text(
                             '${_service.daysUntilRenewal} days remaining in your current period.',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.nearBlack),
+                            style: HuddlText.caption(color: HuddlColors.nearBlack),
                           ),
                         ),
                       ],
@@ -203,14 +201,12 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text('Keep Plan',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.primary)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text('Cancel Subscription',
-                    style: GoogleFonts.poppins(color: HuddlColors.error)),
+                    style: HuddlText.body(color: HuddlColors.error)),
               ),
             ],
           ),
@@ -225,26 +221,22 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Reactivate Subscription?',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
             content: Text(
               'Your cancellation will be reversed and your plan will '
               'continue to auto-renew at the end of the current billing period.',
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textSecondary),
+              style: HuddlText.body(color: context.hc.textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text('Keep Cancelled',
-                    style: GoogleFonts.poppins(color: context.hc.textTertiary)),
+                    style: HuddlText.body(color: context.hc.textTertiary)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text('Reactivate',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.nearBlack)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
               ),
             ],
           ),
@@ -259,26 +251,22 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Keep Current Plan?',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
             content: Text(
               'This will cancel the scheduled plan change. '
               'Your current plan will continue to renew normally.',
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textSecondary),
+              style: HuddlText.body(color: context.hc.textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text('Keep Scheduled Change',
-                    style: GoogleFonts.poppins(color: context.hc.textTertiary)),
+                    style: HuddlText.body(color: context.hc.textTertiary)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text('Keep Current Plan',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary)),
+                    style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.primary)),
               ),
             ],
           ),
@@ -300,10 +288,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Choose Your Plan',
-            style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary)),
+            style: HuddlText.heading(color: context.hc.textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -384,10 +369,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               TextButton(
                 onPressed: _restorePurchases,
                 child: Text('Restore Purchases',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textTertiary)),
+                    style: HuddlText.body(color: context.hc.textTertiary)),
               ),
 
               // ── Apple 3.1.2 / Google Play required subscription disclosures ──
@@ -401,10 +383,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   children: [
                     Text(
                       'Subscription Terms',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textSecondary),
+                      style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textSecondary),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -418,8 +397,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       'subscriptions in your App Store or Google Play account '
                       'settings. Prices shown are in GBP and may vary by region.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                          fontSize: 10, color: HuddlColors.textLight),
+                      style: HuddlText.label(color: HuddlColors.textLight),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -430,28 +408,19 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                             Navigator.pushNamed(context, '/terms');
                           },
                           child: Text('Terms of Service',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textTertiary,
-                                  decoration: TextDecoration.underline)),
+                              style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline)),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text('\u2022',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: HuddlColors.textLight)),
+                              style: HuddlText.caption(color: HuddlColors.textLight)),
                         ),
                         GestureDetector(
                           onTap: () {
                             Navigator.pushNamed(context, '/privacy');
                           },
                           child: Text('Privacy Policy',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textTertiary,
-                                  decoration: TextDecoration.underline)),
+                              style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline)),
                         ),
                       ],
                     ),
@@ -475,7 +444,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             restored
                 ? 'Subscription restored!'
                 : 'No previous purchases found.',
-            style: GoogleFonts.poppins(color: HuddlColors.white),
+            style: HuddlText.body(color: HuddlColors.white),
           ),
           backgroundColor: restored ? HuddlColors.textDark : HuddlColors.textHint,
         ),
@@ -533,10 +502,7 @@ class _ScheduledChangeBanner extends StatelessWidget {
                   isCancellation
                       ? 'Subscription cancels at end of period'
                       : 'Plan change scheduled',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: color),
+                  style: HuddlText.body(weight: FontWeight.w600, color: color),
                 ),
               ),
             ],
@@ -544,17 +510,13 @@ class _ScheduledChangeBanner extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             summary,
-            style: GoogleFonts.poppins(
-                fontSize: 12, color: context.hc.textSecondary),
+            style: HuddlText.caption(color: context.hc.textSecondary),
           ),
           if (daysRemaining > 0) ...[
             const SizedBox(height: 2),
             Text(
               '$daysRemaining days remaining in current period',
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textTertiary),
+              style: HuddlText.caption(color: context.hc.textTertiary),
             ),
           ],
           const SizedBox(height: 10),
@@ -571,10 +533,7 @@ class _ScheduledChangeBanner extends StatelessWidget {
                 isCancellation
                     ? 'Undo Cancellation'
                     : 'Revert to Current Plan',
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: color),
+                style: HuddlText.caption(weight: FontWeight.w600, color: color),
               ),
             ),
           ),
@@ -604,10 +563,7 @@ class _GateBanner extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(message,
-                style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: context.hc.textPrimary)),
+                style: HuddlText.body(color: context.hc.textPrimary)),
           ),
         ],
       ),
@@ -666,13 +622,7 @@ class _BillingToggle extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: isActive
-                        ? HuddlColors.textDark
-                        : HuddlColors.textHint,
-                  )),
+                  style: HuddlText.body()),
               if (showSave) ...[
                 const SizedBox(width: 6),
                 Container(
@@ -683,10 +633,7 @@ class _BillingToggle extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text('Save 30%',
-                      style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary)),
+                      style: HuddlText.label(color: HuddlColors.primary)),
                 ),
               ],
             ],
@@ -786,10 +733,7 @@ class _PlanCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(plan.name,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.hc.textPrimary)),
+                              style: HuddlText.display(color: context.hc.textPrimary)),
                           if (isCurrentPlan) ...[
                             const SizedBox(width: 8),
                             Container(
@@ -803,10 +747,7 @@ class _PlanCard extends StatelessWidget {
                               ),
                               child: Text(
                                 isPendingCancel ? 'Cancelling' : 'Current',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.white)),
+                                style: HuddlText.label(color: HuddlColors.white)),
                             ),
                           ],
                           if (isScheduledTarget) ...[
@@ -819,10 +760,7 @@ class _PlanCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Scheduled',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.white)),
+                                  style: HuddlText.label(color: HuddlColors.white)),
                             ),
                           ],
                           if (isHighlighted && !isCurrentPlan) ...[
@@ -835,19 +773,14 @@ class _PlanCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Best Value',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.white)),
+                                  style: HuddlText.label(color: HuddlColors.white)),
                             ),
                           ],
                         ],
                       ),
                       const SizedBox(height: 2),
                       Text(plan.tagline,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textSecondary)),
+                          style: HuddlText.caption(color: context.hc.textSecondary)),
                     ],
                   ),
                 ),
@@ -868,10 +801,7 @@ class _PlanCard extends StatelessWidget {
                   isFree
                       ? 'Free'
                       : (storePrice ?? '\u00A3${price.toStringAsFixed(2)}'),
-                  style: GoogleFonts.poppins(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary),
+                  style: HuddlText.display(color: context.hc.textPrimary),
                 ),
                 if (!isFree) ...[
                   const SizedBox(width: 4),
@@ -881,8 +811,7 @@ class _PlanCard extends StatelessWidget {
                       period == BillingPeriod.monthly
                           ? '/month'
                           : '/year',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13, color: context.hc.textTertiary),
+                      style: HuddlText.body(color: context.hc.textTertiary),
                     ),
                   ),
                   if (period == BillingPeriod.annual && plan.annualSavingsPercent > 0) ...[
@@ -896,10 +825,7 @@ class _PlanCard extends StatelessWidget {
                       ),
                       child: Text(
                         'Save ${plan.annualSavingsPercent}%',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary),
+                        style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.primary),
                       ),
                     ),
                   ],
@@ -914,10 +840,7 @@ class _PlanCard extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(plan.subtitle,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                      color: context.hc.textTertiary)),
+                  style: HuddlText.caption(color: context.hc.textTertiary).copyWith(fontStyle: FontStyle.italic)),
             ),
           ),
 
@@ -940,9 +863,7 @@ class _PlanCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(h,
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: context.hc.textSecondary)),
+                                  style: HuddlText.body(color: context.hc.textSecondary)),
                             ),
                           ],
                         ),
@@ -970,8 +891,7 @@ class _PlanCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Access until end of period ($daysUntilRenewal days)',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: HuddlColors.error),
+                        style: HuddlText.caption(color: HuddlColors.error),
                       ),
                     ),
                   ],
@@ -998,9 +918,7 @@ class _PlanCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         scheduledSummary ?? 'Scheduled for next billing cycle',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: HuddlColors.nearBlack),
+                        style: HuddlText.caption(color: HuddlColors.nearBlack),
                       ),
                     ),
                   ],
@@ -1011,42 +929,20 @@ class _PlanCard extends StatelessWidget {
           // CTA button
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isCurrentPlan
-                    ? (isPendingCancel || isScheduledTarget
-                        ? onSelect
-                        : null)
-                    : (isScheduledTarget ? null : onSelect),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isCurrentPlan
-                      ? HuddlColors.gray200
-                      : (isHighlighted
-                          ? HuddlColors.primary
-                          : HuddlColors.textDark),
-                  foregroundColor: HuddlColors.white,
-                  disabledBackgroundColor: HuddlColors.successBg,
-                  disabledForegroundColor: HuddlColors.nearBlack,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text(
-                  isCurrentPlan
-                      ? (isPendingCancel
-                          ? 'Reactivate'
-                          : (isScheduledTarget
-                              ? 'Keep Current Plan'
-                              : 'Current Plan'))
-                      : (isScheduledTarget
-                          ? 'Scheduled'
-                          : (isFree ? 'Cancel Subscription' : 'Choose ${plan.name}')),
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
+            child: HuddlButton(
+              label: isCurrentPlan
+                  ? (isPendingCancel
+                      ? 'Reactivate'
+                      : (isScheduledTarget ? 'Keep Current Plan' : 'Current Plan'))
+                  : (isScheduledTarget
+                      ? 'Scheduled'
+                      : (isFree ? 'Cancel Subscription' : 'Choose ${plan.name}')),
+              variant: isFree && !isCurrentPlan
+                  ? HuddlButtonVariant.destructive
+                  : HuddlButtonVariant.primary,
+              onPressed: isCurrentPlan
+                  ? (isPendingCancel || isScheduledTarget ? onSelect : null)
+                  : (isScheduledTarget ? null : onSelect),
             ),
           ),
         ],
@@ -1091,10 +987,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     return Column(
       children: [
         Text('Compare all features',
-            style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary)),
+            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
@@ -1118,31 +1011,19 @@ class _FeatureComparisonTable extends StatelessWidget {
                     Expanded(
                         flex: 3,
                         child: Text('Feature',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textTertiary))),
+                            style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary))),
                     Expanded(
                         child: Text('Welcome',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textTertiary))),
+                            style: HuddlText.label(color: context.hc.textTertiary))),
                     Expanded(
                         child: Text('Plus',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.primary))),
+                            style: HuddlText.label(color: HuddlColors.primary))),
                     Expanded(
                         child: Text('Partner',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.nearBlack))),
+                            style: HuddlText.label(color: HuddlColors.nearBlack))),
                   ],
                 ),
               ),
@@ -1192,11 +1073,7 @@ class _FeatureComparisonTable extends StatelessWidget {
         border: const Border(bottom: BorderSide(color: HuddlColors.gray100)),
       ),
       child: Text(title,
-          style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: HuddlColors.textDark)),
+          style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark).copyWith(letterSpacing: 0.5)),
     );
   }
 
@@ -1211,29 +1088,19 @@ class _FeatureComparisonTable extends StatelessWidget {
           Expanded(
               flex: 3,
               child: Text(label,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: HuddlColors.textSecondary))),
+                  style: HuddlText.caption(color: HuddlColors.textSecondary))),
           Expanded(
               child: Text(explorer,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textTertiary))),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary))),
           Expanded(
               child: Text(neighbourhood,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark))),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark))),
           Expanded(
               child: Text(inner,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.nearBlack))),
+                  style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack))),
         ],
       ),
     );
@@ -1256,8 +1123,7 @@ class _FeatureComparisonTable extends StatelessWidget {
           Expanded(
               flex: 3,
               child: Text(label,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, color: HuddlColors.textSecondary))),
+                  style: HuddlText.caption(color: HuddlColors.textSecondary))),
           Expanded(child: Center(child: checkIcon(explorer, HuddlColors.textHint))),
           Expanded(child: Center(child: checkIcon(neighbourhood, HuddlColors.textDark))),
           Expanded(child: Center(child: checkIcon(inner, HuddlColors.nearBlack))),
