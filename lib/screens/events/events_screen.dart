@@ -32,6 +32,7 @@ import '../../services/subscription_service.dart';
 import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -2352,20 +2353,11 @@ class _ImGoingCard extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx),
             child: Text('Keep', style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onCancel();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isPast ? HuddlColors.textSecondary : HuddlColors.error,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text(
-              isPast ? 'Clear' : 'Cancel',
-              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white),
-            ),
+          HuddlButton(
+            label: isPast ? 'Clear' : 'Cancel',
+            onPressed: () { Navigator.pop(ctx); onCancel(); },
+            variant: isPast ? HuddlButtonVariant.secondary : HuddlButtonVariant.destructive,
+            fullWidth: true,
           ),
         ],
       ),

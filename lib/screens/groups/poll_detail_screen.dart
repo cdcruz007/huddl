@@ -8,6 +8,7 @@ import '../../theme/huddl_colors.dart';
 import 'create_poll_screen.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIRESTORE POLL MODEL
@@ -593,34 +594,14 @@ class _PollCardBody extends StatelessWidget {
           // Submit button for multi-choice
           if (isMulti) ...[
             const SizedBox(height: 4),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                onPressed: (submitting || pendingSelection.isEmpty)
-                    ? null
-                    : onSubmitMulti,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  disabledBackgroundColor:
-                      HuddlColors.primary.withValues(alpha: 0.35),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white)),
-                      )
-                    : Text(
-                        'Submit vote',
-                        style: HuddlText.body(weight: FontWeight.w600),
-                      ),
-              ),
+            HuddlButton(
+              label: 'Submit vote',
+              variant: HuddlButtonVariant.primary,
+              isLoading: submitting,
+              fullWidth: true,
+              onPressed: (submitting || pendingSelection.isEmpty)
+                  ? null
+                  : onSubmitMulti,
             ),
           ],
           _PollFooter(poll: poll, label: 'Tap to vote'),
@@ -1251,27 +1232,15 @@ class PollResultsScreen extends StatelessWidget {
         // ── Delete button — creator only ──────────────────────────────
         if (isCreator && onDeletePoll != null) ...[
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                onDeletePoll?.call();
-              },
-              icon: const Icon(Icons.delete_outline,
-                  color: Colors.white, size: 20),
-              label: Text(
-                'Delete Poll',
-                style: HuddlText.body(weight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.error,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
-              ),
-            ),
+          HuddlButton(
+            label: 'Delete Poll',
+            variant: HuddlButtonVariant.destructive,
+            leadingIcon: Icons.delete_outline,
+            fullWidth: true,
+            onPressed: () {
+              Navigator.pop(context);
+              onDeletePoll?.call();
+            },
           ),
         ],
         const SizedBox(height: 40),
@@ -1965,25 +1934,15 @@ class PollDetailScreen extends StatelessWidget {
           }),
           if (poll.isCreatedByMe && onDeletePoll != null) ...[
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onDeletePoll?.call();
-                },
-                icon: const Icon(Icons.delete_outline,
-                    color: Colors.white, size: 20),
-                label: Text('Delete Poll',
-                    style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.error,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-              ),
+            HuddlButton(
+              label: 'Delete Poll',
+              variant: HuddlButtonVariant.destructive,
+              leadingIcon: Icons.delete_outline,
+              fullWidth: true,
+              onPressed: () {
+                Navigator.pop(context);
+                onDeletePoll?.call();
+              },
             ),
           ],
         ],

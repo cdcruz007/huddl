@@ -4866,30 +4866,19 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     padding: EdgeInsets.fromLTRB(
                         20, 10, 20,
                         MediaQuery.of(ctx).padding.bottom + 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HuddlAnimations.lightTap();
-                          Navigator.pop(ctx);
-                          setState(() {
-                            _selectedAudiences = tempAudiences;
-                            _selectedSort = tempSort;
-                            _aiRecommendationsEnabled = tempSmartSort;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                        ),
-                        child: Text('Apply',
-                          style: HuddlText.body(weight: FontWeight.w600),
-                        ),
-                      ),
+                    child: HuddlButton(
+                      label: 'Apply',
+                      variant: HuddlButtonVariant.primary,
+                      fullWidth: true,
+                      onPressed: () {
+                        HuddlAnimations.lightTap();
+                        Navigator.pop(ctx);
+                        setState(() {
+                          _selectedAudiences = tempAudiences;
+                          _selectedSort = tempSort;
+                          _aiRecommendationsEnabled = tempSmartSort;
+                        });
+                      },
                     ),
                   ),
                 ],

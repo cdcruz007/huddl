@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
@@ -3377,32 +3378,17 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: controller.text.trim().isEmpty
-                              ? null
-                              : () {
-                                  final content = controller.text.trim();
-                                  Navigator.pop(ctx);
-                                  _postToBoroughNoticeboard(content);
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.primary,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor:
-                                HuddlColors.primary.withValues(alpha: 0.4),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 13),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                            style: HuddlText.body(weight: FontWeight.w600),
-                          ),
-                        ),
+                      child: HuddlButton(
+                        label: 'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
+                        onPressed: controller.text.trim().isEmpty
+                            ? null
+                            : () {
+                                final content = controller.text.trim();
+                                Navigator.pop(ctx);
+                                _postToBoroughNoticeboard(content);
+                              },
+                        variant: HuddlButtonVariant.primary,
+                        fullWidth: true,
                       ),
                     ),
                   ],
@@ -3851,27 +3837,14 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                         const SizedBox(height: 12),
                         // CTA button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              HuddlAnimations.mediumTap();
-                              _switchToTab(2);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: HuddlColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 11),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              ctaLabel,
-                              style: HuddlText.body(),
-                            ),
-                          ),
+                        HuddlButton(
+                          label: ctaLabel,
+                          onPressed: () {
+                            HuddlAnimations.mediumTap();
+                            _switchToTab(2);
+                          },
+                          variant: HuddlButtonVariant.primary,
+                          fullWidth: true,
                         ),
                       ],
                     ),
@@ -4801,25 +4774,14 @@ class _HomeScreenState extends State<HomeScreen>
             const SizedBox(height: 12),
             // CTA button
             if (externalUrl.isNotEmpty)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => launchUrl(
-                    Uri.parse(externalUrl),
-                    mode: LaunchMode.externalApplication,
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HuddlColors.primary,
-                    side: const BorderSide(color: HuddlColors.primary),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  child: Text(
-                    ctaLabel,
-                    style: HuddlText.body(),
-                  ),
+              HuddlButton(
+                label: ctaLabel,
+                onPressed: () => launchUrl(
+                  Uri.parse(externalUrl),
+                  mode: LaunchMode.externalApplication,
                 ),
+                variant: HuddlButtonVariant.secondary,
+                fullWidth: true,
               ),
           ],
         ),
@@ -5584,23 +5546,14 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    widget.onSaved(_prefs);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: Text('Save Preferences',
-                      style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
-                ),
+              child: HuddlButton(
+                label: 'Save Preferences',
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onSaved(_prefs);
+                },
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
               ),
             ),
             SizedBox(height: bottomInset > 0 ? bottomInset : 16),
@@ -7049,19 +7002,11 @@ class _ActivityDetailSheet extends StatelessWidget {
                             )),
                   ],
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: HuddlColors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
+                  HuddlButton(
+                    label: 'View',
+                    variant: HuddlButtonVariant.primary,
+                    fullWidth: true,
+                    onPressed: () {
                         if (onAction != null) {
                           onAction!();
                         } else {
@@ -7086,11 +7031,6 @@ class _ActivityDetailSheet extends StatelessWidget {
                           }
                         }
                       },
-                      child: Text(
-                        _actionLabel(item.type),
-                        style: HuddlText.body(weight: FontWeight.w600),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -7123,22 +7063,6 @@ class _ActivityDetailSheet extends StatelessWidget {
     );
   }
 
-  String _actionLabel(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newGroup:
-        return 'View Groups';
-      case FeedItemType.newEvent:
-        return 'View Events';
-      case FeedItemType.newMarketplaceItem:
-        return 'View in Market';
-      case FeedItemType.newParent:
-        return 'Say Welcome';
-      case FeedItemType.milestone:
-        return 'Celebrate';
-      case FeedItemType.partnerPromoted:
-        return 'View Listing';
-    }
-  }
 
   IconData _iconForType(FeedItemType t) {
     switch (t) {

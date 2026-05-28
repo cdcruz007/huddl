@@ -3556,33 +3556,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       actions: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(dCtx, false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: HuddlColors.textSecondary,
-                            side: const BorderSide(color: HuddlColors.divider),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                          ),
-                          child: Text('Decline',
-                              style: HuddlText.body()),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(dCtx, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.primary,
-                            foregroundColor: HuddlColors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                            elevation: 0,
-                          ),
-                          child: Text('I Consent',
-                              style: HuddlText.body(weight: FontWeight.w600)),
-                        ),
+                        HuddlButton(label: 'Decline', onPressed: () => Navigator.pop(dCtx, false), variant: HuddlButtonVariant.secondary, fullWidth: false),
+                        HuddlButton(label: 'I Consent', onPressed: () => Navigator.pop(dCtx, true), variant: HuddlButtonVariant.primary, fullWidth: false),
                       ],
                     ),
                   );
@@ -3623,20 +3598,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Text('Cancel',
                               style: HuddlText.body(color: HuddlColors.textSecondary)),
                         ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(dCtx, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.error,
-                            foregroundColor: HuddlColors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                            elevation: 0,
-                          ),
-                          child: Text('Withdraw Consent',
-                              style: HuddlText.body(weight: FontWeight.w600)),
-                        ),
+                        HuddlButton(label: 'Withdraw Consent', onPressed: () => Navigator.pop(dCtx, true), variant: HuddlButtonVariant.destructive, fullWidth: false),
                       ],
                     ),
                   );
@@ -4594,48 +4556,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(c),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: HuddlColors.textSecondary,
-                            side: BorderSide(color: context.hc.divider),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: Text('Cancel',
-                              style: HuddlText.body()),
-                        ),
+                        child: HuddlButton(label: 'Cancel', onPressed: () => Navigator.pop(c), variant: HuddlButtonVariant.secondary, fullWidth: true),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
+                        child: HuddlButton(
+                          label: 'Verify',
+                          variant: HuddlButtonVariant.primary,
+                          fullWidth: true,
                           onPressed: () async {
                             final code = codeCtrl.text.trim();
                             if (code.length < 4) {
                               setLocal(() => hasError = true);
                               return;
                             }
-                            // Verify via Firebase phone auth on mobile,
-                            // or accept any 6-digit code on web preview
-                            final isWeb = identical(0, 0.0); // dart:core web check
+                            final isWeb = identical(0, 0.0);
                             if (isWeb || code.length == 6) {
-                              // TODO: In production, verify code via SMS backend
                               verified = true;
                               Navigator.pop(c);
                             } else {
                               setLocal(() => hasError = true);
                             }
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.primary,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 0,
-                          ),
-                          child: Text('Verify',
-                              style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                         ),
                       ),
                     ],
@@ -4829,7 +4771,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: HuddlButton(
+                      label: 'Delete Account',
+                      variant: HuddlButtonVariant.destructive,
+                      isLoading: isDeleting,
+                      fullWidth: true,
                       onPressed: isDeleting
                           ? null
                           : () async {
@@ -4929,23 +4875,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     '/onboarding', (r) => false);
                               }
                             },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.error,
-                        disabledBackgroundColor:
-                            HuddlColors.error.withValues(alpha: 0.5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      child: isDeleting
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : Text('Delete Account',
-                              style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                     ),
                   ),
                   const SizedBox(height: 8),

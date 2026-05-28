@@ -16,6 +16,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/backup_restore_service.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -162,16 +163,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             child: Text('Cancel',
                 style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
+          HuddlButton(
+            label: 'Restore',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: false,
             onPressed: () => Navigator.pop(c, ctrl.text.trim()),
-            child: Text('Restore',
-                style: HuddlText.body(weight: FontWeight.w600)),
           ),
         ],
       ),
@@ -228,16 +224,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             child: Text('Cancel',
                 style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.error,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
+          HuddlButton(
+            label: 'Yes, restore',
+            variant: HuddlButtonVariant.destructive,
+            fullWidth: false,
             onPressed: () => Navigator.pop(c, true),
-            child: Text('Yes, restore',
-                style: HuddlText.body(weight: FontWeight.w600)),
           ),
         ],
       ),
@@ -583,20 +574,11 @@ class _ActionCard extends StatelessWidget {
                         color: btnColor, strokeWidth: 2),
                   ),
                 )
-              : SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: btnColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: HuddlText.caption(weight: FontWeight.w600),
-                    ),
-                    onPressed: onTap,
-                    child: Text(buttonLabel),
-                  ),
+              : HuddlButton(
+                  label: buttonLabel,
+                  variant: HuddlButtonVariant.primary,
+                  fullWidth: true,
+                  onPressed: onTap,
                 ),
         ],
       ),
@@ -706,29 +688,20 @@ class _ExportResultSheet extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Copy button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                textStyle: HuddlText.body(weight: FontWeight.w600),
-              ),
-              icon: const Icon(Icons.copy, size: 18),
-              label: const Text('Copy backup to clipboard'),
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: json));
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Backup copied to clipboard'),
-                    duration: Duration(seconds: 2),
-                  ));
-                }
-              },
-            ),
+          HuddlButton(
+            label: 'Copy backup to clipboard',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: true,
+            leadingIcon: Icons.copy,
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: json));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Backup copied to clipboard'),
+                  duration: Duration(seconds: 2),
+                ));
+              }
+            },
           ),
           const SizedBox(height: 10),
           Center(

@@ -2898,33 +2898,13 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        minimumSize: const Size(double.infinity, 52),
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                      ),
-                      icon: _extracting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.search, size: 18),
-                      label: Text(
-                        _extracting
-                            ? 'Analysing\u2026'
-                            : 'Extract recommendations',
-                        style: HuddlText.body(weight: FontWeight.w600),
-                      ),
-                      onPressed: _extracting ? null : _runExtraction,
-                    ),
+                  HuddlButton(
+                    label: _extracting ? 'Analysing\u2026' : 'Extract recommendations',
+                    variant: HuddlButtonVariant.primary,
+                    leadingIcon: Icons.search,
+                    isLoading: _extracting,
+                    fullWidth: true,
+                    onPressed: _extracting ? null : _runExtraction,
                   ),
                   if (_extractError != null) ...[
                     const SizedBox(height: 12),

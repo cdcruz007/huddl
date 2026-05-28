@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/local_services_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // =============================================================================
 // PARTNER BUSINESS PROFILE SCREEN
@@ -372,31 +373,19 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
       children: [
         _SectionHeader(title: 'Get in touch'),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            icon: const Icon(Icons.open_in_new_rounded, size: 18),
-            label: Text(
-              'Book / Enquire',
-              style:
-                  HuddlText.body(weight: FontWeight.w600),
-            ),
-            onPressed: () async {
-              final hasScheme =
-                  url.startsWith('http://') || url.startsWith('https://');
-              final uri = Uri.parse(hasScheme ? url : 'https://$url');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            },
-          ),
+        HuddlButton(
+          label: 'Book / Enquire',
+          variant: HuddlButtonVariant.primary,
+          fullWidth: true,
+          leadingIcon: Icons.open_in_new_rounded,
+          onPressed: () async {
+            final hasScheme =
+                url.startsWith('http://') || url.startsWith('https://');
+            final uri = Uri.parse(hasScheme ? url : 'https://$url');
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
         ),
       ],
     );

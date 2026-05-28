@@ -50,6 +50,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -1814,78 +1815,61 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
               const SizedBox(height: 24),
               // Unsend for everyone
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    setState(() {
-                      _deletedForEveryoneIds.add(msg.id);
-                    });
-                    _persistUnsendStates();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Message unsent for everyone'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              HuddlButton(
+                label: 'Unsend for everyone',
+                variant: HuddlButtonVariant.destructive,
+                leadingIcon: Icons.group_outlined,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.pop(c);
+                  setState(() {
+                    _deletedForEveryoneIds.add(msg.id);
+                  });
+                  _persistUnsendStates();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text('Message unsent for everyone'),
+                        ],
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.group_outlined, size: 20),
-                  label: Text('Unsend for everyone',
-                      style: HuddlText.body(weight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.error,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+                      backgroundColor: HuddlColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 10),
               // Unsend just for me
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    setState(() {
-                      _hiddenMessageIds.add(msg.id);
-                    });
-                    _persistUnsendStates();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Message unsent for you'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.textSecondary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              HuddlButton(
+                label: 'Unsend just for me',
+                variant: HuddlButtonVariant.secondary,
+                leadingIcon: Icons.person_outline,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.pop(c);
+                  setState(() {
+                    _hiddenMessageIds.add(msg.id);
+                  });
+                  _persistUnsendStates();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text('Message unsent for you'),
+                        ],
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.person_outline, size: 20),
-                  label: Text('Unsend just for me',
-                      style: HuddlText.body(weight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HuddlColors.textDark,
-                    side: BorderSide(color: context.hc.divider),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+                      backgroundColor: HuddlColors.textSecondary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 10),
               // Cancel
@@ -2115,38 +2099,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
+                          child: HuddlButton(
+                            label: 'Cancel',
+                            variant: HuddlButtonVariant.secondary,
+                            fullWidth: true,
                             onPressed: () => Navigator.pop(c),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: HuddlColors.divider),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Text('Cancel',
-                                style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary)),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: ElevatedButton(
+                          child: HuddlButton(
+                            label: threadReplies.isEmpty ? 'Save message' : 'Save thread',
+                            variant: HuddlButtonVariant.primary,
+                            fullWidth: true,
                             onPressed: () {
                               final topic = topicController.text.trim();
                               if (topic.isEmpty) return;
                               Navigator.pop(c);
                               unawaited(_saveThread(rootMsg, threadReplies, topic));
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: HuddlColors.primary,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              threadReplies.isEmpty ? 'Save message' : 'Save thread',
-                              style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white),
-                            ),
                           ),
                         ),
                       ],
@@ -2239,20 +2210,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: HuddlButton(
+                      label: 'Cancel',
+                      variant: HuddlButtonVariant.secondary,
+                      fullWidth: true,
                       onPressed: () => Navigator.pop(c),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: context.hc.divider),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text('Cancel',
-                          style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: HuddlButton(
+                      label: isBlocked ? 'Unblock' : 'Block',
+                      variant: HuddlButtonVariant.destructive,
+                      fullWidth: true,
                       onPressed: () async {
                         Navigator.pop(c);
                         final wasBlocked = isBlocked;
@@ -2271,14 +2241,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           );
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.error,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(isBlocked ? 'Unblock' : 'Block',
-                          style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white)),
                     ),
                   ),
                 ],
@@ -2362,20 +2324,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: HuddlButton(
+                        label: 'Cancel',
+                        variant: HuddlButtonVariant.secondary,
+                        fullWidth: true,
                         onPressed: () => Navigator.pop(c),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: context.hc.divider),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text('Cancel',
-                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: HuddlButton(
+                        label: 'Report',
+                        variant: HuddlButtonVariant.destructive,
+                        fullWidth: true,
                         onPressed: selectedType == null
                             ? null
                             : () async {
@@ -2402,15 +2363,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.error,
-                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: Text('Report',
-                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -2489,20 +2441,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: HuddlButton(
+                        label: 'Cancel',
+                        variant: HuddlButtonVariant.secondary,
+                        fullWidth: true,
                         onPressed: () => Navigator.pop(c),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: context.hc.divider),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text('Cancel',
-                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: HuddlButton(
+                        label: 'Report',
+                        variant: HuddlButtonVariant.destructive,
+                        fullWidth: true,
                         onPressed: selectedType == null
                             ? null
                             : () async {
@@ -2530,15 +2481,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.error,
-                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: Text('Report',
-                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -2599,22 +2541,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   return ListTile(
                     leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
                     title: Text(m.name, style: HuddlText.body(color: context.hc.textPrimary)),
-                    trailing: SizedBox(
-                      width: 80,
-                      height: 34,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(c);
-                          setState(() => _groupMembers.add(m));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${m.name} added to group'), backgroundColor: HuddlColors.primary,
-                              behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, elevation: 0, padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                        child: Text('Add', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.white)),
-                      ),
+                    trailing: HuddlButton(
+                      label: 'Add',
+                      variant: HuddlButtonVariant.primary,
+                      fullWidth: false,
+                      onPressed: () {
+                        Navigator.pop(c);
+                        setState(() => _groupMembers.add(m));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${m.name} added to group'), backgroundColor: HuddlColors.primary,
+                            behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                        );
+                      },
                     ),
                   );
                 },
@@ -2677,18 +2615,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     return ListTile(
                       leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
                       title: Text(m.name, style: HuddlText.body(color: context.hc.textPrimary)),
-                      trailing: SizedBox(
-                        width: 90,
-                        height: 34,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pop(c);
-                            _confirmRemoveMember(m);
-                          },
-                          style: OutlinedButton.styleFrom(side: const BorderSide(color: HuddlColors.error), padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                          child: Text('Remove', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.error)),
-                        ),
+                      trailing: HuddlButton(
+                        label: 'Remove',
+                        variant: HuddlButtonVariant.destructive,
+                        fullWidth: false,
+                        onPressed: () {
+                          Navigator.pop(c);
+                          _confirmRemoveMember(m);
+                        },
                       ),
                     );
                   },
@@ -2793,19 +2727,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
                       title: Text(m.name, style: HuddlText.body(color: context.hc.textPrimary)),
                       subtitle: Text('Member', style: HuddlText.caption(color: context.hc.textTertiary)),
-                      trailing: SizedBox(
-                        width: 110,
-                        height: 34,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(c);
-                            _confirmMakeAdmin(m);
-                          },
-                          icon: const Icon(Icons.shield_outlined, size: 16, color: HuddlColors.white),
-                          label: Text('Make Admin', style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                        ),
+                      trailing: HuddlButton(
+                        label: 'Make Admin',
+                        variant: HuddlButtonVariant.primary,
+                        leadingIcon: Icons.shield_outlined,
+                        fullWidth: false,
+                        onPressed: () {
+                          Navigator.pop(c);
+                          _confirmMakeAdmin(m);
+                        },
                       ),
                     );
                   },
@@ -3029,22 +2959,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Understood',
-                    style: HuddlText.body(weight: FontWeight.w600),
-                  ),
-                ),
+              HuddlButton(
+                label: 'Understood',
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
+                onPressed: () => Navigator.pop(c),
               ),
             ],
           ),
@@ -3257,22 +3176,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'OK',
-                    style: HuddlText.body(weight: FontWeight.w600),
-                  ),
-                ),
+              HuddlButton(
+                label: 'OK',
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
+                onPressed: () => Navigator.pop(c),
               ),
             ],
           ),
@@ -5339,21 +5247,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               style: HuddlText.body(),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
+          HuddlButton(
+            label: 'Open Settings',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: false,
             onPressed: () {
               Navigator.of(ctx).pop();
-              openAppSettings(); // Deep-links to iOS Settings → Huddl or Android app info
+              openAppSettings();
             },
-            child: Text(
-              'Open Settings',
-              style: HuddlText.body(weight: FontWeight.w600),
-            ),
           ),
         ],
       ),
@@ -5444,23 +5345,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   style: HuddlText.body(),
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () {
-                      final n = nameCtrl.text.trim();
-                      final p = phoneCtrl.text.trim();
-                      if (n.isEmpty) return; // name required
-                      Navigator.pop(ctx, {'name': n, 'phone': p});
-                    },
-                    child: Text('Share', style: HuddlText.body(weight: FontWeight.w600)),
-                  ),
+                HuddlButton(
+                  label: 'Share',
+                  variant: HuddlButtonVariant.primary,
+                  fullWidth: true,
+                  onPressed: () {
+                    final n = nameCtrl.text.trim();
+                    final p = phoneCtrl.text.trim();
+                    if (n.isEmpty) return;
+                    Navigator.pop(ctx, {'name': n, 'phone': p});
+                  },
                 ),
               ],
             ),

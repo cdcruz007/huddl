@@ -11,6 +11,7 @@ import '../../theme/huddl_colors.dart';
 import '../../models/direct_message.dart';
 import '../main_shell.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/common/huddl_button.dart';
 
 import '../../services/dm_service.dart';
 import '../../services/realtime_dm_service.dart';
@@ -1219,37 +1220,28 @@ class _DMChatScreenState extends State<DMChatScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: HuddlButton(
+                      label: 'Message',
+                      variant: HuddlButtonVariant.secondary,
+                      leadingIcon: Icons.chat_bubble_outline,
+                      fullWidth: true,
                       onPressed: () {
                         Navigator.pop(c);
                         _focusNode.requestFocus();
                       },
-                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                      label: Text('Message', style: HuddlText.body(weight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: HuddlColors.textDark,
-                        side: const BorderSide(color: HuddlColors.divider),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
+                    child: HuddlButton(
+                      label: _isBlocked ? 'Unblock' : 'Block',
+                      variant: HuddlButtonVariant.destructive,
+                      leadingIcon: Icons.block,
+                      fullWidth: true,
                       onPressed: () {
                         Navigator.pop(c);
                         _showBlockUserDialog();
                       },
-                      icon: const Icon(Icons.block, size: 18),
-                      label: Text(_isBlocked ? 'Unblock' : 'Block', style: HuddlText.body(weight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.error.withValues(alpha: 0.1),
-                        foregroundColor: HuddlColors.error,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
                     ),
                   ),
                 ],
@@ -1553,76 +1545,59 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
               const SizedBox(height: 24),
               // Unsend for everyone
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    setState(() {
-                      _deletedForEveryoneIds.add(msg.id);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Message unsent for everyone'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              HuddlButton(
+                label: 'Unsend for everyone',
+                variant: HuddlButtonVariant.destructive,
+                leadingIcon: Icons.group_outlined,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.pop(c);
+                  setState(() {
+                    _deletedForEveryoneIds.add(msg.id);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text('Message unsent for everyone'),
+                        ],
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.group_outlined, size: 20),
-                  label: Text('Unsend for everyone',
-                      style: HuddlText.body(weight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.error,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+                      backgroundColor: HuddlColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 10),
               // Unsend just for me
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    setState(() {
-                      _hiddenMessageIds.add(msg.id);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Message unsent for you'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.textSecondary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              HuddlButton(
+                label: 'Unsend just for me',
+                variant: HuddlButtonVariant.secondary,
+                leadingIcon: Icons.person_outline,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.pop(c);
+                  setState(() {
+                    _hiddenMessageIds.add(msg.id);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text('Message unsent for you'),
+                        ],
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.person_outline, size: 20),
-                  label: Text('Unsend just for me',
-                      style: HuddlText.body(weight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HuddlColors.textDark,
-                    side: BorderSide(color: context.hc.divider),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+                      backgroundColor: HuddlColors.textSecondary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 10),
               // Cancel
@@ -1737,23 +1712,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: HuddlButton(
+                      label: 'Cancel',
+                      variant: HuddlButtonVariant.secondary,
+                      fullWidth: true,
                       onPressed: () => Navigator.pop(c),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: HuddlColors.divider),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: HuddlText.body(weight: FontWeight.w600),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: HuddlButton(
+                      label: _isBlocked ? 'Unblock' : 'Block',
+                      variant: HuddlButtonVariant.destructive,
+                      fullWidth: true,
                       onPressed: () async {
                         Navigator.pop(c);
                         final wasBlocked = _isBlocked;
@@ -1773,17 +1744,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
                           );
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.error,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        _isBlocked ? 'Unblock' : 'Block',
-                        style: HuddlText.body(weight: FontWeight.w600),
-                      ),
                     ),
                   ),
                 ],
@@ -1861,20 +1821,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: HuddlButton(
+                        label: 'Cancel',
+                        variant: HuddlButtonVariant.secondary,
+                        fullWidth: true,
                         onPressed: () => Navigator.pop(c),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: HuddlColors.divider),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text('Cancel',
-                            style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: HuddlButton(
+                        label: 'Report',
+                        variant: HuddlButtonVariant.destructive,
+                        fullWidth: true,
                         onPressed: selectedType == null
                             ? null
                             : () async {
@@ -1901,15 +1860,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.error,
-                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: Text('Report',
-                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -1993,20 +1943,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: HuddlButton(
+                        label: 'Cancel',
+                        variant: HuddlButtonVariant.secondary,
+                        fullWidth: true,
                         onPressed: () => Navigator.pop(c),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: HuddlColors.divider),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text('Cancel',
-                            style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: HuddlButton(
+                        label: 'Report',
+                        variant: HuddlButtonVariant.destructive,
+                        fullWidth: true,
                         onPressed: selectedType == null
                             ? null
                             : () async {
@@ -2031,15 +1980,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.error,
-                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: Text('Report',
-                            style: HuddlText.body(weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
                   ],
@@ -2541,21 +2481,14 @@ class _DMChatScreenState extends State<DMChatScreen> {
               style: HuddlText.body(),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
+          HuddlButton(
+            label: 'Open Settings',
+            variant: HuddlButtonVariant.primary,
+            fullWidth: false,
             onPressed: () {
               Navigator.of(ctx).pop();
-              openAppSettings(); // Deep-links to iOS Settings → Huddl or Android app info
+              openAppSettings();
             },
-            child: Text(
-              'Open Settings',
-              style: HuddlText.body(weight: FontWeight.w600),
-            ),
           ),
         ],
       ),
@@ -2641,22 +2574,15 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   style: HuddlText.body(),
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () {
-                      final n = nameCtrl.text.trim();
-                      if (n.isEmpty) return;
-                      Navigator.pop(ctx, {'name': n, 'phone': phoneCtrl.text.trim()});
-                    },
-                    child: Text('Share', style: HuddlText.body(weight: FontWeight.w600)),
-                  ),
+                HuddlButton(
+                  label: 'Share',
+                  variant: HuddlButtonVariant.primary,
+                  fullWidth: true,
+                  onPressed: () {
+                    final n = nameCtrl.text.trim();
+                    if (n.isEmpty) return;
+                    Navigator.pop(ctx, {'name': n, 'phone': phoneCtrl.text.trim()});
+                  },
                 ),
               ],
             ),
