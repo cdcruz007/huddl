@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
+import 'common/huddl_card.dart';
 import '../screens/groups/group_details_screen.dart';
 import '../constants/app_text_styles.dart';
 
@@ -112,20 +113,7 @@ class GroupInviteCard extends StatelessWidget {
               ),
             );
           },
-          child: Container(
-            decoration: BoxDecoration(
-              color: hc.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: hc.divider, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: HuddlColors.gray900.withValues(alpha: 0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
+          child: HuddlCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

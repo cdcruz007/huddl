@@ -1457,7 +1457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context: ctx,
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20)),
+                              top: Radius.circular(24)),
                         ),
                         builder: (yCtx) => SizedBox(
                           height: 220,
@@ -4952,7 +4952,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isScrollControlled: true,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => DraggableScrollableSheet(
         initialChildSize: 0.85,
         maxChildSize: 0.95,
@@ -5218,11 +5218,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: Color(0xFF1A1A1A), // dark bg — Airbnb profile setup style
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
           child: Padding(
@@ -5320,7 +5320,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           backgroundColor: const Color(0xFF1A1A1A),
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16)),
+                              top: Radius.circular(24)),
                           ),
                           builder: (optCtx) => SafeArea(
                             child: Padding(
@@ -5635,7 +5635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isScrollControlled: true,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (sheetCtx) => GestureDetector(
         onTap: () => FocusScope.of(sheetCtx).unfocus(),
         behavior: HitTestBehavior.opaque,
@@ -5852,7 +5852,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isScrollControlled: true,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (sheetCtx) => GestureDetector(
         onTap: () => FocusScope.of(sheetCtx).unfocus(),
         behavior: HitTestBehavior.opaque,

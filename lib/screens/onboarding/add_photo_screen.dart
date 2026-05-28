@@ -76,7 +76,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
       context: context,
       backgroundColor: const Color(0xFF1C1C1E), // dark sheet
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(

@@ -7,6 +7,7 @@ import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/common/huddl_card.dart';
 import '../../constants/app_text_styles.dart';
 import '../../services/rehome_service.dart';
 import '../../services/firestore_service.dart';
@@ -2072,7 +2073,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       isScrollControlled: true,
       backgroundColor: hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
@@ -2342,7 +2343,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       context: context,
       backgroundColor: hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
         return SafeArea(
@@ -3463,20 +3464,8 @@ class _MarketListCardState extends State<_MarketListCard> {
     return ScaleOnPress(
       scale: 0.98,
       onTap: widget.onTap,
-      child: Container(
+      child: HuddlCard(
         // Full-width card — same shape/shadow as Groups discover card
-        decoration: BoxDecoration(
-          color: hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

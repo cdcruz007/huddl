@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/common/huddl_card.dart';
 import '../../constants/app_text_styles.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -1285,7 +1286,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       context: ctx,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) {
         return SafeArea(
@@ -2828,7 +2829,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       context: ctx,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) {
         return SafeArea(
@@ -5781,20 +5782,8 @@ class _DiscoverGroupCard extends StatelessWidget {
       label: '${group.name}, ${group.memberCount} members, $_privacyTagLabel group',
       child: GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: HuddlCard(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

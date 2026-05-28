@@ -273,7 +273,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       isScrollControlled: true,
       backgroundColor: hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         final sheetHc = ctx.hc;
@@ -519,7 +519,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       isScrollControlled: true,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -825,7 +825,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 backgroundColor: hc.surface,
                                 shape: const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(20)),
+                                      top: Radius.circular(24)),
                                 ),
                                 builder: (_) => SafeArea(
                                   child: Padding(

@@ -185,7 +185,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -310,7 +310,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       isScrollControlled: true,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetCtx) => GestureDetector(
         onTap: () => FocusScope.of(sheetCtx).unfocus(),

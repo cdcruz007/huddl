@@ -1673,7 +1673,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: context.hc.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (outerCtx) {
         return GestureDetector(
           onTap: () => FocusScope.of(outerCtx).unfocus(),

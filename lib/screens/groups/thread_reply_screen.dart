@@ -356,7 +356,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
       context: context,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => SafeArea(
         child: Column(

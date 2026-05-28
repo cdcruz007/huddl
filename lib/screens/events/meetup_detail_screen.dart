@@ -228,7 +228,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         context: context,
         backgroundColor: context.hc.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         builder: (ctx) => SafeArea(
           child: Padding(
@@ -276,7 +276,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       context: context,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -409,7 +409,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return DraggableScrollableSheet(

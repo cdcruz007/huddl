@@ -223,7 +223,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return DraggableScrollableSheet(
@@ -966,7 +966,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       context: ctx,
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => SafeArea(
         child: Column(
