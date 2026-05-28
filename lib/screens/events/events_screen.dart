@@ -2601,6 +2601,8 @@ class _GoingAvatar extends StatelessWidget {
         imageUrl,
         fit: BoxFit.cover, width: 54, height: 54,
         errorBuilder: (_, __, ___) => _fallbackIcon(),
+        loadingBuilder: (_, child, progress) =>
+          progress == null ? child : Container(color: const Color(0xFFF7F7F7)),
       );
     }
     if (imageUrl.startsWith('assets/')) {

@@ -3576,6 +3576,8 @@ class _GroupAvatar extends StatelessWidget {
         width: size,
         height: size,
         errorBuilder: (_, __, ___) => _initialsAvatar(),
+        loadingBuilder: (_, child, progress) =>
+          progress == null ? child : _initialsAvatar(),
       );
     } else if (imageUrl.startsWith('data:')) {
       try {
