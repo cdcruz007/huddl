@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/animations/huddl_loading_states.dart';
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
@@ -1464,7 +1465,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           }
 
           return ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: Container(
               color: bgSheet,
               constraints: BoxConstraints(
@@ -3358,7 +3359,9 @@ class _EventsTabState extends State<_EventsTab> {
         Expanded(
           child: ColoredBox(
             color: const Color(0xFFF7F7F7),
-            child: events.isEmpty
+            child: (!_recommenderReady && events.isEmpty)
+                ? const HuddlSkeletonFeed(cardCount: 3)
+                : events.isEmpty
                 ? _EmptyState(
                     icon: hasActiveFilter
                         ? Icons.filter_list_off
@@ -3828,7 +3831,7 @@ class _EventsTabState extends State<_EventsTab> {
           }
 
           return ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: Container(
               color: bgSheet,
               constraints: BoxConstraints(

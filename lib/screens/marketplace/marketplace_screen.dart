@@ -2377,7 +2377,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                           Text(item.priceDisplay,
-                            style: HuddlText.caption(color: _kMarketBlue, weight: FontWeight.w500)),
+                            style: HuddlText.caption(color: HuddlColors.nearBlack, weight: FontWeight.w500)),
                         ],
                       ),
                     ),
@@ -2927,7 +2927,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                           ),
                           Text(
                             item.priceDisplay,
-                            style: HuddlText.body(color: item.isFree ? HuddlColors.success : _kMarketBlue, weight: FontWeight.w700),
+                            style: HuddlText.body(color: HuddlColors.nearBlack, weight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -3015,20 +3015,10 @@ class _MarketItemCardState extends State<_MarketItemCard> {
         child: ScaleOnPress(
           scale: 0.98,
           onTap: widget.onTap,
-          child: Container(
+          child: HuddlCard(
+            variant: HuddlCardVariant.standard,
             margin: const EdgeInsets.only(bottom: 18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: hc.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.07),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3137,9 +3127,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           // Price — right-aligned in category row
                           Text(
                             item.priceDisplay,
-                            style: HuddlText.body(color: item.isFree
-                                  ? HuddlColors.nearBlack
-                                  : _kMarketBlue, weight: FontWeight.w700),
+                            style: HuddlText.body(color: HuddlColors.nearBlack, weight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -3283,7 +3271,7 @@ class _MarketSearchRow extends StatelessWidget {
     final priceStr = item.isFree
         ? 'Free'
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-    final priceColor = item.isFree ? HuddlColors.success : _kMarketBlue;
+    final priceColor = HuddlColors.nearBlack;
 
     return ScaleOnPress(
       scale: 0.99,
@@ -3457,7 +3445,7 @@ class _MarketListCardState extends State<_MarketListCard> {
     final priceStr = item.isFree
         ? 'Free'
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
-    final priceColor = item.isFree ? HuddlColors.success : _kMarketBlue;
+    final priceColor = HuddlColors.nearBlack;
 
     return ScaleOnPress(
       scale: 0.98,
@@ -3863,19 +3851,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
           ),
           loadingBuilder: (_, child, progress) => progress == null
               ? child
-              : Container(
-                  color: hc.surfaceAlt,
-                  child: Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: HuddlColors.primary.withValues(alpha: 0.4),
-                      ),
-                    ),
-                  ),
-                ),
+              : const _ShimmerBox(width: double.infinity, height: double.infinity),
         ),
         // Subtle darkening scrim so text/badges remain legible
         Container(
@@ -4197,9 +4173,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                   item.priceDisplay,
                                   style: HuddlText.body(color: widget.isSold
                                         ? hc.textTertiary
-                                        : item.isFree
-                                            ? HuddlColors.nearBlack
-                                            : _kMarketBlue, weight: FontWeight.w600),
+                                        : HuddlColors.nearBlack, weight: FontWeight.w600),
                                 ),
                                 const SizedBox(width: 8),
                                 ExcludeSemantics(

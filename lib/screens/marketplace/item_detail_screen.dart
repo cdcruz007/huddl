@@ -22,39 +22,6 @@ import '../groups/forward_message_sheet.dart';
 // Marketplace price colour — Figma dark blue (selected state) #347FEF
 const Color _kMarketBlue = HuddlColors.nearBlack;
 
-// =============================================================================
-// _adaptiveText — delegates to HuddlText type ramp.
-// fontSize param is retained for call-site compatibility; output is snapped
-// to the nearest ramp level: >=20→display, >=15→heading, >=13→body, else caption.
-// =============================================================================
-TextStyle _adaptiveText({
-  double fontSize = 14,
-  FontWeight? fontWeight,
-  Color? color,
-  double? height,
-  FontStyle? fontStyle,
-  double? letterSpacing,
-  TextDecoration? decoration,
-  Color? decorationColor,
-}) {
-  final TextStyle base;
-  if (fontSize >= 20) {
-    base = HuddlText.display(color: color).copyWith(fontWeight: fontWeight);
-  } else if (fontSize >= 15) {
-    base = HuddlText.heading(color: color).copyWith(fontWeight: fontWeight);
-  } else if (fontSize >= 13) {
-    base = HuddlText.body(color: color, weight: fontWeight);
-  } else {
-    base = HuddlText.caption(color: color, weight: fontWeight);
-  }
-  return base.copyWith(
-    height: height,
-    fontStyle: fontStyle,
-    letterSpacing: letterSpacing,
-    decoration: decoration,
-    decorationColor: decorationColor,
-  );
-}
 
 // =============================================================================
 // ITEM DETAIL SCREEN — Invisible AI: smart offer pre-fill, contextual actions,
@@ -398,29 +365,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Make an offer',
-                    style: _adaptiveText(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: sheetHc.textPrimary,
-                    ),
+                    style: HuddlText.display(color: sheetHc.textPrimary),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'for ${item.title}',
-                    style: _adaptiveText(
-                      fontSize: 14,
-                      color: sheetHc.textTertiary,
-                    ),
+                    style: HuddlText.body(color: sheetHc.textTertiary),
                   ),
                   if (!item.isFree) ...[
                     const SizedBox(height: 4),
                     Text(
                       'Listed at ${item.priceDisplay}',
-                      style: _adaptiveText(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _kMarketBlue,
-                      ),
+                      style: HuddlText.body(color: HuddlColors.nearBlack, weight: FontWeight.w500),
                     ),
                   ],
                   const SizedBox(height: 20),
@@ -432,19 +388,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         controller: controller,
                         keyboardType: TextInputType.number,
                         autofocus: true,
-                        style: _adaptiveText(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: sheetHc.textPrimary),
+                        style: HuddlText.display(color: sheetHc.textPrimary),
                         decoration: InputDecoration(
                           prefixText: '\u00A3 ',
-                          prefixStyle: _adaptiveText(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: sheetHc.textPrimary),
+                          prefixStyle: HuddlText.display(color: sheetHc.textPrimary),
                           hintText: '0',
-                          hintStyle: _adaptiveText(
-                              fontSize: 24, color: sheetHc.textTertiary),
+                          hintStyle: HuddlText.display(color: sheetHc.textTertiary),
                           filled: true,
                           fillColor: sheetHc.surfaceAlt,
                           border: OutlineInputBorder(
@@ -461,10 +410,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       const SizedBox(height: 6),
                       Text(
                         'Suggested based on item condition',
-                        style: _adaptiveText(
-                          fontSize: 11,
-                          color: sheetHc.textTertiary,
-                        ),
+                        style: HuddlText.caption(),
                       ),
                     ],
                     const SizedBox(height: 16),
@@ -477,17 +423,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       controller: noteController,
                       maxLines: 2,
                       maxLength: 160,
-                      style: _adaptiveText(
-                          fontSize: 14, color: sheetHc.textPrimary),
+                      style: HuddlText.body(color: HuddlColors.nearBlack),
                       decoration: InputDecoration(
                         hintText:
                             item.isFree ? 'Add a message for the seller…' : 'Add a note (optional)…',
-                        hintStyle: _adaptiveText(
-                            fontSize: 14, color: sheetHc.textTertiary),
+                        hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
                         filled: true,
                         fillColor: sheetHc.surfaceAlt,
-                        counterStyle: _adaptiveText(
-                            fontSize: 11, color: sheetHc.textTertiary),
+                        counterStyle: HuddlText.caption(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
@@ -555,22 +498,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         const SizedBox(width: 12),
                         Text(
                           'Report listing',
-                          style: _adaptiveText(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
+                          style: HuddlText.heading(color: context.hc.textPrimary),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Why are you reporting "${item.title}"?',
-                      style: _adaptiveText(
-                        fontSize: 13,
-                        color: context.hc.textSecondary,
-                        height: 1.4,
-                      ),
+                      style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
                     ),
                     const SizedBox(height: 12),
                     RadioGroup<ReportType>(
@@ -590,9 +525,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   activeColor: HuddlColors.primary,
                                 ),
                                 Text(type.label,
-                                    style: _adaptiveText(
-                                        fontSize: 14,
-                                        color: context.hc.textPrimary)),
+                                    style: HuddlText.body(color: context.hc.textPrimary)),
                               ],
                             ),
                           ),
@@ -726,11 +659,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 children: [
                                   Text(
                                     item.priceDisplay,
-                                    style: _adaptiveText(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w700,
-                                      color: item.isFree ? HuddlColors.nearBlack : _kMarketBlue,
-                                    ),
+                                    style: HuddlText.display(color: HuddlColors.nearBlack),
                                   ),
                                   const SizedBox(width: 10),
                                   Container(
@@ -741,12 +670,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     ),
                                     child: Text(
                                       item.condition.label,
-                                      style: _adaptiveText(fontSize: 12, fontWeight: FontWeight.w600, color: item.condition.color),
+                                      style: HuddlText.caption(color: HuddlColors.nearBlack, weight: FontWeight.w600),
                                     ),
                                   ),
                                   const Spacer(),
                                   Text(item.timeAgo,
-                                    style: _adaptiveText(fontSize: 12, color: hc.textTertiary)),
+                                    style: HuddlText.caption()),
                                 ],
                               ),
                               const SizedBox(height: 10),
@@ -754,12 +683,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               // Title
                               Text(
                                 item.title,
-                                style: _adaptiveText(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: hc.textPrimary,
-                                  height: 1.3,
-                                ),
+                                style: HuddlText.display(color: hc.textPrimary).copyWith(height: 1.3),
                               ),
                               const SizedBox(height: 12),
 
@@ -769,7 +693,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   Icon(Icons.location_on_outlined, size: 14, color: hc.textTertiary),
                                   const SizedBox(width: 3),
                                   Text(item.sellerLocation,
-                                    style: _adaptiveText(fontSize: 13, color: hc.textTertiary)),
+                                    style: HuddlText.caption()),
                                   const SizedBox(width: 12),
                                   Container(
                                     width: 3, height: 3,
@@ -777,7 +701,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   ),
                                   const SizedBox(width: 12),
                                   Text(item.ageStage.shortLabel,
-                                    style: _adaptiveText(fontSize: 13, color: hc.textTertiary)),
+                                    style: HuddlText.caption()),
                                 ],
                               ),
                               const SizedBox(height: 20),
@@ -796,7 +720,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             children: [
                               Text(
                                 _showFullDescription ? item.description : _smartSummary(),
-                                style: _adaptiveText(fontSize: 14, color: hc.textSecondary, height: 1.65),
+                                style: HuddlText.body(color: hc.textSecondary).copyWith(height: 1.65),
                               ),
                               if (item.description.length > 80) ...[
                                 const SizedBox(height: 6),
@@ -804,11 +728,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   onTap: () => setState(() => _showFullDescription = !_showFullDescription),
                                   child: Text(
                                     _showFullDescription ? 'Show less' : 'Read more',
-                                    style: _adaptiveText(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.textTertiary,
-                                    ),
+                                    style: HuddlText.caption(color: HuddlColors.textTertiary, weight: FontWeight.w600),
                                   ),
                                 ),
                               ],
@@ -846,11 +766,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                         const SizedBox(height: 12),
                                         Text(
                                           item.sellerName,
-                                          style: _adaptiveText(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                            color: hc.textPrimary,
-                                          ),
+                                          style: HuddlText.heading(color: hc.textPrimary),
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
@@ -860,18 +776,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                                 size: 13, color: hc.textTertiary),
                                             const SizedBox(width: 3),
                                             Text(item.sellerLocation,
-                                                style: _adaptiveText(
-                                                    fontSize: 13,
-                                                    color: hc.textTertiary)),
+                                                style: HuddlText.caption()),
                                           ],
                                         ),
                                         const SizedBox(height: 20),
                                         Text(
                                           'Seller on Huddl',
-                                          style: _adaptiveText(
-                                            fontSize: 13,
-                                            color: hc.textTertiary,
-                                          ),
+                                          style: HuddlText.caption(),
                                         ),
                                       ],
                                     ),
@@ -891,19 +802,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(item.sellerName,
-                                            style: _adaptiveText(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: hc.textPrimary)),
+                                            style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600)),
                                         const SizedBox(height: 2),
                                         Row(children: [
                                           Icon(Icons.location_on_outlined,
                                               size: 12, color: hc.textTertiary),
                                           const SizedBox(width: 3),
                                           Text(item.sellerLocation,
-                                              style: _adaptiveText(
-                                                  fontSize: 12,
-                                                  color: hc.textTertiary)),
+                                              style: HuddlText.caption()),
                                         ]),
                                       ],
                                     ),
@@ -925,7 +831,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 color: hc.textTertiary.withValues(alpha: 0.6)),
                               const SizedBox(width: 8),
                               Text('Meet in public. Check items before paying.',
-                                style: _adaptiveText(fontSize: 12, color: hc.textTertiary)),
+                                style: HuddlText.caption()),
                             ],
                           ),
                         ),
@@ -980,8 +886,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(color: HuddlColors.error, borderRadius: BorderRadius.circular(8)),
               child: Text('SOLD',
-                style: _adaptiveText(fontSize: 12, fontWeight: FontWeight.w700,
-                    color: Colors.white, letterSpacing: 1)),
+                style: HuddlText.label(color: Colors.white).copyWith(letterSpacing: 1)),
             ),
           ),
         if (images.length > 1)
@@ -1175,11 +1080,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               const SizedBox(width: 6),
               Text(
                 'Sold',
-                style: _adaptiveText(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.error,
-                ),
+                style: HuddlText.body(color: HuddlColors.error, weight: FontWeight.w600),
               ),
             ],
           ),

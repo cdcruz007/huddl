@@ -5496,6 +5496,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                         errorBuilder: (_, __, ___) =>
                                             _SearchResultPlaceholder(
                                                 name: group.name),
+                                        loadingBuilder: (_, child, progress) =>
+                                          progress == null ? child : Container(color: const Color(0xFFF7F7F7)),
                                       )
                                     : _SearchResultPlaceholder(
                                         name: group.name),
@@ -6970,6 +6972,8 @@ class _SavedEventCard extends StatelessWidget {
                         savedEvent.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _fallbackIcon(context),
+                        loadingBuilder: (_, child, progress) =>
+                          progress == null ? child : Container(color: const Color(0xFFF7F7F7)),
                       )
                     : _fallbackIcon(context),
               ),

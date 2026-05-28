@@ -1926,7 +1926,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
           decoration: BoxDecoration(
             color: context.hc.surface,
             borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(

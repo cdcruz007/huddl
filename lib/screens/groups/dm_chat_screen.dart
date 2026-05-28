@@ -1144,7 +1144,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => SafeArea(
         child: Padding(
@@ -2000,7 +2000,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => SafeArea(
         child: Container(
@@ -2521,7 +2521,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: ctx.hc.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             child: Column(
@@ -2951,7 +2951,7 @@ class _DMBubble extends StatelessWidget {
       // Navigator inside the chat ListView on Android.
       useRootNavigator: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) {
         final hc = c.hc;

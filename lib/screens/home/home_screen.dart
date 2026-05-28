@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/common/huddl_card.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
@@ -2122,23 +2123,11 @@ class _HomeScreenState extends State<HomeScreen>
     return ScaleOnPress(
       scale: 0.97,
       onTap: item.onTap,
-      child: Container(
+      child: SizedBox(
         width: 200,
-        decoration: BoxDecoration(
-          color: hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: HuddlColors.divider, width: 1),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2)),
-                ],
-        ),
-        clipBehavior: Clip.antiAlias,
+        child: HuddlCard(
+        variant: HuddlCardVariant.standard,
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2276,6 +2265,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -4151,22 +4141,10 @@ class _HomeScreenState extends State<HomeScreen>
           HuddlSpringPageRoute(page: EventDetailScreen(event: eventMap)),
         );
       },
-      child: Container(
+      child: HuddlCard(
+        variant: HuddlCardVariant.standard,
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: HuddlColors.nearBlack.withValues(alpha: 0.25)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
         child: Row(
           children: [
             // Event image
@@ -4554,20 +4532,10 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() => _groupTaps++);
         _switchToTab(1);
       },
-      child: Container(
+      child: HuddlCard(
+        variant: HuddlCardVariant.standard,
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
         child: Row(
           children: [
             ClipRRect(
@@ -5529,7 +5497,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: hc.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         // Clip so rounded corners show properly
         child: Column(
@@ -5728,7 +5696,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       ),
       decoration: BoxDecoration(
         color: hc.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
@@ -6324,7 +6292,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
           decoration: BoxDecoration(
             color: context.hc.surface,
             borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -6699,7 +6667,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
       ),
       decoration: BoxDecoration(
         color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -6953,7 +6921,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -1666,7 +1666,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
           decoration: BoxDecoration(
             color: context.hc.surface,
             borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [

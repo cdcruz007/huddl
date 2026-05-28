@@ -518,7 +518,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
       ),
       decoration: BoxDecoration(
         color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

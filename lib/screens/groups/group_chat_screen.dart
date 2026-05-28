@@ -1454,7 +1454,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) {
         // Read threads inside builder so the list is always current
@@ -1628,7 +1628,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => SafeArea(
         child: Container(
@@ -2508,7 +2508,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => DraggableScrollableSheet(
         initialChildSize: 0.55,
@@ -2576,7 +2576,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => DraggableScrollableSheet(
         initialChildSize: 0.55,
@@ -2673,7 +2673,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => DraggableScrollableSheet(
         initialChildSize: 0.55,
@@ -2987,7 +2987,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) => SafeArea(
         child: Container(
@@ -5294,7 +5294,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: ctx.hc.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             child: Column(
@@ -5978,7 +5978,7 @@ class _ChatBubble extends StatelessWidget {
       // Navigator (e.g. the chat ListView's scroll context) on Android.
       useRootNavigator: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (c) {
         // Use c (the sheet's own context) for all theme lookups so we never
@@ -7391,7 +7391,7 @@ class _GroupAttachSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Column(
