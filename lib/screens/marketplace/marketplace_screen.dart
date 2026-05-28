@@ -1636,31 +1636,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         // 2-column grid (compact cards) — richer browse experience
         Expanded(
           child: items.isEmpty
-              ? _buildEmptyState(
-                  hc: hc,
-                  illustration: 'marketplace',
-                  title: 'No items found',
-                  subtitle: _hasActiveFilters || _searchQuery.isNotEmpty
-                      ? 'Try adjusting your filters to see more results.'
-                      : 'Nothing listed yet. Check back soon!',
-                  action: (_hasActiveFilters || _searchQuery.isNotEmpty)
-                      ? Semantics(
-                          label: 'Clear all filters',
-                          button: true,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              _clearAllFilters();
-                              setState(() => _searchQuery = '');
-                              _searchController.clear();
-                            },
-                            icon: const Icon(Icons.filter_list_off, size: 18),
-                            label: Text('Clear filters',
-                                style: _adaptiveText(
-                                    fontWeight: FontWeight.w500)),
-                          ),
-                        )
-                      : null,
-                )
+              ? (_hasActiveFilters || _searchQuery.isNotEmpty
+                  ? HuddlEmptyState(
+                      mood: HuddlMood.curious,
+                      title: 'No items found',
+                      subtitle: 'Try adjusting your filters to see more results.',
+                      ctaLabel: 'Clear filters',
+                      onCtaTap: () {
+                        _clearAllFilters();
+                        setState(() => _searchQuery = '');
+                        _searchController.clear();
+                      },
+                    )
+                  : const HuddlEmptyState(
+                      mood: HuddlMood.celebrating,
+                      title: 'Nothing listed yet',
+                      subtitle: 'Be the first to list something — Cambridge parents love a good find.',
+                    ))
               : _isSearchActive
                   // ── Compact search rows (search active) ──────────────
                   ? ListView.separated(
@@ -1797,9 +1789,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           ),
           Expanded(
             child: filtered.isEmpty
-                ? _buildEmptyState(
-                    hc: hc,
-                    illustration: 'marketplace',
+                ? const HuddlEmptyState(
+                    mood: HuddlMood.curious,
                     title: 'No listings found',
                     subtitle: 'Try a different search term.',
                   )
@@ -1860,9 +1851,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               liveRegion: true,
               child: Padding(
                 padding: const EdgeInsets.only(top: 32),
-                child: _buildEmptyState(
-                  hc: hc,
-                  illustration: 'marketplace',
+                child: HuddlEmptyState(
+                  mood: HuddlMood.celebrating,
                   title: 'No listings yet',
                   subtitle: 'Tap above to snap a photo and list your first item.',
                 ),
@@ -2615,11 +2605,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       // liveRegion: screen readers announce when saved list becomes empty
       return Semantics(
         liveRegion: true,
-        child: _buildEmptyState(
-          hc: hc,
-          illustration: 'saved',
+        child: HuddlEmptyState(
+          mood: HuddlMood.neutral,
           title: 'No saved items',
-          subtitle: 'Tap the heart on items you love\nto save them here.',
+          subtitle: 'Tap the ❤️ on any listing to save it here.',
         ),
       );
     }
@@ -2642,11 +2631,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         ),
         Expanded(
           child: saved.isEmpty
-              ? _buildEmptyState(
-                  hc: hc,
-                  illustration: 'saved',
-                  title: 'No saved items found',
-                  subtitle: 'Try a different search term.',
+              ? const HuddlEmptyState(
+                  mood: HuddlMood.curious,
+                  title: 'No results found',
+                  subtitle: 'Try a different search or keyword.',
                 )
               : _isSearchActive
                   // ── Compact search rows ────────────────────────────────
@@ -2685,45 +2673,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         ),
       ],
     );
-  }
-
-  // == EMPTY STATE ===========================================================
-
-  Widget _buildEmptyState({
-    // hc kept for call-site compatibility — unused after migration
-    required HuddlContextColors hc,
-    // illustration kept for call-site compatibility — mood derived internally
-    required String illustration,
-    required String title,
-    required String subtitle,
-    Widget? action,
-    // ignore: unused_element_parameter
-    IconData? icon,
-  }) {
-    // Derive mood from the legacy illustration constant
-    final mood = illustration.contains('saved')
-        ? HuddlMood.neutral
-        : illustration.contains('marketplace')
-            ? HuddlMood.curious
-            : HuddlMood.neutral;
-
-    if (action != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              HuddlEmptyState(mood: mood, title: title, subtitle: subtitle),
-              const SizedBox(height: 8),
-              action,
-            ],
-          ),
-        ),
-      );
-    }
-    return HuddlEmptyState(mood: mood, title: title, subtitle: subtitle);
   }
 
   // == FAB removed — now rendered as Positioned inside Stack in build() ==

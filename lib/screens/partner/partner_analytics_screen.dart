@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/huddl_character.dart';
 import '../../constants/app_text_styles.dart';
 
 // =============================================================================
@@ -186,25 +187,10 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          children: [
-            Icon(
-              Icons.bar_chart_outlined,
-              size: 72,
-              color: HuddlColors.textTertiary,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Your analytics will appear here once parents\nstart viewing your listings.',
-              textAlign: TextAlign.center,
-              style: HuddlText.body(color: context.hc.textSecondary),
-            ),
-          ],
-        ),
-      ),
+    return const HuddlEmptyState(
+      mood: HuddlMood.curious,
+      title: 'No analytics yet',
+      subtitle: 'Analytics will appear here once your listing starts getting views and engagement.',
     );
   }
 

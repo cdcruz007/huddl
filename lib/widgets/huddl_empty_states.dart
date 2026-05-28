@@ -28,7 +28,7 @@ class SavedMessagesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const HuddlEmptyState(
-        mood: HuddlMood.waving,
+        mood: HuddlMood.neutral,
         title: 'Save the good stuff',
         subtitle:
             'Long-press any message in a group chat to save it here for later.',
@@ -44,7 +44,7 @@ class MyGroupsEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => HuddlEmptyState(
-        mood: HuddlMood.neutral,
+        mood: HuddlMood.waving,
         title: 'Your crew is out there',
         subtitle:
             'Parents near you are already chatting — jump in and say hi.',

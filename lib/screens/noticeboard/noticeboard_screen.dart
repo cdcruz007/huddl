@@ -262,23 +262,13 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
   }
 
   Widget _buildEmptyState(dynamic hc) {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const HuddlCharacter(mood: HuddlMood.waving, size: 80),
-      const SizedBox(height: 16),
-      Text('No posts yet', style: HuddlText.heading(color: hc.textPrimary)),
-      const SizedBox(height: 8),
-      Text('Be the first to post something to\n${_borough.isNotEmpty ? _borough : 'your community'}',
-          textAlign: TextAlign.center,
-          style: HuddlText.body(color: hc.textTertiary).copyWith(height: 1.4)),
-      const SizedBox(height: 24),
-      ElevatedButton(
-        onPressed: _openComposerSheet,
-        style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), elevation: 0),
-        child: Text('Post to community', style: HuddlText.body(weight: FontWeight.w600)),
-      ),
-    ]));
+    return HuddlEmptyState(
+      mood: HuddlMood.noticeboard,
+      title: 'No posts yet',
+      subtitle: 'Be the first to post something to ${_borough.isNotEmpty ? _borough : 'your community'}.',
+      ctaLabel: 'Post to community',
+      onCtaTap: _openComposerSheet,
+    );
   }
 
   String _timeAgo(DateTime dt) {

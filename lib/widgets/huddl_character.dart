@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
+import '../constants/app_text_styles.dart';
+import 'common/huddl_button.dart';
 
 // =============================================================================
 // HUDDL CHARACTER — PNG illustration + icon fallback
@@ -21,20 +23,28 @@ enum HuddlMood {
 String? _illustrationForMood(HuddlMood mood) {
   switch (mood) {
     case HuddlMood.neutral:
-      return 'assets/illustrations/search_found.png';
+      // People together — general community/presence
+      return 'assets/illustrations/community_wave.png';
     case HuddlMood.celebrating:
+      // Celebration moment — first join, milestone
       return 'assets/illustrations/celebrating.png';
     case HuddlMood.curious:
+      // Question/search — search empty, filter no results
       return 'assets/illustrations/questions.png';
     case HuddlMood.supportive:
-      return 'assets/illustrations/community_wave.png';
+      // Warmth/support — SEND section, wellbeing
+      return 'assets/illustrations/waving_thumbs.png';
     case HuddlMood.waving:
-      return 'assets/illustrations/waving_phone.png';
+      // Welcoming — onboarding, no conversations, first open
+      return 'assets/illustrations/waving_orange.png';
     case HuddlMood.locked:
+      // Security gate — subscription, auth
       return 'assets/illustrations/security.png';
     case HuddlMood.upgrade:
+      // Growth/upgrade — premium feature unlock
       return 'assets/illustrations/growth.png';
     case HuddlMood.noticeboard:
+      // Announcement/megaphone — noticeboard, broadcast
       return 'assets/illustrations/announcement.png';
   }
 }
@@ -119,9 +129,10 @@ class HuddlCharacter extends StatelessWidget {
 
 // =============================================================================
 // HUDDL EMPTY STATE — full empty state with illustration + copy + optional CTA
+// Animated entrance: 450ms fade + 6% upward slide with 80ms delay
 // =============================================================================
 
-class HuddlEmptyState extends StatelessWidget {
+class HuddlEmptyState extends StatefulWidget {
   const HuddlEmptyState({
     super.key,
     required this.mood,
@@ -140,57 +151,79 @@ class HuddlEmptyState extends StatelessWidget {
   final double characterSize;
 
   @override
+  State<HuddlEmptyState> createState() => _HuddlEmptyStateState();
+}
+
+class _HuddlEmptyStateState extends State<HuddlEmptyState>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    // Small delay prevents flash on fast loads
+    Future.delayed(const Duration(milliseconds: 80), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            HuddlCharacter(mood: mood, size: characterSize),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: HuddlColors.textSecondary,
-                height: 1.5,
-              ),
-            ),
-            if (ctaLabel != null && onCtaTap != null) ...[
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: onCtaTap,
-                style: FilledButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  foregroundColor: HuddlColors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(
+        position: _slide,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                HuddlCharacter(
+                  mood: widget.mood,
+                  size: widget.characterSize,
                 ),
-                child: Text(
-                  ctaLabel!,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: 20),
+                Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                  style: HuddlText.heading(),
                 ),
-              ),
-            ],
-          ],
+                const SizedBox(height: 8),
+                Text(
+                  widget.subtitle,
+                  textAlign: TextAlign.center,
+                  style: HuddlText.body(),
+                ),
+                if (widget.ctaLabel != null && widget.onCtaTap != null) ...[
+                  const SizedBox(height: 28),
+                  HuddlButton(
+                    label: widget.ctaLabel!,
+                    onPressed: widget.onCtaTap,
+                    variant: HuddlButtonVariant.primary,
+                    fullWidth: false,
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
