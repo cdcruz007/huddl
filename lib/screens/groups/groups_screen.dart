@@ -8,6 +8,7 @@ import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
+import '../../widgets/cards/huddl_photo_card.dart';
 import '../../constants/app_text_styles.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -2064,11 +2065,10 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: imageUrl.isNotEmpty
-                    ? Image.network(imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.people_rounded, size: 20, color: accentColor))
-                    : Icon(Icons.people_rounded, size: 20, color: accentColor),
+                child: HuddlPhotoImage(
+                  url: imageUrl,
+                  fallbackIcon: Icons.people_rounded,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -3254,13 +3254,9 @@ class _InvitationCard extends StatelessWidget {
 
     // Network URL
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        width: 48,
-        height: 48,
-        errorBuilder: (_, __, ___) =>
-            const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark),
+      return HuddlPhotoImage(
+        url: imageUrl,
+        fallbackIcon: Icons.group_add,
       );
     }
 

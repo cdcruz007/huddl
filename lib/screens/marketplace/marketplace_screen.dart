@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/cards/huddl_photo_card.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
@@ -2361,13 +2362,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       borderRadius: BorderRadius.circular(10),
                       child: SizedBox(
                         width: 48, height: 48,
-                        child: Image.network(
-                          item.imageUrls.first,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFFF7F7F7),
-                            child: Icon(item.category.icon, size: 22, color: HuddlColors.textHint),
-                          ),
+                        child: HuddlPhotoImage(
+                          url: item.imageUrls.first,
+                          fallbackIcon: item.category.icon,
                         ),
                       ),
                     ),

@@ -475,17 +475,33 @@ class HuddlHorizontalCard extends StatelessWidget {
 
 // ── Shared sub-widgets ────────────────────────────────────────────────────────
 
-class _HuddlPhotoImage extends StatelessWidget {
-  const _HuddlPhotoImage({required this.url});
+/// Public image loader with shimmer placeholder + broken-image fallback.
+/// Drop-in replacement for `Image.network(url, fit: BoxFit.cover, errorBuilder:…)`
+/// inside any fixed-size container.
+class HuddlPhotoImage extends StatelessWidget {
+  const HuddlPhotoImage({super.key, required this.url, this.fallbackIcon});
   final String url;
+  final IconData? fallbackIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return _HuddlPhotoImage(url: url, fallbackIcon: fallbackIcon);
+  }
+}
+
+class _HuddlPhotoImage extends StatelessWidget {
+  const _HuddlPhotoImage({required this.url, this.fallbackIcon});
+  final String url;
+  final IconData? fallbackIcon;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final icon = fallbackIcon ?? Icons.image_outlined;
     if (url.isEmpty) {
       return Container(
         color: isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7),
-        child: Icon(Icons.image_outlined, size: 24,
+        child: Icon(icon, size: 24,
             color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary),
       );
     }

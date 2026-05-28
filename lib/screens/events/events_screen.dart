@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/cards/huddl_photo_card.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
 import '../../services/default_group_service.dart';
@@ -4266,16 +4267,14 @@ class _MeetupSearchRow extends StatelessWidget {
             // Thumbnail — 56×56 rounded rect
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: meetup.imageUrl.isNotEmpty
-                  ? Image.network(
-                      meetup.imageUrl,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _MeetupSearchPlaceholder(title: meetup.title),
-                    )
-                  : _MeetupSearchPlaceholder(title: meetup.title),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: HuddlPhotoImage(
+                  url: meetup.imageUrl,
+                  fallbackIcon: Icons.people_rounded,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             // Text block
@@ -4330,28 +4329,6 @@ class _MeetupSearchRow extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MeetupSearchPlaceholder extends StatelessWidget {
-  final String title;
-  const _MeetupSearchPlaceholder({required this.title});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Text(
-          title.isNotEmpty ? title[0].toUpperCase() : 'M',
-          style: HuddlText.display(),
         ),
       ),
     );
