@@ -470,15 +470,28 @@ class EventsScreenState extends State<EventsScreen>
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
+                    // Kill the default grey ink flash on tap — _AnimatedDiscoverTab
+                    // handles all visual feedback internally via scale + color animation
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor: WidgetStateProperty.all(Colors.transparent),
+                    // Fully suppress TabBar's own label styling and color inheritance.
+                    // The global TabBarThemeData has labelColor=primary which would
+                    // tint our custom child icons orange even when inactive.
+                    // Setting both transparent here gives _AnimatedDiscoverTab full
+                    // control over its own color transitions.
+                    labelColor: Colors.transparent,
+                    unselectedLabelColor: Colors.transparent,
+                    labelStyle: const TextStyle(inherit: false, fontSize: 0),
+                    unselectedLabelStyle: const TextStyle(inherit: false, fontSize: 0),
                     tabs: [
-                      Tab(child: _AnimatedDiscoverTab(
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
                         icon: Icons.people_outline,
                         activeIcon: Icons.people,
                         label: 'Groups',
                         isSelected: _selectedTab == 0,
                         count: _groupCount > 0 ? _groupCount : null,
                       )),
-                      Tab(child: _AnimatedDiscoverTab(
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
                         icon: Icons.location_on_outlined,
                         activeIcon: Icons.location_on,
                         label: 'Meetups',
@@ -486,20 +499,20 @@ class EventsScreenState extends State<EventsScreen>
                         count: _meetupService.meetups.isNotEmpty
                             ? _meetupService.meetups.length : null,
                       )),
-                      Tab(child: _AnimatedDiscoverTab(
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
                         icon: Icons.calendar_today_outlined,
                         activeIcon: Icons.calendar_today,
                         label: 'Events',
                         isSelected: _selectedTab == 2,
                         count: _eventCount > 0 ? _eventCount : null,
                       )),
-                      Tab(child: _AnimatedDiscoverTab(
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
                         icon: Icons.storefront_outlined,
                         activeIcon: Icons.storefront,
                         label: 'Services',
                         isSelected: _selectedTab == 3,
                       )),
-                      Tab(child: _AnimatedDiscoverTab(
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
                         icon: Icons.lightbulb_outline,
                         activeIcon: Icons.lightbulb,
                         label: 'Insights',
@@ -5849,7 +5862,15 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
       animation: _ctrl,
       builder: (_, __) {
         final color = Color.lerp(inactive, active, _colorT.value)!;
-        return Column(
+        // DefaultTextStyle.merge with transparent+zero-size ensures no ancestor
+        // TabBar labelColor or theme text style bleeds into our Icon/Text widgets.
+        // IconTheme.merge similarly nullifies any inherited icon color from TabBar.
+        return DefaultTextStyle.merge(
+          style: const TextStyle(inherit: false, color: Colors.transparent, fontSize: 0),
+          child: IconTheme.merge(
+            data: const IconThemeData(color: Colors.transparent, size: 0),
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Transform.scale(
@@ -5900,7 +5921,9 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
               ],
             ),
           ],
-        );
+        ), // Column
+          ), // IconTheme.merge
+        ); // DefaultTextStyle.merge
       },
     );
   }
