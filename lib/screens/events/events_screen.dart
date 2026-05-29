@@ -475,12 +475,31 @@ class EventsScreenState extends State<EventsScreen>
                   child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  TabBar(
+                  // isScrollable:true — tabs need ~80px each (5×80=400px)
+                  // which slightly exceeds 375px phones, so fill fails.
+                  // Back to scrollable+start, but we override the TabBar's
+                  // internal scroll-view background via Theme so the surface
+                  // colour fills the entire row including the empty right gap.
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      highlightColor: Colors.transparent,
+                      splashColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      // canvasColor + colorScheme.surface together cover the
+                      // TabBar's internal scroll view background in all
+                      // Flutter rendering paths.
+                      canvasColor: context.hc.surface,
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                        surface: context.hc.surface,
+                      ),
+                      tabBarTheme: Theme.of(context).tabBarTheme.copyWith(
+                        dividerColor: HuddlColors.divider,
+                      ),
+                    ),
+                    child: TabBar(
                     controller: _tabController,
-                    isScrollable: false,
-                    tabAlignment: TabAlignment.fill,
-                    // Kill the default grey ink flash on tap — _AnimatedDiscoverTab
-                    // handles all visual feedback internally via scale + color animation
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
                     splashFactory: NoSplash.splashFactory,
                     overlayColor: WidgetStateProperty.all(Colors.transparent),
                     // Fully suppress TabBar's own label styling and color inheritance.
@@ -535,7 +554,7 @@ class EventsScreenState extends State<EventsScreen>
                     indicatorWeight: 2.5,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
-                    labelPadding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
@@ -546,6 +565,7 @@ class EventsScreenState extends State<EventsScreen>
                       setState(() { _selectedTab = index; });
                     },
                   ), // TabBar
+                  ), // Theme
                   const SizedBox(height: 2),
                   ], // Column children
                   ), // Column
