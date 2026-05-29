@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -12,8 +13,39 @@ class ParentTypeScreen extends StatefulWidget {
   State<ParentTypeScreen> createState() => _ParentTypeScreenState();
 }
 
-class _ParentTypeScreenState extends State<ParentTypeScreen> {
+class _ParentTypeScreenState extends State<ParentTypeScreen>
+    with SingleTickerProviderStateMixin {
   String? _selected; // 'Mum' or 'Dad'
+
+  // Entrance animation — same controller pattern as _CarouselPage
+  late final AnimationController _ctrl;
+  late final Animation<double> _imageScale;
+  late final Animation<double> _contentFade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _imageScale = Tween<double>(begin: 1.04, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
+    _contentFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   void _continue() {
     if (_selected == null) return;
@@ -24,96 +56,175 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            _OnboardingAppBar(onBack: () => Navigator.pop(context)),
-            OnboardingProgressBar(step: OnboardingStep.parentType),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 36),
-                    // Title
-                    Center(
-                      child: Text(
-                        'I am a...',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface,
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (_, __) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+              OnboardingProgressBar(step: OnboardingStep.parentType),
+
+              // ── Hero photo — 42% screen height, matches carousel language ──
+              Transform.scale(
+                scale: _imageScale.value,
+                child: SizedBox(
+                  height: size.height * 0.42,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Real photo — full bleed, rounded bottom corners
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(28),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Text(
-                        'Find other Dads and Mums from your local community.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: HuddlColors.disabledText,
-                          height: 1.5,
+                        child: Image.asset(
+                          'assets/images/onboarding_community.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: HuddlColors.primaryPale,
+                            child: Icon(
+                              Icons.people,
+                              size: 80,
+                              color: HuddlColors.primary.withValues(alpha: 0.3),
+                            ),
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Mum option
-                    _ParentTypeCard(
-                      label: 'Mum',
-                      subtitle: 'Join as a parent',
-                      icon: Icons.face_2,
-                      accentColor: HuddlColors.onboardingOrange,
-                      selected: _selected == 'Mum',
-                      onTap: () => setState(() => _selected = 'Mum'),
-                    ),
-                    const SizedBox(height: 14),
-                    // Dad option
-                    _ParentTypeCard(
-                      label: 'Dad',
-                      subtitle: 'Join as a parent',
-                      icon: Icons.face,
-                      accentColor: HuddlColors.onboardingOrange,
-                      selected: _selected == 'Dad',
-                      onTap: () => setState(() => _selected = 'Dad'),
-                    ),
-                    const SizedBox(height: 14),
-
-                    const SizedBox(height: 24),
-
-                    // Illustration — two figures reaching toward each other
-                    Center(
-                      child: Image.asset(
-                        'assets/illustrations/handshake.png',
-                        height: 180,
-                        fit: BoxFit.contain,
+                      // Gradient scrim — bottom 50% darkens for text legibility
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(28),
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.62),
+                              ],
+                              stops: const [0.35, 1.0],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 8),
-                  ],
+                      // Badge pill — top-left, same style as carousel
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '👋 Welcome to Huddl',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.onboardingOrange,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Heading — bottom-left overlay
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: Text(
+                          'Every parent\nbelongs here',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Continue button pinned to bottom
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-              child: _OrangeButton(
-                label: 'Continue',
-                enabled: _selected != null,
-                onTap: _continue,
-                color: HuddlColors.onboardingOrange,
+              // ── Cards + button — fade in after image settles ──────────────
+              Expanded(
+                child: FadeTransition(
+                  opacity: _contentFade,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'I am a...',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Find other parents from your local community.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: HuddlColors.disabledText,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Mum option
+                        _ParentTypeCard(
+                          label: 'Mum',
+                          subtitle: 'Join as a parent',
+                          icon: Icons.face_2,
+                          accentColor: HuddlColors.onboardingOrange,
+                          selected: _selected == 'Mum',
+                          onTap: () => setState(() => _selected = 'Mum'),
+                        ),
+                        const SizedBox(height: 12),
+                        // Dad option
+                        _ParentTypeCard(
+                          label: 'Dad',
+                          subtitle: 'Join as a parent',
+                          icon: Icons.face,
+                          accentColor: HuddlColors.onboardingOrange,
+                          selected: _selected == 'Dad',
+                          onTap: () => setState(() => _selected = 'Dad'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          
-          ],
+
+              // Continue button — pinned to bottom, outside scroll
+              FadeTransition(
+                opacity: _contentFade,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                  child: _OrangeButton(
+                    label: 'Continue',
+                    enabled: _selected != null,
+                    onTap: _continue,
+                    color: HuddlColors.onboardingOrange,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

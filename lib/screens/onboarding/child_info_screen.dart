@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -13,11 +14,37 @@ class ChildInfoScreen extends StatefulWidget {
   State<ChildInfoScreen> createState() => _ChildInfoScreenState();
 }
 
-class _ChildInfoScreenState extends State<ChildInfoScreen> {
+class _ChildInfoScreenState extends State<ChildInfoScreen>
+    with SingleTickerProviderStateMixin {
   final List<_ChildEntry> _children = [_ChildEntry()];
+
+  // Entrance animation — same pattern as parent_type_screen
+  late final AnimationController _ctrl;
+  late final Animation<double> _imageScale;
+  late final Animation<double> _contentFade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _imageScale = Tween<double>(begin: 1.04, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
+    _contentFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
+    _ctrl.forward();
+  }
 
   @override
   void dispose() {
+    _ctrl.dispose();
     for (final c in _children) {
       c.dispose();
     }
@@ -46,117 +73,210 @@ class _ChildInfoScreenState extends State<ChildInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            _OnboardingAppBar(onBack: () => Navigator.pop(context)),
-            OnboardingProgressBar(step: OnboardingStep.childInfo),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 32),
-                    Text(
-                      'Your child',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Meet parents with children the same age as yours. Date of birth won\'t be shared.',
-                      style: TextStyle(
-                          fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (_, __) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+              OnboardingProgressBar(step: OnboardingStep.childInfo),
 
-                    // Illustration — family group with geometric shapes
-                    Center(
-                      child: Image.asset(
-                        'assets/illustrations/group_celebration.png',
-                        height: 160,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Child inputs
-                    ...List.generate(_children.length, (i) {
-                      final child = _children[i];
-                      return Column(
-                        children: [
-                          if (i > 0) const SizedBox(height: 20),
-                          _UnderlineInput(
-                            controller: child.nameCtrl,
-                            hint: 'Child name (optional)',
-                            onChanged: (_) => setState(() {}),
-                          ),
-                          const SizedBox(height: 14),
-                          _UnderlineInput(
-                            controller: child.yearCtrl,
-                            hint: 'Year of birth (yyyy)',
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(4),
-                            ],
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ],
-                      );
-                    }),
-
-                    const SizedBox(height: 16),
-
-                    // Add another child button
-                    GestureDetector(
-                      onTap: _addChild,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: HuddlColors.inputBorderLight),
-                          borderRadius: BorderRadius.circular(10),
+              // ── Compact hero photo — 34% height, more room for form inputs ─
+              Transform.scale(
+                scale: _imageScale.value,
+                child: SizedBox(
+                  height: size.height * 0.34,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Real photo — meetup photo works well here (parents at park)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(28),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Add another child',
-                              style: TextStyle(
-                                  fontSize: 15, color: HuddlColors.disabledText),
+                        child: Image.asset(
+                          'assets/images/onboarding_meetup.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: HuddlColors.primaryPale,
+                            child: Icon(
+                              Icons.child_care,
+                              size: 80,
+                              color: HuddlColors.primary.withValues(alpha: 0.3),
                             ),
-                            Icon(Icons.add, color: HuddlColors.onboardingOrange, size: 22),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
+                      // Gradient scrim
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(28),
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.62),
+                              ],
+                              stops: const [0.3, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Badge pill — top-left
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '👶 About your family',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.onboardingOrange,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Heading overlay — bottom-left
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: Text(
+                          'Meet parents with\nkids the same age',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Continue button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-              child: _OrangeButton(
-                  label: 'Continue',
-                  enabled: _canContinue,
-                  onTap: _continue),
-            ),
-          ],
+              // ── Form area — fades in after image settles ──────────────────
+              Expanded(
+                child: FadeTransition(
+                  opacity: _contentFade,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your child',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Date of birth won\'t be shared with other parents.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: HuddlColors.disabledText,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Child inputs
+                        ...List.generate(_children.length, (i) {
+                          final child = _children[i];
+                          return Column(
+                            children: [
+                              if (i > 0) const SizedBox(height: 20),
+                              _UnderlineInput(
+                                controller: child.nameCtrl,
+                                hint: 'Child name (optional)',
+                                onChanged: (_) => setState(() {}),
+                              ),
+                              const SizedBox(height: 14),
+                              _UnderlineInput(
+                                controller: child.yearCtrl,
+                                hint: 'Year of birth (yyyy)',
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(4),
+                                ],
+                                onChanged: (_) => setState(() {}),
+                              ),
+                            ],
+                          );
+                        }),
+
+                        const SizedBox(height: 16),
+
+                        // Add another child
+                        GestureDetector(
+                          onTap: _addChild,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: HuddlColors.inputBorderLight),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Add another child',
+                                  style: TextStyle(
+                                      fontSize: 15, color: HuddlColors.disabledText),
+                                ),
+                                Icon(Icons.add,
+                                    color: HuddlColors.onboardingOrange, size: 22),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Continue button — pinned to bottom
+              FadeTransition(
+                opacity: _contentFade,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                  child: _OrangeButton(
+                    label: 'Continue',
+                    enabled: _canContinue,
+                    onTap: _continue,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
