@@ -43,6 +43,7 @@ import '../../services/ai_event_discovery_service.dart';
 import '../../screens/marketplace/item_detail_screen.dart';
 import '../../screens/groups/group_chat_screen.dart';
 import '../../screens/groups/dm_chat_screen.dart';
+import '../../screens/search/unified_search_screen.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1309,6 +1310,27 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildAdaptiveLogo(isDark),
                 ),
                 const Spacer(),
+                // Search — opens unified search across all content types
+                Semantics(
+                  label: 'Search everything',
+                  button: true,
+                  child: Tooltip(
+                    message: 'Search groups, meetups, services & market',
+                    child: IconButton(
+                      icon: const Icon(Icons.search),
+                      color: hc.textPrimary,
+                      onPressed: () {
+                        HuddlAnimations.lightTap();
+                        Navigator.of(context).push(HuddlSpringPageRoute(
+                          page: const UnifiedSearchScreen(),
+                        ));
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 40, minHeight: 40),
+                    ),
+                  ),
+                ),
                 // Notification bell
                 Semantics(
                   label: 'Notifications, $_notifBadgeCount new',

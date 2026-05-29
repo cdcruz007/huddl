@@ -49,6 +49,7 @@ import '../screens/subscription/business_verification_screen.dart';
 import '../screens/partner/partner_profile_screen.dart';
 import '../screens/partner/partner_analytics_screen.dart';
 import '../screens/partner/create_partner_listing_screen.dart';
+import '../screens/search/unified_search_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -357,6 +358,15 @@ class AppRouter {
       case '/create_partner_listing':
         return SlidePageRoute(
           page: const CreatePartnerListingScreen(),
+          direction: SlideDirection.up,
+        );
+
+      case '/unified_search':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return SlidePageRoute(
+          page: UnifiedSearchScreen(
+            initialQuery: args?['query'] as String? ?? '',
+          ),
           direction: SlideDirection.up,
         );
 

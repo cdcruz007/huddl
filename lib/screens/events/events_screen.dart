@@ -36,6 +36,7 @@ import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../search/unified_search_screen.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -365,46 +366,92 @@ class EventsScreenState extends State<EventsScreen>
                       ),
                       Row(
                         children: [
-                          // Search icon on Groups/Meetups tabs; bell on Events/Services
+                          // Search icon on Groups/Meetups/Events/Services tabs.
+                          // Tap → inline tab search. Long-press → unified search.
+                          // Bell shown on I'm Going tab (tab 4).
                           if (_selectedTab == 0)
-                            IconButton(
-                              icon: Icon(Icons.search,
-                                  color: context.hc.textPrimary),
-                              tooltip: 'Search groups',
-                              onPressed: () {
-                                HuddlAnimations.lightTap();
-                                _groupSearchTrigger.value = true;
-                              },
+                            Tooltip(
+                              message: 'Search groups · Hold for universal search',
+                              child: GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.lightTap();
+                                  _groupSearchTrigger.value = true;
+                                },
+                                onLongPress: () {
+                                  HuddlAnimations.mediumTap();
+                                  Navigator.of(context).push(HuddlSpringPageRoute(
+                                    page: const UnifiedSearchScreen(),
+                                  ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(Icons.search,
+                                      color: context.hc.textPrimary, size: 24),
+                                ),
+                              ),
                             )
                           else if (_selectedTab == 1)
-                            IconButton(
-                              icon: Icon(Icons.search,
-                                  color: context.hc.textPrimary),
-                              tooltip: 'Search meetups',
-                              onPressed: () {
-                                HuddlAnimations.lightTap();
-                                _meetupSearchTrigger.value = true;
-                              },
+                            Tooltip(
+                              message: 'Search meetups · Hold for universal search',
+                              child: GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.lightTap();
+                                  _meetupSearchTrigger.value = true;
+                                },
+                                onLongPress: () {
+                                  HuddlAnimations.mediumTap();
+                                  Navigator.of(context).push(HuddlSpringPageRoute(
+                                    page: const UnifiedSearchScreen(),
+                                  ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(Icons.search,
+                                      color: context.hc.textPrimary, size: 24),
+                                ),
+                              ),
                             )
                           else if (_selectedTab == 2)
-                            IconButton(
-                              icon: Icon(Icons.search,
-                                  color: context.hc.textPrimary),
-                              tooltip: 'Search events',
-                              onPressed: () {
-                                HuddlAnimations.lightTap();
-                                _eventSearchTrigger.value = true;
-                              },
+                            Tooltip(
+                              message: 'Search events · Hold for universal search',
+                              child: GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.lightTap();
+                                  _eventSearchTrigger.value = true;
+                                },
+                                onLongPress: () {
+                                  HuddlAnimations.mediumTap();
+                                  Navigator.of(context).push(HuddlSpringPageRoute(
+                                    page: const UnifiedSearchScreen(),
+                                  ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(Icons.search,
+                                      color: context.hc.textPrimary, size: 24),
+                                ),
+                              ),
                             )
                           else if (_selectedTab == 3)
-                            IconButton(
-                              icon: Icon(Icons.search,
-                                  color: context.hc.textPrimary),
-                              tooltip: 'Search services',
-                              onPressed: () {
-                                HuddlAnimations.lightTap();
-                                _serviceSearchTrigger.value = true;
-                              },
+                            Tooltip(
+                              message: 'Search services · Hold for universal search',
+                              child: GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.lightTap();
+                                  _serviceSearchTrigger.value = true;
+                                },
+                                onLongPress: () {
+                                  HuddlAnimations.mediumTap();
+                                  Navigator.of(context).push(HuddlSpringPageRoute(
+                                    page: const UnifiedSearchScreen(),
+                                  ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(Icons.search,
+                                      color: context.hc.textPrimary, size: 24),
+                                ),
+                              ),
                             )
                           else
                             IconButton(

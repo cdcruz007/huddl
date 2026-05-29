@@ -41,6 +41,7 @@ import '../../widgets/huddl_character.dart';
 import '../../widgets/huddl_empty_states.dart';
 import '../../services/firestore_service.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
+import '../search/unified_search_screen.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
@@ -156,20 +157,31 @@ class _GroupsScreenState extends State<GroupsScreen>
                         const SizedBox(width: 8),
                         const BoroughScopeChip(feature: HuddlFeature.chat),
                         const Spacer(),
-                        // 🔍 Search trigger icon — top-right, above tabs
-                        IconButton(
-                          onPressed: () {
-                            setState(() => _isSearchActive = true);
-                            Future.microtask(() => _searchFocusNode.requestFocus());
-                          },
-                          icon: Icon(
-                            Icons.search,
-                            color: context.hc.textSecondary,
-                            size: 22,
+                        // 🔍 Search trigger icon — top-right, above tabs.
+                        // Tap → inline group search. Long-press → unified search.
+                        Tooltip(
+                          message: 'Search · Hold for universal search',
+                          child: GestureDetector(
+                            onTap: () {
+                              HuddlAnimations.lightTap();
+                              setState(() => _isSearchActive = true);
+                              Future.microtask(() => _searchFocusNode.requestFocus());
+                            },
+                            onLongPress: () {
+                              HuddlAnimations.mediumTap();
+                              Navigator.of(context).push(HuddlSpringPageRoute(
+                                page: const UnifiedSearchScreen(),
+                              ));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.search,
+                                color: context.hc.textSecondary,
+                                size: 22,
+                              ),
+                            ),
                           ),
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                          tooltip: 'Search',
                         ),
                       ],
                     ),

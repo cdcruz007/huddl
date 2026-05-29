@@ -23,6 +23,7 @@ import '../../models/subscription.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
+import '../search/unified_search_screen.dart';
 
 
 
@@ -1372,23 +1373,34 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 // Borough scope chip — exactly matches Groups/Discover header chip
                 const BoroughScopeChip(feature: HuddlFeature.marketplace),
                 const Spacer(),
-                // Search icon — top-right, like Discover
+                // Search icon — top-right.
+                // Tap → inline market search. Long-press → unified search.
                 Semantics(
                   label: 'Search market items',
                   button: true,
-                  child: IconButton(
-                    onPressed: () {
-                      setState(() => _isSearchActive = true);
-                      Future.microtask(() => _searchFocus.requestFocus());
-                    },
-                    icon: Icon(
-                      Icons.search,
-                      color: hc.textSecondary,
-                      size: 22,
+                  child: Tooltip(
+                    message: 'Search · Hold for universal search',
+                    child: GestureDetector(
+                      onTap: () {
+                        HuddlAnimations.lightTap();
+                        setState(() => _isSearchActive = true);
+                        Future.microtask(() => _searchFocus.requestFocus());
+                      },
+                      onLongPress: () {
+                        HuddlAnimations.mediumTap();
+                        Navigator.of(context).push(HuddlSpringPageRoute(
+                          page: const UnifiedSearchScreen(),
+                        ));
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.search,
+                          color: hc.textSecondary,
+                          size: 22,
+                        ),
+                      ),
                     ),
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(),
-                    tooltip: 'Search',
                   ),
                 ),
               ],
