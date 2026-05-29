@@ -1016,7 +1016,7 @@ class PollResultsScreen extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: context.hc.surface,
             elevation: 0,
-            surfaceTintColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
               onPressed: () => Navigator.pop(context),
@@ -1817,7 +1817,7 @@ class PollDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: context.hc.surface,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
