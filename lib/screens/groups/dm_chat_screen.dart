@@ -42,8 +42,9 @@ import '../../widgets/upgrade_prompt.dart';
 // ── Design tokens ─────────────────────────────────────────────────────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
 const Color _kMyBubble    = HuddlColors.primary;
-// Received-bubble: light grey (Figma spec #F5F5F5)
-const Color _kTheirBubble = Color(0xFFF5F5F5);
+// Received-bubble: warm parchment #F0EDE8 light / #2E2A26 dark
+const Color _kTheirBubbleLight = Color(0xFFF0EDE8);
+const Color _kTheirBubbleDark  = Color(0xFF2E2A26);
 
 
 /// Maps borough member IDs to realistic profile photo URLs
@@ -599,7 +600,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,   // Figma: white chat background
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? HuddlColors.darkBackground
+          : const Color(0xFFFBF9F7),   // warm white — matches group chat
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
@@ -1361,7 +1364,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
               IconButton(
                 icon: const Icon(
                   Icons.add_circle_outline,
-                  color: HuddlColors.textDark,
+                  color: HuddlColors.primary,  // orange — action button
+                  size: 26,
                 ),
                 onPressed: _openAttachSheet,
               ),
@@ -1369,7 +1373,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: context.hc.scaffold,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? HuddlColors.darkInputBg
+                        : const Color(0xFFF5F2EE), // warm grey-beige
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(
@@ -1382,7 +1388,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     textInputAction: TextInputAction.send,
                     style: HuddlText.body(color: context.hc.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: 'Message ${widget.recipientName.split(' ').first}…',
                       hintStyle: HuddlText.body(color: context.hc.textTertiary),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -2835,8 +2841,10 @@ class _DMBubble extends StatelessWidget {
                       color: isHighlighted
                           ? HuddlColors.primary.withValues(alpha: 0.12)
                           : isMe
-                              ? _kMyBubble       // #E8724A
-                              : _kTheirBubble,   // #F5F5F5
+                              ? _kMyBubble  // orange — sent
+                              : Theme.of(context).brightness == Brightness.dark
+                                  ? _kTheirBubbleDark   // warm dark brown
+                                  : _kTheirBubbleLight, // warm parchment
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(18),
                         topRight: const Radius.circular(18),

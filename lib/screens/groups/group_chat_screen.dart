@@ -53,11 +53,40 @@ import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
 const Color _kMyBubble  = HuddlColors.primary;  // #E8724A
-// Received-bubble colour is now adaptive via context.hc.surfaceAlt
+// Received-bubble: warm parchment #F0EDE8 light / #2E2A26 dark (was surfaceAlt grey)
+const Color _kReceivedBubbleLight = Color(0xFFF0EDE8);
+const Color _kReceivedBubbleDark  = Color(0xFF2E2A26);
+
+/// Deterministic accent colour for a sender name.
+/// Same name → same colour across the conversation (Telegram-style identity signal).
+/// Palette: warm, on-brand only — no pure red (errors) or yellow (celebration).
+Color _senderColor(String name) {
+  const palette = [
+    Color(0xFFFF965C),  // primary orange
+    Color(0xFF199A85),  // teal
+    Color(0xFFE8724A),  // deep orange
+    Color(0xFF5B9CFF),  // info blue — identity signal only
+    Color(0xFF9B72CF),  // warm purple
+    Color(0xFFD4845A),  // terracotta
+  ];
+  final index = name.codeUnits.fold(0, (a, b) => a + b) % palette.length;
+  return palette[index];
+}
+
+/// Placeholder avatars for group header — deterministic selection by groupId hash.
+const List<String> _kMemberAvatars = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+];
 // (#F7F5F2 light / #2C2C2C dark) — see _ChatBubble.build()
 
 
@@ -3214,7 +3243,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,   // Figma: white chat background (not grey)
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? HuddlColors.darkBackground
+          : const Color(0xFFFBF9F7),   // warm white — barely perceptible warmth
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
@@ -3655,6 +3686,65 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  /// Overlapping member avatar circles + member count for the AppBar subtitle.
+  /// Member count comes from _groupMembers if populated, otherwise falls back to 1.
+  /// Avatar images use _kMemberAvatars selected deterministically by groupId hash.
+  Widget _buildGroupHeaderSubtitle(BuildContext context) {
+    final memberCount = _groupMembers.isNotEmpty ? _groupMembers.length : 1;
+    final avatarCount = memberCount.clamp(1, 3);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Overlapping avatar circles
+        SizedBox(
+          width: (avatarCount * 14.0) + 10,
+          height: 18,
+          child: Stack(
+            children: List.generate(avatarCount, (i) {
+              return Positioned(
+                left: i * 14.0,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: context.hc.surface,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      _kMemberAvatars[
+                          (widget.groupId.hashCode.abs() + i) %
+                              _kMemberAvatars.length],
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: HuddlColors.primaryPale,
+                        child: const Icon(Icons.person,
+                            size: 10, color: HuddlColors.primary),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$memberCount member${memberCount == 1 ? '' : 's'}',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: context.hc.textTertiary,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
   PreferredSizeWidget _buildSearchAppBar() {
     return AppBar(
       backgroundColor: context.hc.surface,
@@ -3727,10 +3817,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    'Tap here for group info',
-                    style: HuddlText.caption(),
-                  ),
+                  _buildGroupHeaderSubtitle(context),
                 ],
               ),
             ),
@@ -4048,7 +4135,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               IconButton(
                 icon: const Icon(
                   Icons.add_circle_outline,
-                  color: HuddlColors.textDark,
+                  color: HuddlColors.primary,  // orange — action button
+                  size: 26,
                 ),
                 onPressed: _openAttachSheet,
               ),
@@ -4056,7 +4144,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                   decoration: BoxDecoration(
-                    color: context.hc.scaffold,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? HuddlColors.darkInputBg
+                        : const Color(0xFFF5F2EE), // warm grey-beige — matches parchment bubble
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(
@@ -4069,7 +4159,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     textInputAction: TextInputAction.send,
                     style: HuddlText.body(color: context.hc.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: widget.groupName.length > 20
+                          ? 'Message the group…'
+                          : 'Message ${widget.groupName}…',
                       hintStyle:
                           HuddlText.body(color: context.hc.textTertiary),
                       border: InputBorder.none,
@@ -5732,10 +5824,10 @@ class _SystemMessageBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: context.hc.scaffold,
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.transparent,       // no fill — let background breathe
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: context.hc.divider,
+              color: HuddlColors.divider,
               width: 0.5,
             ),
           ),
@@ -5750,14 +5842,20 @@ class _SystemMessageBubble extends StatelessWidget {
                         : Icons.info_outline,
                 size: 14,
                 color: message.message.contains('joined')
-                    ? HuddlColors.nearBlack
-                    : HuddlColors.textHint,
+                    ? HuddlColors.primary        // orange — positive (join)
+                    : message.message.contains('left')
+                        ? HuddlColors.textTertiary  // grey — neutral (leave)
+                        : HuddlColors.infoBlue,     // blue — informational
               ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   message.message,
-                  style: HuddlText.caption().copyWith(fontStyle: FontStyle.italic),
+                  style: HuddlText.caption().copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: HuddlColors.textTertiary,
+                    letterSpacing: 0.1,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -5865,7 +5963,7 @@ class _ChatBubble extends StatelessWidget {
                     crossAxisAlignment:
                         isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
-                      // Sender name — group chat only, orange (Figma spec)
+                      // Sender name — deterministic colour per name (Telegram-style)
                       if (showAvatar && !isMe)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 4),
@@ -5873,7 +5971,9 @@ class _ChatBubble extends StatelessWidget {
                             onTap: onAvatarTap,
                             child: Text(
                               message.senderName,
-                              style: HuddlText.caption(weight: FontWeight.w700),
+                              style: HuddlText.caption(weight: FontWeight.w700).copyWith(
+                                color: _senderColor(message.senderName),
+                              ),
                             ),
                           ),
                         ),
@@ -5884,8 +5984,10 @@ class _ChatBubble extends StatelessWidget {
                           color: isHighlighted
                               ? HuddlColors.primary.withValues(alpha: 0.12)
                               : isMe
-                                  ? _kMyBubble        // #E8724A
-                                  : context.hc.surfaceAlt, // adaptive: #F7F5F2 light / #2C2C2C dark
+                                  ? _kMyBubble  // orange — sent
+                                  : Theme.of(context).brightness == Brightness.dark
+                                      ? _kReceivedBubbleDark   // warm dark brown
+                                      : _kReceivedBubbleLight, // warm parchment
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(18),
                             topRight: const Radius.circular(18),
@@ -5901,7 +6003,7 @@ class _ChatBubble extends StatelessWidget {
                                 ? _buildHighlightedText(context, message.message, searchQuery, isMe: isMe)
                                 : Text(
                                     message.message,
-                                    style: HuddlText.body(color: isMe ? HuddlColors.white : context.hc.textPrimary),
+                                    style: HuddlText.body(color: isMe ? HuddlColors.white : HuddlColors.textDark),
                                   ),
                           ],
                         ),
