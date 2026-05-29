@@ -2855,20 +2855,25 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                           ),
                         ),
                       ),
-                    // Condition badge — top-right
+                    // Condition / Free badge — top-right
+                    // Free badge: yellowSoft/yellowDark (celebration).
+                    // Condition badge: semi-transparent scrim (neutral).
                     Positioned(
                       top: 8, right: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.nearBlack
+                              ? HuddlColors.yellowSoft
                               : Colors.black.withValues(alpha: 0.52),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           item.isFree ? 'Free' : item.condition.label,
-                          style: HuddlText.caption(color: Colors.white, weight: FontWeight.w600),
+                          style: HuddlText.caption(
+                            color: item.isFree ? HuddlColors.yellowDark : Colors.white,
+                            weight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -3051,14 +3056,23 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           ),
                         ),
                       ),
-                      // Free badge — top-left (teal, matches Services 'Parent Added')
+                      // Free badge — top-left: yellowSoft bg, yellowDark text (celebration).
                       if (item.isFree)
                         Positioned(
                           top: 12,
                           left: 12,
-                          child: _MarketBadgePill(
-                            label: 'Free',
-                            color: HuddlColors.nearBlack,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.yellowSoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Free',
+                              style: HuddlText.caption(
+                                  weight: FontWeight.w700,
+                                  color: HuddlColors.yellowDark),
+                            ),
                           ),
                         ),
                       // Condition badge — top-right scrim pill
@@ -3384,18 +3398,21 @@ class _MarketSearchRow extends StatelessWidget {
                   );
                 }),
                 const SizedBox(height: 6),
-                // Price pill
+                // Price pill — Free: yellowSoft/yellowDark. Paid: neutral grey.
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: item.isFree
-                        ? HuddlColors.nearBlack.withValues(alpha: 0.10)
+                        ? HuddlColors.yellowSoft
                         : const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     priceStr,
-                    style: HuddlText.caption(color: priceColor, weight: FontWeight.w700),
+                    style: HuddlText.caption(
+                      color: item.isFree ? HuddlColors.yellowDark : priceColor,
+                      weight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -3625,18 +3642,21 @@ class _MarketListCardState extends State<_MarketListCard> {
                           ),
                         ),
                       ],
-                      // Price pill (Groups "Join" button pattern — grey pill)
+                      // Price pill — Free: yellowSoft/yellowDark. Paid: neutral grey.
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.nearBlack.withValues(alpha: 0.10)
+                              ? HuddlColors.yellowSoft
                               : const Color(0xFFF7F7F7),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           priceStr,
-                          style: HuddlText.body(color: priceColor, weight: FontWeight.w700),
+                          style: HuddlText.body(
+                            color: item.isFree ? HuddlColors.yellowDark : priceColor,
+                            weight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -4176,10 +4196,11 @@ class _SellListingTileState extends State<_SellListingTile>
                                         : HuddlColors.nearBlack, weight: FontWeight.w600),
                                 ),
                                 const SizedBox(width: 8),
+                                // View count — infoBlue: engagement metric, informational.
                                 ExcludeSemantics(
                                   child: Text(
                                     '${item.viewCount} views \u2022 ${item.timeAgo}',
-                                    style: HuddlText.caption(color: hc.textTertiary),
+                                    style: HuddlText.caption(color: HuddlColors.infoBlue),
                                   ),
                                 ),
                               ],

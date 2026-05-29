@@ -11,9 +11,12 @@ import '../../theme/huddl_colors.dart';
 ///   confirmed   — nearBlack fill, white text. Done / completion state.
 ///   destructive — text-only, error red. Destructive actions.
 ///   ghost       — text-only, orange text. Inline links, "See all", etc.
+///   celebrate   — yellow fill, nearBlack text. Celebration moments only.
+///                  Use for: first-join CTAs, achievement unlocks, free-tier
+///                  upgrade confirmation. Never for primary purchase flows.
 ///
 /// Spec: 52px height, 14px radius, 16px/w600 Poppins, 0 elevation.
-enum HuddlButtonVariant { primary, secondary, confirmed, destructive, ghost }
+enum HuddlButtonVariant { primary, secondary, confirmed, destructive, ghost, celebrate }
 
 class HuddlButton extends StatelessWidget {
   final String label;
@@ -109,6 +112,24 @@ class HuddlButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
           child: _child(HuddlColors.primary, HuddlColors.primary),
+        );
+
+      case HuddlButtonVariant.celebrate:
+        // Yellow fill / nearBlack text — celebration moments only.
+        // Semantic rule: never use for purchase flows or primary navigation CTAs.
+        return ElevatedButton(
+          onPressed: onPressed == null ? null : _handleTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: HuddlColors.yellow,
+            disabledBackgroundColor: const Color(0xFFEEEEEE),
+            foregroundColor: HuddlColors.nearBlack,
+            disabledForegroundColor: const Color(0xFF9E9E9E),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14)),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+          ),
+          child: _child(HuddlColors.nearBlack, const Color(0xFF9E9E9E)),
         );
     }
   }

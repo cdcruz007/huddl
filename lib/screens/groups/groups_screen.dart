@@ -4591,7 +4591,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              // Yellow check icon — celebratory join confirmation.
+              const Icon(Icons.check_circle, color: HuddlColors.yellow, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -5526,10 +5527,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
-                                    // Member count
+                                    // Member count — infoBlue: data label, informational
                                     Text(
                                       '${group.memberCount} members',
-                                      style: HuddlText.caption(color: context.hc.textTertiary),
+                                      style: HuddlText.caption(color: HuddlColors.infoBlue),
                                     ),
                                   ],
                                 ),
@@ -5883,10 +5884,11 @@ class _DiscoverGroupCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
+                      // Member count — infoBlue: informational data label.
                       Expanded(
                         child: Text(
                           '${group.memberCount} members',
-                          style: HuddlText.caption(),
+                          style: HuddlText.caption(color: HuddlColors.infoBlue),
                         ),
                       ),
                       // Join / Joined / Restricted button — JoinButton (animated pill)

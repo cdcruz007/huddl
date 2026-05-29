@@ -829,14 +829,17 @@ class _WisdomCard extends StatelessWidget {
                   Row(
                     children: [
                       // Contributor avatar
+                      // Contributor avatar fallback — infoBluePale bg (trust/verified).
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: HuddlColors.primary.withValues(alpha: 0.15),
+                        backgroundColor: HuddlColors.infoBluePale,
                         child: Text(
                           article.contributorFirstName.isNotEmpty
                               ? article.contributorFirstName[0].toUpperCase()
                               : 'P',
-                          style: HuddlText.caption(weight: FontWeight.w600),
+                          style: HuddlText.caption(
+                              weight: FontWeight.w600,
+                              color: HuddlColors.infoBlue),
                         ),
                       ),
                       const SizedBox(width: 7),
@@ -1049,15 +1052,19 @@ class _ExpertCard extends StatelessWidget {
                         style: HuddlText.caption(color: HuddlColors.textHint),
                       ),
                       const Spacer(),
+                      // Read chip — infoBluePale bg / infoBlue text.
+                      // Informational: shows article is readable, not a primary CTA.
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: HuddlColors.nearBlack.withValues(alpha: 0.10),
+                          color: HuddlColors.infoBluePale,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           'Read →',
-                          style: HuddlText.caption(weight: FontWeight.w600),
+                          style: HuddlText.caption(
+                              weight: FontWeight.w600,
+                              color: HuddlColors.infoBlue),
                         ),
                       ),
                     ],
@@ -1187,14 +1194,17 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
               ),
               child: Row(
                 children: [
+                  // Contributor avatar — infoBluePale bg (trust signal).
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: HuddlColors.primary.withValues(alpha: 0.15),
+                    backgroundColor: HuddlColors.infoBluePale,
                     child: Text(
                       article.contributorFirstName.isNotEmpty
                           ? article.contributorFirstName[0].toUpperCase()
                           : 'P',
-                      style: HuddlText.body(weight: FontWeight.w600),
+                      style: HuddlText.body(
+                          weight: FontWeight.w600,
+                          color: HuddlColors.infoBlue),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1667,7 +1677,9 @@ class _CategoryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = teal ? HuddlColors.nearBlack : HuddlColors.primary;
+    // teal=true (category badge on body): nearBlack bg for contrast.
+    // teal=false (category badge on photo overlay / card body): infoBlue accent.
+    final color = teal ? HuddlColors.nearBlack : HuddlColors.infoBlue;
     if (light) {
       // White text on semi-transparent dark bg — for use on photo overlays
       return Container(

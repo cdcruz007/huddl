@@ -6170,8 +6170,10 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Stat numbers \u2014 infoBlue: numeric data labels are informational,
+        // not CTAs. Keeps orange exclusively for action buttons.
         Text(count,
-            style: HuddlText.display(color: context.hc.textPrimary)),
+            style: HuddlText.display(color: HuddlColors.infoBlue)),
         Text(label,
             style: HuddlText.caption(color: context.hc.textTertiary)),
       ],

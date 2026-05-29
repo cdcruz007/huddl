@@ -87,9 +87,11 @@ class HuddlCharacter extends StatelessWidget {
       case HuddlMood.locked:
         return HuddlColors.textTertiary;
       case HuddlMood.upgrade:
-        return HuddlColors.primary;
+        // Star icon for upgrade moment \u2014 yellow = celebration, not a CTA.
+        return HuddlColors.yellow;
       case HuddlMood.celebrating:
-        return HuddlColors.primary;
+        // First-join, milestone celebration \u2014 yellow = joy/achievement.
+        return HuddlColors.yellow;
       default:
         return HuddlColors.textTertiary;
     }

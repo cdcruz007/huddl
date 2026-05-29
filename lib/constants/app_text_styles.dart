@@ -47,18 +47,20 @@ class HuddlText {
   // ── BODY — 14px / 400 / 0 tracking ───────────────────────────────────────
   // Use for: all descriptive text, message content, card subtitles,
   // form helper text, notification body. Default text weight.
+  // Updated 16px (was 14) per Figma styleguide — better legibility.
   static TextStyle body({Color? color, FontWeight? weight}) => GoogleFonts.poppins(
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: weight ?? FontWeight.w400,
-        height: 1.5,
+        height: 1.55,
         color: color ?? HuddlColors.textSecondary,
       );
 
   // ── CAPTION — 12px / 400 / 0.1 tracking ──────────────────────────────────
   // Use for: timestamps, member counts, distance labels, badge text,
   // tab labels, "See all" links, form character counts.
+  // Updated 13px (was 12) per Figma styleguide — prevents sub-pixel artifacts.
   static TextStyle caption({Color? color, FontWeight? weight}) => GoogleFonts.poppins(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: weight ?? FontWeight.w400,
         letterSpacing: 0.1,
         height: 1.4,
@@ -87,14 +89,38 @@ class AppTextStyles {
 
   static TextStyle get h1 => HuddlText.display();
   static TextStyle get h2 => HuddlText.heading();
-  static TextStyle get body1 => HuddlText.body(color: HuddlColors.nearBlack);
-  static TextStyle get body2 => HuddlText.body();
+
+  /// 16px / w400 / nearBlack — primary body copy on light backgrounds.
+  static TextStyle get body1 => GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.55,
+        color: HuddlColors.nearBlack,
+      );
+
+  /// 16px / w400 / textSecondary — secondary body copy.
+  static TextStyle get body2 => GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.55,
+        color: HuddlColors.textSecondary,
+      );
+
   static TextStyle get button => GoogleFonts.poppins(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Colors.white,
       );
-  static TextStyle get caption => HuddlText.caption();
+
+  /// 13px / w400 / textTertiary — caption / metadata text.
+  static TextStyle get caption => GoogleFonts.poppins(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
+        height: 1.4,
+        color: HuddlColors.textTertiary,
+      );
+
   static TextStyle get inputLabel =>
       HuddlText.body(color: HuddlColors.textSecondary, weight: FontWeight.w500);
   static TextStyle get inputHint => HuddlText.body(color: HuddlColors.textHint);
