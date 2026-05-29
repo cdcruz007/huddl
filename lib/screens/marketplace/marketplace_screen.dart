@@ -2752,6 +2752,116 @@ Widget _buildItemImage(String url, RehomeItem item) {
 
 // =============================================================================
 // BUY TAB — 2-COLUMN GRID CARD
+// =============================================================================
+// URGENCY SIGNAL ROW
+//
+// Renders the highest-priority urgency signal for a listing.
+// Priority: offerCount > viewCount ≥10 > isFree > hoursListed < 24 > brandNew
+// Only one signal shown at a time. Returns SizedBox.shrink() for stale
+// low-activity listings — no wasted vertical space.
+// =============================================================================
+
+class _UrgencySignalRow extends StatelessWidget {
+  final RehomeItem item;
+  const _UrgencySignalRow({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final signal = _resolveSignal();
+    if (signal == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(signal.icon, size: 11, color: signal.color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              signal.label,
+              style: HuddlText.caption(
+                color: signal.color,
+                weight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _UrgencySignal? _resolveSignal() {
+    // Priority 1 — Offers pending (highest intent signal)
+    if (item.offerCount > 0) {
+      return _UrgencySignal(
+        icon: Icons.local_offer_outlined,
+        label: item.offerCount == 1
+            ? '1 person made an offer'
+            : '${item.offerCount} people made offers',
+        color: HuddlColors.primary,
+      );
+    }
+
+    // Priority 2 — High view count (social proof)
+    if (item.viewCount >= 10) {
+      return _UrgencySignal(
+        icon: Icons.visibility_outlined,
+        label: item.viewCount >= 50
+            ? '${item.viewCount}+ views — popular item'
+            : '${item.viewCount} people viewed this',
+        color: HuddlColors.infoBlue,
+      );
+    }
+
+    // Priority 3 — Free item (goes fast)
+    if (item.isFree) {
+      return _UrgencySignal(
+        icon: Icons.volunteer_activism_outlined,
+        label: 'Free — first to message gets it',
+        color: HuddlColors.yellowDark,
+      );
+    }
+
+    // Priority 4 — Recently listed (freshness signal)
+    final hoursSinceListed = DateTime.now().difference(item.listedAt).inHours;
+    if (hoursSinceListed < 24) {
+      return _UrgencySignal(
+        icon: Icons.access_time_outlined,
+        label: hoursSinceListed < 2
+            ? 'Just listed'
+            : 'Listed ${item.timeAgo}',
+        color: HuddlColors.textTertiary,
+      );
+    }
+
+    // Priority 5 — Brand new condition (value signal)
+    if (item.condition == ItemCondition.brandNew) {
+      return _UrgencySignal(
+        icon: Icons.auto_awesome,
+        label: 'Brand new — never used',
+        color: HuddlColors.primary,
+      );
+    }
+
+    // No signal — stale, low-activity listing
+    return null;
+  }
+}
+
+class _UrgencySignal {
+  final IconData icon;
+  final String   label;
+  final Color    color;
+  const _UrgencySignal({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+}
+
 // Half-screen-width card: photo (top, fills width, fixed ratio) + body.
 // Image area:
 //   - Count badge top-left (grey pill, hidden if only 1 photo)
@@ -2977,6 +3087,11 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                           ),
                         ],
                       ),
+                      // Compact urgency signal — grid cards are small
+                      if (_resolveGridUrgency(item) != null) ...[
+                        const SizedBox(height: 4),
+                        _resolveGridUrgency(item)!,
+                      ],
                     ],
                   ),
                 ),
@@ -2987,6 +3102,43 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
       ),
     ), // SizedBox.expand
     );
+  }
+
+  Widget? _resolveGridUrgency(RehomeItem item) {
+    if (item.offerCount > 0) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.local_offer_outlined, size: 10, color: HuddlColors.primary),
+          const SizedBox(width: 3),
+          Text(
+            '${item.offerCount} offer${item.offerCount == 1 ? '' : 's'}',
+            style: HuddlText.caption(color: HuddlColors.primary, weight: FontWeight.w600),
+          ),
+        ],
+      );
+    }
+    if (item.viewCount >= 10) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.visibility_outlined, size: 10, color: HuddlColors.infoBlue),
+          const SizedBox(width: 3),
+          Text(
+            '${item.viewCount} views',
+            style: HuddlText.caption(color: HuddlColors.infoBlue, weight: FontWeight.w600),
+          ),
+        ],
+      );
+    }
+    final hours = DateTime.now().difference(item.listedAt).inHours;
+    if (hours < 24) {
+      return Text(
+        hours < 2 ? 'Just listed' : item.timeAgo,
+        style: HuddlText.caption(color: HuddlColors.textTertiary, weight: FontWeight.w600),
+      );
+    }
+    return null;
   }
 }
 
@@ -3014,6 +3166,23 @@ class _MarketItemCardState extends State<_MarketItemCard> {
   String _avatarUrl(int i) {
     final idx = (widget.item.id.hashCode + i).abs() % _kMarketAvatarPool.length;
     return _kMarketAvatarPool[idx];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Increment view count when this card first appears in the list.
+    // Fire-and-forget, non-blocking. Only fires for other users' items
+    // that have never been viewed (viewCount == 0), so counts aren't
+    // inflated on every rebuild.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null
+        && widget.item.sellerId != uid
+        && widget.item.id.isNotEmpty
+        && !widget.item.id.startsWith('local_')
+        && widget.item.viewCount < 1) {
+      FirestoreService().incrementListingViews(widget.item.id).catchError((_) {});
+    }
   }
 
   @override
@@ -3182,6 +3351,9 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      // Urgency signal — offer / view / freshness hint
+                      _UrgencySignalRow(item: item),
                     ],
                   ),
                 ),
@@ -3352,20 +3524,40 @@ class _MarketSearchRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
-                  // Location row
+                  // Location row + urgency signal beneath
                   Row(
                     children: [
                       Icon(Icons.location_on_outlined,
                           size: 12, color: hc.textTertiary),
                       const SizedBox(width: 2),
                       Expanded(
-                        child: Text(
-                          item.sellerLocation.isNotEmpty
-                              ? item.sellerLocation
-                              : 'Near you',
-                          style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.sellerLocation.isNotEmpty
+                                  ? item.sellerLocation
+                                  : 'Near you',
+                              style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (item.offerCount > 0)
+                              Text(
+                                '${item.offerCount} offer${item.offerCount == 1 ? '' : 's'}',
+                                style: HuddlText.caption(color: HuddlColors.primary, weight: FontWeight.w600),
+                              )
+                            else if (item.viewCount >= 10)
+                              Text(
+                                '${item.viewCount} views',
+                                style: HuddlText.caption(color: HuddlColors.infoBlue, weight: FontWeight.w600),
+                              )
+                            else
+                              Text(
+                                item.timeAgo,
+                                style: HuddlText.caption(color: hc.textTertiary),
+                              ),
+                          ],
                         ),
                       ),
                     ],
@@ -3598,7 +3790,10 @@ class _MarketListCardState extends State<_MarketListCard> {
                       ],
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 4),
+                  // Urgency signal — offer / view / freshness hint
+                  _UrgencySignalRow(item: item),
+                  const SizedBox(height: 6),
 
                   // Bottom row — price bold + save heart (Groups join-button pattern)
                   Row(
@@ -3636,10 +3831,10 @@ class _MarketListCardState extends State<_MarketListCard> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      // "Near you" or empty space
+                      // timeAgo — when this was listed
                       Expanded(
                         child: Text(
-                          'Near you',
+                          item.timeAgo,
                           style: HuddlText.caption(color: hc.textTertiary),
                         ),
                       ),

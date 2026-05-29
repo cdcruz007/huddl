@@ -704,7 +704,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     style: HuddlText.caption()),
                                 ],
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 10),
+                              // Urgency banner — shown only when not sold
+                              if (!item.isSold) ...[
+                                _buildDetailUrgencyBanner(),
+                                const SizedBox(height: 10),
+                              ],
                             ],
                           ),
                         ),
@@ -846,6 +851,90 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ],
       ),
     );
+  }
+
+  // == URGENCY BANNER ==========================================================
+
+  Widget _buildDetailUrgencyBanner() {
+    // High view count — social proof (blue)
+    if (item.viewCount >= 20 && item.offerCount == 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: HuddlColors.infoBluePale,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.visibility_outlined, size: 16, color: HuddlColors.infoBlue),
+            const SizedBox(width: 8),
+            Text(
+              '${item.viewCount} parents have viewed this',
+              style: HuddlText.body(color: HuddlColors.infoBlue, weight: FontWeight.w500),
+            ),
+          ],
+        ),
+      );
+    }
+    // Active offers — highest intent signal (orange)
+    if (item.offerCount > 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.local_offer_outlined, size: 16, color: HuddlColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              item.offerCount == 1
+                  ? 'Someone has already made an offer'
+                  : '${item.offerCount} people have made offers',
+              style: HuddlText.body(color: HuddlColors.primary, weight: FontWeight.w500),
+            ),
+          ],
+        ),
+      );
+    }
+    // Free item — goes fast (yellow)
+    if (item.isFree) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: HuddlColors.yellowBackground,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.volunteer_activism_outlined, size: 16, color: HuddlColors.yellowDark),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'This item is free — message the seller before someone else does',
+                style: HuddlText.body(color: HuddlColors.yellowDark, weight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    // Recently listed — freshness signal (subtle)
+    final hours = DateTime.now().difference(item.listedAt).inHours;
+    if (hours < 6) {
+      return Row(
+        children: [
+          const Icon(Icons.access_time_outlined, size: 14, color: HuddlColors.textTertiary),
+          const SizedBox(width: 6),
+          Text(
+            'Just listed ${item.timeAgo}',
+            style: HuddlText.caption(color: HuddlColors.textTertiary, weight: FontWeight.w600),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   // == HERO PHOTO (replaces flat gallery in SliverAppBar) ====================
