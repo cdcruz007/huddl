@@ -711,10 +711,41 @@ class RehomeService extends ChangeNotifier {
 
   void updateListing(RehomeItem updated) {
     final idx = _items.indexWhere((i) => i.id == updated.id);
+    final oldItem = idx >= 0 ? _items[idx] : null;
     if (idx >= 0) _items[idx] = updated;
     final myIdx = _myListings.indexWhere((i) => i.id == updated.id);
     if (myIdx >= 0) _myListings[myIdx] = updated;
     notifyListeners();
+
+    // ── Price drop notification to users who have saved this item ────────
+    // Only fires when: item is not free, price dropped by ≥£2.
+    if (oldItem != null &&
+        !updated.isFree &&
+        updated.price < oldItem.price &&
+        (oldItem.price - updated.price) >= 2.0) {
+      final myId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      FirestoreService().getSavedByUserIds(updated.id).then((savedIds) {
+        for (final uid in savedIds.where((u) => u != myId)) {
+          HuddlNotificationService().savedItemPriceDropped(
+            savedByUserId: uid,
+            itemTitle: updated.title,
+            itemId: updated.id,
+            oldPrice: '£${oldItem.price.toStringAsFixed(0)}',
+            newPrice: '£${updated.price.toStringAsFixed(0)}',
+            itemImageUrl: updated.imageUrls.isNotEmpty
+                ? updated.imageUrls.first
+                : null,
+          ).catchError((Object e) {
+            if (kDebugMode) debugPrint('[RehomeService] priceDrop notif error: $e');
+            return;
+          });
+        }
+      }).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] updateListing savedByUserIds error: $e');
+        return;
+      });
+    }
+
     // ── Persist to Firestore (fire-and-forget) ──────────────────────────
     FirestoreService().updateListing(updated.id, {
       'title': updated.title,

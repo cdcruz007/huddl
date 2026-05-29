@@ -424,23 +424,31 @@ class HuddlNotificationService {
         data: {'meetupId': meetupId, 'meetupTitle': meetupTitle, 'route': '/meetups'},
       );
 
+  /// Write a meetup reminder for a single user (client-side 24h scheduler)
+  /// or fan out to a list of attendees (Cloud Function / batch path).
   Future<void> meetupReminder({
-    required List<String> attendeeIds,
+    String? userId,              // single-user path (client-side scheduler)
+    List<String>? attendeeIds,  // batch path (legacy / Cloud Functions)
     required String meetupTitle,
     required String meetupId,
+    required String meetupDate,
     required String meetupLocation,
     required String meetupTime,
   }) async {
-    for (final id in attendeeIds) {
+    final ids = userId != null ? [userId] : (attendeeIds ?? []);
+    for (final id in ids) {
       await _write(
         recipientId: id,
         type: 'meetup_reminder',
-        title: '📅 Meetup tomorrow!',
-        body: '$meetupTitle at $meetupLocation — $meetupTime',
+        title: '$meetupTitle tomorrow 🗓️',
+        body: meetupLocation.isNotEmpty
+            ? '$meetupTime · $meetupLocation — you\'re going!'
+            : "You're going — tap to see details.",
         data: {
           'meetupId': meetupId,
           'meetupTitle': meetupTitle,
-          'route': '/meetups',
+          'meetupLocation': meetupLocation,
+          'route': '/meetup_detail',
         },
       );
     }
@@ -451,6 +459,7 @@ class HuddlNotificationService {
     required String meetupTitle,
     required String meetupId,
     required String meetupDate,
+    required String meetupLocation,
     required String organiserId,
   }) async {
     for (final id in boroughUserIds) {
@@ -458,12 +467,14 @@ class HuddlNotificationService {
       await _write(
         recipientId: id,
         type: 'new_meetup_nearby',
-        title: 'New meetup near you',
-        body: '$meetupTitle — $meetupDate',
+        title: 'New meetup near you 📍',
+        body: meetupLocation.isNotEmpty
+            ? '$meetupTitle · $meetupDate · $meetupLocation'
+            : '$meetupTitle · $meetupDate — tap to join',
         data: {
           'meetupId': meetupId,
           'meetupTitle': meetupTitle,
-          'route': '/meetups',
+          'route': '/meetup_detail',
         },
       );
     }
@@ -644,6 +655,63 @@ class HuddlNotificationService {
       );
     }
   }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // FIRST GROUP MESSAGE — warmer copy for day-1 retention
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Used instead of newGroupMessage when the group has ≤1 existing members
+  /// (i.e. this is the first real message in the group). Gives new joiners
+  /// a warmer first impression than a generic "new message" notification.
+  Future<void> firstGroupMessage({
+    required String recipientId,
+    required String senderName,
+    required String groupName,
+    required String groupId,
+    required String messagePreview,
+  }) =>
+      _write(
+        recipientId: recipientId,
+        type: 'new_group_message',
+        title: '$senderName said hello in $groupName 👋',
+        body: messagePreview.isNotEmpty
+            ? messagePreview
+            : 'Your neighbours are talking — come join in.',
+        senderName: senderName,
+        data: {
+          'groupId': groupId,
+          'groupName': groupName,
+          'route': '/group_chat',
+          'type': 'group_message',
+        },
+      );
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // SAVED ITEM PRICE DROP
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Notifies a user who saved an item when the seller drops the price by ≥£2.
+  Future<void> savedItemPriceDropped({
+    required String savedByUserId,
+    required String itemTitle,
+    required String itemId,
+    required String oldPrice,
+    required String newPrice,
+    String? itemImageUrl,
+  }) =>
+      _write(
+        recipientId: savedByUserId,
+        type: 'saved_item_price_drop',
+        title: 'Price drop on "$itemTitle"',
+        body: '$oldPrice → $newPrice — still available nearby',
+        imageUrl: itemImageUrl,
+        data: {
+          'itemId': itemId,
+          'itemTitle': itemTitle,
+          'route': '/item_detail',
+          'tab': 'buy',
+        },
+      );
 
   // ═════════════════════════════════════════════════════════════════════════
   // MARK ALL READ

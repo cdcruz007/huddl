@@ -24,6 +24,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/places_autocomplete_field.dart';
 import '../../constants/app_text_styles.dart';
+import '../../services/huddl_notification_service.dart';
+import '../../services/backend_api_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE MEETUP — premium card-based form, Figma-aligned redesign
@@ -611,6 +613,44 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           meetupTitle: meetup.title,
           meetupData: meetupJson,
         );
+      }
+    } else if (meetup.privacy == MeetupPrivacy.public) {
+      // ── Public meetup → notify all borough members ──────────────────────
+      try {
+        final borough = _onboardingService.borough ?? '';
+        if (borough.isEmpty) return;
+
+        // Query all borough users who have notifications enabled
+        final snap = await FirebaseFirestore.instance
+            .collection('users')
+            .where('borough', isEqualTo: borough)
+            .where('notificationsEnabled', isEqualTo: true)
+            .get();
+
+        final boroughUserIds = snap.docs.map((d) => d.id).toList();
+
+        // In-app Firestore notification to each borough member
+        await HuddlNotificationService().newMeetupNearby(
+          boroughUserIds: boroughUserIds,
+          meetupTitle: meetup.title,
+          meetupId: meetup.id,
+          meetupDate: meetup.dateDisplay,
+          meetupLocation: meetup.location,
+          organiserId: meetup.organiserId,
+        );
+
+        // FCM push via backend for users with push tokens registered
+        await BackendApiService().notifyNewMeetupNearby(
+          meetupId: meetup.id,
+          meetupTitle: meetup.title,
+          meetupDate: meetup.dateDisplay,
+          meetupLocation: meetup.location,
+          borough: borough,
+          organiserId: meetup.organiserId,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[CreateMeetup] newMeetupNearby error: $e');
+        // Non-fatal — meetup was saved successfully, notification is best-effort
       }
     }
   }

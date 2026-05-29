@@ -445,6 +445,19 @@ class FirestoreService {
               senderPhotoUrl: senderPhotoUrl,
             ),
           );
+        } else if (otherMembers.length == 1) {
+          // Group has exactly 2 members total (sender + one other) — this is
+          // a brand-new or very small group. Use the warmer first-message copy
+          // to give the recipient a better first impression.
+          unawaited(
+            HuddlNotificationService().firstGroupMessage(
+              recipientId: otherMembers.first,
+              senderName: displayName,
+              groupName: groupName,
+              groupId: groupId,
+              messagePreview: message,
+            ),
+          );
         } else {
           unawaited(
             HuddlNotificationService().newGroupMessage(
@@ -742,6 +755,7 @@ class FirestoreService {
       final borough = meetupData['borough'] as String? ?? '';
       final meetupTitle = meetupData['title'] as String? ?? 'New meetup';
       final meetupDate = meetupData['date'] as String? ?? '';
+      final meetupLocation = meetupData['location'] as String? ?? '';
       if (borough.isNotEmpty) {
         final usersSnap = await _db
             .collection('users')
@@ -756,6 +770,7 @@ class FirestoreService {
               meetupTitle: meetupTitle,
               meetupId: ref.id,
               meetupDate: meetupDate,
+              meetupLocation: meetupLocation,
               organiserId: uid,
             ),
           );

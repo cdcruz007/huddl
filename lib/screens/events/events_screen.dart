@@ -37,6 +37,7 @@ import '../insights/insights_screen.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../search/unified_search_screen.dart';
+import '../../services/huddl_notification_service.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -161,7 +162,38 @@ class EventsScreenState extends State<EventsScreen>
   }
 
   void _refresh() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _scheduleReminderCheck(_meetupService.meetups);
+    }
+  }
+
+  // IDs of meetups we've already dispatched a 24h reminder for this session,
+  // so we don't re-fire on every rebuild triggered by MeetupService updates.
+  final Set<String> _reminderFired = {};
+
+  /// For each meetup the user is going to that starts in 23–25 hours,
+  /// write a reminder notification to Firestore (once per session per meetup).
+  void _scheduleReminderCheck(List<Meetup> meetups) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    if (uid.isEmpty) return;
+    final now = DateTime.now();
+    for (final m in meetups) {
+      if (!m.isGoing) continue;
+      if (_reminderFired.contains(m.id)) continue;
+      final hoursUntil = m.dateTime.difference(now).inHours;
+      if (hoursUntil >= 23 && hoursUntil <= 25) {
+        _reminderFired.add(m.id);
+        HuddlNotificationService().meetupReminder(
+          userId: uid,
+          meetupTitle: m.title,
+          meetupId: m.id,
+          meetupDate: m.dateDisplay,
+          meetupLocation: m.location,
+          meetupTime: m.timeDisplay,
+        ).catchError((_) {});
+      }
+    }
   }
 
   void _navigateToCreateMeetup() async {
@@ -472,90 +504,11 @@ class EventsScreenState extends State<EventsScreen>
                   ),
                   ), // Padding
                 ), // ColoredBox title row
-                // ── Header: tab bar (full-width, no side padding) ──
-                // ColoredBox + full-width Row as spacer forces the surface
-                // color to fill the entire tab bar row. The Row with
-                // mainAxisSize.max fills the Column's tight width, making
-                // the ColoredBox span edge-to-edge including the transparent
-                // gap right of the last scrollable tab.
-                ColoredBox(
-                  color: context.hc.surface,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    splashFactory: NoSplash.splashFactory,
-                    overlayColor: WidgetStateProperty.all(Colors.transparent),
-                    // Fully suppress TabBar's own label styling and color inheritance.
-                    // The global TabBarThemeData has labelColor=primary which would
-                    // tint our custom child icons orange even when inactive.
-                    // Setting both transparent here gives _AnimatedDiscoverTab full
-                    // control over its own color transitions.
-                    labelColor: Colors.transparent,
-                    unselectedLabelColor: Colors.transparent,
-                    labelStyle: const TextStyle(inherit: false, fontSize: 0),
-                    unselectedLabelStyle: const TextStyle(inherit: false, fontSize: 0),
-                    tabs: [
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.people_outline,
-                        activeIcon: Icons.people,
-                        label: 'Groups',
-                        isSelected: _selectedTab == 0,
-                        count: _groupCount > 0 ? _groupCount : null,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.location_on_outlined,
-                        activeIcon: Icons.location_on,
-                        label: 'Meetups',
-                        isSelected: _selectedTab == 1,
-                        count: _meetupService.meetups.isNotEmpty
-                            ? _meetupService.meetups.length : null,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.calendar_today_outlined,
-                        activeIcon: Icons.calendar_today,
-                        label: 'Events',
-                        isSelected: _selectedTab == 2,
-                        count: _eventCount > 0 ? _eventCount : null,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.storefront_outlined,
-                        activeIcon: Icons.storefront,
-                        label: 'Services',
-                        isSelected: _selectedTab == 3,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.lightbulb_outline,
-                        activeIcon: Icons.lightbulb,
-                        label: 'Insights',
-                        isSelected: _selectedTab == 4,
-                        activeColor: HuddlColors.yellow,
-                        activeIconColor: HuddlColors.yellowDark,
-                      )),
-                    ],
-                    indicatorColor: HuddlColors.primary,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    indicatorWeight: 2.5,
-                    dividerColor: HuddlColors.divider,
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
-                    onTap: (index) {
-                      if (index == 0 || _selectedTab == 0) {
-                        _groupResetTrigger.value = true;
-                      }
-                      if (index == 3 || _selectedTab == 3) {
-                        _serviceResetTrigger.value = true;
-                      }
-                      setState(() { _selectedTab = index; });
-                    },
-                  ), // TabBar
-                      ), // Expanded
-                    ], // Row children
-                  ), // Row
-                ), // ColoredBox tab bar
+                // ── DIAGNOSTIC: red box to confirm slot renders correctly ──
+                Container(
+                  height: 54,
+                  color: Colors.red,
+                ), // DIAGNOSTIC red box
             // Borough header banners removed — scope shown via compact
             // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────

@@ -449,6 +449,40 @@ class BackendApiService {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
+  // MEETUP NOTIFICATIONS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Push an FCM notification to all borough members when a new public meetup
+  /// is created. The backend looks up FCM tokens for users in [borough] and
+  /// fires the notification, skipping the organiser.
+  Future<void> notifyNewMeetupNearby({
+    required String meetupId,
+    required String meetupTitle,
+    required String meetupDate,
+    required String meetupLocation,
+    required String borough,
+    required String organiserId,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/meetups/notify-new-nearby'),
+        headers: headers,
+        body: jsonEncode({
+          'meetupId': meetupId,
+          'meetupTitle': meetupTitle,
+          'meetupDate': meetupDate,
+          'meetupLocation': meetupLocation,
+          'borough': borough,
+          'organiserId': organiserId,
+        }),
+      ).timeout(const Duration(seconds: 12));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyNewMeetupNearby error: $e');
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
   // SOCIAL / GROUP EVENT NOTIFICATIONS
   // ═════════════════════════════════════════════════════════════════════════
 
