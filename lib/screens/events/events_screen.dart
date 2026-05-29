@@ -335,6 +335,7 @@ class EventsScreenState extends State<EventsScreen>
             // narrower than screen → right side shows scaffold grey.
             Positioned.fill(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── Header: title row (padded) ────────────────────
                 // Split into two Containers so the TabBar below can be
@@ -472,23 +473,17 @@ class EventsScreenState extends State<EventsScreen>
                   ), // Padding
                 ), // ColoredBox title row
                 // ── Header: tab bar (full-width, no side padding) ──
-                // Stack: white fill behind + TabBar on top.
-                // The TabBar (isScrollable) leaves transparent space to the
-                // right of the last tab. We paint that gap white by putting a
-                // full-width white Container BEHIND the TabBar in a Stack.
-                // Height is fixed to Tab.height (52) + divider (1) + 2px pad.
-                SizedBox(
-                  height: 55,
-                  child: Stack(
+                // ColoredBox + full-width Row as spacer forces the surface
+                // color to fill the entire tab bar row. The Row with
+                // mainAxisSize.max fills the Column's tight width, making
+                // the ColoredBox span edge-to-edge including the transparent
+                // gap right of the last scrollable tab.
+                ColoredBox(
+                  color: context.hc.surface,
+                  child: Row(
                     children: [
-                      // ① Full-width white fill — covers the transparent gap
-                      Positioned.fill(
-                        child: ColoredBox(color: context.hc.surface),
-                      ),
-                      // ② TabBar full-width — Positioned.fill forces it to match
-                      // the SizedBox width so it receives tight constraints.
-                      Positioned.fill(
-                      child: TabBar(
+                      Expanded(
+                        child: TabBar(
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
@@ -557,10 +552,10 @@ class EventsScreenState extends State<EventsScreen>
                       setState(() { _selectedTab = index; });
                     },
                   ), // TabBar
-                      ), // Positioned.fill (TabBar)
-                    ], // Stack children
-                  ), // Stack
-                ), // SizedBox tab bar
+                      ), // Expanded
+                    ], // Row children
+                  ), // Row
+                ), // ColoredBox tab bar
             // Borough header banners removed — scope shown via compact
             // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────
