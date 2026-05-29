@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
-import '../../services/onboarding_data_service.dart';
 import '../../widgets/common/huddl_logo.dart';
 
 // =============================================================================
@@ -86,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Resolve destination before fading so the exit feels intentional.
     // Explicit logout flag takes priority over cached Firebase token.
-    String destination = '/onboarding_carousel';
+    String destination = '/onboarding';
     try {
       final auth = FirebaseAuthService();
       final explicitlyLoggedOut = await FirebaseAuthService.hasExplicitlyLoggedOut;
@@ -99,12 +98,10 @@ class _SplashScreenState extends State<SplashScreen>
         final biometricEnabled = await biometric.isEnabled;
         destination = biometricEnabled ? '/biometric_lock' : '/home';
       } else {
-        final onboarding = OnboardingDataService();
-        final hasStarted = onboarding.name != null || onboarding.postcode != null;
-        destination = hasStarted ? '/onboarding' : '/onboarding_carousel';
+        destination = '/onboarding';
       }
     } catch (_) {
-      destination = '/onboarding_carousel';
+      destination = '/onboarding';
     }
 
     if (!mounted) return;
