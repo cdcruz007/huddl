@@ -86,20 +86,13 @@
                 android:resource="@xml/file_paths"/>
         </provider>
 
-        <!-- FileProvider: Required by image_cropper v8+ on Android to pass the
-             cropped image URI back to the app via content:// scheme.
-             image_cropper uses a separate authority from image_picker to avoid
-             conflicts. Without this entry, image_cropper crashes on Android
-             with "Failed to find configured root" or IllegalArgumentException. -->
-        <provider
-            android:name="com.yalantis.ucrop.UCropFileProvider"
-            android:authorities="${applicationId}.image_cropper.provider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"/>
-        </provider>
+        <!-- NOTE: UCropFileProvider was removed — com.yalantis.ucrop.UCropFileProvider
+             does not exist in ucrop 2.2.10 (used by image_cropper 8.1.0). That class
+             was never part of the ucrop library; declaring it caused a
+             ClassNotFoundException crash on every launch because Android tries to
+             instantiate all declared ContentProviders at startup. image_cropper 8.x
+             routes cropped image URIs through UCrop.of() directly without requiring
+             a separate FileProvider registration. -->
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -50,8 +50,8 @@ android {
         // submitted after August 2024.  Do NOT rely on flutter.targetSdkVersion
         // which may resolve to an older value depending on the Flutter SDK version.
         targetSdk = 35
-        versionCode = 106
-        versionName = "1.1.46"
+        versionCode = 108
+        versionName = "1.1.48"
         // Multidex: required when the app exceeds 64K method references.
         // Without this, secondary DEX classes (e.g. UCropFileProvider from
         // image_cropper) are not found at runtime → ClassNotFoundException crash.

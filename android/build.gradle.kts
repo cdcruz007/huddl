@@ -12,6 +12,11 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // JitPack: required for com.github.yalantis:ucrop (used by image_cropper).
+        // Without this, ucrop classes are NOT compiled into DEX despite appearing
+        // in the dependency tree — causing UCropFileProvider ClassNotFoundException
+        // at runtime on every Android device.
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
