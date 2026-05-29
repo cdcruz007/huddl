@@ -331,18 +331,14 @@ class EventsScreenState extends State<EventsScreen>
             // ── Main content column ────────────────────────────────
             Column(
               children: [
-                // ── Header ─────────────────────────────────────────
-                // Container has NO horizontal padding — the TabBar must reach
-                // the full screen width (isScrollable + tabAlignment.start).
-                // The Row above gets its own Padding widget instead.
-                Container(
+                // ── Header: title row (padded) ────────────────────
+                // Split into two Containers so the TabBar below can be
+                // full-width while the title row keeps 16px side insets.
+                ColoredBox(
                   color: context.hc.surface,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Row(
+                  child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
@@ -469,14 +465,17 @@ class EventsScreenState extends State<EventsScreen>
                     ],
                   ),
                   ), // Padding
-                  const SizedBox(height: 10),
-                  // ── Standard orange-underline tab bar ─────────────
-                  // Material(transparent) prevents the default grey surface
-                  // that TabBar paints behind itself (visible on the right
-                  // when isScrollable+tabAlignment.start leaves empty space).
-                  Material(
-                    color: Colors.transparent,
-                    child: TabBar(
+                ), // ColoredBox title row
+                // ── Header: tab bar (full-width, no side padding) ──
+                // Separate ColoredBox so TabBar spans the full screen width.
+                // Without this the grey Scaffold Material bleeds through on
+                // the right when isScrollable+tabAlignment.start leaves space.
+                ColoredBox(
+                  color: context.hc.surface,
+                  child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  TabBar(
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
@@ -547,11 +546,10 @@ class EventsScreenState extends State<EventsScreen>
                       setState(() { _selectedTab = index; });
                     },
                   ), // TabBar
-                  ), // Material
                   const SizedBox(height: 2),
-                ],
-              ),
-            ),
+                  ], // Column children
+                  ), // Column
+                ), // ColoredBox tab bar
             // Borough header banners removed — scope shown via compact
             // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────
