@@ -64,16 +64,17 @@ class HuddlButton extends StatelessWidget {
         );
 
       case HuddlButtonVariant.secondary:
+        final secondaryColor = _resolveSecondaryColor(context);
         return OutlinedButton(
           onPressed: onPressed == null ? null : _handleTap,
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1C1C1E),
-            side: const BorderSide(color: Color(0xFF1C1C1E), width: 1.5),
+            foregroundColor: secondaryColor,
+            side: BorderSide(color: secondaryColor, width: 1.5),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
-          child: _child(const Color(0xFF1C1C1E), const Color(0xFF9E9E9E)),
+          child: _child(secondaryColor, const Color(0xFF9E9E9E)),
         );
 
       case HuddlButtonVariant.confirmed:
@@ -132,6 +133,14 @@ class HuddlButton extends StatelessWidget {
           child: _child(HuddlColors.nearBlack, const Color(0xFF9E9E9E)),
         );
     }
+  }
+
+  /// Resolves the secondary button colour based on brightness.
+  /// Light mode: nearBlack (#1C1C1E) — dark mode: darkTextPrimary (#E8E8E8).
+  Color _resolveSecondaryColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? HuddlColors.darkTextPrimary
+        : const Color(0xFF1C1C1E);
   }
 
   void _handleTap() {

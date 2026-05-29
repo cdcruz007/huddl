@@ -1548,6 +1548,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       final years = List.generate(4, (i) => currentYear + i);
                       showModalBottomSheet(
                         context: ctx,
+                        backgroundColor: context.hc.surface,
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
                               top: Radius.circular(24)),
@@ -1594,14 +1595,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.hc.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: context.hc.divider),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today,
-                              size: 18, color: HuddlColors.textDark),
+                          Icon(Icons.calendar_today,
+                              size: 18, color: context.hc.textPrimary),
                           const SizedBox(width: 12),
                           Text(
                             selectedDueYear.isNotEmpty

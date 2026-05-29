@@ -7,6 +7,7 @@ import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/common/huddl_network_image.dart';
 import 'send_hub_screen.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -1331,8 +1332,12 @@ class _ExpertArticleScreen extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   heroUrl != null
-                      ? Image.network(heroUrl, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(color: srcColor))
+                      ? HuddlNetworkImage(
+                          url: heroUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fallbackWidget: Container(color: srcColor),
+                        )
                       : Container(color: srcColor),
                   DecoratedBox(
                     decoration: BoxDecoration(
@@ -1721,7 +1726,9 @@ class _Tag extends StatelessWidget {
       decoration: BoxDecoration(
         color: teal
             ? HuddlColors.nearBlack.withValues(alpha: 0.08)
-            : HuddlColors.gray100,
+            : (Theme.of(context).brightness == Brightness.dark
+                ? HuddlColors.darkSurfaceVariant
+                : HuddlColors.gray100),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: teal

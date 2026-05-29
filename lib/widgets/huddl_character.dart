@@ -206,13 +206,21 @@ class _HuddlEmptyStateState extends State<HuddlEmptyState>
                 Text(
                   widget.title,
                   textAlign: TextAlign.center,
-                  style: HuddlText.heading(),
+                  style: HuddlText.heading(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? HuddlColors.darkTextPrimary
+                        : HuddlColors.nearBlack,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   widget.subtitle,
                   textAlign: TextAlign.center,
-                  style: HuddlText.body(),
+                  style: HuddlText.body(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? HuddlColors.darkTextSecondary
+                        : HuddlColors.textSecondary,
+                  ),
                 ),
                 if (widget.ctaLabel != null && widget.onCtaTap != null) ...[
                   const SizedBox(height: 28),

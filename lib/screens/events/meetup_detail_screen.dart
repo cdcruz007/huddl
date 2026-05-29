@@ -11,6 +11,7 @@ import '../../services/member_photo_service.dart';
 import '../../services/browser_storage.dart';
 import '../../constants/app_text_styles.dart';
 
+import '../../widgets/common/huddl_network_image.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -699,14 +700,14 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
 
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.hc.scaffold,
 
       // ── Bottom CTA: locked Join button (matches Events detail pattern) ──────
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(
             20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.hc.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -845,9 +846,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               ),
             ),
 
-            // ── Content area — white background ────────────────────
+            // ── Content area ────────────────────
             Container(
-              color: Colors.white,
+              color: context.hc.surface,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1313,7 +1314,10 @@ Widget _buildDetailCoverImage({
       height: double.infinity,
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
-        return gradientFallback(showIcon: false);
+        return const HuddlShimmer(
+          width: double.infinity,
+          height: double.infinity,
+        );
       },
       errorBuilder: (_, __, ___) => gradientFallback(),
     );

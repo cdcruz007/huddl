@@ -7,6 +7,7 @@ import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/cards/huddl_photo_card.dart';
+import '../../widgets/common/huddl_network_image.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
@@ -520,7 +521,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // Filters
   AgeStage? _selectedAge;
-  Set<ItemCategory> _selectedCategories = {}; // multi-select
+  Set<ItemCategory> _selectedCategories = {}; // multi-select (filter sheet)
+  ItemCategory? _selectedCategory; // single-select from category rail (null = All)
   PriceType? _selectedPriceType;
   ItemCondition? _selectedCondition;
   String _searchQuery = '';
@@ -531,6 +533,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // UI state
   bool _isLoadingItems = false;
   bool _isSearchActive = false;
+  bool _isGridView = true; // grid is the default — Pinterest/Vinted/Depop standard
 
   @override
   void initState() {
@@ -677,13 +680,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   List<RehomeItem> get _filteredItems {
-    final raw = _service.filter(
+    var raw = _service.filter(
       ageStage: _selectedAge,
       categories: _selectedCategories.isEmpty ? null : _selectedCategories,
       condition: _selectedCondition,
       priceType: _selectedPriceType,
       query: _searchQuery,
     );
+
+    // ── Category rail filter (single-select, layered on top of sheet filters) ─
+    if (_selectedCategory != null) {
+      raw = raw.where((i) => i.category == _selectedCategory).toList();
+    }
 
     // AI ranks first; sort modal then overrides order
     final aiRanked = _ai.rankItems(raw);
@@ -1361,18 +1369,58 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
             firstChild: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Market identity icon
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.storefront_outlined,
+                      color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 10),
                 Semantics(
                   header: true,
-                  child: Text(
-                    'Market',
-                    style: HuddlText.heading(color: hc.textPrimary),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Market',
+                        style: HuddlText.display(),
+                      ),
+                      Text(
+                        '${_service.allItems.where((i) => !i.isSold).length} items near you',
+                        style: HuddlText.caption(color: hc.textTertiary),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Borough scope chip — exactly matches Groups/Discover header chip
+                // Borough scope chip
                 const BoroughScopeChip(feature: HuddlFeature.marketplace),
                 const Spacer(),
+                // Grid/list toggle — immediately left of search icon
+                ScaleOnPress(
+                  scale: 0.88,
+                  onTap: () {
+                    HuddlAnimations.lightTap();
+                    setState(() => _isGridView = !_isGridView);
+                  },
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      _isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined,
+                      key: ValueKey(_isGridView),
+                      size: 22,
+                      color: hc.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 // Search icon — top-right.
                 // Tap → inline market search. Long-press → unified search.
                 Semantics(
@@ -1509,6 +1557,269 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // == FILTER BOTTOM SHEETS ==================================================
   // Individual filter sheets are accessed via _showAllFiltersSheet (combined).
 
+  // == CATEGORY RAIL =========================================================
+
+  Widget _buildCategoryRail(HuddlContextColors hc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Only show categories that have at least one active (non-sold) listing
+    final activeCats = ItemCategory.values.where((cat) =>
+      _service.allItems.any((item) => item.category == cat && !item.isSold)
+    ).toList();
+
+    if (activeCats.isEmpty) return const SizedBox.shrink();
+
+    final chipBg       = isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF5F2EE);
+    final chipBorder   = isDark ? HuddlColors.darkDivider : const Color(0xFFE5E5E5);
+    final selectedBg   = isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack;
+    final selectedText = isDark ? HuddlColors.darkBackground : Colors.white;
+
+    return Container(
+      color: hc.surface,
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemCount: activeCats.length + 1, // +1 for "All" chip
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            // "All" chip — always first
+            final isSelected = _selectedCategory == null;
+            return ScaleOnPress(
+              scale: 0.93,
+              onTap: () {
+                HuddlAnimations.lightTap();
+                setState(() => _selectedCategory = null);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? selectedBg : chipBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isSelected ? selectedBg : chipBorder,
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(
+                  'All',
+                  style: HuddlText.body(
+                    color: isSelected ? selectedText : hc.textPrimary,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final cat = activeCats[index - 1];
+          final isSelected = _selectedCategory == cat;
+          final count = _service.allItems
+              .where((i) => i.category == cat && !i.isSold)
+              .length;
+
+          return ScaleOnPress(
+            scale: 0.93,
+            onTap: () {
+              HuddlAnimations.lightTap();
+              setState(() => _selectedCategory = isSelected ? null : cat);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? selectedBg : chipBg,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isSelected ? selectedBg : chipBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(cat.icon, size: 14,
+                    color: isSelected ? selectedText : hc.textPrimary),
+                  const SizedBox(width: 5),
+                  Text(
+                    cat.label,
+                    style: HuddlText.body(
+                      color: isSelected ? selectedText : hc.textPrimary,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                  if (count > 0) ...[
+                    const SizedBox(width: 5),
+                    Text(
+                      '$count',
+                      style: HuddlText.caption(
+                        color: isSelected
+                            ? selectedText.withValues(alpha: 0.7)
+                            : hc.textTertiary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // == JUST IN STRIP ==========================================================
+
+  Widget _buildJustInStrip(HuddlContextColors hc) {
+    final now = DateTime.now();
+    final fresh = _service.allItems
+        .where((i) =>
+          !i.isSold &&
+          now.difference(i.listedAt).inHours < 6 &&
+          (_selectedCategory == null || i.category == _selectedCategory))
+        .take(6)
+        .toList();
+
+    if (fresh.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Row(
+            children: [
+              Container(
+                width: 8, height: 8,
+                decoration: const BoxDecoration(
+                  color: HuddlColors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Just in',
+                style: HuddlText.body(
+                  color: hc.textPrimary,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${fresh.length} new listing${fresh.length == 1 ? '' : 's'}',
+                style: HuddlText.caption(color: hc.textTertiary),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemCount: fresh.length,
+            itemBuilder: (context, i) {
+              final item = fresh[i];
+              final hasImage = item.imageUrls.isNotEmpty;
+              return ScaleOnPress(
+                scale: 0.97,
+                onTap: () => _openItemDetail(item),
+                child: Container(
+                  width: 140,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: hc.divider, width: 0.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Image ───────────────────────────────────────
+                      SizedBox(
+                        height: 130,
+                        width: double.infinity,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            hasImage
+                                ? Image.network(
+                                    item.imageUrls.first,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (_, child, progress) =>
+                                      progress == null
+                                          ? child
+                                          : Container(color: hc.inputBg),
+                                    errorBuilder: (_, __, ___) =>
+                                      _MarketPhotoFallback(item: item),
+                                  )
+                                : _MarketPhotoFallback(item: item),
+                            // "NEW" badge
+                            Positioned(
+                              top: 8, left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.nearBlack,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text('NEW',
+                                  style: HuddlText.label(color: Colors.white)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // ── Body ────────────────────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: HuddlText.body(
+                                color: hc.textPrimary,
+                                weight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.isFree ? 'Free' : '£${item.price.toStringAsFixed(0)}',
+                              style: HuddlText.caption(
+                                color: hc.textPrimary,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Divider(height: 1, thickness: 0.5, color: hc.divider),
+      ],
+    );
+  }
+
   // == BUY TAB — clean, uncluttered ==========================================
   // No AI badges, no thumbs up/down, no smart ranking toggle.
   // AI works silently: ranking results, adapting search placeholder.
@@ -1607,10 +1918,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
           ),
         ),
-        // 2-column grid (compact cards) — richer browse experience
+        // ── Category rail ─────────────────────────────────────────────
+        _buildCategoryRail(hc),
+        Divider(height: 1, thickness: 0.5, color: hc.divider),
+
+        // ── Main content area ─────────────────────────────────────────
         Expanded(
           child: items.isEmpty
-              ? (_hasActiveFilters || _searchQuery.isNotEmpty
+              ? (_hasActiveFilters || _searchQuery.isNotEmpty || _selectedCategory != null
                   ? HuddlEmptyState(
                       mood: HuddlMood.curious,
                       title: 'No items found',
@@ -1618,7 +1933,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       ctaLabel: 'Clear filters',
                       onCtaTap: () {
                         _clearAllFilters();
-                        setState(() => _searchQuery = '');
+                        setState(() {
+                          _searchQuery = '';
+                          _selectedCategory = null;
+                        });
                         _searchController.clear();
                       },
                     )
@@ -1659,37 +1977,69 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         );
                       },
                     )
-                  // ── 2-column grid ─────────────────────────────────────
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.62,
-                      ),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final uid = FirebaseAuth.instance.currentUser?.uid;
-                        final isOwn =
-                            uid != null && items[index].sellerId == uid;
-                        return _MarketGridBuyCard(
-                          item: items[index],
-                          isOwn: isOwn,
-                          onTap: () => _openItemDetail(items[index]),
-                          onToggleSave: () {
-                            HuddlAnimations.lightTap();
-                            final item = items[index];
-                            if (!item.isSaved) {
-                              _ai.recordSave(item);
-                            } else {
-                              _ai.recordUnsave(item);
-                            }
-                            _service.toggleSaved(item.id);
-                          },
-                        );
-                      },
+                  // ── Grid or list with Just-In strip ──────────────────
+                  : CustomScrollView(
+                      slivers: [
+                        // ── Just In strip ─────────────────────────────
+                        SliverToBoxAdapter(child: _buildJustInStrip(hc)),
+
+                        // ── Grid or list ──────────────────────────────
+                        if (_isGridView)
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(10, 8, 10, 100),
+                            sliver: SliverGrid(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                                childAspectRatio: 0.68,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final uid = FirebaseAuth.instance.currentUser?.uid;
+                                  final item = items[index];
+                                  return HuddlSpringMount(
+                                    delay: Duration(milliseconds: (index * 30).clamp(0, 300)),
+                                    child: _MarketGridBuyCard(
+                                      item: item,
+                                      isOwn: uid != null && item.sellerId == uid,
+                                      onTap: () => _openItemDetail(item),
+                                      onToggleSave: () {
+                                        HuddlAnimations.lightTap();
+                                        if (!item.isSaved) _ai.recordSave(item);
+                                        else _ai.recordUnsave(item);
+                                        _service.toggleSaved(item.id);
+                                      },
+                                    ),
+                                  );
+                                },
+                                childCount: items.length,
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 100),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final item = items[index];
+                                  return _MarketItemCard(
+                                    item: item,
+                                    onTap: () => _openItemDetail(item),
+                                    onToggleSave: () {
+                                      HuddlAnimations.lightTap();
+                                      if (!item.isSaved) _ai.recordSave(item);
+                                      else _ai.recordUnsave(item);
+                                      _service.toggleSaved(item.id);
+                                    },
+                                  );
+                                },
+                                childCount: items.length,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
         ),
       ],
@@ -1883,7 +2233,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white,        // warm peach
+                        color: hc.inputBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.camera_alt_rounded,
@@ -2607,75 +2957,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 // =============================================================================
 
 // =============================================================================
-// SHIMMER WIDGET — pure-Dart animated shimmer, no external package required.
-// Used as a loading placeholder for all image areas in the Market module.
-//
-// Usage:
-//   _ShimmerBox(width: double.infinity, height: double.infinity)
-//   _ShimmerBox(width: 64, height: 64, radius: 10)
+// _ShimmerBox REMOVED — superseded by HuddlShimmer in huddl_network_image.dart
+// All image loading placeholders in this file now use HuddlShimmer/HuddlNetworkImage.
 // =============================================================================
-class _ShimmerBox extends StatefulWidget {
+
+// PLACEHOLDER — kept only to anchor surrounding code. Will be cleaned up.
+// The class below replaces the old _ShimmerBox with a trivial redirect.
+// ignore: unused_element
+Widget _shimmerDeleted() => const SizedBox.shrink();
+
+/* DELETED _ShimmerBox — was:
+class _ShimmerBox ... {
   final double width;
   final double height;
   final double radius;
-
-  const _ShimmerBox({
-    required this.width,
-    required this.height,
-    this.radius = 0,
-  });
-
-  @override
-  State<_ShimmerBox> createState() => _ShimmerBoxState();
-}
-
-class _ShimmerBoxState extends State<_ShimmerBox>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-    _anim = Tween<double>(begin: -2.0, end: 2.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final base = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8);
-    final highlight = isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
-
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) => Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.radius),
-          gradient: LinearGradient(
-            begin: Alignment(_anim.value - 1, 0),
-            end: Alignment(_anim.value + 1, 0),
-            colors: [base, highlight, base],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-      ),
-    );
-  }
-}
+  ...
+  begin: ..., end: ..., colors: [...], stops: [...]
+*/
 
 Widget _buildItemImage(String url, RehomeItem item) {
   final iconFallback = Container(
@@ -2699,7 +2997,7 @@ Widget _buildItemImage(String url, RehomeItem item) {
       errorBuilder: (_, __, ___) => iconFallback,
       loadingBuilder: (_, child, progress) {
         if (progress == null) return child;
-        return const _ShimmerBox(width: double.infinity, height: double.infinity);
+        return const HuddlShimmer(width: double.infinity, height: double.infinity);
       },
     );
   }
@@ -2732,7 +3030,7 @@ Widget _buildItemImage(String url, RehomeItem item) {
       errorBuilder: (_, __, ___) => stockPhotoFallback(),
       loadingBuilder: (_, child, progress) {
         if (progress == null) return child;
-        return const _ShimmerBox(width: double.infinity, height: double.infinity);
+        return const HuddlShimmer(width: double.infinity, height: double.infinity);
       },
     );
   }
@@ -2934,11 +3232,9 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Image area (⅝ of card height) ────────────────────────────────
-              // GridView.builder provides tight box constraints to each cell
-              // so Expanded works correctly here.
-              Expanded(
-                flex: 5,
+              // ── Image area — square (1:1) — Depop/Vinted standard ─────────────
+              AspectRatio(
+                aspectRatio: 1.0,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -2989,8 +3285,6 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         ),
                       ),
                     // Condition / Free badge — top-right
-                    // Free badge: yellowSoft/yellowDark (celebration).
-                    // Condition badge: semi-transparent scrim (neutral).
                     Positioned(
                       top: 8, right: 8,
                       child: Container(
@@ -3021,7 +3315,9 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         child: Container(
                           width: 30, height: 30,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.92),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? HuddlColors.darkSurface.withValues(alpha: 0.92)
+                                : Colors.white.withValues(alpha: 0.92),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -3043,68 +3339,56 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                   ],
                 ),
               ),
-              // ── Card body (⅗ of card height) ────────────────────────────────
-              Expanded(
-                flex: 4,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Category row + price right-aligned
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.category.label.toUpperCase(),
-                              style: HuddlText.caption(color: hc.textTertiary, weight: FontWeight.w600).copyWith(letterSpacing: 0.3),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+              // ── Card body — title, price, location ──────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Price + title row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            style: HuddlText.caption(color: hc.textPrimary, weight: FontWeight.w600).copyWith(height: 1.25),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            item.priceDisplay,
-                            style: HuddlText.body(color: HuddlColors.nearBlack, weight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      // Title
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: HuddlText.caption(color: hc.textPrimary, weight: FontWeight.w600).copyWith(height: 1.25),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Location row
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 11, color: hc.textTertiary),
-                          const SizedBox(width: 2),
-                          Expanded(
-                            child: Text(
-                              item.sellerLocation.isNotEmpty
-                                  ? item.sellerLocation
-                                  : 'Near you',
-                              style: HuddlText.caption(color: hc.textTertiary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // Compact urgency signal — grid cards are small
-                      if (_resolveGridUrgency(item) != null) ...[
-                        const SizedBox(height: 4),
-                        _resolveGridUrgency(item)!,
+                        const SizedBox(width: 4),
+                        Text(
+                          item.priceDisplay,
+                          style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w700),
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 3),
+                    // Location row
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 11, color: hc.textTertiary),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            item.sellerLocation.isNotEmpty
+                                ? item.sellerLocation
+                                : 'Near you',
+                            style: HuddlText.caption(color: hc.textTertiary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Compact urgency signal
+                    if (_resolveGridUrgency(item) != null) ...[
+                      const SizedBox(height: 3),
+                      _resolveGridUrgency(item)!,
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -3290,7 +3574,9 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                             width: 34,
                             height: 34,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.92),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.darkSurface.withValues(alpha: 0.92)
+                                  : Colors.white.withValues(alpha: 0.92),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
@@ -3498,16 +3784,11 @@ class _MarketSearchRow extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: hasImage
-                    ? Image.network(
-                        item.imageUrls.first,
+                    ? HuddlNetworkImage(
+                        url: item.imageUrls.first,
                         width: 64,
                         height: 64,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
-                        loadingBuilder: (_, child, progress) {
-                          if (progress == null) return child;
-                          return const _ShimmerBox(width: 64, height: 64, radius: 10);
-                        },
+                        fallbackWidget: _MarketPhotoFallback(item: item),
                       )
                     : _MarketPhotoFallback(item: item),
               ),
@@ -3696,16 +3977,11 @@ class _MarketListCardState extends State<_MarketListCard> {
                 children: [
                   // Photo or fallback
                   hasImage
-                      ? Image.network(
-                          item.imageUrls.first,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
-                          errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
-                          loadingBuilder: (_, child, progress) {
-                            if (progress == null) return child;
-                            return const _ShimmerBox(
-                                width: double.infinity, height: 160);
-                          },
+                      ? HuddlNetworkImage(
+                          url: item.imageUrls.first,
+                          width: double.infinity,
+                          height: 160,
+                          fallbackWidget: _MarketPhotoFallback(item: item),
                         )
                       : _MarketPhotoFallback(item: item),
                   // Subtle gradient at bottom for text legibility
@@ -4076,10 +4352,11 @@ class _MarketGridCardState extends State<_MarketGridCard> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
+        HuddlNetworkImage(
+          url: url,
+          width: double.infinity,
+          height: double.infinity,
+          fallbackWidget: Container(
             color: hc.surfaceAlt,
             child: Center(
               child: Icon(item.category.icon,
@@ -4087,9 +4364,6 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                   color: hc.textTertiary.withValues(alpha: 0.3)),
             ),
           ),
-          loadingBuilder: (_, child, progress) => progress == null
-              ? child
-              : const _ShimmerBox(width: double.infinity, height: double.infinity),
         ),
         // Subtle darkening scrim so text/badges remain legible
         Container(
@@ -4863,7 +5137,9 @@ class _FilterIconTile extends StatelessWidget {
           // Warm peach tint when selected
           color: isSelected
               ? HuddlColors.primaryPale.withValues(alpha: 0.35)
-              : Colors.white,
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? HuddlColors.darkSurface
+                  : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? HuddlColors.primary : HuddlColors.divider,

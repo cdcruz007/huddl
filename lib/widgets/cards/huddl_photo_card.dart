@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../constants/app_text_styles.dart';
+import '../common/huddl_network_image.dart';
 
 // =============================================================================
 // HUDDL PHOTO CARD — photography-first card system
@@ -496,29 +497,12 @@ class _HuddlPhotoImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final icon = fallbackIcon ?? Icons.image_outlined;
-    if (url.isEmpty) {
-      return Container(
-        color: isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7),
-        child: Icon(icon, size: 24,
-            color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary),
-      );
-    }
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      loadingBuilder: (_, child, progress) {
-        if (progress == null) return child;
-        return Container(
-          color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.gray200,
-        );
-      },
-      errorBuilder: (_, __, ___) => Container(
-        color: isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7),
-        child: Icon(Icons.broken_image_outlined, size: 24,
-            color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary),
-      ),
+    return HuddlNetworkImage(
+      url: url,
+      width: double.infinity,
+      height: double.infinity,
+      fallbackIcon: fallbackIcon ?? Icons.image_outlined,
+      fallbackIconSize: 24,
     );
   }
 }

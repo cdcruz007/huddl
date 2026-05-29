@@ -1280,7 +1280,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Widget _profileInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: HuddlColors.textDark),
+        Icon(icon, size: 20, color: context.hc.textPrimary),
         const SizedBox(width: 12),
         Text(label, style: HuddlText.body(color: context.hc.textSecondary)),
         const Spacer(),
@@ -2857,10 +2857,10 @@ class _DMBubble extends StatelessWidget {
                       children: [
                         // Message text (with search highlighting)
                         searchQuery.isNotEmpty
-                            ? _buildHighlightedText(message.message, searchQuery, isMe: isMe)
+                            ? _buildHighlightedText(context, message.message, searchQuery, isMe: isMe)
                             : Text(
                                 message.message,
-                                style: HuddlText.body(color: isMe ? HuddlColors.white : const Color(0xFF1A1A1A)),
+                                style: HuddlText.body(color: isMe ? HuddlColors.white : context.hc.textPrimary),
                               ),
                       ],
                     ),
@@ -3102,8 +3102,9 @@ class _DMBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText(String text, String query, {bool isMe = false}) {
-    final baseColor = isMe ? HuddlColors.white : HuddlColors.textDark;
+  Widget _buildHighlightedText(BuildContext context, String text, String query, {bool isMe = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isMe ? HuddlColors.white : (isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark);
     if (query.isEmpty) {
       return Text(text,
           style: HuddlText.body(color: baseColor).copyWith(height: 1.4));
@@ -3130,7 +3131,7 @@ class _DMBubble extends StatelessWidget {
               ? HuddlColors.primaryDark   // deeper coral for sent bubbles
               : HuddlColors.primary.withValues(alpha: 0.15), // soft brand tint for received bubbles
           fontWeight: FontWeight.w700,
-          color: isMe ? Colors.white : HuddlColors.textDark,
+          color: isMe ? Colors.white : (isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark),
         ),
       ));
       start = idx + query.length;
@@ -3776,7 +3777,11 @@ class _LocationBubble extends StatelessWidget {
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 240),
                 decoration: BoxDecoration(
-                  color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
+                  color: isMe
+                      ? HuddlColors.primary.withValues(alpha: 0.10)
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? HuddlColors.darkSurface
+                          : HuddlColors.white),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -3923,7 +3928,11 @@ class _ContactBubble extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 260),
           decoration: BoxDecoration(
-            color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
+            color: isMe
+                ? HuddlColors.primary.withValues(alpha: 0.10)
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? HuddlColors.darkSurface
+                    : HuddlColors.white),
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
@@ -3949,10 +3958,12 @@ class _ContactBubble extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7F7F7),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? HuddlColors.darkSurfaceVariant
+                            : const Color(0xFFF7F7F7),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: HuddlColors.textDark, size: 24),
+                      child: Icon(Icons.person, color: context.hc.textPrimary, size: 24),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3984,9 +3995,9 @@ class _ContactBubble extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.phone, size: 13, color: HuddlColors.textDark),
+                    Icon(Icons.phone, size: 13, color: context.hc.textPrimary),
                     const SizedBox(width: 4),
-                    Text('Call', style: HuddlText.caption(color: HuddlColors.textDark)),
+                    Text('Call', style: HuddlText.caption(color: context.hc.textPrimary)),
                     const Spacer(),
                     Text(
                       '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}',

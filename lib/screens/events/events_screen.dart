@@ -504,11 +504,90 @@ class EventsScreenState extends State<EventsScreen>
                   ),
                   ), // Padding
                 ), // ColoredBox title row
-                // ── DIAGNOSTIC: red box to confirm slot renders correctly ──
-                Container(
-                  height: 54,
-                  color: Colors.red,
-                ), // DIAGNOSTIC red box
+                // ── Header: tab bar (full-width, no side padding) ──
+                // ColoredBox + full-width Row as spacer forces the surface
+                // color to fill the entire tab bar row. The Row with
+                // mainAxisSize.max fills the Column's tight width, making
+                // the ColoredBox span edge-to-edge including the transparent
+                // gap right of the last scrollable tab.
+                ColoredBox(
+                  color: context.hc.surface,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor: WidgetStateProperty.all(Colors.transparent),
+                    // Fully suppress TabBar's own label styling and color inheritance.
+                    // The global TabBarThemeData has labelColor=primary which would
+                    // tint our custom child icons orange even when inactive.
+                    // Setting both transparent here gives _AnimatedDiscoverTab full
+                    // control over its own color transitions.
+                    labelColor: Colors.transparent,
+                    unselectedLabelColor: Colors.transparent,
+                    labelStyle: const TextStyle(inherit: false, fontSize: 0),
+                    unselectedLabelStyle: const TextStyle(inherit: false, fontSize: 0),
+                    tabs: [
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
+                        icon: Icons.people_outline,
+                        activeIcon: Icons.people,
+                        label: 'Groups',
+                        isSelected: _selectedTab == 0,
+                        count: _groupCount > 0 ? _groupCount : null,
+                      )),
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
+                        icon: Icons.location_on_outlined,
+                        activeIcon: Icons.location_on,
+                        label: 'Meetups',
+                        isSelected: _selectedTab == 1,
+                        count: _meetupService.meetups.isNotEmpty
+                            ? _meetupService.meetups.length : null,
+                      )),
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
+                        icon: Icons.calendar_today_outlined,
+                        activeIcon: Icons.calendar_today,
+                        label: 'Events',
+                        isSelected: _selectedTab == 2,
+                        count: _eventCount > 0 ? _eventCount : null,
+                      )),
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
+                        icon: Icons.storefront_outlined,
+                        activeIcon: Icons.storefront,
+                        label: 'Services',
+                        isSelected: _selectedTab == 3,
+                      )),
+                      Tab(height: 52, child: _AnimatedDiscoverTab(
+                        icon: Icons.lightbulb_outline,
+                        activeIcon: Icons.lightbulb,
+                        label: 'Insights',
+                        isSelected: _selectedTab == 4,
+                        activeColor: HuddlColors.yellow,
+                        activeIconColor: HuddlColors.yellowDark,
+                      )),
+                    ],
+                    indicatorColor: HuddlColors.primary,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    indicatorWeight: 2.5,
+                    dividerColor: HuddlColors.divider,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    onTap: (index) {
+                      if (index == 0 || _selectedTab == 0) {
+                        _groupResetTrigger.value = true;
+                      }
+                      if (index == 3 || _selectedTab == 3) {
+                        _serviceResetTrigger.value = true;
+                      }
+                      setState(() { _selectedTab = index; });
+                    },
+                  ), // TabBar
+                      ), // Expanded
+                    ], // Row children
+                  ), // Row
+                ), // ColoredBox tab bar
             // Borough header banners removed — scope shown via compact
             // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────
@@ -1139,17 +1218,18 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
+          final isDarkSheet = Theme.of(ctx).brightness == Brightness.dark;
 
-          // ══ DESIGN TOKENS — Figma styleguide exact ════════════
-          const Color bgSheet      = Colors.white;
+          // ══ DESIGN TOKENS — adaptive for dark mode ════════════
+          final Color bgSheet      = isDarkSheet ? HuddlColors.darkSurface : Colors.white;
           const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          const Color chipIcon     = Color(0xFF42464C); // nearBlack — uniform icon colour
-          const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
-          const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
-          const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page background = unselected chip
-          const Color dividerColor = Color(0xFFD5D5D5);  // Figma: grayscale divider
-          const Color trackInactive= Color(0xFFD5D5D5);
-          const Color toggleOff    = Color(0xFFD5D5D5);
+          final Color chipIcon     = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
+          final Color textPrimary  = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
+          final Color textSecGray  = isDarkSheet ? HuddlColors.darkTextSecondary : const Color(0xFF949494);
+          final Color chipBg       = isDarkSheet ? HuddlColors.darkSurfaceVariant : const Color(0xFFF6F6F6);
+          final Color dividerColor = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
+          final Color trackInactive= isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
+          final Color toggleOff    = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
 
           // ── Helper: section heading ──────────────────────────────────
           Widget sectionHeading(String title) => Padding(
@@ -3521,17 +3601,18 @@ class _EventsTabState extends State<_EventsTab> {
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
+          final isDarkSheet = Theme.of(ctx).brightness == Brightness.dark;
 
-          // ══ DESIGN TOKENS — Figma styleguide exact ════════════
-          const Color bgSheet      = Colors.white;
+          // ══ DESIGN TOKENS — adaptive for dark mode ════════════
+          final Color bgSheet      = isDarkSheet ? HuddlColors.darkSurface : Colors.white;
           const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          const Color chipIcon     = Color(0xFF42464C); // nearBlack — uniform icon colour
-          const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
-          const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
-          const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page bg = unselected chip
-          const Color dividerColor = Color(0xFFD5D5D5);  // Figma: grayscale divider
-          const Color trackInactive= Color(0xFFD5D5D5);
-          const Color toggleOff    = Color(0xFFD5D5D5);
+          final Color chipIcon     = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
+          final Color textPrimary  = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
+          final Color textSecGray  = isDarkSheet ? HuddlColors.darkTextSecondary : const Color(0xFF949494);
+          final Color chipBg       = isDarkSheet ? HuddlColors.darkSurfaceVariant : const Color(0xFFF6F6F6);
+          final Color dividerColor = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
+          final Color trackInactive= isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
+          final Color toggleOff    = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
 
           // ── Section heading ────────────────────────────────────
           Widget sectionHeading(String title) => Padding(
@@ -4586,7 +4667,9 @@ class _MeetupCardState extends State<_MeetupCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.infoBluePale,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                                  : HuddlColors.infoBluePale,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -4971,7 +5054,9 @@ class _EventListCardState extends State<_EventListCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.infoBluePale,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                                  : HuddlColors.infoBluePale,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -5877,8 +5962,10 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      // Count badge is informational — infoBluePale bg, infoBlue text.
-                      color: HuddlColors.infoBluePale,
+                      // Count badge is informational — infoBlue tinted bg, infoBlue text.
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                          : HuddlColors.infoBluePale,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -5917,7 +6004,9 @@ class _TabLabel extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
-            color: HuddlColors.infoBluePale,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                : HuddlColors.infoBluePale,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(

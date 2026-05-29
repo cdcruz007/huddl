@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 import 'common/huddl_button.dart';
+import 'common/huddl_network_image.dart';
 import '../services/member_photo_service.dart';
 import '../constants/app_text_styles.dart';
 
@@ -570,15 +571,12 @@ class HuddlImageCard extends StatelessWidget {
             SizedBox(
               height: imageHeight,
               width: double.infinity,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFFF7F7F7),
-                  child: const Center(
-                    child: Icon(Icons.image, color: HuddlColors.textDark, size: 32),
-                  ),
-                ),
+              child: HuddlNetworkImage(
+                url: imageUrl,
+                width: double.infinity,
+                height: imageHeight,
+                fallbackIcon: Icons.image_outlined,
+                fallbackIconSize: 32,
               ),
             ),
             Padding(

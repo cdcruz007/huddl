@@ -8,6 +8,7 @@ import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
+import '../../widgets/common/huddl_network_image.dart';
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../constants/app_text_styles.dart';
 import '../../theme/huddl_animations.dart';
@@ -2073,7 +2074,8 @@ class _MessagesTabState extends State<_MessagesTab> {
               width: 40, height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: accentColor.withValues(alpha: 0.12),
+                color: accentColor.withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark ? 0.08 : 0.12),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -6984,12 +6986,11 @@ class _SavedEventCard extends StatelessWidget {
                 width: 62,
                 height: 62,
                 child: hasImage
-                    ? Image.network(
-                        savedEvent.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _fallbackIcon(context),
-                        loadingBuilder: (_, child, progress) =>
-                          progress == null ? child : Container(color: const Color(0xFFF7F7F7)),
+                    ? HuddlNetworkImage(
+                        url: savedEvent.imageUrl,
+                        width: 62,
+                        height: 62,
+                        fallbackWidget: _fallbackIcon(context),
                       )
                     : _fallbackIcon(context),
               ),

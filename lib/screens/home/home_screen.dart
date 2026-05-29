@@ -7,6 +7,7 @@ import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_card.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import '../../widgets/cards/huddl_photo_card.dart';
+import '../../widgets/common/huddl_network_image.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
 import '../../theme/huddl_colors.dart';
@@ -2147,11 +2148,12 @@ class _HomeScreenState extends State<HomeScreen>
     const pillColor = HuddlColors.nearBlack;
 
     Widget imageWidget = item.imageUrl.isNotEmpty
-        ? Image.network(item.imageUrl,
-            fit: BoxFit.cover,
+        ? HuddlNetworkImage(
+            url: item.imageUrl,
             width: double.infinity,
             height: double.infinity,
-            errorBuilder: (_, __, ___) => _discoverImageFallback(item.type, hc))
+            fallbackWidget: _discoverImageFallback(item.type, hc),
+          )
         : _discoverImageFallback(item.type, hc);
 
     return ScaleOnPress(
@@ -2428,12 +2430,11 @@ class _HomeScreenState extends State<HomeScreen>
     // Image widget — network, fallback icon
     Widget imageWidget;
     if (item.imageUrl.isNotEmpty) {
-      imageWidget = Image.network(
-        item.imageUrl,
-        fit: BoxFit.cover,
+      imageWidget = HuddlNetworkImage(
+        url: item.imageUrl,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => _discoverImageFallback(item.type, hc),
+        fallbackWidget: _discoverImageFallback(item.type, hc),
       );
     } else {
       imageWidget = _discoverImageFallback(item.type, hc);
@@ -2773,8 +2774,12 @@ class _HomeScreenState extends State<HomeScreen>
                       fit: StackFit.expand,
                       children: [
                         hasImage
-                            ? Image.network(e.imageUrl, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _eventImageFallback())
+                            ? HuddlNetworkImage(
+                                url: e.imageUrl,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fallbackWidget: _eventImageFallback(),
+                              )
                             : _eventImageFallback(),
                         // Date badge — bottom-left
                         Positioned(
@@ -2905,8 +2910,12 @@ class _HomeScreenState extends State<HomeScreen>
                       fit: StackFit.expand,
                       children: [
                         hasImage
-                            ? Image.network(s.imageUrl!, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _serviceImageFallback(s.category.emoji))
+                            ? HuddlNetworkImage(
+                                url: s.imageUrl!,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fallbackWidget: _serviceImageFallback(s.category.emoji),
+                              )
                             : _serviceImageFallback(s.category.emoji),
                         // Category badge — top-right
                         Positioned(
@@ -3019,8 +3028,12 @@ class _HomeScreenState extends State<HomeScreen>
                       fit: StackFit.expand,
                       children: [
                         hasImage
-                            ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _marketImageFallback(item))
+                            ? HuddlNetworkImage(
+                                url: item.imageUrls.first,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fallbackWidget: _marketImageFallback(item),
+                              )
                             : _marketImageFallback(item),
                         // Subtle gradient
                         const DecoratedBox(
@@ -3784,10 +3797,11 @@ class _HomeScreenState extends State<HomeScreen>
                     SizedBox(
                       height: 160,
                       width: double.infinity,
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                      child: HuddlNetworkImage(
+                        url: imageUrl,
+                        width: double.infinity,
+                        height: 160,
+                        fallbackWidget: Container(
                           color: candidateColor.withValues(alpha: 0.12),
                           child: Center(
                             child: Icon(candidateIcon,
@@ -4189,9 +4203,11 @@ class _HomeScreenState extends State<HomeScreen>
                 width: 56,
                 height: 56,
                 child: event.imageUrl.isNotEmpty
-                    ? Image.network(event.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                    ? HuddlNetworkImage(
+                        url: event.imageUrl,
+                        width: 56,
+                        height: 56,
+                        fallbackWidget: Container(
                               color: HuddlColors.nearBlack
                                   .withValues(alpha: 0.15),
                               child: const Center(
@@ -5004,8 +5020,12 @@ class _HomeScreenState extends State<HomeScreen>
     }
     // If imageUrl is a valid HTTP URL, use it
     if (imageUrl.startsWith('http') && imageUrl.isNotEmpty) {
-      return Image.network(imageUrl, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _meetupIconFallback(category));
+      return HuddlNetworkImage(
+        url: imageUrl,
+        width: double.infinity,
+        height: double.infinity,
+        fallbackWidget: _meetupIconFallback(category),
+      );
     }
     // Fallback to category-based placeholder
     return _meetupIconFallback(category);
@@ -5031,8 +5051,12 @@ class _HomeScreenState extends State<HomeScreen>
           errorBuilder: (_, __, ___) => _groupImageFallback());
     }
     if (imageUrl.startsWith('http')) {
-      return Image.network(imageUrl, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _groupImageFallback());
+      return HuddlNetworkImage(
+        url: imageUrl,
+        width: double.infinity,
+        height: double.infinity,
+        fallbackWidget: _groupImageFallback(),
+      );
     }
     if (imageUrl.startsWith('data:')) {
       try {
