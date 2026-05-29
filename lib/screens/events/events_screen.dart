@@ -332,13 +332,17 @@ class EventsScreenState extends State<EventsScreen>
             Column(
               children: [
                 // ── Header ─────────────────────────────────────────
+                // Container has NO horizontal padding — the TabBar must reach
+                // the full screen width (isScrollable + tabAlignment.start).
+                // The Row above gets its own Padding widget instead.
                 Container(
                   color: context.hc.surface,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
@@ -464,9 +468,15 @@ class EventsScreenState extends State<EventsScreen>
                       ),
                     ],
                   ),
+                  ), // Padding
                   const SizedBox(height: 10),
                   // ── Standard orange-underline tab bar ─────────────
-                  TabBar(
+                  // Material(transparent) prevents the default grey surface
+                  // that TabBar paints behind itself (visible on the right
+                  // when isScrollable+tabAlignment.start leaves empty space).
+                  Material(
+                    color: Colors.transparent,
+                    child: TabBar(
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
@@ -536,7 +546,8 @@ class EventsScreenState extends State<EventsScreen>
                       }
                       setState(() { _selectedTab = index; });
                     },
-                  ),
+                  ), // TabBar
+                  ), // Material
                   const SizedBox(height: 2),
                 ],
               ),
