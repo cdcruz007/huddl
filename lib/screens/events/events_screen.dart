@@ -477,8 +477,8 @@ class EventsScreenState extends State<EventsScreen>
                   children: [
                   TabBar(
                     controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
+                    isScrollable: false,
+                    tabAlignment: TabAlignment.fill,
                     // Kill the default grey ink flash on tap — _AnimatedDiscoverTab
                     // handles all visual feedback internally via scale + color animation
                     splashFactory: NoSplash.splashFactory,
@@ -535,7 +535,7 @@ class EventsScreenState extends State<EventsScreen>
                     indicatorWeight: 2.5,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    labelPadding: EdgeInsets.zero,
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
