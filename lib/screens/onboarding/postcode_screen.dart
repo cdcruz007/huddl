@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -93,7 +94,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                   children: [
                     const SizedBox(height: 40),
                     Text(
-                      'What is your postcode?',
+                      'Where in Cambridge are you?',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -102,11 +103,31 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      "We will connect you with other local parents. Your postcode won't be shared anywhere.",
-                      style: TextStyle(
-                          fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
+                    RichText(
                       textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: HuddlColors.textSecondary,
+                          height: 1.55,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: "We'll show you parents and groups ",
+                          ),
+                          TextSpan(
+                            text: 'within walking distance.',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.nearBlack,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: '\n\nYour exact location is never shared.',
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 40),
                     _UnderlineInput(

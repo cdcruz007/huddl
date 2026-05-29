@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
-import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 
-// Soft salmon/peach matching the supplied screenshots: light warm coral.
-// 0xFFFCA878 == HuddlColors.primary (inlined to keep this file self-contained).
+// ── Data class ────────────────────────────────────────────────────────────────
+class _HeroPageData {
+  final String heroImageAsset;       // real photo from assets/images/
+  final String? overlayStatNumber;   // e.g. "847" — shown large over image
+  final String? overlayStatLabel;    // e.g. "parents in Cambridge"
+  final String badge;                // small pill top-left e.g. "📍 0.3 km away"
+  final String heading;              // 2 lines max, bold, white over image
+  final String subheading;           // smaller, below image, nearBlack
+  final Color accentColor;           // badge and stat colour
 
+  const _HeroPageData({
+    required this.heroImageAsset,
+    this.overlayStatNumber,
+    this.overlayStatLabel,
+    required this.badge,
+    required this.heading,
+    required this.subheading,
+    required this.accentColor,
+  });
+}
+
+// ── Carousel screen ────────────────────────────────────────────────────────────
 class OnboardingCarouselScreen extends StatefulWidget {
   const OnboardingCarouselScreen({super.key});
 
@@ -19,23 +38,45 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   int _currentPage = 0;
 
   static const _pages = [
-    _PageData(
-      title: 'Welcome to Huddl!',
-      subtitle: 'The app for ALL parents,',
-      body: 'Connect with parents who are at the same stage of their parenting journey as you.',
-      illustration: 'assets/illustrations/group_celebration.png',
+    // PAGE 1 — "Is anyone near me?"
+    // Shows a warm group photo of parents. The stat "847 parents" is the
+    // social proof that makes a new user feel they are joining something real.
+    _HeroPageData(
+      heroImageAsset: 'assets/images/onboarding_community.jpg',
+      overlayStatNumber: '847',
+      overlayStatLabel: 'parents in Cambridge',
+      badge: '📍 Cambridge',
+      heading: 'Your neighbourhood\nis full of parents like you',
+      subheading:
+          'Groups, meetups, and conversations — all within walking distance.',
+      accentColor: HuddlColors.primary,
     ),
-    _PageData(
-      title: 'Join local community groups and build trusted networks',
-      subtitle: null,
-      body: 'Connect with like-minded people. Others are here to share their story.',
-      illustration: 'assets/illustrations/chat_high_five.png',
+
+    // PAGE 2 — "Will I fit in?"
+    // Shows a meetup photo — real parents at a park playdate.
+    // The stat shows how many meetups happened this month — activity proof.
+    _HeroPageData(
+      heroImageAsset: 'assets/images/onboarding_meetup.jpg',
+      overlayStatNumber: '23',
+      overlayStatLabel: 'meetups this month',
+      badge: '☕ This Sunday · Victoria Park',
+      heading: 'Morning Coffee & Chat\nthis Sunday at 10am',
+      subheading:
+          '14 parents are going. Drop in, no commitment required.',
+      accentColor: HuddlColors.infoBlue,
     ),
-    _PageData(
-      title: 'You are the Mum and Dad next door',
-      subtitle: null,
-      body: "At Huddl, you're not just another person on a forum filled with strangers.",
-      illustration: 'assets/illustrations/dancing.png',
+
+    // PAGE 3 — "What will I actually do here?"
+    // Shows the market — a tangible, practical reason to join beyond chat.
+    _HeroPageData(
+      heroImageAsset: 'assets/images/onboarding_market.jpg',
+      overlayStatNumber: '£0',
+      overlayStatLabel: 'to join — always free',
+      badge: '🛒 Preloved · Near you',
+      heading: 'The neighbourhood\nbuy and sell for parents',
+      subheading:
+          'Buggy for £40. Baby monitor for free. All from parents nearby.',
+      accentColor: HuddlColors.yellow,
     ),
   ];
 
@@ -63,13 +104,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Logo: H icon only (no "huddl" text) ─────────────────────
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: _HuddlIconOnly(),
-            ),
-
-            // ── Carousel pages ───────────────────────────────────────────
+            // ── PageView — hero image + subheading ───────────────────────
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -79,7 +114,9 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               ),
             ),
 
-            // ── Dot indicators — small circles ───────────────────────────
+            const SizedBox(height: 16),
+
+            // ── Pill dot indicators — Instagram Stories pattern ───────────
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(_pages.length, (i) {
@@ -87,28 +124,34 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: 8,
+                  width: active ? 20 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: active ? HuddlColors.onboardingOrange : HuddlColors.gray300,
-                    shape: BoxShape.circle,
+                    color: active
+                        ? HuddlColors.primary
+                        : HuddlColors.gray300,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 );
               }),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
-            // ── Get started button ───────────────────────────────────────
+            // ── CTA button — label changes on last page ──────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: HuddlButton(
-                label: 'Get started!',
+                label: _currentPage < _pages.length - 1
+                    ? 'Next'
+                    : "I'm in — let's go →",
                 onPressed: _next,
+                variant: HuddlButtonVariant.primary,
+                fullWidth: true,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             // ── Already have an account ──────────────────────────────────
             Row(
@@ -116,7 +159,10 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               children: [
                 Text(
                   'Already have an account? ',
-                  style: HuddlText.body(color: HuddlColors.disabledText),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: HuddlColors.disabledText,
+                  ),
                 ),
                 Semantics(
                   label: 'already_have_account',
@@ -124,12 +170,12 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                   child: GestureDetector(
                     key: const Key('alreadyHaveAccountButton'),
                     onTap: () => Navigator.pushNamed(context, '/login'),
-                    child: const Text(
+                    child: Text(
                       'Login',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: HuddlColors.onboardingOrange,
-                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -137,7 +183,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               ],
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -145,111 +191,189 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   }
 }
 
-// ── Single carousel page ──────────────────────────────────────────────────────
-class _CarouselPage extends StatelessWidget {
-  final _PageData data;
+// ── Single carousel page — stateful for entrance animation ────────────────────
+class _CarouselPage extends StatefulWidget {
+  final _HeroPageData data;
   const _CarouselPage({required this.data});
 
   @override
+  State<_CarouselPage> createState() => _CarouselPageState();
+}
+
+class _CarouselPageState extends State<_CarouselPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _imageScale;
+  late final Animation<double> _textOpacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _imageScale = Tween<double>(begin: 1.04, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
+    _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
+    final size = MediaQuery.of(context).size;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => Column(
         children: [
-          // Illustration
-          Expanded(
+          // ── Hero image — fills 55% of screen height ──────────────────
+          Transform.scale(
+            scale: _imageScale.value,
+            child: SizedBox(
+              height: size.height * 0.55,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Real photo — full bleed, rounded bottom corners
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(28),
+                    ),
+                    child: Image.asset(
+                      widget.data.heroImageAsset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: HuddlColors.primaryPale,
+                        child: Icon(
+                          Icons.people,
+                          size: 80,
+                          color: HuddlColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Gradient scrim — bottom 50% darkens for text legibility
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(28),
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.62),
+                          ],
+                          stops: const [0.35, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Badge — top-left pill
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        widget.data.badge,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: widget.data.accentColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Large stat — bottom-right overlay
+                  if (widget.data.overlayStatNumber != null)
+                    Positioned(
+                      bottom: 70,
+                      right: 20,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            widget.data.overlayStatNumber!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1.0,
+                            ),
+                          ),
+                          Text(
+                            widget.data.overlayStatLabel!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Heading — bottom-left overlay
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 100,
+                    child: Text(
+                      widget.data.heading,
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Subheading — below the image with fade-in ─────────────────
+          FadeTransition(
+            opacity: _textOpacity,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Image.asset(
-                data.illustration,
-                fit: BoxFit.contain,
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Text(
+                widget.data.subheading,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: HuddlColors.textSecondary,
+                  height: 1.55,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
           ),
-
-          // Title
-          Text(
-            data.title,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.3,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          if (data.subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              data.subtitle!,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          // Body
-          Text(
-            data.body,
-            style: const TextStyle(
-              fontSize: 14,
-              color: HuddlColors.disabledText,
-              height: 1.55,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
-}
-
-// ── Huddl full logo (H icon + "huddl" wordmark — matches splash screen) ──────
-class _HuddlIconOnly extends StatelessWidget {
-  const _HuddlIconOnly();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final logo = Image.asset(
-      'assets/images/logo_huddl_splash.png',
-      height: 34,
-      fit: BoxFit.contain,
-    );
-
-    if (!isDark) return logo;
-
-    // Brighten the dark-grey wordmark for dark-mode contrast
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix(<double>[
-        2.0, 0, 0, 0, 60,
-        0, 2.0, 0, 0, 60,
-        0, 0, 2.0, 0, 60,
-        0, 0, 0, 1.0, 0,
-      ]),
-      child: logo,
-    );
-  }
-}
-
-// ── Data class ────────────────────────────────────────────────────────────────
-class _PageData {
-  final String title;
-  final String? subtitle;
-  final String body;
-  final String illustration;
-  const _PageData({
-    required this.title,
-    required this.subtitle,
-    required this.body,
-    required this.illustration,
-  });
 }

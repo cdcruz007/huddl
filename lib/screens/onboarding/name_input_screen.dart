@@ -68,7 +68,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
                     // ── Title ───────────────────────────────────────────
                     Center(
                       child: Text(
-                        "What's your first name?",
+                        'First, what should we call you?',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -81,7 +81,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
                     const SizedBox(height: 10),
                     const Center(
                       child: Text(
-                        'Tell us what your neighbours should call you.',
+                        'Other parents in Cambridge will see your first name only.',
                         style: TextStyle(
                           fontSize: 14,
                           color: HuddlColors.disabledText,

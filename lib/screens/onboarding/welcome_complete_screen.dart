@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/backend_api_service.dart';
@@ -11,149 +12,272 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 
-class WelcomeCompleteScreen extends StatelessWidget {
+class WelcomeCompleteScreen extends StatefulWidget {
   const WelcomeCompleteScreen({super.key});
+
+  @override
+  State<WelcomeCompleteScreen> createState() => _WelcomeCompleteScreenState();
+}
+
+class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
+    with TickerProviderStateMixin {
+  late final AnimationController _ctrl;
 
   /// Fire welcome email once — non-blocking, backend is idempotent (welcomeEmailSent guard).
   void _fireWelcomeEmail() {
     final onboarding = OnboardingDataService();
     final email = (onboarding.email ?? '').trim();
     if (email.isEmpty) return;
-    BackendApiService().sendWelcomeNotification(
-      email: email,
-      firstName: onboarding.name,
-      borough: onboarding.postcode,
-    ).catchError((Object e) {
+    BackendApiService()
+        .sendWelcomeNotification(
+          email: email,
+          firstName: onboarding.name,
+          borough: onboarding.postcode,
+        )
+        .catchError((Object e) {
       if (kDebugMode) debugPrint('[WelcomeComplete] welcome email error: $e');
       return null;
     });
   }
 
+  void _navigateNext() {
+    if (!mounted) return;
+    Navigator.pushNamed(context, '/add_photo');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _ctrl.forward();
+    // Auto-navigate after 4 seconds if user hasn't tapped
+    Future.delayed(const Duration(seconds: 4), _navigateNext);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleCtaTap() async {
+    HuddlAnimations.heavyTap();
+    _fireWelcomeEmail();
+    // 🎉 Tutorial complete celebration overlay
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc =
+            await FirebaseFirestore.instance.doc('users/$uid').get();
+        final achievements =
+            (doc.data()?['achievements'] as Map?) ?? {};
+        if (achievements['tutorialComplete'] != true) {
+          await FirebaseFirestore.instance.doc('users/$uid').set(
+            {'achievements': {'tutorialComplete': true}},
+            SetOptions(merge: true),
+          );
+          if (mounted) {
+            await HuddlCelebrationOverlay.show(
+              context,
+              message: 'Welcome to Huddl! Your community awaits 🏡',
+            );
+          }
+        }
+      }
+    } catch (_) {
+      /* non-critical */
+    }
+    _navigateNext();
+  }
+
   @override
   Widget build(BuildContext context) {
     final onboarding = OnboardingDataService();
+    final name = onboarding.name ?? 'there';
+    final borough = onboarding.borough ?? 'your area';
     final groupCount = onboarding.assignedGroupCount;
     final groupNames = onboarding.assignedGroupNames;
 
+    // Celebration scale animation — clamp prevents easeOutBack overshoot crash
+    final scaleAnim = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.0, 0.7, curve: Curves.easeOutBack),
+    );
+    final headingFadeAnim = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+    );
+    final cardFadeAnim = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
+    );
+
     return Scaffold(
-      backgroundColor: HuddlColors.white,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // -- Huddl logo centered at top --
+            // ── Logo + progress bar ───────────────────────────────────────
             const Padding(
               padding: EdgeInsets.only(top: 32),
               child: _HuddlLogo(),
             ),
-
             OnboardingProgressBar(step: OnboardingStep.welcomeComplete),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            // -- Title --
-            Text(
-              'Welcome to Huddl!',
-              style: HuddlText.display(color: HuddlColors.nearBlack),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 20),
-
-            // -- SUCCESS banner (green) --
-            if (groupCount > 0)
-              Padding(
+            Expanded(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.success.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: HuddlColors.success.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle,
-                          color: HuddlColors.success, size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: HuddlText.body(color: HuddlColors.success),
-                            children: [
-                              const TextSpan(text: 'You\'ve been added to '),
-                              TextSpan(
-                                text: '$groupCount',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              TextSpan(
-                                text: groupCount == 1
-                                    ? ' community group!'
-                                    : ' community groups!',
-                              ),
-                            ],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // ── Celebration graphic — yellow circle with 🎉 ───────
+                    AnimatedBuilder(
+                      animation: _ctrl,
+                      builder: (_, __) => Transform.scale(
+                        scale: scaleAnim.value
+                            .clamp(0.0, 1.15), // guard overshoot
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: const BoxDecoration(
+                            color: HuddlColors.yellowSoft,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '🎉',
+                              style: TextStyle(fontSize: 52),
+                            ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-            if (groupCount > 0) const SizedBox(height: 16),
-
-            // -- Group list (replaces old black box) --
-            if (groupNames.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F7F7),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: HuddlColors.divider,
-                      width: 1,
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your groups',
-                        style: HuddlText.body(weight: FontWeight.w600),
+
+                    const SizedBox(height: 28),
+
+                    // ── Personalised heading ──────────────────────────────
+                    FadeTransition(
+                      opacity: headingFadeAnim,
+                      child: Text(
+                        'Welcome to $borough,\n$name! 👋',
+                        style: GoogleFonts.poppins(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.nearBlack,
+                          height: 1.25,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 10),
-                      ...groupNames.map(
-                        (name) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Group assignment — infoBluePale card ──────────────
+                    if (groupCount > 0)
+                      FadeTransition(
+                        opacity: cardFadeAnim,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.infoBluePale,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF7F7F7),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.people_alt_rounded,
-                                      size: 16, color: HuddlColors.textDark),
-                                ),
+                              const Icon(
+                                Icons.people,
+                                color: HuddlColors.infoBlue,
+                                size: 22,
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  name,
-                                  style: HuddlText.body(color: HuddlColors.nearBlack),
+                                  "You've been added to $groupCount local "
+                                  "group${groupCount > 1 ? 's' : ''} "
+                                  "in $borough. Say hello!",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: HuddlColors.infoBlue,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.45,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // ── Group name list (if available) ────────────────────
+                    if (groupNames.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      FadeTransition(
+                        opacity: cardFadeAnim,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F7F7),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: HuddlColors.divider,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Your groups',
+                                style:
+                                    HuddlText.body(weight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 10),
+                              ...groupNames.map(
+                                (gName) => Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: HuddlColors.infoBluePale,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.people_alt_rounded,
+                                            size: 16,
+                                            color: HuddlColors.infoBlue,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          gName,
+                                          style: HuddlText.body(
+                                            color: HuddlColors.nearBlack,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -161,112 +285,34 @@ class WelcomeCompleteScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                ),
-              )
-            else if (groupCount > 0)
-              // Fallback: show count if names aren't available yet
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F7F7),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: HuddlColors.divider,
-                      width: 1,
+
+                    const SizedBox(height: 20),
+
+                    // ── Subtext ───────────────────────────────────────────
+                    Text(
+                      'Your neighbours are waiting.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: HuddlColors.textSecondary,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFF7F7F7),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$groupCount',
-                            style: HuddlText.heading(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          groupCount == 1
-                              ? 'community group ready for you'
-                              : 'community groups ready for you',
-                          style: HuddlText.body(color: HuddlColors.nearBlack),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
 
-            if (groupCount > 0) const SizedBox(height: 16),
-
-            // -- Subtitle --
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Before we start, let your neighbours know you!',
-                style: HuddlText.body(color: HuddlColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // -- Illustration --
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Image.asset(
-                  'assets/illustrations/community_wave.png',
-                  fit: BoxFit.contain,
+                    const SizedBox(height: 32),
+                  ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // -- Let's go! button --
+            // ── Celebrate CTA ─────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: HuddlButton(
-                label: "Let's go!",
-                variant: HuddlButtonVariant.primary,
+                label: 'Explore $borough →',
+                variant: HuddlButtonVariant.celebrate,
                 fullWidth: true,
-                onPressed: () async {
-                  HuddlAnimations.heavyTap();
-                  _fireWelcomeEmail();
-                  // 🎉 Tutorial complete celebration overlay
-                  try {
-                    final uid = FirebaseAuth.instance.currentUser?.uid;
-                    if (uid != null) {
-                      final doc = await FirebaseFirestore.instance.doc('users/$uid').get();
-                      final achievements = (doc.data()?['achievements'] as Map?) ?? {};
-                      if (achievements['tutorialComplete'] != true) {
-                        await FirebaseFirestore.instance.doc('users/$uid')
-                            .set({'achievements': {'tutorialComplete': true}}, SetOptions(merge: true));
-                        if (context.mounted) {
-                          await HuddlCelebrationOverlay.show(context,
-                              message: 'Welcome to Huddl! Your community awaits 🏡');
-                        }
-                      }
-                    }
-                  } catch (_) { /* non-critical */ }
-                  if (context.mounted) Navigator.pushNamed(context, '/add_photo');
-                },
+                onPressed: _handleCtaTap,
               ),
             ),
           ],
@@ -276,7 +322,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
   }
 }
 
-// -- Shared Huddl logo --
+// ── Shared Huddl logo ─────────────────────────────────────────────────────────
 class _HuddlLogo extends StatelessWidget {
   const _HuddlLogo();
 
