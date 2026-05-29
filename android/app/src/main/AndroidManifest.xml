@@ -43,7 +43,7 @@
 
     <application
         android:label="Huddl"
-        android:name="${applicationName}"
+        android:name="androidx.multidex.MultiDexApplication"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true"
         android:allowBackup="true"

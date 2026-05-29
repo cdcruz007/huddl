@@ -50,8 +50,8 @@ android {
         // submitted after August 2024.  Do NOT rely on flutter.targetSdkVersion
         // which may resolve to an older value depending on the Flutter SDK version.
         targetSdk = 35
-        versionCode = 105
-        versionName = "1.1.45"
+        versionCode = 106
+        versionName = "1.1.46"
         // Multidex: required when the app exceeds 64K method references.
         // Without this, secondary DEX classes (e.g. UCropFileProvider from
         // image_cropper) are not found at runtime → ClassNotFoundException crash.
@@ -69,4 +69,13 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Multidex support: required when app exceeds 64K method limit.
+    // multiDexEnabled = true in defaultConfig is not sufficient on its own —
+    // the library must also be declared here so it is included in the APK/AAB.
+    // This ensures secondary DEX classes (e.g. UCropFileProvider from image_cropper)
+    // are loaded correctly and avoids ClassNotFoundException crashes at runtime.
+    implementation("androidx.multidex:multidex:2.0.1")
 }
