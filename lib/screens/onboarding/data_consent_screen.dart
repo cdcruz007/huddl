@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/common/huddl_logo.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/browser_storage.dart';
@@ -319,23 +320,8 @@ class _OnboardingAppBar extends StatelessWidget {
             onPressed: onBack,
             padding: EdgeInsets.zero,
           ),
-          Expanded(
-            child: Center(
-              child: Image.asset(
-                'assets/images/huddl_logomark.png',
-                height: 40,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.people, color: Colors.white, size: 22),
-                ),
-              ),
-            ),
+          const Expanded(
+            child: Center(child: HuddlLogomark(size: 40)),
           ),
           const SizedBox(width: 48),
         ],

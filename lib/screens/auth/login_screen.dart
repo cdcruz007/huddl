@@ -4,6 +4,7 @@ import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/logo_widget.dart';
+import '../../widgets/common/huddl_logo.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import 'package:local_auth/local_auth.dart';
@@ -410,7 +411,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8),
 
               // ── Logo ──────────────────────────────────────────
-              const LogoWidget(height: 44),
+              const HuddlWordmarkLogo(height: 44),
 
               const SizedBox(height: 44),
 

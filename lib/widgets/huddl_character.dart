@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/huddl_colors.dart';
 import '../constants/app_text_styles.dart';
 import 'common/huddl_button.dart';
 
 // =============================================================================
-// HUDDL CHARACTER — PNG illustration + icon fallback
+// HUDDL CHARACTER — SVG/PNG illustration + icon fallback
 // =============================================================================
 
 /// The emotional states of the Huddl character.
@@ -23,29 +24,21 @@ enum HuddlMood {
 String? _illustrationForMood(HuddlMood mood) {
   switch (mood) {
     case HuddlMood.neutral:
-      // People together — general community/presence
-      return 'assets/illustrations/community_wave.png';
+      return 'assets/icons/illustrations/community_wave.svg';
     case HuddlMood.celebrating:
-      // Celebration moment — first join, milestone
-      return 'assets/illustrations/celebrating.png';
+      return 'assets/icons/illustrations/celebrating.svg';
     case HuddlMood.curious:
-      // Question/search — search empty, filter no results
-      return 'assets/illustrations/questions.png';
+      return 'assets/icons/illustrations/questions.svg';
     case HuddlMood.supportive:
-      // Warmth/support — SEND section, wellbeing
-      return 'assets/illustrations/waving_thumbs.png';
+      return 'assets/icons/illustrations/waving_thumbs.svg';
     case HuddlMood.waving:
-      // Welcoming — onboarding, no conversations, first open
-      return 'assets/illustrations/waving_orange.png';
+      return 'assets/icons/illustrations/waving_orange.svg';
     case HuddlMood.locked:
-      // Security gate — subscription, auth
-      return 'assets/illustrations/security.png';
+      return 'assets/icons/illustrations/security.svg';
     case HuddlMood.upgrade:
-      // Growth/upgrade — premium feature unlock
-      return 'assets/illustrations/growth.png';
+      return 'assets/icons/illustrations/growth.svg';
     case HuddlMood.noticeboard:
-      // Announcement/megaphone — noticeboard, broadcast
-      return 'assets/illustrations/announcement.png';
+      return 'assets/icons/illustrations/announcement.svg';
   }
 }
 
@@ -102,6 +95,17 @@ class HuddlCharacter extends StatelessWidget {
     final illustrationPath = _illustrationForMood(mood);
 
     if (illustrationPath != null) {
+      final isSvg = illustrationPath.endsWith('.svg');
+      if (isSvg) {
+        return SvgPicture.asset(
+          illustrationPath,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          placeholderBuilder: (_) => SizedBox(width: size, height: size),
+        );
+      }
+      // PNG fallback — used during migration for any unconverted assets
       return Image.asset(
         illustrationPath,
         width: size,

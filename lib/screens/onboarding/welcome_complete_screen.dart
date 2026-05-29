@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/common/huddl_logo.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 import '../../services/onboarding_data_service.dart';
@@ -328,19 +329,6 @@ class _HuddlLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/images/huddl_logomark.png',
-      height: 40,
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: HuddlColors.primary,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Icon(Icons.people, color: Colors.white, size: 22),
-      ),
-    );
+    return const HuddlLogomark(size: 40);
   }
 }

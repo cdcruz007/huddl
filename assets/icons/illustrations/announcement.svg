@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#FFF3ED"/>
+  <!-- Megaphone body -->
+  <path d="M44 80 L44 118 Q44 126 52 126 L72 126 L72 80 Z" fill="#FF965C"/>
+  <!-- Megaphone flare -->
+  <path d="M72 74 L148 44 L148 154 L72 124 Z" fill="#FF965C"/>
+  <!-- Bell circle (amplifier) -->
+  <circle cx="158" cy="100" r="18" fill="none" stroke="#FF965C" stroke-width="6"/>
+  <!-- Sound waves -->
+  <path d="M50 98 L50 100" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Handle -->
+  <rect x="52" y="126" width="20" height="28" rx="8" fill="#F3C54F"/>
+  <!-- Stars/burst -->
+  <circle cx="62" cy="60" r="6" fill="#F3C54F"/>
+  <circle cx="44" cy="72" r="4" fill="#347FEF"/>
+  <path d="M148 48 L152 40 L156 48 L164 52 L156 56 L152 64 L148 56 L140 52 Z" fill="#F3C54F" opacity="0.8"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#FFF3ED"/>
+  <!-- Figure -->
+  <circle cx="100" cy="64" r="22" fill="#FF965C"/>
+  <rect x="80" y="84" width="40" height="62" rx="20" fill="#FF965C"/>
+  <!-- Thumbs up arm -->
+  <path d="M80 94 Q60 86 54 72 Q50 62 62 60" fill="#FF965C"/>
+  <!-- Thumb up shape -->
+  <rect x="46" y="48" width="22" height="30" rx="8" fill="#FF965C"/>
+  <rect x="42" y="66" width="30" height="20" rx="6" fill="#FF965C"/>
+  <!-- Waving arm -->
+  <path d="M120 94 Q142 82 148 66 Q152 52 140 50 Q132 60 128 80" fill="#FF965C"/>
+  <!-- Wave lines -->
+  <line x1="152" y1="44" x2="160" y2="36" stroke="#FF965C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="158" y1="52" x2="168" y2="48" stroke="#FF965C" stroke-width="4" stroke-linecap="round"/>
+</svg>

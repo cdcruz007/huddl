@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#FFF3ED"/>
+  <!-- Figure body -->
+  <circle cx="100" cy="66" r="24" fill="#FF965C"/>
+  <rect x="78" y="86" width="44" height="66" rx="22" fill="#FF965C"/>
+  <!-- Waving arm -->
+  <path d="M122 96 Q148 78 144 60 Q140 46 128 54 Q120 64 124 90" fill="#FF965C"/>
+  <!-- Hand wave lines -->
+  <line x1="148" y1="48" x2="156" y2="40" stroke="#FF965C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="154" y1="58" x2="164" y2="54" stroke="#FF965C" stroke-width="4" stroke-linecap="round"/>
+  <line x1="154" y1="40" x2="158" y2="30" stroke="#FF965C" stroke-width="3" stroke-linecap="round"/>
+</svg>

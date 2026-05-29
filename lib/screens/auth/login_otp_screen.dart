@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/huddl_logo.dart';
 import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -268,14 +269,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                   ),
-                  Expanded(
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/huddl_logomark.png',
-                        height: 36,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                  const Expanded(
+                    child: Center(child: HuddlLogomark(size: 36)),
                   ),
                   const SizedBox(width: 48),
                 ]),

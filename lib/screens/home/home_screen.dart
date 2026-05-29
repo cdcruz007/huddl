@@ -8,6 +8,7 @@ import '../../widgets/common/huddl_card.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
 import '../../widgets/cards/huddl_photo_card.dart';
 import '../../widgets/common/huddl_network_image.dart';
+import '../../widgets/common/huddl_logo.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
 import '../../theme/huddl_colors.dart';
@@ -1280,14 +1281,7 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
 
-    return Image.asset(
-      isDark
-          ? 'assets/images/logo_huddl_dark.png'
-          : 'assets/images/logo_huddl.png',
-      height: 28,
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => fallback,
-    );
+    return const HuddlAppBarLogo(height: 28);
   }
 
 

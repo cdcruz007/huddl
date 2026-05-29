@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#EDF4FF"/>
+  <!-- Figure -->
+  <circle cx="92" cy="72" r="22" fill="#347FEF"/>
+  <rect x="72" y="92" width="40" height="60" rx="20" fill="#347FEF"/>
+  <!-- Thinking arm -->
+  <path d="M112 100 Q132 88 136 74 Q138 64 128 64 Q120 72 116 88" fill="#347FEF"/>
+  <!-- Speech bubble -->
+  <rect x="118" y="42" width="52" height="44" rx="14" fill="white" stroke="#347FEF" stroke-width="3"/>
+  <text x="144" y="70" font-size="28" text-anchor="middle" fill="#347FEF" font-family="sans-serif" font-weight="bold">?</text>
+  <path d="M128 86 L118 96 L136 86" fill="white" stroke="#347FEF" stroke-width="3" stroke-linejoin="round"/>
+</svg>

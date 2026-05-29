@@ -91,9 +91,15 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    # ── Icons and logomark (SVG) ─────────────────────────────────────
+    - assets/icons/
+    - assets/icons/illustrations/
+
+    # ── Images (PNG logos + WebP photos) ─────────────────────────────
     - assets/images/
     - assets/images/illustrations/
-    - assets/icons/
     - assets/images/avatars/
     - assets/images/groups/
+
+    # ── Illustrations (PNG — kept for any non-migrated assets) ───────
     - assets/illustrations/

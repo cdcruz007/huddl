@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/huddl_logo.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_character.dart';
@@ -110,12 +111,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
               const Spacer(flex: 2),
 
               // ── App logo ───────────────────────────────────────────────
-              Image.asset(
-                'assets/images/huddl_logomark.png',
-                height: 56,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox(width: 56, height: 56),
-              ),
+              const HuddlLogomark(size: 56),
 
               const SizedBox(height: 56),
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,18 +6,17 @@ import '../../theme/huddl_colors.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../widgets/common/huddl_logo.dart';
 
 // =============================================================================
-// HUDDL SPLASH SCREEN — v2
+// HUDDL SPLASH SCREEN v2 — minimal, photography-aligned
 //
-// Design: warm cream background (#FFF8F3), centred H mark logo, simple
-// scale+fade entrance. Matches the photography-first, minimal app identity.
-//
-// Animation sequence:
-//   0ms   → logo at scale 0.82, opacity 0.0
-//   600ms → logo at scale 1.0,  opacity 1.0  (ease out cubic)
-//   1400ms → hold (800ms after logo entrance completes)
-//   exit  → screen fades out over 300ms before navigating
+// Background: warm cream #FFF8F3 — identical to app scaffold warmCream.
+// Logo: HuddlLogomark SVG at 110px (H mark only, no wordmark clutter).
+// Wordmark: "huddl" Poppins text — fades in at 40% through animation.
+// Tagline: fades in at 65% — "The mum and dad next door".
+// Animation: scale 0.82→1.0 + fade over 700ms, easeOutCubic.
+// Exit: 300ms fade before navigation.
 //
 // No blobs. No bouncing circles. The logo stands alone.
 // =============================================================================
@@ -34,6 +34,8 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _logoCtrl;
   late final Animation<double> _logoFade;
   late final Animation<double> _logoScale;
+  late final Animation<double> _wordmarkFade;
+  late final Animation<double> _taglineFade;
   late final AnimationController _exitCtrl;
   late final Animation<double> _exitFade;
 
@@ -46,14 +48,22 @@ class _SplashScreenState extends State<SplashScreen>
       statusBarIconBrightness: Brightness.dark,
     ));
 
-    // ── Logo entrance — 600ms ease out ──────────────────────────────
+    // ── Logo entrance — 700ms ────────────────────────────────────────
     _logoCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
     _logoFade = CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOut);
     _logoScale = Tween<double>(begin: 0.82, end: 1.0).animate(
       CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutCubic),
+    );
+    _wordmarkFade = CurvedAnimation(
+      parent: _logoCtrl,
+      curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+    );
+    _taglineFade = CurvedAnimation(
+      parent: _logoCtrl,
+      curve: const Interval(0.65, 1.0, curve: Curves.easeOut),
     );
 
     // ── Exit fade — 300ms ease in ────────────────────────────────────
@@ -65,23 +75,20 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn),
     );
 
-    // ── Sequence: enter → hold 800ms → resolve destination → exit ───
+    // ── Sequence: enter → hold 700ms → resolve destination → exit ───
     _logoCtrl.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 800), _navigateNext);
+      Future.delayed(const Duration(milliseconds: 700), _navigateNext);
     });
   }
 
   Future<void> _navigateNext() async {
     if (!mounted) return;
 
-    // Resolve destination before fading so the fade-out feels intentional.
-    // Mirrors the original navigation logic — explicit logout flag takes
-    // priority, then biometric, then onboarding progress.
+    // Resolve destination before fading so the exit feels intentional.
+    // Explicit logout flag takes priority over cached Firebase token.
     String destination = '/onboarding_carousel';
     try {
       final auth = FirebaseAuthService();
-
-      // Explicit logout flag prevents re-entry via cached Firebase token
       final explicitlyLoggedOut = await FirebaseAuthService.hasExplicitlyLoggedOut;
       if (!mounted) return;
 
@@ -115,102 +122,74 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Warm cream — exactly matches app scaffold warmCream so the transition
-    // from splash to first onboarding screen is seamless with no colour flash.
+    // Warm cream — matches app scaffold warmCream exactly.
+    // Seamless visual transition from splash to first onboarding screen.
     const bg = Color(0xFFFFF8F3);
 
     return Scaffold(
       backgroundColor: bg,
       body: AnimatedBuilder(
         animation: Listenable.merge([_logoCtrl, _exitCtrl]),
-        builder: (context, _) {
-          return Opacity(
-            opacity: _exitFade.value,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // ── Warm background ──────────────────────────────────
-                const ColoredBox(color: bg),
+        builder: (_, __) => Opacity(
+          opacity: _exitFade.value,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: bg),
 
-                // ── Centred logo mark + wordmark ─────────────────────
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // H mark — scale + fade entrance
-                      FadeTransition(
-                        opacity: _logoFade,
-                        child: ScaleTransition(
-                          scale: _logoScale,
-                          child: Image.asset(
-                            'assets/images/huddl_logomark.png',
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: HuddlColors.primary,
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              child: const Icon(
-                                Icons.people,
-                                color: Colors.white,
-                                size: 56,
-                              ),
-                            ),
-                          ),
-                        ),
+              // ── Centred logo mark + wordmark ─────────────────────
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // H mark — scale + fade entrance
+                    FadeTransition(
+                      opacity: _logoFade,
+                      child: ScaleTransition(
+                        scale: _logoScale,
+                        child: const HuddlLogomark(size: 110),
                       ),
-                      const SizedBox(height: 16),
-                      // Wordmark — fades in at 40% through animation
-                      // so the mark always leads the wordmark
-                      FadeTransition(
-                        opacity: CurvedAnimation(
-                          parent: _logoCtrl,
-                          curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
-                        ),
-                        child: Text(
-                          'huddl',
-                          style: GoogleFonts.poppins(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: HuddlColors.nearBlack,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── Tagline at bottom — fades in at 60% ──────────────
-                Positioned(
-                  bottom: 60,
-                  left: 0,
-                  right: 0,
-                  child: FadeTransition(
-                    opacity: CurvedAnimation(
-                      parent: _logoCtrl,
-                      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
                     ),
-                    child: Text(
-                      'The mum and dad next door',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: HuddlColors.textTertiary,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.2,
+                    const SizedBox(height: 18),
+                    // Wordmark — fades in at 40% so mark always leads
+                    FadeTransition(
+                      opacity: _wordmarkFade,
+                      child: Text(
+                        'huddl',
+                        style: GoogleFonts.poppins(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.nearBlack,
+                          letterSpacing: -0.5,
+                        ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Tagline at bottom ─────────────────────────────────
+              Positioned(
+                bottom: 64,
+                left: 0,
+                right: 0,
+                child: FadeTransition(
+                  opacity: _taglineFade,
+                  child: Text(
+                    'The mum and dad next door',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: HuddlColors.textTertiary,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

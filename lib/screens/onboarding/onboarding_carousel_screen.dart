@@ -42,7 +42,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     // Shows a warm group photo of parents. The stat "847 parents" is the
     // social proof that makes a new user feel they are joining something real.
     _HeroPageData(
-      heroImageAsset: 'assets/images/onboarding_community.jpg',
+      heroImageAsset: 'assets/images/onboarding_community.webp',
       overlayStatNumber: '847',
       overlayStatLabel: 'parents in Cambridge',
       badge: '📍 Cambridge',
@@ -56,7 +56,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     // Shows a meetup photo — real parents at a park playdate.
     // The stat shows how many meetups happened this month — activity proof.
     _HeroPageData(
-      heroImageAsset: 'assets/images/onboarding_meetup.jpg',
+      heroImageAsset: 'assets/images/onboarding_meetup.webp',
       overlayStatNumber: '23',
       overlayStatLabel: 'meetups this month',
       badge: '☕ This Sunday · Victoria Park',
@@ -69,7 +69,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     // PAGE 3 — "What will I actually do here?"
     // Shows the market — a tangible, practical reason to join beyond chat.
     _HeroPageData(
-      heroImageAsset: 'assets/images/onboarding_market.jpg',
+      heroImageAsset: 'assets/images/onboarding_market.webp',
       overlayStatNumber: '£0',
       overlayStatLabel: 'to join — always free',
       badge: '🛒 Preloved · Near you',

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#FFF8E1"/>
+  <!-- Figure -->
+  <circle cx="100" cy="62" r="22" fill="#FF965C"/>
+  <rect x="80" y="82" width="40" height="64" rx="20" fill="#FF965C"/>
+  <!-- Arms raised in celebration -->
+  <path d="M80 90 Q56 68 52 52 Q50 42 62 44 Q68 58 76 72" fill="#FF965C"/>
+  <path d="M120 90 Q144 68 148 52 Q150 42 138 44 Q132 58 124 72" fill="#FF965C"/>
+  <!-- Confetti -->
+  <rect x="48" y="40" width="10" height="10" rx="2" fill="#F3C54F" transform="rotate(20 53 45)"/>
+  <rect x="136" y="34" width="10" height="10" rx="2" fill="#347FEF" transform="rotate(-15 141 39)"/>
+  <circle cx="68" cy="32" r="5" fill="#FF965C"/>
+  <circle cx="130" cy="44" r="5" fill="#F3C54F"/>
+  <rect x="158" y="60" width="8" height="8" rx="2" fill="#FF965C" transform="rotate(30 162 64)"/>
+  <circle cx="44" cy="68" r="4" fill="#347FEF"/>
+</svg>

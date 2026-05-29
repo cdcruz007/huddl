@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="currentColor">
+  <!-- Huddl H mark — two figures side by side forming an H shape -->
+  <!-- Left figure head -->
+  <circle cx="28" cy="18" r="14"/>
+  <!-- Right figure head -->
+  <circle cx="92" cy="18" r="14"/>
+  <!-- Left figure body — rounded pill -->
+  <rect x="14" y="30" width="42" height="96" rx="21"/>
+  <!-- Right figure body — rounded pill -->
+  <rect x="64" y="30" width="42" height="96" rx="21"/>
+  <!-- Bridge — the H crossbar connecting both figures -->
+  <rect x="42" y="60" width="36" height="18" rx="9"/>
+</svg>

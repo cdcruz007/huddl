@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#FFF3ED"/>
+  <!-- Left figure -->
+  <circle cx="62" cy="62" r="20" fill="#FF965C"/>
+  <rect x="44" y="80" width="36" height="60" rx="18" fill="#FF965C"/>
+  <!-- Right figure -->
+  <circle cx="138" cy="62" r="20" fill="#347FEF"/>
+  <rect x="120" y="80" width="36" height="60" rx="18" fill="#347FEF"/>
+  <!-- Centre figure -->
+  <circle cx="100" cy="54" r="20" fill="#F3C54F"/>
+  <rect x="82" y="72" width="36" height="60" rx="18" fill="#F3C54F"/>
+  <!-- Wave hands -->
+  <path d="M44 88 Q28 72 34 58 Q38 48 48 56 Q44 72 52 82" fill="#FF965C"/>
+  <path d="M156 88 Q172 72 166 58 Q162 48 152 56 Q156 72 148 82" fill="#347FEF"/>
+</svg>
