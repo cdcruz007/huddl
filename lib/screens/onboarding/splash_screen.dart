@@ -1,23 +1,18 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
 import '../../widgets/common/huddl_logo.dart';
 
 // =============================================================================
-// HUDDL SPLASH SCREEN v2 — minimal, photography-aligned
+// HUDDL SPLASH SCREEN v3 — official brand SVGs
 //
-// Background: warm cream #FFF8F3 — identical to app scaffold warmCream.
-// Logo: HuddlLogomark SVG at 110px (H mark only, no wordmark clutter).
-// Wordmark: "huddl" Poppins text — fades in at 40% through animation.
-// Tagline: fades in at 65% — "The mum and dad next door".
-// Animation: scale 0.82→1.0 + fade over 700ms, easeOutCubic.
-// Exit: 300ms fade before navigation.
-//
-// No blobs. No bouncing circles. The logo stands alone.
+// Background  : warm cream #FFF8F3
+// Centre      : HuddlLockup SVG (official H-mark + huddl text, height 52px)
+//               — scale 0.82→1.0 + fade over 700ms easeOutCubic
+// Tagline     : "The mum and dad next door" — fades in at 65%
+// Exit        : 300ms easeIn fade before navigation
 // =============================================================================
 
 class SplashScreen extends StatefulWidget {
@@ -33,7 +28,6 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _logoCtrl;
   late final Animation<double> _logoFade;
   late final Animation<double> _logoScale;
-  late final Animation<double> _wordmarkFade;
   late final Animation<double> _taglineFade;
   late final AnimationController _exitCtrl;
   late final Animation<double> _exitFade;
@@ -55,10 +49,6 @@ class _SplashScreenState extends State<SplashScreen>
     _logoFade = CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOut);
     _logoScale = Tween<double>(begin: 0.82, end: 1.0).animate(
       CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutCubic),
-    );
-    _wordmarkFade = CurvedAnimation(
-      parent: _logoCtrl,
-      curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
     );
     _taglineFade = CurvedAnimation(
       parent: _logoCtrl,
@@ -83,7 +73,6 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateNext() async {
     if (!mounted) return;
 
-    // Resolve destination before fading so the exit feels intentional.
     // Explicit logout flag takes priority over cached Firebase token.
     String destination = '/onboarding';
     try {
@@ -119,8 +108,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Warm cream — matches app scaffold warmCream exactly.
-    // Seamless visual transition from splash to first onboarding screen.
     const bg = Color(0xFFFFF8F3);
 
     return Scaffold(
@@ -134,34 +121,14 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               const ColoredBox(color: bg),
 
-              // ── Centred logo mark + wordmark ─────────────────────
+              // ── Official lockup SVG — H-mark + huddl text ─────────
               Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // H mark — scale + fade entrance
-                    FadeTransition(
-                      opacity: _logoFade,
-                      child: ScaleTransition(
-                        scale: _logoScale,
-                        child: const HuddlLogomark(size: 110),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    // Wordmark — fades in at 40% so mark always leads
-                    FadeTransition(
-                      opacity: _wordmarkFade,
-                      child: Text(
-                        'huddl',
-                        style: GoogleFonts.poppins(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.nearBlack,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: FadeTransition(
+                  opacity: _logoFade,
+                  child: ScaleTransition(
+                    scale: _logoScale,
+                    child: const HuddlLockup(height: 52),
+                  ),
                 ),
               ),
 
@@ -175,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Text(
                     'The mum and dad next door',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 14,
                       color: HuddlColors.textTertiary,
                       fontWeight: FontWeight.w400,

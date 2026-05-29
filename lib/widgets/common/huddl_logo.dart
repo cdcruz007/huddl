@@ -1,98 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../theme/huddl_colors.dart';
 
 // =============================================================================
 // HUDDL LOGO WIDGETS — single source of truth for all logo usage
 //
-// HuddlLogomark     → H mark only, SVG, tintable. Use on all onboarding
-//                     data-entry screens, biometric lock, verification,
-//                     login OTP, splash screen.
+// HuddlLogomark   → H-mark only SVG (official brand asset, two-tone orange).
+//                   Used on onboarding data-entry screens, biometric lock,
+//                   verification, login OTP.
 //
-// HuddlWordmarkLogo → Full logo (H mark + "huddl" wordmark), PNG with
-//                     dark-mode brightening. Use on login screen, About.
+// HuddlLockup     → Full brand SVG: H-mark + "huddl" text side by side
+//                   (official asset, orange mark + #43464D text).
+//                   Used on splash screen and login screen.
 //
-// HuddlAppBarLogo   → Compact adaptive full logo for home screen app bar.
-//                     Switches between logo_huddl.png / logo_huddl_dark.png.
+// HuddlAppBarLogo → Compact adaptive PNG for home screen app bar only.
+//                   Switches logo_huddl.png / logo_huddl_dark.png.
 //
-// RULE:
+// USAGE:
 //   Onboarding data-entry  → HuddlLogomark(size: 40)
-//   Splash screen          → HuddlLogomark(size: 110)
-//   Login screen           → HuddlWordmarkLogo(height: 44)
-//   Home app bar           → HuddlAppBarLogo()
-//   About section          → HuddlWordmarkLogo(height: 56)
+//   Splash screen          → HuddlLockup(height: 52)
+//   Login screen           → HuddlLockup(height: 44)
+//   Home app bar           → HuddlAppBarLogo(height: 28)
 // =============================================================================
 
-/// H mark only — SVG, tintable at runtime via [color].
-/// Default colour: HuddlColors.primary orange.
-/// Pass [color] to override (e.g. Colors.white for dark surfaces).
+/// Official H-mark SVG — two-tone orange brand asset.
+/// viewBox 107×150 → aspect ratio 0.713 (taller than wide).
+/// Do NOT apply a colorFilter — the SVG has its own two-tone fills.
 class HuddlLogomark extends StatelessWidget {
+  /// Rendered height in logical pixels. Width is derived from aspect ratio.
   final double size;
-  final Color? color;
 
-  const HuddlLogomark({
-    super.key,
-    this.size = 40,
-    this.color,
-  });
+  const HuddlLogomark({super.key, this.size = 40});
 
   @override
   Widget build(BuildContext context) {
-    final tint = color ?? HuddlColors.primary;
+    // viewBox is 107×150 — width = height * (107/150)
+    final double w = size * (107 / 150);
     return SvgPicture.asset(
       'assets/icons/huddl_logomark.svg',
-      width: size,
+      width: w,
       height: size,
-      colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
-      placeholderBuilder: (_) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: tint,
-          borderRadius: BorderRadius.circular(size * 0.22),
-        ),
-      ),
+      fit: BoxFit.contain,
+      placeholderBuilder: (_) => SizedBox(width: w, height: size),
     );
   }
 }
 
-/// Full logo — H mark + "huddl" wordmark PNG with dark-mode brightening.
-/// Use on login screen and About section (where brand reinforcement matters).
-class HuddlWordmarkLogo extends StatelessWidget {
+/// Official full-brand SVG: H-mark + "huddl" text.
+/// viewBox 559×150 → aspect ratio 3.727 (wide).
+/// Scales uniformly by [height]; width is derived from aspect ratio.
+/// Text is #43464D (reads well on light backgrounds).
+/// For dark mode on the home app bar use HuddlAppBarLogo instead.
+class HuddlLockup extends StatelessWidget {
+  /// Rendered height in logical pixels. Width is derived from aspect ratio.
   final double height;
 
+  const HuddlLockup({super.key, this.height = 44});
+
+  @override
+  Widget build(BuildContext context) {
+    // viewBox is 559×150 — width = height * (559/150)
+    final double w = height * (559 / 150);
+    return SvgPicture.asset(
+      'assets/icons/huddl_lockup.svg',
+      width: w,
+      height: height,
+      fit: BoxFit.contain,
+      placeholderBuilder: (_) => SizedBox(width: w, height: height),
+    );
+  }
+}
+
+/// Backwards-compatible alias — delegates to HuddlLockup.
+/// Kept so existing call sites (login_screen, etc.) need no change.
+class HuddlWordmarkLogo extends StatelessWidget {
+  final double height;
   const HuddlWordmarkLogo({super.key, this.height = 44});
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Logo PNG is 593×208 px — preserve aspect ratio
-    final double width = height * (593 / 208);
-    final logo = Image.asset(
-      'assets/images/logo_huddl_splash.png',
-      height: height,
-      width: width,
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => HuddlLogomark(size: height),
-    );
-    if (!isDark) return logo;
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix([
-        2.0, 0, 0, 0, 60,
-        0, 2.0, 0, 0, 60,
-        0, 0, 2.0, 0, 60,
-        0, 0, 0, 1.0, 0,
-      ]),
-      child: logo,
-    );
-  }
+  Widget build(BuildContext context) => HuddlLockup(height: height);
 }
 
-/// Compact adaptive logo for home screen app bar only.
+/// Compact adaptive PNG logo for home screen app bar only.
 /// Uses logo_huddl.png (light) / logo_huddl_dark.png (dark).
+/// PNG variants are used here because they're pre-optimised for small sizes
+/// and the dark variant has white text — not achievable with the locked SVG.
 class HuddlAppBarLogo extends StatelessWidget {
   final double height;
-
   const HuddlAppBarLogo({super.key, this.height = 28});
 
   @override
@@ -104,7 +97,7 @@ class HuddlAppBarLogo extends StatelessWidget {
           : 'assets/images/logo_huddl.png',
       height: height,
       fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => HuddlLogomark(size: height),
+      errorBuilder: (_, __, ___) => HuddlLockup(height: height),
     );
   }
 }
