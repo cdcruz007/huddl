@@ -111,9 +111,10 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
 
               // ── App logo ───────────────────────────────────────────────
               Image.asset(
-                'assets/images/logo_huddl_splash.png',
-                height: 48,
+                'assets/images/huddl_logomark.png',
+                height: 56,
                 fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox(width: 56, height: 56),
               ),
 
               const SizedBox(height: 56),

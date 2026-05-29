@@ -320,10 +320,21 @@ class _OnboardingAppBar extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
           Expanded(
-            child: Image.asset(
-              'assets/images/logo_huddl_splash.png',
-              height: 34,
-              fit: BoxFit.contain,
+            child: Center(
+              child: Image.asset(
+                'assets/images/huddl_logomark.png',
+                height: 40,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.people, color: Colors.white, size: 22),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 48),

@@ -415,7 +415,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     icon: const Icon(Icons.chevron_left, size: 30, color: kOrange),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero),
-                const Expanded(child: HuddlHeaderLogo(height: 30)),
+                Expanded(
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/huddl_logomark.png',
+                      height: 36,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 48),
               ]),
             ),

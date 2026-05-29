@@ -271,8 +271,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                   Expanded(
                     child: Center(
                       child: Image.asset(
-                        'assets/images/logo_huddl_splash.png',
-                        height: 34,
+                        'assets/images/huddl_logomark.png',
+                        height: 36,
                         fit: BoxFit.contain,
                       ),
                     ),
