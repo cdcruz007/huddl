@@ -2686,8 +2686,10 @@ Widget _buildItemImage(String url, RehomeItem item) {
     ),
   );
 
-  // When no URL provided, use category-matched UHD stock photo instead of plain icon
-  if (url.isEmpty) {
+  // Stock photo fallback — used when URL is empty OR when a real URL fails
+  // to load (e.g. expired Firebase Storage tokens, deleted files).
+  // Always shows a contextual category image rather than a bare icon.
+  Widget stockPhotoFallback() {
     final stockUrl = _MarketGridCardState._categoryStockPhoto(item.category, item.title);
     return Image.network(
       stockUrl,
@@ -2701,6 +2703,10 @@ Widget _buildItemImage(String url, RehomeItem item) {
       },
     );
   }
+
+  // No URL → go straight to stock photo
+  if (url.isEmpty) return stockPhotoFallback();
+
   if (url.startsWith('data:')) {
     try {
       final comma = url.indexOf(',');
@@ -2708,25 +2714,30 @@ Widget _buildItemImage(String url, RehomeItem item) {
         final bytes = base64Decode(url.substring(comma + 1));
         return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity,
             height: double.infinity,
-            errorBuilder: (_, __, ___) => iconFallback);
+            // base64 decode errors → stock photo, not bare icon
+            errorBuilder: (_, __, ___) => stockPhotoFallback());
       }
     } catch (_) {}
-    return iconFallback;
+    return stockPhotoFallback();
   }
+
   if (url.startsWith('http')) {
     return Image.network(
       url,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, __, ___) => iconFallback,
+      // Broken/expired URL (404, 403, network error) → stock photo fallback,
+      // NOT bare icon. This handles stale Firebase Storage download tokens.
+      errorBuilder: (_, __, ___) => stockPhotoFallback(),
       loadingBuilder: (_, child, progress) {
         if (progress == null) return child;
         return const _ShimmerBox(width: double.infinity, height: double.infinity);
       },
     );
   }
-  return iconFallback;
+
+  return stockPhotoFallback();
 }
 
 // =============================================================================
@@ -4119,7 +4130,13 @@ class _MarketGridCardState extends State<_MarketGridCard> {
       return 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=600&q=80';
     }
     if (t.contains('high chair') || t.contains('highchair')) {
-      return 'https://images.unsplash.com/photo-1585332003745-59ef8c2c8e2e?w=600&q=80';
+      return 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=600&q=80';
+    }
+    if (t.contains('carrier') || t.contains('sling') || t.contains('wrap') || t.contains('tula') || t.contains('ergo')) {
+      return 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80';
+    }
+    if (t.contains('sleepyhead') || t.contains('pod') || t.contains('lounger') || t.contains('dock')) {
+      return 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=600&q=80';
     }
     if (t.contains('monitor') || t.contains('camera')) {
       return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80';
@@ -4141,6 +4158,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
       case ItemCategory.forTheCar:
         return 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=600&q=80';
       case ItemCategory.furniture:
+        // Nursery furniture — crib/cot image
         return 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&q=80';
       case ItemCategory.books:
         return 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&q=80';
