@@ -50,8 +50,8 @@ android {
         // submitted after August 2024.  Do NOT rely on flutter.targetSdkVersion
         // which may resolve to an older value depending on the Flutter SDK version.
         targetSdk = 35
-        versionCode = 100
-        versionName = "1.1.40"
+        versionCode = 101
+        versionName = "1.1.41"
     }
 
     buildTypes {
