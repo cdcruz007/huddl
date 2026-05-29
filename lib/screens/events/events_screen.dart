@@ -472,18 +472,23 @@ class EventsScreenState extends State<EventsScreen>
                   ), // Padding
                 ), // ColoredBox title row
                 // ── Header: tab bar (full-width, no side padding) ──
-                // Material(elevation:0) gives the TabBar a dedicated Material
-                // ancestor with the surface colour.  The TabBar's isScrollable
-                // path leaves the right portion of its viewport transparent;
-                // that transparency shows through to THIS Material — not the
-                // Scaffold's Material far above — so it renders white, not grey.
-                Material(
-                  color: context.hc.surface,
-                  elevation: 0,
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                  TabBar(
+                // Stack: white fill behind + TabBar on top.
+                // The TabBar (isScrollable) leaves transparent space to the
+                // right of the last tab. We paint that gap white by putting a
+                // full-width white Container BEHIND the TabBar in a Stack.
+                // Height is fixed to Tab.height (52) + divider (1) + 2px pad.
+                SizedBox(
+                  height: 55,
+                  child: Stack(
+                    children: [
+                      // ① Full-width white fill — covers the transparent gap
+                      Positioned.fill(
+                        child: ColoredBox(color: context.hc.surface),
+                      ),
+                      // ② TabBar full-width — Positioned.fill forces it to match
+                      // the SizedBox width so it receives tight constraints.
+                      Positioned.fill(
+                      child: TabBar(
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
@@ -552,10 +557,10 @@ class EventsScreenState extends State<EventsScreen>
                       setState(() { _selectedTab = index; });
                     },
                   ), // TabBar
-                  const SizedBox(height: 2),
-                  ], // Column children
-                  ), // Column
-                ), // Material tab bar
+                      ), // Positioned.fill (TabBar)
+                    ], // Stack children
+                  ), // Stack
+                ), // SizedBox tab bar
             // Borough header banners removed — scope shown via compact
             // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────
