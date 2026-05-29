@@ -2076,20 +2076,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.08),
+                          // Informational notice — infoBluePale bg, infoBlue accent.
+                          color: HuddlColors.infoBluePale,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: HuddlColors.primary.withValues(alpha: 0.25)),
+                              color: HuddlColors.infoBlueMid.withValues(alpha: 0.35)),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.info_outline_rounded,
-                                size: 16, color: HuddlColors.primary),
+                                size: 16, color: HuddlColors.infoBlue),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Saved as a new item under "${topicController.text.trim()}" — existing saves are untouched',
-                                style: HuddlText.caption(color: HuddlColors.primary),
+                                style: HuddlText.caption(color: HuddlColors.infoBlue),
                               ),
                             ),
                           ],
@@ -3066,7 +3067,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   )
                                 : CircleAvatar(
                                     radius: 22,
-                                    backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
+                                    backgroundColor: HuddlColors.infoBluePale,
                                     child: Text(
                                       member.name.isNotEmpty ? member.name[0] : '?',
                                       style: HuddlText.body(weight: FontWeight.w600),

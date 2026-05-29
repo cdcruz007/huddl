@@ -290,7 +290,7 @@ class UpgradeBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.star_rounded, color: HuddlColors.primary, size: 20),
+            Icon(Icons.star_rounded, color: HuddlColors.yellow, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,

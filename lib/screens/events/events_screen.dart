@@ -457,6 +457,8 @@ class EventsScreenState extends State<EventsScreen>
                         activeIcon: Icons.lightbulb,
                         label: 'Insights',
                         isSelected: _selectedTab == 4,
+                        activeColor: HuddlColors.yellow,
+                        activeIconColor: HuddlColors.yellowDark,
                       )),
                     ],
                     indicatorColor: HuddlColors.primary,
@@ -2557,11 +2559,12 @@ class _ImGoingCard extends StatelessWidget {
   }
 
   /// Colour for countdown badge based on urgency.
+  /// Past/overdue: textSecondary. Today/tomorrow: red error. Future: infoBlue.
   static Color _countdownColor(int daysUntil, bool isPast) {
     if (isPast) return HuddlColors.textSecondary;
     if (daysUntil <= 0) return HuddlColors.error;
-    if (daysUntil <= 2) return HuddlColors.nearBlack;
-    return HuddlColors.nearBlack;
+    if (daysUntil <= 2) return HuddlColors.error;
+    return HuddlColors.infoBlue;
   }
 }
 
@@ -4548,17 +4551,18 @@ class _MeetupCardState extends State<_MeetupCard> {
                     left: 12,
                     child: Row(
                       children: [
-                        // "New" badge — amber/yellow, same as Events tab
+                        // "New" badge — infoBluePale bg with infoBlue text.
+                        // "New" is a trust/discovery signal (informational), not a CTA.
                         if (isNew) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.nearBlack,
+                              color: HuddlColors.infoBluePale,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               'New',
-                              style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
+                              style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.infoBlue),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -4593,8 +4597,10 @@ class _MeetupCardState extends State<_MeetupCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
+                        // Free badge — yellow celebration treatment (gift/value).
+                        // Paid price stays white/nearBlack (neutral).
                         color: isFree
-                            ? HuddlColors.nearBlack
+                            ? HuddlColors.yellowSoft
                             : Colors.white.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -4602,7 +4608,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                         priceText,
                         style: HuddlText.caption(
                           weight: FontWeight.w700,
-                          color: isFree ? Colors.white : HuddlColors.nearBlack,
+                          color: isFree ? HuddlColors.yellowDark : HuddlColors.nearBlack,
                         ),
                       ),
                     ),
@@ -4838,7 +4844,9 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
-    const Color eventTypeBlue = HuddlColors.primary;
+    // eventTypeBlue: informational colour for Online badge + card fallback icon.
+    // Changed from primary orange to infoBlue \u2014 "Online" is a data attribute, not a CTA.
+    const Color eventTypeBlue = HuddlColors.infoBlue;
     const Radius cardRadius = Radius.circular(20);
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
@@ -4929,16 +4937,17 @@ class _EventListCardState extends State<_EventListCard> {
                     left: 12,
                     child: Row(
                       children: [
+                        // "New" badge — infoBluePale bg with infoBlue text (informational).
                         if (isNew)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.nearBlack,
+                              color: HuddlColors.infoBluePale,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               'New',
-                              style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
+                              style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.infoBlue),
                             ),
                           ),
                         // Type badge: "Online" only — shown for virtual events; in-person needs no label
@@ -4966,8 +4975,9 @@ class _EventListCardState extends State<_EventListCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
+                        // Free badge — yellow celebration treatment (gift/value).
                         color: isFree
-                            ? HuddlColors.nearBlack
+                            ? HuddlColors.yellowSoft
                             : Colors.white.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -4975,7 +4985,7 @@ class _EventListCardState extends State<_EventListCard> {
                         priceLabel,
                         style: HuddlText.caption(
                           weight: FontWeight.w700,
-                          color: isFree ? Colors.white : HuddlColors.nearBlack,
+                          color: isFree ? HuddlColors.yellowDark : HuddlColors.nearBlack,
                         ),
                       ),
                     ),
@@ -5725,6 +5735,11 @@ class _AnimatedDiscoverTab extends StatefulWidget {
   final String label;
   final int? count;
   final bool isSelected;
+  /// Override the active accent colour (default: HuddlColors.primary orange).
+  /// Used on Insights tab to signal warmth/wisdom with yellow.
+  final Color? activeColor;
+  /// Override the active icon colour (default: same as activeColor).
+  final Color? activeIconColor;
 
   const _AnimatedDiscoverTab({
     required this.icon,
@@ -5732,6 +5747,8 @@ class _AnimatedDiscoverTab extends StatefulWidget {
     required this.label,
     required this.isSelected,
     this.count,
+    this.activeColor,
+    this.activeIconColor,
   });
 
   @override
@@ -5777,7 +5794,8 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
 
   @override
   Widget build(BuildContext context) {
-    final active   = HuddlColors.primary;
+    final active   = widget.activeColor ?? HuddlColors.primary;
+    final activeIcon = widget.activeIconColor ?? active;
     final inactive = HuddlColors.textHint;
 
     return AnimatedBuilder(
@@ -5798,7 +5816,7 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
                   ),
                   Opacity(
                     opacity: _colorT.value.clamp(0.0, 1.0),
-                    child: Icon(widget.activeIcon, size: 20, color: active),
+                    child: Icon(widget.activeIcon, size: 20, color: activeIcon),
                   ),
                 ],
               ),
@@ -5822,12 +5840,13 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.15),
+                      // Count badge is informational — infoBluePale bg, infoBlue text.
+                      color: HuddlColors.infoBluePale,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${widget.count}',
-                      style: HuddlText.label(color: active),
+                      style: HuddlText.label(color: HuddlColors.infoBlue),
                     ),
                   ),
                 ],
@@ -5859,12 +5878,12 @@ class _TabLabel extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
-            color: HuddlColors.primary.withValues(alpha: 0.15),
+            color: HuddlColors.infoBluePale,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             '$count',
-            style: HuddlText.label(),
+            style: HuddlText.label(color: HuddlColors.infoBlue),
           ),
         ),
       ],

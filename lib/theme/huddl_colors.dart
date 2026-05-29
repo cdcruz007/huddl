@@ -102,6 +102,14 @@ class HuddlColors {
   static const Color primaryPale  = Color(0xFFFFC7A8);  // Figma: "Light orange"
   static const Color primaryDark  = Color(0xFFFF965C);  // same as primary (was E8935E)
 
+  // ── Informational blue — original Figma styleguide "Dark blue" ────────────
+  // Use for: informational badges, selected filter chips, stat counts,
+  // data labels, "New" badges, verified/trust indicators, AI feature accents.
+  // Never use for primary CTAs (orange only) or success states (teal only).
+  static const Color infoBlue     = Color(0xFF347FEF);  // #347FEF — Figma "Dark blue"
+  static const Color infoBlueMid  = Color(0xFF5B9CFF);  // #5B9CFF — Figma "Medium blue"
+  static const Color infoBluePale = Color(0xFFEDF4FF);  // #EDF4FF — Figma pale blue bg
+
   // Secondary / Accent
   static const Color teal = Color(0xFF199A85);
   // ── Figma blue tokens (actual UI blues from Figma styleguide) ───────────

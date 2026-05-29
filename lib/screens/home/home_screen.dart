@@ -1205,8 +1205,8 @@ class _HomeScreenState extends State<HomeScreen>
                 SliverToBoxAdapter(
                   child: _buildSectionHeader(
                     hc: hc,
-                    icon: Icons.explore_outlined,
-                    iconColor: HuddlColors.nearBlack,
+                    icon: Icons.auto_awesome,
+                    iconColor: HuddlColors.yellow,
                     title: 'Discover New Listings',
                     subtitle: 'New groups, meetups, events & items this week',
                     onSeeAll: () => _switchToTab(2),
@@ -2394,12 +2394,13 @@ class _HomeScreenState extends State<HomeScreen>
   /// A single unified Discover card — image hero + type pill + title + subtitle.
   Widget _buildDiscoverCard(_DiscoverItem item, dynamic hc, bool isDark) {
     // Type pill colour + label
-    // Design rule: all type pills nearBlack — no per-type colour coding
-    final (pillLabel, pillColor) = switch (item.type) {
-      _DiscoverType.group   => ('GROUP',   HuddlColors.nearBlack),
-      _DiscoverType.meetup  => ('MEETUP',  HuddlColors.nearBlack),
-      _DiscoverType.event   => ('EVENT',   HuddlColors.nearBlack),
-      _DiscoverType.sale    => ('FOR SALE',HuddlColors.nearBlack),
+    // Design rule: GROUP/MEETUP/EVENT badges are informational category labels
+    // → infoBluePale bg with infoBlue text. FOR SALE stays dark (commerce action).
+    final (pillLabel, pillBg, pillText) = switch (item.type) {
+      _DiscoverType.group   => ('GROUP',    HuddlColors.infoBluePale, HuddlColors.infoBlue),
+      _DiscoverType.meetup  => ('MEETUP',   HuddlColors.infoBluePale, HuddlColors.infoBlue),
+      _DiscoverType.event   => ('EVENT',    HuddlColors.infoBluePale, HuddlColors.infoBlue),
+      _DiscoverType.sale    => ('FOR SALE', HuddlColors.nearBlack,    Colors.white),
     };
 
     // Image widget — network, fallback icon
@@ -2457,7 +2458,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: pillColor,
+                        color: pillBg,
                         borderRadius: BorderRadius.circular(6),
                         boxShadow: [BoxShadow(
                             color: Colors.black.withValues(alpha: 0.18),
@@ -2465,7 +2466,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       child: Text(
                         pillLabel,
-                        style: HuddlText.label(color: Colors.white).copyWith(letterSpacing: 0.4),
+                        style: HuddlText.label(color: pillText).copyWith(letterSpacing: 0.4),
                       ),
                     ),
                   ),
