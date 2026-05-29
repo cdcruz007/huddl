@@ -470,13 +470,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // White scaffold — same as Create Meetup & Create Group so gray fields
-      // have visible contrast against the white background.
-      backgroundColor: Colors.white,
+      // Adaptive scaffold — white in light mode, darkSurface in dark mode.
+      // Input fields use context.hc.inputBg for contrast against the surface.
+      backgroundColor: context.hc.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leading: GestureDetector(
           onTap: () {

@@ -2956,25 +2956,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 // SHARED IMAGE HELPER — handles data:URI (base64), http, and empty URLs
 // =============================================================================
 
-// =============================================================================
-// _ShimmerBox REMOVED — superseded by HuddlShimmer in huddl_network_image.dart
-// All image loading placeholders in this file now use HuddlShimmer/HuddlNetworkImage.
-// =============================================================================
-
-// PLACEHOLDER — kept only to anchor surrounding code. Will be cleaned up.
-// The class below replaces the old _ShimmerBox with a trivial redirect.
-// ignore: unused_element
-Widget _shimmerDeleted() => const SizedBox.shrink();
-
-/* DELETED _ShimmerBox — was:
-class _ShimmerBox ... {
-  final double width;
-  final double height;
-  final double radius;
-  ...
-  begin: ..., end: ..., colors: [...], stops: [...]
-*/
-
 Widget _buildItemImage(String url, RehomeItem item) {
   final iconFallback = Container(
     color: const Color(0xFFF7F7F7),

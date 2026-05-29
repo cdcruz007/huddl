@@ -7,6 +7,7 @@ import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/common/huddl_network_image.dart';
 import '../../widgets/huddl_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/rehome_service.dart';
@@ -1038,8 +1039,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         errorBuilder: (_, __, ___) => fallback,
         loadingBuilder: (_, child, progress) {
           if (progress == null) return child;
-          // Shimmer placeholder while the full-res image streams in
-          return _DetailShimmer();
+          return const HuddlShimmer(
+            width: double.infinity,
+            height: double.infinity,
+          );
         },
       );
     } else {
@@ -1276,65 +1279,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// DETAIL SHIMMER — standalone StatefulWidget shimmer for the 300px hero area.
-// Pure-Dart AnimationController + LinearGradient — no external package needed.
-// =============================================================================
-class _DetailShimmer extends StatefulWidget {
-  const _DetailShimmer();
-
-  @override
-  State<_DetailShimmer> createState() => _DetailShimmerState();
-}
-
-class _DetailShimmerState extends State<_DetailShimmer>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-    _anim = Tween<double>(begin: -2.0, end: 2.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final base = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8);
-    final highlight =
-        isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
-
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) => Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment(_anim.value - 1, 0),
-            end: Alignment(_anim.value + 1, 0),
-            colors: [base, highlight, base],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
       ),
     );
   }

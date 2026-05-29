@@ -672,7 +672,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.hc.surface,
       appBar: _buildAppBar(),
       body: SafeArea(
         top: false,
@@ -828,9 +828,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: context.hc.surface,
       elevation: 0,
-      surfaceTintColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
       automaticallyImplyLeading: false,
       leading: GestureDetector(
         onTap: () => _handleBackNavigation(),

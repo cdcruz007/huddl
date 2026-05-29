@@ -199,7 +199,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
     return FadeTransition(
       opacity: _fadeAnim,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: context.hc.surface,
         body: SafeArea(
           child: Column(
             children: [
@@ -222,14 +222,14 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
     return Hero(
       tag: 'huddl_search_pill',
       child: Material(
-        color: Colors.white,
+        color: context.hc.surface,
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.hc.surface,
             border: Border(
               bottom: BorderSide(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 width: 0.5,
               ),
             ),
