@@ -42,7 +42,7 @@ class DefaultFirebaseOptions {
   // ── Android ─────────────────────────────────────────────────────────────
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBPWoXNhqNY-HZLG8cBmE8voZ75TRKBTOw',
-    appId: '1:879152141283:android:e33a13e587e540519186d6',
+    appId: '1:879152141283:android:85d9abe330f0ef969186d6',
     messagingSenderId: '879152141283',
     projectId: 'huddl-connect',
     storageBucket: 'huddl-connect.firebasestorage.app',
