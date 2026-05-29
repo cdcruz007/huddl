@@ -329,7 +329,12 @@ class EventsScreenState extends State<EventsScreen>
         child: Stack(
           children: [
             // ── Main content column ────────────────────────────────
-            Column(
+            // Positioned.fill forces the Column to receive tight constraints
+            // (full screen width). Without this the Stack gives loose
+            // constraints → Column shrink-wraps → ColoredBox header is
+            // narrower than screen → right side shows scaffold grey.
+            Positioned.fill(
+            child: Column(
               children: [
                 // ── Header: title row (padded) ────────────────────
                 // Split into two Containers so the TabBar below can be
@@ -473,7 +478,7 @@ class EventsScreenState extends State<EventsScreen>
                 ColoredBox(
                   color: context.hc.surface,
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                   // isScrollable:true — tabs need ~80px each (5×80=400px)
                   // which slightly exceeds 375px phones, so fill fails.
@@ -600,6 +605,7 @@ class EventsScreenState extends State<EventsScreen>
             ),
           ],
         ),
+        ), // Positioned.fill — forces Column to full screen width, fixing grey box
         // ── Circular + FAB ────────────────────────────────────
         // Rendered as a Positioned inside the Stack so we have
         // absolute control: Groups → create group, Meetups →
