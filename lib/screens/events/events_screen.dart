@@ -472,36 +472,18 @@ class EventsScreenState extends State<EventsScreen>
                   ), // Padding
                 ), // ColoredBox title row
                 // ── Header: tab bar (full-width, no side padding) ──
-                // Separate ColoredBox so TabBar spans the full screen width.
-                // Without this the grey Scaffold Material bleeds through on
-                // the right when isScrollable+tabAlignment.start leaves space.
-                ColoredBox(
+                // Material(elevation:0) gives the TabBar a dedicated Material
+                // ancestor with the surface colour.  The TabBar's isScrollable
+                // path leaves the right portion of its viewport transparent;
+                // that transparency shows through to THIS Material — not the
+                // Scaffold's Material far above — so it renders white, not grey.
+                Material(
                   color: context.hc.surface,
+                  elevation: 0,
                   child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                  // isScrollable:true — tabs need ~80px each (5×80=400px)
-                  // which slightly exceeds 375px phones, so fill fails.
-                  // Back to scrollable+start, but we override the TabBar's
-                  // internal scroll-view background via Theme so the surface
-                  // colour fills the entire row including the empty right gap.
-                  Theme(
-                    data: Theme.of(context).copyWith(
-                      highlightColor: Colors.transparent,
-                      splashColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                      // canvasColor + colorScheme.surface together cover the
-                      // TabBar's internal scroll view background in all
-                      // Flutter rendering paths.
-                      canvasColor: context.hc.surface,
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                        surface: context.hc.surface,
-                      ),
-                      tabBarTheme: Theme.of(context).tabBarTheme.copyWith(
-                        dividerColor: HuddlColors.divider,
-                      ),
-                    ),
-                    child: TabBar(
+                  TabBar(
                     controller: _tabController,
                     isScrollable: true,
                     tabAlignment: TabAlignment.start,
@@ -570,11 +552,10 @@ class EventsScreenState extends State<EventsScreen>
                       setState(() { _selectedTab = index; });
                     },
                   ), // TabBar
-                  ), // Theme
                   const SizedBox(height: 2),
                   ], // Column children
                   ), // Column
-                ), // ColoredBox tab bar
+                ), // Material tab bar
             // Borough header banners removed — scope shown via compact
             // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────
