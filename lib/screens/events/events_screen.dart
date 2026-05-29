@@ -85,6 +85,7 @@ class EventsScreenState extends State<EventsScreen>
   }
   late TabController _tabController;
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
+  late final ValueNotifier<int> _animatedTab; // drives instant animation on tap
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
   int _groupCount = 0;   // my joined groups count — shown on Groups tab badge
@@ -106,7 +107,14 @@ class EventsScreenState extends State<EventsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _animatedTab = ValueNotifier<int>(0);
     _tabController.addListener(() {
+      // Drive the animation notifier immediately on every listener tick
+      // so _AnimatedDiscoverTab fires its controller forward() on the same
+      // frame the user lifts their finger — not after the slide settles.
+      if (_animatedTab.value != _tabController.index) {
+        _animatedTab.value = _tabController.index;
+      }
       // Only update the selected tab when the animation has settled,
       // so the FAB never shows/hides based on a mid-swipe index.
       if (!_tabController.indexIsChanging) {
@@ -150,6 +158,7 @@ class EventsScreenState extends State<EventsScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _animatedTab.dispose();
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     _groupSearchTrigger.dispose();
@@ -531,43 +540,59 @@ class EventsScreenState extends State<EventsScreen>
                     labelStyle: const TextStyle(inherit: false, fontSize: 0),
                     unselectedLabelStyle: const TextStyle(inherit: false, fontSize: 0),
                     tabs: [
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.people_outline,
-                        activeIcon: Icons.people,
-                        label: 'Groups',
-                        isSelected: _selectedTab == 0,
-                        count: _groupCount > 0 ? _groupCount : null,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.location_on_outlined,
-                        activeIcon: Icons.location_on,
-                        label: 'Meetups',
-                        isSelected: _selectedTab == 1,
-                        count: _meetupService.meetups.isNotEmpty
-                            ? _meetupService.meetups.length : null,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.calendar_today_outlined,
-                        activeIcon: Icons.calendar_today,
-                        label: 'Events',
-                        isSelected: _selectedTab == 2,
-                        count: _eventCount > 0 ? _eventCount : null,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.storefront_outlined,
-                        activeIcon: Icons.storefront,
-                        label: 'Services',
-                        isSelected: _selectedTab == 3,
-                      )),
-                      Tab(height: 52, child: _AnimatedDiscoverTab(
-                        icon: Icons.lightbulb_outline,
-                        activeIcon: Icons.lightbulb,
-                        label: 'Insights',
-                        isSelected: _selectedTab == 4,
-                        activeColor: HuddlColors.yellow,
-                        activeIconColor: HuddlColors.yellowDark,
-                      )),
+                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
+                        valueListenable: _animatedTab,
+                        builder: (_, idx, __) => _AnimatedDiscoverTab(
+                          icon: Icons.diversity_3_outlined,
+                          activeIcon: Icons.diversity_3,
+                          label: 'Groups',
+                          isSelected: idx == 0,
+                          count: _groupCount > 0 ? _groupCount : null,
+                        ),
+                      ))),
+                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
+                        valueListenable: _animatedTab,
+                        builder: (_, idx, __) => _AnimatedDiscoverTab(
+                          icon: Icons.edit_location_alt_outlined,
+                          activeIcon: Icons.edit_location_alt,
+                          label: 'Meetups',
+                          isSelected: idx == 1,
+                          count: _meetupService.meetups.isNotEmpty
+                              ? _meetupService.meetups.length : null,
+                        ),
+                      ))),
+                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
+                        valueListenable: _animatedTab,
+                        builder: (_, idx, __) => _AnimatedDiscoverTab(
+                          icon: Icons.event_note_outlined,
+                          activeIcon: Icons.event_note,
+                          label: 'Events',
+                          isSelected: idx == 2,
+                          count: _eventCount > 0 ? _eventCount : null,
+                        ),
+                      ))),
+                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
+                        valueListenable: _animatedTab,
+                        builder: (_, idx, __) => _AnimatedDiscoverTab(
+                          icon: Icons.handshake_outlined,
+                          activeIcon: Icons.handshake,
+                          label: 'Services',
+                          isSelected: idx == 3,
+                        ),
+                      ))),
+                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
+                        valueListenable: _animatedTab,
+                        builder: (_, idx, __) => _AnimatedDiscoverTab(
+                          icon: Icons.tips_and_updates_outlined,
+                          activeIcon: Icons.tips_and_updates,
+                          label: 'Insights',
+                          isSelected: idx == 4,
+                          activeColor: HuddlColors.yellow,
+                          activeIconColor: HuddlColors.yellowDark,
+                        ),
+                      ))),
                     ],
+                    indicator: const BoxDecoration(), // suppress default selection highlight box
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorWeight: 2.5,
@@ -582,6 +607,7 @@ class EventsScreenState extends State<EventsScreen>
                         _serviceResetTrigger.value = true;
                       }
                       setState(() { _selectedTab = index; });
+                      _animatedTab.value = index; // drive animation immediately on tap
                     },
                   ), // TabBar
                       ), // Expanded
@@ -5929,18 +5955,33 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
           children: [
             Transform.scale(
               scale: _scale.value,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Opacity(
-                    opacity: (1.0 - _colorT.value).clamp(0.0, 1.0),
-                    child: Icon(widget.icon, size: 20, color: inactive),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: EdgeInsets.symmetric(
+                  horizontal: _colorT.value * 10, // expands 0→10px on activation
+                  vertical: _colorT.value * 4,    // expands 0→4px on activation
+                ),
+                decoration: BoxDecoration(
+                  color: Color.lerp(
+                    Colors.transparent,
+                    active.withValues(alpha: 0.12),
+                    _colorT.value,
                   ),
-                  Opacity(
-                    opacity: _colorT.value.clamp(0.0, 1.0),
-                    child: Icon(widget.activeIcon, size: 20, color: activeIcon),
-                  ),
-                ],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Opacity(
+                      opacity: (1.0 - _colorT.value).clamp(0.0, 1.0),
+                      child: Icon(widget.icon, size: 22, color: inactive),
+                    ),
+                    Opacity(
+                      opacity: _colorT.value.clamp(0.0, 1.0),
+                      child: Icon(widget.activeIcon, size: 22, color: activeIcon),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 3),
@@ -5962,15 +6003,20 @@ class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      // Count badge is informational — infoBlue tinted bg, infoBlue text.
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? HuddlColors.infoBlue.withValues(alpha: 0.15)
-                          : HuddlColors.infoBluePale,
+                      // Active tab: solid infoBlue badge with white text (vibrant).
+                      // Inactive tab: subtle tinted bg with infoBlue text.
+                      color: widget.isSelected
+                          ? HuddlColors.infoBlue
+                          : HuddlColors.infoBlue.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${widget.count}',
-                      style: HuddlText.label(color: HuddlColors.infoBlue),
+                      style: HuddlText.label(
+                        color: widget.isSelected
+                            ? Colors.white
+                            : HuddlColors.infoBlue,
+                      ),
                     ),
                   ),
                 ],
