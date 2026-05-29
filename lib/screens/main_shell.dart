@@ -522,7 +522,7 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
     _scale = TweenSequence([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.22), weight: 35),
       TweenSequenceItem(tween: Tween(begin: 1.22, end: 1.0), weight: 65),
-    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    ]).animate(_ctrl);
     _iconOpacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
     _labelSlide = Tween<Offset>(
       begin: const Offset(0, 0.3),
