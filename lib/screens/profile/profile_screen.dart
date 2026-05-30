@@ -1112,14 +1112,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// 2×2 quick action grid: Find Parents, Marketplace, Noticeboard, Invite.
   Widget _buildQuickActionsGrid(HuddlContextColors hc) {
     final actions = [
-      (Icons.people_outline, 'Find Parents', HuddlColors.primary,
-          () => Navigator.pushNamed(context, '/connect')),
-      (Icons.storefront_outlined, 'Marketplace', HuddlColors.nearBlack,
-          () => Navigator.pushNamed(context, '/marketplace')),
-      (Icons.campaign_outlined, 'Noticeboard', HuddlColors.success,
-          () => Navigator.pushNamed(context, '/noticeboard')),
-      (Icons.person_add_alt_1_outlined, 'Invite Friend',
-          HuddlColors.warning, _showInviteFriendSheet),
+      (Icons.people_outline,            'Find Parents',  HuddlColors.primary, () => Navigator.pushNamed(context, '/connect')),
+      (Icons.storefront_outlined,       'Marketplace',   HuddlColors.primary, () => Navigator.pushNamed(context, '/marketplace')),
+      (Icons.campaign_outlined,         'Noticeboard',   HuddlColors.primary, () => Navigator.pushNamed(context, '/noticeboard')),
+      (Icons.person_add_alt_1_outlined, 'Invite Friend', HuddlColors.primary, _showInviteFriendSheet),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
