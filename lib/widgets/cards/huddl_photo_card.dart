@@ -614,6 +614,7 @@ class HuddlParallaxPhotoCard extends StatelessWidget {
     this.statIcon,
     this.onTap,
     this.aspectRatio = 1.65,
+    this.borderRadius = 16,
   });
 
   final String imageUrl;
@@ -625,6 +626,7 @@ class HuddlParallaxPhotoCard extends StatelessWidget {
   final IconData? statIcon;
   final VoidCallback? onTap;
   final double aspectRatio;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -635,7 +637,7 @@ class HuddlParallaxPhotoCard extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: aspectRatio,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(borderRadius),
           child: Stack(
             fit: StackFit.expand,
             children: [

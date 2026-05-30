@@ -1134,6 +1134,22 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       backgroundColor: hc.scaffold,
+      floatingActionButton: (_activeFeedFilter == 'all' ||
+              _activeFeedFilter == 'noticeboard')
+          ? FloatingActionButton.extended(
+              onPressed: () => _openNoticeboardComposerSheet(hc, isDark),
+              backgroundColor: HuddlColors.primary,
+              elevation: 3,
+              icon: const Icon(Icons.campaign_outlined,
+                  color: Colors.white, size: 20),
+              label: Text(
+                'Post to ${_borough.isNotEmpty ? _borough : 'Cambridge'}',
+                style: HuddlText.body(
+                    color: Colors.white, weight: FontWeight.w600),
+              ),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
         child: RefreshIndicator(
           color: HuddlColors.textTertiary,
@@ -1158,18 +1174,6 @@ class _HomeScreenState extends State<HomeScreen>
 
               // Search pill removed — filter chips in feed header handle discovery
 
-              // ── Compact greeting row — hidden when filtered ──────────
-              if (_activeFeedFilter == 'all')
-                SliverToBoxAdapter(
-                  child: SlideTransition(
-                    position: _greetingSlide,
-                    child: FadeTransition(
-                      opacity: _greetingFade,
-                      child: _buildCompactGreeting(hc, isDark),
-                    ),
-                  ),
-                ),
-
               // ── Hero Meetup Card — next upcoming meetup, 'all' only ──
               if (!_isLoading &&
                   _activeFeedFilter == 'all' &&
@@ -1190,17 +1194,6 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildFirstRunCard(hc, isDark),
                 ),
 
-              // ── Noticeboard composer + feed ────────────────────────
-              // Shown on 'all' and 'noticeboard' filter tabs
-              if (_activeFeedFilter == 'all' || _activeFeedFilter == 'noticeboard') ...[
-                SliverToBoxAdapter(
-                  child: _buildNoticeboardComposer(hc, isDark),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildNoticeboardSection(hc, isDark),
-                ),
-              ],
-
               // ── "Don't Forget" — confirmed-attending items ────────
               // Always shown (with an empty state CTA when no RSVPs yet).
               // Pulls from: meetups where isGoing==true + _goingEvents.
@@ -1209,17 +1202,39 @@ class _HomeScreenState extends State<HomeScreen>
                   _activeFeedFilter == 'meetups' ||
                   _activeFeedFilter == 'events') ...[
                 SliverToBoxAdapter(
-                  child: _buildSectionHeader(
-                    hc: hc,
-                    icon: Icons.notifications_active_outlined,
-                    iconColor: HuddlColors.nearBlack,
-                    title: "Don't Forget",
-                    subtitle: 'Your confirmed upcoming meetups & events',
-                    onSeeAll: () => _switchToTab(2),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Coming up',
+                          style: HuddlText.body(
+                            color: hc.textPrimary,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => _switchToTab(2),
+                          child: Text(
+                            'See all',
+                            style: HuddlText.caption(
+                                color: HuddlColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: _buildDontForgetCarousel(hc, isDark),
+                ),
+              ],
+
+              // ── Noticeboard feed (posts only — composer moved to FAB) ──────
+              if (_activeFeedFilter == 'all' || _activeFeedFilter == 'noticeboard') ...[
+                SliverToBoxAdapter(
+                  child: _buildNoticeboardSection(hc, isDark),
                 ),
               ],
 
@@ -1293,6 +1308,15 @@ class _HomeScreenState extends State<HomeScreen>
                   label: 'Huddl home',
                   child: _buildAdaptiveLogo(isDark),
                 ),
+                const SizedBox(width: 10),
+                if (_name.isNotEmpty)
+                  Text(
+                    '$_greeting, ${_name.split(' ').first}',
+                    style: HuddlText.caption(
+                      color: HuddlColors.textTertiary,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
                 const Spacer(),
                 // Search — opens unified search across all content types
                 Semantics(
@@ -1579,33 +1603,12 @@ class _HomeScreenState extends State<HomeScreen>
           // ── Section header ───────────────────────────────────────────────
           Row(
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: hc.textPrimary.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(Icons.campaign_rounded,
-                    size: 18, color: hc.textPrimary),
+              Text(
+                '${_borough.isNotEmpty ? _borough : 'Community'} board',
+                style: HuddlText.body(
+                    color: hc.textPrimary, weight: FontWeight.w700),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Noticeboard',
-                      style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
-                    ),
-                    Text(
-                      '${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
-                      style: HuddlText.caption(color: hc.textTertiary),
-                    ),
-                  ],
-                ),
-              ),
-              // See all -> noticeboard full screen
+              const Spacer(),
               GestureDetector(
                 onTap: () {
                   HuddlAnimations.selectionClick();
@@ -1613,7 +1616,7 @@ class _HomeScreenState extends State<HomeScreen>
                 },
                 child: Text(
                   'See all',
-                  style: HuddlText.caption(),
+                  style: HuddlText.caption(color: HuddlColors.primary),
                 ),
               ),
             ],
@@ -1752,200 +1755,117 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildAiCatchUpCard(dynamic hc, bool isDark) {
     if (_catchUpDismissed) return const SizedBox.shrink();
 
-    final lastLogin = _feedService.lastLogin;
-    final now = DateTime.now();
+    final sinceTime = _feedService.lastLogin
+        ?? DateTime.now().subtract(const Duration(days: 7));
 
-    // Compute counts of new items since last login
-    final sinceTime = lastLogin ?? now.subtract(const Duration(days: 7));
     final newMeetups = _upcomingMeetups
-        .where((m) => m.dateTime.isAfter(sinceTime))
-        .length;
+        .where((m) => m.dateTime.isAfter(sinceTime)).length;
     final newEvents = _eventService.events
-        .where((e) => e.dateTime.isAfter(sinceTime))
-        .length;
+        .where((e) => e.dateTime.isAfter(sinceTime)).length;
     final newGroupCount = _newPublicGroups
-        .where((g) => !_isDefaultOnboardingGroup(g))
-        .length;
+        .where((g) => !_isDefaultOnboardingGroup(g)).length;
     final newMarket = _rehomeService.allItems
-        .where((i) => i.listedAt.isAfter(sinceTime))
-        .length;
+        .where((i) => i.listedAt.isAfter(sinceTime)).length;
 
-    // Friendly "last seen" label
-    String lastSeenLabel;
-    if (lastLogin == null) {
-      lastSeenLabel = 'since you joined';
-    } else {
-      final days = now.difference(lastLogin).inDays;
-      if (days == 0) {
-        lastSeenLabel = 'since earlier today';
-      } else if (days == 1) {
-        lastSeenLabel = 'since yesterday';
-      } else {
-        lastSeenLabel = 'in the last $days days';
-      }
-    }
-
-    // Build individual activity pills
-    final List<_CatchUpItem> items = [];
+    // Build pill items — only include counts > 0
+    final pills = <_CatchUpItem>[];
     if (newMeetups > 0) {
-      items.add(_CatchUpItem(
-        icon: Icons.place_rounded,
-        color: HuddlColors.nearBlack,
-        label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
-        onTap: () => _switchToDiscover(1), // Nearby sub-tab (meetups + events)
+      pills.add(_CatchUpItem(
+        icon: Icons.near_me_outlined,
+        color: HuddlColors.primary,
+        label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'}',
+        onTap: () => _switchToDiscover(1),
       ));
     }
     if (newEvents > 0) {
-      items.add(_CatchUpItem(
-        icon: Icons.event_rounded,
-        color: HuddlColors.nearBlack,
-        label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
-        onTap: () => _switchToDiscover(1), // Nearby sub-tab (meetups + events)
+      pills.add(_CatchUpItem(
+        icon: Icons.event_note_outlined,
+        color: HuddlColors.infoBlue,
+        label: '$newEvents new ${newEvents == 1 ? 'event' : 'events'}',
+        onTap: () => _switchToDiscover(1),
       ));
     }
     if (newGroupCount > 0) {
-      items.add(_CatchUpItem(
-        icon: Icons.people_rounded,
+      pills.add(_CatchUpItem(
+        icon: Icons.diversity_3_outlined,
         color: HuddlColors.nearBlack,
-        label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
-        onTap: () => _switchToDiscover(0), // Groups sub-tab
+        label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
+        onTap: () => _switchToDiscover(0),
       ));
     }
     if (newMarket > 0) {
-      items.add(_CatchUpItem(
-        icon: Icons.storefront_rounded,
-        color: HuddlColors.nearBlack,
-        label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale',
+      pills.add(_CatchUpItem(
+        icon: Icons.sell_outlined,
+        color: HuddlColors.yellowDark,
+        label: '$newMarket for sale',
         onTap: () => _switchToTab(3),
       ));
     }
 
-    // When no new items, show a light "you're all caught up" state
-    // so the card is always visible (matches the home screen mockup design).
+    // Nothing new — no card at all
+    if (pills.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Container(
-        decoration: BoxDecoration(
-          color: hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: hc.divider),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 8, 0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.auto_awesome,
-                      size: 16,
-                      color: HuddlColors.nearBlack.withValues(alpha: 0.5),
-                    ),
+      padding: const EdgeInsets.only(top: 10, bottom: 4),
+      child: SizedBox(
+        height: 34,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemCount: pills.length + 1, // +1 for dismiss pill
+          itemBuilder: (context, index) {
+            // Last item = dismiss × pill
+            if (index == pills.length) {
+              return GestureDetector(
+                onTap: () {
+                  HuddlAnimations.lightTap();
+                  setState(() => _catchUpDismissed = true);
+                },
+                child: Container(
+                  width: 34,
+                  decoration: BoxDecoration(
+                    color: hc.inputBg,
+                    borderRadius: BorderRadius.circular(17),
+                    border: Border.all(color: hc.divider, width: 0.5),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Here's what you missed",
-                          style: HuddlText.body(weight: FontWeight.w700),
-                        ),
-                        Text(
-                          lastSeenLabel,
-                          style: HuddlText.label(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Dismiss button
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(Icons.close, size: 16, color: hc.textTertiary),
-                    onPressed: () {
-                      HuddlAnimations.lightTap();
-                      setState(() => _catchUpDismissed = true);
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Activity rows — card-style, no pills
-            if (items.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
-                child: Column(
-                  children: items.asMap().entries.map((entry) {
-                    final item = entry.value;
-                    return InkWell(
-                      onTap: () {
-                        HuddlAnimations.selectionClick();
-                        item.onTap();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        child: Row(
-                          children: [
-                            // Coloured icon square
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: item.color.withValues(
-                                    alpha: isDark ? 0.20 : 0.12),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(item.icon,
-                                  size: 18,
-                                  color: isDark
-                                      ? item.color.withValues(alpha: 0.85)
-                                      : item.color),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item.label,
-                                style: HuddlText.body(),
-                              ),
-                            ),
-                            Icon(Icons.chevron_right_rounded,
-                                size: 18, color: hc.textTertiary),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                  child: Icon(Icons.close, size: 14, color: hc.textTertiary),
                 ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+              );
+            }
+            final pill = pills[index];
+            return GestureDetector(
+              onTap: () {
+                HuddlAnimations.lightTap();
+                pill.onTap();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: pill.color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: pill.color.withValues(alpha: 0.25),
+                    width: 0.5,
+                  ),
+                ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_outline,
-                        size: 14, color: HuddlColors.textTertiary),
-                    const SizedBox(width: 6),
+                    Icon(pill.icon, size: 13, color: pill.color),
+                    const SizedBox(width: 5),
                     Text(
-                      "You're all caught up! Scroll down to explore.",
-                      style: HuddlText.caption(color: hc.textSecondary),
+                      pill.label,
+                      style: HuddlText.caption(
+                        color: pill.color,
+                        weight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
               ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -3478,102 +3398,64 @@ class _HomeScreenState extends State<HomeScreen>
   // ── First-run onboarding card ──────────────────────────────────────────────
   Widget _buildFirstRunCard(dynamic hc, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: hc.divider),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+          color: HuddlColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: HuddlColors.primary.withValues(alpha: 0.20),
+            width: 0.5,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 8, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome to ${_borough.isNotEmpty ? _borough : 'Huddl'}!',
-                          style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
-                        ),
-                        Text(
-                          "Here's how to get the most out of huddl",
-                          style: HuddlText.caption(color: hc.textTertiary),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Dismiss X
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon:
-                        Icon(Icons.close, size: 18, color: hc.textTertiary),
-                    onPressed: () async {
-                      HuddlAnimations.lightTap();
-                      await BrowserStorage.setString(
-                          'huddl_interaction_count', '3');
-                      setState(() => _isFirstRun = false);
-                    },
-                  ),
-                ],
+            Icon(Icons.diversity_3_outlined,
+                size: 18, color: HuddlColors.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '${_newPublicGroups.isNotEmpty ? '${_newPublicGroups.length} groups' : 'Parents'} '
+                'are waiting for you in ${_borough.isNotEmpty ? _borough : 'Cambridge'}',
+                style: HuddlText.body(
+                  color: HuddlColors.primary,
+                  weight: FontWeight.w500,
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            // Action rows
-            _buildFirstRunRow(
-              hc: hc,
-              icon: Icons.people_outline,
-              title: 'Join a group near you',
-              ctaLabel: 'Browse groups',
-              onTap: () async {
-                HuddlAnimations.selectionClick();
-                _switchToTab(1);
-                await _incrementInteractionCount();
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                HuddlAnimations.lightTap();
+                _switchToTab(1); // Connect tab → Browse groups
               },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Join',
+                  style: HuddlText.caption(
+                    color: Colors.white,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
-            Divider(height: 1, thickness: 0.5, color: hc.divider, indent: 44),
-            _buildFirstRunRow(
-              hc: hc,
-              icon: Icons.place,
-              title: 'Find a local meetup',
-              ctaLabel: 'See meetups',
+            const SizedBox(width: 6),
+            GestureDetector(
               onTap: () async {
-                HuddlAnimations.selectionClick();
-                _switchToTab(2);
-                await _incrementInteractionCount();
+                HuddlAnimations.lightTap();
+                await BrowserStorage.setString(
+                    'huddl_interaction_count', '3');
+                setState(() => _isFirstRun = false);
               },
+              child: Icon(Icons.close, size: 16, color: HuddlColors.textTertiary),
             ),
-            Divider(height: 1, thickness: 0.5, color: hc.divider, indent: 44),
-            _buildFirstRunRow(
-              hc: hc,
-              icon: Icons.campaign_outlined,
-              title: 'Say hello to your neighbours',
-              ctaLabel: 'Post now',
-              onTap: () async {
-                HuddlAnimations.selectionClick();
-                final isDarkMode =
-                    Theme.of(context).brightness == Brightness.dark;
-                _openNoticeboardComposerSheet(hc, isDarkMode);
-                await _incrementInteractionCount();
-              },
-            ),
-            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -4051,20 +3933,18 @@ class _HomeScreenState extends State<HomeScreen>
   /// Sits between the greeting row and the AI catch-up card — high-impact,
   /// photography-first card layout.
   Widget _buildHeroMeetupCard(Meetup meetup, dynamic hc, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: HuddlParallaxPhotoCard(
-        imageUrl: meetup.imageUrl,
-        title: meetup.title,
-        subtitle: '${meetup.dateDisplay} · ${meetup.timeDisplay}',
-        badge: meetup.isGoing ? 'Going ✓' : null,
-        stat: meetup.attendeeCount > 0 ? '${meetup.attendeeCount} going' : null,
-        statIcon: Icons.people_outline,
-        scrollOffset: _heroScrollOffset,
-        aspectRatio: 1.65,
-        onTap: () => Navigator.of(context).push(
-          HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),
-        ),
+    return HuddlParallaxPhotoCard(
+      imageUrl: meetup.imageUrl,
+      title: meetup.title,
+      subtitle: '${meetup.dateDisplay} · ${meetup.timeDisplay}',
+      badge: meetup.isGoing ? 'Going ✓' : null,
+      stat: meetup.attendeeCount > 0 ? '${meetup.attendeeCount} going' : null,
+      statIcon: Icons.people_outline,
+      scrollOffset: _heroScrollOffset,
+      aspectRatio: 1.55,
+      borderRadius: 0,
+      onTap: () => Navigator.of(context).push(
+        HuddlSpringPageRoute(page: MeetupDetailScreen(meetup: meetup)),
       ),
     );
   }
