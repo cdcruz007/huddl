@@ -1124,10 +1124,9 @@ class _HomeScreenState extends State<HomeScreen>
                 pinned: true,
                 delegate: _StickyHeaderDelegate(
                   child: _buildStickyHeader(hc, isDark),
-                  // Logo row ≈ 10+40+4 = 54px
-                  // Your Feed title ≈ 28px, subtitle ≈ 16px
-                  // paddings: 6+10 = 16px
-                  // total ≈ 114px — use 116 for safe breathing room
+                  // Logo row:   top(10) + icon(40) + bottom(4) = 54px
+                  // Feed header: outer(4+10) + inner(6) + title(32) + bottom(10) = 62px
+                  // total = 116px — subtitle removed from pinned header
                   height: 116,
                 ),
               ),
@@ -1390,11 +1389,6 @@ class _HomeScreenState extends State<HomeScreen>
                   Text(
                     'Your Feed',
                     style: HuddlText.display(),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'RSVP to events & meetups to see personalised updates',
-                    style: HuddlText.caption(color: hc.textTertiary),
                   ),
                 ],
               ),
