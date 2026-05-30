@@ -1,11 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../widgets/common/huddl_logo.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'dart:async';
 import '../../theme/huddl_colors.dart';
-import '../../widgets/common/huddl_header_logo.dart';
+import '../../widgets/common/huddl_logo.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';

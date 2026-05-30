@@ -20,9 +20,6 @@ import '../../services/report_service.dart';
 import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
-// Marketplace price colour — Figma dark blue (selected state) #347FEF
-const Color _kMarketBlue = HuddlColors.nearBlack;
-
 
 // =============================================================================
 // ITEM DETAIL SCREEN — Invisible AI: smart offer pre-fill, contextual actions,

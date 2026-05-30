@@ -28,9 +28,6 @@ import '../search/unified_search_screen.dart';
 
 
 
-// Marketplace price colour — near-black for a premium, neutral feel
-const Color _kMarketBlue = HuddlColors.nearBlack;  // #347FEF — Figma blue
-
 // 12 deterministic Unsplash face URLs for seller avatar stack
 const List<String> _kMarketAvatarPool = [
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=48&q=70',

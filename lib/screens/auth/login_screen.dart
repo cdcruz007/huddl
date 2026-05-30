@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
-import '../../widgets/common/logo_widget.dart';
 import '../../widgets/common/huddl_logo.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';

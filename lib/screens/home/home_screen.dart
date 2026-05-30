@@ -1265,21 +1265,6 @@ class _HomeScreenState extends State<HomeScreen>
   /// Both assets have white background removed at build time.
   /// RichText fallback is used if either asset is missing.
   Widget _buildAdaptiveLogo(bool isDark) {
-    final fallback = RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'h',
-            style: HuddlText.display(),
-          ),
-          TextSpan(
-            text: 'uddl',
-            style: HuddlText.display(),
-          ),
-        ],
-      ),
-    );
-
     return const HuddlAppBarLogo(height: 28);
   }
 
