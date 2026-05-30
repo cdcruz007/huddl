@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../services/payment_service.dart';
-import '../../widgets/common/huddl_button.dart';
 import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -126,7 +127,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           },
         );
         if (result == true && mounted) {
-          Navigator.pop(context, true);
+          await _celebrateUpgrade(plan);
+          if (mounted) Navigator.pop(context, true);
         }
       }
     } else {
@@ -274,162 +276,277 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         false;
   }
 
-  // ── Build ────────────────────────────────────────────────────────────
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.hc.scaffold,
-      appBar: AppBar(
-        backgroundColor: context.hc.surface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: context.hc.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Choose Your Plan',
-            style: HuddlText.heading(color: context.hc.textPrimary)),
-        centerTitle: true,
+  // ── Upgrade celebration ──────────────────────────────────────────────
+  Future<void> _celebrateUpgrade(SubscriptionPlan plan) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _UpgradeCelebration(planName: plan.name),
+    );
+  }
+
+  // ── Hero header ──────────────────────────────────────────────────────
+  Widget _buildHero(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
+      decoration: const BoxDecoration(
+        color: HuddlColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-          child: Column(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SvgPicture.asset(
+            'assets/icons/huddl_logomark.svg',
+            width: 36,
+            height: 36 * (150 / 107),
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.gateMessage != null
+                ? 'Unlock this feature'
+                : 'Your village is waiting',
+            style: GoogleFonts.poppins(
+              fontSize: 28, fontWeight: FontWeight.w700,
+              color: Colors.white, height: 1.15,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.gateMessage ??
+                'Everything Cambridge parents need — groups, meetups, market, and AI. From £4.99/month.',
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              color: Colors.white.withValues(alpha: 0.85),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
             children: [
-              // Gate message banner
-              if (widget.gateMessage != null) _GateBanner(widget.gateMessage!),
-              if (widget.gateMessage != null) const SizedBox(height: 16),
-
-              // ── Pending cancellation / scheduled change banner ─────────
-              if (_service.isPendingCancellation || _service.hasScheduledChange)
-                _ScheduledChangeBanner(
-                  summary: _service.scheduledChangeSummary ?? '',
-                  isCancellation: _service.isPendingCancellation,
-                  daysRemaining: _service.daysUntilRenewal,
-                  onRevert: () async {
-                    if (_service.isPendingCancellation) {
-                      await _service.reactivateSubscription();
-                    } else {
-                      await _service.revokeScheduledChange();
-                    }
-                    if (mounted) setState(() {});
-                  },
-                ),
-              if (_service.isPendingCancellation || _service.hasScheduledChange)
-                const SizedBox(height: 16),
-
-
-              const SizedBox(height: 8),
-
-              // Billing toggle
-              _BillingToggle(
-                period: _period,
-                onChanged: (p) => setState(() => _period = p),
-              ),
-              const SizedBox(height: 20),
-
-              // Plan cards
-              ...SubscriptionPlan.allPlans.map((plan) {
-                    // Use the store-localised price string (Apple/Google format
-                    // their own currency and locale).  Falls back to the
-                    // hard-coded GBP price when the store hasn't loaded yet
-                    // (web, sandbox, or slow connection).
-                    final productId = HuddlProductIds.productIdFor(
-                      plan.tier, _period);
-                    final storePrice =
-                        PaymentService().getPriceForProduct(productId);
-                    return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _PlanCard(
-                      plan: plan,
-                      period: _period,
-                      storePrice: storePrice.isNotEmpty ? storePrice : null,
-                      isCurrentPlan: plan.tier == _service.tier,
-                      isHighlighted: plan.tier == widget.highlightTier ||
-                          (widget.highlightTier == null &&
-                              plan.tier == SubscriptionTier.neighbourhood),
-                      isScheduledTarget: plan.tier == _service.scheduledTier,
-                      isPendingCancel: _service.isPendingCancellation &&
-                          plan.tier == _service.tier,
-                      scheduledSummary: _service.scheduledChangeSummary,
-                      daysUntilRenewal: _service.daysUntilRenewal,
-                      onSelect: () => _onSelectPlan(plan),
-                    ),
-                  );
-                  }),
-
-              const SizedBox(height: 16),
-
-              // Feature comparison
-              _FeatureComparisonTable(period: _period),
-
-              const SizedBox(height: 24),
-
-              // Restore purchases (Apple Guideline 3.1.1 — required)
-              TextButton(
-                onPressed: _restorePurchases,
-                child: Text('Restore Purchases',
-                    style: HuddlText.body(color: context.hc.textTertiary)),
-              ),
-
-              // ── Apple 3.1.2 / Google Play required subscription disclosures ──
-              // Apple requires: subscription name, duration, price, renewal/
-              // cancellation terms, and links to ToS & Privacy Policy.
-              // Google Play requires: prominent disclosure of subscription
-              // terms, auto-renewal, how to cancel, and billing information.
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Column(
-                  children: [
-                    Text(
-                      'Subscription Terms',
-                      style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textSecondary),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Payment will be charged to your Apple ID or Google Play '
-                      'account at confirmation of purchase. Subscriptions '
-                      'automatically renew unless auto-renew is turned off at '
-                      'least 24 hours before the end of the current period. '
-                      'Your account will be charged for renewal within 24 hours '
-                      'prior to the end of the current period at the rate of '
-                      'your selected plan. You can manage and cancel your '
-                      'subscriptions in your App Store or Google Play account '
-                      'settings. Prices shown are in GBP and may vary by region.',
-                      textAlign: TextAlign.center,
-                      style: HuddlText.label(color: HuddlColors.textLight),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/terms');
-                          },
-                          child: Text('Terms of Service',
-                              style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('\u2022',
-                              style: HuddlText.caption(color: HuddlColors.textLight)),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/privacy');
-                          },
-                          child: Text('Privacy Policy',
-                              style: HuddlText.caption(color: HuddlColors.textTertiary).copyWith(decoration: TextDecoration.underline)),
-                        ),
-                      ],
-                    ),
-                  ],
+              Icon(Icons.people_outline,
+                  size: 14, color: Colors.white.withValues(alpha: 0.75)),
+              const SizedBox(width: 6),
+              Text(
+                'Joined by Cambridge parents this week',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    // Plus first for free users — primary conversion target
+    final orderedPlans = _service.isFree
+        ? [
+            SubscriptionPlan.allPlans.firstWhere(
+                (p) => p.tier == SubscriptionTier.neighbourhood),
+            SubscriptionPlan.allPlans.firstWhere(
+                (p) => p.tier == SubscriptionTier.explorer),
+            SubscriptionPlan.allPlans.firstWhere(
+                (p) => p.tier == SubscriptionTier.partner),
+          ]
+        : SubscriptionPlan.allPlans;
+
+    return Scaffold(
+      backgroundColor: context.hc.scaffold,
+      body: Stack(
+        children: [
+          SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Orange hero (replaces AppBar + _GateBanner)
+                  _buildHero(context),
+                  const SizedBox(height: 20),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        // ── Pending cancellation / scheduled change banner ─────────
+                        if (_service.isPendingCancellation || _service.hasScheduledChange)
+                          _ScheduledChangeBanner(
+                            summary: _service.scheduledChangeSummary ?? '',
+                            isCancellation: _service.isPendingCancellation,
+                            daysRemaining: _service.daysUntilRenewal,
+                            onRevert: () async {
+                              if (_service.isPendingCancellation) {
+                                await _service.reactivateSubscription();
+                              } else {
+                                await _service.revokeScheduledChange();
+                              }
+                              if (mounted) setState(() {});
+                            },
+                          ),
+                        if (_service.isPendingCancellation || _service.hasScheduledChange)
+                          const SizedBox(height: 16),
+
+                        // Billing toggle
+                        _BillingToggle(
+                          period: _period,
+                          onChanged: (p) => setState(() => _period = p),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Plan cards — ordered: Plus, Welcome, Partner for free users
+                        ...orderedPlans.map((plan) {
+                          final productId = HuddlProductIds.productIdFor(
+                              plan.tier, _period);
+                          final storePrice =
+                              PaymentService().getPriceForProduct(productId);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _PlanCard(
+                              plan: plan,
+                              period: _period,
+                              currentTier: _service.tier,
+                              storePrice:
+                                  storePrice.isNotEmpty ? storePrice : null,
+                              isCurrentPlan: plan.tier == _service.tier,
+                              isHighlighted: plan.tier ==
+                                      widget.highlightTier ||
+                                  (widget.highlightTier == null &&
+                                      plan.tier ==
+                                          SubscriptionTier.neighbourhood),
+                              isScheduledTarget:
+                                  plan.tier == _service.scheduledTier,
+                              isPendingCancel:
+                                  _service.isPendingCancellation &&
+                                      plan.tier == _service.tier,
+                              scheduledSummary:
+                                  _service.scheduledChangeSummary,
+                              daysUntilRenewal: _service.daysUntilRenewal,
+                              onSelect: () => _onSelectPlan(plan),
+                            ),
+                          );
+                        }),
+
+                        const SizedBox(height: 16),
+
+                        // Feature comparison
+                        _FeatureComparisonTable(period: _period),
+
+                        const SizedBox(height: 24),
+
+                        // Restore purchases (Apple Guideline 3.1.1 — required)
+                        TextButton(
+                          onPressed: _restorePurchases,
+                          child: Text('Restore Purchases',
+                              style: HuddlText.body(
+                                  color: context.hc.textTertiary)),
+                        ),
+
+                        // Apple 3.1.2 / Google Play required disclosures
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Subscription Terms',
+                                style: HuddlText.caption(
+                                    weight: FontWeight.w600,
+                                    color: context.hc.textSecondary),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Payment will be charged to your Apple ID or '
+                                'Google Play account at confirmation of purchase. '
+                                'Subscriptions automatically renew unless '
+                                'auto-renew is turned off at least 24 hours '
+                                'before the end of the current period. Your '
+                                'account will be charged for renewal within 24 '
+                                'hours prior to the end of the current period at '
+                                'the rate of your selected plan. You can manage '
+                                'and cancel your subscriptions in your App Store '
+                                'or Google Play account settings. Prices shown '
+                                'are in GBP and may vary by region.',
+                                textAlign: TextAlign.center,
+                                style:
+                                    HuddlText.label(color: HuddlColors.textLight),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(
+                                        context, '/terms'),
+                                    child: Text(
+                                      'Terms of Service',
+                                      style: HuddlText.caption(
+                                              color: HuddlColors.textTertiary)
+                                          .copyWith(
+                                              decoration:
+                                                  TextDecoration.underline),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8),
+                                    child: Text('\u2022',
+                                        style: HuddlText.caption(
+                                            color: HuddlColors.textLight)),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(
+                                        context, '/privacy'),
+                                    child: Text(
+                                      'Privacy Policy',
+                                      style: HuddlText.caption(
+                                              color: HuddlColors.textTertiary)
+                                          .copyWith(
+                                              decoration:
+                                                  TextDecoration.underline),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Close button overlay ───────────────────────────────────────
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            right: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, size: 18, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -543,33 +660,7 @@ class _ScheduledChangeBanner extends StatelessWidget {
   }
 }
 
-/// Banner shown when a gated feature redirects the user here
-class _GateBanner extends StatelessWidget {
-  final String message;
-  const _GateBanner(this.message);
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: HuddlColors.divider),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.lock_outline, color: HuddlColors.primaryDark, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message,
-                style: HuddlText.body(color: context.hc.textPrimary)),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 
 /// Billing period toggle
@@ -648,6 +739,7 @@ class _BillingToggle extends StatelessWidget {
 class _PlanCard extends StatelessWidget {
   final SubscriptionPlan plan;
   final BillingPeriod period;
+  final SubscriptionTier currentTier;
   /// Store-localised price string (e.g. "£4.99/month" from Apple/Google).
   /// When null, falls back to the hard-coded GBP price from the model.
   final String? storePrice;
@@ -662,6 +754,7 @@ class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.plan,
     required this.period,
+    required this.currentTier,
     this.storePrice,
     required this.isCurrentPlan,
     required this.isHighlighted,
@@ -674,66 +767,83 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final price = plan.priceFor(period);
-    final isFree = plan.tier == SubscriptionTier.explorer;
-    Color borderColor = HuddlColors.gray200;
-    Color bgColor = HuddlColors.white;
-    if (isScheduledTarget) {
-      borderColor = HuddlColors.nearBlack;
-      bgColor = HuddlColors.premiumPurpleBg;
-    } else if (isHighlighted && !isCurrentPlan) {
-      borderColor = HuddlColors.primary;
-      bgColor = HuddlColors.primary.withValues(alpha: 0.06);
-    }
-    if (isCurrentPlan) {
-      borderColor = isPendingCancel ? HuddlColors.error : HuddlColors.nearBlack;
-      bgColor = isPendingCancel
-          ? HuddlColors.error.withValues(alpha: 0.05)
-          : HuddlColors.successBg;
-    }
+    final isPlus    = plan.tier == SubscriptionTier.neighbourhood;
+    final isFreeUser = currentTier == SubscriptionTier.explorer;
+    final tierColor  = _tierColor(plan.tier);
 
-    return Container(
+    // Plus card gets full orange treatment when the user is on free tier —
+    // it's the primary conversion target.
+    final bool isFeatured = isPlus && isFreeUser && !isCurrentPlan;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: isFeatured ? HuddlColors.primary : context.hc.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor, width: isHighlighted || isCurrentPlan || isScheduledTarget ? 2 : 1),
-        boxShadow: isHighlighted
+        border: Border.all(
+          color: isCurrentPlan && !isFeatured
+              ? tierColor
+              : isFeatured
+                  ? Colors.transparent
+                  : HuddlColors.divider,
+          width: isCurrentPlan ? 2 : 0.5,
+        ),
+        boxShadow: isFeatured
             ? [
                 BoxShadow(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                )
+                  color: HuddlColors.primary.withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
               ]
-            : null,
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
+          // ── Card header ────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: _tierColor(plan.tier).withValues(alpha: 0.12),
+                    color: isFeatured
+                        ? Colors.white.withValues(alpha: 0.20)
+                        : tierColor.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(_tierIcon(plan.tier),
-                      color: _tierColor(plan.tier), size: 24),
+                  child: Icon(
+                    _tierIcon(plan.tier),
+                    color: isFeatured ? Colors.white : tierColor,
+                    size: 20,
+                  ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Text(plan.name,
-                              style: HuddlText.display(color: context.hc.textPrimary)),
+                          Text(
+                            plan.name,
+                            style: GoogleFonts.poppins(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: isFeatured
+                                  ? Colors.white
+                                  : context.hc.textPrimary,
+                            ),
+                          ),
                           if (isCurrentPlan) ...[
                             const SizedBox(width: 8),
                             Container(
@@ -742,12 +852,15 @@ class _PlanCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: isPendingCancel
                                     ? HuddlColors.error
-                                    : HuddlColors.nearBlack,
+                                    : (isFeatured
+                                        ? Colors.white.withValues(alpha: 0.25)
+                                        : HuddlColors.nearBlack),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 isPendingCancel ? 'Cancelling' : 'Current',
-                                style: HuddlText.label(color: HuddlColors.white)),
+                                style: HuddlText.label(color: Colors.white),
+                              ),
                             ),
                           ],
                           if (isScheduledTarget) ...[
@@ -760,110 +873,126 @@ class _PlanCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Scheduled',
-                                  style: HuddlText.label(color: HuddlColors.white)),
-                            ),
-                          ],
-                          if (isHighlighted && !isCurrentPlan) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text('Best Value',
-                                  style: HuddlText.label(color: HuddlColors.white)),
+                                  style:
+                                      HuddlText.label(color: HuddlColors.white)),
                             ),
                           ],
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Text(plan.tagline,
-                          style: HuddlText.caption(color: context.hc.textSecondary)),
+                      Text(
+                        plan.tagline,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: isFeatured
+                              ? Colors.white.withValues(alpha: 0.80)
+                              : HuddlColors.textTertiary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // Price
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  // Prefer the store-localised string (correct currency for
-                  // the user's locale).  Fall back to the hard-coded GBP
-                  // price when the store has not loaded (web / slow network).
-                  isFree
-                      ? 'Free'
-                      : (storePrice ?? '\u00A3${price.toStringAsFixed(2)}'),
-                  style: HuddlText.display(color: context.hc.textPrimary),
-                ),
-                if (!isFree) ...[
-                  const SizedBox(width: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 5),
-                    child: Text(
-                      period == BillingPeriod.monthly
-                          ? '/month'
-                          : '/year',
-                      style: HuddlText.body(color: context.hc.textTertiary),
-                    ),
-                  ),
-                  if (period == BillingPeriod.annual && plan.annualSavingsPercent > 0) ...[
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
+                // Price column
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (plan.monthlyPrice > 0) ...[
+                      Text(
+                        storePrice ??
+                            '\u00A3${plan.priceFor(period).toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isFeatured
+                              ? Colors.white
+                              : context.hc.textPrimary,
+                        ),
                       ),
-                      child: Text(
-                        'Save ${plan.annualSavingsPercent}%',
-                        style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.primary),
+                      Text(
+                        period == BillingPeriod.annual ? '/year' : '/month',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: isFeatured
+                              ? Colors.white.withValues(alpha: 0.70)
+                              : HuddlColors.textTertiary,
+                        ),
                       ),
-                    ),
+                      if (period == BillingPeriod.annual &&
+                          plan.annualSavingsPercent > 0)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isFeatured
+                                ? Colors.white.withValues(alpha: 0.20)
+                                : HuddlColors.yellowSoft,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Save ${plan.annualSavingsPercent}%',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: isFeatured
+                                  ? Colors.white
+                                  : HuddlColors.yellowDark,
+                            ),
+                          ),
+                        ),
+                    ] else
+                      Text(
+                        'Free',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: context.hc.textPrimary,
+                        ),
+                      ),
                   ],
-                ],
+                ),
               ],
             ),
           ),
 
-          // Subtitle
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(plan.subtitle,
-                  style: HuddlText.caption(color: context.hc.textTertiary).copyWith(fontStyle: FontStyle.italic)),
-            ),
+          const SizedBox(height: 16),
+          Divider(
+            height: 1,
+            color: isFeatured
+                ? Colors.white.withValues(alpha: 0.15)
+                : HuddlColors.divider,
+            indent: 20,
+            endIndent: 20,
           ),
+          const SizedBox(height: 14),
 
-          // Highlights
+          // ── Benefit list ────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: plan.highlights
                   .map((h) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.only(bottom: 10),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Icon(Icons.check_circle,
-                                  size: 16,
-                                  color: _tierColor(plan.tier)),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 18,
+                              color: isFeatured ? Colors.white : tierColor,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: Text(h,
-                                  style: HuddlText.body(color: context.hc.textSecondary)),
+                              child: Text(
+                                h,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  height: 1.4,
+                                  color: isFeatured
+                                      ? Colors.white.withValues(alpha: 0.92)
+                                      : context.hc.textSecondary,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -872,10 +1001,10 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
 
-          // Pending cancellation notice on card
+          // Pending cancellation notice
           if (isPendingCancel && daysUntilRenewal > 0)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
@@ -899,10 +1028,10 @@ class _PlanCard extends StatelessWidget {
               ),
             ),
 
-          // Scheduled target notice on card
+          // Scheduled change notice
           if (isScheduledTarget)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
@@ -918,7 +1047,8 @@ class _PlanCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         scheduledSummary ?? 'Scheduled for next billing cycle',
-                        style: HuddlText.caption(color: HuddlColors.nearBlack),
+                        style:
+                            HuddlText.caption(color: HuddlColors.nearBlack),
                       ),
                     ),
                   ],
@@ -926,23 +1056,49 @@ class _PlanCard extends StatelessWidget {
               ),
             ),
 
-          // CTA button
+          const SizedBox(height: 16),
+
+          // ── CTA button ────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: HuddlButton(
-              label: isCurrentPlan
-                  ? (isPendingCancel
-                      ? 'Reactivate'
-                      : (isScheduledTarget ? 'Keep Current Plan' : 'Current Plan'))
-                  : (isScheduledTarget
-                      ? 'Scheduled'
-                      : (isFree ? 'Cancel Subscription' : 'Choose ${plan.name}')),
-              variant: isFree && !isCurrentPlan
-                  ? HuddlButtonVariant.destructive
-                  : HuddlButtonVariant.primary,
-              onPressed: isCurrentPlan
-                  ? (isPendingCancel || isScheduledTarget ? onSelect : null)
-                  : (isScheduledTarget ? null : onSelect),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: isCurrentPlan
+                    ? (isPendingCancel || isScheduledTarget ? onSelect : null)
+                    : (isScheduledTarget ? null : onSelect),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isFeatured
+                      ? Colors.white
+                      : isCurrentPlan
+                          ? HuddlColors.gray100
+                          : tierColor,
+                  foregroundColor: isFeatured
+                      ? HuddlColors.primary
+                      : isCurrentPlan
+                          ? HuddlColors.textTertiary
+                          : Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(
+                  isCurrentPlan
+                      ? (isPendingCancel
+                          ? 'Reactivate'
+                          : (isScheduledTarget
+                              ? 'Keep Current Plan'
+                              : 'Current Plan'))
+                      : isScheduledTarget
+                          ? 'Scheduled'
+                          : plan.monthlyPrice == 0
+                              ? 'Continue Free'
+                              : 'Get ${plan.name}',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
           ),
         ],
@@ -974,6 +1130,91 @@ class _PlanCard extends StatelessWidget {
       case SubscriptionTier.partner:
         return Icons.verified;
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UPGRADE CELEBRATION — full-screen orange flash on successful purchase
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _UpgradeCelebration extends StatefulWidget {
+  final String planName;
+  const _UpgradeCelebration({required this.planName});
+
+  @override
+  State<_UpgradeCelebration> createState() => _UpgradeCelebrationState();
+}
+
+class _UpgradeCelebrationState extends State<_UpgradeCelebration>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _ctrl.forward();
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: HuddlColors.primary,
+      child: FadeTransition(
+        opacity: _fade,
+        child: ScaleTransition(
+          scale: _scale,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/huddl_logomark.svg',
+                  width: 80,
+                  height: 80 * (150 / 107),
+                  colorFilter: const ColorFilter.mode(
+                      Colors.white, BlendMode.srcIn),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  "You're in! 🎉",
+                  style: GoogleFonts.poppins(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Welcome to ${widget.planName}.\nYour community is fully unlocked.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

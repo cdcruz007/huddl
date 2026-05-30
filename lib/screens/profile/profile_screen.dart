@@ -470,110 +470,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSubscriptionCard() {
     final sub = _subscriptionService.subscription;
-    final isFree = sub.isFree;
-    final isNeighbourhood = sub.isNeighbourhood || sub.isInnerCircle; // legacy innerCircle → Plus
+    final isFree    = sub.isFree;
     final isPartner = sub.isPartner;
 
-    Color accentColor = HuddlColors.textHint;
-    IconData icon = Icons.explore_outlined;
-    String planLabel = 'Welcome';
-    String subtitle = 'Upgrade for unlimited access';
-
-    if (isPartner) {
-      accentColor = HuddlColors.nearBlack;
-      icon = Icons.verified_outlined;
-      planLabel = 'Huddl Partner';
-      subtitle = sub.billingPeriod == BillingPeriod.annual
-          ? '\u00A3199.00/year'
-          : '\u00A324.99/month';
-    } else if (isNeighbourhood) {
-      accentColor = HuddlColors.primary;
-      icon = Icons.home_outlined;
-      planLabel = 'Huddl Plus';
-      subtitle = sub.billingPeriod == BillingPeriod.annual
-              ? '\u00A339.99/year'
-              : '\u00A34.99/month';
-    }
-
-    return Container(
-      color: context.hc.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('Subscription',
-                  style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () async {
-              if (isFree) {
-                await Navigator.pushNamed(context, '/subscription_plans');
-              } else {
-                await Navigator.pushNamed(context, '/manage_subscription');
-              }
-              if (mounted) setState(() {});
-            },
-            child: Container(
-              padding: const EdgeInsets.all(14),
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.pushNamed(
+          context,
+          isFree ? '/subscription_plans' : '/manage_subscription',
+        );
+        if (mounted) setState(() {});
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: isFree
+              ? LinearGradient(
+                  colors: [
+                    HuddlColors.primary,
+                    HuddlColors.primary.withRed(230),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isFree ? null : HuddlColors.nearBlack,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: (isFree ? HuddlColors.primary : Colors.black)
+                  .withValues(alpha: 0.20),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Plan icon
+            Container(
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: context.hc.surfaceAlt,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isFree
-                      ? HuddlColors.primary.withValues(alpha: 0.30)
-                      : accentColor.withValues(alpha: 0.25),
-                ),
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
+              child: Icon(
+                isFree
+                    ? Icons.rocket_launch_outlined
+                    : isPartner
+                        ? Icons.verified_outlined
+                        : Icons.home_outlined,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, color: accentColor, size: 22),
+                  Text(
+                    isFree
+                        ? 'Unlock your full community'
+                        : isPartner
+                            ? 'Huddl Partner'
+                            : 'Huddl Plus',
+                    style: HuddlText.body(
+                        weight: FontWeight.w700, color: HuddlColors.white),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(planLabel,
-                                style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
-                          ],
-                        ),
-                        const SizedBox(height: 1),
-                        Text(subtitle,
-                            style: HuddlText.caption(color: context.hc.textSecondary)),
-                      ],
-                    ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isFree
+                        ? 'Groups, AI, meetups \u2014 from \u00A34.99/mo'
+                        : isPartner
+                            ? '\u00A3${sub.billingPeriod == BillingPeriod.annual ? "199.00/year" : "24.99/month"}'
+                            : '\u00A3${sub.billingPeriod == BillingPeriod.annual ? "39.99/year" : "4.99/month"}',
+                    style: HuddlText.caption(
+                        color: HuddlColors.white.withValues(alpha: 0.80)),
                   ),
-                  if (isFree)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text('Upgrade',
-                          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white)),
-                    )
-                  else
-                    Icon(Icons.chevron_right,
-                        color: accentColor, size: 22),
                 ],
               ),
             ),
-          ),
-        ],
+            Icon(
+              isFree ? Icons.arrow_forward_ios_rounded : Icons.settings_outlined,
+              color: Colors.white.withValues(alpha: 0.70),
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

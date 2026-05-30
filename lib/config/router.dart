@@ -39,6 +39,7 @@ import '../screens/rehome/create_listing_screen.dart';
 import '../screens/subscription/subscription_plans_screen.dart';
 import '../screens/subscription/subscription_checkout_screen.dart';
 import '../screens/subscription/manage_subscription_screen.dart';
+import '../screens/subscription/subscription_gate_screen.dart';
 import '../services/rehome_service.dart';
 import '../services/payment_service.dart';
 import '../models/subscription.dart';
@@ -235,6 +236,25 @@ class AppRouter {
         );
 
       // ── Subscription feature routes ──────────────────────────────────
+      case '/subscription_gate':
+        final gateArgs =
+            settings.arguments as Map<String, dynamic>? ?? {};
+        // featureIcon IconData cannot be passed through route arguments
+        // (non-const IconData breaks web icon tree-shaking).
+        // Icon is always lock_outline_rounded when routed by name;
+        // use SubscriptionGateScreen.show() for custom icons.
+        return SlidePageRoute(
+          page: SubscriptionGateScreen(
+            featureTitle:
+                gateArgs['featureTitle'] as String? ?? 'Premium Feature',
+            featureDescription: gateArgs['featureDescription'] as String? ??
+                'Upgrade to access this feature.',
+            requiredPlan:
+                gateArgs['requiredPlan'] as String? ?? 'Huddl Plus',
+          ),
+          direction: SlideDirection.up,
+        );
+
       case '/subscription_plans':
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         SubscriptionTier? highlightTier;
