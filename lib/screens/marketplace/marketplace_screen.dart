@@ -4196,7 +4196,6 @@ class _MarketGridCardState extends State<_MarketGridCard> {
     final item = widget.item;
     final hc = context.hc;
     final hasImage = item.imageUrls.isNotEmpty && item.imageUrls.first.isNotEmpty;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // High-quality grid card:
     // • No card border or shadow — clean edge-to-edge photo grid
@@ -4204,7 +4203,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
     // • Single nearBlack pill badge top-left (condition or "Yours")
     // • Heart top-right on white scrim circle
     // • Text below: title (w500), price (w700 nearBlack), location (muted)
-    // • warmSand / white background, zero decorative noise
+    // • surface background, zero decorative noise
 
     return Semantics(
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, ${item.sellerLocation}',
@@ -4213,7 +4212,7 @@ class _MarketGridCardState extends State<_MarketGridCard> {
         scale: 0.97,
         onTap: widget.onTap,
         child: ColoredBox(
-          color: isDark ? hc.surface : const Color(0xFFF7F5F2),
+          color: hc.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -162,9 +162,6 @@ class HuddlColors {
   static const Color textLight = Color(0xFFB0B0B0);
 
   // ── Backgrounds (light mode) ────────────────────────────────────────────
-  /// Warm sand — Phase 1 scaffold background (#F7F5F2).
-  /// "The single change that does 80% of the work" — docx Phase 1 spec.
-  static const Color warmSand = Color(0xFFF7F5F2);
   static const Color background = Color(0xFFF6F6F6);
   static const Color white = Color(0xFFFFFFFF);
   static const Color peachLight = Color(0xFFFFF3ED);
@@ -252,7 +249,6 @@ class HuddlColors {
   static const Color attachPollBg     = Color(0xFFFFF6C9);
 
   // ── Warmth pass additions ────────────────────────────────────────────────
-  static const Color warmCream       = Color(0xFFFFF8F3);  // scaffold — warm cream
   static const Color warmDivider     = Color(0xFFEEDDD4);  // warm-tinted divider
   static const Color peachSoft       = Color(0xFFFFE8D9);  // orange tint surface
 
