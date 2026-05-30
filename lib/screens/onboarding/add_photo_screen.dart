@@ -74,7 +74,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1C1C1E), // dark sheet
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -89,7 +89,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: HuddlColors.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -385,7 +385,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
       errorBuilder: (_, __, ___) => Container(
         width: 260,
         height: 260,
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFFF5F5F5),
         child: const Icon(Icons.person, size: 80, color: HuddlColors.textHint),
       ),
     );
