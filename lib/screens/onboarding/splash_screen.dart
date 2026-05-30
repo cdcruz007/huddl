@@ -16,7 +16,7 @@ import '../../services/biometric_auth_service.dart';
 // Animation: settle — H mark starts 15° tilted + scale 0.72, rotates level
 //   and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
 //   600ms settle + 300ms hold + 200ms exit fade — Airbnb-tier timing.
-// Wordmark fades at 50% (300ms). Tagline at 78% (468ms).
+// Tagline at 78% (468ms).
 // Status bar: white icons on orange.
 // =============================================================================
 
@@ -41,9 +41,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   // H mark opacity: 0 → 1 in first 43% of animation (258ms)
   late final Animation<double> _markOpacity;
-
-  // Wordmark opacity: fades in from 50% of animation (300ms)
-  late final Animation<double> _wordmarkOpacity;
 
   // Tagline opacity: fades in from 78% of animation (468ms)
   late final Animation<double> _taglineOpacity;
@@ -99,12 +96,6 @@ class _SplashScreenState extends State<SplashScreen>
     _markOpacity = CurvedAnimation(
       parent: _settleCtrl,
       curve: const Interval(0.0, 0.43, curve: Curves.easeOut),
-    );
-
-    // ── Wordmark: fades in from 50% through the settle (300ms) ───────────
-    _wordmarkOpacity = CurvedAnimation(
-      parent: _settleCtrl,
-      curve: const Interval(0.50, 1.0, curve: Curves.easeOut),
     );
 
     // ── Tagline: fades in from 78% through the settle (468ms) ────────────
@@ -184,57 +175,26 @@ class _SplashScreenState extends State<SplashScreen>
                 alignment: Alignment.center,
                 children: [
 
-                  // ── Centred logo group ────────────────────────────────
+                  // ── Centred lockup — settle animation applied to whole unit ──
                   Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-
-                        // ── H mark: rotates from 15° to 0°, scales with spring ───────
-                        FadeTransition(
-                          opacity: _markOpacity,
-                          child: RotationTransition(
-                            turns: _rotation,
-                            child: ScaleTransition(
-                              scale: _markScale,
-                              child: SvgPicture.asset(
-                                'assets/icons/huddl_logomark.svg',
-                                width: 96,
-                                // preserve 107:150 viewBox ratio
-                                height: 96 * (150 / 107),
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 22),
-
-                        // ── Wordmark: fades in at 300ms once mark has settled ────────
-                        FadeTransition(
-                          opacity: _wordmarkOpacity,
+                    child: FadeTransition(
+                      opacity: _markOpacity,
+                      child: RotationTransition(
+                        turns: _rotation,
+                        child: ScaleTransition(
+                          scale: _markScale,
                           child: SvgPicture.asset(
                             'assets/icons/huddl_lockup.svg',
-                            height: 38,
+                            height: 56,
                             colorFilter: const ColorFilter.mode(
                               Colors.white,
                               BlendMode.srcIn,
                             ),
-                            placeholderBuilder: (_) => Text(
-                              'huddl',
-                              style: GoogleFonts.poppins(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
+                            placeholderBuilder: (_) =>
+                                const SizedBox(height: 56),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
 
