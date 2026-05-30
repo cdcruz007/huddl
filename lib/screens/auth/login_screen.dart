@@ -407,12 +407,12 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // ── Logo ──────────────────────────────────────────
-              const HuddlWordmarkLogo(height: 44),
+              const HuddlWordmarkLogo(height: 56),
 
-              const SizedBox(height: 44),
+              const SizedBox(height: 40),
 
               // ── Title ────────────────────────────────────────
               Text(
@@ -429,238 +429,233 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 44),
+              const SizedBox(height: 40),
 
-              // ── Phone number field (UK format) ──────────────
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Phone number',
-                    style: AppTextStyles.inputLabel.copyWith(
-                      color: context.hc.textSecondary,
+              // ── Unified card — phone + password (Airbnb pattern) ────────────
+              Container(
+                decoration: BoxDecoration(
+                  color: context.hc.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.hc.divider, width: 0.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Country code (locked to UK)
-                      Container(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: context.hc.divider),
+                  ],
+                ),
+                child: Column(
+                  children: [
+
+                    // ── Phone field ──────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                      child: Row(
+                        children: [
+                          // Country code pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: context.hc.inputBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('\u{1F1EC}\u{1F1E7}',
+                                    style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '+44',
+                                  style: HuddlText.body(
+                                    color: context.hc.textPrimary,
+                                    weight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text('\u{1F1EC}\u{1F1E7}',
-                                style: TextStyle(fontSize: 20)),
-                            const SizedBox(width: 6),
-                            Text(
-                              _countryCode,
-                              style: AppTextStyles.body1.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            // BARE TextField — no Semantics wrapper of any kind.
+                            // v24: Semantics(excludeSemantics:true) → outer View + inner
+                            //   EditText, Robo matched outer non-editable View.
+                            // v25: semanticsLabel on InputDecoration → DESC='' in
+                            //   BySelector, Robo hit phone EditText twice (index 0 both).
+                            // v26: Semantics(label) WITHOUT excludeSemantics → altered
+                            //   screen fingerprint, Robo skipped VIEW_TEXT_CHANGED
+                            //   entirely and clicked Log in with empty fields.
+                            // v27: bare TextField. Phone = byselector index 0 (proven
+                            //   in every log). Password = byselector index 1 (proven
+                            //   in v26 log line 32398). robo_script targets index 1
+                            //   for password using groupViewChildPosition:1.
+                            child: TextField(
+                              key: const Key('phoneField'),
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              autofillHints: const [AutofillHints.telephoneNumberNational],
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                _UKMobileInputFormatter(),
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              maxLength: 10,
+                              style: HuddlText.body(color: context.hc.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: 'Mobile number',
+                                hintStyle: HuddlText.body(
+                                    color: context.hc.textTertiary),
+                                counterText: '',
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 14),
+                              ),
+                              onChanged: (_) {
+                                final err = _validatePhone(_phoneController.text);
+                                setState(() => _phoneError = err);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Divider ──────────────────────────────────────────
+                    Divider(height: 1, color: context.hc.divider),
+
+                    // ── Password field ────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            // PASSWORD FIELD — v29 approach.
+                            //
+                            // History of failures:
+                            // v24: Semantics(excludeSemantics:true) → outer View gets
+                            //   contentDescription but has no ACTION_SET_TEXT; Robo
+                            //   types into non-editable node, text silently lost.
+                            // v25: InputDecoration.semanticsLabel on BOTH fields →
+                            //   DESC='' on both EditText nodes; robo_script
+                            //   contentDescription selector fell back to index 0
+                            //   (phone field) for both type-text steps.
+                            // v26: Semantics(label) on BOTH fields → altered screen
+                            //   fingerprint; Robo skipped VIEW_TEXT_CHANGED entirely
+                            //   and clicked Log in with empty fields.
+                            // v27: bare TextFields + groupViewChildPosition:1 →
+                            //   groupViewChildPosition is IGNORED by UiAutomator2;
+                            //   both type-text steps hit phone field (index 0).
+                            // v28: Semantics(label:'password_field', child:TextField)
+                            //   → Flutter creates a PARENT wrapper View with
+                            //   contentDescription='password_field', while the inner
+                            //   android.widget.EditText keeps DESC=''. robo_script
+                            //   selector requires BOTH contentDescription AND className
+                            //   on the same node — they are on different nodes, so
+                            //   zero matches; step silently no-ops (confirmed: no
+                            //   BySelector[DESC='password_field'] in 121 k-line log).
+                            //
+                            // v29 FIX: Semantics(identifier:'password_field') wraps
+                            //   the TextField. Semantics.identifier maps directly to
+                            //   AccessibilityNodeInfo.setViewIdResourceName on Android
+                            //   (documented in flutter/semantics.dart line 1795-1810:
+                            //   "On Android, this is used for
+                            //   AccessibilityNodeInfo.setViewIdResourceName. It'll
+                            //   appear in accessibility hierarchy as resource-id").
+                            //   The robo_script targets this with resourceId selector
+                            //   (RES= field in UiAutomator BySelector). Unlike
+                            //   contentDescription, resource-id is NOT affected by
+                            //   Robo's screen-fingerprint logic, so this cannot alter
+                            //   how Robo classifies the screen. The selector fires a
+                            //   VIEW_TEXT_CHANGED on the correct EditText node.
+                            //   Phone field stays completely bare — no wrapper at all.
+                            child: Semantics(
+                              identifier: 'password_field',
+                              child: TextField(
+                                key: const Key('passwordField'),
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                autofillHints: const [AutofillHints.password],
+                                style: HuddlText.body(color: context.hc.textPrimary),
+                                decoration: InputDecoration(
+                                  hintText: 'Password',
+                                  hintStyle: HuddlText.body(
+                                      color: context.hc.textTertiary),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 14),
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                // onSubmitted intentionally absent: firing onSubmitted
+                                // during Robo's TYPE_TEXT causes a screen-state
+                                // transition that prevents Robo finding Log in button.
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        // BARE TextField — no Semantics wrapper of any kind.
-                        // v24: Semantics(excludeSemantics:true) → outer View + inner
-                        //   EditText, Robo matched outer non-editable View.
-                        // v25: semanticsLabel on InputDecoration → DESC='' in
-                        //   BySelector, Robo hit phone EditText twice (index 0 both).
-                        // v26: Semantics(label) WITHOUT excludeSemantics → altered
-                        //   screen fingerprint, Robo skipped VIEW_TEXT_CHANGED
-                        //   entirely and clicked Log in with empty fields.
-                        // v27: bare TextField. Phone = byselector index 0 (proven
-                        //   in every log). Password = byselector index 1 (proven
-                        //   in v26 log line 32398). robo_script targets index 1
-                        //   for password using groupViewChildPosition:1.
-                        child: TextField(
-                          key: const Key('phoneField'),
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          autofillHints: const [AutofillHints.telephoneNumberNational],
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            _UKMobileInputFormatter(),
-                            LengthLimitingTextInputFormatter(10),
-                          ],
-                            maxLength: 10,
-                            style: AppTextStyles.body1.copyWith(color: context.hc.textPrimary),
-                          decoration: InputDecoration(
-                            hintText: '7700 900 123',
-                            hintStyle: AppTextStyles.inputHint.copyWith(color: context.hc.textTertiary),
-                            counterText: '',
-                            border: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: _phoneError != null
-                                      ? HuddlColors.error
-                                      : context.hc.divider),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: _phoneError != null
-                                      ? HuddlColors.error
-                                      : HuddlColors.primary,
-                                  width: 2),
-                            ),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: _phoneError != null
-                                      ? HuddlColors.error
-                                      : context.hc.divider),
-                            ),
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 8),
                           ),
-                          onChanged: (_) {
-                            final err = _validatePhone(_phoneController.text);
-                            setState(() => _phoneError = err);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_phoneError != null) ...[
-                    const SizedBox(height: 4),
-                    Text(_phoneError!,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: HuddlColors.error,
-                            fontWeight: FontWeight.w500)),
-                  ],
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // ── Password field ──────────────────────────────────────────────────
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Password',
-                      style: AppTextStyles.inputLabel.copyWith(
-                        color: context.hc.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // PASSWORD FIELD — v29 approach.
-                    //
-                    // History of failures:
-                    // v24: Semantics(excludeSemantics:true) → outer View gets
-                    //   contentDescription but has no ACTION_SET_TEXT; Robo
-                    //   types into non-editable node, text silently lost.
-                    // v25: InputDecoration.semanticsLabel on BOTH fields →
-                    //   DESC='' on both EditText nodes; robo_script
-                    //   contentDescription selector fell back to index 0
-                    //   (phone field) for both type-text steps.
-                    // v26: Semantics(label) on BOTH fields → altered screen
-                    //   fingerprint; Robo skipped VIEW_TEXT_CHANGED entirely
-                    //   and clicked Log in with empty fields.
-                    // v27: bare TextFields + groupViewChildPosition:1 →
-                    //   groupViewChildPosition is IGNORED by UiAutomator2;
-                    //   both type-text steps hit phone field (index 0).
-                    // v28: Semantics(label:'password_field', child:TextField)
-                    //   → Flutter creates a PARENT wrapper View with
-                    //   contentDescription='password_field', while the inner
-                    //   android.widget.EditText keeps DESC=''. robo_script
-                    //   selector requires BOTH contentDescription AND className
-                    //   on the same node — they are on different nodes, so
-                    //   zero matches; step silently no-ops (confirmed: no
-                    //   BySelector[DESC='password_field'] in 121 k-line log).
-                    //
-                    // v29 FIX: Semantics(identifier:'password_field') wraps
-                    //   the TextField. Semantics.identifier maps directly to
-                    //   AccessibilityNodeInfo.setViewIdResourceName on Android
-                    //   (documented in flutter/semantics.dart line 1795-1810:
-                    //   "On Android, this is used for
-                    //   AccessibilityNodeInfo.setViewIdResourceName. It'll
-                    //   appear in accessibility hierarchy as resource-id").
-                    //   The robo_script targets this with resourceId selector
-                    //   (RES= field in UiAutomator BySelector). Unlike
-                    //   contentDescription, resource-id is NOT affected by
-                    //   Robo's screen-fingerprint logic, so this cannot alter
-                    //   how Robo classifies the screen. The selector fires a
-                    //   VIEW_TEXT_CHANGED on the correct EditText node.
-                    //   Phone field stays completely bare — no wrapper at all.
-                    Semantics(
-                      identifier: 'password_field',
-                      child: TextField(
-                        key: const Key('passwordField'),
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        style: AppTextStyles.body1.copyWith(color: context.hc.textPrimary),
-                        decoration: InputDecoration(
-                          hintText: 'Min 8 chars, upper+lower+digit',
-                          hintStyle: AppTextStyles.inputHint.copyWith(color: context.hc.textTertiary),
-                          suffixIcon: ExcludeSemantics(
+                          // Eye toggle — ExcludeSemantics so Robo cannot accidentally
+                          // tap it instead of the Log in button.
+                          ExcludeSemantics(
                             child: IconButton(
                               icon: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
+                                size: 20,
                                 color: context.hc.textTertiary,
                               ),
-                              onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
+                              onPressed: () =>
+                                  setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                          border: UnderlineInputBorder(
-                            borderSide: BorderSide(color: context.hc.divider),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide:
-                                BorderSide(color: HuddlColors.primary, width: 2),
-                          ),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: context.hc.divider),
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                        onChanged: (_) => setState(() {}),
-                        // onSubmitted intentionally absent: firing onSubmitted
-                        // during Robo's TYPE_TEXT causes a screen-state
-                        // transition that prevents Robo finding Log in button.
+                        ],
                       ),
                     ),
+
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 12),
+              // ── Phone error (shown below card if present) ──────────────
+              if (_phoneError != null) ...[
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    _phoneError!,
+                    style: HuddlText.caption(
+                        color: HuddlColors.error,
+                        weight: FontWeight.w500),
+                  ),
+                ),
+              ],
 
-                // ── Forgot password ──────────────────────────────
-                // ExcludeSemantics hides this from Robo Test's crawl so it
-                // cannot accidentally tap "Forgot password?" after the login
-                // button click lands on a disabled state.
-                ExcludeSemantics(
-                 child: Align(
+              const SizedBox(height: 12),
+
+              // ── Forgot password — right-aligned text link below card ──
+              // ExcludeSemantics hides this from Robo Test's crawl so it
+              // cannot accidentally tap "Forgot password?" after the login
+              // button click lands on a disabled state.
+              ExcludeSemantics(
+                child: Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _showForgotPasswordFlow,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
+                  child: GestureDetector(
+                    onTap: _showForgotPasswordFlow,
                     child: Text(
                       'Forgot password?',
-                      style: AppTextStyles.body2.copyWith(
-                        color: context.hc.textTertiary,
-                        fontWeight: FontWeight.w600,
+                      style: HuddlText.body(
+                        color: HuddlColors.primary,
+                        weight: FontWeight.w500,
                       ),
                     ),
                   ),
-                 ),
                 ),
+              ),
+
               const SizedBox(height: 8),
 
               // ── Error message ────────────────────────────────

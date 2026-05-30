@@ -286,22 +286,14 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     children: [
                       const SizedBox(height: 32),
 
-                      // ── Lock icon ────────────────────────────────────
-                      Container(
-                        width: 64, height: 64,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.lock_outline_rounded,
-                            size: 32, color: HuddlColors.onboardingOrange),
-                      ),
+                      // ── Illustration placeholder ────────────────────
+                      const SizedBox(height: 16),
 
                       const SizedBox(height: 20),
 
                       // ── Title ────────────────────────────────────────
                       Text(
-                        'Verify it\'s you',
+                        'Enter your code',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
@@ -314,11 +306,9 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                       // ── Subtitle ─────────────────────────────────────
                       Text(
-                        'We\'ve sent a 6-digit code to\n${widget.phoneNumber}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: HuddlColors.disabledText,
-                          height: 1.5,
+                        'Sent to ${widget.phoneNumber}',
+                        style: HuddlText.body(
+                          color: context.hc.textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -346,37 +336,27 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                       const SizedBox(height: 28),
 
-                      // ── Resend button ────────────────────────────────
+                      // ── Resend — inline text link ─────────────────────
                       GestureDetector(
-                        onTap: _resendCode,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          decoration: BoxDecoration(
-                            color: context.hc.inputBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: HuddlColors.inputBorderLight, width: 1),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _resendTimer > 0
-                                ? 'Resend code in $_resendTimer s'
-                                : 'Resend code',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: _resendTimer > 0
-                                  ? HuddlColors.disabledText
-                                  : HuddlColors.onboardingOrange,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        onTap: _resendTimer > 0 ? null : _resendCode,
+                        child: Text(
+                          _resendTimer > 0
+                              ? 'Resend code in ${_resendTimer}s'
+                              : 'Resend code',
+                          style: HuddlText.body(
+                            color: _resendTimer > 0
+                                ? context.hc.textTertiary
+                                : HuddlColors.primary,
+                            weight: _resendTimer > 0
+                                ? FontWeight.w400
+                                : FontWeight.w600,
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 20),
 
-                      // ── Verify button ────────────────────────────────
+                      // ── Confirm button ───────────────────────────────
                       _isVerifying
                           ? SizedBox(
                               height: 54,
@@ -387,24 +367,19 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                                 ),
                               ),
                             )
-                          : _OrangeButton(
-                              key: const Key('otpVerifyButton'),
-                              label: 'Verify & Log in',
-                              enabled: _codeController.text.length == 6 &&
-                                  !_hasError,
-                              onTap: _verify,
+                          : Semantics(
+                              label: 'otp_verify_button',
+                              button: true,
+                              child: HuddlButton(
+                                key: const Key('otpVerifyButton'),
+                                label: 'Confirm',
+                                fullWidth: true,
+                                onPressed: (_codeController.text.length == 6 &&
+                                        !_hasError)
+                                    ? _verify
+                                    : null,
+                              ),
                             ),
-
-                      const SizedBox(height: 24),
-
-                      Text(
-                        'This keeps your Huddl account secure.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: HuddlColors.disabledText.withValues(alpha: 0.8),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
 
                       // Extra bottom padding so content clears the keyboard
                       const SizedBox(height: 32),
@@ -523,39 +498,3 @@ class _OtpBoxRow extends StatelessWidget {
   }
 }
 
-// ── Reusable orange button ─────────────────────────────────────────────────────
-class _OrangeButton extends StatelessWidget {
-  final String label;
-  final bool enabled;
-  final VoidCallback onTap;
-  const _OrangeButton(
-      {super.key, required this.label, required this.enabled, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'otp_verify_button',
-      button: true,
-      child: GestureDetector(
-        onTap: enabled ? onTap : null,
-        child: Container(
-          width: double.infinity,
-          height: 54,
-          decoration: BoxDecoration(
-            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
-            borderRadius: BorderRadius.circular(12),
-        ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: enabled ? Colors.white : HuddlColors.disabledText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
