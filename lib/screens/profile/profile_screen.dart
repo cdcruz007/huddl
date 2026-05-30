@@ -30,7 +30,6 @@ import '../../services/feedback_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../utils/borough_migration_service.dart';
-import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -790,14 +789,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SliverToBoxAdapter(child: _buildUsageSection(hc)),
 
-              // ── Settings entry row ────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _buildSettingsEntryRow(hc),
-                ),
-              ),
-
               // ── Logout + version ──────────────────────────────────────
               SliverToBoxAdapter(
                 child: Column(
@@ -1178,43 +1169,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }).toList(),
         ),
       ],
-    );
-  }
-
-  /// Single settings entry row — opens the existing settings sheet.
-  Widget _buildSettingsEntryRow(HuddlContextColors hc) {
-    return Container(
-      color: hc.surface,
-      child: Column(
-        children: [
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            leading: Icon(Icons.settings_outlined, color: hc.textPrimary),
-            title: Text('Settings',
-                style: HuddlText.body(color: hc.textPrimary)),
-            subtitle: Text('Account, privacy, notifications',
-                style: HuddlText.caption(color: hc.textTertiary)),
-            trailing:
-                Icon(Icons.chevron_right, color: hc.textTertiary, size: 18),
-            onTap: _openSettingsSheet,
-          ),
-          if (_subscriptionService.isPartner) ...[
-            Divider(height: 1, color: hc.divider),
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              leading: Icon(Icons.store_outlined, color: hc.textPrimary),
-              title: Text('Partner Dashboard',
-                  style: HuddlText.body(color: hc.textPrimary)),
-              subtitle: Text('Profile, analytics & verification',
-                  style: HuddlText.caption(color: hc.textTertiary)),
-              trailing: Icon(Icons.chevron_right,
-                  color: hc.textTertiary, size: 18),
-              onTap: () =>
-                  Navigator.pushNamed(context, '/partner_profile'),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -5002,6 +4956,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ANALYTICS PREFERENCES — GDPR Art. 6(1)(a) opt-out
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  void _showAnalyticsPrefsSheet() {
+    // Default true (opted in). In production, load from SharedPreferences:
+    // SharedPreferences.getInstance().then((p) => p.getBool('analytics_enabled') ?? true)
+    bool analyticsEnabled = true;
+    bool crashEnabled = true;
+
+    _showSheet(
+      title: 'Analytics preferences',
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              child: Text(
+                'Huddl uses anonymised analytics to understand how the app '
+                'is used and to fix bugs. You can opt out at any time. '
+                'This does not affect your community features.',
+                style: HuddlText.body(),
+              ),
+            ),
+
+            // ── App analytics toggle ───────────────────────────────────
+            SwitchListTile(
+              value: analyticsEnabled,
+              onChanged: (v) async {
+                setLocal(() => analyticsEnabled = v);
+                // TODO: FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(v)
+                // TODO: SharedPreferences: set 'analytics_enabled' = v
+              },
+              title: Text(
+                'App analytics',
+                style: HuddlText.body(
+                    color: context.hc.textPrimary,
+                    weight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                'Helps us understand how parents use the app',
+                style: HuddlText.caption(),
+              ),
+              activeThumbColor: HuddlColors.primary,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20),
+            ),
+
+            Divider(
+                indent: 20, endIndent: 20, color: context.hc.divider),
+
+            // ── Crash reporting toggle ─────────────────────────────────
+            SwitchListTile(
+              value: crashEnabled,
+              onChanged: (v) async {
+                setLocal(() => crashEnabled = v);
+                // TODO: FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(v)
+                // TODO: SharedPreferences: set 'crash_reporting_enabled' = v
+              },
+              title: Text(
+                'Crash reporting',
+                style: HuddlText.body(
+                    color: context.hc.textPrimary,
+                    weight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                'Sends anonymous crash reports to help fix bugs faster',
+                style: HuddlText.caption(),
+              ),
+              activeThumbColor: HuddlColors.primary,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── ICO GDPR reference ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Text(
+                'Under UK GDPR you have the right to opt out of analytics '
+                'processing. For questions contact dpo@huddl.app.',
+                style: HuddlText.caption(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showHelpSheet() {
     _showSheet(
       title: 'Help & Support',
@@ -5149,63 +5196,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _openSettingsSheet() {
-    _showSheet(
-      title: 'Settings',
-      builder: (c) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _helpTile(Icons.notifications_outlined, 'Notifications',
-              'Manage push notifications', () {
-            Navigator.pop(c);
-            _showNotificationsSheet();
-          }),
-          _helpTile(Icons.lock_outline, 'Privacy', 'Control your privacy settings',
-              () {
-            Navigator.pop(c);
-            _showPrivacySheet();
-          }),
-          _helpTile(Icons.backup_outlined, 'Backup & Restore',
-              'Export or restore your app data', () {
-            Navigator.pop(c);
-            Navigator.pushNamed(context, '/backup_restore');
-          }),
-          _helpTile(Icons.person_outline, 'Edit profile',
-              'Change name, bio, and photo', () {
-            Navigator.pop(c);
-            _showEditProfileSheet();
-          }),
-          _helpTile(Icons.location_on_outlined, 'Change location',
-              'Update your postcode', () {
-            Navigator.pop(c);
-            _showLocationSheet();
-          }),
-          const Divider(indent: 16, endIndent: 16),
-          _helpTile(Icons.explore_outlined, 'App Tour',
-              'Replay the getting-started walkthrough', () {
-            Navigator.pop(c);
-            _rerunTutorial();
-          }),
-          _helpTile(Icons.help_outline, 'Help & Support', 'FAQs and contact',
-              () {
-            Navigator.pop(c);
-            _showHelpSheet();
-          }),
-          _helpTile(Icons.info_outline, 'About Huddl', 'Version and legal', () {
-            Navigator.pop(c);
-            _showAboutSheet();
-          }),
-          if (kDebugMode)
-            _helpTile(Icons.bug_report_outlined, 'Borough Debug',
-                'Borough scoping & analytics', () {
-              Navigator.pop(c);
-              Navigator.push(
-                context,
-                HuddlSpringPageRoute(
-                    page: const BoroughDebugScreen()),
-              );
-            }),
-          const SizedBox(height: 16),
-        ],
+    Navigator.of(context).push(
+      HuddlSpringPageRoute(
+        page: _SettingsScreen(profileState: this),
       ),
     );
   }
@@ -6266,6 +6259,519 @@ class _CountBadge extends StatelessWidget {
         const SizedBox(width: 4),
         Icon(Icons.chevron_right, color: context.hc.textTertiary),
       ],
+    );
+  }
+}
+
+// =============================================================================
+// SETTINGS SCREEN — full-screen unified settings
+//
+// Replaces the old _openSettingsSheet() bottom sheet pattern.
+// Single entry point: gear icon in _buildIdentityHeader → Navigator.push here.
+// Seven sections: Account, Security, Privacy, Your data, Notifications,
+// Support, Legal. Sign-out button at the bottom.
+// =============================================================================
+
+class _SettingsScreen extends StatelessWidget {
+  final _ProfileScreenState profileState;
+  const _SettingsScreen({required this.profileState});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.hc.scaffold,
+      appBar: AppBar(
+        backgroundColor: context.hc.surface,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new,
+              size: 18, color: context.hc.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text('Settings', style: HuddlText.heading()),
+        centerTitle: false,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.only(top: 8, bottom: 40),
+        children: [
+
+          // ── Account ───────────────────────────────────────────────────
+          _SettingsSection(
+            title: 'Account',
+            items: [
+              _SettingsItem(
+                icon: Icons.person_outline,
+                title: 'Edit profile',
+                subtitle: 'Name, bio, and photo',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showEditProfileSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.child_care,
+                title: 'Stage of life',
+                subtitle: profileState._stageLabel.isNotEmpty
+                    ? profileState._stageLabel
+                    : 'Set your stage',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showStageOfLifeSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.location_on_outlined,
+                title: 'Location',
+                subtitle:
+                    '${profileState._borough}${profileState._postcode != null ? ' (${profileState._postcode})' : ''}',
+                showOtpBadge: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showLocationSheet();
+                },
+              ),
+              if (profileState._phone != null)
+                _SettingsItem(
+                  icon: Icons.phone_outlined,
+                  title: 'Phone number',
+                  subtitle: profileState._phone,
+                  showOtpBadge: true,
+                  onTap: () {
+                    Navigator.pop(context);
+                    profileState._showPhoneSheet();
+                  },
+                ),
+              _SettingsItem(
+                icon: Icons.credit_card_outlined,
+                title: 'Subscription & billing',
+                subtitle: profileState._subscriptionService
+                    .subscription.tierDisplayName,
+                onTap: () {
+                  Navigator.pop(context);
+                  final route =
+                      profileState._subscriptionService.isFree
+                          ? '/subscription_plans'
+                          : '/manage_subscription';
+                  Navigator.pushNamed(context, route);
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.backup_outlined,
+                title: 'Backup & restore',
+                subtitle: 'Export or restore your app data',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/backup_restore');
+                },
+              ),
+            ],
+          ),
+
+          // ── Security ──────────────────────────────────────────────────
+          _SettingsSection(
+            title: 'Security',
+            items: [
+              _SettingsItem(
+                icon: Icons.lock_reset_outlined,
+                title: 'Change password',
+                subtitle: 'Identity verified by SMS code',
+                showOtpBadge: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showChangePasswordSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.fingerprint,
+                title: 'Biometric login',
+                subtitle: 'Face ID or fingerprint unlock',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showPrivacySheet();
+                },
+              ),
+            ],
+          ),
+
+          // ── Privacy ───────────────────────────────────────────────────
+          _SettingsSection(
+            title: 'Privacy',
+            items: [
+              _SettingsItem(
+                icon: Icons.privacy_tip_outlined,
+                title: 'Privacy settings',
+                subtitle: 'Profile visibility, read receipts, blocked users',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showPrivacySheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.mic_outlined,
+                title: 'Voice message consent',
+                subtitle: 'Microphone access and audio data',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showPrivacySheet();
+                },
+              ),
+            ],
+          ),
+
+          // ── Your Data (GDPR) ──────────────────────────────────────────
+          _SettingsSection(
+            title: 'Your data',
+            items: [
+              _SettingsItem(
+                icon: Icons.visibility_outlined,
+                title: 'View my data',
+                subtitle: 'See all personal data Huddl holds — Article 15',
+                iconColor: HuddlColors.infoBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showViewMyDataSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.download_outlined,
+                title: 'Export my data',
+                subtitle: 'Download a portable copy — Article 20',
+                iconColor: HuddlColors.infoBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showExportDataSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.tune_outlined,
+                title: 'Analytics preferences',
+                subtitle: 'Opt out of app analytics and crash reporting',
+                iconColor: HuddlColors.infoBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showAnalyticsPrefsSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.delete_forever,
+                title: 'Delete my account & data',
+                subtitle: 'Permanently delete everything — Article 17',
+                iconColor: HuddlColors.error,
+                titleColor: HuddlColors.error,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showDeleteAccountSheet();
+                },
+              ),
+            ],
+          ),
+
+          // ── Notifications ─────────────────────────────────────────────
+          _SettingsSection(
+            title: 'Notifications',
+            items: [
+              _SettingsItem(
+                icon: Icons.notifications_outlined,
+                title: 'Notification preferences',
+                subtitle: 'Groups, meetups, messages, market',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showNotificationsSheet();
+                },
+              ),
+            ],
+          ),
+
+          // ── Support ───────────────────────────────────────────────────
+          _SettingsSection(
+            title: 'Support',
+            items: [
+              _SettingsItem(
+                icon: Icons.help_outline,
+                title: 'Help & support',
+                subtitle: 'FAQs and contact',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showHelpSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.feedback_outlined,
+                title: 'Send feedback',
+                subtitle: 'Tell us what you think',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._openFeedbackScreen();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.school_outlined,
+                title: 'Run tutorial',
+                subtitle: 'Walk through the app again',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._rerunTutorial();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.info_outline,
+                title: 'About Huddl',
+                subtitle: 'Version, credits, and legal',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showAboutSheet();
+                },
+              ),
+              if (profileState._isAdmin)
+                _SettingsItem(
+                  icon: Icons.shield_outlined,
+                  title: 'Admin dashboard',
+                  subtitle: 'Review user reports',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/admin');
+                  },
+                ),
+            ],
+          ),
+
+          // ── Legal ─────────────────────────────────────────────────────
+          // Terms and Privacy open in external browser — URLs must match
+          // those declared in App Store Connect and Google Play Console.
+          _SettingsSection(
+            title: 'Legal',
+            items: [
+              _SettingsItem(
+                icon: Icons.description_outlined,
+                title: 'Terms of service',
+                onTap: () => launchUrl(
+                  Uri.parse(
+                      'https://www.huddlapp.co.uk/terms-of-service.html'),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
+              _SettingsItem(
+                icon: Icons.privacy_tip_outlined,
+                title: 'Privacy policy',
+                onTap: () => launchUrl(
+                  Uri.parse(
+                      'https://www.huddlapp.co.uk/privacy-policy.html'),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
+              _SettingsItem(
+                icon: Icons.cookie_outlined,
+                title: 'Cookie & analytics policy',
+                onTap: () => launchUrl(
+                  Uri.parse(
+                      'https://www.huddlapp.co.uk/cookie-policy.html'),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
+            ],
+          ),
+
+          // ── Sign out ──────────────────────────────────────────────────
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HuddlButton(
+              label: 'Sign out',
+              onPressed: () async {
+                Navigator.pop(context);
+                profileState._confirmLogout();
+              },
+              variant: HuddlButtonVariant.secondary,
+              fullWidth: true,
+            ),
+          ),
+
+          if (kDebugMode) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: HuddlButton(
+                label: 'Borough debug',
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/borough_debug');
+                },
+                variant: HuddlButtonVariant.ghost,
+                fullWidth: true,
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              '© ${DateTime.now().year} Cruzen Ltd. All rights reserved.',
+              style: HuddlText.caption(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// SETTINGS SECTION — labelled group of settings items in a rounded card
+// =============================================================================
+
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final List<_SettingsItem> items;
+  const _SettingsSection({required this.title, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+          child: Text(
+            title.toUpperCase(),
+            style: HuddlText.caption(
+              color: HuddlColors.textTertiary,
+              weight: FontWeight.w600,
+            ).copyWith(letterSpacing: 0.8),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: context.hc.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.hc.divider, width: 0.5),
+          ),
+          child: Column(
+            children: items.asMap().entries.map((e) {
+              final isLast = e.key == items.length - 1;
+              return Column(
+                children: [
+                  e.value,
+                  if (!isLast)
+                    Divider(
+                      height: 1,
+                      indent: 52,
+                      endIndent: 0,
+                      color: context.hc.divider,
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// SETTINGS ITEM — single row with icon, title, subtitle, OTP badge, chevron
+// =============================================================================
+
+class _SettingsItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+  final Color? iconColor;
+  final Color? titleColor;
+  // When true, shows a small orange OTP badge indicating this action
+  // requires SMS verification before proceeding.
+  final bool showOtpBadge;
+
+  const _SettingsItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    this.iconColor,
+    this.titleColor,
+    this.showOtpBadge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        child: Row(
+          children: [
+            // Leading icon in a rounded container
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: (iconColor ?? HuddlColors.textTertiary)
+                    .withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: iconColor ?? context.hc.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: HuddlText.body(
+                      color: titleColor ?? context.hc.textPrimary,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      subtitle!,
+                      style: HuddlText.caption(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // OTP badge — shown on Location, Phone, Change password
+            if (showOtpBadge)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.verified_user_outlined,
+                        size: 11, color: HuddlColors.primary),
+                    const SizedBox(width: 3),
+                    Text(
+                      'OTP',
+                      style: HuddlText.label(color: HuddlColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            Icon(Icons.chevron_right,
+                size: 18, color: context.hc.textTertiary),
+          ],
+        ),
+      ),
     );
   }
 }
