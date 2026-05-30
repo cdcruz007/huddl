@@ -1368,33 +1368,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             firstChild: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Market identity icon
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.storefront_outlined,
-                      color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 10),
                 Semantics(
                   header: true,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Market',
-                        style: HuddlText.display(),
-                      ),
-                      Text(
-                        '${_service.allItems.where((i) => !i.isSold).length} items near you',
-                        style: HuddlText.caption(color: hc.textTertiary),
-                      ),
-                    ],
-                  ),
+                  child: Text('Market', style: HuddlText.display()),
                 ),
                 const SizedBox(width: 8),
                 // Borough scope chip
@@ -2882,8 +2858,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       return Semantics(
         liveRegion: true,
         child: HuddlEmptyState(
-          mood: HuddlMood.neutral,
-          title: 'No saved items',
+          mood: HuddlMood.supportive,
+          title: 'Nothing saved yet',
           subtitle: 'Tap the ❤️ on any listing to save it here.',
         ),
       );
