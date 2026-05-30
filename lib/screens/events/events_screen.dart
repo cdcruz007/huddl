@@ -85,7 +85,7 @@ class EventsScreenState extends State<EventsScreen>
   }
   late TabController _tabController;
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
-  late final ValueNotifier<int> _animatedTab; // drives instant animation on tap
+
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
   int _groupCount = 0;   // my joined groups count — shown on Groups tab badge
@@ -105,14 +105,7 @@ class EventsScreenState extends State<EventsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _animatedTab = ValueNotifier<int>(0);
     _tabController.addListener(() {
-      // Drive the animation notifier immediately on every listener tick
-      // so _AnimatedDiscoverTab fires its controller forward() on the same
-      // frame the user lifts their finger — not after the slide settles.
-      if (_animatedTab.value != _tabController.index) {
-        _animatedTab.value = _tabController.index;
-      }
       // Only update the selected tab when the animation has settled,
       // so the FAB never shows/hides based on a mid-swipe index.
       if (!_tabController.indexIsChanging) {
@@ -156,7 +149,7 @@ class EventsScreenState extends State<EventsScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _animatedTab.dispose();
+
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     _groupSearchTrigger.dispose();
@@ -492,70 +485,33 @@ class EventsScreenState extends State<EventsScreen>
                       Expanded(
                         child: TabBar(
                     controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
+                    isScrollable: false,
                     splashFactory: NoSplash.splashFactory,
                     overlayColor: WidgetStateProperty.all(Colors.transparent),
-                    // Fully suppress TabBar's own label styling and color inheritance.
-                    // The global TabBarThemeData has labelColor=primary which would
-                    // tint our custom child icons orange even when inactive.
-                    // Setting both transparent here gives _AnimatedDiscoverTab full
-                    // control over its own color transitions.
-                    labelColor: Colors.transparent,
-                    unselectedLabelColor: Colors.transparent,
-                    labelStyle: const TextStyle(inherit: false, fontSize: 0),
-                    unselectedLabelStyle: const TextStyle(inherit: false, fontSize: 0),
-                    tabs: [
-                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
-                        valueListenable: _animatedTab,
-                        builder: (_, idx, __) => _AnimatedDiscoverTab(
-                          icon: Icons.diversity_3_outlined,
-                          activeIcon: Icons.diversity_3,
-                          label: 'Groups',
-                          isSelected: idx == 0,
-                          count: _groupCount > 0 ? _groupCount : null,
-                        ),
-                      ))),
-                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
-                        valueListenable: _animatedTab,
-                        builder: (_, idx, __) => _AnimatedDiscoverTab(
-                          icon: Icons.near_me_outlined,
-                          activeIcon: Icons.near_me,
-                          label: 'Nearby',
-                          isSelected: idx == 1,
-                          count: (_meetupService.meetups.length + _eventCount) > 0
-                              ? _meetupService.meetups.length + _eventCount
-                              : null,
-                        ),
-                      ))),
-                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
-                        valueListenable: _animatedTab,
-                        builder: (_, idx, __) => _AnimatedDiscoverTab(
-                          icon: Icons.handshake_outlined,
-                          activeIcon: Icons.handshake,
-                          label: 'Services',
-                          isSelected: idx == 2,
-                        ),
-                      ))),
-                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
-                        valueListenable: _animatedTab,
-                        builder: (_, idx, __) => _AnimatedDiscoverTab(
-                          icon: Icons.tips_and_updates_outlined,
-                          activeIcon: Icons.tips_and_updates,
-                          label: 'Insights',
-                          isSelected: idx == 3,
-                          activeColor: HuddlColors.yellow,
-                          activeIconColor: HuddlColors.yellowDark,
-                        ),
-                      ))),
-                    ],
-                    indicator: const BoxDecoration(), // suppress default selection highlight box
+                    labelColor: HuddlColors.primary,
+                    unselectedLabelColor: HuddlColors.textHint,
+                    labelStyle: HuddlText.caption(weight: FontWeight.w600),
+                    unselectedLabelStyle: HuddlText.caption(),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorWeight: 2.5,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    tabs: [
+                      Tab(child: _CountTab(
+                        label: 'Groups',
+                        count: _groupCount > 0 ? _groupCount : null,
+                      )),
+                      Tab(child: _CountTab(
+                        label: 'Nearby',
+                        count: (_meetupService.meetups.length + _eventCount) > 0
+                            ? _meetupService.meetups.length + _eventCount
+                            : null,
+                      )),
+                      const Tab(text: 'Services'),
+                      const Tab(text: 'Insights'),
+                    ],
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
@@ -564,7 +520,6 @@ class EventsScreenState extends State<EventsScreen>
                         _serviceResetTrigger.value = true;
                       }
                       setState(() { _selectedTab = index; });
-                      _animatedTab.value = index; // drive animation immediately on tap
                     },
                   ), // TabBar
                       ), // Expanded
@@ -5823,164 +5778,36 @@ class _HistogramPainter extends CustomPainter {
 // =============================================================================
 // ANIMATED DISCOVER TAB — icon + label with spring scale on selection.
 // =============================================================================
-class _AnimatedDiscoverTab extends StatefulWidget {
-  final IconData icon;
-  final IconData activeIcon;
+// _AnimatedDiscoverTab removed — replaced by standard text-only TabBar style.
+
+// ── Count badge tab (Groups, Nearby) ─────────────────────────────────────────
+class _CountTab extends StatelessWidget {
   final String label;
   final int? count;
-  final bool isSelected;
-  /// Override the active accent colour (default: HuddlColors.primary orange).
-  /// Used on Insights tab to signal warmth/wisdom with yellow.
-  final Color? activeColor;
-  /// Override the active icon colour (default: same as activeColor).
-  final Color? activeIconColor;
-
-  const _AnimatedDiscoverTab({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.isSelected,
-    this.count,
-    this.activeColor,
-    this.activeIconColor,
-  });
-
-  @override
-  State<_AnimatedDiscoverTab> createState() => _AnimatedDiscoverTabState();
-}
-
-class _AnimatedDiscoverTabState extends State<_AnimatedDiscoverTab>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scale;
-  late final Animation<double> _colorT;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-      value: widget.isSelected ? 1.0 : 0.0,
-    );
-    _scale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.18), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 1.18, end: 1.0), weight: 70),
-    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
-    _colorT = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-  }
-
-  @override
-  void didUpdateWidget(_AnimatedDiscoverTab old) {
-    super.didUpdateWidget(old);
-    if (!old.isSelected && widget.isSelected) {
-      _ctrl.forward(from: 0);
-    } else if (old.isSelected && !widget.isSelected) {
-      _ctrl.reverse();
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  const _CountTab({required this.label, this.count});
 
   @override
   Widget build(BuildContext context) {
-    final active   = widget.activeColor ?? HuddlColors.primary;
-    final activeIcon = widget.activeIconColor ?? active;
-    final inactive = HuddlColors.textHint;
-
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) {
-        final color = Color.lerp(inactive, active, _colorT.value)!;
-        // DefaultTextStyle.merge with transparent+zero-size ensures no ancestor
-        // TabBar labelColor or theme text style bleeds into our Icon/Text widgets.
-        // IconTheme.merge similarly nullifies any inherited icon color from TabBar.
-        return DefaultTextStyle.merge(
-          style: const TextStyle(inherit: false, color: Colors.transparent, fontSize: 0),
-          child: IconTheme.merge(
-            data: const IconThemeData(color: Colors.transparent, size: 0),
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Transform.scale(
-              scale: _scale.value,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: EdgeInsets.symmetric(
-                  horizontal: _colorT.value * 10, // expands 0→10px on activation
-                  vertical: _colorT.value * 4,    // expands 0→4px on activation
-                ),
-                decoration: BoxDecoration(
-                  color: Color.lerp(
-                    Colors.transparent,
-                    active.withValues(alpha: 0.12),
-                    _colorT.value,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Opacity(
-                      opacity: (1.0 - _colorT.value).clamp(0.0, 1.0),
-                      child: Icon(widget.icon, size: 22, color: inactive),
-                    ),
-                    Opacity(
-                      opacity: _colorT.value.clamp(0.0, 1.0),
-                      child: Icon(widget.activeIcon, size: 22, color: activeIcon),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 3),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.label,
-                  style: HuddlText.caption(
-                    color: color,
-                    weight: widget.isSelected
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
-                ),
-                if (widget.count != null && widget.count! > 0) ...[
-                  const SizedBox(width: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(
-                      // Active tab: solid infoBlue badge with white text (vibrant).
-                      // Inactive tab: subtle tinted bg with infoBlue text.
-                      color: widget.isSelected
-                          ? HuddlColors.infoBlue
-                          : HuddlColors.infoBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${widget.count}',
-                      style: HuddlText.label(
-                        color: widget.isSelected
-                            ? Colors.white
-                            : HuddlColors.infoBlue,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ), // Column
-          ), // IconTheme.merge
-        ); // DefaultTextStyle.merge
-      },
+    if (count == null || count! == 0) {
+      return Text(label);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label),
+        const SizedBox(width: 5),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+          decoration: BoxDecoration(
+            color: HuddlColors.infoBlue.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '$count',
+            style: HuddlText.label(color: HuddlColors.infoBlue),
+          ),
+        ),
+      ],
     );
   }
 }
