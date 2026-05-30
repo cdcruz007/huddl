@@ -11,12 +11,16 @@ import '../../services/biometric_auth_service.dart';
 // HUDDL SPLASH SCREEN — full-bleed primary orange, settle animation
 //
 // Background: HuddlColors.primary (#FF965C) — full screen, no blobs.
-// Logo: huddl_lockup.svg (full lockup — H mark + huddl text) via SvgPicture.asset
-//   with white colorFilter. BlendMode.srcIn makes all fills (orange H mark +
-//   nearBlack #1C1C1E text) render white on the orange background.
-//   Single element — no separate logomark, no double-logo.
-// Animation: settle — H mark starts 15° tilted + scale 0.72, rotates level
-//   and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
+// Logo: Row of huddl_logomark.svg + huddl_lockup.svg (letters only, clipped),
+//   both white via colorFilter. Rendered as separate sized elements so the
+//   H mark body aligns optically with the huddl letter x-height.
+//   - Logomark: height 48 (107×150 ratio → width ~34px)
+//   - Lockup text: the lockup SVG letters span y≈42–148 of 150px viewBox.
+//     Rendered at height 56 but wrapped in a ClipRect that removes the top
+//     ~28% dead space (above the letters), so the letter caps align with the
+//     top of the H mark body rather than the H mark dot-heads.
+// Animation: settle — entire Row starts 15° tilted + scale 0.72, rotates
+//   level and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
 //   600ms settle + 300ms hold + 200ms exit fade — Airbnb-tier timing.
 // Tagline at 78% (468ms).
 // Status bar: white icons on orange.
@@ -185,15 +189,34 @@ class _SplashScreenState extends State<SplashScreen>
                         turns: _rotation,
                         child: ScaleTransition(
                           scale: _markScale,
-                          child: SvgPicture.asset(
-                            'assets/icons/huddl_lockup.svg',
-                            height: 56,
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn,
-                            ),
-                            placeholderBuilder: (_) =>
-                                const SizedBox(height: 56),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // H mark logomark — two-tone paths, white via srcIn
+                              SvgPicture.asset(
+                                'assets/icons/huddl_logomark.svg',
+                                height: 48,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                                placeholderBuilder: (_) =>
+                                    const SizedBox(width: 34, height: 48),
+                              ),
+                              const SizedBox(width: 12),
+                              // "huddl" wordmark — letter-only SVG, white via srcIn
+                              SvgPicture.asset(
+                                'assets/icons/huddl_wordmark.svg',
+                                height: 34,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                                placeholderBuilder: (_) =>
+                                    const SizedBox(width: 149, height: 34),
+                              ),
+                            ],
                           ),
                         ),
                       ),
