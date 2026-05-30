@@ -191,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen>
                           scale: _markScale,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               // H mark logomark — two-tone paths, white via srcIn
                               SvgPicture.asset(
