@@ -86,7 +86,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
   Color _bgForStep(int index) {
     final step = _steps[index];
     if (step.stepKey == 'ready')  return Color(step.accentColor); // full orange
-    if (step.stepKey == 'market') return const Color(0xFFFFF8F3); // warm cream
+    if (step.stepKey == 'market') return Colors.white;
     return Colors.white;
   }
 
