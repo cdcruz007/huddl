@@ -2003,8 +2003,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                       onTap: () => _openItemDetail(item),
                                       onToggleSave: () {
                                         HuddlAnimations.lightTap();
-                                        if (!item.isSaved) _ai.recordSave(item);
-                                        else _ai.recordUnsave(item);
+                                        if (!item.isSaved) {
+                                          _ai.recordSave(item);
+                                        } else {
+                                          _ai.recordUnsave(item);
+                                        }
                                         _service.toggleSaved(item.id);
                                       },
                                     ),
@@ -2026,8 +2029,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                     onTap: () => _openItemDetail(item),
                                     onToggleSave: () {
                                       HuddlAnimations.lightTap();
-                                      if (!item.isSaved) _ai.recordSave(item);
-                                      else _ai.recordUnsave(item);
+                                      if (!item.isSaved) {
+                                        _ai.recordSave(item);
+                                      } else {
+                                        _ai.recordUnsave(item);
+                                      }
                                       _service.toggleSaved(item.id);
                                     },
                                   );
