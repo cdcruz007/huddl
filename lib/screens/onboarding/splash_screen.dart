@@ -12,7 +12,7 @@ import '../../services/biometric_auth_service.dart';
 //
 // Background: HuddlColors.primary (#FF965C) — full screen, no blobs.
 // Logo: huddl_logomark.svg via SvgPicture.asset with white colorFilter.
-// Wordmark: huddl_logo_full.svg — white colorFilter makes all fills white.
+// Wordmark: huddl_lockup.svg — white colorFilter makes all fills white.
 // Animation: settle — H mark starts 15° tilted + scale 0.72, rotates level
 //   and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
 //   600ms settle + 300ms hold + 200ms exit fade — Airbnb-tier timing.
@@ -217,7 +217,7 @@ class _SplashScreenState extends State<SplashScreen>
                         FadeTransition(
                           opacity: _wordmarkOpacity,
                           child: SvgPicture.asset(
-                            'assets/icons/huddl_logo_full.svg',
+                            'assets/icons/huddl_lockup.svg',
                             height: 38,
                             colorFilter: const ColorFilter.mode(
                               Colors.white,
