@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../../widgets/common/huddl_logo.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/onboarding_data_service.dart';
@@ -447,44 +446,47 @@ class _PasswordInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 8),
-            child: Text(
-              hint,
-              style: HuddlText.caption(color: HuddlColors.disabledText),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          onChanged: onChanged,
+          style: HuddlText.body(color: Theme.of(context).colorScheme.onSurface),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: HuddlText.body(color: HuddlColors.disabledText),
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
             ),
-          ),
-          TextField(
-            controller: controller,
-            obscureText: obscure,
-            onChanged: onChanged,
-            style: HuddlText.body(color: Theme.of(context).colorScheme.onSurface),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.fromLTRB(16, 2, 16, 12),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  obscure
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: HuddlColors.disabledText,
-                  size: 22,
-                ),
-                onPressed: onToggle,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                  color: HuddlColors.primary, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 16),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: HuddlColors.disabledText,
+                size: 22,
               ),
+              onPressed: onToggle,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -496,26 +498,20 @@ class _OnboardingAppBar extends StatelessWidget {
   const _OnboardingAppBar({required this.onBack});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(children: [
-        IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
-            onPressed: onBack,
-            padding: EdgeInsets.zero),
-        const Expanded(child: _HuddlLogo()),
-        const SizedBox(width: 48),
-      ]),
+    return SizedBox(
+      height: 44,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: HuddlColors.nearBlack,
+          ),
+          onPressed: onBack,
+        ),
+      ),
     );
-  }
-}
-
-class _HuddlLogo extends StatelessWidget {
-  const _HuddlLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return const HuddlLogomark(size: 40);
   }
 }
 

@@ -95,13 +95,18 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
           children: [
             OnboardingProgressBar(step: OnboardingStep.aboutYou),
             // ── Back arrow only (no logo on this screen per design) ────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 8, 0),
-              child: IconButton(
-                icon: const Icon(Icons.chevron_left,
-                    size: 30, color: HuddlColors.onboardingOrange),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
+            SizedBox(
+              height: 44,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: HuddlColors.nearBlack,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
             ),
 
@@ -144,10 +149,8 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
-                    border: Border(
-                      bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.2),
-                    ),
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
                     controller: _bioController,
@@ -160,20 +163,29 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                       height: 1.55,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: 'About',
-                      labelStyle: TextStyle(
-                        fontSize: 13,
-                        color: HuddlColors.disabledText,
-                      ),
+                    decoration: InputDecoration(
                       hintText:
                           'E.g. tell other about your children or interests',
-                      hintStyle: TextStyle(
+                      hintStyle: const TextStyle(
                         fontSize: 15,
                         color: HuddlColors.disabledText,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: HuddlColors.primary, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       alignLabelWithHint: true,
                     ),
                     onChanged: (_) => setState(() {}),

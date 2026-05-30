@@ -194,8 +194,8 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
     final hasPhoto = _pickedFile != null;
 
     return Scaffold(
-      // UX-09: Immersive black scaffold
-      backgroundColor: Colors.black,
+      // UX-09: White scaffold — consistent with adjacent onboarding screens
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -209,13 +209,13 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.chevron_left,
-                          size: 30, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          size: 18, color: HuddlColors.nearBlack),
                     ),
                   ),
                   Text(
                     'Preview',
-                    style: HuddlText.heading(),
+                    style: HuddlText.heading(color: HuddlColors.nearBlack),
                   ),
                 ],
               ),
@@ -253,14 +253,14 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                       border: Border.all(
                         color: hasPhoto
                             ? HuddlColors.primary
-                            : Colors.white.withValues(alpha: 0.15),
+                            : HuddlColors.primary.withValues(alpha: 0.20),
                         width: hasPhoto ? 3 : 1.5,
                       ),
                     ),
                     child: ClipOval(
                       child: _isLoading
                           ? Container(
-                              color: const Color(0xFF1C1C1E),
+                              color: const Color(0xFFF5F5F5),
                               child: const Center(
                                 child: CircularProgressIndicator(
                                   color: HuddlColors.primary,
@@ -279,7 +279,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                       decoration: BoxDecoration(
                         color: HuddlColors.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 2.5),
+                        border: Border.all(color: Colors.white, width: 2.5),
                       ),
                       child: const Icon(
                         Icons.camera_alt,
@@ -296,7 +296,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
             // ── Headline + subtitle ─────────────────────────────────────────
             Text(
               hasPhoto ? 'Looking good!' : 'Add a photo',
-              style: HuddlText.display(),
+              style: HuddlText.display(color: HuddlColors.nearBlack),
               textAlign: TextAlign.center,
             ),
 
@@ -308,7 +308,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                 hasPhoto
                     ? 'Your neighbours will recognise you instantly.'
                     : 'Don\'t be just a name – share your smile with us too.',
-                style: HuddlText.body(color: Colors.white.withValues(alpha: 0.55)),
+                style: HuddlText.body(color: HuddlColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -409,7 +409,7 @@ class _ArcProgressPainter extends CustomPainter {
     final r     = size.width * 0.49;
 
     final trackPaint = Paint()
-      ..color   = Colors.white.withValues(alpha: 0.12)
+      ..color   = HuddlColors.primary.withValues(alpha: 0.15)
       ..style   = PaintingStyle.stroke
       ..strokeWidth = 3.5
       ..strokeCap   = StrokeCap.round;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../widgets/common/huddl_logo.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -321,29 +320,20 @@ class _OnboardingAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
-            onPressed: onBack,
-            padding: EdgeInsets.zero,
+    return SizedBox(
+      height: 44,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: HuddlColors.nearBlack,
           ),
-          const Expanded(child: _HuddlLogo()),
-          const SizedBox(width: 48),
-        ],
+          onPressed: onBack,
+        ),
       ),
     );
-  }
-}
-
-class _HuddlLogo extends StatelessWidget {
-  const _HuddlLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return const HuddlLogomark(size: 40);
   }
 }
 

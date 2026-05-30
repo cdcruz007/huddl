@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../widgets/common/huddl_logo.dart';
 import 'package:flutter/services.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -184,13 +183,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     // Phone input row
                     Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
-                        border: Border(
-                          bottom: BorderSide(
-                            color: _errorText != null ? HuddlColors.error : HuddlColors.inputBorder,
-                            width: _errorText != null ? 1.8 : 1.2,
-                          ),
-                        ),
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: _errorText != null
+                            ? Border.all(color: HuddlColors.error, width: 1.5)
+                            : Border.all(color: Colors.transparent),
                       ),
                       child: Row(
                         children: [
@@ -374,26 +371,20 @@ class _OnboardingAppBar extends StatelessWidget {
   const _OnboardingAppBar({required this.onBack});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(children: [
-        IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
-            onPressed: onBack,
-            padding: EdgeInsets.zero),
-        const Expanded(child: _HuddlLogo()),
-        const SizedBox(width: 48),
-      ]),
+    return SizedBox(
+      height: 44,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: HuddlColors.nearBlack,
+          ),
+          onPressed: onBack,
+        ),
+      ),
     );
-  }
-}
-
-class _HuddlLogo extends StatelessWidget {
-  const _HuddlLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return const HuddlLogomark(size: 40);
   }
 }
 

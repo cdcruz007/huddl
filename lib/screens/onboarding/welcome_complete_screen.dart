@@ -311,7 +311,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: HuddlButton(
                 label: 'Explore $borough →',
-                variant: HuddlButtonVariant.celebrate,
+                variant: HuddlButtonVariant.primary,
                 fullWidth: true,
                 onPressed: _handleCtaTap,
               ),

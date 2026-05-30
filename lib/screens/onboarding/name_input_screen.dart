@@ -64,7 +64,11 @@ class _NameInputScreenState extends State<NameInputScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 32),
+
+                    // ── Brand mark — first onboarding screen only ───────
+                    const Center(child: HuddlLogomark(size: 44)),
+                    const SizedBox(height: 28),
 
                     // ── Title ───────────────────────────────────────────
                     Center(
@@ -159,37 +163,28 @@ class _NameInputScreenState extends State<NameInputScreen> {
 
 // ── Shared widgets used across all onboarding screens ─────────────────────────
 
-/// AppBar with back arrow (orange) + centered Huddl logo
+/// Back-button-only app bar — 44px row, no logo.
+/// Logo is shown explicitly in the body of the first onboarding screen only.
 class _OnboardingAppBar extends StatelessWidget {
-  final VoidCallback onBack;
-  const _OnboardingAppBar({required this.onBack});
+  final VoidCallback? onBack;
+  const _OnboardingAppBar({this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
-            onPressed: onBack,
-            padding: EdgeInsets.zero,
+    return SizedBox(
+      height: 44,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: HuddlColors.nearBlack,
           ),
-          const Expanded(child: _HuddlLogo()),
-          const SizedBox(width: 48), // balance
-        ],
+          onPressed: onBack ?? () => Navigator.pop(context),
+        ),
       ),
     );
-  }
-}
-
-/// Huddl H logo + text
-class _HuddlLogo extends StatelessWidget {
-  const _HuddlLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return const HuddlLogomark(size: 40);
   }
 }
 
@@ -226,7 +221,7 @@ class _OrangeButton extends StatelessWidget {
   }
 }
 
-/// Underline text field (grey background, bottom border)
+/// Rounded outlined text field — matches main app input style.
 /// Optional [showError] flag + [errorText] for inline validation messages.
 class _UnderlineInput extends StatelessWidget {
   final TextEditingController controller;
@@ -249,48 +244,46 @@ class _UnderlineInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = showError
-        ? Colors.redAccent
-        : Theme.of(context).dividerColor;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).inputDecorationTheme.fillColor ??
-                context.hc.inputBg,
-            border: Border(
-              bottom: BorderSide(color: borderColor, width: 1.2),
-            ),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          autocorrect: false,
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
-          child: TextField(
-            controller: controller,
-            onChanged: onChanged,
-            keyboardType: keyboardType,
-            textCapitalization: textCapitalization,
-            autocorrect: false,
-            style: TextStyle(
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
               fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: HuddlColors.disabledText,
             ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(
-                fontSize: 16,
-                color: HuddlColors.disabledText,
-              ),
-              // filled: false is required to prevent the theme's filled:true
-              // from painting a second background layer inside the TextField on
-              // Android Material 3, which collapses the field to zero height.
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: showError
+                  ? const BorderSide(color: Colors.redAccent, width: 1.5)
+                  : BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: showError
+                  ? const BorderSide(color: Colors.redAccent, width: 1.5)
+                  : const BorderSide(color: HuddlColors.primary, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
