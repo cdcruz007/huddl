@@ -8,7 +8,6 @@ import '../../services/ai_knowledge_flywheel_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_network_image.dart';
-import 'send_hub_screen.dart';
 import '../../constants/app_text_styles.dart';
 
 // ── UHD hero images per article ID (sourced from Pexels / Unsplash) ─────────
@@ -58,12 +57,11 @@ Color _sourceColor(String source) {
 // The Insights feed: a unified, searchable knowledge base combining:
 //   1. Curated expert articles (from AiKnowledgeBaseService — NHS, NCT, etc.)
 //   2. Community insights articles (from AiKnowledgeFlywheelService — Firestore)
-//   3. SEND Navigator — full SendHubScreen embedded as tab 3
 //
 // Navigation:
-//   Top tabs: "Community" | "Expert Guides" | "SEND"
-//   Category chip row (scrollable — hidden on SEND tab)
-//   Search bar (hidden on SEND tab)
+//   Single unified feed (Expert Guides + Community Wisdom interleaved)
+//   Category chip row (scrollable)
+//   Search bar
 //   Article cards with contributor credit
 //
 // Moderator view (debug builds or isAdmin):
@@ -78,9 +76,7 @@ class InsightsScreen extends StatefulWidget {
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
 
-class _InsightsScreenState extends State<InsightsScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _InsightsScreenState extends State<InsightsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   KnowledgeCategory? _selectedCategory;
@@ -91,10 +87,6 @@ class _InsightsScreenState extends State<InsightsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      if (mounted) setState(() {});
-    });
     _searchController.addListener(() {
       if (mounted) {
         setState(() => _searchQuery = _searchController.text.trim().toLowerCase());
@@ -104,7 +96,6 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -134,7 +125,6 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isSendTab = _tabController.index == 2;
     return NotificationListener<_TagFilterNotification>(
       onNotification: (n) {
         // When a hashtag pill is tapped, open search and pre-fill with the tag
@@ -142,8 +132,6 @@ class _InsightsScreenState extends State<InsightsScreen>
           _searchOpen = true;
           _searchController.text = n.tag;
           _searchQuery = n.tag.toLowerCase();
-          // Switch to Expert Guides tab if not already on it
-          if (_tabController.index == 0) _tabController.animateTo(1);
         });
         return true;
       },
@@ -153,39 +141,26 @@ class _InsightsScreenState extends State<InsightsScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header: title + tab bar + search icon ─────────────────
+            // ── Header: title + search icon ───────────────────────────
             _Header(
-              tabController: _tabController,
               searchOpen: _searchOpen,
               onSearchToggle: _toggleSearch,
               searchController: _searchController,
             ),
-            // ── Filter/sort row (hidden on SEND tab) ─────────────────
-            if (!isSendTab)
-              _FilterSortRow(
+            // ── Filter/sort row ────────────────────────────────────────
+            _FilterSortRow(
+              selectedCategory: _selectedCategory,
+              sortBy: _sortBy,
+              onCategorySelected: (cat) => setState(() => _selectedCategory = cat),
+              onSortTap: _showSortSheet,
+            ),
+            const SizedBox(height: 2),
+            // ── Unified feed ───────────────────────────────────────────
+            Expanded(
+              child: _UnifiedInsightsFeed(
+                searchQuery: _searchQuery,
                 selectedCategory: _selectedCategory,
                 sortBy: _sortBy,
-                onCategorySelected: (cat) => setState(() => _selectedCategory = cat),
-                onSortTap: _showSortSheet,
-              ),
-            if (!isSendTab) const SizedBox(height: 2),
-            // ── Tab content ───────────────────────────────────────────
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _CommunityTab(
-                    searchQuery: _searchQuery,
-                    selectedCategory: _selectedCategory,
-                    sortBy: _sortBy,
-                  ),
-                  _ExpertTab(
-                    searchQuery: _searchQuery,
-                    selectedCategory: _selectedCategory,
-                    sortBy: _sortBy,
-                  ),
-                  const _SendTab(),
-                ],
               ),
             ),
           ],
@@ -196,16 +171,14 @@ class _InsightsScreenState extends State<InsightsScreen>
   }
 }
 
-// ─── Header (title + search icon + tab bar) ───────────────────────────────────
+// ─── Header (title + search icon) ────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
-  final TabController tabController;
   final bool searchOpen;
   final VoidCallback onSearchToggle;
   final TextEditingController searchController;
 
   const _Header({
-    required this.tabController,
     required this.searchOpen,
     required this.onSearchToggle,
     required this.searchController,
@@ -292,26 +265,7 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          // ── Tab bar ────────────────────────────────────────────
-          TabBar(
-            controller: tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            tabs: const [
-              Tab(text: 'Community'),
-              Tab(text: 'Expert Guides'),
-              Tab(text: 'SEND'),
-            ],
-            labelColor: HuddlColors.primary,
-            unselectedLabelColor: HuddlColors.textHint,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-            labelStyle: HuddlText.caption(weight: FontWeight.w600),
-            unselectedLabelStyle: HuddlText.caption(),
-            indicatorColor: HuddlColors.primary,
-            indicatorWeight: 2.5,
-            indicatorSize: TabBarIndicatorSize.label,
-            dividerColor: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
-          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -480,47 +434,6 @@ class _SortSheet extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-// ─── SEND tab ─────────────────────────────────────────────────────────────────
-// Shows the SEND Navigator hero card at the top, then embeds SendHubScreen
-// below it.  Wrapped in a local Navigator so internal push routes stay scoped.
-
-class _SendTab extends StatefulWidget {
-  const _SendTab();
-
-  @override
-  State<_SendTab> createState() => _SendTabState();
-}
-
-class _SendTabState extends State<_SendTab>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true; // preserve chat state across tab switches
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    // ── Embedded SendHubScreen only — no hero card banner above it.
-    // The user is already on the SEND tab, so a redundant title tile adds
-    // no value.  SendHubScreen itself carries the SEND Navigator header.
-    return Navigator(
-      onGenerateRoute: (_) => MaterialPageRoute(
-        builder: (_) => const _EmbeddedSendHubScreen(),
-      ),
-    );
-  }
-}
-
-/// SendHubScreen with the header back-button hidden — it is embedded in a tab
-/// so the user switches tabs rather than pressing back.
-class _EmbeddedSendHubScreen extends StatelessWidget {
-  const _EmbeddedSendHubScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SendHubScreen(embedded: true);
   }
 }
 
@@ -1886,4 +1799,176 @@ class _ShimmerBoxState extends State<_ShimmerBox>
       ),
     );
   }
+}
+
+// =============================================================================
+// UNIFIED INSIGHTS FEED — merges Expert Guides + Community Wisdom into one feed.
+// Sorted by: relevance (default) | newest | a-z
+// Filtered by: searchQuery + selectedCategory
+// Renders expert articles with _ExpertCard and community articles with _WisdomCard.
+// =============================================================================
+
+class _UnifiedInsightsFeed extends StatefulWidget {
+  final String searchQuery;
+  final KnowledgeCategory? selectedCategory;
+  final String sortBy;
+
+  const _UnifiedInsightsFeed({
+    required this.searchQuery,
+    required this.selectedCategory,
+    required this.sortBy,
+  });
+
+  @override
+  State<_UnifiedInsightsFeed> createState() => _UnifiedInsightsFeedState();
+}
+
+class _UnifiedInsightsFeedState extends State<_UnifiedInsightsFeed>
+    with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Build the expert articles half of the feed.
+  List<_InsightFeedItem> _expertItems() {
+    final svc = AiKnowledgeBaseService();
+    List<KnowledgeArticle> articles;
+
+    if (widget.selectedCategory != null) {
+      articles = svc.getArticlesByCategory(widget.selectedCategory!);
+    } else if (widget.searchQuery.isNotEmpty) {
+      articles = svc.searchArticles(widget.searchQuery);
+    } else {
+      articles = svc.allArticles;
+    }
+
+    // secondary text filter when both category and query are active
+    if (widget.selectedCategory != null && widget.searchQuery.isNotEmpty) {
+      final q = widget.searchQuery;
+      articles = articles.where((a) {
+        return a.title.toLowerCase().contains(q) ||
+            a.summary.toLowerCase().contains(q) ||
+            a.tags.any((t) => t.toLowerCase().contains(q));
+      }).toList();
+    }
+
+    return articles.map((a) => _InsightFeedItem.expert(a)).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    final expertItems = _expertItems();
+    final flywheelSvc = AiKnowledgeFlywheelService();
+
+    return StreamBuilder<List<CommunityWisdomArticle>>(
+      stream: flywheelSvc.publishedArticlesStream(),
+      builder: (context, snap) {
+        // Build community items from snapshot
+        List<_InsightFeedItem> communityItems = [];
+        if (snap.hasData) {
+          var articles = snap.data!;
+          if (widget.selectedCategory != null) {
+            articles = articles
+                .where((a) => a.category == widget.selectedCategory)
+                .toList();
+          }
+          if (widget.searchQuery.isNotEmpty) {
+            final q = widget.searchQuery;
+            articles = articles.where((a) {
+              return a.title.toLowerCase().contains(q) ||
+                  a.summary.toLowerCase().contains(q) ||
+                  a.tags.any((t) => t.toLowerCase().contains(q));
+            }).toList();
+          }
+          communityItems = articles.map((a) => _InsightFeedItem.community(a)).toList();
+        }
+
+        // Merge
+        final allItems = [...expertItems, ...communityItems];
+
+        // Sort
+        if (widget.sortBy == 'a-z') {
+          allItems.sort((a, b) => a.title.compareTo(b.title));
+        } else if (widget.sortBy == 'newest') {
+          allItems.sort((a, b) => b.sortDate.compareTo(a.sortDate));
+        } else {
+          // relevance — expert articles by relevanceWeight, community by upvotes
+          allItems.sort((a, b) => b.sortWeight.compareTo(a.sortWeight));
+        }
+
+        if (snap.connectionState == ConnectionState.waiting && allItems.isEmpty) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+
+        if (snap.hasError && communityItems.isEmpty && expertItems.isEmpty) {
+          return _ErrorState(
+            message: 'Could not load insights.\n${snap.error}',
+          );
+        }
+
+        if (allItems.isEmpty) {
+          return _EmptyState(
+            icon: Icons.auto_awesome_outlined,
+            title: widget.searchQuery.isNotEmpty
+                ? 'No results for "${widget.searchQuery}"'
+                : 'No insights yet',
+            subtitle: widget.searchQuery.isNotEmpty
+                ? 'Try a different search term or category.'
+                : 'Expert guides and community wisdom will appear here.',
+          );
+        }
+
+        return ListView.separated(
+          controller: _scrollCtrl,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+          itemCount: allItems.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, i) {
+            final item = allItems[i];
+            if (item.isExpert) {
+              return _ExpertCard(
+                article: item.expertArticle!,
+                onTagTap: (tag) => _TagFilterNotification(tag).dispatch(context),
+              );
+            } else {
+              return _WisdomCard(article: item.communityArticle!);
+            }
+          },
+        );
+      },
+    );
+  }
+}
+
+// ── Data container for unified insight feed ───────────────────────────────────
+class _InsightFeedItem {
+  final KnowledgeArticle? expertArticle;
+  final CommunityWisdomArticle? communityArticle;
+
+  _InsightFeedItem.expert(this.expertArticle) : communityArticle = null;
+  _InsightFeedItem.community(this.communityArticle) : expertArticle = null;
+
+  bool get isExpert => expertArticle != null;
+
+  String get title =>
+      isExpert ? expertArticle!.title : communityArticle!.title;
+
+  /// Used for 'newest' sort — expert uses lastUpdated, community uses extractedAt.
+  DateTime get sortDate => isExpert
+      ? expertArticle!.lastUpdated
+      : communityArticle!.extractedAt;
+
+  /// Used for 'relevance' sort — higher is more relevant.
+  double get sortWeight => isExpert
+      ? expertArticle!.relevanceWeight.toDouble()
+      : communityArticle!.upvotes.toDouble();
 }

@@ -34,7 +34,6 @@ import '../../services/ai_chat_summariser_service.dart';
 import '../../services/messages_ai_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/discover_ai_service.dart';
-import '../events/events_screen.dart' show ImGoingTab;
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
@@ -94,7 +93,7 @@ class _GroupsScreenState extends State<GroupsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _clearSearch();       // reset search when switching tabs
@@ -113,8 +112,7 @@ class _GroupsScreenState extends State<GroupsScreen>
   String get _searchHint {
     switch (_tabController.index) {
       case 0:  return 'Search chats…';
-      case 1:  return 'Search attending…';
-      case 2:  return 'Search saved…';
+      case 1:  return 'Search saved…';
       default: return 'Search…';
     }
   }
@@ -262,7 +260,6 @@ class _GroupsScreenState extends State<GroupsScreen>
                     controller: _tabController,
                     tabs: const [
                       Tab(text: 'Messages'),
-                      Tab(text: 'Attending'),
                       Tab(text: 'Saved'),
                     ],
                     labelColor: HuddlColors.primary,
@@ -289,7 +286,6 @@ class _GroupsScreenState extends State<GroupsScreen>
                     groupsChangedNotifier: _groupsChangedNotifier,
                     searchNotifier: _searchNotifier,
                   ),
-                  ImGoingTab(searchNotifier: _searchNotifier),
                   _SavedTab(searchNotifier: _searchNotifier),
                 ],
               ),
@@ -4401,8 +4397,15 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     );
   }
 
+  List<_GroupItem> get _unjoinedGroups {
+    return _allDiscoverGroups.where((g) {
+      final isJoined = _invitationService.isGroupJoined(g.id);
+      return !isJoined;
+    }).toList();
+  }
+
   List<_GroupItem> get _filteredGroups {
-    List<_GroupItem> results = _allDiscoverGroups.where((g) {
+    List<_GroupItem> results = _unjoinedGroups.where((g) {
       final isOwnGroup = g.creatorId == 'current_user';
       if (!isOwnGroup && !g.isVisibleTo(_userParentType, _userStagesOfLife)) {
         return false;
@@ -5640,13 +5643,13 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             if (groups.isEmpty)
               SliverToBoxAdapter(
                 child: HuddlEmptyState(
-                  mood: hasActiveFilters ? HuddlMood.curious : HuddlMood.neutral,
+                  mood: hasActiveFilters ? HuddlMood.curious : HuddlMood.celebrating,
                   title: hasActiveFilters
                       ? 'No groups match your search'
-                      : 'Your crew is out there',
+                      : "You're in every group nearby",
                   subtitle: hasActiveFilters
                       ? 'Try adjusting your filters or search terms.'
-                      : 'Parents near you are already chatting — jump in and say hi.',
+                      : 'Impressive — you\'ve joined every group in your area. New ones appear as they\'re created.',
                   ctaLabel: hasActiveFilters ? 'Clear filters' : null,
                   onCtaTap: hasActiveFilters
                       ? () {

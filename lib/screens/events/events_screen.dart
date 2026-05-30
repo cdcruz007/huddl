@@ -56,7 +56,7 @@ const List<String> _kAttendeeAvatars = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DISCOVER SCREEN — main entry with 4 tabs: Groups · Meetups · Events · Services
+// DISCOVER SCREEN — main entry with 4 tabs: Groups · Nearby · Services · Insights
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class EventsScreen extends StatefulWidget {
@@ -77,7 +77,7 @@ class EventsScreenState extends State<EventsScreen>
   }
 
   /// Jump directly to a specific sub-tab inside the Discover screen.
-  /// 0=Groups, 1=Meetups, 2=Events, 3=Services
+  /// 0=Groups, 1=Nearby (meetups+events), 2=Services, 3=Insights
   void switchToSubTab(int subIndex) {
     if (!mounted) return;
     _tabController.animateTo(subIndex);
@@ -94,10 +94,8 @@ class EventsScreenState extends State<EventsScreen>
   final ValueNotifier<bool> _groupSearchTrigger = ValueNotifier<bool>(false);
   // Fires true to reset/close search mode when leaving the Groups tab.
   final ValueNotifier<bool> _groupResetTrigger = ValueNotifier<bool>(false);
-  // Fires true to open inline search in the Meetups tab.
-  final ValueNotifier<bool> _meetupSearchTrigger = ValueNotifier<bool>(false);
-  // Fires true to open inline search in the Events tab.
-  final ValueNotifier<bool> _eventSearchTrigger  = ValueNotifier<bool>(false);
+  // Fires true to open inline search in the Nearby tab (meetups + events).
+  final ValueNotifier<bool> _nearbySearchTrigger = ValueNotifier<bool>(false);
   // Fires true to open inline search in the Services tab.
   final ValueNotifier<bool> _serviceSearchTrigger = ValueNotifier<bool>(false);
   // Fires true to reset/close search mode when leaving the Services tab.
@@ -106,7 +104,7 @@ class EventsScreenState extends State<EventsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _animatedTab = ValueNotifier<int>(0);
     _tabController.addListener(() {
       // Drive the animation notifier immediately on every listener tick
@@ -123,7 +121,7 @@ class EventsScreenState extends State<EventsScreen>
           if (_selectedTab == 0 && _tabController.index != 0) {
             _groupResetTrigger.value = true;
           }
-          if (_selectedTab == 3 && _tabController.index != 3) {
+          if (_selectedTab == 2 && _tabController.index != 2) {
             _serviceResetTrigger.value = true;
           }
           setState(() { _selectedTab = _tabController.index; });
@@ -163,8 +161,7 @@ class EventsScreenState extends State<EventsScreen>
     _eventService.removeListener(_refresh);
     _groupSearchTrigger.dispose();
     _groupResetTrigger.dispose();
-    _meetupSearchTrigger.dispose();
-    _eventSearchTrigger.dispose();
+    _nearbySearchTrigger.dispose();
     _serviceSearchTrigger.dispose();
     _serviceResetTrigger.dispose();
     super.dispose();
@@ -400,13 +397,11 @@ class EventsScreenState extends State<EventsScreen>
                             duration: const Duration(milliseconds: 200),
                             child: BoroughScopeChip(
                               key: ValueKey('discover_chip_$_selectedTab'),
-                              feature: _selectedTab == 2
-                                  ? HuddlFeature.events
-                                  : _selectedTab == 3
+                              feature: _selectedTab == 1
+                                  ? HuddlFeature.meetups
+                                  : _selectedTab == 2
                                       ? HuddlFeature.services
-                                      : _selectedTab == 1
-                                          ? HuddlFeature.meetups
-                                          : HuddlFeature.groups,
+                                      : HuddlFeature.groups,
                             ),
                           ),
                         ],
@@ -415,7 +410,6 @@ class EventsScreenState extends State<EventsScreen>
                         children: [
                           // Search icon on Groups/Meetups/Events/Services tabs.
                           // Tap → inline tab search. Long-press → unified search.
-                          // Bell shown on I'm Going tab (tab 4).
                           if (_selectedTab == 0)
                             Tooltip(
                               message: 'Search groups · Hold for universal search',
@@ -439,11 +433,11 @@ class EventsScreenState extends State<EventsScreen>
                             )
                           else if (_selectedTab == 1)
                             Tooltip(
-                              message: 'Search meetups · Hold for universal search',
+                              message: 'Search nearby · Hold for universal search',
                               child: GestureDetector(
                                 onTap: () {
                                   HuddlAnimations.lightTap();
-                                  _meetupSearchTrigger.value = true;
+                                  _nearbySearchTrigger.value = true;
                                 },
                                 onLongPress: () {
                                   HuddlAnimations.mediumTap();
@@ -459,27 +453,6 @@ class EventsScreenState extends State<EventsScreen>
                               ),
                             )
                           else if (_selectedTab == 2)
-                            Tooltip(
-                              message: 'Search events · Hold for universal search',
-                              child: GestureDetector(
-                                onTap: () {
-                                  HuddlAnimations.lightTap();
-                                  _eventSearchTrigger.value = true;
-                                },
-                                onLongPress: () {
-                                  HuddlAnimations.mediumTap();
-                                  Navigator.of(context).push(HuddlSpringPageRoute(
-                                    page: const UnifiedSearchScreen(),
-                                  ));
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Icon(Icons.search,
-                                      color: context.hc.textPrimary, size: 24),
-                                ),
-                              ),
-                            )
-                          else if (_selectedTab == 3)
                             Tooltip(
                               message: 'Search services · Hold for universal search',
                               child: GestureDetector(
@@ -499,13 +472,6 @@ class EventsScreenState extends State<EventsScreen>
                                       color: context.hc.textPrimary, size: 24),
                                 ),
                               ),
-                            )
-                          else
-                            IconButton(
-                              icon: Icon(Icons.notifications_outlined,
-                                  color: context.hc.textPrimary),
-                              tooltip: 'Notifications',
-                              onPressed: _showNotificationsSheet,
                             ),
                         ],
                       ),
@@ -553,22 +519,13 @@ class EventsScreenState extends State<EventsScreen>
                       Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
                         valueListenable: _animatedTab,
                         builder: (_, idx, __) => _AnimatedDiscoverTab(
-                          icon: Icons.edit_location_alt_outlined,
-                          activeIcon: Icons.edit_location_alt,
-                          label: 'Meetups',
+                          icon: Icons.near_me_outlined,
+                          activeIcon: Icons.near_me,
+                          label: 'Nearby',
                           isSelected: idx == 1,
-                          count: _meetupService.meetups.isNotEmpty
-                              ? _meetupService.meetups.length : null,
-                        ),
-                      ))),
-                      Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
-                        valueListenable: _animatedTab,
-                        builder: (_, idx, __) => _AnimatedDiscoverTab(
-                          icon: Icons.event_note_outlined,
-                          activeIcon: Icons.event_note,
-                          label: 'Events',
-                          isSelected: idx == 2,
-                          count: _eventCount > 0 ? _eventCount : null,
+                          count: (_meetupService.meetups.length + _eventCount) > 0
+                              ? _meetupService.meetups.length + _eventCount
+                              : null,
                         ),
                       ))),
                       Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
@@ -577,7 +534,7 @@ class EventsScreenState extends State<EventsScreen>
                           icon: Icons.handshake_outlined,
                           activeIcon: Icons.handshake,
                           label: 'Services',
-                          isSelected: idx == 3,
+                          isSelected: idx == 2,
                         ),
                       ))),
                       Tab(child: SizedBox(height: 56, child: ValueListenableBuilder<int>(
@@ -586,7 +543,7 @@ class EventsScreenState extends State<EventsScreen>
                           icon: Icons.tips_and_updates_outlined,
                           activeIcon: Icons.tips_and_updates,
                           label: 'Insights',
-                          isSelected: idx == 4,
+                          isSelected: idx == 3,
                           activeColor: HuddlColors.yellow,
                           activeIconColor: HuddlColors.yellowDark,
                         ),
@@ -603,7 +560,7 @@ class EventsScreenState extends State<EventsScreen>
                       if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
                       }
-                      if (index == 3 || _selectedTab == 3) {
+                      if (index == 2 || _selectedTab == 2) {
                         _serviceResetTrigger.value = true;
                       }
                       setState(() { _selectedTab = index; });
@@ -625,14 +582,11 @@ class EventsScreenState extends State<EventsScreen>
                     searchTrigger: _groupSearchTrigger,
                     resetTrigger: _groupResetTrigger,
                   ),
-                  _MeetupsTab(
+                  _NearbyTab(
                     meetupService: _meetupService,
-                    onCreateMeetup: _navigateToCreateMeetup,
-                    searchTrigger: _meetupSearchTrigger,
-                  ),
-                  _EventsTab(
                     eventService: _eventService,
-                    searchTrigger: _eventSearchTrigger,
+                    onCreateMeetup: _navigateToCreateMeetup,
+                    searchTrigger: _nearbySearchTrigger,
                   ),
                   ServicesScreen(
                     searchTrigger: _serviceSearchTrigger,
@@ -724,7 +678,7 @@ class EventsScreenState extends State<EventsScreen>
               ],
             ),
           ),
-        // _selectedTab == 2 (Events) or 3 (Services) → no FAB rendered at all
+        // _selectedTab == 2 (Services) or 3 (Insights) → no FAB rendered at all
           ],
         ),
       ),
@@ -6061,6 +6015,209 @@ class _TabLabel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// =============================================================================
+// NEARBY TAB — unified meetups + events discovery
+// Replaces the separate _MeetupsTab and _EventsTab.
+// Filter chips: All | Meetups | Events
+// Content: chronological feed of meetup cards and event cards interleaved.
+// =============================================================================
+
+class _NearbyTab extends StatefulWidget {
+  final MeetupService meetupService;
+  final EventService eventService;
+  final VoidCallback onCreateMeetup;
+  final ValueNotifier<bool>? searchTrigger;
+
+  const _NearbyTab({
+    required this.meetupService,
+    required this.eventService,
+    required this.onCreateMeetup,
+    this.searchTrigger,
+  });
+
+  @override
+  State<_NearbyTab> createState() => _NearbyTabState();
+}
+
+class _NearbyTabState extends State<_NearbyTab>
+    with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true;
+
+  // 'all' | 'meetups' | 'events'
+  String _filter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final hc = context.hc;
+
+    final List<_NearbyItem> items = [];
+    final now = DateTime.now();
+
+    if (_filter == 'all' || _filter == 'meetups') {
+      for (final m in widget.meetupService.meetups) {
+        if (m.dateTime.isAfter(now)) {
+          items.add(_NearbyItem.meetup(m));
+        }
+      }
+    }
+
+    if (_filter == 'all' || _filter == 'events') {
+      for (final e in widget.eventService.events) {
+        if (e.dateTime.isAfter(now)) {
+          items.add(_NearbyItem.event(e));
+        }
+      }
+    }
+
+    items.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    return Column(
+      children: [
+        // ── Filter chips ─────────────────────────────────────────
+        Container(
+          color: hc.surface,
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(
+            children: [
+              _NearbyFilterChip(
+                label: 'All',
+                selected: _filter == 'all',
+                onTap: () => setState(() => _filter = 'all'),
+              ),
+              const SizedBox(width: 8),
+              _NearbyFilterChip(
+                label: 'Meetups',
+                icon: Icons.edit_location_alt_outlined,
+                selected: _filter == 'meetups',
+                onTap: () => setState(() => _filter = 'meetups'),
+              ),
+              const SizedBox(width: 8),
+              _NearbyFilterChip(
+                label: 'Events',
+                icon: Icons.event_note_outlined,
+                selected: _filter == 'events',
+                onTap: () => setState(() => _filter = 'events'),
+              ),
+              const Spacer(),
+              if (items.isNotEmpty)
+                Text(
+                  '${items.length} near you',
+                  style: HuddlText.caption(color: hc.textTertiary),
+                ),
+            ],
+          ),
+        ),
+        Divider(height: 1, color: hc.divider),
+
+        // ── Content ──────────────────────────────────────────────
+        Expanded(
+          child: items.isEmpty
+              ? HuddlEmptyState(
+                  mood: HuddlMood.curious,
+                  title: _filter == 'meetups'
+                      ? 'No meetups nearby yet'
+                      : _filter == 'events'
+                          ? 'No events nearby yet'
+                          : 'Nothing nearby yet',
+                  subtitle: 'Tap + to create the first meetup in your area.',
+                  ctaLabel: 'Create a meetup',
+                  onCtaTap: widget.onCreateMeetup,
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 100),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    if (item.isMeetup) {
+                      return _MeetupCard(
+                        meetup: item.meetup!,
+                      );
+                    } else {
+                      return _EventListCard(
+                        event: item.event!.toMap(),
+                      );
+                    }
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Data container for unified nearby feed ────────────────────────────────────
+class _NearbyItem {
+  final Meetup? meetup;
+  final Event? event;
+
+  _NearbyItem.meetup(this.meetup) : event = null;
+  _NearbyItem.event(this.event) : meetup = null;
+
+  bool get isMeetup => meetup != null;
+  DateTime get dateTime => isMeetup ? meetup!.dateTime : event!.dateTime;
+}
+
+// ── Filter chip widget ────────────────────────────────────────────────────────
+class _NearbyFilterChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NearbyFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HuddlAnimations.lightTap();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? HuddlColors.nearBlack
+              : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? HuddlColors.nearBlack
+                : const Color(0xFFE5E5E5),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13,
+                  color: selected ? Colors.white : HuddlColors.nearBlack),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: HuddlText.caption(
+                color: selected ? Colors.white : HuddlColors.nearBlack,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
