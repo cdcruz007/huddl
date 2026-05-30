@@ -8,13 +8,16 @@ import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
 
 // =============================================================================
-// HUDDL SPLASH SCREEN — full-bleed primary orange, real SVG logomark
+// HUDDL SPLASH SCREEN — full-bleed primary orange, settle animation
 //
 // Background: HuddlColors.primary (#FF965C) — full screen, no blobs.
 // Logo: huddl_logomark.svg via SvgPicture.asset with white colorFilter.
 // Wordmark: huddl_logo_full.svg — white colorFilter makes all fills white.
-// Animation: scale 0.82→1.0 + fade 650ms easeOutCubic. Wordmark at 35%.
-// Tagline at 65%. Exit 250ms fade. Status bar: white icons on orange.
+// Animation: settle — H mark starts 15° tilted + scale 0.72, rotates level
+//   and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
+//   600ms settle + 300ms hold + 200ms exit fade — Airbnb-tier timing.
+// Wordmark fades at 50% (300ms). Tagline at 78% (468ms).
+// Status bar: white icons on orange.
 // =============================================================================
 
 class SplashScreen extends StatefulWidget {
@@ -26,11 +29,25 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
 
-  late final AnimationController _logoCtrl;
-  late final Animation<double>   _logoFade;
-  late final Animation<double>   _logoScale;
-  late final Animation<double>   _wordmarkFade;
-  late final Animation<double>   _taglineFade;
+  // Single controller drives the entire entrance sequence
+  late final AnimationController _settleCtrl;
+
+  // H mark rotation: starts +15° clockwise, settles to 0°
+  // Using turns (1 turn = 360°): 15° = 15/360 = 0.04167 turns
+  late final Animation<double> _rotation;
+
+  // H mark scale: spring overshoot 0.72 → 1.06 → 1.0
+  late final Animation<double> _markScale;
+
+  // H mark opacity: 0 → 1 in first 43% of animation (258ms)
+  late final Animation<double> _markOpacity;
+
+  // Wordmark opacity: fades in from 50% of animation (300ms)
+  late final Animation<double> _wordmarkOpacity;
+
+  // Tagline opacity: fades in from 78% of animation (468ms)
+  late final Animation<double> _taglineOpacity;
+
   late final AnimationController _exitCtrl;
   late final Animation<double>   _exitFade;
 
@@ -45,35 +62,69 @@ class _SplashScreenState extends State<SplashScreen>
       statusBarBrightness:     Brightness.dark,
     ));
 
-    _logoCtrl = AnimationController(
+    // ── Settle controller — 600ms total entrance ──────────────────────────
+    _settleCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 600),
     );
-    _logoFade  = CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOut);
-    _logoScale = Tween<double>(begin: 0.82, end: 1.0).animate(
-        CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutCubic));
 
-    // Wordmark fades in starting at 35% through the logo animation
-    _wordmarkFade = CurvedAnimation(
-      parent: _logoCtrl,
-      curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
+    // ── Rotation: 15° → 0° with easeOutCubic ─────────────────────────────
+    // Decelerates smoothly so logo clicks precisely into level position.
+    _rotation = Tween<double>(
+      begin: 15 / 360,  // 15° expressed as turns
+      end:   0.0,
+    ).animate(CurvedAnimation(
+      parent: _settleCtrl,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // ── Scale: spring overshoot — 0.72 → 1.06 → 1.0 ─────────────────────
+    // First 75% of animation: accelerates past target (small → slightly large)
+    // Final 25%: settles back to exact target size
+    _markScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.72, end: 1.06)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 75,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.06, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+    ]).animate(_settleCtrl);
+
+    // ── Mark opacity: 0 → 1 in the first 43% of animation (258ms) ────────
+    // Fully visible well before rotation completes — no ghost effect
+    _markOpacity = CurvedAnimation(
+      parent: _settleCtrl,
+      curve: const Interval(0.0, 0.43, curve: Curves.easeOut),
     );
-    // Tagline fades in starting at 65%
-    _taglineFade = CurvedAnimation(
-      parent: _logoCtrl,
-      curve: const Interval(0.65, 1.0, curve: Curves.easeOut),
+
+    // ── Wordmark: fades in from 50% through the settle (300ms) ───────────
+    _wordmarkOpacity = CurvedAnimation(
+      parent: _settleCtrl,
+      curve: const Interval(0.50, 1.0, curve: Curves.easeOut),
     );
+
+    // ── Tagline: fades in from 78% through the settle (468ms) ────────────
+    _taglineOpacity = CurvedAnimation(
+      parent: _settleCtrl,
+      curve: const Interval(0.78, 1.0, curve: Curves.easeOut),
+    );
+
+    // ── Start sequence then hold 300ms before navigating ─────────────────
+    // 300ms hold = Twitter/X standard — fast and confident, not sluggish
+    _settleCtrl.forward().then((_) {
+      Future.delayed(const Duration(milliseconds: 300), _navigateNext);
+    });
 
     _exitCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 200),  // was 250
     );
     _exitFade = Tween<double>(begin: 1.0, end: 0.0).animate(
         CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn));
-
-    _logoCtrl.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 700), _navigateNext);
-    });
   }
 
   Future<void> _navigateNext() async {
@@ -108,7 +159,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _logoCtrl.dispose();
+    _settleCtrl.dispose();
     _exitCtrl.dispose();
     super.dispose();
   }
@@ -123,7 +174,7 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: bg,
       body: AnimatedBuilder(
-        animation: Listenable.merge([_logoCtrl, _exitCtrl]),
+        animation: Listenable.merge([_settleCtrl, _exitCtrl]),
         builder: (_, __) => Opacity(
           opacity: _exitFade.value,
           child: SizedBox.expand(
@@ -139,19 +190,22 @@ class _SplashScreenState extends State<SplashScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
 
-                        // H mark SVG — white via colorFilter
+                        // ── H mark: rotates from 15° to 0°, scales with spring ───────
                         FadeTransition(
-                          opacity: _logoFade,
-                          child: ScaleTransition(
-                            scale: _logoScale,
-                            child: SvgPicture.asset(
-                              'assets/icons/huddl_logomark.svg',
-                              width: 96,
-                              // preserve 107:150 viewBox ratio
-                              height: 96 * (150 / 107),
-                              colorFilter: const ColorFilter.mode(
-                                Colors.white,
-                                BlendMode.srcIn,
+                          opacity: _markOpacity,
+                          child: RotationTransition(
+                            turns: _rotation,
+                            child: ScaleTransition(
+                              scale: _markScale,
+                              child: SvgPicture.asset(
+                                'assets/icons/huddl_logomark.svg',
+                                width: 96,
+                                // preserve 107:150 viewBox ratio
+                                height: 96 * (150 / 107),
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
                               ),
                             ),
                           ),
@@ -159,12 +213,9 @@ class _SplashScreenState extends State<SplashScreen>
 
                         const SizedBox(height: 22),
 
-                        // Full wordmark SVG — white via colorFilter.
-                        // BlendMode.srcIn makes ALL fills white:
-                        // the orange H mark paths AND the grey "huddl" text
-                        // paths both become white — correct on orange bg.
+                        // ── Wordmark: fades in at 300ms once mark has settled ────────
                         FadeTransition(
-                          opacity: _wordmarkFade,
+                          opacity: _wordmarkOpacity,
                           child: SvgPicture.asset(
                             'assets/icons/huddl_logo_full.svg',
                             height: 38,
@@ -193,7 +244,7 @@ class _SplashScreenState extends State<SplashScreen>
                     left: 0,
                     right: 0,
                     child: FadeTransition(
-                      opacity: _taglineFade,
+                      opacity: _taglineOpacity,
                       child: Text(
                         'The mum and dad next door',
                         textAlign: TextAlign.center,
