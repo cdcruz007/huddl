@@ -116,7 +116,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'About you',
+                'One last thing',
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w700,
@@ -132,7 +132,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Adding a short bio will make it easier for you to connect with other parents.',
+                'A line about you helps nearby parents find their people. You can always add this later.',
                 style: TextStyle(
                   fontSize: 14,
                   color: HuddlColors.disabledText,

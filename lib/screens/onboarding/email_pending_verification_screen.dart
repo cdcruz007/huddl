@@ -216,7 +216,7 @@ class _EmailPendingVerificationScreenState
                     const SizedBox(height: 16),
 
                     Text(
-                      'Tap the \u201cVerify My Email\u201d button in the email to unlock Huddl and meet your neighbours.',
+                      'Tap the link in the email \u2014 we\'ll let you straight in.',
                       style: HuddlText.body(color: HuddlColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
@@ -263,7 +263,7 @@ class _EmailPendingVerificationScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Can\'t find it? Check your spam or junk folder.',
+                              'Not there? Check your spam folder or tap to resend.',
                               style: HuddlText.body(color: HuddlColors.textDark),
                             ),
                           ),

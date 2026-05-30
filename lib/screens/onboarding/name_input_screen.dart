@@ -129,9 +129,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Text(
-                        'Add your email for receipts & updates. Don\'t worry, you can '
-                        'unsubscribe from any emails you receive from the Huddl team '
-                        'directly from your inbox.',
+                        'For account recovery and occasional updates. Unsubscribe any time.',
                         style: TextStyle(
                           fontSize: 12,
                           color: HuddlColors.textSecondary,

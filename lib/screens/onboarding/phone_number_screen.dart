@@ -163,7 +163,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   children: [
                     const SizedBox(height: 40),
                     Text(
-                      'What is your phone number?',
+                      'What\'s your mobile number?',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -173,7 +173,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Enter your UK mobile number to create your account.',
+                      'We\'ll send a one-time code to verify it\'s you. Never used for marketing.',
                       style: TextStyle(
                           fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
                       textAlign: TextAlign.center,

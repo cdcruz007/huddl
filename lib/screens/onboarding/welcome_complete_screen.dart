@@ -98,6 +98,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
   Widget build(BuildContext context) {
     final onboarding = OnboardingDataService();
     final name = onboarding.name ?? 'there';
+    final firstName = name.split(' ').first;
     final borough = onboarding.borough ?? 'your area';
     final groupCount = onboarding.assignedGroupCount;
     final groupNames = onboarding.assignedGroupNames;
@@ -135,25 +136,15 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ── Celebration graphic — yellow circle with 🎉 ───────
+                    // ── Celebration graphic — HuddlCharacter celebrating ──
                     AnimatedBuilder(
                       animation: _ctrl,
                       builder: (_, __) => Transform.scale(
                         scale: scaleAnim.value
                             .clamp(0.0, 1.15), // guard overshoot
-                        child: Container(
-                          width: 120,
-                          height: 120,
-                          decoration: const BoxDecoration(
-                            color: HuddlColors.yellowSoft,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '🎉',
-                              style: TextStyle(fontSize: 52),
-                            ),
-                          ),
+                        child: const HuddlCharacter(
+                          mood: HuddlMood.celebrating,
+                          size: 160,
                         ),
                       ),
                     ),
@@ -164,7 +155,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
                     FadeTransition(
                       opacity: headingFadeAnim,
                       child: Text(
-                        'Welcome to $borough,\n$name! 👋',
+                        'You\'re in, $firstName 🏡',
                         style: GoogleFonts.poppins(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
@@ -291,7 +282,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
 
                     // ── Subtext ───────────────────────────────────────────
                     Text(
-                      'Your neighbours are waiting.',
+                      '$borough is full of parents who get it.\nYour community starts now.',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: HuddlColors.textSecondary,
@@ -310,7 +301,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: HuddlButton(
-                label: 'Explore $borough →',
+                label: 'Meet my neighbours →',
                 variant: HuddlButtonVariant.primary,
                 fullWidth: true,
                 onPressed: _handleCtaTap,

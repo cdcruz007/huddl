@@ -151,7 +151,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Choose a strong password to keep your account secure.',
+                      'You\'ll use this to sign back in. Make it something memorable.',
                       style: TextStyle(
                           fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
                       textAlign: TextAlign.center,
