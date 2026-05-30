@@ -48,7 +48,7 @@ class HuddlLogomark extends StatelessWidget {
 /// Official full-brand SVG: H-mark + "huddl" text.
 /// viewBox 559×150 → aspect ratio 3.727 (wide).
 /// Scales uniformly by [height]; width is derived from aspect ratio.
-/// Text is #43464D (reads well on light backgrounds).
+/// Text is #1C1C1E nearBlack (stronger contrast, matches brand nearBlack token).
 /// For dark mode on the home app bar use HuddlAppBarLogo instead.
 class HuddlLockup extends StatelessWidget {
   /// Rendered height in logical pixels. Width is derived from aspect ratio.

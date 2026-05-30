@@ -11,8 +11,10 @@ import '../../services/biometric_auth_service.dart';
 // HUDDL SPLASH SCREEN — full-bleed primary orange, settle animation
 //
 // Background: HuddlColors.primary (#FF965C) — full screen, no blobs.
-// Logo: huddl_logomark.svg via SvgPicture.asset with white colorFilter.
-// Wordmark: huddl_lockup.svg — white colorFilter makes all fills white.
+// Logo: huddl_lockup.svg (full lockup — H mark + huddl text) via SvgPicture.asset
+//   with white colorFilter. BlendMode.srcIn makes all fills (orange H mark +
+//   nearBlack #1C1C1E text) render white on the orange background.
+//   Single element — no separate logomark, no double-logo.
 // Animation: settle — H mark starts 15° tilted + scale 0.72, rotates level
 //   and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
 //   600ms settle + 300ms hold + 200ms exit fade — Airbnb-tier timing.
