@@ -35,68 +35,68 @@ class TutorialService {
     _isLoaded = true;
   }
 
-  /// Ordered tutorial steps. Each maps to a tab index in MainShell:
+  /// Ordered tutorial steps — emotionally-driven, not feature-spec.
+  /// Each headline answers "what does this mean for me as a parent?"
+  /// Each body sentence is one line. Each CTA is a specific invitation.
+  ///
+  /// Tab indices map to MainShell:
   ///   0 = Home  1 = Connect  2 = Discover  3 = Market  4 = Insights  5 = Profile
   static const List<TutorialStep> steps = [
-    // 0 — Home (tab 0)
+
+    // STEP 0 — The founding moment
+    // Emotional job: make the parent feel understood before explaining anything
     TutorialStep(
       tabIndex: 0,
-      title: 'HOME',
-      headline: 'Your neighbourhood, at a glance',
-      body:
-          'Every morning you\'ll see what\'s happening nearby \u2014 new meetups, '
-          'local events, and groups worth joining. All picked for your '
-          'family\'s age and stage. No scrolling through irrelevant noise.',
-      ctaLabel: 'Tap cards to explore',
-      iconName: 'home',
+      stepKey: 'welcome',
+      headline: 'You just found your village',
+      body: 'Every parent nearby has been where you are right now. Huddl connects you to them.',
+      ctaLabel: "Let's meet them →",
+      illustrationMood: 'waving',
+      accentColor: 0xFFFF965C, // orange
     ),
-    // 1 — Connect (tab 1)
+
+    // STEP 1 — Connect (the core value proposition)
     TutorialStep(
       tabIndex: 1,
-      title: 'CONNECT',
-      headline: 'Your local parent network, ready and waiting',
-      body:
-          'You\'ve already been added to groups in Cambridge that match your '
-          'stage \u2014 expecting, toddler years, school age. Jump in, ask a '
-          'question, or just say hi. These are the parents on your street.',
-      ctaLabel: 'Tap a group to start chatting',
-      iconName: 'people',
+      stepKey: 'connect',
+      headline: 'Your neighbours are already here',
+      body: "You've been added to groups in Cambridge that match where you are right now.",
+      ctaLabel: "See who's in your groups →",
+      illustrationMood: 'community',
+      accentColor: 0xFF347FEF, // info blue
     ),
-    // 2 — Discover (tab 2)
+
+    // STEP 2 — Discover (meetups and events)
     TutorialStep(
       tabIndex: 2,
-      title: 'DISCOVER',
+      stepKey: 'discover',
       headline: 'Never miss the good stuff again',
-      body:
-          'We scan local listings, NHS boards, and community pages every day '
-          'so you don\'t have to. Free baby groups, NCT events, toddler classes '
-          '\u2014 filtered to what actually suits your child\'s age.',
-      ctaLabel: 'Tap + to create a meetup',
-      iconName: 'groups',
+      body: "Sunday walks, free baby groups, NCT events — filtered to your child's age, right now.",
+      ctaLabel: "See what's on this week →",
+      illustrationMood: 'exploring',
+      accentColor: 0xFF347FEF, // info blue
     ),
-    // 3 — Market (tab 3)
+
+    // STEP 3 — Market (practical, celebratory)
     TutorialStep(
       tabIndex: 3,
-      title: 'MARKET',
-      headline: 'Give outgrown gear a second life',
-      body:
-          'List that barely-used bouncer in 60 seconds. Buy a pram from a '
-          'parent two streets away. Everything is local, trusted, and safe \u2014 '
-          'because you already know who you\'re buying from.',
-      ctaLabel: 'Tap + to list an item',
-      iconName: 'storefront',
+      stepKey: 'market',
+      headline: 'The street sale that never ends',
+      body: 'Buy from a parent two streets away. List that bouncer in 60 seconds.',
+      ctaLabel: "See what's nearby →",
+      illustrationMood: 'market',
+      accentColor: 0xFFF3C54F, // yellow
     ),
-    // 4 — Profile (tab 5)
+
+    // STEP 4 — The close — celebratory, not informational
     TutorialStep(
-      tabIndex: 5,
-      title: 'PROFILE',
-      headline: 'It gets better the more it knows you',
-      body:
-          'Add your children\'s names and ages, set your interests, and Huddl '
-          'tailors everything to your family. Update as your kids grow \u2014 '
-          'your feed grows with them.',
-      ctaLabel: 'Scroll down for settings',
-      iconName: 'person',
+      tabIndex: 0,
+      stepKey: 'ready',
+      headline: 'Cambridge is waiting for you',
+      body: 'Your community, your neighbours, your feed. Everything is ready.',
+      ctaLabel: "I'm ready — let's go 🏡",
+      illustrationMood: 'celebrating',
+      accentColor: 0xFFFF965C, // orange
     ),
   ];
 }
@@ -104,18 +104,20 @@ class TutorialService {
 /// A single step in the onboarding tutorial.
 class TutorialStep {
   final int tabIndex;
-  final String title;
+  final String stepKey;
   final String headline;
   final String body;
   final String ctaLabel;
-  final String iconName;
+  final String illustrationMood;
+  final int accentColor;
 
   const TutorialStep({
     required this.tabIndex,
-    required this.title,
+    required this.stepKey,
     required this.headline,
     required this.body,
     required this.ctaLabel,
-    required this.iconName,
+    required this.illustrationMood,
+    this.accentColor = 0xFFFF965C,
   });
 }

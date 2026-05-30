@@ -1,18 +1,25 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/tutorial_service.dart';
-import '../../constants/app_text_styles.dart';
+import '../../widgets/huddl_character.dart';
 
-/// Lightweight, translucent tutorial overlay that walks the user through each
-/// tab while keeping the actual screen fully visible underneath.
-///
-/// Design principles:
-///   - Ultra-light scrim so the real screen content shows through
-///   - Compact frosted-glass card near the bottom nav
-///   - Pulsing highlight ring around the active nav tab
-///   - Each step switches to the real tab so users see live content
-///   - Swipe left/right to navigate steps
+// =============================================================================
+// TUTORIAL OVERLAY v2 — cinematic full-screen walkthrough
+//
+// Design philosophy:
+//   Each step owns the entire screen. No underlying app visible.
+//   Emotional headline + one sentence body + specific CTA.
+//   Step-specific background colour — each screen feels like a distinct moment.
+//   HuddlCharacter illustration centred above the text.
+//   Progress dots at top. CTA at bottom. Swipe left/right to navigate.
+//   Final step: full orange screen, white CTA — same energy as the splash.
+//
+// Reference: Duolingo (interactive moments), Spotify (full-screen visual),
+//   Airbnb (emotional copy that sells feeling, not features).
+// =============================================================================
+
 class TutorialOverlay extends StatefulWidget {
   final void Function(int tabIndex) onTabSwitch;
   final VoidCallback? onComplete;
@@ -23,7 +30,9 @@ class TutorialOverlay extends StatefulWidget {
     this.onComplete,
   });
 
-  /// Convenience launcher -- pushes the overlay as a transparent route.
+  /// Convenience launcher — pushes as an opaque full-screen route.
+  /// opaque: true so the underlying app is not rendered during the tutorial.
+  /// onTabSwitch still fires per step so the correct tab is active on exit.
   static Future<void> show(
     BuildContext context, {
     required void Function(int tabIndex) onTabSwitch,
@@ -31,7 +40,7 @@ class TutorialOverlay extends StatefulWidget {
   }) {
     return Navigator.of(context).push(
       PageRouteBuilder(
-        opaque: false,
+        opaque: true,
         barrierDismissible: false,
         pageBuilder: (_, __, ___) => TutorialOverlay(
           onTabSwitch: onTabSwitch,
@@ -39,7 +48,7 @@ class TutorialOverlay extends StatefulWidget {
         ),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 400),
       ),
     );
   }
@@ -50,44 +59,80 @@ class TutorialOverlay extends StatefulWidget {
 
 class _TutorialOverlayState extends State<TutorialOverlay>
     with TickerProviderStateMixin {
-  int _current = 0;
 
-  late final AnimationController _cardAnim;
-  late final AnimationController _pulseAnim;
-  late Animation<double> _cardFade;
-  late Animation<Offset> _cardSlide;
+  int _current = 0;
+  bool _animating = false;
+
+  // ── Per-step entrance animations ─────────────────────────────────────────
+  late final AnimationController _enterCtrl;
+  late final Animation<double>   _enterFade;
+  late final Animation<double>   _enterScale;
+  late final Animation<Offset>   _enterSlide;
+
+  // ── CTA button breathing scale ────────────────────────────────────────────
+  late final AnimationController _ctaCtrl;
+  late final Animation<double>   _ctaScale;
+
+  // ── Background colour tween ───────────────────────────────────────────────
+  late final AnimationController _bgCtrl;
+  Color _fromBg = Colors.white;
+  Color _toBg   = Colors.white;
 
   List<TutorialStep> get _steps => TutorialService.steps;
   TutorialStep get _step => _steps[_current];
+  bool get _isLast => _current == _steps.length - 1;
 
-  // Nav tab layout: 6 evenly-spaced items inside the pill bar
-  // Each item centre is at (index + 0.5) / 6 of the bar width
-  static const int _tabCount = 6;
+  // ── Background colour per step ────────────────────────────────────────────
+  Color _bgForStep(int index) {
+    final step = _steps[index];
+    if (step.stepKey == 'ready')  return Color(step.accentColor); // full orange
+    if (step.stepKey == 'market') return const Color(0xFFFFF8F3); // warm cream
+    return Colors.white;
+  }
 
   @override
   void initState() {
     super.initState();
 
-    _cardAnim = AnimationController(
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
+
+    // ── Entrance animation — 500ms ────────────────────────────────────────
+    _enterCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 500),
     );
-    _cardFade = CurvedAnimation(parent: _cardAnim, curve: Curves.easeOut);
-    _cardSlide = Tween<Offset>(
-      begin: const Offset(0, 0.15),
+    _enterFade = CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOut);
+    _enterScale = Tween<double>(begin: 0.90, end: 1.0).animate(
+      CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOutCubic),
+    );
+    _enterSlide = Tween<Offset>(
+      begin: const Offset(0, 0.06),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _cardAnim, curve: Curves.easeOutCubic));
+    ).animate(CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOutCubic));
 
-    _pulseAnim = AnimationController(
+    // ── CTA pulse — gentle breathing, 1600ms ─────────────────────────────
+    _ctaCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
+    _ctaScale = Tween<double>(begin: 1.0, end: 1.03).animate(
+      CurvedAnimation(parent: _ctaCtrl, curve: Curves.easeInOut),
+    );
 
-    _cardAnim.forward();
-    // Defer the first tab-switch until after the overlay's first build.
-    // Calling onTabSwitch() directly in initState() triggers setState() on
-    // MainShell while the TutorialOverlay widget is being inflated, causing
-    // "setState() called during build" crash (main_shell.dart:77).
+    // ── Background colour cross-fade — 400ms ─────────────────────────────
+    _bgCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _toBg   = _bgForStep(0);
+    _fromBg = _toBg;
+    _enterCtrl.forward();
+
+    // Defer first tab-switch past build to avoid setState-during-build crash.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.onTabSwitch(_step.tabIndex);
     });
@@ -95,26 +140,50 @@ class _TutorialOverlayState extends State<TutorialOverlay>
 
   @override
   void dispose() {
-    _cardAnim.dispose();
-    _pulseAnim.dispose();
+    _enterCtrl.dispose();
+    _ctaCtrl.dispose();
+    _bgCtrl.dispose();
     super.dispose();
   }
 
-  // ── Navigation ──────────────────────────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
 
   Future<void> _goTo(int index) async {
-    await _cardAnim.reverse();
+    if (_animating) return;
+    _animating = true;
+    HapticFeedback.lightImpact();
+
+    // Start background colour transition
+    _fromBg = _bgForStep(_current);
+    _toBg   = _bgForStep(index);
+    _bgCtrl.reset();
+    _bgCtrl.forward();
+
+    // Fade + slide content out
+    await _enterCtrl.reverse();
+
     setState(() => _current = index);
     widget.onTabSwitch(_steps[index].tabIndex);
-    _cardAnim.forward();
+
+    // Flip status bar icons on the orange final step
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: _steps[index].stepKey == 'ready'
+          ? Brightness.light  // white icons on orange
+          : Brightness.dark,  // dark icons on white/cream
+    ));
+
+    // Fade + slide content back in
+    await _enterCtrl.forward();
+    _animating = false;
   }
 
   Future<void> _next() async {
-    if (_current < _steps.length - 1) {
-      await _goTo(_current + 1);
-    } else {
+    if (_isLast) {
       await _finish();
+      return;
     }
+    await _goTo(_current + 1);
   }
 
   Future<void> _prev() async {
@@ -122,6 +191,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
   }
 
   Future<void> _finish() async {
+    HapticFeedback.mediumImpact();
     await TutorialService().markCompleted();
     widget.onComplete?.call();
     if (mounted) Navigator.of(context).pop();
@@ -133,336 +203,237 @@ class _TutorialOverlayState extends State<TutorialOverlay>
     if (mounted) Navigator.of(context).pop();
   }
 
-  IconData _iconForName(String name) {
-    switch (name) {
-      case 'home':
-        return Icons.home;
-      case 'people':
-        return Icons.people;
-      case 'groups':
-        return Icons.groups;
-      case 'storefront':
-        return Icons.storefront;
-      case 'person':
-        return Icons.person;
-      default:
-        return Icons.info;
+  // ── Map illustrationMood string → HuddlMood enum ─────────────────────────
+
+  HuddlMood _moodForStep(String mood) {
+    switch (mood) {
+      case 'waving':      return HuddlMood.waving;
+      case 'community':   return HuddlMood.neutral;
+      case 'exploring':   return HuddlMood.curious;
+      case 'market':      return HuddlMood.supportive;
+      case 'celebrating': return HuddlMood.celebrating;
+      default:            return HuddlMood.neutral;
     }
   }
 
-  // ── Build ───────────────────────────────────────────────────────────────
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    // Bottom nav pill sits at: padding 16 from sides, 12 from bottom, height 70
-    // The safe-area bottom padding is handled by the nav bar itself
-    final navBarBottom = mq.padding.bottom + 12;
-    const navBarHeight = 70.0;
-    const navBarHPad = 16.0;
+    final size     = MediaQuery.of(context).size;
+    final step     = _step;
+    final accent   = Color(step.accentColor);
+    final onOrange = step.stepKey == 'ready';
 
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        // Swipe left/right to navigate
-        onHorizontalDragEnd: (details) {
-          if (details.primaryVelocity == null) return;
-          if (details.primaryVelocity! < -200) {
-            _next();
-          } else if (details.primaryVelocity! > 200) {
-            _prev();
-          }
-        },
-        child: Stack(
-          children: [
-            // ── Ultra-light scrim -- screen shows through ─────────
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () {}, // absorb taps
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.25),
-                ),
-              ),
-            ),
-
-            // ── Pulsing highlight ring around active nav tab ──────
-            _buildNavHighlight(
-              navBarBottom: navBarBottom,
-              navBarHeight: navBarHeight,
-              navBarHPad: navBarHPad,
-              screenWidth: mq.size.width,
-            ),
-
-            // ── Skip button (top-right) ──────────────────────────
-            Positioned(
-              top: mq.padding.top + 8,
-              right: 12,
-              child: GestureDetector(
-                onTap: _skip,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.25)),
-                      ),
-                      child: Text(
-                        'Skip',
-                        style: HuddlText.body(color: Colors.white.withValues(alpha: 0.95))),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Compact frosted card above bottom nav ─────────────
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: navBarBottom + navBarHeight + 14,
-              child: FadeTransition(
-                opacity: _cardFade,
-                child: SlideTransition(
-                  position: _cardSlide,
-                  child: _buildCompactCard(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Pulsing glow ring positioned over the active bottom nav tab.
-  Widget _buildNavHighlight({
-    required double navBarBottom,
-    required double navBarHeight,
-    required double navBarHPad,
-    required double screenWidth,
-  }) {
-    final tabIndex = _step.tabIndex;
-    final barWidth = screenWidth - (navBarHPad * 2);
-    final tabWidth = barWidth / _tabCount;
-    final centreX = navBarHPad + (tabIndex * tabWidth) + (tabWidth / 2);
+    final textColor    = onOrange ? Colors.white : HuddlColors.nearBlack;
+    final subtextColor = onOrange
+        ? Colors.white.withValues(alpha: 0.80)
+        : HuddlColors.textSecondary;
 
     return AnimatedBuilder(
-      animation: _pulseAnim,
-      builder: (_, __) {
-        final t = _pulseAnim.value; // 0 -> 1 -> 0
-        final scale = 1.0 + (t * 0.15);
-        final alpha = 0.35 + (t * 0.25);
-
-        return Positioned(
-          left: centreX - 28 * scale,
-          bottom: navBarBottom + (navBarHeight / 2) - 28 * scale,
-          child: IgnorePointer(
-            child: Container(
-              width: 56 * scale,
-              height: 56 * scale,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: HuddlColors.primary.withValues(alpha: alpha),
-                  width: 2.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: HuddlColors.primary.withValues(alpha: alpha * 0.5),
-                    blurRadius: 16 + (t * 8),
-                    spreadRadius: 2 + (t * 4),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+      animation: _bgCtrl,
+      builder: (_, child) {
+        final bg = Color.lerp(_fromBg, _toBg, _bgCtrl.value) ?? _toBg;
+        return Scaffold(backgroundColor: bg, body: child);
       },
-    );
-  }
-
-  /// Compact, frosted-glass card with icon, headline, short text, and nav.
-  Widget _buildCompactCard() {
-    final isLast = _current == _steps.length - 1;
-    final isFirst = _current == 0;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.88),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.5),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Top row: icon + headline + step counter ──────
-              Row(
+      child: GestureDetector(
+        onHorizontalDragEnd: (d) {
+          final v = d.primaryVelocity ?? 0;
+          if (v < -200) { _next(); }
+          else if (v > 200) { _prev(); }
+        },
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _enterFade,
+            child: SlideTransition(
+              position: _enterSlide,
+              child: Column(
                 children: [
-                  // Icon badge
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _iconForName(_step.iconName),
-                      color: HuddlColors.textDark,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Title + headline
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                  // ── Top row: progress dots + skip ──────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    child: Row(
                       children: [
-                        Text(
-                          _step.title,
-                          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark),
+                        // Progress dots — active pill expands to 24px wide
+                        Row(
+                          children: List.generate(_steps.length, (i) {
+                            final active = i == _current;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin: const EdgeInsets.only(right: 6),
+                              width:  active ? 24 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? accent
+                                    : (onOrange
+                                        ? Colors.white.withValues(alpha: 0.40)
+                                        : HuddlColors.gray300),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
                         ),
-                        const SizedBox(height: 1),
-                        Text(
-                          _step.headline,
-                          style: HuddlText.body(weight: FontWeight.w700, color: context.hc.textPrimary),
-                        ),
+                        const Spacer(),
+                        // Skip — hidden on final step
+                        if (!_isLast)
+                          GestureDetector(
+                            onTap: _skip,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Text(
+                                'Skip',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: onOrange
+                                      ? Colors.white.withValues(alpha: 0.70)
+                                      : HuddlColors.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                  // Step counter
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.gray100,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${_current + 1}/${_steps.length}',
-                      style: HuddlText.caption(weight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 10),
-
-              // ── Body text (short) ───────────────────────────
-              Text(
-                _step.body,
-                style: HuddlText.caption(color: HuddlColors.textSecondary),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const SizedBox(height: 12),
-
-              // ── Progress dots + navigation ──────────────────
-              Row(
-                children: [
-                  // Progress dots
+                  // ── Illustration — upper half of screen ────────────────
                   Expanded(
-                    child: Row(
-                      children: List.generate(
-                        _steps.length,
-                        (i) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.only(right: 4),
-                          width: i == _current ? 20 : 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: i == _current
-                                ? HuddlColors.primary
-                                : HuddlColors.gray300,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
+                    flex: 5,
+                    child: ScaleTransition(
+                      scale: _enterScale,
+                      child: Center(
+                        child: HuddlCharacter(
+                          mood: _moodForStep(step.illustrationMood),
+                          size: size.height * 0.28,
                         ),
                       ),
                     ),
                   ),
 
-                  // Back button
-                  if (!isFirst) ...[
-                    GestureDetector(
-                      onTap: _prev,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.gray100,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new,
-                          size: 14,
-                          color: HuddlColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-
-                  // Next / Done button
-                  GestureDetector(
-                    onTap: _next,
-                    child: Container(
-                      height: 36,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: isLast ? 20 : 16),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                HuddlColors.primary.withValues(alpha: 0.20),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                  // ── Text content — lower half ──────────────────────────
+                  Expanded(
+                    flex: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            isLast ? 'Get started' : 'Next',
-                            style: HuddlText.body(weight: FontWeight.w600),
+
+                          // Step pill — e.g. "2 of 5"
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(
+                                  alpha: onOrange ? 0.25 : 0.10),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${_current + 1} of ${_steps.length}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: onOrange ? Colors.white : accent,
+                              ),
+                            ),
                           ),
-                          if (!isLast) ...[
-                            const SizedBox(width: 4),
-                            const Icon(Icons.arrow_forward_ios,
-                                size: 12, color: Colors.white),
-                          ],
+
+                          const SizedBox(height: 16),
+
+                          // Headline — the emotional hook, max 7 words
+                          Text(
+                            step.headline,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                              height: 1.2,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Body — one sentence maximum
+                          Text(
+                            step.body,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: subtextColor,
+                              height: 1.55,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
+
+                  // ── CTA button ─────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+                    child: ScaleTransition(
+                      scale: _ctaScale,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _next,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: onOrange ? Colors.white : accent,
+                            foregroundColor: onOrange ? accent : Colors.white,
+                            elevation: onOrange ? 0 : 2,
+                            shadowColor: accent.withValues(alpha: 0.30),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            step.ctaLabel,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ── Back link — step 2+ only, hidden on final step ─────
+                  if (_current > 0 && !_isLast)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: GestureDetector(
+                        onTap: _prev,
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(
+                            '← Back',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: onOrange
+                                  ? Colors.white.withValues(alpha: 0.65)
+                                  : HuddlColors.textTertiary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 20),
+
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
