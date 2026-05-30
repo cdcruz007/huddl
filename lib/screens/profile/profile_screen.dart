@@ -5000,6 +5000,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     final shell = MainShell.shellKey.currentState;
     if (shell != null) {
+      shell.switchTab(0); // return to Home before tutorial starts
+      await Future.delayed(const Duration(milliseconds: 150));
+      if (!mounted) return;
       shell.launchTutorial();
     }
   }
@@ -5191,6 +5194,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _showLocationSheet();
           }),
           const Divider(indent: 16, endIndent: 16),
+          _helpTile(Icons.explore_outlined, 'App Tour',
+              'Replay the getting-started walkthrough', () {
+            Navigator.pop(c);
+            _rerunTutorial();
+          }),
           _helpTile(Icons.help_outline, 'Help & Support', 'FAQs and contact',
               () {
             Navigator.pop(c);
