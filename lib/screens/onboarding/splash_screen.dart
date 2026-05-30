@@ -8,22 +8,21 @@ import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
 
 // =============================================================================
-// HUDDL SPLASH SCREEN — full-bleed primary orange, settle animation
+// HUDDL SPLASH SCREEN — white background, natural brand colours
 //
-// Background: HuddlColors.primary (#FF965C) — full screen, no blobs.
-// Logo: Row of huddl_logomark.svg + huddl_lockup.svg (letters only, clipped),
-//   both white via colorFilter. Rendered as separate sized elements so the
-//   H mark body aligns optically with the huddl letter x-height.
+// Background: Colors.white — clean canvas for two-tone lockup.
+// Logo: Row of huddl_logomark.svg (orange H mark, #FF975C/#FFA878) +
+//   huddl_wordmark.svg (letters only, #1C1C1E nearBlack). No colorFilter —
+//   each SVG renders its own native fills.
 //   - Logomark: height 48 (107×150 ratio → width ~34px)
-//   - Lockup text: the lockup SVG letters span y≈42–148 of 150px viewBox.
-//     Rendered at height 56 but wrapped in a ClipRect that removes the top
-//     ~28% dead space (above the letters), so the letter caps align with the
-//     top of the H mark body rather than the H mark dot-heads.
+//   - Wordmark: viewBox "162 42 397 106" (tightly cropped to letter bbox),
+//     height 34 → renders ~127px wide.
+// crossAxisAlignment.end bottom-aligns H mark leg bottoms with letter baselines.
 // Animation: settle — entire Row starts 15° tilted + scale 0.72, rotates
 //   level and springs to 1.0 via 1.06 overshoot. Total splash: 1,100ms.
 //   600ms settle + 300ms hold + 200ms exit fade — Airbnb-tier timing.
 // Tagline at 78% (468ms).
-// Status bar: white icons on orange.
+// Status bar: dark icons on white.
 // =============================================================================
 
 class SplashScreen extends StatefulWidget {
@@ -58,11 +57,11 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // White status bar icons — we are on a solid orange background
+    // Dark status bar icons — white background needs dark chrome
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor:          Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness:     Brightness.dark,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness:     Brightness.light,
     ));
 
     // ── Settle controller — 600ms total entrance ──────────────────────────
@@ -163,10 +162,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Full-bleed orange — the brand's strongest colour at full saturation.
-    // This is the Airbnb/Spotify principle: one background colour, maximum
-    // contrast, logo stands alone. No blobs, no gradients, no cream.
-    const bg = HuddlColors.primary;
+    // White background — lets the two-tone lockup read in full brand colour:
+    // orange H mark (#FF975C) + nearBlack "huddl" text (#1C1C1E).
+    // Clean, uncluttered; logo stands alone.
+    const bg = Colors.white;
 
     return Scaffold(
       backgroundColor: bg,
@@ -193,26 +192,18 @@ class _SplashScreenState extends State<SplashScreen>
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              // H mark logomark — two-tone paths, white via srcIn
+                              // H mark logomark — renders native orange fills
                               SvgPicture.asset(
                                 'assets/icons/huddl_logomark.svg',
                                 height: 48,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
                                 placeholderBuilder: (_) =>
                                     const SizedBox(width: 34, height: 48),
                               ),
                               const SizedBox(width: 12),
-                              // "huddl" wordmark — letter-only SVG, white via srcIn
+                              // "huddl" wordmark — renders native #1C1C1E nearBlack
                               SvgPicture.asset(
                                 'assets/icons/huddl_wordmark.svg',
                                 height: 34,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
                                 placeholderBuilder: (_) =>
                                     const SizedBox(width: 149, height: 34),
                               ),
@@ -235,7 +226,7 @@ class _SplashScreenState extends State<SplashScreen>
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: HuddlColors.nearBlack.withValues(alpha: 0.45),
                           fontWeight: FontWeight.w400,
                           letterSpacing: 0.2,
                         ),
