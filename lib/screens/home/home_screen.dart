@@ -560,6 +560,28 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
 
+    // 7. SEND Navigator card — shown once for parents with a school-age child
+    //    (birthday between 4 and 11 years ago). Not filtered by _feedPrefs.
+    final children = _onboarding.children;
+    if (children.isNotEmpty) {
+      final now = DateTime.now();
+      final hasSchoolAgeChild = children.any((c) {
+        final bday = c['birthday'];
+        if (bday == null || bday.isEmpty) return false;
+        final dob = DateTime.tryParse(bday);
+        if (dob == null) return false;
+        final ageYears = now.difference(dob).inDays / 365.25;
+        return ageYears >= 4.0 && ageYears < 12.0;
+      });
+      if (hasSchoolAgeChild) {
+        items.add(_SmartFeedItem(
+          type: _SmartFeedType.sendNavigator,
+          relevanceScore: 0.70,
+          reason: 'Resources and support for school-age children',
+        ));
+      }
+    }
+
     // ── Apply feed preference filters ─────────────────────────────────────
     items.removeWhere((item) {
       switch (item.type) {
@@ -577,6 +599,8 @@ class _HomeScreenState extends State<HomeScreen>
           return !(_feedPrefs['tips'] ?? true);
         case _SmartFeedType.partnerPromoted:
           return false; // always shown — Partner paid for placement
+        case _SmartFeedType.sendNavigator:
+          return false; // always shown for eligible parents
       }
     });
 
@@ -592,8 +616,9 @@ class _HomeScreenState extends State<HomeScreen>
       _SmartFeedType.suggestedMeetup:    2,
       _SmartFeedType.group:              2,
       _SmartFeedType.communityActivity:  3,
-      _SmartFeedType.aiNudge:            4,
-      _SmartFeedType.partnerPromoted:    5, // below organic; woven in separately
+      _SmartFeedType.sendNavigator:      4,
+      _SmartFeedType.aiNudge:            5,
+      _SmartFeedType.partnerPromoted:    6, // below organic; woven in separately
     };
     items.sort((a, b) {
       final sA = sectionOrder[a.type] ?? 99;
@@ -686,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Switch to the Discover tab and jump directly to a sub-tab.
-  /// subIndex: 0=Groups, 1=Meetups, 2=Events, 3=Services
+  /// subIndex: 0=Groups, 1=Nearby, 2=Services, 3=Insights
   void _switchToDiscover(int subIndex) {
     final shellState = MainShell.shellKey.currentState;
     if (shellState != null) {
@@ -1196,26 +1221,6 @@ class _HomeScreenState extends State<HomeScreen>
                 SliverToBoxAdapter(
                   child: _buildDontForgetCarousel(hc, isDark),
                 ),
-              ],
-
-              // ── Discover New Listings — unified carousel ──────────
-              // Groups + Meetups + Events + Market items, last 7 days
-              // (or since last login if < 7 days), newest → oldest
-              if (_activeFeedFilter == 'all' ||
-                  _activeFeedFilter == 'meetups' ||
-                  _activeFeedFilter == 'events') ...[
-                SliverToBoxAdapter(
-                  child: _buildSectionHeader(
-                    hc: hc,
-                    icon: Icons.auto_awesome,
-                    iconColor: HuddlColors.yellow,
-                    title: 'Discover New Listings',
-                    subtitle: 'New groups, meetups, events & items this week',
-                    onSeeAll: () => _switchToTab(2),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                    child: _buildDiscoverNewListingsCarousel(hc, isDark)),
               ],
 
               // ── Smart feed items — filtered per tab ───────────────
@@ -1787,7 +1792,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.place_rounded,
         color: HuddlColors.nearBlack,
         label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
-        onTap: () => _switchToDiscover(1), // Meetups sub-tab
+        onTap: () => _switchToDiscover(1), // Nearby sub-tab (meetups + events)
       ));
     }
     if (newEvents > 0) {
@@ -1795,7 +1800,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.event_rounded,
         color: HuddlColors.nearBlack,
         label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
-        onTap: () => _switchToDiscover(2), // Events sub-tab
+        onTap: () => _switchToDiscover(1), // Nearby sub-tab (meetups + events)
       ));
     }
     if (newGroupCount > 0) {
@@ -3922,6 +3927,8 @@ class _HomeScreenState extends State<HomeScreen>
         return _buildCommunityFeedCard(item, hc);
       case _SmartFeedType.partnerPromoted:
         return _buildPartnerPromotedCard(item, hc);
+      case _SmartFeedType.sendNavigator:
+        return _buildSendNavigatorCard(hc);
     }
   }
 
@@ -4871,6 +4878,99 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Feed item helpers ─────────────────────────────────────────────────────
+
+  // ── SEND Navigator card ───────────────────────────────────────────────────
+  Widget _buildSendNavigatorCard(dynamic hc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () {
+        HuddlAnimations.mediumTap();
+        // Navigate to the Insights tab — SEND content now lives in the unified feed
+        _switchToDiscover(3); // Insights tab
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E2A3A) : const Color(0xFFEEF4FB),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2E4A6A) : const Color(0xFFBFD7F0),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF2E4A6A)
+                    : const Color(0xFFD0E8FA),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.school_outlined,
+                size: 22,
+                color: Color(0xFF1A73E8),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Label pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A73E8).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'SEND Navigator',
+                      style: HuddlText.label(color: const Color(0xFF1A73E8)),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Resources for school-age children',
+                    style: HuddlText.body(weight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Find guides, support and local services for children with additional needs.',
+                    style: HuddlText.caption(color: hc.textSecondary),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(
+                        'Explore SEND guides',
+                        style: HuddlText.caption(
+                          color: const Color(0xFF1A73E8),
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 14,
+                        color: Color(0xFF1A73E8),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFeedImage(FeedItem item) {
     final imgUrl = item.type == FeedItemType.newParent
         ? MemberPhotoService.getPhotoByName(item.title)
@@ -5428,6 +5528,7 @@ enum _SmartFeedType {
   group,
   communityActivity,
   partnerPromoted, // Promoted card from a verified Partner business (1:7 ratio)
+  sendNavigator,   // SEND Navigator card — shown for parents with school-age children
 }
 
 // ── Discover New Listings types ───────────────────────────────────────────

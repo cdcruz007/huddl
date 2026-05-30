@@ -326,7 +326,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   void switchTab(int index) => _switchTab(index);
 
   /// Switch to the Discover tab AND jump to a specific sub-tab within it.
-  /// subIndex: 0=Groups, 1=Meetups, 2=Events, 3=Services
+  /// subIndex: 0=Groups, 1=Nearby (meetups+events), 2=Services, 3=Insights
   void switchDiscoverTab(int subIndex) {
     _switchTab(2); // Discover is always tab 2
     // Give the Discover screen one frame to build before animating sub-tab
