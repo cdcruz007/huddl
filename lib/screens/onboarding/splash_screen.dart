@@ -143,7 +143,7 @@ class _SplashScreenState extends State<SplashScreen>
             // ── Lottie logo — centred ────────────────────────────────
             Center(
               child: Lottie.asset(
-                'assets/icons/logo.lottie',
+                'assets/icons/logo_animation.json',
                 controller: _lottieCtrl,
                 width: 220,
                 // height derives from 182×49 aspect ratio → ~59px
