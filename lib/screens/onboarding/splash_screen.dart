@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
-import '../../widgets/common/huddl_logo.dart';
 
 // =============================================================================
-// HUDDL SPLASH SCREEN v3 — official brand SVGs
+// HUDDL SPLASH SCREEN v4 — dotLottie animated logo
 //
-// Background  : warm cream #FFF8F3
-// Centre      : HuddlLockup SVG (official H-mark + huddl text, height 52px)
-//               — scale 0.82→1.0 + fade over 700ms easeOutCubic
-// Tagline     : "The mum and dad next door" — fades in at 65%
-// Exit        : 300ms easeIn fade before navigation
+// Background  : white
+// Centre      : logo.lottie (182×49 viewport, 8.5s @ 60fps, 1 play-through)
+//               Rendered at width 220px (height scales proportionally ~59px)
+// Tagline     : "The mum and dad next door" — fades in at 60% of animation
+// Exit        : navigates on animation complete (or 9s safety timeout)
 // =============================================================================
 
 class SplashScreen extends StatefulWidget {
@@ -25,12 +25,13 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
 
-  late final AnimationController _logoCtrl;
-  late final Animation<double> _logoFade;
-  late final Animation<double> _logoScale;
+  late final AnimationController _lottieCtrl;
+  late final AnimationController _taglineCtrl;
   late final Animation<double> _taglineFade;
   late final AnimationController _exitCtrl;
   late final Animation<double> _exitFade;
+
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -41,21 +42,21 @@ class _SplashScreenState extends State<SplashScreen>
       statusBarIconBrightness: Brightness.dark,
     ));
 
-    // ── Logo entrance — 700ms ────────────────────────────────────────
-    _logoCtrl = AnimationController(
+    // ── Lottie controller — driven by the animation duration ─────────
+    // Duration is set in onLoaded callback once the composition is known.
+    _lottieCtrl = AnimationController(vsync: this);
+
+    // ── Tagline fade — 400ms ─────────────────────────────────────────
+    _taglineCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _logoFade = CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOut);
-    _logoScale = Tween<double>(begin: 0.82, end: 1.0).animate(
-      CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutCubic),
+      duration: const Duration(milliseconds: 400),
     );
     _taglineFade = CurvedAnimation(
-      parent: _logoCtrl,
-      curve: const Interval(0.65, 1.0, curve: Curves.easeOut),
+      parent: _taglineCtrl,
+      curve: Curves.easeOut,
     );
 
-    // ── Exit fade — 300ms ease in ────────────────────────────────────
+    // ── Exit fade — 300ms ────────────────────────────────────────────
     _exitCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -64,20 +65,39 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn),
     );
 
-    // ── Sequence: enter → hold 700ms → resolve destination → exit ───
-    _logoCtrl.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 700), _navigateNext);
+    // Safety timeout — navigate if Lottie fails to fire completion
+    Future.delayed(const Duration(milliseconds: 9500), () {
+      if (mounted && !_navigated) _navigateNext();
+    });
+  }
+
+  void _onLottieLoaded(LottieComposition composition) {
+    _lottieCtrl.duration = composition.duration;
+    _lottieCtrl.forward();
+
+    // Fade tagline in at 60% through the animation
+    final taglineDelay = composition.duration * 0.60;
+    Future.delayed(taglineDelay, () {
+      if (mounted) _taglineCtrl.forward();
+    });
+
+    // Navigate when animation completes
+    _lottieCtrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted && !_navigated) {
+        _navigateNext();
+      }
     });
   }
 
   Future<void> _navigateNext() async {
-    if (!mounted) return;
+    if (_navigated || !mounted) return;
+    _navigated = true;
 
-    // Explicit logout flag takes priority over cached Firebase token.
     String destination = '/onboarding';
     try {
       final auth = FirebaseAuthService();
-      final explicitlyLoggedOut = await FirebaseAuthService.hasExplicitlyLoggedOut;
+      final explicitlyLoggedOut =
+          await FirebaseAuthService.hasExplicitlyLoggedOut;
       if (!mounted) return;
 
       if (explicitlyLoggedOut) {
@@ -101,58 +121,65 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _logoCtrl.dispose();
+    _lottieCtrl.dispose();
+    _taglineCtrl.dispose();
     _exitCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    const bg = Colors.white;
-
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Colors.white,
       body: AnimatedBuilder(
-        animation: Listenable.merge([_logoCtrl, _exitCtrl]),
-        builder: (_, __) => Opacity(
+        animation: _exitCtrl,
+        builder: (_, child) => Opacity(
           opacity: _exitFade.value,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              const ColoredBox(color: bg),
+          child: child,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // ── Lottie logo — centred ────────────────────────────────
+            Center(
+              child: Lottie.asset(
+                'assets/icons/logo.lottie',
+                controller: _lottieCtrl,
+                width: 220,
+                // height derives from 182×49 aspect ratio → ~59px
+                fit: BoxFit.contain,
+                onLoaded: _onLottieLoaded,
+                // Fallback while loading
+                frameBuilder: (ctx, child, composition) {
+                  if (composition == null) {
+                    return const SizedBox(width: 220, height: 59);
+                  }
+                  return child;
+                },
+              ),
+            ),
 
-              // ── Official lockup SVG — H-mark + huddl text ─────────
-              Center(
-                child: FadeTransition(
-                  opacity: _logoFade,
-                  child: ScaleTransition(
-                    scale: _logoScale,
-                    child: const HuddlLockup(height: 52),
+            // ── Tagline at bottom ────────────────────────────────────
+            Positioned(
+              bottom: 64,
+              left: 0,
+              right: 0,
+              child: FadeTransition(
+                opacity: _taglineFade,
+                child: Text(
+                  'The mum and dad next door',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: HuddlColors.textTertiary,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.2,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ),
-
-              // ── Tagline at bottom ─────────────────────────────────
-              Positioned(
-                bottom: 64,
-                left: 0,
-                right: 0,
-                child: FadeTransition(
-                  opacity: _taglineFade,
-                  child: Text(
-                    'The mum and dad next door',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: HuddlColors.textTertiary,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
