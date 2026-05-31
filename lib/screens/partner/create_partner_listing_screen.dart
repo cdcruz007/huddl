@@ -47,6 +47,39 @@ class _CreatePartnerListingScreenState
     ..add(ServiceCategory.other);
 
   @override
+  void initState() {
+    super.initState();
+    _checkVerification();
+  }
+
+  /// Gate: redirect unverified Partner users to verification flow before
+  /// they can access the create-listing form.
+  Future<void> _checkVerification() async {
+    final ss = SubscriptionService();
+    await ss.initialize();
+    await ss.loadBusinessVerificationStatus();
+
+    if (!mounted) return;
+
+    if (!ss.isBusinessVerified) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            'Complete business verification first to publish your listing.',
+            style: HuddlText.body(color: Colors.white),
+          ),
+          backgroundColor: HuddlColors.nearBlack,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+        ));
+        Navigator.pushReplacementNamed(context, '/business_verification');
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _namCtrl.dispose();
     _taglineCtrl.dispose();

@@ -821,29 +821,65 @@ class _ServicesScreenState extends State<ServicesScreen> {
           ),
         ],
       ),
-        // ── + FAB — positioned above floating pill nav ────────────────────
-        Positioned(
-          bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
-          right: 20,
-          child: Material(
-            elevation: 6,
-            shadowColor: HuddlColors.primary.withValues(alpha: 0.40),
-            shape: const CircleBorder(),
-            color: HuddlColors.primary,
-            child: InkWell(
-              onTap: () {
-                HuddlAnimations.mediumTap();
-                _openAddSheet(context);
-              },
-              customBorder: const CircleBorder(),
-              child: const SizedBox(
-                width: 52,
-                height: 52,
-                child: Icon(Icons.add, color: Colors.white, size: 26),
+          // ── + FAB — positioned above floating pill nav ────────────────────
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+            right: 20,
+            child: Material(
+              elevation: 6,
+              shadowColor: HuddlColors.primary.withValues(alpha: 0.40),
+              shape: const CircleBorder(),
+              color: HuddlColors.primary,
+              child: InkWell(
+                onTap: () {
+                  HuddlAnimations.mediumTap();
+                  final ss = SubscriptionService();
+                  if (!ss.isPlusOrAbove) {
+                    // Free users: route to upgrade gate
+                    Navigator.pushNamed(context, '/subscription_gate',
+                        arguments: {
+                          'featureTitle': 'Service Listings',
+                          'featureDescription':
+                              'List your business in the Cambridge services '
+                              'directory. Requires Huddl Plus with business '
+                              'verification.',
+                          'requiredPlan': 'Huddl Plus',
+                          'featureIcon': Icons.store_outlined.codePoint,
+                        });
+                    return;
+                  }
+                  if (!ss.isBusinessVerified) {
+                    // Plus/Partner unverified: verification SnackBar + action
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                        'Verify your business first to create a service listing.',
+                        style: HuddlText.body(color: Colors.white),
+                      ),
+                      backgroundColor: HuddlColors.nearBlack,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      action: SnackBarAction(
+                        label: 'Verify',
+                        textColor: HuddlColors.primary,
+                        onPressed: () => Navigator.pushNamed(
+                            context, '/business_verification'),
+                      ),
+                    ));
+                    return;
+                  }
+                  // Verified Plus/Partner — open the add sheet
+                  _openAddSheet(context);
+                },
+                customBorder: const CircleBorder(),
+                child: const SizedBox(
+                  width: 52,
+                  height: 52,
+                  child: Icon(Icons.add, color: Colors.white, size: 26),
+                ),
               ),
             ),
           ),
-        ),
       ], // Stack children
       ),
     );
@@ -2567,6 +2603,39 @@ class _EndorsementTile extends StatelessWidget {
                 child: Text(
                   'Respond',
                   style: HuddlText.caption(color: HuddlColors.primary),
+                ),
+              ),
+            ),
+
+          // Locked reply hint for Plus owners — upgrade to Partner to reply
+          if (currentUid != null &&
+              currentUid == listing.ownerUid &&
+              !SubscriptionService().canRespondToEndorsements &&
+              endorsement.ownerReply == null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/subscription_gate',
+                    arguments: {
+                      'featureTitle': 'Endorsement Replies',
+                      'featureDescription':
+                          'Reply publicly to parent endorsements on your listings. '
+                          'Exclusive to Huddl Partner.',
+                      'requiredPlan': 'Huddl Partner',
+                      'featureIcon': Icons.reply_rounded.codePoint,
+                    }),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_outline,
+                        size: 11, color: HuddlColors.textTertiary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Reply (Partner)',
+                      style: HuddlText.caption(
+                          color: HuddlColors.textTertiary),
+                    ),
+                  ],
                 ),
               ),
             ),

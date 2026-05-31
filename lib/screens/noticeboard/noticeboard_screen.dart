@@ -451,13 +451,34 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
               boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
             ),
             child: Row(children: [
-              Icon(Icons.campaign_outlined, size: 20, color: hc.textTertiary),
+              Icon(
+                _subscriptionService.isPartner
+                    ? Icons.verified_rounded
+                    : Icons.campaign_outlined,
+                size: 20,
+                color: _subscriptionService.isPartner
+                    ? HuddlColors.primary
+                    : hc.textTertiary,
+              ),
               const SizedBox(width: 10),
-              Expanded(child: Text('Post something to ${_borough.isNotEmpty ? _borough : 'your community'}...',
-                  style: HuddlText.body(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic))),
-              Container(padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(9)),
-                child: const Icon(Icons.send_rounded, size: 14, color: Colors.white)),
+              Expanded(
+                child: Text(
+                  _subscriptionService.isPartner
+                      ? 'Post as your business to ${_borough.isNotEmpty ? _borough : "the community"}...'
+                      : 'Post something to ${_borough.isNotEmpty ? _borough : "your community"}...',
+                  style: HuddlText.body(color: hc.textTertiary)
+                      .copyWith(fontStyle: FontStyle.italic),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.send_rounded,
+                    size: 14, color: Colors.white),
+              ),
             ]),
           ),
         ),

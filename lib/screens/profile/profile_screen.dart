@@ -789,6 +789,181 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SliverToBoxAdapter(child: _buildUsageSection(hc)),
 
+              // ── Partner teaser — shown to Plus users who aren't Partner ──
+              // Explains Partner tier and invites upgrade.
+              if (_subscriptionService.isNeighbourhood ||
+                  _subscriptionService.isInnerCircle)
+                SliverToBoxAdapter(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      '/subscription_plans',
+                      arguments: {
+                        'highlightTier': SubscriptionTier.partner,
+                      },
+                    ),
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: hc.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: hc.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary
+                                  .withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.verified_rounded,
+                                size: 20, color: HuddlColors.primary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Grow your local business',
+                                  style: HuddlText.body(
+                                    weight: FontWeight.w600,
+                                    color: hc.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Business profile, directory listing & feed promotion',
+                                  style: HuddlText.caption(
+                                      color: hc.textTertiary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Partner',
+                              style: HuddlText.caption(
+                                weight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // ── Partner section — shown to Partner users only ──────────
+              if (_subscriptionService.isPartner) ...[
+                // Amber verification warning — shown when not yet verified
+                if (!_subscriptionService.isBusinessVerified)
+                  SliverToBoxAdapter(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pushNamed(
+                          context, '/business_verification'),
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFFFCC02)
+                                .withValues(alpha: 0.5),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                size: 18, color: Color(0xFFE65100)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Verify your business to activate Partner features',
+                                style: HuddlText.body(
+                                  color: const Color(0xFFE65100),
+                                ).copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'Verify →',
+                              style: HuddlText.caption(
+                                weight: FontWeight.w600,
+                                color: const Color(0xFFE65100),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Partner menu: Business Profile + Analytics
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _MenuSection(
+                      title: 'Partner',
+                      items: [
+                        _MenuItem(
+                          icon: Icons.store_outlined,
+                          title: 'Business Profile',
+                          subtitle: _subscriptionService.isBusinessVerified
+                              ? 'Your public Partner listing page'
+                              : 'Verify your business to unlock',
+                          iconColor: _subscriptionService.isBusinessVerified
+                              ? HuddlColors.primary
+                              : HuddlColors.textTertiary,
+                          onTap: () {
+                            if (!_subscriptionService.isBusinessVerified) {
+                              Navigator.pushNamed(
+                                  context, '/business_verification');
+                              return;
+                            }
+                            Navigator.pushNamed(
+                                context, '/partner_profile');
+                          },
+                        ),
+                        _MenuItem(
+                          icon: Icons.bar_chart_outlined,
+                          title: 'Analytics',
+                          subtitle: _subscriptionService.isBusinessVerified
+                              ? 'Views, clicks & endorsement trends'
+                              : 'Verify your business to unlock',
+                          iconColor: _subscriptionService.isBusinessVerified
+                              ? HuddlColors.primary
+                              : HuddlColors.textTertiary,
+                          onTap: () {
+                            if (!_subscriptionService.isBusinessVerified) {
+                              Navigator.pushNamed(
+                                  context, '/business_verification');
+                              return;
+                            }
+                            Navigator.pushNamed(
+                                context, '/partner_analytics');
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
               // ── Logout + version ──────────────────────────────────────
               SliverToBoxAdapter(
                 child: Column(
@@ -6287,6 +6462,7 @@ class _MenuItem extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
   final VoidCallback onTap;
+  final Color? iconColor;
 
   const _MenuItem({
     required this.icon,
@@ -6294,6 +6470,7 @@ class _MenuItem extends StatelessWidget {
     this.subtitle,
     this.trailing,
     required this.onTap,
+    this.iconColor,
   });
 
   @override
@@ -6306,7 +6483,8 @@ class _MenuItem extends StatelessWidget {
         decoration: BoxDecoration(
             color: context.hc.scaffold,
             borderRadius: BorderRadius.circular(9)),
-        child: Icon(icon, size: 18, color: context.hc.textSecondary),
+        child: Icon(icon, size: 18,
+            color: iconColor ?? context.hc.textSecondary),
       ),
       title: Text(title,
           style: HuddlText.body(color: context.hc.textPrimary)),

@@ -4712,7 +4712,7 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row: partner name + verified tick + "Promoted" pill
+            // Header row: partner name + verified tick + "Partner" badge + "Promoted" pill
             Row(
               children: [
                 if (isVerified) ...[
@@ -4727,6 +4727,28 @@ class _HomeScreenState extends State<HomeScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                // Partner identity badge — ASA/CAP compliant commercial identifier
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.verified_rounded,
+                          size: 10, color: HuddlColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Partner',
+                        style: HuddlText.label(
+                            color: HuddlColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
@@ -4754,9 +4776,34 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
             const SizedBox(height: 12),
-            // CTA button
-            if (externalUrl.isNotEmpty)
-              HuddlButton(
+            // CTA — owner sees edit affordance; non-owner sees external URL button
+            Builder(builder: (ctx) {
+              final currentUid =
+                  FirebaseAuth.instance.currentUser?.uid;
+              final ownerUid =
+                  meta['ownerUid'] as String? ?? '';
+              final isOwner =
+                  ownerUid.isNotEmpty && ownerUid == currentUid;
+              if (isOwner) {
+                return TextButton.icon(
+                  icon: const Icon(Icons.edit_outlined,
+                      size: 14, color: HuddlColors.primary),
+                  label: Text(
+                    'Edit listing',
+                    style: HuddlText.caption(
+                      weight: FontWeight.w600,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                  onPressed: () => Navigator.pushNamed(
+                      context, '/create_partner_listing'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6)),
+                );
+              }
+              if (externalUrl.isEmpty) return const SizedBox.shrink();
+              return HuddlButton(
                 label: ctaLabel,
                 onPressed: () => launchUrl(
                   Uri.parse(externalUrl),
@@ -4764,7 +4811,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 variant: HuddlButtonVariant.secondary,
                 fullWidth: true,
-              ),
+              );
+            }),
           ],
         ),
       ),

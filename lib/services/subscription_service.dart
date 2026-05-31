@@ -691,10 +691,19 @@ class SubscriptionService extends ChangeNotifier {
       case 'ai_full_event_discovery':
         return SubscriptionTier.neighbourhood;
 
-      // AI -- Inner Circle (exclusive)
+      // AI -- Partner exclusive
       case 'ai_matchmaker':
+        return SubscriptionTier.partner;
       case 'unlimited_ai':
-        return SubscriptionTier.innerCircle;
+        return SubscriptionTier.partner;
+
+      // Partner-exclusive features
+      case 'business_profile':
+      case 'partner_analytics':
+      case 'endorsement_replies':
+      case 'feed_promotion':
+      case 'unlimited_service_listings':
+        return SubscriptionTier.partner;
 
       // Free tier features
       case 'ai_copilot_basic':
