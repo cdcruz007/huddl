@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../services/announcement_service.dart';
@@ -6,6 +8,8 @@ import '../../services/browser_storage.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/invitation_service.dart';
+import '../../services/subscription_service.dart';
+import '../../services/local_services_service.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/huddl_character.dart';
 import '../../constants/app_text_styles.dart';
@@ -21,6 +25,10 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcodeService = PostcodeService();
+  final SubscriptionService _subscriptionService = SubscriptionService();
+  List<ServiceListing> _partnerListings = [];
+  ServiceListing? _selectedListing;
+  bool _partnerListingsLoaded = false;
   String _borough = '';
   int _memberCount = 0;
 
@@ -28,6 +36,9 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
   void initState() {
     super.initState();
     _loadContext();
+    if (_subscriptionService.isPartner) {
+      _loadPartnerListings();
+    }
   }
 
   Future<void> _loadContext() async {
@@ -37,6 +48,27 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
     final borough = pc != null ? (_postcodeService.getBoroughFromPostcode(pc) ?? '') : '';
     final members = pc != null ? InvitationService.getBoroughMembers(pc) : [];
     if (mounted) setState(() { _borough = borough; _memberCount = members.length; });
+  }
+
+  Future<void> _loadPartnerListings() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('local_services')
+          .where('ownerUid', isEqualTo: uid)
+          .where('isPartnerListing', isEqualTo: true)
+          .get();
+      if (!mounted) return;
+      setState(() {
+        _partnerListings = snap.docs
+            .map((d) => ServiceListing.fromFirestore(d))
+            .toList();
+        _partnerListingsLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _partnerListingsLoaded = true);
+    }
   }
 
   Future<void> _postToBoroughNoticeboard(String content) async {
@@ -69,6 +101,14 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
   }
 
   void _openComposerSheet() {
+    if (_subscriptionService.isPartner) {
+      _openPartnerComposerSheet();
+    } else {
+      _openStandardComposerSheet();
+    }
+  }
+
+  void _openStandardComposerSheet() {
     final hc = context.hc;
     final controller = TextEditingController();
     showModalBottomSheet(
@@ -115,6 +155,252 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
           ])),
         ),
       )),
+    );
+  }
+
+  void _openPartnerComposerSheet() {
+    final hc = context.hc;
+    final controller = TextEditingController();
+    ServiceListing? selectedListing = _selectedListing;
+    final businessName = _onboarding.name ?? 'My Business';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            decoration: BoxDecoration(
+              color: hc.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  const HuddlBottomSheetHandle(),
+
+                  // ── Partner header ────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.verified_rounded,
+                              size: 16, color: HuddlColors.primary),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Post as $businessName',
+                                style: HuddlText.body(
+                                  weight: FontWeight.w700,
+                                  color: hc.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Huddl Partner · ${_borough.isNotEmpty ? _borough : 'Community'}',
+                                style: HuddlText.caption(
+                                  color: HuddlColors.primary,
+                                  weight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Text composer ─────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: TextField(
+                      controller: controller,
+                      autofocus: true,
+                      maxLength: 280,
+                      maxLines: 5,
+                      minLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Share a promotion, update, or tip '
+                            'with ${_borough.isNotEmpty ? _borough : 'your community'}...',
+                        hintStyle: HuddlText.body(color: hc.textTertiary),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: hc.divider)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: hc.divider)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: HuddlColors.primary)),
+                        filled: true,
+                        fillColor: hc.scaffold,
+                        contentPadding: const EdgeInsets.all(12),
+                      ),
+                      style: HuddlText.body(color: hc.textPrimary),
+                      onChanged: (_) => setSheet(() {}),
+                    ),
+                  ),
+
+                  // ── Listing attachment (optional) ──────────────────────
+                  if (_partnerListings.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Attach a listing (optional)',
+                            style: HuddlText.caption(
+                              weight: FontWeight.w600,
+                              color: hc.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          SizedBox(
+                            height: 36,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _partnerListings.length + 1,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 8),
+                              itemBuilder: (_, i) {
+                                // First chip = "None"
+                                if (i == 0) {
+                                  final isNone = selectedListing == null;
+                                  return GestureDetector(
+                                    onTap: () =>
+                                        setSheet(() => selectedListing = null),
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: isNone
+                                            ? HuddlColors.nearBlack
+                                            : hc.inputBg,
+                                        borderRadius:
+                                            BorderRadius.circular(18),
+                                      ),
+                                      child: Text(
+                                        'None',
+                                        style: HuddlText.caption(
+                                          weight: FontWeight.w600,
+                                          color: isNone
+                                              ? Colors.white
+                                              : hc.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final listing = _partnerListings[i - 1];
+                                final isSelected =
+                                    selectedListing?.id == listing.id;
+                                return GestureDetector(
+                                  onTap: () => setSheet(
+                                      () => selectedListing = listing),
+                                  child: AnimatedContainer(
+                                    duration:
+                                        const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 7),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? HuddlColors.primary
+                                          : hc.inputBg,
+                                      borderRadius:
+                                          BorderRadius.circular(18),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.store_outlined,
+                                            size: 12,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : hc.textSecondary),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          listing.name,
+                                          style: HuddlText.caption(
+                                            weight: FontWeight.w600,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : hc.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // ── Post CTA ──────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: controller.text.trim().isEmpty
+                            ? null
+                            : () async {
+                                Navigator.pop(ctx);
+                                await _announcementService.postAsPartner(
+                                  content: controller.text.trim(),
+                                  businessName: businessName,
+                                  linkedListingId: selectedListing?.id,
+                                  linkedListingName: selectedListing?.name,
+                                );
+                                if (mounted) setState(() {});
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.primary,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor:
+                              HuddlColors.primary.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 13),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Post to ${_borough.isNotEmpty ? _borough : 'community'} as $businessName',
+                          style: HuddlText.body(weight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -206,42 +492,225 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
 
   Widget _buildPostCard(Announcement ann, dynamic hc, bool isDark) {
     final timeAgo = _timeAgo(ann.createdAt);
+    final isPartner = ann.isPartnerPost;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: hc.surface, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: hc.divider),
-        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          // Partner posts get a subtle orange border to stand out
+          color: isPartner
+              ? HuddlColors.primary.withValues(alpha: 0.25)
+              : hc.divider,
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          CircleAvatar(backgroundColor: HuddlColors.orangeIconBg, radius: 18,
-            child: Text(ann.authorName.isNotEmpty ? ann.authorName[0].toUpperCase() : '?',
-                style: HuddlText.body(weight: FontWeight.w700, color: HuddlColors.primary))),
-          const SizedBox(width: 10),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(ann.authorName, style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary)),
-            Text(timeAgo, style: HuddlText.caption(color: hc.textTertiary)),
-          ])),
-          if (ann.isPinned) Icon(Icons.push_pin, size: 14, color: HuddlColors.textTertiary),
-        ]),
-        const SizedBox(height: 10),
-        Text(ann.content, style: HuddlText.body(color: hc.textPrimary).copyWith(height: 1.45)),
-        const SizedBox(height: 12),
-        Row(children: [
-          _actionBtn(icon: ann.isLiked ? Icons.favorite : Icons.favorite_border,
-            color: ann.isLiked ? HuddlColors.error : hc.textTertiary,
-            label: ann.likes > 0 ? ann.likes.toString() : 'Like',
-            onTap: () async { await _announcementService.toggleLike(ann.id); setState(() {}); }),
-          const SizedBox(width: 16),
-          _actionBtn(icon: Icons.chat_bubble_outline, color: hc.textTertiary,
-            label: ann.comments > 0 ? ann.comments.toString() : 'Comment', onTap: () {}),
-          const SizedBox(width: 16),
-          _actionBtn(icon: Icons.share_outlined, color: hc.textTertiary, label: 'Share',
-            onTap: () { _announcementService.share(ann.id); setState(() {}); }),
-        ]),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // ── Author row ──────────────────────────────────────────────
+          Row(
+            children: [
+              // Avatar or Partner badge
+              if (isPartner)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.verified_rounded,
+                    size: 20,
+                    color: HuddlColors.primary,
+                  ),
+                )
+              else
+                CircleAvatar(
+                  backgroundColor: HuddlColors.orangeIconBg,
+                  radius: 18,
+                  child: Text(
+                    ann.authorName.isNotEmpty
+                        ? ann.authorName[0].toUpperCase()
+                        : '?',
+                    style: HuddlText.body(
+                      weight: FontWeight.w700,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            ann.authorName,
+                            style: HuddlText.body(
+                              weight: FontWeight.w600,
+                              color: hc.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Partner badge pill
+                        if (isPartner) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.verified_rounded,
+                                  size: 10,
+                                  color: HuddlColors.primary,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Partner',
+                                  style: HuddlText.caption(
+                                    color: HuddlColors.primary,
+                                    weight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      timeAgo,
+                      style: HuddlText.caption(color: hc.textTertiary),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (ann.isPinned)
+                Icon(Icons.push_pin, size: 14, color: HuddlColors.textTertiary),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // ── Post content ────────────────────────────────────────────
+          Text(
+            ann.content,
+            style: HuddlText.body(color: hc.textPrimary).copyWith(height: 1.45),
+          ),
+
+          // ── Linked listing card — Partner only ──────────────────────
+          if (isPartner && ann.linkedListingName != null) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                if (ann.linkedListingId != null) {
+                  Navigator.pushNamed(
+                    context,
+                    '/services',
+                    arguments: {'highlightListingId': ann.linkedListingId},
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: HuddlColors.primary.withValues(alpha: 0.18),
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.store_outlined,
+                      size: 16,
+                      color: HuddlColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        ann.linkedListingName!,
+                        style: HuddlText.body(
+                          color: HuddlColors.primary,
+                          weight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      'See listing \u2192',
+                      style: HuddlText.caption(color: HuddlColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 12),
+
+          // ── Action row ──────────────────────────────────────────────
+          Row(
+            children: [
+              _actionBtn(
+                icon: ann.isLiked ? Icons.favorite : Icons.favorite_border,
+                color: ann.isLiked ? HuddlColors.error : hc.textTertiary,
+                label: ann.likes > 0 ? ann.likes.toString() : 'Like',
+                onTap: () async {
+                  await _announcementService.toggleLike(ann.id);
+                  setState(() {});
+                },
+              ),
+              const SizedBox(width: 16),
+              _actionBtn(
+                icon: Icons.chat_bubble_outline,
+                color: hc.textTertiary,
+                label: ann.comments > 0 ? ann.comments.toString() : 'Comment',
+                onTap: () {},
+              ),
+              const SizedBox(width: 16),
+              _actionBtn(
+                icon: Icons.share_outlined,
+                color: hc.textTertiary,
+                label: 'Share',
+                onTap: () {
+                  _announcementService.share(ann.id);
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

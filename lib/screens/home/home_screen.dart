@@ -3253,6 +3253,16 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _openNoticeboardComposerSheet(dynamic hc, bool isDark) {
+    if (SubscriptionService().isPartner) {
+      // Partner users compose via the full noticeboard screen,
+      // which hosts the Partner-aware business composer.
+      Navigator.pushNamed(context, '/noticeboard');
+      return;
+    }
+    _openStandardNoticeboardComposer(hc, isDark);
+  }
+
+  void _openStandardNoticeboardComposer(dynamic hc, bool isDark) {
     final controller = TextEditingController();
     HuddlAnimations.lightTap();
     showModalBottomSheet(

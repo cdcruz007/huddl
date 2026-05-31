@@ -103,6 +103,22 @@ class Announcement {
   int shares;
   List<AnnouncementComment> commentsList;
 
+  /// True when posted by a Huddl Partner business account.
+  /// Drives the Partner badge display on the post card.
+  final bool isPartnerPost;
+
+  /// The verified business name — shown as author on Partner posts.
+  /// Null on standard user posts.
+  final String? businessName;
+
+  /// The ID of the service listing this post is promoting.
+  /// Null when no listing is attached.
+  final String? linkedListingId;
+
+  /// The display name of the linked service listing.
+  /// Cached at post time so the card renders without a Firestore lookup.
+  final String? linkedListingName;
+
   Announcement({
     required this.id,
     this.authorId = '',
@@ -120,6 +136,10 @@ class Announcement {
     this.isBookmarked = false,
     this.shares = 0,
     List<AnnouncementComment>? commentsList,
+    this.isPartnerPost = false,
+    this.businessName,
+    this.linkedListingId,
+    this.linkedListingName,
   })  : boroughId = boroughId ?? borough,
         likedBy = likedBy ?? [],
         commentsList = commentsList ?? [];
@@ -142,6 +162,10 @@ class Announcement {
         'isBookmarked': isBookmarked,
         'shares': shares,
         'commentsList': commentsList.map((c) => c.toJson()).toList(),
+        'isPartnerPost': isPartnerPost,
+        if (businessName != null) 'businessName': businessName,
+        if (linkedListingId != null) 'linkedListingId': linkedListingId,
+        if (linkedListingName != null) 'linkedListingName': linkedListingName,
       };
 
   factory Announcement.fromJson(Map<String, dynamic> j) => Announcement(
@@ -165,6 +189,10 @@ class Announcement {
                     AnnouncementComment.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
+        isPartnerPost: j['isPartnerPost'] as bool? ?? false,
+        businessName: j['businessName'] as String?,
+        linkedListingId: j['linkedListingId'] as String?,
+        linkedListingName: j['linkedListingName'] as String?,
       );
 
   // ── Firestore serialisation ─────────────────────────────────────────────
@@ -186,6 +214,10 @@ class Announcement {
         'shares': shares,
         'commentsList':
             commentsList.map((c) => c.toFirestoreMap()).toList(),
+        'isPartnerPost': isPartnerPost,
+        if (businessName != null) 'businessName': businessName,
+        if (linkedListingId != null) 'linkedListingId': linkedListingId,
+        if (linkedListingName != null) 'linkedListingName': linkedListingName,
       };
 
   /// Reconstruct from a Firestore document snapshot.
@@ -226,6 +258,10 @@ class Announcement {
                   AnnouncementComment.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      isPartnerPost: data['isPartnerPost'] as bool? ?? false,
+      businessName: data['businessName'] as String?,
+      linkedListingId: data['linkedListingId'] as String?,
+      linkedListingName: data['linkedListingName'] as String?,
     );
   }
 
@@ -434,6 +470,56 @@ class AnnouncementService {
     } catch (e) {
       if (kDebugMode) debugPrint('AnnouncementService post Firestore error: $e');
       // Keep the optimistic local entry so the user sees their own post.
+    }
+
+    return a;
+  }
+
+  /// Post a Partner business announcement.
+  ///
+  /// Called when a Partner subscriber posts from the business composer.
+  /// Stores [businessName] as the visible author and optionally attaches
+  /// a [linkedListingId] so the card can show a "See listing" button.
+  Future<Announcement> postAsPartner({
+    required String content,
+    required String businessName,
+    String? linkedListingId,
+    String? linkedListingName,
+  }) async {
+    await initialize();
+    final borough = _guard.currentBorough ?? _userBorough ?? 'Unknown';
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final localId = 'ann_${DateTime.now().millisecondsSinceEpoch}';
+
+    final a = Announcement(
+      id: localId,
+      authorId: uid,
+      // Business name shown instead of personal name on the card
+      authorName: businessName,
+      authorPhotoUrl: null, // Partner posts use the Partner badge, not a photo
+      borough: borough,
+      boroughId: borough,
+      content: content,
+      createdAt: DateTime.now(),
+      isPartnerPost: true,
+      businessName: businessName,
+      linkedListingId: linkedListingId,
+      linkedListingName: linkedListingName,
+    );
+
+    // Optimistic local insert
+    _announcements.insert(0, a);
+    _streamController.add(boroughAnnouncements);
+    await _saveToStorageCache();
+
+    // Firestore write
+    try {
+      await _firestore
+          .collection(_collection)
+          .doc(localId)
+          .set(a.toFirestore());
+    } catch (e) {
+      if (kDebugMode) debugPrint('AnnouncementService postAsPartner error: $e');
     }
 
     return a;
