@@ -739,7 +739,7 @@ class _CurrentPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPartner = subscription.isPartner || subscription.isInnerCircle; // isInnerCircle is deprecated alias for Plus, but manage screen shows Partner path
+    final isPartner = subscription.isPartner;
     final isPlus = subscription.isPlus;
     final isFree = subscription.isFree;
 

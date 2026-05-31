@@ -1140,7 +1140,7 @@ class FirebaseAuthService {
 
       // ── Restore subscription tier from Firestore ─────────────────────────
       // On a fresh install BrowserStorage is empty so SubscriptionService
-      // defaults to 'explorer'. Fetch the subscriptions collection and
+      // defaults to free tier. Fetch the subscriptions collection and
       // reinstate the correct tier so all paid features are immediately
       // accessible without requiring the user to go through a payment flow.
       try {

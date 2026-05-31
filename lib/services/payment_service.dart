@@ -53,7 +53,7 @@ import 'backend_api_service.dart';
 class HuddlProductIds {
   HuddlProductIds._();
 
-  // Plus tier (formerly Neighbour)
+  // Plus tier
   static const String plusMonthly  = 'huddl_plus_monthly';
   static const String plusAnnual   = 'huddl_plus_annual';
 
@@ -157,7 +157,7 @@ class StripeConfig {
   //  Huddl Plus       Annual   price_1TaagHGb8Lg9FVI5k1BKNlqv      £39.99
   //  Huddl Partner    Monthly  price_1TaagHGb8Lg9FVI5bgzTWFLU      £24.99
   //  Huddl Partner    Annual   price_1TaagIGb8Lg9FVI54eBr0Qgo     £199.00
-  //  (created via Stripe API — June 2025; old Neighbour/Circle prices archived)
+  //  (created via Stripe API — June 2025)
   static const Map<String, String> priceIds = {
     HuddlProductIds.plusMonthly:     'price_1TaagGGb8Lg9FVI5f2SrV5nv',
     HuddlProductIds.plusAnnual:      'price_1TaagHGb8Lg9FVI5k1BKNlqv',
@@ -900,11 +900,6 @@ class PaymentService extends ChangeNotifier {
             ? HuddlProductIds.plusAnnual
             : HuddlProductIds.plusMonthly;
       case 'partner':
-        return isAnnual
-            ? HuddlProductIds.partnerAnnual
-            : HuddlProductIds.partnerMonthly;
-      // backward-compat — old 'innerCircle' tier string maps to partner
-      case 'innerCircle':
         return isAnnual
             ? HuddlProductIds.partnerAnnual
             : HuddlProductIds.partnerMonthly;

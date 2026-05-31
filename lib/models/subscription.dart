@@ -17,15 +17,10 @@
 //    directory placement, endorsement replies, reach analytics, and
 //    promoted cards in the borough feed. Requires business verification.
 //
-// NOTE: `innerCircle` enum value is a deprecated Firestore backward-compat alias
-// that maps to Plus behaviour. Never surface it to users.
 // =====================================================================================
 
 /// Subscription tier levels for Huddl
-// ignore: constant_identifier_names
-enum SubscriptionTier { welcome, plus, innerCircle, partner }
-// NOTE: `innerCircle` is a deprecated Firestore backward-compat alias only.
-// It is never shown to users and maps to Huddl Plus behaviour.
+enum SubscriptionTier { welcome, plus, partner }
 
 /// Billing period
 enum BillingPeriod { monthly, annual }
@@ -212,49 +207,8 @@ class TierLimits {
     listingDurationDays: 60,
   );
 
-  // ---- CIRCLE (legacy — deprecated Firestore backward-compat alias for Plus) ----
-  static const TierLimits innerCircle = TierLimits(
-    maxGroups: 999,
-    maxGroupsCreated: 999,
-    maxMeetupsPerMonth: 999,
-    maxDMConversations: 999,
-    maxMarketplaceListings: 999,
-    maxPhotoUploads: 50,
-    maxMessagesPerMonth: 999,
-    canCreatePrivateGroups: true,
-    canCreateMeetups: true,
-    customProfileBadge: true,
-    maxAiCopilotChatsPerDay: 999,
-    maxAiEventDiscoveriesPerWeek: 999,
-    maxAiChatSummariesPerDay: 999,
-    maxAiListingGenerationsPerMonth: 999,
-    maxAiMatchmakerRequestsPerMonth: 999,
-    maxAiSmartFeedRefreshesPerDay: 999,
-    aiCopilotAccess: true,
-    aiEventDiscovery: true,
-    aiEventRecommendations: true,
-    aiChatSummaries: true,
-    aiListingGenerator: true,
-    aiSmartFeed: true,
-    aiMeetupMatchmaker: true,
-    maxQuestionsPerWeek: 999,
-    communityBadgesEnabled: true,
-    maxBookmarksPerMonth: 999,
-    aiSynthesisAccess: true,
-    // ── Lifetime gates — unlimited (deprecated alias) ──
-    maxListingsCreatedLifetime: 999,
-    maxBuyerContactsLifetime: 999,
-    maxUserCreatedGroupsLifetime: 999,
-    maxFreeMeetupsLifetime: 999,
-    maxPollsCreatedLifetime: 999,
-    maxQuestionsLifetime: 999,
-    maxSavedItemsLifetime: 999,
-    maxAiSavedSummariesLifetime: 999,
-    listingDurationDays: 999,
-  );
-
   // ---- PARTNER (£24.99/mo | £199.00/yr) ----------------------------------------
-  // All community limits identical to Plus/innerCircle; adds business features.
+  // All community limits identical to Plus; adds business features.
   static const TierLimits partner = TierLimits(
     maxGroups: 999, maxGroupsCreated: 999, maxMeetupsPerMonth: 999,
     maxDMConversations: 999, maxMarketplaceListings: 999, maxPhotoUploads: 50,
@@ -286,8 +240,6 @@ class TierLimits {
         return welcome;
       case SubscriptionTier.plus:
         return plus;
-      case SubscriptionTier.innerCircle:
-        return innerCircle; // deprecated alias → Plus behaviour
       case SubscriptionTier.partner:
         return partner;
     }
@@ -460,14 +412,8 @@ class UserSubscription {
 
   bool get isWelcome => tier == SubscriptionTier.welcome;
   bool get isPlus => tier == SubscriptionTier.plus;
-  /// Deprecated Firestore alias — treated as Plus
-  bool get isInnerCircle => tier == SubscriptionTier.innerCircle;
   bool get isPartner => tier == SubscriptionTier.partner;
   bool get isFree => tier == SubscriptionTier.welcome;
-  // Legacy aliases — kept so callers don't break mid-rename
-  bool get isExplorer => isWelcome;
-  bool get isNeighbourhood => isPlus;
-  bool get isVillage => isPlus;
   bool get isPaid => !isFree;
   // Legacy compat — no founding members
   bool get isFoundingMember => false;
@@ -504,8 +450,6 @@ class UserSubscription {
         return 'Welcome';
       case SubscriptionTier.plus:
         return 'Huddl Plus';
-      case SubscriptionTier.innerCircle:
-        return 'Huddl Plus'; // deprecated alias → Plus display name
       case SubscriptionTier.partner:
         return 'Huddl Partner';
     }
@@ -526,12 +470,11 @@ class UserSubscription {
         return 'Welcome';
       case SubscriptionTier.plus:
         return 'Huddl Plus';
-      case SubscriptionTier.innerCircle:
-        return 'Huddl Plus'; // deprecated alias
       case SubscriptionTier.partner:
         return 'Huddl Partner';
     }
   }
+
 
   String get tierShortName => tierDisplayName;
 
@@ -547,20 +490,18 @@ class UserSubscription {
       };
 
   factory UserSubscription.fromJson(Map<String, dynamic> json) {
-    // ── Normalise legacy / old Firestore tier strings ──────────────────────────
+    // ── Normalise legacy Firestore tier strings → canonical 3-tier values ──────
     String tierName = json['tier'] as String? ?? 'welcome';
-    // Old free-tier names → welcome
-    if (tierName == 'free')        tierName = 'welcome';
-    if (tierName == 'explorer')    tierName = 'welcome';
-    // Old Plus-tier names → plus
-    if (tierName == 'neighbourhood') tierName = 'plus';
-    if (tierName == 'village')     tierName = 'plus';
-    if (tierName == 'neighbour')   tierName = 'plus';
-    // Legacy paid-tier alias kept in Firestore → innerCircle (still in enum)
-    if (tierName == 'pro')         tierName = 'innerCircle';
-    if (tierName == 'circle')      tierName = 'innerCircle';
-    // Canonical names pass through unchanged
-    // 'welcome', 'plus', 'innerCircle', 'partner'
+    // All legacy free names → welcome
+    const _toWelcome = ['free', 'explorer'];
+    if (_toWelcome.contains(tierName)) tierName = 'welcome';
+    // All legacy Plus names → plus
+    const _toPlus = ['neighbourhood', 'village', 'neighbour'];
+    if (_toPlus.contains(tierName)) tierName = 'plus';
+    // All legacy paid names → plus (innerCircle was a Plus-equivalent)
+    const _toLegacyPlus = ['pro', 'circle', 'innerCircle'];
+    if (_toLegacyPlus.contains(tierName)) tierName = 'plus';
+    // Canonical names pass through unchanged: 'welcome', 'plus', 'partner'
 
     SubscriptionTier? schedTier;
     final schedTierName = json['scheduledTier'] as String?;
@@ -608,6 +549,4 @@ class UserSubscription {
         isActive: true,
       );
 
-  /// Deprecated alias — use [UserSubscription.welcome] instead
-  factory UserSubscription.explorer() => UserSubscription.welcome();
 }

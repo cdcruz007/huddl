@@ -45,19 +45,11 @@ class SubscriptionService extends ChangeNotifier {
   bool get isPaid => _subscription.isPaid;
   bool get isWelcome => _subscription.isWelcome;
   bool get isPlus => _subscription.isPlus;
-  /// Deprecated Firestore alias — treated as Plus
-  bool get isInnerCircle => _subscription.isInnerCircle;
   bool get isPartner => _subscription.isPartner;
 
-  // Legacy aliases — kept so call-sites don't break during rename
-  bool get isExplorer => isWelcome;
-  bool get isNeighbourhood => isPlus;
-  bool get isVillage => isPlus;
-  bool get isPro => isInnerCircle;
 
-  // ── Partner tier ─────────────────────────────────────────────────────────────
-  /// Huddl Plus, deprecated Circle alias, or Partner
-  bool get isPlusOrAbove => isPlus || isInnerCircle || isPartner;
+  // ── Plus or above ─────────────────────────────────────────────────────────
+  bool get isPlusOrAbove => isPlus || isPartner;
 
   // ── Paid meetups (Plus or above only; free meetups open to all) ───────────────
   bool get canCreatePaidMeetup => isPlusOrAbove;
@@ -783,7 +775,7 @@ class SubscriptionService extends ChangeNotifier {
   /// Cancel subscription -- sets cancelledAtPeriodEnd so the user retains
   /// access at the current tier until the end of the billing period.
   ///
-  /// After [renewalDate] the subscription will revert to Explorer.
+  /// After [renewalDate] the subscription will revert to the free tier.
   Future<void> cancelSubscription() async {
     if (!_initialized) await initialize();
 

@@ -78,7 +78,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       return;
     }
 
-    // ── Downgrade to Explorer (cancel)
+    // ── Downgrade to free tier (cancel)
     if (plan.tier == SubscriptionTier.welcome) {
       if (_service.isPaid) {
         // Paid user cancelling — keep access until end of period
@@ -113,7 +113,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       return;
     }
 
-    // ── New purchase from Explorer (immediate) or tier change (scheduled)
+    // ── New purchase from free tier (immediate) or tier change (scheduled)
     if (_service.isFree) {
       // Immediate purchase from free tier
       if (mounted) {
@@ -1120,8 +1120,6 @@ class _PlanCard extends StatelessWidget {
         return HuddlColors.textHint;
       case SubscriptionTier.plus:
         return HuddlColors.primary;
-      case SubscriptionTier.innerCircle:
-        return HuddlColors.nearBlack; // deprecated alias
       case SubscriptionTier.partner:
         return HuddlColors.primary;
     }
@@ -1133,8 +1131,6 @@ class _PlanCard extends StatelessWidget {
         return Icons.explore_outlined;
       case SubscriptionTier.plus:
         return Icons.home_outlined;
-      case SubscriptionTier.innerCircle:
-        return Icons.workspace_premium; // deprecated alias
       case SubscriptionTier.partner:
         return Icons.verified;
     }
