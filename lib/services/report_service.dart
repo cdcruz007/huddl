@@ -95,7 +95,7 @@ class ReportService {
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      debugPrint('[ReportService] Not authenticated — cannot file report');
+      if (kDebugMode) debugPrint('[ReportService] Not authenticated — cannot file report');
       return false;
     }
 
@@ -119,10 +119,10 @@ class ReportService {
         'status'      : 'pending',
         'timestamp'   : FieldValue.serverTimestamp(),
       });
-      debugPrint('[ReportService] Report filed: ${doc.id}');
+      if (kDebugMode) debugPrint('[ReportService] Report filed: ${doc.id}');
       return true;
     } catch (e) {
-      debugPrint('[ReportService] Failed to file report: $e');
+      if (kDebugMode) debugPrint('[ReportService] Failed to file report: $e');
       return false;
     }
   }

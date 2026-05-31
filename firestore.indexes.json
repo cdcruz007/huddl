@@ -32,6 +32,14 @@
         { "fieldPath": "isActive",   "order": "ASCENDING"  },
         { "fieldPath": "promotedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetMemberId", "order": "ASCENDING" },
+        { "fieldPath": "status",         "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

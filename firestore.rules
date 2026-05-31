@@ -70,6 +70,23 @@ service cloud.firestore {
       match /deadlines/{docId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Block list: users/{uid}/blocks/{blockedUid}
+      // Written by BlockService._writeToFirestore().
+      // Doc ID == blocked user's UID. Only the owner may read or modify.
+      match /blocks/{blockedUid} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Group invitations sent TO this user: users/{uid}/invitations/{invId}
+      // Written by InvitationService.sendInvitations() on the inviter's device.
+      // The invited user can read and update (accept/decline); any auth user
+      // can create (the invite flow writes to the recipient's sub-collection).
+      match /invitations/{invitationId} {
+        allow read, update: if isOwner(userId);
+        allow create: if isAuth();
+        allow delete: if isOwner(userId);
+      }
     }
 
     // =========================================================================

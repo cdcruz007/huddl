@@ -1,14 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/onboarding_data_service.dart';
-import '../legal/terms_of_service_screen.dart';
-import '../legal/privacy_policy_detail_screen.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/onboarding_progress_bar.dart';
-
 
 // ── Password strength helpers ─────────────────────────────────────────────────
 
@@ -241,12 +237,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
                                       decoration: TextDecoration.underline,
                                     ),
                                     recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          HuddlSpringPageRoute(page: const TermsOfServiceScreen()),
-                                        );
-                                      },
+                                      ..onTap = () =>
+                                          Navigator.pushNamed(context, '/terms'),
                                   ),
                                   const TextSpan(text: ' and '),
                                   TextSpan(
@@ -257,12 +249,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
                                       decoration: TextDecoration.underline,
                                     ),
                                     recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          HuddlSpringPageRoute(page: const PrivacyPolicyDetailScreen()),
-                                        );
-                                      },
+                                      ..onTap = () =>
+                                          Navigator.pushNamed(context, '/privacy'),
                                   ),
                                   const TextSpan(
                                       text: ', including the processing of my personal data as described in the Privacy Policy.'),

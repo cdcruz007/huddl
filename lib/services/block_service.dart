@@ -65,9 +65,9 @@ class BlockService extends ChangeNotifier {
         }
         // Persist merged set locally so next launch is fast even offline
         await _saveLocal();
-        debugPrint('[BlockService] Loaded ${snapshot.docs.length} block(s) from Firestore');
+        if (kDebugMode) debugPrint('[BlockService] Loaded ${snapshot.docs.length} block(s) from Firestore');
       } catch (e) {
-        debugPrint('[BlockService] Firestore load failed (offline?): $e');
+        if (kDebugMode) debugPrint('[BlockService] Firestore load failed (offline?): $e');
         // Local cache is still usable — not fatal
       }
     }
@@ -98,7 +98,7 @@ class BlockService extends ChangeNotifier {
         'blockedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      debugPrint('[BlockService] Firestore block write failed: $e');
+      if (kDebugMode) debugPrint('[BlockService] Firestore block write failed: $e');
     }
   }
 
@@ -113,7 +113,7 @@ class BlockService extends ChangeNotifier {
           .doc(targetUid)
           .delete();
     } catch (e) {
-      debugPrint('[BlockService] Firestore unblock write failed: $e');
+      if (kDebugMode) debugPrint('[BlockService] Firestore unblock write failed: $e');
     }
   }
 

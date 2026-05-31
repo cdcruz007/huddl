@@ -22,6 +22,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/ai_api_helper.dart';
+import '../../services/huddl_user_service.dart';
 import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -174,12 +175,31 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     await onboarding.initialize();
     final postcode = onboarding.postcode;
     final borough = PostcodeService().getBoroughFromPostcode(postcode);
-    final members = InvitationService.getBoroughMembers(borough);
-    if (mounted) {
-      setState(() {
-        _userBorough = borough;
-        _boroughMembers = members;
-      });
+    if (borough == null) return;
+
+    // Use HuddlUserService which queries Firestore for real borough members.
+    // InvitationService.getBoroughMembers() returns an empty static list kept
+    // only for API compatibility (see invitation_service.dart line ~513).
+    try {
+      final huddlUsers = await HuddlUserService().getBoroughMembers(borough);
+      final members = huddlUsers
+          .map((u) => BoroughMember(
+                id: u.uid,
+                name: u.name,
+                avatarUrl: u.photoUrl.isNotEmpty ? u.photoUrl : null,
+                parentType: u.parentType,
+                stagesOfLife: u.stagesOfLife,
+              ))
+          .toList();
+      if (mounted) {
+        setState(() {
+          _userBorough = borough;
+          _boroughMembers = members;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[CreateGroup] _loadBoroughMembers error: $e');
+      if (mounted) setState(() => _userBorough = borough);
     }
   }
 
@@ -820,6 +840,31 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           if (mounted) _showDuplicateNameDialog();
           return;
         }
+      }
+      // ── Firestore cross-device duplicate check ────────────────────────
+      // Local BrowserStorage only covers groups cached on this device. Query
+      // Firestore to prevent two users creating same-named public borough groups.
+      try {
+        final onboardingCheck = OnboardingDataService();
+        await onboardingCheck.initialize();
+        final checkBorough = PostcodeService()
+            .getBoroughFromPostcode(onboardingCheck.postcode);
+        if (checkBorough != null) {
+          final fsSnap = await FirebaseFirestore.instance
+              .collection('groups')
+              .where('borough', isEqualTo: checkBorough)
+              .where('name', isEqualTo: _nameController.text.trim())
+              .where('isPrivate', isEqualTo: false)
+              .limit(1)
+              .get();
+          if (fsSnap.docs.isNotEmpty) {
+            if (mounted) _showDuplicateNameDialog();
+            return;
+          }
+        }
+      } catch (e) {
+        // Non-fatal — offline or index not deployed; continue with creation
+        if (kDebugMode) debugPrint('[CreateGroup] Firestore dupe check failed: $e');
       }
     }
 

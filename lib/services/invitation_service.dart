@@ -214,6 +214,35 @@ class InvitationService extends ChangeNotifier {
 
       _isInitialized = true;
       _log('Loaded ${_invitations.length} invitation(s), ${_joinedGroups.length} joined group(s), ${_systemMessages.length} system message(s)');
+
+      // ── Load pending Firestore invitations (cross-device sync) ──────────────
+      // Invitations are written to users/{uid}/invitations/{invId} by the
+      // inviter's device. We merge any not already in BrowserStorage so they
+      // appear even on a fresh install.
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        try {
+          final snap = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('invitations')
+              .where('status', isEqualTo: 'pending')
+              .get();
+          bool changed = false;
+          for (final doc in snap.docs) {
+            final inv = GroupInvitation.fromJson(doc.data());
+            if (!_invitations.any((i) => i.id == inv.id)) {
+              _invitations.add(inv);
+              changed = true;
+            }
+          }
+          if (changed) await _saveInvitations();
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[InvitationService] Firestore invitations load error: $e');
+          }
+        }
+      }
     } catch (e) {
       _log('Error loading data: $e');
       _isInitialized = true;
@@ -250,23 +279,65 @@ class InvitationService extends ChangeNotifier {
     required String creatorName,
   }) async {
     await initialize();
+    final db = FirebaseFirestore.instance;
+    final inviterId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
     for (final memberId in invitedMemberIds) {
+      final invId = 'inv_${group.id}_$memberId';
       final inv = GroupInvitation(
-        id: 'inv_${group.id}_$memberId',
+        id: invId,
         groupId: group.id,
         groupName: group.name,
         groupDescription: group.description,
         groupImageUrl: group.imageUrl,
         invitedByName: creatorName,
-        invitedById: FirebaseAuth.instance.currentUser?.uid ?? '',
+        invitedById: inviterId,
         targetMemberId: memberId,
         sentAt: DateTime.now(),
         status: 'pending',
       );
-      // Avoid duplicates
-      _invitations.removeWhere((i) => i.id == inv.id);
+
+      // 1. Write to local cache (fast path, offline-safe)
+      _invitations.removeWhere((i) => i.id == invId);
       _invitations.add(inv);
+
+      // 2. Write to Firestore so the invited member sees it on any device
+      try {
+        await db
+            .collection('users')
+            .doc(memberId)
+            .collection('invitations')
+            .doc(invId)
+            .set({
+          'id': invId,
+          'groupId': group.id,
+          'groupName': group.name,
+          'groupDescription': group.description,
+          'groupImageUrl': group.imageUrl,
+          'invitedByName': creatorName,
+          'invitedById': inviterId,
+          'targetMemberId': memberId,
+          'sentAt': FieldValue.serverTimestamp(),
+          'status': 'pending',
+        });
+      } catch (e) {
+        if (kDebugMode) debugPrint('[InvitationService] Firestore invite write error: $e');
+      }
+
+      // 3. Send FCM push notification to the invited member
+      try {
+        await HuddlNotificationService().groupInvitation(
+          recipientId: memberId,
+          invitedByName: creatorName,
+          groupName: group.name,
+          groupId: group.id,
+          groupImageUrl: group.imageUrl.isNotEmpty ? group.imageUrl : null,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[InvitationService] FCM invitation push error: $e');
+      }
     }
+
     await _saveInvitations();
     notifyListeners();
     _log('Sent ${invitedMemberIds.length} invitation(s) for group "${group.name}"');

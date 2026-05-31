@@ -177,7 +177,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                                 decoration: TextDecoration.underline,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchUrl('https://huddlapp.co.uk/privacy'),
+                                ..onTap = () => Navigator.pushNamed(context, '/privacy'),
                             ),
                             const TextSpan(text: ' and '),
                             TextSpan(
@@ -188,7 +188,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                                 decoration: TextDecoration.underline,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchUrl('https://huddlapp.co.uk/terms'),
+                                ..onTap = () => Navigator.pushNamed(context, '/terms'),
                             ),
                             const TextSpan(
                               text: '. I consent to Huddl processing my personal data as described.',
@@ -283,7 +283,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                                 decoration: TextDecoration.underline,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchUrl('https://huddlapp.co.uk/privacy'),
+                                ..onTap = () => Navigator.pushNamed(context, '/privacy'),
                             ),
                           ],
                         ),

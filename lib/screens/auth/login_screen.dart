@@ -744,6 +744,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
+              const SizedBox(height: 16),
+              // ── Legal footer ─────────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/terms'),
+                    child: Text('Terms',
+                        style: HuddlText.caption(color: HuddlColors.primary)),
+                  ),
+                  Text('\u00b7',
+                      style: HuddlText.caption(
+                          color: context.hc.textTertiary)),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/privacy'),
+                    child: Text('Privacy',
+                        style: HuddlText.caption(color: HuddlColors.primary)),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 32),
             ],
           ),

@@ -4521,6 +4521,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           pollIsCalendarMode: result.isCalendarMode,
           pollExpiresAt: result.expiresAt?.toIso8601String(),
         );
+        // Pre-register ID immediately so the Firestore stream echo (which may
+        // arrive before Step 3 patches pollFirestoreId) is recognised as an
+        // already-known message and falls through without creating a legacy
+        // text bubble duplicate.
+        if (groupMsgId.isNotEmpty) {
+          _firestoreMsgIds.add(groupMsgId);
+        }
       } catch (e) {
         if (kDebugMode) debugPrint('[GroupChat] Poll msg write error: $e');
       }
@@ -4545,13 +4552,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       if (!mounted) return;
 
       // ── Step 3: Patch pollFirestoreId back onto the group_messages doc ──
-      // This allows other devices to resolve the polls/ doc from the message
-      // stream without a secondary lookup.
+      // Awaited so the patch lands before the Firestore stream can echo the
+      // message without pollFirestoreId, which would cause a duplicate legacy
+      // text bubble to appear alongside the interactive poll card (BUG 1 fix).
       if (firestorePollId.isNotEmpty && groupMsgId.isNotEmpty) {
-        unawaited(FirestoreService().patchGroupMessagePollId(
-          groupMsgId: groupMsgId,
-          pollFirestoreId: firestorePollId,
-        ));
+        try {
+          await FirestoreService().patchGroupMessagePollId(
+            groupMsgId: groupMsgId,
+            pollFirestoreId: firestorePollId,
+          );
+        } catch (e) {
+          if (kDebugMode) debugPrint('[GroupChat] Poll patch error: $e');
+        }
       }
 
       // ── Step 4: Add to local _pollItems list (inline timeline) ───────

@@ -5452,6 +5452,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 24),
           Text('\u00a9 ${DateTime.now().year} Cruzen Ltd. All rights reserved.',
               style: HuddlText.caption(color: context.hc.textTertiary)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/terms'),
+                child: Text('Terms of Service',
+                    style: HuddlText.caption(color: HuddlColors.primary)),
+              ),
+              Text('\u00b7', style: HuddlText.caption(color: context.hc.textTertiary)),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/privacy'),
+                child: Text('Privacy Policy',
+                    style: HuddlText.caption(color: HuddlColors.primary)),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
         ],
       ),
