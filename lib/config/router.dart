@@ -413,11 +413,11 @@ class AppRouter {
         );
 
       // Marketplace — notification tap for offers/sales + profile quick-link.
-      // MarketplaceScreen is embedded as tab 3 in MainShell; route to home
-      // shell so the bottom nav context is correct.
+      // MarketplaceScreen is tab 3 in MainShell. Use _ShellTabRedirect to
+      // switch the existing shell to tab 3 without pushing a new shell.
       case '/marketplace':
         return FadePageRoute(
-          page: MainShell(key: MainShell.shellKey),
+          page: const _ShellTabRedirect(tabIndex: 3),
         );
 
       default:
@@ -430,4 +430,34 @@ class AppRouter {
         );
     }
   }
+}
+
+// ── Shell tab redirect ────────────────────────────────────────────────────────
+// Pops the current route and switches the existing MainShell to [tabIndex].
+// Used for routes that are actually tabs embedded in MainShell (Marketplace,
+// Groups, etc.) so they don't create a new shell on top of the existing one.
+class _ShellTabRedirect extends StatefulWidget {
+  final int tabIndex;
+  const _ShellTabRedirect({required this.tabIndex});
+
+  @override
+  State<_ShellTabRedirect> createState() => _ShellTabRedirectState();
+}
+
+class _ShellTabRedirectState extends State<_ShellTabRedirect> {
+  @override
+  void initState() {
+    super.initState();
+    // Schedule after the frame so the Navigator route is fully pushed first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Switch the shell tab.
+      MainShell.shellKey.currentState?.switchTab(widget.tabIndex);
+      // Pop this redirect page off the stack.
+      if (Navigator.canPop(context)) Navigator.pop(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
