@@ -1210,7 +1210,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   child: TextField(
                     controller: _priceCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: HuddlText.body(color: _sectionText),
+                    // Disable input for free users who've selected paid —
+                    // the hint below explains the gate; they cannot type a price they can't use
+                    enabled: !SubscriptionService().isFree,
+                    style: HuddlText.body(
+                      color: SubscriptionService().isFree
+                          ? HuddlColors.textTertiary
+                          : _sectionText,
+                    ),
                     decoration: InputDecoration(
                       hintText: ' Price',
                       hintStyle: HuddlText.body(color: _hintGray),

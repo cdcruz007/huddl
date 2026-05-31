@@ -25,6 +25,7 @@ import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
 import '../search/unified_search_screen.dart';
+import '../ai/ai_listing_generator_sheet.dart';
 
 
 
@@ -2229,6 +2230,81 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         size: 13, color: hc.textTertiary),
                   ],
                 ),
+                // AI Write secondary action row
+                const SizedBox(height: 10),
+                Builder(builder: (bCtx) {
+                  final canUse = SubscriptionService().hasAiListingGenerator;
+                  return GestureDetector(
+                    onTap: () {
+                      if (!canUse) {
+                        Navigator.pushNamed(
+                          context,
+                          '/subscription_gate',
+                          arguments: {
+                            'featureTitle': 'AI Listing Writer',
+                            'featureDescription':
+                                'Describe your item and AI writes the '
+                                'perfect listing in seconds.',
+                            'requiredPlan': 'Huddl Plus',
+                            'featureIcon':
+                                Icons.auto_awesome_outlined.codePoint,
+                          },
+                        );
+                        return;
+                      }
+                      _openAiListingGenerator();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: canUse
+                            ? HuddlColors.primary
+                            : HuddlColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_outlined,
+                            size: 14,
+                            color: canUse
+                                ? Colors.white
+                                : HuddlColors.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'AI Write',
+                            style: HuddlText.caption(
+                              weight: FontWeight.w600,
+                              color: canUse
+                                  ? Colors.white
+                                  : HuddlColors.primary,
+                            ),
+                          ),
+                          if (!canUse) ...[
+
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                'Plus',
+                                style: HuddlText.label(
+                                    color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }),
                 // P12: listing usage indicator for capped tiers
                 if (isCapped) ...[
                   const SizedBox(height: 8),
@@ -2263,6 +2339,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           ),
         ),
       ),
+    );
+  }
+
+  void _openAiListingGenerator() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AiListingGeneratorSheet(),
     );
   }
 

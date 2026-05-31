@@ -30,6 +30,7 @@ import '../main_shell.dart';
 import '../events/meetup_detail_screen.dart';
 import '../events/event_detail_screen.dart';
 import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/ai_feed_service.dart';
 import '../../widgets/borough_badge.dart';
@@ -83,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen>
   final DMService _dmService = DMService();
   final AiFeedService _aiFeedService = AiFeedService();
   final LocalServicesService _servicesService = LocalServicesService();
+  final SubscriptionService _subscriptionService = SubscriptionService();
   final RehomeService _rehomeService = RehomeService();
 
   bool _isLoading = true;
@@ -3119,6 +3121,28 @@ class _HomeScreenState extends State<HomeScreen>
   /// has typed in the composer as an initial message.
   void _openAssistant() {
     HuddlAnimations.mediumTap();
+
+    // ── Free tier: pre-gate when daily limit is exhausted ─────────────────
+    // Route directly to the gate screen rather than letting the copilot
+    // screen handle it silently via a SnackBar.
+    if (_subscriptionService.isFree &&
+        !_subscriptionService.canUseAiCopilot) {
+      Navigator.pushNamed(
+        context,
+        '/subscription_gate',
+        arguments: {
+          'featureTitle': 'huddl Assistant',
+          'featureDescription':
+              'You\'ve used your ${_subscriptionService.limits.maxAiCopilotChatsPerDay} '
+              'free AI chats today. Upgrade to Huddl Plus for 25 chats a day.',
+          'requiredPlan': 'Huddl Plus',
+          'featureIcon': Icons.auto_awesome_outlined.codePoint,
+        },
+      );
+      return;
+    }
+
+    // ── Normal open ───────────────────────────────────────────────────────
     final text = _postController.text.trim();
     _postController.clear();
     Navigator.pushNamed(
@@ -3151,7 +3175,10 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
           border: isDark ? Border.all(color: hc.divider) : null,
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
           children: [
             _buildTinyAvatar(),
             const SizedBox(width: 10),
@@ -3198,6 +3225,44 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ),
+          ],
+        ),
+            // ── Free tier remaining AI chat count ────────────────────────────
+            // Shown below the composer row for free users only.
+            // Turns orange when the daily limit is reached.
+            if (_subscriptionService.isFree &&
+                !TierLimits.isUnlimited(
+                    _subscriptionService.limits.maxAiCopilotChatsPerDay))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_outlined,
+                      size: 11,
+                      color: _subscriptionService.canUseAiCopilot
+                          ? HuddlColors.textTertiary
+                          : HuddlColors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _subscriptionService.canUseAiCopilot
+                          ? '${_subscriptionService.aiCopilotChatsRemaining} free AI '
+                            '${_subscriptionService.aiCopilotChatsRemaining == 1 ? "chat" : "chats"} '
+                            'left today'
+                          : 'Daily limit reached \u00b7 Upgrade for more',
+                      style: HuddlText.caption(
+                        color: _subscriptionService.canUseAiCopilot
+                            ? HuddlColors.textTertiary
+                            : HuddlColors.primary,
+                        weight: _subscriptionService.canUseAiCopilot
+                            ? FontWeight.w400
+                            : FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

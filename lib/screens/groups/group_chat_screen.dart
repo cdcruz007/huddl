@@ -3825,6 +3825,71 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         ),
       ),
       actions: [
+        // AI Summary — gated for free tier, locked state with Plus badge
+        Builder(builder: (ctx) {
+          final canSummarise = SubscriptionService().hasAiChatSummaries;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.auto_awesome_outlined,
+                  color: canSummarise
+                      ? context.hc.textSecondary
+                      : HuddlColors.textTertiary,
+                ),
+                onPressed: canSummarise
+                    ? () => ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('AI Summary coming soon',
+                                style: HuddlText.body()),
+                            backgroundColor: HuddlColors.textDark,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        )
+                    : () => Navigator.pushNamed(
+                          context,
+                          '/subscription_gate',
+                          arguments: {
+                            'featureTitle': 'AI Group Summary',
+                            'featureDescription':
+                                'Catch up on what you missed — AI summarises '
+                                'unread messages in seconds.',
+                            'requiredPlan': 'Huddl Plus',
+                            'featureIcon':
+                                Icons.auto_awesome_outlined.codePoint,
+                          },
+                        ),
+                tooltip:
+                    canSummarise ? 'AI Summary' : 'Upgrade for AI Summary',
+              ),
+              // Plus badge — shown only for free users
+              if (!canSummarise)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Plus',
+                      style: GoogleFonts.poppins(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }),
         IconButton(
           icon: Icon(Icons.search, color: context.hc.textPrimary),
           onPressed: () => setState(() => _isSearching = true),

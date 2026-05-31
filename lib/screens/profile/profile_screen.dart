@@ -932,6 +932,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: HuddlText.body(color: hc.textTertiary)),
             ],
           ),
+          // ── Neighbourhood badge slot ────────────────────────────────────
+          // Free users: locked badge slot → /subscription_plans
+          // Plus/Partner: active badge with borough label
+          if (!_subscriptionService.hasBadge)
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(
+                context,
+                '/subscription_plans',
+                arguments: {
+                  'gateMessage': 'Your neighbourhood badge shows other parents '
+                      'where you\'re from in Cambridge.',
+                },
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: hc.inputBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: HuddlColors.divider, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.lock_outline,
+                              size: 11,
+                              color: HuddlColors.textTertiary),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Neighbourhood badge',
+                            style: HuddlText.caption(
+                                color: HuddlColors.textTertiary),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Plus',
+                              style: HuddlText.label(
+                                  color: HuddlColors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified_rounded,
+                        size: 12, color: HuddlColors.primary),
+                    const SizedBox(width: 5),
+                    Text(
+                      _borough.isNotEmpty
+                          ? '$_borough parent'
+                          : 'Huddl Plus member',
+                      style: HuddlText.caption(
+                        color: HuddlColors.primary,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           // Stage badge
           if (_stageLabel.isNotEmpty) ...[
             const SizedBox(height: 6),
