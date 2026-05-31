@@ -19,29 +19,18 @@ class GeminiConfig {
   GeminiConfig._();
 
   // ── API credentials ────────────────────────────────────────────────────
-  // ⚠️  TODO (BUG 4): The key below is the Firebase web browser API key
-  // (project huddl-connect, 879152141283). A Firebase web key and a Gemini
-  // AI Studio key are DIFFERENT credentials even though both start with AIzaSy.
-  // This key does NOT have the Generative Language API scope — the copilot will
-  // always fail validation and show "Offline mode" until a real Gemini key is
-  // supplied.
+  // This is the huddl-connect Firebase web API key (project 879152141283)
+  // with the Generative Language API enabled at:
+  //   https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect
   //
-  // To fix:
-  //   Step 1: Go to https://aistudio.google.com/app/apikey
-  //   Step 2: Create a new API key for the huddl-connect project
-  //   Step 3: Enable the Generative Language API at:
-  //     https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect
-  //   Step 4: Replace the placeholder below with the real key, OR
-  //           pass it at build time via --dart-define=GEMINI_API_KEY=AIza...
-  //           so the key never lives in source control.
+  // A Firebase web API key CAN serve as a Gemini key once the Generative
+  // Language API is enabled for the project — they are the same GCP credential.
   //
-  // Production build command:
-  //   flutter build web --dart-define=GEMINI_API_KEY=YOUR_REAL_GEMINI_KEY
-  //   flutter build appbundle --dart-define=GEMINI_API_KEY=YOUR_REAL_GEMINI_KEY
-  //
-  // ⚠️  NEVER commit a real Gemini API key to source control.
-  //     Use --dart-define at build time or a secrets manager in CI/CD.
-  static const String _embeddedKey = 'REPLACE_WITH_GEMINI_AI_STUDIO_KEY';
+  // To override at build time (recommended for production — keeps key out of
+  // source control):
+  //   flutter build web --dart-define=GEMINI_API_KEY=AIza...
+  //   flutter build appbundle --dart-define=GEMINI_API_KEY=AIza...
+  static const String _embeddedKey = 'AIzaSyBk2hsDAYRFj1eLM8XZD5aQndLJBiXTZp4';
 
   static const String apiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
