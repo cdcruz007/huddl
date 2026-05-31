@@ -1322,7 +1322,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String welcome, String plus, String inner) {
+  Widget _row(String label, String welcome, String plus, String partner) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
@@ -1343,7 +1343,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark))),
           Expanded(
-              child: Text(inner,
+              child: Text(partner,
                   textAlign: TextAlign.center,
                   style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack))),
         ],
@@ -1351,7 +1351,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _rowBool(String label, bool welcome, bool plus, bool inner) {
+  Widget _rowBool(String label, bool welcome, bool plus, bool partner) {
     Widget checkIcon(bool val, Color color) => Icon(
           val ? Icons.check_circle : Icons.remove_circle_outline,
           size: 16,
@@ -1371,7 +1371,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: HuddlText.caption(color: HuddlColors.textSecondary))),
           Expanded(child: Center(child: checkIcon(welcome, HuddlColors.textHint))),
           Expanded(child: Center(child: checkIcon(plus, HuddlColors.textDark))),
-          Expanded(child: Center(child: checkIcon(inner, HuddlColors.nearBlack))),
+          Expanded(child: Center(child: checkIcon(partner, HuddlColors.nearBlack))),
         ],
       ),
     );

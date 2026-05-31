@@ -130,6 +130,9 @@ class TierLimits {
     maxMeetupsPerMonth: 999,    // attending meetups is unlimited
     maxDMConversations: 999,    // DMs unlimited
     maxMarketplaceListings: 999, // legacy — new gate uses maxListingsCreatedLifetime
+    // Photo cap is intentionally unlimited on free — free users are capped
+    // to 3 lifetime listings anyway, so photo volume is naturally low.
+    // Do NOT reduce this: it would break free users' existing uploads.
     maxPhotoUploads: 999,
     maxMessagesPerMonth: 999,
     canCreatePrivateGroups: false,

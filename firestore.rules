@@ -168,6 +168,32 @@ service cloud.firestore {
 
       // Conversations are never deleted from the client.
       allow delete: if false;
+
+      // ── Messages subcollection ────────────────────────────────────────────
+      match /messages/{messageId} {
+        // Only participants in the parent conversation can read messages.
+        allow read: if isAuth()
+          && request.auth.uid in
+              get(/databases/$(database)/documents/conversations/$(conversationId))
+                .data.participantIds;
+
+        // Either participant may send; senderId must match their UID.
+        allow create: if isAuth()
+          && request.resource.data.senderId == request.auth.uid;
+
+        // Sender may update their own message (reactions, status, unsend flag).
+        // Either participant may update reactions.
+        allow update: if isAuth() && (
+          resource.data.senderId == request.auth.uid
+          ||
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['reactions', 'status', 'updatedAt'])
+        );
+
+        // Sender may delete (unsend) their own message only.
+        allow delete: if isAuth()
+          && resource.data.senderId == request.auth.uid;
+      }
     }
 
     // Individual DM messages.
@@ -231,6 +257,26 @@ service cloud.firestore {
     // RSVP records: user_rsvps/{uid}/meetups/{meetupId}
     match /user_rsvps/{uid}/{type}/{itemId} {
       allow read, write: if isOwner(uid);
+    }
+
+    // =========================================================================
+    // RSVPS  (top-level collection — legacy/parallel to user_rsvps)
+    // Used by meetup RSVP flow and cleared on account deletion.
+    // =========================================================================
+    match /rsvps/{rsvpId} {
+      // Users can read and write their own RSVPs only.
+      allow read: if isAuth()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuth()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isAuth()
+        && resource.data.userId == request.auth.uid;
+
+      // Users may delete their own RSVPs (cancel RSVP flow).
+      allow delete: if isAuth()
+        && resource.data.userId == request.auth.uid;
     }
 
     // =========================================================================
@@ -312,6 +358,57 @@ service cloud.firestore {
       allow delete: if isAuth()
         && resource.data.userId == request.auth.uid;
       allow update: if false;
+    }
+
+    // =========================================================================
+    // POLLS  (group polls created from group chat)
+    // =========================================================================
+    match /polls/{pollId} {
+      // Any auth user can read polls (needed for group chat embed).
+      allow read: if isAuth();
+
+      // Any auth user can create a poll; createdByUid must match their UID.
+      allow create: if isAuth()
+        && request.resource.data.createdByUid == request.auth.uid;
+
+      // Any auth user may update vote counts and voter records (voting flow).
+      // The creator may additionally soft-delete (deleted: true) their poll.
+      allow update: if isAuth() && (
+        resource.data.createdByUid == request.auth.uid
+        ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['options', 'voters', 'updatedAt'])
+      );
+
+      // Only the creator may delete their poll.
+      allow delete: if isAuth()
+        && resource.data.createdByUid == request.auth.uid;
+    }
+
+    // =========================================================================
+    // BOROUGH ANNOUNCEMENTS  (noticeboard posts)
+    // =========================================================================
+    match /borough_announcements/{announcementId} {
+      // Any auth user can read announcements in any borough.
+      allow read: if isAuth();
+
+      // Any auth user may post; authorId must match their UID.
+      allow create: if isAuth()
+        && request.resource.data.authorId == request.auth.uid;
+
+      // The author may update their own post (edits, likes, comments).
+      // Any auth user may update reaction/like counters only.
+      allow update: if isAuth() && (
+        resource.data.authorId == request.auth.uid
+        ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['likedBy', 'likeCount', 'commentsList',
+                    'commentCount', 'updatedAt'])
+      );
+
+      // Only the author may delete their own post.
+      allow delete: if isAuth()
+        && resource.data.authorId == request.auth.uid;
     }
 
     // =========================================================================

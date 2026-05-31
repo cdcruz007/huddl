@@ -39,6 +39,7 @@ import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../search/unified_search_screen.dart';
 import '../../services/huddl_notification_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -197,6 +198,21 @@ class EventsScreenState extends State<EventsScreen>
   }
 
   void _navigateToCreateMeetup() async {
+    // ── Commercial event gate — Plus/Partner only ─────────────────────────────
+    final ss = SubscriptionService();
+    await ss.initialize();
+    if (!ss.isPlusOrAbove) {
+      if (!mounted) return;
+      await showUpgradePrompt(
+        context,
+        feature: 'events',
+        message: ss.limitReachedMessage('events'),
+        requiredTier: SubscriptionTier.plus,
+      );
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+    if (!mounted) return;
     final newMeetup = await Navigator.push<Meetup>(
       context,
       HuddlSpringPageRoute(page: const CreateMeetupScreen()),
