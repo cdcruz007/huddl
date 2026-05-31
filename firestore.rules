@@ -63,6 +63,13 @@ service cloud.firestore {
       match /notifPrefs/{docId} {
         allow read, write: if isOwner(userId);
       }
+
+      // SEND navigator deadlines: users/{uid}/deadlines/{docId}
+      // Written by SendNavigatorService._persistDeadlinesToFirestore().
+      // Only the owning user may read or write their own deadline docs.
+      match /deadlines/{docId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // =========================================================================

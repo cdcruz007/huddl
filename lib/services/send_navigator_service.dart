@@ -315,7 +315,7 @@ class SendNavigatorService {
         }
       }
     } catch (e) {
-      debugPrint('[SEND] loadStage Firestore error (using local fallback): $e');
+      if (kDebugMode) debugPrint('[SEND] loadStage Firestore error (using local fallback): $e');
     }
     // BrowserStorage fallback
     final raw = await BrowserStorage.getString(_stageKey);
@@ -330,7 +330,7 @@ class SendNavigatorService {
     // Dual-write: BrowserStorage (sync) + Firestore (async, best-effort)
     await BrowserStorage.setString(_stageKey, stage.storageValue);
     _writeStageToFirestore(stage);
-    debugPrint('[SEND] Stage saved: ${stage.storageValue}');
+    if (kDebugMode) debugPrint('[SEND] Stage saved: ${stage.storageValue}');
   }
 
   /// Writes EHCP stage to Firestore `users/{uid}.ehcpStage` — best-effort,
@@ -344,10 +344,10 @@ class SendNavigatorService {
           .doc(uid)
           .set({'ehcpStage': stage.storageValue}, SetOptions(merge: true))
           .catchError((Object e) {
-        debugPrint('[SEND] _writeStageToFirestore error: $e');
+        if (kDebugMode) debugPrint('[SEND] _writeStageToFirestore error: $e');
       });
     } catch (e) {
-      debugPrint('[SEND] _writeStageToFirestore sync error: $e');
+      if (kDebugMode) debugPrint('[SEND] _writeStageToFirestore sync error: $e');
     }
   }
 
@@ -698,7 +698,7 @@ class SendNavigatorService {
         }
       }
     } catch (e) {
-      debugPrint('[SEND] loadDeadlines Firestore error (using local fallback): $e');
+      if (kDebugMode) debugPrint('[SEND] loadDeadlines Firestore error (using local fallback): $e');
     }
 
     // BrowserStorage fallback
@@ -710,7 +710,7 @@ class SendNavigatorService {
             .map((j) => SendDeadline.fromJson(j as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        debugPrint('[SEND] loadDeadlines parse error: $e');
+        if (kDebugMode) debugPrint('[SEND] loadDeadlines parse error: $e');
         _deadlines = [];
       }
     }
@@ -757,10 +757,10 @@ class SendNavigatorService {
         batch.set(col.doc(d.id), d.toJson());
       }
       batch.commit().catchError((Object e) {
-        debugPrint('[SEND] _persistDeadlinesToFirestore batch error: $e');
+        if (kDebugMode) debugPrint('[SEND] _persistDeadlinesToFirestore batch error: $e');
       });
     } catch (e) {
-      debugPrint('[SEND] _persistDeadlinesToFirestore sync error: $e');
+      if (kDebugMode) debugPrint('[SEND] _persistDeadlinesToFirestore sync error: $e');
     }
   }
 
@@ -928,7 +928,7 @@ class SendNavigatorService {
         timeout: const Duration(seconds: 25),
       );
     } catch (e) {
-      debugPrint('[SEND] askEhcpAdvisor error: $e');
+      if (kDebugMode) debugPrint('[SEND] askEhcpAdvisor error: $e');
       final msg = e.toString();
       // 403 API_KEY_SERVICE_BLOCKED means the Generative Language API is not
       // enabled for this project's key — a config error, not a network error.
@@ -1022,7 +1022,7 @@ class SendNavigatorService {
         timeout: const Duration(seconds: 25),
       );
     } catch (e) {
-      debugPrint('[SEND] askAnonAdvisor error: $e');
+      if (kDebugMode) debugPrint('[SEND] askAnonAdvisor error: $e');
       final msg = e.toString();
       final isConfig = msg.contains('403') ||
           msg.contains('PERMISSION_DENIED') ||

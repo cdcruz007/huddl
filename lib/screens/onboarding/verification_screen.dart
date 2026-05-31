@@ -134,7 +134,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     final fullPhone = _buildFullPhoneNumber();
     // Log the exact string being sent — visible in Crashlytics and debug console
-    debugPrint('[VerificationScreen] Sending to Firebase: "$fullPhone"');
+    if (kDebugMode) debugPrint('[VerificationScreen] Sending to Firebase: "$fullPhone"');
     try { FirebaseCrashlytics.instance.log('verifyPhoneNumber sending: $fullPhone'); } catch (_) {}
 
     try {

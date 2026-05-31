@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/services.dart';
@@ -118,7 +119,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           });
         }
       } catch (e) {
-        if (mounted) debugPrint('[createMeetupGroupChat] Firestore error: $e');
+        if (kDebugMode) debugPrint('[createMeetupGroupChat] Firestore error: $e');
         // Fall through to local storage so the user still sees the chat
       }
     }

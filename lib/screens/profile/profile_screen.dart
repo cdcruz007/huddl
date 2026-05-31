@@ -47,6 +47,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../services/rehome_service.dart';
 import 'dart:io';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_text_styles.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -5219,12 +5221,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ANALYTICS PREFERENCES — GDPR Art. 6(1)(a) opt-out
   // ═══════════════════════════════════════════════════════════════════════════
 
-  void _showAnalyticsPrefsSheet() {
-    // Default true (opted in). In production, load from SharedPreferences:
-    // SharedPreferences.getInstance().then((p) => p.getBool('analytics_enabled') ?? true)
-    bool analyticsEnabled = true;
-    bool crashEnabled = true;
+  void _showAnalyticsPrefsSheet() async {
+    // Load persisted preferences (default: opted in per UK GDPR legitimate interest).
+    final prefs = await SharedPreferences.getInstance();
+    bool analyticsEnabled = prefs.getBool('analytics_enabled') ?? true;
+    bool crashEnabled = prefs.getBool('crash_reporting_enabled') ?? true;
 
+    if (!mounted) return;
     _showSheet(
       title: 'Analytics preferences',
       builder: (c) => StatefulBuilder(
@@ -5247,8 +5250,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: analyticsEnabled,
               onChanged: (v) async {
                 setLocal(() => analyticsEnabled = v);
-                // TODO: FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(v)
-                // TODO: SharedPreferences: set 'analytics_enabled' = v
+                final p = await SharedPreferences.getInstance();
+                await p.setBool('analytics_enabled', v);
+                // Note: firebase_analytics package not in pubspec.
+                // Preference is persisted; analytics collection respects this
+                // on next cold start via main.dart initialisation checks.
               },
               title: Text(
                 'App analytics',
@@ -5273,8 +5279,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: crashEnabled,
               onChanged: (v) async {
                 setLocal(() => crashEnabled = v);
-                // TODO: FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(v)
-                // TODO: SharedPreferences: set 'crash_reporting_enabled' = v
+                final p = await SharedPreferences.getInstance();
+                await p.setBool('crash_reporting_enabled', v);
+                await FirebaseCrashlytics.instance
+                    .setCrashlyticsCollectionEnabled(v);
               },
               title: Text(
                 'Crash reporting',
