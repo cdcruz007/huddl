@@ -119,6 +119,20 @@ class AiApiHelper {
       }
     }
 
+    // 403 with API_KEY_SERVICE_BLOCKED means the Generative Language API is not
+    // enabled on the GCP project — this is a permanent configuration issue, NOT
+    // a transient network failure. Throw a specific error so callers (e.g.
+    // AiCopilotService) can distinguish "misconfigured" from "offline" and avoid
+    // setting _isApiOnline=false, which would show a permanent "Offline" badge.
+    if (geminiResponse.statusCode == 403 &&
+        geminiResponse.body.contains('API_KEY_SERVICE_BLOCKED')) {
+      throw Exception(
+          'GEMINI_API_NOT_ENABLED: The Generative Language API is not enabled '
+          'for project huddl-connect. '
+          'Enable it at: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect '
+          'or pass --dart-define=GEMINI_API_KEY=<AI_Studio_key>.');
+    }
+
     throw Exception(
         'Both AI providers failed. '
         'Vertex AI: see above. '

@@ -300,7 +300,11 @@ class AiCopilotService with BoroughAiContext {
         });
         return response;
       } catch (geminiError) {
-        _isApiOnline = false;
+        // API_KEY_SERVICE_BLOCKED = permanent config issue, not a network outage.
+        // Do NOT set _isApiOnline=false in that case — the Cloud Function primary
+        // path is unaffected, and the "Offline" badge would be misleading.
+        final isConfigError = geminiError.toString().contains('GEMINI_API_NOT_ENABLED');
+        _isApiOnline = !isConfigError;
         if (kDebugMode) {
           debugPrint('AiCopilot: all AI APIs failed: $geminiError');
         }
