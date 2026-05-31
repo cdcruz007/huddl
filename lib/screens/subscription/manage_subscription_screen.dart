@@ -739,16 +739,16 @@ class _CurrentPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInnerCircle = subscription.isInnerCircle;
-    final isNeighbourhood = subscription.isNeighbourhood;
+    final isPartner = subscription.isPartner || subscription.isInnerCircle; // isInnerCircle is deprecated alias for Plus, but manage screen shows Partner path
+    final isPlus = subscription.isPlus;
     final isFree = subscription.isFree;
 
     Color accentColor = HuddlColors.textHint;
     IconData icon = Icons.explore_outlined;
-    if (isNeighbourhood) {
+    if (isPlus) {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
-    } else if (isInnerCircle) {
+    } else if (isPartner) {
       accentColor = HuddlColors.nearBlack;
       icon = Icons.workspace_premium;
     }

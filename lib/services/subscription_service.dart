@@ -33,19 +33,21 @@ class SubscriptionService extends ChangeNotifier {
   // ---- Tier checks (used across the app for gating) ----
   bool get isFree => _subscription.isFree;
   bool get isPaid => _subscription.isPaid;
-  bool get isExplorer => _subscription.isExplorer;
-  bool get isNeighbourhood => _subscription.isNeighbourhood;
-  bool get isVillage => _subscription.isVillage; // backward-compat alias
+  bool get isWelcome => _subscription.isWelcome;
+  bool get isPlus => _subscription.isPlus;
+  /// Deprecated Firestore alias — treated as Plus
   bool get isInnerCircle => _subscription.isInnerCircle;
   bool get isPartner => _subscription.isPartner;
 
-  // Backward compat aliases used by some screens
-  bool get isPlus => _subscription.isVillage || _subscription.isPartner;
-  bool get isPro => _subscription.isInnerCircle;
+  // Legacy aliases — kept so call-sites don't break during rename
+  bool get isExplorer => isWelcome;
+  bool get isNeighbourhood => isPlus;
+  bool get isVillage => isPlus;
+  bool get isPro => isInnerCircle;
 
   // ── Partner tier ─────────────────────────────────────────────────────────────
-  /// Plus, legacy Circle, or Partner
-  bool get isPlusOrAbove => isNeighbourhood || isInnerCircle || isPartner;
+  /// Huddl Plus, deprecated Circle alias, or Partner
+  bool get isPlusOrAbove => isPlus || isInnerCircle || isPartner;
 
   // ── Paid meetups (Plus or above only; free meetups open to all) ───────────────
   bool get canCreatePaidMeetup => isPlusOrAbove;
@@ -121,10 +123,10 @@ class SubscriptionService extends ChangeNotifier {
         _subscription =
             UserSubscription.fromJson(jsonDecode(json) as Map<String, dynamic>);
       } catch (_) {
-        _subscription = UserSubscription.explorer();
+        _subscription = UserSubscription.welcome();
       }
     } else {
-      _subscription = UserSubscription.explorer();
+      _subscription = UserSubscription.welcome();
     }
 
     // Load usage counts
@@ -153,7 +155,7 @@ class SubscriptionService extends ChangeNotifier {
             .timeout(const Duration(seconds: 5));
         if (doc.exists) {
           final data = doc.data()!;
-          final tierStr = data['tier'] as String? ?? 'explorer';
+          final tierStr = data['tier'] as String? ?? 'welcome';
           final periodStr = data['billingPeriod'] as String? ?? 'monthly';
           final renewalMs = data['renewalDate'] as int?;
           final isActive = data['isActive'] as bool? ?? false;
@@ -162,10 +164,10 @@ class SubscriptionService extends ChangeNotifier {
 
           final remoteTier = SubscriptionTier.values.firstWhere(
             (t) => t.name == tierStr,
-            orElse: () => SubscriptionTier.explorer,
+            orElse: () => SubscriptionTier.welcome,
           );
           // Only upgrade: if remote tier is higher than local, adopt remote
-          if (_subscription.isFree && remoteTier != SubscriptionTier.explorer) {
+          if (_subscription.isFree && remoteTier != SubscriptionTier.welcome) {
             final remotePeriod = BillingPeriod.values.firstWhere(
               (p) => p.name == periodStr,
               orElse: () => BillingPeriod.monthly,
@@ -184,7 +186,7 @@ class SubscriptionService extends ChangeNotifier {
                   ? null
                   : SubscriptionTier.values.firstWhere(
                       (t) => t.name == schedTierStr,
-                      orElse: () => SubscriptionTier.explorer),
+                      orElse: () => SubscriptionTier.welcome),
               scheduledPeriod: schedPeriodStr == null
                   ? null
                   : BillingPeriod.values.firstWhere(
@@ -256,7 +258,7 @@ class SubscriptionService extends ChangeNotifier {
   }) async {
     if (!_initialized) await initialize();
 
-    // Only restore if the local subscription is currently on explorer (free).
+    // Only restore if the local subscription is currently on Welcome (free).
     // If the user already has a paid local subscription, leave it untouched.
     if (!_subscription.isFree) return;
 
@@ -476,7 +478,7 @@ class SubscriptionService extends ChangeNotifier {
   // SUBSCRIPTION PURCHASE / UPGRADE / DOWNGRADE
   //
   // BILLING-CYCLE POLICY:
-  //   • Purchasing from Explorer (free) activates immediately.
+  //   • Purchasing from Welcome (free) activates immediately.
   //   • Switching between paid tiers (upgrade or downgrade) is *scheduled*
   //     — the new tier/period take effect on the next renewalDate.
   //   • Cancelling sets cancelledAtPeriodEnd = true; the user keeps full
@@ -602,7 +604,7 @@ class SubscriptionService extends ChangeNotifier {
 
     // If the user is already free, just reset.
     if (_subscription.isFree) {
-      _subscription = UserSubscription.explorer();
+      _subscription = UserSubscription.welcome();
       await _persist();
       notifyListeners();
       return;
@@ -682,14 +684,14 @@ class SubscriptionService extends ChangeNotifier {
       case 'meetups':
       case 'events':
       case 'profile_badge':
-        return SubscriptionTier.neighbourhood;
+        return SubscriptionTier.plus;
 
       // AI -- Plus
       case 'ai_listing_generator':
       case 'ai_full_copilot':
       case 'ai_full_chat_summaries':
       case 'ai_full_event_discovery':
-        return SubscriptionTier.neighbourhood;
+        return SubscriptionTier.plus;
 
       // AI -- Partner exclusive
       case 'ai_matchmaker':
@@ -710,10 +712,10 @@ class SubscriptionService extends ChangeNotifier {
       case 'ai_event_discovery_basic':
       case 'ai_smart_feed_basic':
       case 'ai_recommendations_basic':
-        return SubscriptionTier.explorer;
+        return SubscriptionTier.welcome;
 
       default:
-        return SubscriptionTier.explorer;
+        return SubscriptionTier.welcome;
     }
   }
 

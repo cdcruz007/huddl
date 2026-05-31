@@ -390,7 +390,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           context,
           feature: 'messaging',
           message: SubscriptionService().limitReachedMessage('messages'),
-          requiredTier: SubscriptionTier.neighbourhood,
+          requiredTier: SubscriptionTier.plus,
         );
       }
       return;

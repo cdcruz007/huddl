@@ -409,7 +409,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   // ── Create ──────────────────────────────────────────────────────────
   void _createEvent() async {
-    // ── Subscription gate: meetup creation requires Neighbourhood or Inner Circle ───────────
+    // ── Subscription gate: meetup creation requires Huddl Plus or above ───────────
     final subService = SubscriptionService();
     await subService.initialize();
     if (!subService.canCreateMeetupFeature) {

@@ -338,7 +338,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           feature: 'paid meetups',
           message: 'Creating a paid meetup requires Huddl Plus. '
               'Free meetups are available to all members.',
-          requiredTier: SubscriptionTier.neighbourhood,
+          requiredTier: SubscriptionTier.plus,
         );
       }
       return;

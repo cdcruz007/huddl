@@ -1,0 +1,99 @@
+name: huddl_connect
+description: Huddl - Connect with your local community through groups, meetups and marketplace.
+publish_to: 'none'
+version: 1.1.48+108
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: 6.1.5+1
+  shared_preferences: 2.5.3
+  http: 1.5.0
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.17
+  flutter_staggered_grid_view: ^0.7.0
+  intl: ^0.20.2
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.2        # Image cropping and editing
+  file_picker: ^8.0.0
+  url_launcher: ^6.2.5
+  package_info_plus: ^8.1.3     # Dynamic app version from pubspec.yaml
+
+  # Firebase — pinned to iOS SDK 10.27.0 to avoid the iOS 18 SIGTRAP crash.
+  # FirebaseAuth 11.x (firebase_auth >=5.2.0) has a hard assertionFailure in
+  # verifyPhoneNumber on iOS 18 without APNs. FirebaseAuth 10.x does NOT.
+  # firebase_auth 5.1.0 + firebase_core 3.1.0 = Firebase iOS SDK 10.27.0.
+  # All versions below are the exact releases tied to firebase_core 3.1.0.
+  # DO NOT upgrade any of these without verifying the iOS pod version first.
+  firebase_core: 3.1.0
+  firebase_auth: 5.1.0
+  cloud_firestore: 5.0.1
+  firebase_storage: 12.0.1
+  firebase_messaging: 15.0.0
+  firebase_crashlytics: 4.0.1
+
+  # Payment / In-App Purchases
+  in_app_purchase: 3.2.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
+
+  # Biometric Authentication (P3 audit recommendation)
+  local_auth: ^2.3.0               # Fingerprint, Face ID, passcode
+
+  # Material You dynamic colour (P3 audit recommendation)
+  dynamic_color: ^1.7.0            # Android 12+ dynamic colour extraction
+
+  # Voice messages
+  record: 6.0.0                    # Audio recording (mic → m4a/aac file) — 6.x fixes record_linux/platform_interface mismatch
+  audioplayers: 6.1.0              # Audio playback for voice message bubbles
+  path_provider: ^2.1.4            # Temp directory for voice recordings
+
+  # Cloud Functions callable (Events recommendation feedback + Firestore reads)
+  cloud_functions: 5.0.0           # Firebase Cloud Functions callable — pinned for firebase_core 3.1.0
+
+  # Native OS share sheet (Events share button, deep-links)
+  share_plus: ^10.0.0              # Native Share sheet on iOS/Android/Web (web compat with firebase_auth_web)
+
+  # Location — real GPS on Android/iOS; browser Geolocation API on Web
+  geolocator: ^12.0.0              # Cross-platform GPS (Android/iOS/Web) — v12 compatible with firebase_auth_web
+
+  # Runtime permissions — Android/iOS (no-op on Web)
+  permission_handler: ^11.4.0      # Camera, location, contacts, microphone
+
+  # dependency_overrides: force web sub-packages to versions that accept
+  # firebase_core 3.1.0. These are the platform-web implementations bundled
+  # inside firebase_auth and firebase_messaging — they are not used on iOS/Android
+  # but the pub resolver still checks their constraints.
+dependency_overrides:
+  firebase_auth_web: 5.12.2
+  firebase_messaging_web: 3.8.9
+  cached_network_image_web: 1.3.0
+  # record_linux 0.7.2 is incompatible with record_platform_interface 1.5.0.
+  # record 6.0.0 ships record_linux 1.3.0 — pin it here so pub resolver uses
+  # the correct version on all platforms (iOS build also resolves sub-packages).
+  record_linux: 1.3.0
+  # record_web 1.x has a method signature mismatch with record_platform_interface 1.5.0.
+  # record_platform_interface 1.5.0 added {bool request = true} to hasPermission but
+  # record_web 1.x never implemented it. Pin platform_interface to 1.4.0 to fix web build.
+  record_platform_interface: 1.4.0
+  record_web: 1.1.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/images/illustrations/
+    - assets/icons/
+    - assets/images/avatars/
+    - assets/images/groups/
+    - assets/illustrations/

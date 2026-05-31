@@ -91,7 +91,7 @@ class _UpgradePromptSheet extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Quick tier previews
-              if (currentTier == SubscriptionTier.explorer) ...[
+              if (currentTier == SubscriptionTier.welcome) ...[
                 _QuickTierPreview(
                   name: 'Huddl Plus',
                   price: '\u00A34.99/mo',
@@ -106,7 +106,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                     Navigator.pop(context, false);
                     Navigator.pushNamed(context, '/subscription_plans',
                         arguments: {
-                          'highlightTier': 'neighbourhood',
+                          'highlightTier': 'plus',
                           'gateMessage': message,
                         });
                   },
@@ -137,7 +137,7 @@ class _UpgradePromptSheet extends StatelessWidget {
               const SizedBox(height: 16),
 
               // 7-day trial CTA (only if on Welcome and trial not used)
-              if (currentTier == SubscriptionTier.explorer) ...[
+              if (currentTier == SubscriptionTier.welcome) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),

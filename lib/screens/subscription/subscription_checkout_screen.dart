@@ -267,8 +267,8 @@ class _SubscriptionCheckoutScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isInnerCircle = _plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
+    final isPartner = _plan.tier == SubscriptionTier.partner;
+    final color = isPartner ? HuddlColors.nearBlack : HuddlColors.primary;
 
     return Scaffold(
       backgroundColor: context.hc.scaffold,
@@ -807,8 +807,8 @@ class _OrderSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
+    final isPartner = plan.tier == SubscriptionTier.partner;
+    final color = isPartner ? HuddlColors.nearBlack : HuddlColors.primary;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -833,7 +833,7 @@ class _OrderSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
-              isInnerCircle ? Icons.workspace_premium : Icons.home_outlined,
+              isPartner ? Icons.workspace_premium : Icons.home_outlined,
               color: color,
               size: 28,
             ),
@@ -930,8 +930,8 @@ class _SuccessDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
+    final isPartner = plan.tier == SubscriptionTier.partner;
+    final color = isPartner ? HuddlColors.nearBlack : HuddlColors.primary;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -984,8 +984,8 @@ class _ScheduledSuccessDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isInnerCircle ? HuddlColors.nearBlack : HuddlColors.primary;
+    final isPartner = plan.tier == SubscriptionTier.partner;
+    final color = isPartner ? HuddlColors.nearBlack : HuddlColors.primary;
 
     String dateStr = 'your next billing cycle';
     if (renewalDate != null) {

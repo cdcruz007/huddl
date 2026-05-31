@@ -1117,7 +1117,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           context,
           feature: 'messaging',
           message: SubscriptionService().limitReachedMessage('messages'),
-          requiredTier: SubscriptionTier.neighbourhood,
+          requiredTier: SubscriptionTier.plus,
         );
       }
       return;
@@ -4393,7 +4393,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           context,
           feature: 'messaging',
           message: SubscriptionService().limitReachedMessage('messages'),
-          requiredTier: SubscriptionTier.neighbourhood,
+          requiredTier: SubscriptionTier.plus,
         );
       }
       return;

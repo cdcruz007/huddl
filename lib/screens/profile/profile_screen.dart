@@ -791,8 +791,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // ── Partner teaser — shown to Plus users who aren't Partner ──
               // Explains Partner tier and invites upgrade.
-              if (_subscriptionService.isNeighbourhood ||
-                  _subscriptionService.isInnerCircle)
+              if (_subscriptionService.isPlus)
                 SliverToBoxAdapter(
                   child: GestureDetector(
                     onTap: () => Navigator.pushNamed(
@@ -1107,7 +1106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: HuddlText.body(color: hc.textTertiary)),
             ],
           ),
-          // ── Neighbourhood badge slot ────────────────────────────────────
+          // ── Huddl Plus badge slot ──────────────────────────────────────
           // Free users: locked badge slot → /subscription_plans
           // Plus/Partner: active badge with borough label
           if (!_subscriptionService.hasBadge)
@@ -1116,7 +1115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 context,
                 '/subscription_plans',
                 arguments: {
-                  'gateMessage': 'Your neighbourhood badge shows other parents '
+                  'gateMessage': 'Your Huddl Plus badge shows other parents '
                       'where you\'re from in Cambridge.',
                 },
               ),
@@ -1142,7 +1141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               color: HuddlColors.textTertiary),
                           const SizedBox(width: 5),
                           Text(
-                            'Neighbourhood badge',
+                            'Huddl Plus badge',
                             style: HuddlText.caption(
                                 color: HuddlColors.textTertiary),
                           ),
@@ -6630,7 +6629,7 @@ class _SettingsScreen extends StatelessWidget {
               ),
 
               // ── Business verification ───────────────────────────────
-              // Visible only for Plus/Partner users — free (explorer) users hidden.
+              // Visible only for Plus/Partner users — free (Welcome) users hidden.
 
               // Unverified Plus/Partner: offer path to get verified
               if (SubscriptionService().isPlusOrAbove &&

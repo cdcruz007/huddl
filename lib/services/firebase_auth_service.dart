@@ -1151,12 +1151,12 @@ class FirebaseAuthService {
             .timeout(const Duration(seconds: 5));
         if (subDocs.docs.isNotEmpty) {
           final subData = subDocs.docs.first.data();
-          final tierStr = (subData['tier'] as String?) ?? 'explorer';
+          final tierStr = (subData['tier'] as String?) ?? 'welcome';
           final isActive = (subData['isActive'] as bool?) ?? false;
-          if (isActive && tierStr != 'explorer') {
+          if (isActive && tierStr != 'welcome') {
             final tier = SubscriptionTier.values.firstWhere(
               (t) => t.name == tierStr,
-              orElse: () => SubscriptionTier.explorer,
+              orElse: () => SubscriptionTier.welcome,
             );
             final periodStr = (subData['billingPeriod'] as String?) ?? 'monthly';
             final period = BillingPeriod.values.firstWhere(
@@ -1242,7 +1242,7 @@ class FirebaseAuthService {
       'children': onboarding.children,
       'bio': onboarding.bio ?? '',
       'photoUrl': '',
-      'tier': 'explorer',
+      'tier': 'welcome',
       'isFoundingMember': false,
       'isPhoneVerified': true,
       'isOnline': true,
@@ -1262,7 +1262,7 @@ class FirebaseAuthService {
 
     await _db.collection('subscriptions').add({
       'userId': userId,
-      'tier': 'explorer',
+      'tier': 'welcome',
       'billingPeriod': 'monthly',
       'status': 'active',
       'platform': kIsWeb

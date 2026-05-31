@@ -55,7 +55,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           context,
           feature: 'ai_listing_generator',
           message: SubscriptionService().limitReachedMessage('ai_listing_generator'),
-          requiredTier: SubscriptionTier.neighbourhood,
+          requiredTier: SubscriptionTier.plus,
         );
       }
       return;

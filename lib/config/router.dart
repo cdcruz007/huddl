@@ -262,7 +262,7 @@ class AppRouter {
         if (hlStr != null) {
           highlightTier = SubscriptionTier.values.firstWhere(
             (t) => t.name == hlStr,
-            orElse: () => SubscriptionTier.neighbourhood,
+            orElse: () => SubscriptionTier.plus,
           );
         }
         return SlidePageRoute(
@@ -278,8 +278,8 @@ class AppRouter {
         return SlidePageRoute(
           page: SubscriptionCheckoutScreen(
             tier: SubscriptionTier.values.firstWhere(
-              (t) => t.name == (args['tier'] as String? ?? 'neighbourhood'),
-              orElse: () => SubscriptionTier.neighbourhood,
+              (t) => t.name == (args['tier'] as String? ?? 'plus'),
+              orElse: () => SubscriptionTier.plus,
             ),
             period: BillingPeriod.values.firstWhere(
               (b) => b.name == (args['period'] as String? ?? 'annual'),

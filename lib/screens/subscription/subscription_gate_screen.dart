@@ -71,7 +71,7 @@ class SubscriptionGateScreen extends StatelessWidget {
     (Icons.summarize_outlined,
         'Group summaries catch you up instantly'),
     (Icons.verified_outlined,
-        'Your Huddl Plus neighbourhood badge'),
+        'Your Huddl Plus badge'),
   ];
 
   @override
@@ -216,7 +216,7 @@ class SubscriptionGateScreen extends StatelessWidget {
                         context,
                         '/subscription_plans',
                         arguments: {
-                          'highlightTier': SubscriptionTier.neighbourhood.name,
+                          'highlightTier': SubscriptionTier.plus.name,
                           'gateMessage': featureDescription,
                         },
                       );

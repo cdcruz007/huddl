@@ -79,7 +79,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     }
 
     // ── Downgrade to Explorer (cancel)
-    if (plan.tier == SubscriptionTier.explorer) {
+    if (plan.tier == SubscriptionTier.welcome) {
       if (_service.isPaid) {
         // Paid user cancelling — keep access until end of period
         final confirmed = await _showDowngradeDialog();
@@ -352,9 +352,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final orderedPlans = _service.isFree
         ? [
             SubscriptionPlan.allPlans.firstWhere(
-                (p) => p.tier == SubscriptionTier.neighbourhood),
+                (p) => p.tier == SubscriptionTier.plus),
             SubscriptionPlan.allPlans.firstWhere(
-                (p) => p.tier == SubscriptionTier.explorer),
+                (p) => p.tier == SubscriptionTier.welcome),
             SubscriptionPlan.allPlans.firstWhere(
                 (p) => p.tier == SubscriptionTier.partner),
           ]
@@ -421,7 +421,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                                       widget.highlightTier ||
                                   (widget.highlightTier == null &&
                                       plan.tier ==
-                                          SubscriptionTier.neighbourhood),
+                                          SubscriptionTier.plus),
                               isScheduledTarget:
                                   plan.tier == _service.scheduledTier,
                               isPendingCancel:
@@ -767,8 +767,8 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPlus    = plan.tier == SubscriptionTier.neighbourhood;
-    final isFreeUser = currentTier == SubscriptionTier.explorer;
+    final isPlus    = plan.tier == SubscriptionTier.plus;
+    final isFreeUser = currentTier == SubscriptionTier.welcome;
     final tierColor  = _tierColor(plan.tier);
 
     // Plus card gets full orange treatment when the user is on free tier —
@@ -1108,12 +1108,12 @@ class _PlanCard extends StatelessWidget {
 
   static Color _tierColor(SubscriptionTier tier) {
     switch (tier) {
-      case SubscriptionTier.explorer:
+      case SubscriptionTier.welcome:
         return HuddlColors.textHint;
-      case SubscriptionTier.neighbourhood:
+      case SubscriptionTier.plus:
         return HuddlColors.primary;
       case SubscriptionTier.innerCircle:
-        return HuddlColors.nearBlack;
+        return HuddlColors.nearBlack; // deprecated alias
       case SubscriptionTier.partner:
         return HuddlColors.primary;
     }
@@ -1121,12 +1121,12 @@ class _PlanCard extends StatelessWidget {
 
   static IconData _tierIcon(SubscriptionTier tier) {
     switch (tier) {
-      case SubscriptionTier.explorer:
+      case SubscriptionTier.welcome:
         return Icons.explore_outlined;
-      case SubscriptionTier.neighbourhood:
+      case SubscriptionTier.plus:
         return Icons.home_outlined;
       case SubscriptionTier.innerCircle:
-        return Icons.workspace_premium;
+        return Icons.workspace_premium; // deprecated alias
       case SubscriptionTier.partner:
         return Icons.verified;
     }
@@ -1318,7 +1318,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String explorer, String neighbourhood, String inner) {
+  Widget _row(String label, String welcome, String plus, String inner) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
@@ -1331,11 +1331,11 @@ class _FeatureComparisonTable extends StatelessWidget {
               child: Text(label,
                   style: HuddlText.caption(color: HuddlColors.textSecondary))),
           Expanded(
-              child: Text(explorer,
+              child: Text(welcome,
                   textAlign: TextAlign.center,
                   style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary))),
           Expanded(
-              child: Text(neighbourhood,
+              child: Text(plus,
                   textAlign: TextAlign.center,
                   style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textDark))),
           Expanded(
@@ -1347,7 +1347,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _rowBool(String label, bool explorer, bool neighbourhood, bool inner) {
+  Widget _rowBool(String label, bool welcome, bool plus, bool inner) {
     Widget checkIcon(bool val, Color color) => Icon(
           val ? Icons.check_circle : Icons.remove_circle_outline,
           size: 16,
@@ -1365,8 +1365,8 @@ class _FeatureComparisonTable extends StatelessWidget {
               flex: 3,
               child: Text(label,
                   style: HuddlText.caption(color: HuddlColors.textSecondary))),
-          Expanded(child: Center(child: checkIcon(explorer, HuddlColors.textHint))),
-          Expanded(child: Center(child: checkIcon(neighbourhood, HuddlColors.textDark))),
+          Expanded(child: Center(child: checkIcon(welcome, HuddlColors.textHint))),
+          Expanded(child: Center(child: checkIcon(plus, HuddlColors.textDark))),
           Expanded(child: Center(child: checkIcon(inner, HuddlColors.nearBlack))),
         ],
       ),

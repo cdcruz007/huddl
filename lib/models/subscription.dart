@@ -22,7 +22,10 @@
 // =====================================================================================
 
 /// Subscription tier levels for Huddl
-enum SubscriptionTier { explorer, neighbourhood, innerCircle, partner }
+// ignore: constant_identifier_names
+enum SubscriptionTier { welcome, plus, innerCircle, partner }
+// NOTE: `innerCircle` is a deprecated Firestore backward-compat alias only.
+// It is never shown to users and maps to Huddl Plus behaviour.
 
 /// Billing period
 enum BillingPeriod { monthly, annual }
@@ -103,7 +106,7 @@ class TierLimits {
   // ---- WELCOME (Free) -----------------------------------------------------------
   // Enough to genuinely engage — 2 groups, attend meetups, send DMs, list items.
   // AI features are taster-level: 3 AI chats/day and weekly events discovery.
-  static const TierLimits explorer = TierLimits(
+  static const TierLimits welcome = TierLimits(
     maxGroups: 999,            // unlimited — no group join cap on free
     maxGroupsCreated: 999,     // unlimited — free users can create groups
     maxMeetupsPerMonth: 999,   // unlimited — free users can create meetups
@@ -133,9 +136,9 @@ class TierLimits {
     aiSynthesisAccess: false,
   );
 
-  // ---- NEIGHBOUR (£5.99/mo) -----------------------------------------------------
+  // ---- HUDDL PLUS (£4.99/mo) ---------------------------------------------------
   // Full social access + complete AI suite at generous daily/monthly limits.
-  static const TierLimits neighbourhood = TierLimits(
+  static const TierLimits plus = TierLimits(
     maxGroups: 999,
     maxGroupsCreated: 25,
     maxMeetupsPerMonth: 999,
@@ -217,12 +220,12 @@ class TierLimits {
 
   static TierLimits forTier(SubscriptionTier tier) {
     switch (tier) {
-      case SubscriptionTier.explorer:
-        return explorer;
-      case SubscriptionTier.neighbourhood:
-        return neighbourhood;
+      case SubscriptionTier.welcome:
+        return welcome;
+      case SubscriptionTier.plus:
+        return plus;
       case SubscriptionTier.innerCircle:
-        return innerCircle;
+        return innerCircle; // deprecated alias → Plus behaviour
       case SubscriptionTier.partner:
         return partner;
     }
@@ -271,13 +274,13 @@ class SubscriptionPlan {
   static const List<SubscriptionPlan> allPlans = [
     // ---- WELCOME (Free) ---------------------------------------------------------
     SubscriptionPlan(
-      tier: SubscriptionTier.explorer,
+      tier: SubscriptionTier.welcome,
       name: 'Huddl',
       tagline: 'Join your local community',
       subtitle: 'Start connecting with Cambridge parents today',
       monthlyPrice: 0,
       annualPrice: 0,
-      limits: TierLimits.explorer,
+      limits: TierLimits.welcome,
       highlights: [
         'Join every local group in Cambridge',
         'Message other parents in your borough',
@@ -292,15 +295,15 @@ class SubscriptionPlan {
       ],
     ),
 
-    // ---- PLUS (£4.99/mo | £39.99/yr) – formerly Neighbour -----------------------
+    // ---- HUDDL PLUS (£4.99/mo | £39.99/yr) ---------------------------------------
     SubscriptionPlan(
-      tier: SubscriptionTier.neighbourhood,
+      tier: SubscriptionTier.plus,
       name: 'Huddl Plus',
       tagline: 'Your full community, fully unlocked',
       subtitle: 'Everything Cambridge parents need, nothing held back',
       monthlyPrice: 4.99,
       annualPrice: 39.99,
-      limits: TierLimits.neighbourhood,
+      limits: TierLimits.plus,
       highlights: [
         'Every parent conversation in Cambridge — nothing blocked',
         'AI finds the Sunday walk before you think to search',
@@ -312,7 +315,7 @@ class SubscriptionPlan {
       shortBenefits: [
         'Unlimited groups, DMs and meetups',
         'Full AI suite — copilot, listings, summaries',
-        'Your neighbourhood badge',
+        'Your Huddl Plus badge',
       ],
     ),
 
@@ -371,13 +374,16 @@ class UserSubscription {
 
   TierLimits get limits => TierLimits.forTier(tier);
 
-  bool get isExplorer => tier == SubscriptionTier.explorer;
-  bool get isNeighbourhood => tier == SubscriptionTier.neighbourhood;
-  /// Backward-compat alias
-  bool get isVillage => isNeighbourhood;
+  bool get isWelcome => tier == SubscriptionTier.welcome;
+  bool get isPlus => tier == SubscriptionTier.plus;
+  /// Deprecated Firestore alias — treated as Plus
   bool get isInnerCircle => tier == SubscriptionTier.innerCircle;
   bool get isPartner => tier == SubscriptionTier.partner;
-  bool get isFree => tier == SubscriptionTier.explorer;
+  bool get isFree => tier == SubscriptionTier.welcome;
+  // Legacy aliases — kept so callers don't break mid-rename
+  bool get isExplorer => isWelcome;
+  bool get isNeighbourhood => isPlus;
+  bool get isVillage => isPlus;
   bool get isPaid => !isFree;
   // Legacy compat — no founding members
   bool get isFoundingMember => false;
@@ -410,12 +416,12 @@ class UserSubscription {
 
   static String _tierDisplayName(SubscriptionTier t) {
     switch (t) {
-      case SubscriptionTier.explorer:
+      case SubscriptionTier.welcome:
         return 'Welcome';
-      case SubscriptionTier.neighbourhood:
+      case SubscriptionTier.plus:
         return 'Huddl Plus';
       case SubscriptionTier.innerCircle:
-        return 'Huddl Plus'; // legacy tier maps to Plus display name
+        return 'Huddl Plus'; // deprecated alias → Plus display name
       case SubscriptionTier.partner:
         return 'Huddl Partner';
     }
@@ -432,12 +438,12 @@ class UserSubscription {
 
   String get tierDisplayName {
     switch (tier) {
-      case SubscriptionTier.explorer:
+      case SubscriptionTier.welcome:
         return 'Welcome';
-      case SubscriptionTier.neighbourhood:
+      case SubscriptionTier.plus:
         return 'Huddl Plus';
       case SubscriptionTier.innerCircle:
-        return 'Huddl Plus'; // legacy
+        return 'Huddl Plus'; // deprecated alias
       case SubscriptionTier.partner:
         return 'Huddl Partner';
     }
@@ -457,24 +463,27 @@ class UserSubscription {
       };
 
   factory UserSubscription.fromJson(Map<String, dynamic> json) {
-    // Handle migration from old tier names
-    String tierName = json['tier'] as String? ?? 'explorer';
-    if (tierName == 'free') tierName = 'explorer';
-    if (tierName == 'plus') tierName = 'neighbourhood';
-    if (tierName == 'village') tierName = 'neighbourhood';
-    if (tierName == 'pro') tierName = 'innerCircle';
-    if (tierName == 'welcome') tierName = 'explorer';
-    if (tierName == 'neighbour') tierName = 'neighbourhood';
-    if (tierName == 'circle') tierName = 'innerCircle';
-    // Validate partner tier exists in enum (added in v4)
-    if (tierName == 'partner') tierName = 'partner';
+    // ── Normalise legacy / old Firestore tier strings ──────────────────────────
+    String tierName = json['tier'] as String? ?? 'welcome';
+    // Old free-tier names → welcome
+    if (tierName == 'free')        tierName = 'welcome';
+    if (tierName == 'explorer')    tierName = 'welcome';
+    // Old Plus-tier names → plus
+    if (tierName == 'neighbourhood') tierName = 'plus';
+    if (tierName == 'village')     tierName = 'plus';
+    if (tierName == 'neighbour')   tierName = 'plus';
+    // Legacy paid-tier alias kept in Firestore → innerCircle (still in enum)
+    if (tierName == 'pro')         tierName = 'innerCircle';
+    if (tierName == 'circle')      tierName = 'innerCircle';
+    // Canonical names pass through unchanged
+    // 'welcome', 'plus', 'innerCircle', 'partner'
 
     SubscriptionTier? schedTier;
     final schedTierName = json['scheduledTier'] as String?;
     if (schedTierName != null) {
       schedTier = SubscriptionTier.values.firstWhere(
         (t) => t.name == schedTierName,
-        orElse: () => SubscriptionTier.explorer,
+        orElse: () => SubscriptionTier.welcome,
       );
     }
 
@@ -490,7 +499,7 @@ class UserSubscription {
     return UserSubscription(
       tier: SubscriptionTier.values.firstWhere(
         (t) => t.name == tierName,
-        orElse: () => SubscriptionTier.explorer,
+        orElse: () => SubscriptionTier.welcome,
       ),
       billingPeriod: BillingPeriod.values.firstWhere(
         (b) => b.name == json['billingPeriod'],
@@ -508,10 +517,13 @@ class UserSubscription {
   }
 
   /// Default free subscription
-  factory UserSubscription.explorer() => UserSubscription(
-        tier: SubscriptionTier.explorer,
+  factory UserSubscription.welcome() => UserSubscription(
+        tier: SubscriptionTier.welcome,
         billingPeriod: BillingPeriod.monthly,
         startDate: DateTime.now(),
         isActive: true,
       );
+
+  /// Deprecated alias — use [UserSubscription.welcome] instead
+  factory UserSubscription.explorer() => UserSubscription.welcome();
 }

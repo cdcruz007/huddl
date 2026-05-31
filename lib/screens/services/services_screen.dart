@@ -711,7 +711,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           // ── Listing stream ────────────────────────────────────────────────
 
           // Verification nudge banner — unverified Plus/Partner users only.
-          // Hidden once verified or for free (explorer) users.
+          // Hidden once verified or for free (Welcome) users.
           if (SubscriptionService().isPlusOrAbove &&
               !SubscriptionService().isBusinessVerified)
             GestureDetector(

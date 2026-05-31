@@ -73,15 +73,15 @@ class HuddlProductIds {
   static (SubscriptionTier, BillingPeriod) tierForProduct(String id) {
     switch (id) {
       case plusMonthly:
-        return (SubscriptionTier.neighbourhood, BillingPeriod.monthly);
+        return (SubscriptionTier.plus, BillingPeriod.monthly);
       case plusAnnual:
-        return (SubscriptionTier.neighbourhood, BillingPeriod.annual);
+        return (SubscriptionTier.plus, BillingPeriod.annual);
       case partnerMonthly:
         return (SubscriptionTier.partner, BillingPeriod.monthly);
       case partnerAnnual:
         return (SubscriptionTier.partner, BillingPeriod.annual);
       default:
-        return (SubscriptionTier.explorer, BillingPeriod.monthly);
+        return (SubscriptionTier.welcome, BillingPeriod.monthly);
     }
   }
 
@@ -90,7 +90,7 @@ class HuddlProductIds {
     SubscriptionTier tier,
     BillingPeriod period,
   ) {
-    if (tier == SubscriptionTier.neighbourhood) {
+    if (tier == SubscriptionTier.plus) {
       return period == BillingPeriod.monthly ? plusMonthly : plusAnnual;
     }
     if (tier == SubscriptionTier.partner) {
@@ -487,7 +487,7 @@ class PaymentService extends ChangeNotifier {
   void _populateWebProducts() {
     _products.clear();
     for (final plan in SubscriptionPlan.allPlans) {
-      if (plan.tier == SubscriptionTier.explorer) continue;
+      if (plan.tier == SubscriptionTier.welcome) continue;
 
       final monthlyId = HuddlProductIds.productIdFor(
           plan.tier, BillingPeriod.monthly);
@@ -836,8 +836,8 @@ class PaymentService extends ChangeNotifier {
         if (uid == null) return false;
         final status = await api.getSubscriptionStatus(uid);
         final isActive = status['isActive'] == true;
-        final tier = status['tier'] as String? ?? 'explorer';
-        if (isActive && tier != 'explorer') {
+        final tier = status['tier'] as String? ?? 'welcome';
+        if (isActive && tier != 'welcome') {
           _setStatus(PaymentStatus.restored);
           final productId = _productIdFromTierString(tier, status['billingPeriod'] as String?);
           onPurchasesRestored?.call([productId]);
@@ -895,7 +895,7 @@ class PaymentService extends ChangeNotifier {
   String _productIdFromTierString(String tier, String? billingPeriod) {
     final isAnnual = billingPeriod == 'annual';
     switch (tier) {
-      case 'neighbourhood':
+      case 'plus':
         return isAnnual
             ? HuddlProductIds.plusAnnual
             : HuddlProductIds.plusMonthly;

@@ -247,7 +247,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 onPressed: () => Navigator.pushNamed(
                     context, '/subscription_plans',
                     arguments: {
-                      'highlightTier': SubscriptionTier.neighbourhood
+                      'highlightTier': SubscriptionTier.plus
                     }),
               )
             : null,
