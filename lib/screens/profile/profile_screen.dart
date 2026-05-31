@@ -783,6 +783,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
+              // ── SEND Navigator ────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSendNavigatorCard(hc),
+              ),
+
               // ── Subscription + usage ──────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
@@ -1371,6 +1376,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: HuddlText.caption(color: hc.textTertiary)),
             ),
         ],
+      ),
+    );
+  }
+
+  /// SEND Navigator banner — teal card visible on the main profile body.
+  Widget _buildSendNavigatorCard(HuddlContextColors hc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: GestureDetector(
+        onTap: () {
+          HuddlAnimations.mediumTap();
+          Navigator.pushNamed(context, '/send');
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF0D3349), const Color(0xFF0A4A5E)]
+                  : [const Color(0xFFD0EEF6), const Color(0xFFB8E4F0)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? HuddlColors.teal.withValues(alpha: 0.45)
+                  : HuddlColors.teal.withValues(alpha: 0.35),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: HuddlColors.teal.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.school_outlined,
+                    size: 22, color: HuddlColors.teal),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SEND Navigator',
+                      style: HuddlText.body(
+                        weight: FontWeight.w700,
+                        color: isDark
+                            ? HuddlColors.teal
+                            : const Color(0xFF0A6C82),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'EHCP support · Deadlines · AI advisor · Directory',
+                      style: HuddlText.caption(
+                        color: isDark
+                            ? HuddlColors.teal.withValues(alpha: 0.8)
+                            : const Color(0xFF0A6C82).withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: isDark
+                    ? HuddlColors.teal.withValues(alpha: 0.7)
+                    : const Color(0xFF0A6C82).withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

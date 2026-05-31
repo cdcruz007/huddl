@@ -562,27 +562,12 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
 
-    // 7. SEND Navigator card — shown once for parents with a school-age child
-    //    (birthday between 4 and 11 years ago). Not filtered by _feedPrefs.
-    final children = _onboarding.children;
-    if (children.isNotEmpty) {
-      final now = DateTime.now();
-      final hasSchoolAgeChild = children.any((c) {
-        final bday = c['birthday'];
-        if (bday == null || bday.isEmpty) return false;
-        final dob = DateTime.tryParse(bday);
-        if (dob == null) return false;
-        final ageYears = now.difference(dob).inDays / 365.25;
-        return ageYears >= 4.0 && ageYears < 12.0;
-      });
-      if (hasSchoolAgeChild) {
-        items.add(_SmartFeedItem(
-          type: _SmartFeedType.sendNavigator,
-          relevanceScore: 0.70,
-          reason: 'Resources and support for school-age children',
-        ));
-      }
-    }
+    // 7. SEND Navigator card — shown to all users (SEND affects any family).
+    items.add(_SmartFeedItem(
+      type: _SmartFeedType.sendNavigator,
+      relevanceScore: 0.70,
+      reason: 'Resources and support for school-age children',
+    ));
 
     // ── Apply feed preference filters ─────────────────────────────────────
     items.removeWhere((item) {
@@ -1232,6 +1217,11 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildNoticeboardSection(hc, isDark),
                 ),
               ],
+
+              // ── SEND Navigator banner ─────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSendBannerCard(hc, isDark),
+              ),
 
               // ── Smart feed items — filtered per tab ───────────────
               // UX-03: Spring physics on feed cards
@@ -4893,6 +4883,84 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Feed item helpers ─────────────────────────────────────────────────────
+
+  // ── SEND Navigator home banner — always visible above the smart feed ──────
+  Widget _buildSendBannerCard(dynamic hc, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: GestureDetector(
+        onTap: () {
+          HuddlAnimations.mediumTap();
+          Navigator.pushNamed(context, '/send');
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF0D3349), const Color(0xFF0A4A5E)]
+                  : [const Color(0xFFD0EEF6), const Color(0xFFB8E4F0)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? HuddlColors.teal.withValues(alpha: 0.45)
+                  : HuddlColors.teal.withValues(alpha: 0.35),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: HuddlColors.teal.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.school_outlined,
+                    size: 22, color: HuddlColors.teal),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SEND Navigator',
+                      style: HuddlText.body(
+                        weight: FontWeight.w700,
+                        color: isDark
+                            ? HuddlColors.teal
+                            : const Color(0xFF0A6C82),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'EHCP support · Deadlines · AI advisor · Directory',
+                      style: HuddlText.caption(
+                        color: isDark
+                            ? HuddlColors.teal.withValues(alpha: 0.8)
+                            : const Color(0xFF0A6C82).withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: isDark
+                    ? HuddlColors.teal.withValues(alpha: 0.7)
+                    : const Color(0xFF0A6C82).withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   // ── SEND Navigator card ───────────────────────────────────────────────────
   Widget _buildSendNavigatorCard(dynamic hc) {
