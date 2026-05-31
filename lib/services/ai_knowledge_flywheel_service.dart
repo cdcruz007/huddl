@@ -351,7 +351,7 @@ class AiKnowledgeFlywheelService {
       if (!doc.exists) return null;
       return CommunityWisdomArticle.fromFirestore(doc.data()!, doc.id);
     } catch (e) {
-      debugPrint('[Flywheel] getArticle error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] getArticle error: $e');
       return null;
     }
   }
@@ -470,7 +470,7 @@ Message:
 
       return double.tryParse(raw.trim()) ?? 0.0;
     } catch (e) {
-      debugPrint('[Flywheel] _scoreMessageQuality error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] _scoreMessageQuality error: $e');
       return 0.0;
     }
   }
@@ -515,10 +515,10 @@ Message:
       );
 
       await _wisdomCol.doc(docId).set(article.toFirestore());
-      debugPrint('[Flywheel] Saved pending article: ${article.title}');
+      if (kDebugMode) debugPrint('[Flywheel] Saved pending article: ${article.title}');
       return article;
     } catch (e) {
-      debugPrint('[Flywheel] generateAndSaveArticle error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] generateAndSaveArticle error: $e');
       return null;
     }
   }
@@ -580,7 +580,7 @@ Rules:
 
       return jsonDecode(cleaned) as Map<String, dynamic>;
     } catch (e) {
-      debugPrint('[Flywheel] _generateArticleContent error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] _generateArticleContent error: $e');
       return null;
     }
   }
@@ -601,7 +601,7 @@ Rules:
       });
       return true;
     } catch (e) {
-      debugPrint('[Flywheel] approveArticle error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] approveArticle error: $e');
       return false;
     }
   }
@@ -617,7 +617,7 @@ Rules:
       });
       return true;
     } catch (e) {
-      debugPrint('[Flywheel] rejectArticle error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] rejectArticle error: $e');
       return false;
     }
   }
@@ -643,7 +643,7 @@ Rules:
       });
       await batch.commit();
     } catch (e) {
-      debugPrint('[Flywheel] upvoteArticle error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] upvoteArticle error: $e');
     }
   }
 
@@ -652,7 +652,7 @@ Rules:
     _wisdomCol.doc(articleId).update({
       'view_count': FieldValue.increment(1),
     }).catchError((e) {
-      debugPrint('[Flywheel] recordView error: $e');
+      if (kDebugMode) debugPrint('[Flywheel] recordView error: $e');
     });
   }
 

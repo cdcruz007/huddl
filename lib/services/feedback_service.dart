@@ -121,9 +121,9 @@ class FeedbackService extends ChangeNotifier {
         'email_sent'  : false,
       });
       firestoreDocId = doc.id;
-      debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
+      if (kDebugMode) debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
     } catch (e) {
-      debugPrint('[FeedbackService] Firestore write failed: $e');
+      if (kDebugMode) debugPrint('[FeedbackService] Firestore write failed: $e');
     }
 
     // ── Step 3: EmailJS notification ─────────────────────────────────────────
@@ -184,16 +184,18 @@ class FeedbackService extends ChangeNotifier {
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        debugPrint('[FeedbackService] Email sent via EmailJS ✓');
+        if (kDebugMode) debugPrint('[FeedbackService] Email sent via EmailJS ✓');
         return true;
       } else {
         // Log full details to help diagnose issues
-        debugPrint('[FeedbackService] EmailJS error ${response.statusCode}: ${response.body}');
-        debugPrint('[FeedbackService] service_id=$_emailJsServiceId  template_id=$_emailJsTemplateId');
+        if (kDebugMode) {
+          debugPrint('[FeedbackService] EmailJS error ${response.statusCode}: ${response.body}');
+          debugPrint('[FeedbackService] service_id=$_emailJsServiceId  template_id=$_emailJsTemplateId');
+        }
         return false;
       }
     } catch (e) {
-      debugPrint('[FeedbackService] EmailJS request exception: $e');
+      if (kDebugMode) debugPrint('[FeedbackService] EmailJS request exception: $e');
       return false;
     }
   }

@@ -47,7 +47,7 @@ void main() async {
       appVerificationDisabledForTesting: true,
     );
   } catch (e) {
-    debugPrint('Firebase init error: $e');
+    if (kDebugMode) debugPrint('Firebase init error: $e');
   }
 
   // ── One-time data reset (safe version v5 — waits for async auth restore) ────
@@ -175,7 +175,7 @@ void main() async {
       );
     };
   } catch (e) {
-    debugPrint('Crashlytics init error: $e');
+    if (kDebugMode) debugPrint('Crashlytics init error: $e');
   }
 
   // ── Load user privacy & notification preferences ──────────────────────
