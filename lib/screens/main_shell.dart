@@ -10,6 +10,7 @@ import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
+import 'insights/send_hub_screen.dart';
 import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
@@ -305,7 +306,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     TutorialOverlay.show(
       context,
       onTabSwitch: (index) {
-        if (index >= 0 && index < 5) {
+        if (index >= 0 && index < 6) {
           _switchTab(index);
         }
       },
@@ -322,7 +323,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   /// Switch to a specific tab by index.
-  /// 0=Home, 1=Connect, 2=Discover, 3=Market, 4=Profile
+  /// 0=Home, 1=Connect, 2=Discover, 3=SEND, 4=Market, 5=Profile
   void switchTab(int index) => _switchTab(index);
 
   /// Switch to the Discover tab AND jump to a specific sub-tab within it.
@@ -336,7 +337,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   void _switchTab(int index) {
-    if (index < 0 || index >= 5) return;
+    if (index < 0 || index >= 6) return;
     if (!mounted) return;
     // Reset Services search mode whenever the user leaves the Discover tab (2).
     if (_currentIndex == 2 && index != 2) {
@@ -359,8 +360,9 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       case 0: return const HomeScreen();
       case 1: return const GroupsScreen();
       case 2: return EventsScreen(key: _eventsKey);
-      case 3: return const MarketplaceScreen();
-      case 4: return const ProfileScreen();
+      case 3: return const SendHubScreen(embedded: true);
+      case 4: return const MarketplaceScreen();
+      case 5: return const ProfileScreen();
       default: return const SizedBox.shrink();
     }
   }
@@ -372,7 +374,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       body: Stack(
         children: [
           // ── Screen stack ──────────────────────────────────────────────
-          ...List.generate(5, (index) {
+          ...List.generate(6, (index) {
             return Offstage(
               offstage: _currentIndex != index,
               child: _buildScreen(index),
@@ -421,11 +423,12 @@ class _HuddlFloatingNavBar extends StatefulWidget {
 
 class _HuddlFloatingNavBarState extends State<_HuddlFloatingNavBar> {
   static const _tabs = [
-    _TabDef(Icons.home_outlined,       Icons.home,         'Home'),
-    _TabDef(Icons.people_outline,      Icons.people,       'Connect'),
-    _TabDef(Icons.explore_outlined,    Icons.explore,      'Discover'),
-    _TabDef(Icons.storefront_outlined, Icons.storefront,   'Market'),
-    _TabDef(Icons.person_outline,      Icons.person,       'Profile'),
+    _TabDef(Icons.home_outlined,          Icons.home,             'Home'),
+    _TabDef(Icons.people_outline,         Icons.people,           'Connect'),
+    _TabDef(Icons.explore_outlined,       Icons.explore,          'Discover'),
+    _TabDef(Icons.school_outlined,        Icons.school,           'SEND'),
+    _TabDef(Icons.storefront_outlined,    Icons.storefront,       'Market'),
+    _TabDef(Icons.person_outline,         Icons.person,           'Profile'),
   ];
 
   @override

@@ -413,11 +413,11 @@ class AppRouter {
         );
 
       // Marketplace — notification tap for offers/sales + profile quick-link.
-      // MarketplaceScreen is tab 3 in MainShell. Use _ShellTabRedirect to
-      // switch the existing shell to tab 3 without pushing a new shell.
+      // MarketplaceScreen is tab 4 in MainShell. Use _ShellTabRedirect to
+      // switch the existing shell to tab 4 without pushing a new shell.
       case '/marketplace':
         return FadePageRoute(
-          page: const _ShellTabRedirect(tabIndex: 3),
+          page: const _ShellTabRedirect(tabIndex: 4),
         );
 
       default:

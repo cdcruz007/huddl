@@ -1031,7 +1031,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _onAvatarTap() {
-    _switchToTab(4); // Profile tab
+    _switchToTab(5); // Profile tab
   }
 
   void _onFeedItemTap(FeedItem item) {
@@ -1070,7 +1070,7 @@ class _HomeScreenState extends State<HomeScreen>
         break;
       case FeedItemType.newMarketplaceItem:
         setState(() => _marketTaps++);
-        _switchToTab(3);
+        _switchToTab(4);
         break;
       case FeedItemType.milestone:
         showModalBottomSheet(
@@ -1758,7 +1758,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.sell_outlined,
         color: HuddlColors.yellowDark,
         label: '$newMarket for sale',
-        onTap: () => _switchToTab(3),
+        onTap: () => _switchToTab(4),
       ));
     }
 
@@ -7229,7 +7229,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                               shell.switchTab(2);
                               break;
                             case FeedItemType.newMarketplaceItem:
-                              shell.switchTab(3);
+                              shell.switchTab(4);
                               break;
                             case FeedItemType.newParent:
                             case FeedItemType.milestone:
