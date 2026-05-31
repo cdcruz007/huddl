@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../services/onboarding_data_service.dart';
@@ -99,13 +102,16 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
     super.dispose();
   }
 
-  void _sendReply() {
+  Future<void> _sendReply() async {
     final text = _replyController.text.trim();
     if (text.isEmpty) return;
 
+    // Use the authenticated user's UID, not the hardcoded 'current_user'
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
     final reply = ThreadReply(
       id: 'thread_${DateTime.now().millisecondsSinceEpoch}',
-      senderId: 'current_user',
+      senderId: uid,
       senderName: _userName,
       senderAvatar: '',
       message: text,
@@ -128,6 +134,31 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
         );
       }
     });
+
+    // Write to Firestore so all group members see this reply across devices.
+    // We embed replies as an array field on the parent group_messages doc
+    // (Option B — array field, simpler than a subcollection, capped ~20 replies).
+    if (uid.isNotEmpty) {
+      try {
+        final replyMap = {
+          'id': reply.id,
+          'senderId': uid,
+          'senderName': _userName,
+          'senderAvatar': '',
+          'message': text,
+          'timestamp': FieldValue.serverTimestamp(),
+        };
+        await FirebaseFirestore.instance
+            .collection('group_messages')
+            .doc(widget.rootMessage.id)
+            .update({
+          'replies': FieldValue.arrayUnion([replyMap]),
+          'replyCount': FieldValue.increment(1),
+        });
+      } catch (e) {
+        if (kDebugMode) debugPrint('[ThreadReply] Firestore write error: $e');
+      }
+    }
   }
 
   String _formatTime(DateTime dt) {

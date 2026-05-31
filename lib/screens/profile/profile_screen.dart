@@ -4777,21 +4777,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Shows an OTP verification dialog before applying sensitive profile changes.
-  /// Returns true if verified, false if cancelled.
+  /// Sends a real SMS via FirebaseAuthService.sendPhoneUpdateOtp() and verifies
+  /// the entered code via FirebaseAuthService.reAuthWithOtp().
+  /// Returns true if verified, false if cancelled or failed.
   Future<bool> _verifyWithOtp(String changeDescription) async {
-    final phone = _onboarding.fullPhoneNumber ?? '+44 xxxxxxxx';
+    final phone = _onboarding.fullPhoneNumber ?? '';
+    if (phone.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No phone number on file. Cannot send verification code.'),
+        ));
+      }
+      return false;
+    }
+
     final codeCtrl = TextEditingController();
     bool verified = false;
-    bool hasError = false;
+    // step: 'sending' → 'otp' (code entry) → 'error' (send failure)
+    String step = 'sending';
+    bool isBusy = true;
+    String? errorText;
+
+    final authService = FirebaseAuthService();
+
+    Future<void> sendOtp(StateSetter setLocal) async {
+      setLocal(() { isBusy = true; errorText = null; });
+      final result = await authService.sendPhoneUpdateOtp(phone);
+      setLocal(() {
+        isBusy = false;
+        if (result.status != PhoneAuthStatus.codeSent) {
+          step = 'error';
+          errorText = result.errorMessage ?? 'Failed to send verification code.';
+        } else {
+          step = 'otp';
+        }
+      });
+    }
 
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (c) => StatefulBuilder(
         builder: (ctx, setLocal) {
+          // Auto-send OTP when dialog first opens
+          if (step == 'sending' && isBusy) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => sendOtp(setLocal));
+          }
+
           return Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
               child: Column(
@@ -4800,8 +4834,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     width: 56,
                     height: 56,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF7F7F7),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.security,
@@ -4812,72 +4846,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: HuddlText.heading(color: context.hc.textPrimary)),
                   const SizedBox(height: 8),
                   Text(
-                    'To $changeDescription, please enter the 6-digit code sent to $phone',
-                    style: HuddlText.body(color: context.hc.textSecondary).copyWith(height: 1.4),
+                    step == 'sending'
+                        ? 'Sending verification code to $phone…'
+                        : step == 'error'
+                            ? 'Failed to send code.'
+                            : 'To $changeDescription, enter the 6-digit code sent to $phone',
+                    style: HuddlText.body(color: context.hc.textSecondary)
+                        .copyWith(height: 1.4),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: codeCtrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    style: HuddlText.display().copyWith(letterSpacing: 8),
-                    decoration: InputDecoration(
-                      hintText: '------',
-                      counterText: '',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: hasError
-                                  ? HuddlColors.error
-                                  : HuddlColors.divider)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: hasError
-                                  ? HuddlColors.error
-                                  : HuddlColors.primary,
-                              width: 2)),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+
+                  // Show spinner while sending; show text field once sent
+                  if (step == 'sending') ...[
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 20),
+                  ] else if (step == 'error') ...[
+                    if (errorText != null)
+                      Text(errorText!,
+                          style: HuddlText.caption(color: HuddlColors.error),
+                          textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    HuddlButton(
+                      label: 'Retry',
+                      variant: HuddlButtonVariant.secondary,
+                      fullWidth: true,
+                      onPressed: () {
+                        setLocal(() { step = 'sending'; isBusy = true; });
+                        sendOtp(setLocal);
+                      },
                     ),
-                  ),
-                  if (hasError) ...[
                     const SizedBox(height: 8),
-                    Text('Incorrect code. Please try again.',
-                        style: HuddlText.caption(color: HuddlColors.error)),
-                  ],
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: HuddlButton(label: 'Cancel', onPressed: () => Navigator.pop(c), variant: HuddlButtonVariant.secondary, fullWidth: true),
+                    HuddlButton(
+                      label: 'Cancel',
+                      variant: HuddlButtonVariant.secondary,
+                      fullWidth: true,
+                      onPressed: () => Navigator.pop(c),
+                    ),
+                  ] else ...[
+                    // step == 'otp'
+                    TextField(
+                      controller: codeCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      autofocus: true,
+                      style: HuddlText.display().copyWith(letterSpacing: 8),
+                      decoration: InputDecoration(
+                        hintText: '------',
+                        counterText: '',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: errorText != null
+                                    ? HuddlColors.error
+                                    : HuddlColors.divider)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: errorText != null
+                                    ? HuddlColors.error
+                                    : HuddlColors.primary,
+                                width: 2)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: HuddlButton(
-                          label: 'Verify',
-                          variant: HuddlButtonVariant.primary,
-                          fullWidth: true,
-                          onPressed: () async {
-                            final code = codeCtrl.text.trim();
-                            if (code.length < 4) {
-                              setLocal(() => hasError = true);
-                              return;
-                            }
-                            final isWeb = identical(0, 0.0);
-                            if (isWeb || code.length == 6) {
-                              verified = true;
-                              Navigator.pop(c);
-                            } else {
-                              setLocal(() => hasError = true);
-                            }
-                          },
-                        ),
-                      ),
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Text(errorText!,
+                          style: HuddlText.caption(color: HuddlColors.error)),
                     ],
-                  ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: HuddlButton(
+                            label: 'Cancel',
+                            onPressed: () => Navigator.pop(c),
+                            variant: HuddlButtonVariant.secondary,
+                            fullWidth: true,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: HuddlButton(
+                            label: isBusy ? 'Verifying…' : 'Verify',
+                            variant: HuddlButtonVariant.primary,
+                            fullWidth: true,
+                            isLoading: isBusy,
+                            onPressed: isBusy
+                                ? null
+                                : () async {
+                                    final code = codeCtrl.text.trim();
+                                    if (code.length < 6) {
+                                      setLocal(() => errorText =
+                                          'Enter the 6-digit code.');
+                                      return;
+                                    }
+                                    setLocal(() {
+                                      isBusy = true;
+                                      errorText = null;
+                                    });
+                                    final authErr = await authService
+                                        .reAuthWithOtp(smsCode: code);
+                                    if (!ctx.mounted) return;
+                                    if (authErr == null) {
+                                      verified = true;
+                                      Navigator.pop(c);
+                                    } else {
+                                      setLocal(() {
+                                        isBusy = false;
+                                        errorText = 'Incorrect code. Please try again.';
+                                      });
+                                    }
+                                  },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -4885,6 +4973,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
+
+    codeCtrl.dispose();
     return verified;
   }
 

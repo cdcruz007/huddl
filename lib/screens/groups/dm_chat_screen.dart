@@ -382,6 +382,46 @@ class _DMChatScreenState extends State<DMChatScreen> {
     });
   }
 
+  // ── Voice consent dialog ──────────────────────────────────────────────────
+  /// Shows a one-time consent dialog explaining voice message recording policy.
+  /// Returns true if the user tapped Allow, false if they cancelled.
+  Future<bool> _showVoiceConsentDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (c) => AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'Voice Messages',
+              style: HuddlText.heading(),
+            ),
+            content: Text(
+              'Huddl records voice messages and uploads them securely to '
+              'Firebase Storage. Recordings are deleted from your device '
+              'immediately after upload. The recipient can play your voice '
+              'messages.\n\n'
+              'By tapping Allow, you agree to the Huddl voice message policy.',
+              style: HuddlText.body().copyWith(height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(c, true),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary),
+                child: const Text('Allow',
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Future<void> _sendMessage() async {
     // ── Subscription gate: message limit ────────────────────────────────────
     if (!SubscriptionService().canSendMessage) {
@@ -1435,6 +1475,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       FocusScope.of(context).unfocus();
                       await Future.delayed(const Duration(milliseconds: 80));
                       if (!mounted) return;
+
+                      // Check voice message consent (required by ToS and Privacy Policy).
+                      final prefs = UserPrivacyPrefsService();
+                      await prefs.load();
+                      if (!prefs.voiceMessageConsent) {
+                        final granted = await _showVoiceConsentDialog();
+                        if (!granted || !mounted) return;
+                        await prefs.setSetting(
+                            UserPrivacyPrefsService.keyVoiceConsent, true);
+                      }
+
                       final hasPerms = await _voiceSvc.hasPermission();
                       if (!hasPerms) {
                         if (mounted) {

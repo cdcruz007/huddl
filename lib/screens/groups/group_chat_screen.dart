@@ -52,6 +52,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../theme/huddl_animations.dart';
+import '../../services/ai_chat_summariser_service.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -1050,6 +1051,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Thread reply persistence ─────────────────────────────────────────
   Future<void> _loadPersistedThreadReplies() async {
+    // Step 1 — load from local BrowserStorage (fast, works offline)
     try {
       final raw = await BrowserStorage.getString(_threadStorageKey);
       if (raw != null) {
@@ -1063,6 +1065,59 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
     } catch (_) {
       // Silently handle — first launch or corrupt data
+    }
+
+    // Step 2 — supplement with Firestore replies so cross-device replies are visible.
+    // Queries group_messages that have at least one reply for this group.
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('group_messages')
+          .where('groupId', isEqualTo: widget.groupId)
+          .where('replyCount', isGreaterThan: 0)
+          .get();
+
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+      for (final doc in snap.docs) {
+        final rawReplies = doc.data()['replies'] as List<dynamic>? ?? [];
+        if (rawReplies.isEmpty) continue;
+
+        // Parse and mark isMe based on current UID
+        final firestoreReplies = rawReplies
+            .whereType<Map<String, dynamic>>()
+            .map((r) {
+              // Firestore serverTimestamp comes back as Timestamp; normalise it
+              final ts = r['timestamp'];
+              DateTime parsedTime;
+              if (ts is Timestamp) {
+                parsedTime = ts.toDate();
+              } else if (ts is String) {
+                parsedTime = DateTime.tryParse(ts) ?? DateTime.now();
+              } else {
+                parsedTime = DateTime.now();
+              }
+              return ThreadReply(
+                id: r['id'] as String? ?? '',
+                senderId: r['senderId'] as String? ?? '',
+                senderName: r['senderName'] as String? ?? '',
+                senderAvatar: r['senderAvatar'] as String? ?? '',
+                message: r['message'] as String? ?? '',
+                timestamp: parsedTime,
+                isMe: (r['senderId'] as String? ?? '') == uid,
+              );
+            })
+            .toList();
+
+        // Merge with local cache — Firestore is the source of truth
+        // Keep local-only entries (id prefix 'thread_') that aren't in Firestore yet
+        final existing = _threadReplies[doc.id] ?? [];
+        final firestoreIds = firestoreReplies.map((r) => r.id).toSet();
+        final localOnly = existing.where((r) => !firestoreIds.contains(r.id));
+        _threadReplies[doc.id] = [...firestoreReplies, ...localOnly]
+          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Firestore thread replies load error: $e');
     }
   }
 
@@ -3782,19 +3837,123 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  // ── Voice consent dialog ──────────────────────────────────────────────────
+  /// Shows a one-time consent dialog explaining voice message recording policy.
+  /// Returns true if the user tapped Allow, false if they cancelled.
+  Future<bool> _showVoiceConsentDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (c) => AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'Voice Messages',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            content: Text(
+              'Huddl records voice messages and uploads them securely to '
+              'Firebase Storage. Recordings are deleted from your device '
+              'immediately after upload. Other group members can play your '
+              'voice messages.\n\n'
+              'By tapping Allow, you agree to the Huddl voice message policy.',
+              style: GoogleFonts.poppins(fontSize: 14, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(c, true),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary),
+                child: const Text('Allow',
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   // ── AI Summary ────────────────────────────────────────────────────────────
-  // Stub: summarises unread group messages using AI.
-  // Full implementation will be wired to the AI Copilot service.
-  void _showAiSummary() {
+  // Wired to AiChatSummariserService.generateSummary() with subscription gate.
+  Future<void> _showAiSummary() async {
+    final ss = SubscriptionService();
+    if (!ss.canUseAiChatSummary) {
+      showUpgradePrompt(
+        context,
+        feature: 'ai_chat_summary',
+        message: ss.limitReachedMessage('ai_chat_summary'),
+        requiredTier: SubscriptionTier.plus,
+      );
+      return;
+    }
+
+    // Show loading snackbar immediately so the user gets instant feedback
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
-        'AI Summary generating…',
-        style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
-      ),
+      content: Row(children: [
+        const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          'Generating AI summary…',
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+        ),
+      ]),
+      duration: const Duration(seconds: 30),
       backgroundColor: HuddlColors.nearBlack,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));
+
+    try {
+      // Collect up to 50 recent messages formatted for the summariser
+      final recentMsgs = _messages.take(50).map((m) => {
+        'senderName': m.senderName,
+        'message': m.message,
+        'timestamp': m.timestamp.toIso8601String(),
+      }).toList();
+
+      final summary = await AiChatSummariserService().generateSummary(
+        groupId: widget.groupId,
+        groupName: widget.groupName,
+        messages: recentMsgs,
+        lastReadIndex: 0,
+      );
+
+      await ss.recordAiChatSummary();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _AiSummarySheet(
+          summary: summary,
+          groupName: widget.groupName,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          'Could not generate summary. Please try again.',
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+        ),
+        backgroundColor: HuddlColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
+      if (kDebugMode) debugPrint('[GroupChat] AI summary error: $e');
+    }
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -4335,6 +4494,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       FocusScope.of(context).unfocus();
                       await Future.delayed(const Duration(milliseconds: 80));
                       if (!mounted) return;
+
+                      // Check voice message consent (required by ToS and Privacy Policy).
+                      // UserPrivacyPrefsService.voiceMessageConsent defaults false
+                      // until the user explicitly grants it via the consent dialog.
+                      final prefs = UserPrivacyPrefsService();
+                      await prefs.load();
+                      if (!prefs.voiceMessageConsent) {
+                        final granted = await _showVoiceConsentDialog();
+                        if (!granted || !mounted) return;
+                        await prefs.setSetting(
+                            UserPrivacyPrefsService.keyVoiceConsent, true);
+                      }
+
                       final hasPerms = await _voiceSvc.hasPermission();
                       if (!hasPerms) {
                         if (mounted) {
@@ -7766,4 +7938,201 @@ class _GroupMember {
     required this.accentColor,
     this.isAdmin = false,
   });
+}
+
+// ── AI Summary bottom sheet ────────────────────────────────────────────────
+class _AiSummarySheet extends StatelessWidget {
+  final ChatSummary summary;
+  final String groupName;
+
+  const _AiSummarySheet({required this.summary, required this.groupName});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (_, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, size: 20, color: HuddlColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'AI Summary — $groupName',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    iconSize: 20,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Content
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(20),
+                children: [
+                  // Overview
+                  if (summary.overviewText.isNotEmpty) ...[
+                    Text(
+                      summary.overviewText,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  // Key points
+                  if (summary.keyPoints.isNotEmpty) ...[
+                    Text(
+                      'Key Points',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...summary.keyPoints.map((pt) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 6),
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              pt.text,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                    const SizedBox(height: 16),
+                  ],
+                  // Topics
+                  if (summary.mentionedTopics.isNotEmpty) ...[
+                    Text(
+                      'Topics mentioned',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: summary.mentionedTopics.map((t) => Chip(
+                        label: Text(
+                          t,
+                          style: GoogleFonts.poppins(fontSize: 12),
+                        ),
+                        backgroundColor: HuddlColors.primary.withValues(alpha: 0.1),
+                        side: BorderSide.none,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                      )).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  // Upcoming plan note
+                  if (summary.upcomingPlanNote != null &&
+                      summary.upcomingPlanNote!.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: HuddlColors.primary.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.event_note,
+                              size: 18, color: HuddlColors.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              summary.upcomingPlanNote!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  // Footer note
+                  Text(
+                    'Generated from the last ${summary.unreadCount > 0 ? summary.unreadCount : 'recent'} message${summary.unreadCount == 1 ? '' : 's'}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
