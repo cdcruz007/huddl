@@ -35,6 +35,7 @@ import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
+import '../marketplace/marketplace_screen.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../search/unified_search_screen.dart';
@@ -106,7 +107,7 @@ class EventsScreenState extends State<EventsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       // Only update the selected tab when the animation has settled,
       // so the FAB never shows/hides based on a mid-swipe index.
@@ -528,6 +529,7 @@ class EventsScreenState extends State<EventsScreen>
                       )),
                       const Tab(text: 'Services'),
                       const Tab(text: 'Insights'),
+                      const Tab(text: 'Market'),
                     ],
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
@@ -565,6 +567,7 @@ class EventsScreenState extends State<EventsScreen>
                     resetTrigger: _serviceResetTrigger,
                   ),
                   const InsightsScreen(),
+                  const MarketplaceScreen(),
                 ],
               ),
             ),

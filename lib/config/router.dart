@@ -413,11 +413,11 @@ class AppRouter {
         );
 
       // Marketplace — notification tap for offers/sales + profile quick-link.
-      // MarketplaceScreen is tab 4 in MainShell. Use _ShellTabRedirect to
-      // switch the existing shell to tab 4 without pushing a new shell.
+      // Marketplace is now Discover sub-tab 4. Use _ShellTabRedirect to
+      // switch the existing shell to Discover and open the Market sub-tab.
       case '/marketplace':
         return FadePageRoute(
-          page: const _ShellTabRedirect(tabIndex: 4),
+          page: const _ShellTabRedirect(tabIndex: 2, discoverSubIndex: 4),
         );
 
       default:
@@ -434,11 +434,13 @@ class AppRouter {
 
 // ── Shell tab redirect ────────────────────────────────────────────────────────
 // Pops the current route and switches the existing MainShell to [tabIndex].
-// Used for routes that are actually tabs embedded in MainShell (Marketplace,
-// Groups, etc.) so they don't create a new shell on top of the existing one.
+// If [discoverSubIndex] is non-null, also switches the Discover sub-tab.
+// Used for routes that are tabs embedded in MainShell so they don't create
+// a new shell on top of the existing one.
 class _ShellTabRedirect extends StatefulWidget {
   final int tabIndex;
-  const _ShellTabRedirect({required this.tabIndex});
+  final int? discoverSubIndex;
+  const _ShellTabRedirect({required this.tabIndex, this.discoverSubIndex});
 
   @override
   State<_ShellTabRedirect> createState() => _ShellTabRedirectState();
@@ -451,8 +453,12 @@ class _ShellTabRedirectState extends State<_ShellTabRedirect> {
     // Schedule after the frame so the Navigator route is fully pushed first.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // Switch the shell tab.
-      MainShell.shellKey.currentState?.switchTab(widget.tabIndex);
+      final shell = MainShell.shellKey.currentState;
+      if (widget.discoverSubIndex != null) {
+        shell?.switchDiscoverTab(widget.discoverSubIndex!);
+      } else {
+        shell?.switchTab(widget.tabIndex);
+      }
       // Pop this redirect page off the stack.
       if (Navigator.canPop(context)) Navigator.pop(context);
     });

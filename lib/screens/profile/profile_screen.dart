@@ -3284,7 +3284,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leadingIcon: Icons.add_circle_outline,
                     onPressed: () {
                       Navigator.pop(c);
-                      MainShell.shellKey.currentState?.switchTab(4);
+                      MainShell.shellKey.currentState?.switchDiscoverTab(4);
                     },
                   ),
                 ),
@@ -3372,7 +3372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: HuddlColors.textTertiary),
                     onTap: () {
                       Navigator.pop(c);
-                      MainShell.shellKey.currentState?.switchTab(4);
+                      MainShell.shellKey.currentState?.switchDiscoverTab(4);
                     },
                   );
                 },
@@ -3387,7 +3387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   leadingIcon: Icons.storefront_outlined,
                   onPressed: () {
                     Navigator.pop(c);
-                    MainShell.shellKey.currentState?.switchTab(4);
+                    MainShell.shellKey.currentState?.switchDiscoverTab(4);
                   },
                 ),
               ),
