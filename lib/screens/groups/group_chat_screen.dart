@@ -80,14 +80,6 @@ Color _senderColor(String name) {
 }
 
 /// Placeholder avatars for group header — deterministic selection by groupId hash.
-const List<String> _kMemberAvatars = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-];
 // (#F7F5F2 light / #2C2C2C dark) — see _ChatBubble.build()
 
 
@@ -2856,6 +2848,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   _groupMembers[idx] = _GroupMember(
                     id: member.id, name: member.name,
                     accentColor: member.accentColor, isAdmin: true,
+                    photoUrl: member.photoUrl,
                   );
                 }
                 _adminIds.add(member.id);
@@ -3743,7 +3736,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Overlapping member avatar circles + member count for the AppBar subtitle.
   /// Member count comes from _groupMembers if populated, otherwise falls back to 1.
-  /// Avatar images use _kMemberAvatars selected deterministically by groupId hash.
+  /// Avatar images use real member photoUrls from _groupMembers when available;
+  /// otherwise shows a simple icon placeholder (no hardcoded stock photos).
   Widget _buildGroupHeaderSubtitle(BuildContext context) {
     final memberCount = _groupMembers.isNotEmpty ? _groupMembers.length : 1;
     final avatarCount = memberCount.clamp(1, 3);
@@ -3757,6 +3751,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           height: 18,
           child: Stack(
             children: List.generate(avatarCount, (i) {
+              final member = (_groupMembers.length > i) ? _groupMembers[i] : null;
+              final photoUrl = member?.photoUrl ?? '';
               return Positioned(
                 left: i * 14.0,
                 child: Container(
@@ -3770,17 +3766,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                   ),
                   child: ClipOval(
-                    child: Image.network(
-                      _kMemberAvatars[
-                          (widget.groupId.hashCode.abs() + i) %
-                              _kMemberAvatars.length],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: HuddlColors.primaryPale,
-                        child: const Icon(Icons.person,
-                            size: 10, color: HuddlColors.primary),
-                      ),
-                    ),
+                    child: photoUrl.isNotEmpty
+                        ? Image.network(
+                            photoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: HuddlColors.primaryPale,
+                              child: const Icon(Icons.person,
+                                  size: 10, color: HuddlColors.primary),
+                            ),
+                          )
+                        : Container(
+                            color: HuddlColors.primaryPale,
+                            child: const Icon(Icons.person,
+                                size: 10, color: HuddlColors.primary),
+                          ),
                   ),
                 ),
               );
@@ -7931,12 +7931,14 @@ class _GroupMember {
   final String name;
   final Color accentColor;
   final bool isAdmin;
+  final String photoUrl;
 
   const _GroupMember({
     required this.id,
     required this.name,
     required this.accentColor,
     this.isAdmin = false,
+    this.photoUrl = '',
   });
 }
 

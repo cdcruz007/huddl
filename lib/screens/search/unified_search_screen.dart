@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/group.dart';
@@ -9,6 +10,8 @@ import '../../services/local_services_service.dart';
 import '../../services/meetup_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/rehome_service.dart';
+import '../../services/huddl_user_service.dart';
+import '../../services/postcode_service.dart';
 import '../../theme/huddl_animations.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
@@ -74,6 +77,10 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
   List<Event>          _eventResults   = [];
   List<ServiceListing> _serviceResults = [];
   List<RehomeItem>     _marketResults  = [];
+  List<HuddlUser>      _memberResults  = [];
+
+  // ── Debounce timer for member search ──────────────────────────────
+  Timer? _debounceTimer;
 
   // ── Quick-pick categories ─────────────────────────────────────────────────
   static const _quickPicks = [
@@ -122,6 +129,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _serviceStreamSub?.cancel();
     _ctrl.dispose();
     _focus.dispose();
@@ -139,6 +147,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         _eventResults   = [];
         _serviceResults = [];
         _marketResults  = [];
+        _memberResults  = [];
         _hasSearched    = false;
       });
       return;
@@ -186,11 +195,41 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         i.category.label.toLowerCase().contains(query)
       ).take(4).toList();
     });
+
+    // Member search is async — debounced 400ms to avoid Firestore spam
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      _runMemberSearch(query);
+    });
+  }
+
+  Future<void> _runMemberSearch(String query) async {
+    if (query.isEmpty || !mounted) return;
+    final postcode = _onboarding.postcode ?? '';
+    final borough = PostcodeService().getBoroughFromPostcode(postcode) ?? '';
+    if (borough.isEmpty) return;
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    try {
+      final members = await HuddlUserService().getBoroughMembers(borough);
+      if (!mounted) return;
+      setState(() {
+        _memberResults = members
+            .where((m) =>
+                m.uid != myUid &&
+                (m.name.toLowerCase().contains(query) ||
+                    m.firstName.toLowerCase().contains(query)))
+            .take(5)
+            .toList();
+      });
+    } catch (_) {
+      // Network unavailable — member section simply stays empty
+    }
   }
 
   int get _totalResults =>
     _groupResults.length + _meetupResults.length +
-    _eventResults.length + _serviceResults.length + _marketResults.length;
+    _eventResults.length + _serviceResults.length +
+    _marketResults.length + _memberResults.length;
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
@@ -262,7 +301,10 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                     focusNode: _focus,
                     onChanged: (v) {
                       setState(() => _query = v);
-                      _runSearch(v);
+                      _debounceTimer?.cancel();
+                      _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+                        if (mounted) _runSearch(v);
+                      });
                     },
                     onSubmitted: _runSearch,
                     textInputAction: TextInputAction.search,
@@ -516,7 +558,133 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
             ),
           ),
         ],
+
+        // ── Members ───────────────────────────────────────────────────
+        if (_memberResults.isNotEmpty) ...[
+          _SectionHeader(
+            icon: Icons.person_outline,
+            label: 'Members',
+            color: HuddlColors.teal,
+            count: _memberResults.length,
+            onSeeAll: () => Navigator.pop(context),
+          ),
+          ..._memberResults.asMap().entries.map((e) {
+            final member = e.value;
+            final displayName = member.name.isNotEmpty
+                ? member.name
+                : member.firstName;
+            final initial = displayName.isNotEmpty
+                ? displayName[0].toUpperCase()
+                : '?';
+            return HuddlSpringMount(
+              delay: Duration(milliseconds: e.key * 40),
+              child: InkWell(
+                onTap: () {
+                  HuddlAnimations.lightTap();
+                  Navigator.pushNamed(context, '/dm_chat', arguments: {
+                    'recipientId': member.uid,
+                    'recipientName': displayName,
+                    'recipientAvatarColor': member.avatarColor,
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                  child: Row(
+                    children: [
+                      // Avatar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: member.photoUrl.isNotEmpty
+                              ? Image.network(
+                                  member.photoUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _MemberAvatar(
+                                          initial: initial,
+                                          color: member.avatarColor),
+                                )
+                              : _MemberAvatar(
+                                  initial: initial,
+                                  color: member.avatarColor),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Name + parent type
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _HighlightedText(
+                              text: displayName,
+                              query: _query,
+                              style: HuddlText.body(
+                                color: HuddlColors.nearBlack,
+                                weight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              member.parentType == 'mum' ? 'Mum' : 'Dad',
+                              style: HuddlText.caption(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // DM icon
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.tealIconBg,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.send_outlined,
+                          size: 15,
+                          color: HuddlColors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ],
+    );
+  }
+}
+
+// ── Member avatar fallback ────────────────────────────────────────────────────
+class _MemberAvatar extends StatelessWidget {
+  final String initial;
+  final String color;
+  const _MemberAvatar({required this.initial, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    Color bg;
+    try {
+      bg = Color(int.parse('FF${color.replaceFirst('#', '')}', radix: 16));
+    } catch (_) {
+      bg = HuddlColors.primaryPale;
+    }
+    return Container(
+      color: bg,
+      child: Center(
+        child: Text(
+          initial,
+          style: HuddlText.body(
+            color: HuddlColors.nearBlack,
+            weight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }

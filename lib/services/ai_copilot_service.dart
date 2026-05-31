@@ -357,6 +357,12 @@ class AiCopilotService with BoroughAiContext {
   /// Call the `huddlCopilotChat` Firebase Cloud Function.
   /// Passes last 10 messages and user context.
   /// Throws on failure so the caller can try Gemini fallback.
+  ///
+  /// REGION NOTE: Uses the default `us-central1` region.
+  /// If the function is deployed to a different region (e.g. `europe-west1`),
+  /// change `FirebaseFunctions.instance` to:
+  ///   FirebaseFunctions.instanceFor(region: 'europe-west1')
+  /// Check deployed region with: firebase functions:list --project huddl-connect
   Future<String> _callCopilotCloudFunction(String userText) async {
     final callable = FirebaseFunctions.instance.httpsCallable(
       'huddlCopilotChat',

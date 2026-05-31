@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'browser_storage.dart';
 
 /// Singleton that holds the user's privacy and notification preferences.
@@ -68,6 +71,32 @@ class UserPrivacyPrefsService {
     if (pGrps   != null) showGroups       = pGrps   == 'true';
     if (pRead   != null) readReceipts     = pRead   == 'true';
     if (pVoice  != null) voiceMessageConsent = pVoice == 'true';
+
+    // ── Firestore merge for cross-device pref restoration ─────────────────
+    // Runs after local read. Firestore values win for notification prefs only
+    // (privacy prefs like voiceConsent are device-local by design).
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('notifPrefs')
+            .doc('settings')
+            .get();
+        if (doc.exists) {
+          final data = doc.data() ?? {};
+          if (data[keyPushEnabled]       is bool) pushEnabled       = data[keyPushEnabled];
+          if (data[keyGroupMessages]     is bool) groupMessages     = data[keyGroupMessages];
+          if (data[keyDmMessages]        is bool) dmMessages        = data[keyDmMessages];
+          if (data[keyEventReminders]    is bool) eventReminders    = data[keyEventReminders];
+          if (data[keyCommunityUpdates]  is bool) communityUpdates  = data[keyCommunityUpdates];
+          if (data[keyLockScreenAlerts]  is bool) lockScreenAlerts  = data[keyLockScreenAlerts];
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[UserPrivacyPrefs] Firestore load error: $e');
+      }
+    }
   }
 
   // ── Write a single setting ─────────────────────────────────────────────
@@ -86,6 +115,27 @@ class UserPrivacyPrefsService {
       case keyShowGroups:       showGroups       = value; break;
       case keyReadReceipts:     readReceipts     = value; break;
       case keyVoiceConsent:     voiceMessageConsent = value; break;
+    }
+
+    // Sync notification prefs to Firestore for cross-device persistence.
+    // Privacy prefs (voiceConsent, readReceipts, showOnline, etc.) stay local.
+    const notifKeys = [
+      keyPushEnabled, keyGroupMessages, keyDmMessages,
+      keyEventReminders, keyCommunityUpdates, keyLockScreenAlerts,
+    ];
+    if (notifKeys.contains(key)) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('notifPrefs')
+            .doc('settings')
+            .set({key: value}, SetOptions(merge: true))
+            .catchError((Object e) {
+          if (kDebugMode) debugPrint('[UserPrivacyPrefs] Firestore sync error: $e');
+        });
+      }
     }
   }
 

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/saved_message.dart';
 import 'browser_storage.dart';
 
@@ -108,6 +110,31 @@ class SavedMessageService extends ChangeNotifier {
     } catch (_) {
       _savedEvents = [];
     }
+
+    // ── Firestore merge (cross-device restore on reinstall) ──────────────────
+    // Runs after local load so local-only items aren't overwritten.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('saved_messages')
+            .orderBy('savedAt', descending: true)
+            .limit(200)
+            .get();
+        for (final doc in snap.docs) {
+          final msg = SavedMessage.fromJson(doc.data());
+          if (!_savedMessages.any((m) => m.id == msg.id)) {
+            _savedMessages.add(msg);
+          }
+        }
+        _savedMessages.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+        await _persistMessages();
+      } catch (e) {
+        if (kDebugMode) debugPrint('[SavedMsg] Firestore load error: $e');
+      }
+    }
   }
 
   // ── Persistence helpers ───────────────────────────────────────────────────
@@ -137,6 +164,38 @@ class SavedMessageService extends ChangeNotifier {
         json.encode(_savedEvents.map((e) => e.toJson()).toList()),
       );
     } catch (_) {}
+  }
+
+  // ── Firestore sync helpers ─────────────────────────────────────────────────
+
+  /// Fire-and-forget write to Firestore. Errors are logged but never rethrown.
+  void _syncToFirestore(SavedMessage msg) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('saved_messages')
+        .doc(msg.id)
+        .set(msg.toJson())
+        .catchError((Object e) {
+      if (kDebugMode) debugPrint('[SavedMsg] Firestore sync error: $e');
+    });
+  }
+
+  /// Fire-and-forget delete from Firestore.
+  void _deleteFromFirestore(String id) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('saved_messages')
+        .doc(id)
+        .delete()
+        .catchError((Object e) {
+      if (kDebugMode) debugPrint('[SavedMsg] Firestore delete error: $e');
+    });
   }
 
   // ── Clear all (GDPR) ──────────────────────────────────────────────────────
@@ -186,6 +245,7 @@ class SavedMessageService extends ChangeNotifier {
     );
     _savedMessages.insert(0, saved);
     await _persistMessages();
+    _syncToFirestore(saved);
     notifyListeners();
   }
 
@@ -217,6 +277,7 @@ class SavedMessageService extends ChangeNotifier {
     );
     _savedMessages.insert(0, saved);
     await _persistMessages();
+    _syncToFirestore(saved);
     notifyListeners();
   }
 
@@ -225,6 +286,7 @@ class SavedMessageService extends ChangeNotifier {
   Future<void> unsaveMessage(String savedMessageId) async {
     _savedMessages.removeWhere((m) => m.id == savedMessageId);
     await _persistMessages();
+    _deleteFromFirestore(savedMessageId);
     notifyListeners();
   }
 

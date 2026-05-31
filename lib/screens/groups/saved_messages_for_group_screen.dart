@@ -160,45 +160,71 @@ class _SavedMessagesForGroupScreenState
               );
             }
           },
-          child: Container(
-            color: context.hc.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sender + time
-                Row(
-                  children: [
-                    const Icon(Icons.bookmark,
-                        size: 16, color: HuddlColors.textDark),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        msg.senderName,
-                        style: HuddlText.body(weight: FontWeight.w600),
+          child: InkWell(
+            onTap: () {
+              Navigator.pop(context); // close saved messages screen first
+              Navigator.pushNamed(context, '/group_chat', arguments: {
+                'groupId': widget.groupId,
+                'groupName': widget.groupName,
+                'groupImageUrl': '',
+                'isDefaultGroup': false,
+                'isPrivate': false,
+                'targetAudience': <String>[],
+                'groupCategory': '',
+                'creatorId': null,
+                'creatorBorough': null,
+                'openThreadForMessageId': msg.messageId,
+              });
+            },
+            child: Container(
+              color: context.hc.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Sender + time
+                  Row(
+                    children: [
+                      const Icon(Icons.bookmark,
+                          size: 16, color: HuddlColors.textDark),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          msg.senderName,
+                          style: HuddlText.body(weight: FontWeight.w600),
+                        ),
                       ),
-                    ),
-                    Text(
-                      _formatDate(msg.savedAt),
-                      style: HuddlText.caption(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Message text
-                Text(
-                  msg.message,
-                  style: HuddlText.body(color: context.hc.textSecondary),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                // Original timestamp
-                Text(
-                  'Sent ${_formatDate(msg.timestamp)}',
-                  style: HuddlText.caption(),
-                ),
-              ],
+                      Text(
+                        _formatDate(msg.savedAt),
+                        style: HuddlText.caption(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Message text
+                  Text(
+                    msg.message,
+                    style: HuddlText.body(color: context.hc.textSecondary),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  // Footer row: sent time + tap hint
+                  Row(
+                    children: [
+                      Text(
+                        'Sent ${_formatDate(msg.timestamp)}',
+                        style: HuddlText.caption(),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Tap to jump →',
+                        style: HuddlText.caption(color: HuddlColors.primary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
