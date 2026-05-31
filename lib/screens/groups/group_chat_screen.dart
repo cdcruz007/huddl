@@ -5026,9 +5026,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
       final epoch = ts.millisecondsSinceEpoch;
       final ext = docName.contains('.') ? docName.split('.').last : 'bin';
-      // Canonical storage path: groups/{groupId}/files/{uid}_{epoch}.{ext}
+      // Canonical storage path matches storage.rules group_documents block:
+      // group_documents/{groupId}/{uid}_{epoch}.{ext}
       final storageRef = FirebaseStorage.instance
-          .ref('groups/${widget.groupId}/files/${uid}_$epoch.$ext');
+          .ref('group_documents/${widget.groupId}/${uid}_$epoch.$ext');
 
       TaskSnapshot snap;
       if (attachment.bytes != null) {

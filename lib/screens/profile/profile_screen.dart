@@ -48,6 +48,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../services/rehome_service.dart';
 import 'dart:io';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -5252,9 +5253,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 setLocal(() => analyticsEnabled = v);
                 final p = await SharedPreferences.getInstance();
                 await p.setBool('analytics_enabled', v);
-                // Note: firebase_analytics package not in pubspec.
-                // Preference is persisted; analytics collection respects this
-                // on next cold start via main.dart initialisation checks.
+                await FirebaseAnalytics.instance
+                    .setAnalyticsCollectionEnabled(v);
               },
               title: Text(
                 'App analytics',

@@ -126,6 +126,20 @@ service firebase.storage {
     }
 
     // =========================================================================
+    // DM DOCUMENT ATTACHMENTS
+    // Path: dm_documents/{uid}_{timestamp}.{ext}
+    // =========================================================================
+    // Written by dm_chat_screen._uploadMediaToStorage() with folder='dm_documents'.
+    // Separate from dm_images to allow document-specific MIME type tracking.
+    // =========================================================================
+    match /dm_documents/{fileName} {
+      allow read:   if isAuth();
+      allow write:  if isAuth()
+                    && (isImage() || isDocument())
+                    && maxSize(20);
+    }
+
+    // =========================================================================
     // GROUP CHAT IMAGES
     // Path: group_images/{groupId}/{uid}_{timestamp}.jpg
     // =========================================================================

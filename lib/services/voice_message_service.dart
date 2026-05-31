@@ -386,6 +386,15 @@ class VoiceMessageService {
     _playingUrlController.add(null);
   }
 
+  /// Seek to [position] in the currently playing audio.
+  Future<void> seekTo(Duration position) async {
+    try {
+      await _player.seek(position);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[VoiceMessageService] seek error: $e');
+    }
+  }
+
   /// Get total duration of an audio file (for display before playback).
   Future<Duration?> getDuration(String url) async {
     try {

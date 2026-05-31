@@ -126,11 +126,8 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Huddl uses Face ID to protect your account with biometric login.</string>
 
-	<!-- File access — used by file_picker to attach documents in
-	     marketplace listings or group posts -->
-	<key>NSDocumentsFolderUsageDescription</key>
-	<string>Huddl accesses your files to let you attach documents to marketplace listings and group posts.</string>
-
+	<!-- File access: file_picker uses UIDocumentPickerViewController which does
+	     not require a custom Info.plist key on iOS — no entry needed -->
 	<!-- Push Notifications — required for Firebase Cloud Messaging (FCM)
 	     which powers group and DM notifications -->
 	<key>UIBackgroundModes</key>

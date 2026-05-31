@@ -174,7 +174,14 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
                       child: Slider(
                         value: progress.clamp(0.0, 1.0),
                         onChanged: (v) async {
-                          // Seek not supported in this version – just visual
+                          if (!_isPlaying &&
+                              _svc.playingUrl != widget.audioUrl) { return; }
+                          final totalMs = widget.durationSeconds * 1000;
+                          final seekMs = (v * totalMs).round();
+                          try {
+                            await _svc.seekTo(
+                                Duration(milliseconds: seekMs));
+                          } catch (_) {}
                         },
                       ),
                     ),

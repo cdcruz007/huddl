@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint;
+import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint, kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
 import 'theme/huddl_theme.dart';
@@ -97,6 +99,23 @@ void main() async {
     // Without this call, Crashlytics may be disabled in release builds
     // depending on the platform default — always force it on.
     await crashlytics.setCrashlyticsCollectionEnabled(true);
+
+    // ── Apply persisted GDPR consent preferences (BUG 8) ────────────────────
+    // These are written by profile_screen.dart _showAnalyticsPrefsSheet().
+    // Default: both enabled (UK GDPR legitimate interest — user must actively opt out).
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final analyticsEnabled = prefs.getBool('analytics_enabled') ?? true;
+      final crashEnabled = prefs.getBool('crash_reporting_enabled') ?? true;
+      await FirebaseAnalytics.instance
+          .setAnalyticsCollectionEnabled(analyticsEnabled);
+      await crashlytics.setCrashlyticsCollectionEnabled(crashEnabled);
+      if (kDebugMode) {
+        debugPrint('[main] analytics=$analyticsEnabled crash=$crashEnabled');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[main] Failed to apply consent prefs: $e');
+    }
 
     // Log a breadcrumb immediately so we can confirm Crashlytics is live
     // in Firebase Console → Crashlytics → latest session → Logs tab.

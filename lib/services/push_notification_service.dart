@@ -31,7 +31,9 @@ import 'notification_copy_service.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Firebase is already initialised by the time this runs on Android.
   // We only need to ensure we don't crash — actual UI work happens on resume.
-  debugPrint('[FCM-BG] ${message.notification?.title}: ${message.notification?.body}');
+  if (kDebugMode) {
+    debugPrint('[FCM-BG] ${message.notification?.title}: ${message.notification?.body}');
+  }
 }
 
 class PushNotificationService {

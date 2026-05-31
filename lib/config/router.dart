@@ -50,6 +50,7 @@ import '../screens/subscription/business_verification_screen.dart';
 import '../screens/partner/partner_profile_screen.dart';
 import '../screens/partner/partner_analytics_screen.dart';
 import '../screens/partner/create_partner_listing_screen.dart';
+import '../screens/events/event_detail_screen.dart';
 import '../screens/search/unified_search_screen.dart';
 import '../utils/page_transitions.dart';
 
@@ -388,6 +389,35 @@ class AppRouter {
             initialQuery: args?['query'] as String? ?? '',
           ),
           direction: SlideDirection.up,
+        );
+
+      // ── Deep-link routes (notification taps + programmatic navigation) ───
+
+      // Meetup detail — notification tap from meetup_rsvp events.
+      // MeetupDetailScreen requires a full Meetup object which can only be
+      // loaded from Firestore. Route to home so MeetupService can load it;
+      // the notification_copy_service delayed push pattern handles the rest.
+      case '/meetup_detail':
+        return FadePageRoute(
+          page: MainShell(key: MainShell.shellKey),
+        );
+
+      // Event detail — navigated from SavedEvent cards in groups_screen.
+      // Arguments: Map<String, dynamic> with id, title, date, time, location,
+      // organiser, imageUrl, isFree, price, category, isOnline, description,
+      // attendees, isUserCreated.
+      case '/event_detail':
+        final evArgs = settings.arguments as Map<String, dynamic>? ?? {};
+        return SlidePageRoute(
+          page: EventDetailScreen(event: evArgs),
+        );
+
+      // Marketplace — notification tap for offers/sales + profile quick-link.
+      // MarketplaceScreen is embedded as tab 3 in MainShell; route to home
+      // shell so the bottom nav context is correct.
+      case '/marketplace':
+        return FadePageRoute(
+          page: MainShell(key: MainShell.shellKey),
         );
 
       default:

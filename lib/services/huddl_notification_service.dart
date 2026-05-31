@@ -751,13 +751,12 @@ class HuddlNotificationService {
   Stream<List<Map<String, dynamic>>> stream() {
     final uid = _uid;
     if (uid == null) return Stream.value([]);
-    // NOTE: No .orderBy() here — adding orderBy('createdAt') alongside
-    // where('userId') requires a composite Firestore index that may not exist,
-    // causing the snapshot to error and return nothing (empty badge + list).
-    // We sort in-memory below instead.
+    // Composite index deployed: notifications(userId ASC, read ASC, createdAt DESC)
+    // See firestore.indexes.json — deploy with: firebase deploy --only firestore:indexes
     return _db
         .collection('notifications')
         .where('userId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
         .limit(60)
         .snapshots()
         .map((snap) {
@@ -770,12 +769,7 @@ class HuddlNotificationService {
             }
             return data;
           }).toList();
-          // Sort newest-first in memory (no index needed)
-          docs.sort((a, b) {
-            final aStr = a['createdAt'] as String? ?? '';
-            final bStr = b['createdAt'] as String? ?? '';
-            return bStr.compareTo(aStr);
-          });
+          // Firestore now returns results sorted newest-first; no in-memory sort needed.
           // De-duplicate: if two notifications share the same type + groupId/conversationId
           // and arrived within 60 seconds of each other, keep only the newest one.
           // This prevents double-entries caused by the backend FCM fan-out AND the
