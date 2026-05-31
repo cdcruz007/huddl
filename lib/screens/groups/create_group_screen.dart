@@ -16,6 +16,7 @@ import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1055,6 +1056,63 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
                     // ─────────── PHOTO UPLOAD (blue banner) ───────────
                     _buildPhotoUpload(),
+
+                    // ─────────── GROUPS CREATED COUNTER ───────────
+                    // Shown for finite tiers (Plus: 25 cap).
+                    // Partner is unlimited (999) so TierLimits.isUnlimited skips it.
+                    Builder(builder: (context) {
+                      final ss  = SubscriptionService();
+                      final max = ss.limits.maxGroupsCreated;
+                      if (TierLimits.isUnlimited(max)) return const SizedBox.shrink();
+                      final remaining   = ss.groupsCreatedRemaining;
+                      final isNearLimit = remaining <= 3;
+                      final isAtLimit   = remaining == 0;
+                      return Container(
+                        margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isNearLimit
+                              ? HuddlColors.primary.withValues(alpha: 0.08)
+                              : context.hc.inputBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: isNearLimit
+                              ? Border.all(
+                                  color: HuddlColors.primary.withValues(alpha: 0.20),
+                                  width: 0.5)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.diversity_3_outlined,
+                              size: 14,
+                              color: isNearLimit
+                                  ? HuddlColors.primary
+                                  : context.hc.textTertiary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isAtLimit
+                                    ? 'You\'ve created $max groups — your Plus limit. '
+                                      'Upgrade to Partner for unlimited.'
+                                    : '$remaining of $max group'
+                                      '${remaining == 1 ? "" : "s"} remaining on Huddl Plus',
+                                style: HuddlText.caption(
+                                  color: isNearLimit
+                                      ? HuddlColors.primary
+                                      : context.hc.textTertiary,
+                                  weight: isNearLimit
+                                      ? FontWeight.w500
+                                      : FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
 
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),

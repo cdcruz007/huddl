@@ -744,7 +744,8 @@ class SubscriptionService extends ChangeNotifier {
       case 'ai_listing_generator':
         return 'AI Listing Writer is a Huddl Plus feature. Upgrade to auto-generate listings from photos!';
       case 'ai_matchmaker':
-        return 'AI Meetup Matchmaker is a Huddl Partner exclusive. Upgrade to get smart matching!';
+        return 'AI Meetup Matchmaker is exclusive to Huddl Partner — '
+            'it finds compatible parents nearby and suggests the perfect meetup.';
       case 'ai_event_discovery':
         return 'You\'ve used your weekly AI event discovery. Upgrade to Huddl Plus for daily discovery!';
       case 'ai_smart_feed':

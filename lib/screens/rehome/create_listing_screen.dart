@@ -14,6 +14,7 @@ import '../../services/firestore_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -207,18 +208,37 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     );
   }
 
+  // _maxImages retained for reference; tier-aware _canAddPhoto() is the active guard.
+  // ignore: unused_field
   static const int _maxImages = 6;
 
-  Future<void> _pickMultipleFromGallery() async {
-    if (_pickedImages.length >= _maxImages) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Maximum $_maxImages photos per listing'),
-          behavior: SnackBarBehavior.floating,
-        ));
-      }
-      return;
+  // ── Photo upload guard: checks tier-aware per-listing photo cap ────────────
+  // Free tier is unlimited (maxPhotoUploads: 999) so TierLimits.isUnlimited
+  // returns true and the guard never fires. Plus cap is 15, Partner is 50.
+  bool _canAddPhoto() {
+    final ss  = SubscriptionService();
+    final max = ss.limits.maxPhotoUploads;
+    if (TierLimits.isUnlimited(max)) return true;
+    if (_pickedImages.length >= max) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          'You can add up to $max photos per listing on Huddl Plus. '
+          'Upgrade to Huddl Partner for 50 photos.',
+          style: HuddlText.body(color: Colors.white),
+        ),
+        backgroundColor: HuddlColors.nearBlack,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)),
+      ));
+      return false;
     }
+    return true;
+  }
+
+  Future<void> _pickMultipleFromGallery() async {
+    // Tier-aware guard replaces static _maxImages check
+    if (!_canAddPhoto()) return;
     try {
       // Pass ImageSource.gallery directly — the caller already showed the
       // source-selection sheet, so we skip ImageEditorWidget's own sheet.
@@ -230,7 +250,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         final mimeType = file.path.toLowerCase().endsWith('.png')
             ? 'image/png'
             : 'image/jpeg';
-        setState(() => _pickedImages.add('data:$mimeType;base64,$b64'));
+        if (_canAddPhoto()) {
+          setState(() => _pickedImages.add('data:$mimeType;base64,$b64'));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -245,15 +267,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _pickFromCamera() async {
-    if (_pickedImages.length >= _maxImages) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Maximum $_maxImages photos per listing'),
-          behavior: SnackBarBehavior.floating,
-        ));
-      }
-      return;
-    }
+    // Tier-aware guard replaces static _maxImages check
+    if (!_canAddPhoto()) return;
     try {
       // Pass ImageSource.camera directly — skips ImageEditorWidget's own sheet.
       final file = await ImageEditorWidget.pickMarketplaceImageWithSource(
@@ -264,7 +279,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final mimeType = file.path.toLowerCase().endsWith('.png')
           ? 'image/png'
           : 'image/jpeg';
-      setState(() => _pickedImages.add('data:$mimeType;base64,$b64'));
+      if (_canAddPhoto()) {
+        setState(() => _pickedImages.add('data:$mimeType;base64,$b64'));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -748,6 +765,30 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 children: [
                   // ── Photo banner — full-width blue (Create Meetup / Create Group style) ──
                   _buildPhotoArea(),
+
+                  // ── Photo count label: shown for finite tier limits ──
+                  Builder(builder: (context) {
+                    final ss  = SubscriptionService();
+                    final max = ss.limits.maxPhotoUploads;
+                    if (TierLimits.isUnlimited(max)) return const SizedBox.shrink();
+                    final used      = _pickedImages.length;
+                    final remaining = (max - used).clamp(0, max);
+                    // Only show once photos have been added, or when limit is close
+                    if (used == 0 && remaining > 3) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 20),
+                      child: Text(
+                        remaining == 0
+                            ? 'Photo limit reached ($used/$max)'
+                            : '$used/$max photos added',
+                        style: HuddlText.caption(
+                          color: remaining == 0
+                              ? HuddlColors.error
+                              : HuddlColors.textTertiary,
+                        ),
+                      ),
+                    );
+                  }),
 
                   // ── Selection summary chip ──
                   Padding(

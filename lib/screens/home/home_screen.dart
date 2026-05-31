@@ -3122,21 +3122,24 @@ class _HomeScreenState extends State<HomeScreen>
   void _openAssistant() {
     HuddlAnimations.mediumTap();
 
-    // ── Free tier: pre-gate when daily limit is exhausted ─────────────────
-    // Route directly to the gate screen rather than letting the copilot
-    // screen handle it silently via a SnackBar.
-    if (_subscriptionService.isFree &&
-        !_subscriptionService.canUseAiCopilot) {
+    // ── Gate any tier that has exhausted their daily limit ────────────────
+    if (!_subscriptionService.canUseAiCopilot) {
+      final isPlusUser = _subscriptionService.isPlusOrAbove;
       Navigator.pushNamed(
         context,
         '/subscription_gate',
         arguments: {
           'featureTitle': 'huddl Assistant',
-          'featureDescription':
-              'You\'ve used your ${_subscriptionService.limits.maxAiCopilotChatsPerDay} '
-              'free AI chats today. Upgrade to Huddl Plus for 25 chats a day.',
-          'requiredPlan': 'Huddl Plus',
+          'featureDescription': isPlusUser
+              ? 'You\'ve used your '
+                '${_subscriptionService.limits.maxAiCopilotChatsPerDay} '
+                'AI chats today. Your limit resets at midnight.'
+              : 'You\'ve used your '
+                '${_subscriptionService.limits.maxAiCopilotChatsPerDay} '
+                'free AI chats today. Upgrade to Huddl Plus for 25 a day.',
+          'requiredPlan': isPlusUser ? 'Huddl Partner' : 'Huddl Plus',
           'featureIcon': Icons.auto_awesome_outlined.codePoint,
+          'showUpgrade': !isPlusUser,
         },
       );
       return;
@@ -3227,11 +3230,10 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ],
         ),
-            // ── Free tier remaining AI chat count ────────────────────────────
-            // Shown below the composer row for free users only.
-            // Turns orange when the daily limit is reached.
-            if (_subscriptionService.isFree &&
-                !TierLimits.isUnlimited(
+            // ── Remaining AI chat count — all finite tiers ───────────────────
+            // Shown for any tier with a finite daily limit (free = 3, Plus = 25).
+            // Partner is unlimited (999) so TierLimits.isUnlimited() skips it.
+            if (!TierLimits.isUnlimited(
                     _subscriptionService.limits.maxAiCopilotChatsPerDay))
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
@@ -3247,10 +3249,12 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(width: 4),
                     Text(
                       _subscriptionService.canUseAiCopilot
-                          ? '${_subscriptionService.aiCopilotChatsRemaining} free AI '
+                          ? '${_subscriptionService.aiCopilotChatsRemaining} AI '
                             '${_subscriptionService.aiCopilotChatsRemaining == 1 ? "chat" : "chats"} '
-                            'left today'
-                          : 'Daily limit reached \u00b7 Upgrade for more',
+                            'remaining today'
+                          : _subscriptionService.isFree
+                              ? 'Daily limit reached \u00b7 Upgrade for more'
+                              : 'Daily limit reached \u2014 resets at midnight',
                       style: HuddlText.caption(
                         color: _subscriptionService.canUseAiCopilot
                             ? HuddlColors.textTertiary

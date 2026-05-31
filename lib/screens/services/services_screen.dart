@@ -709,6 +709,52 @@ class _ServicesScreenState extends State<ServicesScreen> {
             ),
 
           // ── Listing stream ────────────────────────────────────────────────
+
+          // Verification nudge banner — unverified Plus/Partner users only.
+          // Hidden once verified or for free (explorer) users.
+          if (SubscriptionService().isPlusOrAbove &&
+              !SubscriptionService().isBusinessVerified)
+            GestureDetector(
+              onTap: () =>
+                  Navigator.pushNamed(context, '/business_verification'),
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.infoBlue.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: HuddlColors.infoBlue.withValues(alpha: 0.20),
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_outlined,
+                        size: 18, color: HuddlColors.infoBlue),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Verify your business to list your services here',
+                        style: HuddlText.body(
+                          weight: FontWeight.w500,
+                          color: HuddlColors.infoBlue,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Get verified →',
+                      style: HuddlText.caption(
+                        weight: FontWeight.w600,
+                        color: HuddlColors.infoBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           Expanded(
             child: ColoredBox(
               color: _isSearchActive ? hc.surface : const Color(0xFFF7F7F7),

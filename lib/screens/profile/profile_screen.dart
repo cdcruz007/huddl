@@ -6450,6 +6450,34 @@ class _SettingsScreen extends StatelessWidget {
                   Navigator.pushNamed(context, '/backup_restore');
                 },
               ),
+
+              // ── Business verification ───────────────────────────────
+              // Visible only for Plus/Partner users — free (explorer) users hidden.
+
+              // Unverified Plus/Partner: offer path to get verified
+              if (SubscriptionService().isPlusOrAbove &&
+                  !SubscriptionService().isBusinessVerified)
+                _SettingsItem(
+                  icon: Icons.verified_outlined,
+                  title: 'Verify your business',
+                  subtitle: 'Get the HMRC-verified badge and list your services',
+                  iconColor: HuddlColors.infoBlue,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/business_verification');
+                  },
+                ),
+
+              // Already verified Plus/Partner: show confirmed status
+              if (SubscriptionService().isPlusOrAbove &&
+                  SubscriptionService().isBusinessVerified)
+                _SettingsItem(
+                  icon: Icons.verified_rounded,
+                  title: 'Business verified',
+                  subtitle: 'HMRC Partner badge active on your listings',
+                  iconColor: HuddlColors.primary,
+                  onTap: () {},
+                ),
             ],
           ),
 

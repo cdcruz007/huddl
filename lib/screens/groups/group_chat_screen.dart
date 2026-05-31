@@ -3782,6 +3782,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  // ── AI Summary ────────────────────────────────────────────────────────────
+  // Stub: summarises unread group messages using AI.
+  // Full implementation will be wired to the AI Copilot service.
+  void _showAiSummary() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        'AI Summary generating…',
+        style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+      ),
+      backgroundColor: HuddlColors.nearBlack,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ));
+  }
+
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: context.hc.surface,
@@ -3825,48 +3840,71 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         ),
       ),
       actions: [
-        // AI Summary — gated for free tier, locked state with Plus badge
+        // AI Summary — tier-aware: free locked, Plus counted, Partner unlimited
         Builder(builder: (ctx) {
-          final canSummarise = SubscriptionService().hasAiChatSummaries;
+          final ss        = SubscriptionService();
+          final hasAccess = ss.hasAiChatSummaries;
+          final canUse    = ss.canUseAiChatSummary;
+          final remaining = ss.aiChatSummariesRemaining;
+          final isFinite  = !TierLimits.isUnlimited(
+              ss.limits.maxAiChatSummariesPerDay);
+          // Numeric badge when 3 or fewer remain (and limit is finite)
+          final showCount = hasAccess && isFinite && remaining <= 3;
+
           return Stack(
             clipBehavior: Clip.none,
             children: [
               IconButton(
                 icon: Icon(
                   Icons.auto_awesome_outlined,
-                  color: canSummarise
-                      ? context.hc.textSecondary
-                      : HuddlColors.textTertiary,
+                  color: (!hasAccess || !canUse)
+                      ? HuddlColors.textTertiary
+                      : context.hc.textSecondary,
                 ),
-                onPressed: canSummarise
-                    ? () => ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('AI Summary coming soon',
-                                style: HuddlText.body()),
-                            backgroundColor: HuddlColors.textDark,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        )
-                    : () => Navigator.pushNamed(
-                          context,
-                          '/subscription_gate',
-                          arguments: {
-                            'featureTitle': 'AI Group Summary',
-                            'featureDescription':
-                                'Catch up on what you missed — AI summarises '
-                                'unread messages in seconds.',
-                            'requiredPlan': 'Huddl Plus',
-                            'featureIcon':
-                                Icons.auto_awesome_outlined.codePoint,
-                          },
-                        ),
-                tooltip:
-                    canSummarise ? 'AI Summary' : 'Upgrade for AI Summary',
+                tooltip: !hasAccess
+                    ? 'Upgrade for AI Summary'
+                    : !canUse
+                        ? 'Daily limit reached'
+                        : 'AI Summary',
+                onPressed: () {
+                  if (!hasAccess) {
+                    // Free users — route to gate screen
+                    Navigator.pushNamed(context, '/subscription_gate',
+                        arguments: {
+                          'featureTitle': 'AI Group Summary',
+                          'featureDescription':
+                              'Catch up on what you missed — AI summarises '
+                              'unread messages in seconds.',
+                          'requiredPlan': 'Huddl Plus',
+                          'featureIcon':
+                              Icons.auto_awesome_outlined.codePoint,
+                        });
+                    return;
+                  }
+                  if (!canUse) {
+                    // Plus users exhausted — informational SnackBar
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                        'You\'ve used your '
+                        '${ss.limits.maxAiChatSummariesPerDay} AI summaries '
+                        'today. Resets at midnight.',
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, color: Colors.white),
+                      ),
+                      backgroundColor: HuddlColors.nearBlack,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ));
+                    return;
+                  }
+                  // Access granted — call existing summary method
+                  _showAiSummary();
+                },
               ),
-              // Plus badge — shown only for free users
-              if (!canSummarise)
+
+              // Free users: "Plus" upgrade badge pill
+              if (!hasAccess)
                 Positioned(
                   top: 6,
                   right: 6,
@@ -3879,6 +3917,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                     child: Text(
                       'Plus',
+                      style: GoogleFonts.poppins(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Plus users near/at daily limit: numeric count badge
+              if (hasAccess && showCount)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: !canUse
+                          ? HuddlColors.error
+                          : HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      !canUse ? '0' : '$remaining',
                       style: GoogleFonts.poppins(
                         fontSize: 8,
                         fontWeight: FontWeight.w700,

@@ -2230,73 +2230,118 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         size: 13, color: hc.textTertiary),
                   ],
                 ),
-                // AI Write secondary action row
+                // AI Write secondary action row — tier-aware: free locked, Plus counted, Partner unlimited
                 const SizedBox(height: 10),
                 Builder(builder: (bCtx) {
-                  final canUse = SubscriptionService().hasAiListingGenerator;
+                  final ss        = SubscriptionService();
+                  final hasAccess = ss.hasAiListingGenerator;
+                  final canUse    = ss.canUseAiListingGenerator;
+                  final remaining = ss.aiListingGenerationsRemaining;
+                  final isFinite  = !TierLimits.isUnlimited(
+                      ss.limits.maxAiListingGenerationsPerMonth);
+                  // Count badge when 3 or fewer remain and limit is finite
+                  final showCount = hasAccess && isFinite && remaining <= 3;
+
                   return GestureDetector(
                     onTap: () {
+                      if (!hasAccess) {
+                        Navigator.pushNamed(context, '/subscription_gate',
+                            arguments: {
+                              'featureTitle': 'AI Listing Writer',
+                              'featureDescription':
+                                  'Describe your item and AI writes the perfect '
+                                  'listing title, description, and price in seconds.',
+                              'requiredPlan': 'Huddl Plus',
+                              'featureIcon':
+                                  Icons.auto_awesome_outlined.codePoint,
+                            });
+                        return;
+                      }
                       if (!canUse) {
-                        Navigator.pushNamed(
-                          context,
-                          '/subscription_gate',
-                          arguments: {
-                            'featureTitle': 'AI Listing Writer',
-                            'featureDescription':
-                                'Describe your item and AI writes the '
-                                'perfect listing in seconds.',
-                            'requiredPlan': 'Huddl Plus',
-                            'featureIcon':
-                                Icons.auto_awesome_outlined.codePoint,
-                          },
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                            'You\'ve used your '
+                            '${ss.limits.maxAiListingGenerationsPerMonth} AI listing '
+                            'generations this month. Resets on your billing date.',
+                            style: HuddlText.body(color: Colors.white),
+                          ),
+                          backgroundColor: HuddlColors.nearBlack,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ));
                         return;
                       }
                       _openAiListingGenerator();
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
-                        color: canUse
-                            ? HuddlColors.primary
-                            : HuddlColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        color: !hasAccess
+                            ? HuddlColors.primary.withValues(alpha: 0.12)
+                            : !canUse
+                                ? HuddlColors.gray100
+                                : HuddlColors.primary,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.auto_awesome_outlined,
-                            size: 14,
-                            color: canUse
-                                ? Colors.white
-                                : HuddlColors.primary,
+                            size: 16,
+                            color: (!hasAccess || !canUse)
+                                ? HuddlColors.primary
+                                : Colors.white,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'AI Write',
+                            !canUse && hasAccess ? 'Limit reached' : 'AI Write',
                             style: HuddlText.caption(
                               weight: FontWeight.w600,
-                              color: canUse
-                                  ? Colors.white
-                                  : HuddlColors.primary,
+                              color: (!hasAccess || !canUse)
+                                  ? HuddlColors.primary
+                                  : Colors.white,
                             ),
                           ),
-                          if (!canUse) ...[
-
+                          // Free users: Plus upgrade badge
+                          if (!hasAccess) ...[
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 1),
+                                  horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
                                 color: HuddlColors.primary,
-                                borderRadius: BorderRadius.circular(5),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 'Plus',
-                                style: HuddlText.label(
-                                    color: Colors.white),
+                                style: HuddlText.caption(
+                                  weight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                          // Plus users near monthly limit: count badge
+                          if (hasAccess && showCount) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: !canUse
+                                    ? HuddlColors.error
+                                    : Colors.white.withValues(alpha: 0.28),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                !canUse ? '0 left' : '$remaining left',
+                                style: HuddlText.caption(
+                                  weight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ],

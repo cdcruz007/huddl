@@ -36,8 +36,10 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
         await showUpgradePrompt(
           context,
           feature: 'ai_matchmaker',
-          message: SubscriptionService().limitReachedMessage('ai_matchmaker'),
-          requiredTier: SubscriptionTier.innerCircle,
+          message: 'AI Meetup Matchmaker is exclusive to Huddl Partner. '
+              'It scores compatibility between parents in Cambridge and suggests '
+              'the perfect meetup for your family.',
+          requiredTier: SubscriptionTier.partner,
         );
         Navigator.pop(context);
       }
