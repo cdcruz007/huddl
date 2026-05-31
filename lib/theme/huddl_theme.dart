@@ -131,26 +131,26 @@ class HuddlTheme {
 
   static TextTheme _lightTextTheme() => TextTheme(
     // Display → headlineLarge
-    headlineLarge:  HuddlText.display(),
+    headlineLarge:  HuddlText.display(color: HuddlColors.nearBlack),
 
     // Heading → all title slots collapse to 17/600
-    headlineMedium: HuddlText.heading(),
-    headlineSmall:  HuddlText.heading(),
-    titleLarge:     HuddlText.heading(),
-    titleMedium:    HuddlText.heading(),
+    headlineMedium: HuddlText.heading(color: HuddlColors.nearBlack),
+    headlineSmall:  HuddlText.heading(color: HuddlColors.nearBlack),
+    titleLarge:     HuddlText.heading(color: HuddlColors.nearBlack),
+    titleMedium:    HuddlText.heading(color: HuddlColors.nearBlack),
     titleSmall:     HuddlText.heading(color: HuddlColors.textSecondary),
 
     // Body → bodyLarge (nearBlack), bodyMedium (textSecondary)
     bodyLarge:      HuddlText.body(color: HuddlColors.nearBlack),
-    bodyMedium:     HuddlText.body(),
+    bodyMedium:     HuddlText.body(color: HuddlColors.textSecondary),
 
     // Caption / Label
-    bodySmall:      HuddlText.caption(),
-    labelSmall:     HuddlText.label(),
+    bodySmall:      HuddlText.caption(color: HuddlColors.textTertiary),
+    labelSmall:     HuddlText.label(color: HuddlColors.textTertiary),
 
     // Button text — handled by HuddlButton, kept for legacy Material widgets
     labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-    labelMedium:    HuddlText.caption(weight: FontWeight.w500),
+    labelMedium:    HuddlText.caption(color: HuddlColors.textSecondary, weight: FontWeight.w500),
   );
 
   static TextTheme _darkTextTheme() => TextTheme(

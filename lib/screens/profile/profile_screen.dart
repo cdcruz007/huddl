@@ -1378,7 +1378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// 2×2 quick action grid: Find Parents, Marketplace, Noticeboard, Invite.
   Widget _buildQuickActionsGrid(HuddlContextColors hc) {
     final actions = [
-      (Icons.people_outline,            'Find Parents',  HuddlColors.primary, () => Navigator.pushNamed(context, '/connect')),
+      (Icons.people_outline,            'Find Parents',  HuddlColors.primary, () => Navigator.pushNamed(context, '/unified_search', arguments: {'query': 'parents'})),
       (Icons.storefront_outlined,       'Marketplace',   HuddlColors.primary, () => Navigator.pushNamed(context, '/marketplace')),
       (Icons.campaign_outlined,         'Noticeboard',   HuddlColors.primary, () => Navigator.pushNamed(context, '/noticeboard')),
       (Icons.person_add_alt_1_outlined, 'Invite Friend', HuddlColors.primary, _showInviteFriendSheet),
@@ -6889,35 +6889,22 @@ class _SettingsScreen extends StatelessWidget {
           ),
 
           // ── SEND Support ──────────────────────────────────────────────
-          // Visible only when the parent has a school-age child (age 4–11).
-          if (() {
-            final children = profileState._onboarding.children;
-            if (children.isEmpty) return false;
-            final now = DateTime.now();
-            return children.any((c) {
-              final bday = c['birthday'];
-              if (bday == null || bday.toString().isEmpty) return false;
-              final dob = DateTime.tryParse(bday.toString());
-              if (dob == null) return false;
-              final ageYears = now.difference(dob).inDays / 365.25;
-              return ageYears >= 4.0 && ageYears < 12.0;
-            });
-          }())
-            _SettingsSection(
-              title: 'SEND Support',
-              items: [
-                _SettingsItem(
-                  icon: Icons.school_outlined,
-                  title: 'SEND Navigator',
-                  subtitle: 'EHCP, deadlines, AI advisor & support directory',
-                  iconColor: HuddlColors.teal,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/send');
-                  },
-                ),
-              ],
-            ),
+          // Available to all users — SEND affects any family at any stage.
+          _SettingsSection(
+            title: 'SEND Support',
+            items: [
+              _SettingsItem(
+                icon: Icons.school_outlined,
+                title: 'SEND Navigator',
+                subtitle: 'EHCP, deadlines, AI advisor & support directory',
+                iconColor: HuddlColors.teal,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/send');
+                },
+              ),
+            ],
+          ),
 
           // ── Support ───────────────────────────────────────────────────
           _SettingsSection(

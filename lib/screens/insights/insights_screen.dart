@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
-import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_network_image.dart';
@@ -179,21 +178,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
 class _SendNavigatorBanner extends StatelessWidget {
   const _SendNavigatorBanner();
 
-  /// Returns true when the user has at least one child aged 4–11 years.
-  bool _isEligible() {
-    final onboarding = OnboardingDataService();
-    final children = onboarding.children;
-    if (children.isEmpty) return false;
-    final now = DateTime.now();
-    return children.any((c) {
-      final bday = c['birthday'];
-      if (bday == null || bday.toString().isEmpty) return false;
-      final dob = DateTime.tryParse(bday.toString());
-      if (dob == null) return false;
-      final ageYears = now.difference(dob).inDays / 365.25;
-      return ageYears >= 4.0 && ageYears < 12.0;
-    });
-  }
+  /// Always show — SEND support is relevant to all families.
+  bool _isEligible() => true;
 
   @override
   Widget build(BuildContext context) {

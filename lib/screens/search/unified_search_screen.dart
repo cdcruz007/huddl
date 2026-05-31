@@ -308,7 +308,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                     },
                     onSubmitted: _runSearch,
                     textInputAction: TextInputAction.search,
-                    style: HuddlText.body(color: HuddlColors.nearBlack),
+                    style: HuddlText.body(color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search groups, meetups, services…',
                       hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
@@ -1096,9 +1096,9 @@ class _QuickPickChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F2EE),
+          color: context.hc.surfaceAlt,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: HuddlColors.divider, width: 0.5),
+          border: Border.all(color: context.hc.divider, width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1108,7 +1108,7 @@ class _QuickPickChip extends StatelessWidget {
             Text(
               quickPick.label,
               style: HuddlText.body(
-                color: HuddlColors.nearBlack,
+                color: context.hc.textPrimary,
                 weight: FontWeight.w500,
               ),
             ),
@@ -1148,13 +1148,13 @@ class _PopularRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: HuddlText.body(color: HuddlColors.nearBlack),
+                style: HuddlText.body(color: context.hc.textPrimary),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.north_west,
               size: 14,
-              color: HuddlColors.textTertiary,
+              color: context.hc.textSecondary,
             ),
           ],
         ),

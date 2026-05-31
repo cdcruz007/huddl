@@ -3300,7 +3300,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: const Color(0xFFF7F7F7),
+              color: context.hc.surfaceAlt,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -7202,7 +7202,7 @@ class _GroupImageBubble extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 width: 240,
                                 height: 240,
-                                errorBuilder: (_, __, ___) => _brokenImage(),
+                                errorBuilder: (ctx, __, ___) => _brokenImage(ctx),
                               )
                             : (imageUrl.startsWith('http://') ||
                                     imageUrl.startsWith('https://'))
@@ -7227,7 +7227,7 @@ class _GroupImageBubble extends StatelessWidget {
                                                       child: CircularProgressIndicator(strokeWidth: 2),
                                                     ),
                                                   ),
-                                        errorBuilder: (_, __, ___) => _brokenImage(),
+                                        errorBuilder: (ctx, __, ___) => _brokenImage(ctx),
                                       )
                                     : CachedNetworkImage(
                                         imageUrl: imageUrl,
@@ -7242,9 +7242,9 @@ class _GroupImageBubble extends StatelessWidget {
                                             child: CircularProgressIndicator(strokeWidth: 2),
                                           ),
                                         ),
-                                        errorWidget: (_, __, ___) => _brokenImage(),
+                                        errorWidget: (ctx, __, ___) => _brokenImage(ctx),
                                       ))
-                                : _brokenImage(),
+                                : Builder(builder: (ctx) => _brokenImage(ctx)),
                       ),
                     ),
                     // Forward button overlay
@@ -7292,16 +7292,37 @@ class _GroupImageBubble extends StatelessWidget {
     );
   }
 
-  Widget _brokenImage() => Container(
-        width: 200,
-        height: 200,
-        decoration: BoxDecoration(
-          color: const Color(0xFFE0E0E0),
-          borderRadius: BorderRadius.circular(12),
+  Widget _brokenImage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: 200,
+      height: 160,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD),
         ),
-        child: const Icon(Icons.image_not_supported_outlined,
-            color: Color(0xFFBDBDBD), size: 40),
-      );
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported_outlined,
+            color: isDark ? const Color(0xFF666666) : const Color(0xFFBDBDBD),
+            size: 32,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Image unavailable',
+            style: HuddlText.caption(
+              color: isDark ? const Color(0xFF555555) : const Color(0xFFBBBBBB),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   String _fmtTime(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');

@@ -30,7 +30,7 @@ class HuddlText {
         fontWeight: FontWeight.w700,
         letterSpacing: -0.5,
         height: 1.2,
-        color: color ?? HuddlColors.nearBlack,
+        color: color,
       );
 
   // ── HEADING — 17px / 600 / -0.2 tracking ─────────────────────────────────
@@ -41,7 +41,7 @@ class HuddlText {
         fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
         height: 1.3,
-        color: color ?? HuddlColors.nearBlack,
+        color: color,
       );
 
   // ── BODY — 14px / 400 / 0 tracking ───────────────────────────────────────
@@ -52,7 +52,7 @@ class HuddlText {
         fontSize: 16,
         fontWeight: weight ?? FontWeight.w400,
         height: 1.55,
-        color: color ?? HuddlColors.textSecondary,
+        color: color,
       );
 
   // ── CAPTION — 12px / 400 / 0.1 tracking ──────────────────────────────────
@@ -64,7 +64,7 @@ class HuddlText {
         fontWeight: weight ?? FontWeight.w400,
         letterSpacing: 0.1,
         height: 1.4,
-        color: color ?? HuddlColors.textTertiary,
+        color: color,
       );
 
   // ── LABEL — 12px / 600 / 0.5 tracking — UPPERCASE only ───────────────────
@@ -75,7 +75,7 @@ class HuddlText {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
         height: 1.3,
-        color: color ?? HuddlColors.textTertiary,
+        color: color,
       );
 }
 
