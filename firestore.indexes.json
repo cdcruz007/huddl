@@ -40,6 +40,54 @@
         { "fieldPath": "targetMemberId", "order": "ASCENDING" },
         { "fieldPath": "status",         "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "group_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId",   "order": "ASCENDING"  },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "group_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId",    "order": "ASCENDING"  },
+        { "fieldPath": "replyCount", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "saved_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId",  "order": "ASCENDING"  },
+        { "fieldPath": "savedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "updatedAt",      "order": "DESCENDING"     }
+      ]
+    },
+    {
+      "collectionGroup": "borough_announcements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "borough",    "order": "ASCENDING"  },
+        { "fieldPath": "createdAt",  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rsvps",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId",    "order": "ASCENDING"  },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

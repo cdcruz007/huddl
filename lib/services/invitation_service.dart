@@ -321,7 +321,9 @@ class InvitationService extends ChangeNotifier {
           'status': 'pending',
         });
       } catch (e) {
-        if (kDebugMode) debugPrint('[InvitationService] Firestore invite write error: $e');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[InvitationService] Firestore invite write error: $e');
+        }
       }
 
       // 3. Send FCM push notification to the invited member
@@ -334,7 +336,9 @@ class InvitationService extends ChangeNotifier {
           groupImageUrl: group.imageUrl.isNotEmpty ? group.imageUrl : null,
         );
       } catch (e) {
-        if (kDebugMode) debugPrint('[InvitationService] FCM invitation push error: $e');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[InvitationService] FCM invitation push error: $e');
+        }
       }
     }
 
@@ -373,7 +377,9 @@ class InvitationService extends ChangeNotifier {
           groupId: inv.groupId,
           groupImageUrl: inv.groupImageUrl.isNotEmpty ? inv.groupImageUrl : null,
         ).catchError((e) {
-          if (kDebugMode) debugPrint('[InvitationService] invitationAccepted notif error: $e');
+          if (kDebugMode) {
+            if (kDebugMode) debugPrint('[InvitationService] invitationAccepted notif error: $e');
+          }
         });
       }
     }
@@ -466,7 +472,9 @@ class InvitationService extends ChangeNotifier {
           }, SetOptions(merge: true));
         }
       } catch (e) {
-        if (kDebugMode) debugPrint('[InvitationService] Firestore join update error: $e');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[InvitationService] Firestore join update error: $e');
+        }
       }
     }
 
@@ -482,7 +490,9 @@ class InvitationService extends ChangeNotifier {
           groupId: group.id,
           groupImageUrl: group.imageUrl.isNotEmpty ? group.imageUrl : null,
         ).catchError((e) {
-          if (kDebugMode) debugPrint('[InvitationService] groupMemberJoined notif error: $e');
+          if (kDebugMode) {
+            if (kDebugMode) debugPrint('[InvitationService] groupMemberJoined notif error: $e');
+          }
         });
       }
     }
@@ -587,7 +597,9 @@ class InvitationService extends ChangeNotifier {
 
   void _log(String message) {
     if (kDebugMode) {
-      debugPrint('InvitationService: $message');
+      if (kDebugMode) {
+        debugPrint('InvitationService: $message');
+      }
     }
   }
 

@@ -73,7 +73,9 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
     try {
       await HuddlUserService().syncCurrentUserProfile();
     } catch (e) {
-      if (kDebugMode) debugPrint('Could not sync profile at onboarding end: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('Could not sync profile at onboarding end: $e');
+      }
     }
 
     if (!mounted) return;

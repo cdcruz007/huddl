@@ -333,7 +333,9 @@ class OnboardingDataService {
           debugPrint('OnboardingData loaded from storage');
           debugPrint('   Name: $_name');
           debugPrint('   Postcode: $_postcode');
-          debugPrint('   Stages: $_stagesOfLife');
+          if (kDebugMode) {
+            debugPrint('   Stages: $_stagesOfLife');
+          }
           debugPrint('   Phone: $fullPhoneNumber');
         }
       }
@@ -341,7 +343,9 @@ class OnboardingDataService {
       _isInitialized = true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error loading onboarding data: $e');
+        if (kDebugMode) {
+          debugPrint('Error loading onboarding data: $e');
+        }
       }
     }
   }
@@ -375,7 +379,9 @@ class OnboardingDataService {
       _log('Data saved to storage');
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error saving onboarding data: $e');
+        if (kDebugMode) {
+          debugPrint('Error saving onboarding data: $e');
+        }
       }
     }
   }
@@ -383,7 +389,9 @@ class OnboardingDataService {
   // Debug logging
   void _log(String message) {
     if (kDebugMode) {
-      debugPrint('📝 OnboardingData: $message');
+      if (kDebugMode) {
+        debugPrint('📝 OnboardingData: $message');
+      }
     }
   }
 
@@ -393,11 +401,21 @@ class OnboardingDataService {
       debugPrint('=== Onboarding Data Summary ===');
       debugPrint('Name: $_name');
       debugPrint('Parent Type: $_parentType');
-      debugPrint('Stages: $_stagesOfLife');
-      debugPrint('Postcode: $_postcode');
-      debugPrint('Phone: $fullPhoneNumber');
-      debugPrint('Phone Verified: $_isPhoneVerified');
-      debugPrint('Completion: ${getCompletionPercentage().toStringAsFixed(1)}%');
+      if (kDebugMode) {
+        debugPrint('Stages: $_stagesOfLife');
+      }
+      if (kDebugMode) {
+        debugPrint('Postcode: $_postcode');
+      }
+      if (kDebugMode) {
+        debugPrint('Phone: $fullPhoneNumber');
+      }
+      if (kDebugMode) {
+        debugPrint('Phone Verified: $_isPhoneVerified');
+      }
+      if (kDebugMode) {
+        debugPrint('Completion: ${getCompletionPercentage().toStringAsFixed(1)}%');
+      }
       debugPrint('==============================');
     }
   }

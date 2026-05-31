@@ -121,9 +121,11 @@ class GeminiConfig {
       _isValid = response.statusCode == 200 || response.statusCode == 429;
 
       if (!_isValid && kDebugMode) {
-        debugPrint(
-            'GeminiConfig: API key validation failed (${response.statusCode}): '
-            '${response.body.substring(0, response.body.length.clamp(0, 300))}');
+        if (kDebugMode) {
+          debugPrint(
+          'GeminiConfig: API key validation failed (${response.statusCode}): '
+          '${response.body.substring(0, response.body.length.clamp(0, 300))}');
+        }
         if (response.statusCode == 403) {
           final isBlocked = response.body.contains('API_KEY_SERVICE_BLOCKED');
           _blockReason = isBlocked
@@ -131,14 +133,18 @@ class GeminiConfig {
                 'https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect '
                 'or inject --dart-define=GEMINI_API_KEY=<AI_Studio_key>'
               : 'HTTP 403: ${response.body.substring(0, response.body.length.clamp(0, 200))}';
-          debugPrint('GeminiConfig: \u26a0\ufe0f  $_blockReason');
+          if (kDebugMode) {
+            debugPrint('GeminiConfig: \u26a0\ufe0f  $_blockReason');
+          }
         }
       }
     } catch (e) {
       _validated = true;
       _isValid = false;
       if (kDebugMode) {
-        debugPrint('GeminiConfig: Key validation error: $e');
+        if (kDebugMode) {
+          debugPrint('GeminiConfig: Key validation error: $e');
+        }
       }
     }
     return _isValid;

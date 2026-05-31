@@ -134,7 +134,9 @@ class MessageSafetyService {
     final normalised = _normalise(message);
     for (final term in _hardBlockList) {
       if (normalised.contains(term)) {
-        if (kDebugMode) debugPrint('[MessageSafety] Local block hit: "$term"');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[MessageSafety] Local block hit: "$term"');
+        }
         return true;
       }
     }
@@ -199,7 +201,9 @@ Respond with ONLY the single word SAFE or UNSAFE. No explanation.
       );
 
       if (raw == null) {
-        if (kDebugMode) debugPrint('[MessageSafety] No AI response — defaulting to safe');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[MessageSafety] No AI response — defaulting to safe');
+        }
         return MessageSafetyResult.safe;
       }
 
@@ -214,7 +218,9 @@ Respond with ONLY the single word SAFE or UNSAFE. No explanation.
 
     } catch (e) {
       // Safe-by-default on any error (network, quota, API blocked, parse)
-      if (kDebugMode) debugPrint('[MessageSafety] AI classify() error — allowing message: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[MessageSafety] AI classify() error — allowing message: $e');
+      }
       return MessageSafetyResult.safe;
     }
   }

@@ -2222,7 +2222,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
       }
       return await snap.ref.getDownloadURL();
     } catch (e) {
-      if (kDebugMode) debugPrint('[DMChat] Storage upload error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[DMChat] Storage upload error: $e');
+      }
       return null;
     }
   }
@@ -2269,7 +2271,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
       if (!status.isGranted) {
         // On Android 13+ photos permission may map to READ_MEDIA_IMAGES —
         // fall back gracefully if the picker itself grants access.
-        if (kDebugMode) debugPrint('[DMChat] Photos permission: $status — continuing anyway (picker may still work)');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[DMChat] Photos permission: $status — continuing anyway (picker may still work)');
+        }
       }
     }
     final attachments = await _mediaService.pickMultipleImages();
@@ -2389,7 +2393,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
       lat = position.latitude;
       lng = position.longitude;
     } catch (e) {
-      if (kDebugMode) debugPrint('[DMChat] Geolocation error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[DMChat] Geolocation error: $e');
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       final permission = await Geolocator.checkPermission();

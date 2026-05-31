@@ -497,7 +497,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     await _clearDraft();
 
     if (kDebugMode && _selectedGroupName != null) {
-      debugPrint('Event created for group: $_selectedGroupName');
+      if (kDebugMode) {
+        debugPrint('Event created for group: $_selectedGroupName');
+      }
     }
 
     setState(() => _isCreating = false);

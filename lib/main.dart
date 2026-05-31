@@ -47,7 +47,9 @@ void main() async {
       appVerificationDisabledForTesting: true,
     );
   } catch (e) {
-    if (kDebugMode) debugPrint('Firebase init error: $e');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('Firebase init error: $e');
+    }
   }
 
   // ── One-time data reset (safe version v5 — waits for async auth restore) ────
@@ -111,7 +113,9 @@ void main() async {
           .setAnalyticsCollectionEnabled(analyticsEnabled);
       await crashlytics.setCrashlyticsCollectionEnabled(crashEnabled);
       if (kDebugMode) {
-        debugPrint('[main] analytics=$analyticsEnabled crash=$crashEnabled');
+        if (kDebugMode) {
+          debugPrint('[main] analytics=$analyticsEnabled crash=$crashEnabled');
+        }
       }
     } catch (e) {
       if (kDebugMode) debugPrint('[main] Failed to apply consent prefs: $e');
@@ -124,8 +128,12 @@ void main() async {
     // Pass all Flutter framework errors to Crashlytics
     FlutterError.onError = (FlutterErrorDetails details) {
       // Always print to console so we can diagnose crashes in Xcode log
-      debugPrint('🔴 FLUTTER ERROR: ${details.exceptionAsString()}');
-      debugPrint('🔴 STACK: ${details.stack?.toString().split('\n').take(10).join('\n')}');
+      if (kDebugMode) {
+        debugPrint('🔴 FLUTTER ERROR: ${details.exceptionAsString()}');
+      }
+      if (kDebugMode) {
+        debugPrint('🔴 STACK: ${details.stack?.toString().split('\n').take(10).join('\n')}');
+      }
       FlutterError.presentError(details);
       crashlytics.recordFlutterFatalError(details);
     };
@@ -140,8 +148,12 @@ void main() async {
     // the error text so we can diagnose crashes from Xcode console.
     ErrorWidget.builder = (FlutterErrorDetails details) {
       // Always print to debug console regardless of build mode
-      debugPrint('🔴 ErrorWidget triggered: ${details.exceptionAsString()}');
-      debugPrint('🔴 Stack: ${details.stack?.toString().split('\n').take(15).join('\n')}');
+      if (kDebugMode) {
+        debugPrint('🔴 ErrorWidget triggered: ${details.exceptionAsString()}');
+      }
+      if (kDebugMode) {
+        debugPrint('🔴 Stack: ${details.stack?.toString().split('\n').take(15).join('\n')}');
+      }
       return MaterialApp(
         home: Scaffold(
           backgroundColor: Colors.white,
@@ -175,7 +187,9 @@ void main() async {
       );
     };
   } catch (e) {
-    if (kDebugMode) debugPrint('Crashlytics init error: $e');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('Crashlytics init error: $e');
+    }
   }
 
   // ── Load user privacy & notification preferences ──────────────────────

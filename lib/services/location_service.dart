@@ -144,7 +144,9 @@ class LocationService {
       return LocationResult.serviceDisabled();
     } catch (e) {
       _lastStatus = LocationStatus.error;
-      if (kDebugMode) debugPrint('[LocationService] Error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[LocationService] Error: $e');
+      }
       return LocationResult.error(e.toString());
     }
   }

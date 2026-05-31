@@ -373,7 +373,9 @@ class AnnouncementService {
         _streamController.add(boroughAnnouncements);
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('AnnouncementService cache load error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('AnnouncementService cache load error: $e');
+      }
     }
   }
 
@@ -415,14 +417,18 @@ class AnnouncementService {
         },
         onError: (Object e) {
           if (kDebugMode) {
-            debugPrint('AnnouncementService Firestore stream error: $e');
+            if (kDebugMode) {
+              debugPrint('AnnouncementService Firestore stream error: $e');
+            }
           }
           // On error keep the cached list visible; do not crash.
         },
       );
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('AnnouncementService stream init error: $e');
+        if (kDebugMode) {
+          debugPrint('AnnouncementService stream init error: $e');
+        }
       }
     }
   }
@@ -468,7 +474,9 @@ class AnnouncementService {
           .doc(localId)
           .set(a.toFirestore());
     } catch (e) {
-      if (kDebugMode) debugPrint('AnnouncementService post Firestore error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('AnnouncementService post Firestore error: $e');
+      }
       // Keep the optimistic local entry so the user sees their own post.
     }
 
@@ -519,7 +527,9 @@ class AnnouncementService {
           .doc(localId)
           .set(a.toFirestore());
     } catch (e) {
-      if (kDebugMode) debugPrint('AnnouncementService postAsPartner error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('AnnouncementService postAsPartner error: $e');
+      }
     }
 
     return a;
@@ -556,7 +566,9 @@ class AnnouncementService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('AnnouncementService toggleLike Firestore error: $e');
+        if (kDebugMode) {
+          debugPrint('AnnouncementService toggleLike Firestore error: $e');
+        }
       }
     }
   }
@@ -605,7 +617,9 @@ class AnnouncementService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('AnnouncementService addComment Firestore error: $e');
+        if (kDebugMode) {
+          debugPrint('AnnouncementService addComment Firestore error: $e');
+        }
       }
     }
 
@@ -644,7 +658,9 @@ class AnnouncementService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('AnnouncementService addReply Firestore error: $e');
+        if (kDebugMode) {
+          debugPrint('AnnouncementService addReply Firestore error: $e');
+        }
       }
     }
 
@@ -677,7 +693,9 @@ class AnnouncementService {
       await _firestore.collection(_collection).doc(announcementId).delete();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('AnnouncementService delete Firestore error: $e');
+        if (kDebugMode) {
+          debugPrint('AnnouncementService delete Firestore error: $e');
+        }
       }
     }
   }
@@ -703,7 +721,9 @@ class AnnouncementService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('AnnouncementService togglePin Firestore error: $e');
+        if (kDebugMode) {
+          debugPrint('AnnouncementService togglePin Firestore error: $e');
+        }
       }
     }
   }
@@ -717,7 +737,9 @@ class AnnouncementService {
           json.encode(_announcements.map((a) => a.toJson()).toList());
       await BrowserStorage.setString(_storageKey, encoded);
     } catch (e) {
-      if (kDebugMode) debugPrint('AnnouncementService cache save error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('AnnouncementService cache save error: $e');
+      }
     }
   }
 

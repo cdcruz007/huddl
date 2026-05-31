@@ -121,7 +121,9 @@ class FeedbackService extends ChangeNotifier {
         'email_sent'  : false,
       });
       firestoreDocId = doc.id;
-      if (kDebugMode) debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[FeedbackService] Firestore write failed: $e');
     }
@@ -184,7 +186,9 @@ class FeedbackService extends ChangeNotifier {
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        if (kDebugMode) debugPrint('[FeedbackService] Email sent via EmailJS ✓');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[FeedbackService] Email sent via EmailJS ✓');
+        }
         return true;
       } else {
         // Log full details to help diagnose issues

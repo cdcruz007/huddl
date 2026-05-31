@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/direct_message.dart';
 import 'dm_service.dart';
 
@@ -106,6 +109,72 @@ class MessageSearchService {
     // Sort by most recent first
     results.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
+    return results;
+  }
+
+  /// Search Firestore group_messages collection for [query].
+  /// Fetches the last 200 messages per group and filters client-side —
+  /// Firestore does not support full-text search, so we keep it lightweight
+  /// by limiting per group and stopping at the first 5 group matches.
+  Future<List<MessageSearchResult>> searchGroupMessages({
+    required String query,
+    required List<Map<String, dynamic>> groups,
+  }) async {
+    if (query.trim().isEmpty || groups.isEmpty) return [];
+
+    final q = query.toLowerCase().trim();
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final results = <MessageSearchResult>[];
+
+    for (final group in groups) {
+      if (results.length >= 20) break; // cap total results
+      final groupId = group['id'] as String? ?? '';
+      final groupName = group['name'] as String? ?? '';
+      final groupImageUrl = group['imageUrl'] as String? ?? '';
+      if (groupId.isEmpty) continue;
+
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('group_messages')
+            .where('groupId', isEqualTo: groupId)
+            .limit(200)
+            .get();
+
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          final msgText = (data['message'] as String?) ?? '';
+          if (!msgText.toLowerCase().contains(q)) continue;
+          final senderId = (data['senderId'] as String?) ?? '';
+          final senderName = senderId == myUid
+              ? 'You'
+              : (data['senderName'] as String?) ?? 'Member';
+          DateTime timestamp;
+          final ts = data['timestamp'];
+          if (ts is Timestamp) {
+            timestamp = ts.toDate();
+          } else {
+            timestamp = DateTime.tryParse(ts?.toString() ?? '') ?? DateTime.now();
+          }
+          results.add(MessageSearchResult(
+            conversationId: groupId,
+            conversationName: groupName,
+            isGroup: true,
+            imageUrl: groupImageUrl,
+            avatarColor: '',
+            messageText: msgText,
+            senderName: senderName,
+            timestamp: timestamp,
+            messageId: doc.id,
+            targetId: groupId,
+          ));
+          if (results.length >= 20) break;
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[MessageSearch] group $groupId error: $e');
+      }
+    }
+
+    results.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return results;
   }
 }

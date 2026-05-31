@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/borough_scope_guard.dart';
@@ -45,6 +46,13 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Production guard — this screen must never render in a release build.
+    if (!kDebugMode) {
+      return const Scaffold(
+        body: Center(child: Text('Not available in release builds')),
+      );
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

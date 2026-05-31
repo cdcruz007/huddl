@@ -883,7 +883,9 @@ class DefaultGroupService {
         });
       }
     }).catchError((e) {
-      if (kDebugMode) debugPrint('[DefaultGroupService] Firestore sync error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[DefaultGroupService] Firestore sync error: $e');
+      }
     });
   }
 
@@ -950,15 +952,21 @@ class DefaultGroupService {
   /// Print group assignment summary
   void printGroupAssignmentSummary() {
     if (kDebugMode) {
-      debugPrint('');
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('        DEFAULT GROUP ASSIGNMENT SUMMARY');
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('📊 Total Default Groups: ${_defaultGroups.length}');
-      debugPrint('👥 Total Users: ${_userGroupMemberships.length}');
-      debugPrint('');
-      debugPrint('🏘️  HYPER-LOCAL COMMUNITY GROUPS:');
-      debugPrint('───────────────────────────────────────────────────────');
+      if (kDebugMode) {
+        debugPrint('');
+      }
+      if (kDebugMode) {
+        debugPrint('═══════════════════════════════════════════════════════');
+      }
+      if (kDebugMode) {
+        debugPrint('        DEFAULT GROUP ASSIGNMENT SUMMARY');
+        debugPrint('═══════════════════════════════════════════════════════');
+        debugPrint('📊 Total Default Groups: ${_defaultGroups.length}');
+        debugPrint('👥 Total Users: ${_userGroupMemberships.length}');
+        debugPrint('');
+        debugPrint('🏘️  HYPER-LOCAL COMMUNITY GROUPS:');
+        debugPrint('───────────────────────────────────────────────────────');
+      }
       
       // Sort groups by member count (descending)
       final sortedGroups = _defaultGroups.values.toList()
@@ -968,8 +976,12 @@ class DefaultGroupService {
         final memberCountEmoji = group.memberCount == 0 ? '🆕' : 
                                  group.memberCount == 1 ? '👤' : 
                                  group.memberCount >= 5 ? '👥👥' : '👥';
-        debugPrint('$memberCountEmoji  ${group.name}');
-        debugPrint('    └─ ${group.memberCount} member${group.memberCount != 1 ? 's' : ''}');
+        if (kDebugMode) {
+          debugPrint('$memberCountEmoji  ${group.name}');
+        }
+        if (kDebugMode) {
+          debugPrint('    └─ ${group.memberCount} member${group.memberCount != 1 ? 's' : ''}');
+        }
         
         // Show which users are in this group
         final usersInGroup = _userGroupMemberships.entries
@@ -978,22 +990,34 @@ class DefaultGroupService {
             .toList();
         
         if (usersInGroup.isNotEmpty) {
-          debugPrint('    └─ Members: ${usersInGroup.join(', ')}');
+          if (kDebugMode) debugPrint('    └─ Members: ${usersInGroup.join(', ')}');
         }
-        debugPrint('');
+        if (kDebugMode) debugPrint('');
       }
       
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('💡 Hyper-local community building in action!');
-      debugPrint('   Parents with same journey → Same groups → Connected');
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('');
+      if (kDebugMode) {
+        debugPrint('═══════════════════════════════════════════════════════');
+      }
+      if (kDebugMode) {
+        debugPrint('💡 Hyper-local community building in action!');
+      }
+      if (kDebugMode) {
+        debugPrint('   Parents with same journey → Same groups → Connected');
+      }
+      if (kDebugMode) {
+        debugPrint('═══════════════════════════════════════════════════════');
+      }
+      if (kDebugMode) {
+        debugPrint('');
+      }
     }
   }
 
   void _log(String message) {
     if (kDebugMode) {
-      debugPrint('DefaultGroupService: $message');
+      if (kDebugMode) {
+        debugPrint('DefaultGroupService: $message');
+      }
     }
   }
 

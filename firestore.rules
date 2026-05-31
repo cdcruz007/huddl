@@ -160,11 +160,14 @@ service cloud.firestore {
       // Message author may update their own message (edit text, add reaction).
       // Any auth user may update reactions/reactionUsers via FieldValue.increment
       // (the app uses merge:true; we allow if only those fields are touched).
+      // Any auth user may also append thread replies (arrayUnion on 'replies')
+      // and increment replyCount — written by thread_reply_screen._sendReply().
       allow update: if isAuth() && (
         resource.data.senderId == request.auth.uid
         ||
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['reactions', 'reactionUsers', 'updatedAt'])
+          .hasOnly(['reactions', 'reactionUsers', 'updatedAt',
+                    'replies', 'replyCount'])
       );
 
       // Only the sender may soft-delete (unsend) their own message.
@@ -678,6 +681,44 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
       // Backend Admin SDK creates and updates these — no client writes.
       allow write: if false;
+    }
+
+    // =========================================================================
+    // SAVED MESSAGES  (cross-device bookmark sync)
+    // Written by SavedMessageService._syncToFirestore().
+    // Doc structure: { userId, messageId, groupId/conversationId, ... }
+    // =========================================================================
+    match /saved_messages/{docId} {
+      allow read: if isAuth()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuth()
+        && request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own saved messages (e.g. note field).
+      allow update: if isAuth()
+        && resource.data.userId == request.auth.uid;
+
+      // Users can delete (unsave) their own saved messages.
+      allow delete: if isAuth()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // =========================================================================
+    // SAVED THREADS  (pinned thread replies)
+    // Written by thread_reply_screen or group_chat_screen save actions.
+    // =========================================================================
+    match /saved_threads/{docId} {
+      allow read: if isAuth()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuth()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow delete: if isAuth()
+        && resource.data.userId == request.auth.uid;
+
+      allow update: if false;
     }
 
     // =========================================================================

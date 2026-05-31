@@ -475,7 +475,9 @@ class FirestoreService {
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[FirestoreService] push notify error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FirestoreService] push notify error: $e');
+      }
     }
 
     return ref.id;
@@ -494,7 +496,9 @@ class FirestoreService {
         'longitude': longitude,
       });
     } catch (e) {
-      if (kDebugMode) debugPrint('[FirestoreService] live location update error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FirestoreService] live location update error: $e');
+      }
     }
   }
 
@@ -505,7 +509,9 @@ class FirestoreService {
         'liveExpired': true,
       });
     } catch (e) {
-      if (kDebugMode) debugPrint('[FirestoreService] expire live location error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FirestoreService] expire live location error: $e');
+      }
     }
   }
 
@@ -731,7 +737,9 @@ class FirestoreService {
           );
         }
       } catch (e) {
-        if (kDebugMode) debugPrint('[FirestoreService] meetupRsvp notif error: $e');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[FirestoreService] meetupRsvp notif error: $e');
+        }
       }
     } else {
       await _db.collection('meetups').doc(meetupId).update({
@@ -779,7 +787,9 @@ class FirestoreService {
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[FirestoreService] newMeetupNearby notif error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FirestoreService] newMeetupNearby notif error: $e');
+      }
     }
 
     return ref.id;
@@ -1301,7 +1311,9 @@ class FirestoreService {
     ];
     if (localPrefixes.any((p) => messageId.startsWith(p))) {
       if (kDebugMode) {
-        debugPrint('[FirestoreService] updateMessageReaction: skipped local id $messageId');
+        if (kDebugMode) {
+          debugPrint('[FirestoreService] updateMessageReaction: skipped local id $messageId');
+        }
       }
       return;
     }
@@ -1320,7 +1332,9 @@ class FirestoreService {
         });
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[FirestoreService] updateMessageReaction error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FirestoreService] updateMessageReaction error: $e');
+      }
     }
   }
 
@@ -1468,7 +1482,9 @@ class FirestoreService {
           .update({'pollFirestoreId': pollFirestoreId});
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('[FirestoreService] patchGroupMessagePollId error: $e');
+        if (kDebugMode) {
+          debugPrint('[FirestoreService] patchGroupMessagePollId error: $e');
+        }
       }
     }
   }
@@ -1478,7 +1494,9 @@ class FirestoreService {
     try {
       await _db.collection('polls').doc(pollId).update({'deleted': true});
     } catch (e) {
-      if (kDebugMode) debugPrint('[FirestoreService] deletePoll error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[FirestoreService] deletePoll error: $e');
+      }
     }
   }
 

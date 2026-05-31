@@ -1885,64 +1885,84 @@ class AiLearningEngineService {
       debugPrint(
           'Borough maturity: ${_profile.currentBoroughMaturity.name} '
           '(${_profile.currentBoroughStats.totalBoroughSignals} signals)');
-      debugPrint(
-          'Global maturity: ${_profile.globalMaturity.name} '
-          '(${_profile.totalSignals} signals)');
+      if (kDebugMode) {
+        debugPrint(
+        'Global maturity: ${_profile.globalMaturity.name} '
+        '(${_profile.totalSignals} signals)');
+      }
       debugPrint(
           'Engagement: ${_profile.engagementLevel} '
           '(${_profile.dailyEngagementScore.toStringAsFixed(2)})');
-      debugPrint(
-          'Trend: ${_profile.weeklyEngagementTrend > 0 ? "+" : ""}'
-          '${_profile.weeklyEngagementTrend.toStringAsFixed(2)}');
-      debugPrint('Peak: ${_profile.peakPeriod} (hour ${_profile.peakHour})');
-      debugPrint(
+      if (kDebugMode) {
+        debugPrint(
+        'Trend: ${_profile.weeklyEngagementTrend > 0 ? "+" : ""}'
+        '${_profile.weeklyEngagementTrend.toStringAsFixed(2)}');
+      }
+      if (kDebugMode) debugPrint('Peak: ${_profile.peakPeriod} (hour ${_profile.peakHour})');
+      if (kDebugMode) debugPrint(
           'Top topics: ${_profile.inferredInterests.take(5).join(", ")}');
-      debugPrint('Format: ${_profile.formatPreference.dominantFormat}');
-      debugPrint(
-          'Meetup pref: ${_profile.preferredMeetupType ?? "none"} '
-          '/ ${_profile.preferredMeetupTime ?? "any"}');
+      if (kDebugMode) {
+        debugPrint('Format: ${_profile.formatPreference.dominantFormat}');
+      }
+      if (kDebugMode) {
+        debugPrint(
+        'Meetup pref: ${_profile.preferredMeetupType ?? "none"} '
+        '/ ${_profile.preferredMeetupTime ?? "any"}');
+      }
 
       // Borough-scoped stats
       final bStats = _profile.currentBoroughStats;
-      debugPrint('--- Borough Stats (${_profile.currentBorough}) ---');
-      debugPrint(
+      if (kDebugMode) debugPrint('--- Borough Stats (${_profile.currentBorough}) ---');
+      if (kDebugMode) debugPrint(
           '  Groups: ${bStats.groupsJoined}, '
           'Meetups: ${bStats.meetupsAttended}, '
           'DMs: ${bStats.dmConversations}');
-      debugPrint(
-          '  Marketplace: ${bStats.marketplaceListings} listings, '
-          '${bStats.marketplaceViews} views');
-      debugPrint(
-          '  Matches: ${bStats.matchesAccepted} accepted, '
-          '${bStats.matchesDismissed} dismissed');
+      if (kDebugMode) {
+        debugPrint(
+        '  Marketplace: ${bStats.marketplaceListings} listings, '
+        '${bStats.marketplaceViews} views');
+      }
+      if (kDebugMode) {
+        debugPrint(
+        '  Matches: ${bStats.matchesAccepted} accepted, '
+        '${bStats.matchesDismissed} dismissed');
+      }
 
       // Global event stats
-      debugPrint('--- Events (UK-wide) ---');
-      debugPrint(
+      if (kDebugMode) {
+        debugPrint('--- Events (UK-wide) ---');
+      }
+      if (kDebugMode) debugPrint(
           '  RSVP\'d: ${_profile.eventPreferences.eventsRsvpd}, '
           'Viewed: ${_profile.eventPreferences.eventsViewed}');
-      debugPrint(
-          '  Categories: ${_profile.eventPreferences.preferredCategories.join(", ")}');
-      debugPrint(
+      if (kDebugMode) {
+        debugPrint(
+        '  Categories: ${_profile.eventPreferences.preferredCategories.join(", ")}');
+      }
+      if (kDebugMode) debugPrint(
           '  Explored boroughs: ${_profile.eventPreferences.exploredBoroughs.take(5).join(", ")}');
 
       // All borough stats
       if (_profile.boroughStats.length > 1) {
-        debugPrint('--- All Borough History ---');
+        if (kDebugMode) {
+          debugPrint('--- All Borough History ---');
+        }
         for (final entry in _profile.boroughStats.entries) {
-          debugPrint(
+          if (kDebugMode) debugPrint(
               '  ${entry.key}: ${entry.value.totalBoroughSignals} signals '
               '(${entry.value.maturity.name})');
         }
       }
 
-      debugPrint('Copilot queries: ${_profile.copilotQueries}');
+      if (kDebugMode) debugPrint('Copilot queries: ${_profile.copilotQueries}');
       if (_profile.previousBorough != null) {
-        debugPrint(
+        if (kDebugMode) debugPrint(
             'Previous borough: ${_profile.previousBorough} '
             '(changed ${_profile.boroughChangedAt})');
       }
-      debugPrint('================================================');
+      if (kDebugMode) {
+        debugPrint('================================================');
+      }
     }
   }
 }

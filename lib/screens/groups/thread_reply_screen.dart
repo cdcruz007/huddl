@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../services/onboarding_data_service.dart';
@@ -78,6 +80,8 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
   late List<ThreadReply> _replies;
   String _userName = 'You';
 
+  bool _isUploading = false;
+
   @override
   void initState() {
     super.initState();
@@ -100,6 +104,136 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  // ── Attachment helpers ────────────────────────────────────────────────────
+
+  Future<void> _handleImageAttach({required bool fromCamera}) async {
+    final picker = ImagePicker();
+    final source = fromCamera ? ImageSource.camera : ImageSource.gallery;
+    XFile? file;
+    try {
+      file = await picker.pickImage(source: source, imageQuality: 80);
+    } catch (_) {
+      return;
+    }
+    if (file == null || !mounted) return;
+
+    setState(() => _isUploading = true);
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+      final ts  = DateTime.now().millisecondsSinceEpoch;
+      final ext = file.path.contains('.') ? file.path.split('.').last : 'jpg';
+      final path = 'group_images/${widget.groupId}/thread_${uid}_$ts.$ext';
+
+      final bytes = await file.readAsBytes();
+      final ref = FirebaseStorage.instance.ref(path);
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/$ext'));
+      final url = await ref.getDownloadURL();
+
+      // Insert image URL inline as a text message with the URL
+      final reply = ThreadReply(
+        id: 'thread_img_$ts',
+        senderId: uid,
+        senderName: _userName,
+        senderAvatar: '',
+        message: url,
+        timestamp: DateTime.now(),
+        isMe: true,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _replies.add(reply);
+        _isUploading = false;
+      });
+      widget.onReplySent(reply);
+
+      // Persist to Firestore
+      if (uid.isNotEmpty) {
+        final replyMap = {
+          'id': reply.id,
+          'senderId': uid,
+          'senderName': _userName,
+          'senderAvatar': '',
+          'message': url,
+          'type': 'image',
+          'timestamp': FieldValue.serverTimestamp(),
+        };
+        await FirebaseFirestore.instance
+            .collection('group_messages')
+            .doc(widget.rootMessage.id)
+            .update({
+          'replies': FieldValue.arrayUnion([replyMap]),
+          'replyCount': FieldValue.increment(1),
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed: $e'), backgroundColor: HuddlColors.error),
+      );
+    }
+  }
+
+  void _showAttachSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: context.hc.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: HuddlColors.infoBluePale,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.photo_library_outlined,
+                    color: HuddlColors.infoBlue),
+              ),
+              title: Text('Photo library', style: HuddlText.body()),
+              onTap: () {
+                Navigator.pop(ctx);
+                _handleImageAttach(fromCamera: false);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primaryPale,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.camera_alt_outlined,
+                    color: HuddlColors.primary),
+              ),
+              title: Text('Take photo', style: HuddlText.body()),
+              onTap: () {
+                Navigator.pop(ctx);
+                _handleImageAttach(fromCamera: true);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _sendReply() async {
@@ -358,10 +492,23 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      reply.message,
-                      style: HuddlText.body(color: context.hc.textPrimary),
-                    ),
+                    if (reply.message.startsWith('http') &&
+                        reply.message.contains('firebasestorage'))
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          reply.message,
+                          width: MediaQuery.of(context).size.width * 0.60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.broken_image_outlined),
+                        ),
+                      )
+                    else
+                      Text(
+                        reply.message,
+                        style: HuddlText.body(color: context.hc.textPrimary),
+                      ),
                     const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -445,13 +592,19 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(
-              Icons.add_circle_outline,
-              color: HuddlColors.nearBlack,
-            ),
-            onPressed: () {
-              // Placeholder for attachment in thread
-            },
+            icon: _isUploading
+                ? const SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: HuddlColors.primary,
+                    ),
+                  )
+                : const Icon(
+                    Icons.add_circle_outline,
+                    color: HuddlColors.nearBlack,
+                  ),
+            onPressed: _isUploading ? null : _showAttachSheet,
           ),
           Expanded(
             child: Container(

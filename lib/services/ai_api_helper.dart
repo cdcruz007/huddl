@@ -61,22 +61,30 @@ class AiApiHelper {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        if (kDebugMode) debugPrint('AiApiHelper: Vertex AI ✅');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('AiApiHelper: Vertex AI ✅');
+        }
         return data;
       }
 
       // Log the actual status + first 300 chars so we can diagnose misconfigs
       if (kDebugMode) {
-        debugPrint('AiApiHelper: Vertex AI ${response.statusCode}: '
-            '${response.body.substring(0, response.body.length.clamp(0, 300))}');
+        if (kDebugMode) {
+          debugPrint('AiApiHelper: Vertex AI ${response.statusCode}: '
+          '${response.body.substring(0, response.body.length.clamp(0, 300))}');
+        }
       }
 
       throw Exception(
           'Vertex AI ${response.statusCode}: ${response.body.substring(0, response.body.length.clamp(0, 200))}');
     } catch (vertexErr) {
       if (kDebugMode) {
-        debugPrint('AiApiHelper: Vertex AI failed — $vertexErr');
-        debugPrint('AiApiHelper: Falling back to Gemini AI Studio…');
+        if (kDebugMode) {
+          debugPrint('AiApiHelper: Vertex AI failed — $vertexErr');
+        }
+        if (kDebugMode) {
+          debugPrint('AiApiHelper: Falling back to Gemini AI Studio…');
+        }
       }
     }
 
@@ -89,7 +97,9 @@ class AiApiHelper {
     }
 
     if (kDebugMode) {
-      debugPrint('AiApiHelper: → Gemini ${GeminiConfig.model}');
+      if (kDebugMode) {
+        debugPrint('AiApiHelper: → Gemini ${GeminiConfig.model}');
+      }
     }
 
     final geminiUrl = Uri.parse(GeminiConfig.generateContentUrl);
@@ -102,20 +112,26 @@ class AiApiHelper {
 
     if (geminiResponse.statusCode == 200) {
       final data = jsonDecode(geminiResponse.body) as Map<String, dynamic>;
-      if (kDebugMode) debugPrint('AiApiHelper: Gemini fallback ✅');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('AiApiHelper: Gemini fallback ✅');
+      }
       return data;
     }
 
     // Detailed Gemini error logging
     if (kDebugMode) {
-      debugPrint('AiApiHelper: Gemini failed (${geminiResponse.statusCode}): '
-          '${geminiResponse.body.substring(0, geminiResponse.body.length.clamp(0, 400))}');
+      if (kDebugMode) {
+        debugPrint('AiApiHelper: Gemini failed (${geminiResponse.statusCode}): '
+        '${geminiResponse.body.substring(0, geminiResponse.body.length.clamp(0, 400))}');
+      }
       if (geminiResponse.statusCode == 403) {
-        debugPrint(
-            'AiApiHelper: ⚠️  Gemini 403 — The Generative Language API is '
-            'not enabled for project huddl-connect. Enable it at:\n'
-            'https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect\n'
-            'Or supply a dedicated key: flutter run --dart-define=GEMINI_API_KEY=AIza...');
+        if (kDebugMode) {
+          debugPrint(
+          'AiApiHelper: ⚠️  Gemini 403 — The Generative Language API is '
+          'not enabled for project huddl-connect. Enable it at:\n'
+          'https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect\n'
+          'Or supply a dedicated key: flutter run --dart-define=GEMINI_API_KEY=AIza...');
+        }
       }
     }
 

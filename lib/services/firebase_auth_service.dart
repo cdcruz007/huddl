@@ -1316,14 +1316,18 @@ class FirebaseAuthService {
     try {
       FirebaseCrashlytics.instance.log(message);
     } catch (_) {}
-    if (kDebugMode) debugPrint('[FirebaseAuthService] $message');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('[FirebaseAuthService] $message');
+    }
   }
 
   void _logError(Object e, StackTrace stack, String reason) {
     try {
       FirebaseCrashlytics.instance.recordError(e, stack, reason: reason);
     } catch (_) {}
-    if (kDebugMode) debugPrint('[FirebaseAuthService] ERROR $reason: $e');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('[FirebaseAuthService] ERROR $reason: $e');
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════

@@ -585,7 +585,9 @@ class LocalServicesService {
         hasEndorsed: hasEndorsed,
       );
     } catch (e) {
-      if (kDebugMode) debugPrint('LocalServicesService.getListing: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('LocalServicesService.getListing: $e');
+      }
       return null;
     }
   }
@@ -672,7 +674,9 @@ class LocalServicesService {
         'ratingCount':     ratings.length,
       });
     } catch (e) {
-      if (kDebugMode) debugPrint('LocalServicesService._updateCommunityRating: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('LocalServicesService._updateCommunityRating: $e');
+      }
     }
   }
 
@@ -696,7 +700,9 @@ class LocalServicesService {
       );
       await batch.commit();
     } catch (e) {
-      if (kDebugMode) debugPrint('LocalServicesService.removeEndorsement: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('LocalServicesService.removeEndorsement: $e');
+      }
     }
   }
 
@@ -711,7 +717,9 @@ class LocalServicesService {
     _db.collection(_collection).doc(listingId).update({
       'viewCount': FieldValue.increment(1),
     }).catchError((e) {
-      if (kDebugMode) debugPrint('LocalServicesService.recordView: \$e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('LocalServicesService.recordView: \$e');
+      }
     });
     // Partner analytics — fire and forget
     if (ownerUid != null) {
@@ -797,7 +805,9 @@ class LocalServicesService {
           .add(listing.toFirestore());
       return ref.id;
     } catch (e) {
-      if (kDebugMode) debugPrint('LocalServicesService.createListing: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('LocalServicesService.createListing: $e');
+      }
       return null;
     }
   }
@@ -899,7 +909,9 @@ If no service recommendations are found, respond with exactly: []
       }).toList();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('LocalServicesService.extractFromChatText: $e');
+        if (kDebugMode) {
+          debugPrint('LocalServicesService.extractFromChatText: $e');
+        }
       }
       return [];
     }
@@ -950,7 +962,9 @@ If no service recommendations are found, respond with exactly: []
           .map((d) => ServiceEndorsement.fromFirestore(d.data()))
           .toList();
     } catch (e) {
-      if (kDebugMode) debugPrint('LocalServicesService.getEndorsements: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('LocalServicesService.getEndorsements: $e');
+      }
       return [];
     }
   }

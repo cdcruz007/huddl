@@ -321,6 +321,8 @@ class PushNotificationService {
   }
 
   void _log(String msg) {
-    if (kDebugMode) debugPrint('[PushNotificationService] $msg');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('[PushNotificationService] $msg');
+    }
   }
 }

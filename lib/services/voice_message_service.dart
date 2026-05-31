@@ -75,7 +75,9 @@ class VoiceMessageService {
           ),
         );
       } catch (e) {
-        if (kDebugMode) debugPrint('[VoiceMessageService] audio context error: $e');
+        if (kDebugMode) {
+          if (kDebugMode) debugPrint('[VoiceMessageService] audio context error: $e');
+        }
       }
     }
 
@@ -350,7 +352,9 @@ class VoiceMessageService {
           );
         } catch (e) {
           if (kDebugMode) {
-            debugPrint('[VoiceMessageService] AVAudioSession error: $e');
+            if (kDebugMode) {
+              debugPrint('[VoiceMessageService] AVAudioSession error: $e');
+            }
           }
           rethrow; // surface it — silent swallow causes cryptic play() failure
         }
@@ -372,7 +376,9 @@ class VoiceMessageService {
       _isPlaying = false;
       _playingUrl = null;
       _playingUrlController.add(null);
-      if (kDebugMode) debugPrint('[VoiceMessageService] playback error for $url: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[VoiceMessageService] playback error for $url: $e');
+      }
       // Re-throw so the UI can show a snackbar
       rethrow;
     }
@@ -391,7 +397,9 @@ class VoiceMessageService {
     try {
       await _player.seek(position);
     } catch (e) {
-      if (kDebugMode) debugPrint('[VoiceMessageService] seek error: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[VoiceMessageService] seek error: $e');
+      }
     }
   }
 
@@ -433,7 +441,9 @@ class VoiceMessageService {
       return await ref.getDownloadURL();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('[VoiceMessageService] URL refresh failed, using original: $e');
+        if (kDebugMode) {
+          debugPrint('[VoiceMessageService] URL refresh failed, using original: $e');
+        }
       }
       return url; // fall back to the original — playback may still succeed
     }

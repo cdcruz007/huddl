@@ -171,7 +171,9 @@ class AiDirectoryService {
   }
 
   Future<void> _runDiscovery() async {
-    if (kDebugMode) debugPrint('[AiDirectory] 📍 Starting Places API discovery…');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('[AiDirectory] 📍 Starting Places API discovery…');
+    }
 
     final borough       = _userBorough;
     final existingNames = await _loadExistingNames(borough);
@@ -184,7 +186,9 @@ class AiDirectoryService {
       final (cat, queryTemplate) = _queries[idx];
       final query = queryTemplate.replaceAll('{borough}', borough);
 
-      if (kDebugMode) debugPrint('[AiDirectory]   🔍 $query');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[AiDirectory]   🔍 $query');
+      }
 
       try {
         final places = await _searchPlaces(query);
@@ -209,9 +213,11 @@ class AiDirectoryService {
           totalAdded++;
 
           if (kDebugMode) {
-            debugPrint('[AiDirectory]   ✓ ${name.substring(0, name.length.clamp(0, 50))} '
-                '(${rating != null ? "$rating★" : "no rating"}, '
-                '${imageUrl != null ? "📷" : "no img"})');
+            if (kDebugMode) {
+              debugPrint('[AiDirectory]   ✓ ${name.substring(0, name.length.clamp(0, 50))} '
+              '(${rating != null ? "$rating★" : "no rating"}, '
+              '${imageUrl != null ? "📷" : "no img"})');
+            }
           }
         }
       } catch (e) {
@@ -225,7 +231,9 @@ class AiDirectoryService {
     await BrowserStorage.setString(_lastRunKey, DateTime.now().toIso8601String());
 
     if (kDebugMode) {
-      debugPrint('[AiDirectory] ✅ Done — $totalAdded new real listings added');
+      if (kDebugMode) {
+        debugPrint('[AiDirectory] ✅ Done — $totalAdded new real listings added');
+      }
     }
   }
 

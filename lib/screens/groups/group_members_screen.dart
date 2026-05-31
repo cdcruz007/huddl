@@ -151,7 +151,9 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
         _currentUserIsAdmin = isAdminFromFirestore || isCreatorCheck;
       });
     } catch (e) {
-      if (kDebugMode) debugPrint('[GroupMembersScreen] Error loading members: $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[GroupMembersScreen] Error loading members: $e');
+      }
       setState(() { _isLoading = false; _error = 'Could not load members. Tap to retry.'; });
     }
   }

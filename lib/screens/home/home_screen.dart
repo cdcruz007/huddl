@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Feed filter chip — 'all' | 'meetups' | 'events' | 'noticeboard' | 'tips'
   // Filter chips removed — feed always shows all content.
-  final String _activeFeedFilter = 'all';
+  // _activeFeedFilter removed — always 'all'; dead filter branches deleted.
 
   // ── Adaptive: track which sections user interacts with ────────────────────
   int _meetupTaps = 0;
@@ -1136,9 +1136,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       backgroundColor: hc.scaffold,
-      floatingActionButton: (_activeFeedFilter == 'all' ||
-              _activeFeedFilter == 'noticeboard')
-          ? FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(
               onPressed: () => _openNoticeboardComposerSheet(hc, isDark),
               backgroundColor: HuddlColors.primary,
               elevation: 3,
@@ -1149,8 +1147,7 @@ class _HomeScreenState extends State<HomeScreen>
                 style: HuddlText.body(
                     color: Colors.white, weight: FontWeight.w600),
               ),
-            )
-          : null,
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
         child: RefreshIndicator(
@@ -1177,21 +1174,19 @@ class _HomeScreenState extends State<HomeScreen>
               // Search pill removed — filter chips in feed header handle discovery
 
               // ── Hero Meetup Card — next upcoming meetup, 'all' only ──
-              if (!_isLoading &&
-                  _activeFeedFilter == 'all' &&
-                  _upcomingMeetups.isNotEmpty)
+              if (!_isLoading && _upcomingMeetups.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _buildHeroMeetupCard(_upcomingMeetups.first, hc, isDark),
                 ),
 
               // ── AI Catch-Up Summary Card — 'all' only ─────────────
-              if (!_isLoading && _activeFeedFilter == 'all')
+              if (!_isLoading)
                 SliverToBoxAdapter(
                   child: _buildAiCatchUpCard(hc, isDark),
                 ),
 
               // ── First-run onboarding card ──────────────────────────
-              if (_isFirstRun && _activeFeedFilter == 'all')
+              if (_isFirstRun)
                 SliverToBoxAdapter(
                   child: _buildFirstRunCard(hc, isDark),
                 ),
@@ -1200,9 +1195,7 @@ class _HomeScreenState extends State<HomeScreen>
               // Always shown (with an empty state CTA when no RSVPs yet).
               // Pulls from: meetups where isGoing==true + _goingEvents.
               // Sorted soonest first.
-              if (_activeFeedFilter == 'all' ||
-                  _activeFeedFilter == 'meetups' ||
-                  _activeFeedFilter == 'events') ...[
+              ...[
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -1234,7 +1227,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
 
               // ── Noticeboard feed (posts only — composer moved to FAB) ──────
-              if (_activeFeedFilter == 'all' || _activeFeedFilter == 'noticeboard') ...[
+              ...[
                 SliverToBoxAdapter(
                   child: _buildNoticeboardSection(hc, isDark),
                 ),
@@ -1242,7 +1235,7 @@ class _HomeScreenState extends State<HomeScreen>
 
               // ── Smart feed items — filtered per tab ───────────────
               // UX-03: Spring physics on feed cards
-              if (_activeFeedFilter != 'noticeboard') ...[
+              ...[
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -1260,7 +1253,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
 
               // ── Upgrade banner — shown at the bottom ──────────────
-              if (_activeFeedFilter == 'all' && SubscriptionService().isFree)
+              if (SubscriptionService().isFree)
                 SliverToBoxAdapter(
                   child: UpgradeBanner(
                     message: 'Unlock more groups, meetups & private features',
@@ -1434,34 +1427,9 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Returns the smart feed items filtered by [_activeFeedFilter].
+  /// Returns all smart feed items (filter always 'all').
   List<_SmartFeedItem> _filteredSmartFeed(dynamic hc, bool isDark) {
-    switch (_activeFeedFilter) {
-      case 'meetups':
-        return _smartFeed
-            .where((i) =>
-                i.type == _SmartFeedType.meetup ||
-                i.type == _SmartFeedType.goingEvent ||
-                i.type == _SmartFeedType.suggestedMeetup)
-            .toList();
-      case 'events':
-        return _smartFeed
-            .where((i) =>
-                i.type == _SmartFeedType.goingEvent ||
-                i.type == _SmartFeedType.meetup)
-            .toList();
-      case 'noticeboard':
-        return []; // Noticeboard renders its own section above
-      case 'tips':
-        return _smartFeed
-            .where((i) =>
-                i.type == _SmartFeedType.aiNudge ||
-                i.type == _SmartFeedType.communityActivity)
-            .toList();
-      case 'all':
-      default:
-        return _smartFeed;
-    }
+    return _smartFeed;
   }
 
   /// Greeting row: time-based greeting + bold name.

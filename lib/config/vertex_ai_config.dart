@@ -382,7 +382,9 @@ class VertexAiConfig {
       await getBearerToken();
       _validated = true;
       _isValid   = true;
-      if (kDebugMode) debugPrint('VertexAiConfig: credentials valid ✅');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('VertexAiConfig: credentials valid ✅');
+      }
     } catch (e) {
       _validated = true;
       _isValid   = false;

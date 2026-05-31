@@ -120,7 +120,9 @@ class GeocodingService {
 
       return latLng;
     } catch (e) {
-      if (kDebugMode) debugPrint('[GeocodingService] Error for "$cleaned": $e');
+      if (kDebugMode) {
+        if (kDebugMode) debugPrint('[GeocodingService] Error for "$cleaned": $e');
+      }
       _cache[cacheKey] = null; // cache the failure so we don't hammer the API
       return null;
     }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import '../models/direct_message.dart';
@@ -219,7 +220,9 @@ class DMService {
       debugPrint('💾 DMService.sendMessage called:');
       debugPrint('   convId: $conversationId');
       debugPrint('   type: ${type.name}');
-      debugPrint('   meetupData: ${meetupData != null ? 'YES (${meetupData.keys.length} keys)' : 'NO'}');
+      if (kDebugMode) {
+        debugPrint('   meetupData: ${meetupData != null ? 'YES (${meetupData.keys.length} keys)' : 'NO'}');
+      }
       debugPrint('   groupData: ${groupData != null ? 'YES (${groupData.keys.length} keys)' : 'NO'}');
       debugPrint('   itemData: ${itemData != null ? 'YES (${itemData.keys.length} keys)' : 'NO'}');
     }
@@ -227,7 +230,7 @@ class DMService {
     // 1. Create the message with 'sending' status
     final msg = DirectMessage(
       id: 'dm_msg_${DateTime.now().millisecondsSinceEpoch}',
-      senderId: 'current_user',
+      senderId: FirebaseAuth.instance.currentUser?.uid ?? 'anonymous',
       senderName: senderName,
       message: message,
       timestamp: DateTime.now(),
@@ -256,11 +259,13 @@ class DMService {
     await _saveMessages(conversationId, messages);
     
     if (kDebugMode) {
-      debugPrint('💾 Message saved to storage:');
+      if (kDebugMode) {
+        debugPrint('💾 Message saved to storage:');
+      }
       final json = msg.toJson();
       debugPrint('   groupData in JSON: ${json['groupData'] != null ? 'YES' : 'NO'}');
       debugPrint('   itemData in JSON: ${json['itemData'] != null ? 'YES' : 'NO'}');
-      debugPrint('   meetupData in JSON: ${json['meetupData'] != null ? 'YES' : 'NO'}');
+      if (kDebugMode) debugPrint('   meetupData in JSON: ${json["meetupData"] != null ? "YES" : "NO"}');
     }
 
     // Determine display text for conversation list
@@ -526,7 +531,9 @@ class DMService {
 
   void _log(String message) {
     if (kDebugMode) {
-      debugPrint('DMService: $message');
+      if (kDebugMode) {
+        debugPrint('DMService: $message');
+      }
     }
   }
 
@@ -548,7 +555,7 @@ class DMService {
 
     final msg = DirectMessage(
       id: 'dm_msg_meetup_${DateTime.now().millisecondsSinceEpoch}_$recipientId',
-      senderId: 'current_user',
+      senderId: FirebaseAuth.instance.currentUser?.uid ?? 'anonymous',
       senderName: 'You',
       message: meetupTitle,
       timestamp: DateTime.now(),

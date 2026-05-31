@@ -204,7 +204,9 @@ class AiCopilotService with BoroughAiContext {
     // Instead, _isApiOnline is updated by the result of each real sendMessage
     // call so it reflects actual live status.
     _isInitialized = true;
-    if (kDebugMode) debugPrint('AiCopilot: initialized (online assumed until first call)');
+    if (kDebugMode) {
+      if (kDebugMode) debugPrint('AiCopilot: initialized (online assumed until first call)');
+    }
   }
 
   void clearConversation() {
@@ -253,7 +255,9 @@ class AiCopilotService with BoroughAiContext {
       return response;
     } catch (cloudError) {
       if (kDebugMode) {
-        debugPrint('AiCopilot: Cloud Function failed ($cloudError), trying Gemini fallback');
+        if (kDebugMode) {
+          debugPrint('AiCopilot: Cloud Function failed ($cloudError), trying Gemini fallback');
+        }
       }
       // ── Fallback: Gemini via AiApiHelper ─────────────────────────────────
       try {
@@ -306,7 +310,9 @@ class AiCopilotService with BoroughAiContext {
         final isConfigError = geminiError.toString().contains('GEMINI_API_NOT_ENABLED');
         _isApiOnline = !isConfigError;
         if (kDebugMode) {
-          debugPrint('AiCopilot: all AI APIs failed: $geminiError');
+          if (kDebugMode) {
+            debugPrint('AiCopilot: all AI APIs failed: $geminiError');
+          }
         }
         // ── Offline fallback: local pattern-matched response ──────────────
         final fallback = _generateLocalResponse(userText);
