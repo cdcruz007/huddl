@@ -2345,6 +2345,18 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 label: listing.phone!,
                 color: HuddlColors.nearBlack,
                 onTap: () async {
+                  // Gate: service contact requires Plus
+                  final ss = SubscriptionService();
+                  if (!ss.isPlusOrAbove) {
+                    Navigator.pushNamed(context, '/subscription_gate',
+                        arguments: {
+                          'featureTitle': 'Contact this service',
+                          'featureDescription': ss.limitReachedMessage('service_contact'),
+                          'requiredPlan': 'Huddl Plus',
+                          'featureIcon': Icons.phone_outlined.codePoint,
+                        });
+                    return;
+                  }
                   HuddlAnimations.selectionClick();
                   final uri = Uri(scheme: 'tel', path: listing.phone);
                   if (await canLaunchUrl(uri)) {
@@ -2361,6 +2373,23 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   }
                 },
               ),
+              const SizedBox(height: 4),
+              // "Huddl Plus to contact" label for free users
+              if (!SubscriptionService().isPlusOrAbove)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.lock_outline_rounded, size: 13,
+                          color: HuddlColors.textTertiary),
+                      const SizedBox(width: 4),
+                      Text('Huddl Plus to contact',
+                          style: HuddlText.caption(
+                              color: HuddlColors.textTertiary)),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 8),
             ],
             // ── Book Now — Partner listing booking URL ─────────────────
@@ -2370,6 +2399,18 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 label: 'Book Now',
                 leadingIcon: Icons.calendar_today_outlined,
                 onPressed: () async {
+                  // Gate: service contact requires Plus
+                  final ss = SubscriptionService();
+                  if (!ss.isPlusOrAbove) {
+                    Navigator.pushNamed(context, '/subscription_gate',
+                        arguments: {
+                          'featureTitle': 'Contact this service',
+                          'featureDescription': ss.limitReachedMessage('service_contact'),
+                          'requiredPlan': 'Huddl Plus',
+                          'featureIcon': Icons.calendar_today_outlined.codePoint,
+                        });
+                    return;
+                  }
                   HuddlAnimations.selectionClick();
                   final raw = listing.externalBookingUrl!;
                   final hasScheme = raw.startsWith('http://') ||

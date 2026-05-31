@@ -331,6 +331,20 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     // Paid meetups (price > £0): Plus or above only
     final subService = SubscriptionService();
     await subService.initialize();
+
+    // Gate 1: Free meetup lifetime limit (free tier only)
+    if (_isFree && !subService.isPlusOrAbove && !subService.canCreateFreeMeetup) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/subscription_gate', arguments: {
+          'featureTitle': 'Meetup limit reached',
+          'featureDescription': subService.limitReachedMessage('free_meetups'),
+          'requiredPlan': 'Huddl Plus',
+          'featureIcon': Icons.people_outline.codePoint,
+        });
+      }
+      return;
+    }
+
     if (!_isFree && !subService.canCreatePaidMeetup) {
       if (mounted) {
         await showUpgradePrompt(
@@ -479,6 +493,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
     // Record usage for subscription tracking
     subService.recordMeetupCreate();
+    // Record free meetup lifetime usage (free tier only)
+    if (_isFree && !subService.isPlusOrAbove) {
+      await subService.recordFreeMeetupCreated();
+    }
     // Navigate to the newly created meetup detail screen
     if (mounted) {
       Navigator.pop(context, meetup);
@@ -686,6 +704,32 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const BoroughGateMessage(featureLabel: 'Meetups'),
+                    // Free meetup slot counter — visible to free users only
+                    Builder(builder: (context) {
+                      final ss = SubscriptionService();
+                      if (ss.isPlusOrAbove) return const SizedBox.shrink();
+                      final remaining = ss.freeMeetupsCreatedRemaining;
+                      final max = ss.limits.maxFreeMeetupsLifetime;
+                      final used = ss.freeMeetupsCreatedTotal;
+                      return Container(
+                        width: double.infinity,
+                        color: remaining == 0
+                            ? HuddlColors.primary.withValues(alpha: 0.08)
+                            : HuddlColors.primary.withValues(alpha: 0.04),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Text(
+                          remaining == 0
+                              ? 'Free meetup limit reached — upgrade for unlimited'
+                              : 'Free meetup ${used + 1} of $max',
+                          style: HuddlText.caption(
+                              color: remaining == 0
+                                  ? HuddlColors.primary
+                                  : HuddlColors.textTertiary),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }),
                     _buildPhotoUpload(),
 
                     Padding(

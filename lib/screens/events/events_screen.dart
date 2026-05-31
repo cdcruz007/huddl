@@ -32,6 +32,7 @@ import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/huddl_character.dart';
 import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
 import '../../constants/app_text_styles.dart';
@@ -562,27 +563,62 @@ class EventsScreenState extends State<EventsScreen>
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
             right: 20,
-            child: GestureDetector(
-              onTap: () {
-                HuddlAnimations.lightTap();
-                Navigator.pushNamed(context, '/create_group');
-              },
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: HuddlColors.primary.withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Counter label above FAB — free users only
+                Builder(builder: (context) {
+                  final ss = SubscriptionService();
+                  if (TierLimits.isUnlimited(
+                      ss.limits.maxUserCreatedGroupsLifetime)) {
+                    return const SizedBox.shrink();
+                  }
+                  final remaining = ss.userGroupsCreatedRemaining;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: remaining == 0
+                            ? HuddlColors.primary
+                            : HuddlColors.nearBlack
+                                .withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        remaining == 0
+                            ? 'Limit reached'
+                            : '$remaining group${remaining == 1 ? "" : "s"} left',
+                        style: HuddlText.caption(color: Colors.white),
+                      ),
                     ),
-                  ],
+                  );
+                }),
+                GestureDetector(
+                  onTap: () {
+                    HuddlAnimations.lightTap();
+                    Navigator.pushNamed(context, '/create_group');
+                  },
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: HuddlColors.primary.withValues(alpha: 0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                  ),
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 28),
-              ),
+              ],
             ),
           ),
         if (_selectedTab == 1)

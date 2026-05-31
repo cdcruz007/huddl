@@ -43,9 +43,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/group.dart';
+import '../models/subscription.dart';
 import 'backend_api_service.dart';
 import 'default_group_service.dart';
 import 'huddl_notification_service.dart';
+import 'subscription_service.dart';
 
 class FirestoreService {
   // ── Singleton ──────────────────────────────────────────────────────────
@@ -847,6 +849,16 @@ class FirestoreService {
     listingData['favouriteCount'] = 0;
     listingData['createdAt'] = FieldValue.serverTimestamp();
     listingData['updatedAt'] = FieldValue.serverTimestamp();
+    // ── Set listing expiry based on subscription tier ───────────────────────
+    final ss = SubscriptionService();
+    final durationDays = ss.listingDurationDays;
+    if (!TierLimits.isUnlimited(durationDays)) {
+      // Plus = 60 days, Free = 7 days; Partner = 999 (unlimited, no expiry set)
+      listingData['expiresAt'] = Timestamp.fromDate(
+        DateTime.now().add(Duration(days: durationDays)),
+      );
+    }
+    // ───────────────────────────────────────────────────────────────────────
     final ref = await _db.collection('marketplace').add(listingData);
     await ref.update({'id': ref.id});
     return ref.id;

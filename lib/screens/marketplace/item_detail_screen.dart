@@ -17,6 +17,8 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/backend_api_service.dart';
 import '../../services/report_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
@@ -163,6 +165,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Future<void> _openSellerChat() async {
     if (_openingChat) return;
+    final allowed = await _checkContactAllowance();
+    if (!allowed) return;
     HapticFeedback.mediumImpact();
     setState(() => _openingChat = true);
 
@@ -201,6 +205,44 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
+  // ── Subscription-gated save action ──────────────────────────────────────────
+  Future<void> _handleSaveAction() async {
+    final ss = SubscriptionService();
+    // Only gate when saving (not un-saving)
+    if (!item.isSaved && !ss.canSaveItem) {
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/subscription_gate', arguments: {
+        'featureTitle': 'Save limit reached',
+        'featureDescription': ss.limitReachedMessage('saved_items'),
+        'requiredPlan': 'Huddl Plus',
+        'featureIcon': Icons.bookmark_outline.codePoint,
+      });
+      return;
+    }
+    if (!item.isSaved) {
+      await ss.recordSavedItem();
+    }
+    _toggleSave();
+  }
+
+  // ── Subscription-gated contact check ─────────────────────────────────────
+  Future<bool> _checkContactAllowance() async {
+    final ss = SubscriptionService();
+    await ss.initialize();
+    if (!ss.canContactSeller) {
+      if (!mounted) return false;
+      Navigator.pushNamed(context, '/subscription_gate', arguments: {
+        'featureTitle': 'Free seller contacts used',
+        'featureDescription': ss.limitReachedMessage('buyer_contacts'),
+        'requiredPlan': 'Huddl Plus',
+        'featureIcon': Icons.chat_bubble_outline.codePoint,
+      });
+      return false;
+    }
+    await ss.recordBuyerContact();
+    return true;
+  }
+
   void _toggleSave() {
     HapticFeedback.lightImpact();
     _service.toggleSaved(item.id);
@@ -227,6 +269,25 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   void _showMakeOfferSheet() {
+    // Gate: buyer contacts lifetime limit
+    SubscriptionService().initialize().then((_) {
+      final ss = SubscriptionService();
+      if (!ss.canContactSeller) {
+        if (!mounted) return;
+        Navigator.pushNamed(context, '/subscription_gate', arguments: {
+          'featureTitle': 'Free seller contacts used',
+          'featureDescription': ss.limitReachedMessage('buyer_contacts'),
+          'requiredPlan': 'Huddl Plus',
+          'featureIcon': Icons.chat_bubble_outline.codePoint,
+        });
+        return;
+      }
+      ss.recordBuyerContact();
+      _doShowMakeOfferSheet();
+    });
+  }
+
+  void _doShowMakeOfferSheet() {
     HapticFeedback.mediumImpact();
     final hc = context.hc;
     final suggestedPrice = _suggestedOfferPrice();
@@ -602,7 +663,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     if (!_isOwnItem)
                       _ItemCircleButton(
                         icon: item.isSaved ? Icons.favorite : Icons.favorite_border,
-                        onTap: _toggleSave,
+                        onTap: _handleSaveAction,
                         color: item.isSaved ? HuddlColors.error : Colors.white,
                       ),
                     if (!_isOwnItem)
@@ -1223,6 +1284,51 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       child: Row(
         children: [
+          // ── Buyer contact slot counter (free users only) ──────────────────
+          Builder(builder: (context) {
+            final ss = SubscriptionService();
+            if (TierLimits.isUnlimited(ss.limits.maxBuyerContactsLifetime)) {
+              return const SizedBox.shrink();
+            }
+            final remaining = ss.buyerContactsRemaining;
+            final total = ss.limits.maxBuyerContactsLifetime;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: remaining == 0
+                      ? HuddlColors.primary.withValues(alpha: 0.08)
+                      : context.hc.inputBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: remaining == 0
+                      ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.20))
+                      : null,
+                ),
+                child: Row(children: [
+                  Icon(Icons.chat_bubble_outline,
+                      size: 14,
+                      color: remaining == 0
+                          ? HuddlColors.primary
+                          : context.hc.textTertiary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      remaining == 0
+                          ? 'Free seller contacts used — upgrade for unlimited'
+                          : '$remaining of $total free seller '
+                            '${total == 1 ? "contact" : "contacts"} remaining',
+                      style: HuddlText.caption(
+                        color: remaining == 0
+                            ? HuddlColors.primary
+                            : context.hc.textTertiary,
+                      ),
+                    ),
+                  ),
+                ]),
+              ),
+            );
+          }),
           // Save button — 48dp
           Semantics(
             label: item.isSaved
@@ -1238,7 +1344,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
-                onTap: _toggleSave,
+                onTap: _handleSaveAction,
                 child: Icon(
                   item.isSaved ? Icons.favorite : Icons.favorite_border,
                   color: item.isSaved

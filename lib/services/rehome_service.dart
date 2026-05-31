@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/huddl_colors.dart';
 import 'borough_scope_guard.dart';
 import 'firestore_service.dart';
@@ -298,6 +299,8 @@ class RehomeItem {
   int viewCount;
   int offerCount;
   final String? borough; // Borough this item belongs to for hyperlocal visibility
+  final DateTime? expiresAt; // null = no expiry (Plus/Partner)
+  final bool isExpiredFlag;  // true when listing has passed expiresAt (set by _archiveExpiredListings)
 
   RehomeItem({
     required this.id,
@@ -317,9 +320,23 @@ class RehomeItem {
     this.viewCount = 0,
     this.offerCount = 0,
     this.borough,
+    this.expiresAt,
+    this.isExpiredFlag = false,
   });
 
   bool get isFree => price == 0;
+
+  bool get isExpired {
+    if (isExpiredFlag) return true;
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
+  }
+
+  int get daysUntilExpiry {
+    if (expiresAt == null) return 999;
+    final diff = expiresAt!.difference(DateTime.now()).inDays;
+    return diff.clamp(0, 999);
+  }
 
   /// Build a RehomeItem from a Firestore document map.
   factory RehomeItem.fromFirestore(Map<String, dynamic> d) {
@@ -381,6 +398,12 @@ class RehomeItem {
       offerCount: (d['offerCount'] as num?)?.toInt() ?? 0,
       borough:
           d['borough'] as String? ?? d['sellerBorough'] as String?,
+      expiresAt: d['expiresAt'] != null
+          ? (d['expiresAt'] is Timestamp
+              ? (d['expiresAt'] as Timestamp).toDate()
+              : DateTime.tryParse(d['expiresAt'].toString()))
+          : null,
+      isExpiredFlag: d['status'] == 'expired',
     );
   }
 
@@ -578,6 +601,8 @@ class RehomeService extends ChangeNotifier {
             viewCount: item.viewCount,
             offerCount: item.offerCount,
             borough: _guard.currentBorough,
+            expiresAt: item.expiresAt,
+            isExpiredFlag: item.isExpiredFlag,
           )
         : item;
     _items.insert(0, toAdd);
@@ -656,18 +681,109 @@ class RehomeService extends ChangeNotifier {
     }
   }
 
-  void relistItem(String id) {
+
+  /// Check all my listings for expiry and mark expired ones locally.
+  /// Called when the Sell tab loads to surface the Relist UI immediately.
+  void archiveExpiredListings() {
+    bool changed = false;
+    for (int i = 0; i < _myListings.length; i++) {
+      final item = _myListings[i];
+      if (!item.isSold && !item.isExpiredFlag && item.expiresAt != null &&
+          DateTime.now().isAfter(item.expiresAt!)) {
+        _myListings[i] = RehomeItem(
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          ageStage: item.ageStage,
+          category: item.category,
+          condition: item.condition,
+          price: item.price,
+          imageUrls: item.imageUrls,
+          sellerName: item.sellerName,
+          sellerId: item.sellerId,
+          sellerLocation: item.sellerLocation,
+          listedAt: item.listedAt,
+          isSaved: item.isSaved,
+          isSold: false,
+          viewCount: item.viewCount,
+          offerCount: item.offerCount,
+          borough: item.borough,
+          expiresAt: item.expiresAt,
+          isExpiredFlag: true,
+        );
+        changed = true;
+        // Sync to Firestore fire-and-forget
+        FirestoreService().updateListing(item.id, {
+          'status': 'expired',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }).catchError((_) {});
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  void relistItem(String id, {DateTime? newExpiry}) {
+    // Update in-memory lists — replace item to clear isExpiredFlag and set new expiry
     final idx = _items.indexWhere((i) => i.id == id);
     if (idx >= 0) {
-      _items[idx].isSold = false;
+      final item = _items[idx];
+      _items[idx] = RehomeItem(
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        ageStage: item.ageStage,
+        category: item.category,
+        condition: item.condition,
+        price: item.price,
+        imageUrls: item.imageUrls,
+        sellerName: item.sellerName,
+        sellerId: item.sellerId,
+        sellerLocation: item.sellerLocation,
+        listedAt: DateTime.now(),
+        isSaved: item.isSaved,
+        isSold: false,
+        viewCount: item.viewCount,
+        offerCount: item.offerCount,
+        borough: item.borough,
+        expiresAt: newExpiry,
+        isExpiredFlag: false,
+      );
       notifyListeners();
     }
     final myIdx = _myListings.indexWhere((i) => i.id == id);
     if (myIdx >= 0) {
-      _myListings[myIdx].isSold = false;
+      final item = _myListings[myIdx];
+      _myListings[myIdx] = RehomeItem(
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        ageStage: item.ageStage,
+        category: item.category,
+        condition: item.condition,
+        price: item.price,
+        imageUrls: item.imageUrls,
+        sellerName: item.sellerName,
+        sellerId: item.sellerId,
+        sellerLocation: item.sellerLocation,
+        listedAt: DateTime.now(),
+        isSaved: item.isSaved,
+        isSold: false,
+        viewCount: item.viewCount,
+        offerCount: item.offerCount,
+        borough: item.borough,
+        expiresAt: newExpiry,
+        isExpiredFlag: false,
+      );
     }
     // ── Persist to Firestore (fire-and-forget) ──────────────────────────
-    FirestoreService().relistListing(id).catchError((e) {
+    final Map<String, dynamic> updateData = {
+      'status': 'active',
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (newExpiry != null) {
+      updateData['expiresAt'] = Timestamp.fromDate(newExpiry);
+    }
+    FirestoreService().updateListing(id, updateData).catchError((e) {
       if (kDebugMode) debugPrint('[RehomeService] relistItem FS error: $e');
     });
 

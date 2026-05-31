@@ -3410,6 +3410,29 @@ class _HomeScreenState extends State<HomeScreen>
                         fullWidth: true,
                       ),
                     ),
+                    // Q&A remaining count — free users only
+                    Builder(builder: (bCtx) {
+                      final ss = SubscriptionService();
+                      if (TierLimits.isUnlimited(
+                          ss.limits.maxQuestionsLifetime)) {
+                        return const SizedBox.shrink();
+                      }
+                      final rem = ss.questionsPostedRemaining;
+                      return Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Text(
+                          rem == 0
+                              ? 'Free post limit reached — upgrade for unlimited'
+                              : '$rem free post${rem == 1 ? "" : "s"} remaining',
+                          style: HuddlText.label(
+                              color: rem == 0
+                                  ? HuddlColors.primary
+                                  : HuddlColors.textTertiary),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -3422,8 +3445,25 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _postToBoroughNoticeboard(String content) async {
     if (content.trim().isEmpty) return;
+
+    // ── Subscription gate: lifetime Q&A / community post limit ──────────
+    final ss = SubscriptionService();
+    await ss.initialize();
+    if (!ss.canPostQuestion) {
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/subscription_gate', arguments: {
+        'featureTitle': 'Q&A limit reached',
+        'featureDescription': ss.limitReachedMessage('questions'),
+        'requiredPlan': 'Huddl Plus',
+        'featureIcon': Icons.help_outline.codePoint,
+      });
+      return;
+    }
+
     try {
       await _announcementService.post(content.trim());
+      // Record community post usage after successful post
+      await ss.recordQuestionPosted();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

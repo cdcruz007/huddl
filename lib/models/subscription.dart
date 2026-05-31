@@ -2,23 +2,23 @@
 // HUDDL -- SUBSCRIPTION MODEL
 // =====================================================================================
 //
-// FOUR TIERS:
+// THREE TIERS (user-facing):
 //
-// 1. WELCOME (Free) — "Try the community"
-//    Tight but meaningful limits so new users experience real value within
-//    the first few days before hitting a natural upgrade prompt.
+// 1. WELCOME (Free) — "Discover your parent community"
+//    Meaningful taster limits across every feature — enough to get value,
+//    tight enough to motivate upgrade.
 //
-// 2. PLUS (£4.99/mo | £39.99/yr) — "Full community access"
-//    Removes all social friction — unlimited groups, DMs, and meetups.
-//    Unlocks the full AI suite: AI Chat Helper, AI Listing Writer,
-//    Daily Events Finder, and AI Group Summaries.
+// 2. HUDDL PLUS (£4.99/mo | £39.99/yr) — "Full community access"
+//    Removes all friction — unlimited everything. Full AI suite.
+//    60-day listing duration. Own a service listing (with verification).
 //
-// 3. PARTNER (£24.99/mo | £199.00/yr) — "Grow your local business"
+// 3. HUDDL PARTNER (£24.99/mo | £199.00/yr) — "Grow your local business"
 //    Dedicated business profile, unlimited service listings, priority
 //    directory placement, endorsement replies, reach analytics, and
 //    promoted cards in the borough feed. Requires business verification.
 //
-// NOTE: No founding member / promotional pricing offered.
+// NOTE: `innerCircle` enum value is a deprecated Firestore backward-compat alias
+// that maps to Plus behaviour. Never surface it to users.
 // =====================================================================================
 
 /// Subscription tier levels for Huddl
@@ -34,10 +34,10 @@ enum BillingPeriod { monthly, annual }
 class TierLimits {
   // ---- Core Social Limits ----
   final int maxGroups;           // how many groups a user can join
-  final int maxGroupsCreated;    // how many groups a user can create
+  final int maxGroupsCreated;    // how many groups a user can create (legacy field)
   final int maxMeetupsPerMonth;  // meetups user can attend per month
   final int maxDMConversations;  // open DM threads at once
-  final int maxMarketplaceListings;
+  final int maxMarketplaceListings;  // legacy field — new gate uses maxListingsCreatedLifetime
   final int maxPhotoUploads;     // photos that can be uploaded in total
   final int maxMessagesPerMonth; // messages sent across all chats
 
@@ -63,11 +63,24 @@ class TierLimits {
   final bool aiSmartFeed;
   final bool aiMeetupMatchmaker;
 
-  // ---- Community Q&A & Bookmarks ----
-  final int maxQuestionsPerWeek;   // questions posted to community Q&A board
-  final int maxBookmarksPerMonth;  // messages/posts saved to bookmarks
+  // ---- Community Q&A & Bookmarks (legacy fields — kept for backward compat) ----
+  final int maxQuestionsPerWeek;   // legacy — new gate uses maxQuestionsLifetime
+  final int maxBookmarksPerMonth;  // legacy — new gate uses maxSavedItemsLifetime
   final bool communityBadgesEnabled;
   final bool aiSynthesisAccess;    // AI-generated answer summaries in Q&A
+
+  // ── Lifetime gates — free tier only (999 = unlimited on paid tiers) ───────────
+  final int maxListingsCreatedLifetime;   // marketplace listings ever created
+  final int maxBuyerContactsLifetime;     // seller message + offer attempts combined
+  final int maxUserCreatedGroupsLifetime; // public hobby/interest groups created
+  final int maxFreeMeetupsLifetime;       // free (non-paid) meetups created
+  final int maxPollsCreatedLifetime;      // polls created across all groups
+  final int maxQuestionsLifetime;         // Q&A questions posted
+  final int maxSavedItemsLifetime;        // saved messages + posts + listings combined
+  final int maxAiSavedSummariesLifetime;  // AI summaries of saved items
+
+  // ── Listing duration ──────────────────────────────────────────────────────────
+  final int listingDurationDays; // 7 free, 60 Plus, 999 (unlimited) Partner
 
   const TierLimits({
     // Core social
@@ -96,28 +109,39 @@ class TierLimits {
     required this.aiListingGenerator,
     required this.aiSmartFeed,
     required this.aiMeetupMatchmaker,
-    // Community Q&A
+    // Community Q&A (legacy defaults)
     this.maxQuestionsPerWeek = 3,
     this.communityBadgesEnabled = false,
     this.maxBookmarksPerMonth = 5,
     this.aiSynthesisAccess = false,
+    // Lifetime gates — default unlimited
+    this.maxListingsCreatedLifetime = 999,
+    this.maxBuyerContactsLifetime = 999,
+    this.maxUserCreatedGroupsLifetime = 999,
+    this.maxFreeMeetupsLifetime = 999,
+    this.maxPollsCreatedLifetime = 999,
+    this.maxQuestionsLifetime = 999,
+    this.maxSavedItemsLifetime = 999,
+    this.maxAiSavedSummariesLifetime = 999,
+    this.listingDurationDays = 999,
   });
 
   // ---- WELCOME (Free) -----------------------------------------------------------
-  // Enough to genuinely engage — 2 groups, attend meetups, send DMs, list items.
-  // AI features are taster-level: 3 AI chats/day and weekly events discovery.
+  // Taster limits: enough to get genuine value, tight enough to upgrade.
   static const TierLimits welcome = TierLimits(
-    maxGroups: 999,            // unlimited — no group join cap on free
-    maxGroupsCreated: 999,     // unlimited — free users can create groups
-    maxMeetupsPerMonth: 999,   // unlimited — free users can create meetups
-    maxDMConversations: 999,   // unlimited
-    maxMarketplaceListings: 999, // unlimited
-    maxPhotoUploads: 999,      // unlimited
-    maxMessagesPerMonth: 999,  // unlimited
+    // ── Core social (legacy fields — kept for backward compat) ──
+    maxGroups: 999,             // join unlimited groups
+    maxGroupsCreated: 999,      // legacy — new gate uses maxUserCreatedGroupsLifetime
+    maxMeetupsPerMonth: 999,    // attending meetups is unlimited
+    maxDMConversations: 999,    // DMs unlimited
+    maxMarketplaceListings: 999, // legacy — new gate uses maxListingsCreatedLifetime
+    maxPhotoUploads: 999,
+    maxMessagesPerMonth: 999,
     canCreatePrivateGroups: false,
     canCreateMeetups: true,
     customProfileBadge: false,
-    maxAiCopilotChatsPerDay: 3,          // AI still gated — upgrade incentive
+    // ── AI feature limits ──
+    maxAiCopilotChatsPerDay: 3,
     maxAiEventDiscoveriesPerWeek: 1,
     maxAiChatSummariesPerDay: 0,
     maxAiListingGenerationsPerMonth: 0,
@@ -130,20 +154,30 @@ class TierLimits {
     aiListingGenerator: false,
     aiSmartFeed: true,
     aiMeetupMatchmaker: false,
-    maxQuestionsPerWeek: 999,  // unlimited
+    maxQuestionsPerWeek: 999,   // legacy unlimited
     communityBadgesEnabled: false,
-    maxBookmarksPerMonth: 999, // unlimited
+    maxBookmarksPerMonth: 999,  // legacy unlimited
     aiSynthesisAccess: false,
+    // ── Lifetime gates ──
+    maxListingsCreatedLifetime: 3,
+    maxBuyerContactsLifetime: 3,
+    maxUserCreatedGroupsLifetime: 3,
+    maxFreeMeetupsLifetime: 3,
+    maxPollsCreatedLifetime: 3,
+    maxQuestionsLifetime: 3,
+    maxSavedItemsLifetime: 6,
+    maxAiSavedSummariesLifetime: 2,
+    listingDurationDays: 7,
   );
 
   // ---- HUDDL PLUS (£4.99/mo) ---------------------------------------------------
   // Full social access + complete AI suite at generous daily/monthly limits.
   static const TierLimits plus = TierLimits(
     maxGroups: 999,
-    maxGroupsCreated: 25,
+    maxGroupsCreated: 999,
     maxMeetupsPerMonth: 999,
     maxDMConversations: 999,
-    maxMarketplaceListings: 999, // unlimited for Plus
+    maxMarketplaceListings: 999,
     maxPhotoUploads: 15,
     maxMessagesPerMonth: 999,
     canCreatePrivateGroups: true,
@@ -166,10 +200,19 @@ class TierLimits {
     communityBadgesEnabled: true,
     maxBookmarksPerMonth: 50,
     aiSynthesisAccess: true,
+    // ── Lifetime gates — unlimited for Plus ──
+    maxListingsCreatedLifetime: 999,
+    maxBuyerContactsLifetime: 999,
+    maxUserCreatedGroupsLifetime: 999,
+    maxFreeMeetupsLifetime: 999,
+    maxPollsCreatedLifetime: 999,
+    maxQuestionsLifetime: 999,
+    maxSavedItemsLifetime: 999,
+    maxAiSavedSummariesLifetime: 999,
+    listingDurationDays: 60,
   );
 
-  // ---- CIRCLE (legacy — kept for backward-compat; maps to innerCircle) ----------
-  // Alias so existing code that references TierLimits.innerCircle still compiles.
+  // ---- CIRCLE (legacy — deprecated Firestore backward-compat alias for Plus) ----
   static const TierLimits innerCircle = TierLimits(
     maxGroups: 999,
     maxGroupsCreated: 999,
@@ -198,11 +241,20 @@ class TierLimits {
     communityBadgesEnabled: true,
     maxBookmarksPerMonth: 999,
     aiSynthesisAccess: true,
+    // ── Lifetime gates — unlimited (deprecated alias) ──
+    maxListingsCreatedLifetime: 999,
+    maxBuyerContactsLifetime: 999,
+    maxUserCreatedGroupsLifetime: 999,
+    maxFreeMeetupsLifetime: 999,
+    maxPollsCreatedLifetime: 999,
+    maxQuestionsLifetime: 999,
+    maxSavedItemsLifetime: 999,
+    maxAiSavedSummariesLifetime: 999,
+    listingDurationDays: 999,
   );
 
-  // ---- PARTNER (£24.99/mo | £199.00/yr) ------------------------------------------
-  // All limits identical to innerCircle — Partner subscribers get full community
-  // access in addition to business-specific features.
+  // ---- PARTNER (£24.99/mo | £199.00/yr) ----------------------------------------
+  // All community limits identical to Plus/innerCircle; adds business features.
   static const TierLimits partner = TierLimits(
     maxGroups: 999, maxGroupsCreated: 999, maxMeetupsPerMonth: 999,
     maxDMConversations: 999, maxMarketplaceListings: 999, maxPhotoUploads: 50,
@@ -216,6 +268,16 @@ class TierLimits {
     aiMeetupMatchmaker: true,
     maxQuestionsPerWeek: 999, communityBadgesEnabled: true,
     maxBookmarksPerMonth: 999, aiSynthesisAccess: true,
+    // ── Lifetime gates — unlimited for Partner ──
+    maxListingsCreatedLifetime: 999,
+    maxBuyerContactsLifetime: 999,
+    maxUserCreatedGroupsLifetime: 999,
+    maxFreeMeetupsLifetime: 999,
+    maxPollsCreatedLifetime: 999,
+    maxQuestionsLifetime: 999,
+    maxSavedItemsLifetime: 999,
+    maxAiSavedSummariesLifetime: 999,
+    listingDurationDays: 999,
   );
 
   static TierLimits forTier(SubscriptionTier tier) {
@@ -272,75 +334,97 @@ class SubscriptionPlan {
           : 0;
 
   static const List<SubscriptionPlan> allPlans = [
-    // ---- WELCOME (Free) ---------------------------------------------------------
+
+    // ── FREE ──────────────────────────────────────────────────────────────────
     SubscriptionPlan(
       tier: SubscriptionTier.welcome,
       name: 'Huddl',
-      tagline: 'Join your local community',
-      subtitle: 'Start connecting with Cambridge parents today',
+      tagline: 'Discover your parent community',
+      subtitle: 'Free forever — no card required',
       monthlyPrice: 0,
       annualPrice: 0,
       limits: TierLimits.welcome,
       highlights: [
-        'Join every local group in Cambridge',
-        'Message other parents in your borough',
-        'Browse and post to the preloved market',
-        'Discover local meetups and family events',
-        '3 AI parenting Q&A sessions per day',
+        'Join your year-of-birth Cambridge parents group automatically',
+        'Join unlimited local hobby and interest groups',
+        'Message any parent directly — no limits',
+        'Browse the full services directory and read endorsements',
+        'Create up to 3 marketplace listings (7-day duration)',
+        'Buy from 3 sellers — contact and make offers',
+        'Create up to 3 public hobby groups',
+        'Create up to 3 free community meetups',
+        'Create up to 3 group polls',
+        'Ask up to 3 community Q&A questions',
+        'Save up to 6 recommendations, posts or listings',
+        'AI Chat Helper — 3 conversations per day',
+        'AI Events Finder — 1 local event per week',
+        'Personalised home feed',
       ],
       shortBenefits: [
-        'Free, always',
-        'Local groups and market',
-        'Discover nearby meetups',
+        'Your Cambridge parents group — automatic on joining',
+        'Message parents, browse services & join groups — unlimited',
+        'Marketplace, groups, meetups & Q\u0026A — up to 3 each',
       ],
     ),
 
-    // ---- HUDDL PLUS (£4.99/mo | £39.99/yr) ---------------------------------------
+    // ── PLUS ──────────────────────────────────────────────────────────────────
     SubscriptionPlan(
       tier: SubscriptionTier.plus,
       name: 'Huddl Plus',
-      tagline: 'Your full community, fully unlocked',
-      subtitle: 'Everything Cambridge parents need, nothing held back',
+      tagline: 'Full access — marketplace, services and community',
+      subtitle: 'Less than 2 coffees a month',
       monthlyPrice: 4.99,
       annualPrice: 39.99,
       limits: TierLimits.plus,
       highlights: [
-        'Every parent conversation in Cambridge — nothing blocked',
-        'AI finds the Sunday walk before you think to search',
-        'List preloved gear in seconds — AI writes the description',
-        'Group summaries catch you up on what you missed',
-        'Your Huddl Plus badge on your profile',
-        'Priority support from the huddl team',
+        'Unlimited marketplace listings — 60-day duration',
+        'Contact any seller — unlimited messages and offers',
+        'Contact any service provider directly — childminders, tutors, classes',
+        'Create unlimited public and private groups',
+        'Create unlimited polls and free meetups',
+        'Create paid meetups — cost-share with other parents',
+        'Unlimited Q\u0026A questions + AI answer synthesis',
+        'Unlimited saves + AI summary of your saved items',
+        '1 free listing bump per week',
+        'Full AI suite — Chat Helper (25/day), Summaries (10/day), Listing Writer (10/month), Events (7/week)',
+        'Neighbourhood badge on your profile',
+        'Community badges unlocked',
+        'Own a service listing — verified businesses (see verification)',
       ],
       shortBenefits: [
-        'Unlimited groups, DMs and meetups',
-        'Full AI suite — copilot, listings, summaries',
-        'Your Huddl Plus badge',
+        'Unlimited listings, contacts & service provider access',
+        'Unlimited groups, polls, meetups & Q\u0026A',
+        'Full AI suite + unlimited saves',
       ],
     ),
 
-    // ---- PARTNER (£24.99/mo | £199.00/yr) – for local businesses ------------------
+    // ── PARTNER ───────────────────────────────────────────────────────────────
     SubscriptionPlan(
       tier: SubscriptionTier.partner,
       name: 'Huddl Partner',
-      tagline: 'Grow your local business with huddl',
-      subtitle: 'The trust of the community, working for your business',
+      tagline: 'Reach local parents as customers',
+      subtitle: 'For local businesses and service providers',
       monthlyPrice: 24.99,
       annualPrice: 199.00,
       limits: TierLimits.partner,
       highlights: [
-        'Verified business profile that Cambridge parents trust',
-        'Priority placement in the local services directory',
-        'Promoted cards in the borough community feed',
-        'AI writes unlimited listings and service descriptions',
-        'Reach analytics — see exactly who found you',
-        'Respond publicly to parent endorsements',
-        'All Huddl Plus community features included',
+        'Everything in Huddl Plus — fully unlimited',
+        'Dedicated business profile page — separate from personal profile',
+        'Unlimited service listings — nurseries, classes, multiple offerings',
+        'Priority pinned placement in the borough service directory',
+        'HMRC-verified Partner badge on all listings',
+        'Promoted cards in the borough home feed (1:7 ratio)',
+        '1 free promoted event slot per month',
+        'Respond publicly to parent endorsements on your listings',
+        'Reach analytics — impressions, profile views, booking link clicks',
+        'External booking URL on all listings',
+        'Post as your verified business on the noticeboard',
+        'AI Meetup Matchmaker — find compatible parents nearby',
       ],
       shortBenefits: [
-        'Verified business profile + priority directory',
-        'Promoted in the community feed',
-        'Reach analytics + endorsement replies',
+        'Business profile + unlimited listings + priority directory placement',
+        'Borough feed promotion + endorsement replies + reach analytics',
+        'All Plus features unlimited + AI Matchmaker',
       ],
     ),
   ];

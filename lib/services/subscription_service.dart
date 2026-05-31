@@ -22,6 +22,16 @@ class SubscriptionService extends ChangeNotifier {
   static const String _subKey = 'user_subscription_v2';
   static const String _usageKey = 'subscription_usage_v2';
 
+  // ── Lifetime usage keys (never reset) ─────────────────────────────────────
+  static const String _listingsCreatedKey    = 'listings_created_lifetime';
+  static const String _buyerContactsKey      = 'buyer_contacts_lifetime';
+  static const String _userGroupsCreatedKey  = 'user_groups_created_lifetime';
+  static const String _freeMeetupsCreatedKey = 'free_meetups_created_lifetime';
+  static const String _pollsCreatedKey       = 'polls_created_lifetime';
+  static const String _questionsPostedKey    = 'questions_posted_lifetime';
+  static const String _savedItemsKey         = 'saved_items_lifetime';
+  static const String _aiSavedSummariesKey   = 'ai_saved_summaries_lifetime';
+
   bool _initialized = false;
   late UserSubscription _subscription;
   final Map<String, int> _usageCounts = {};
@@ -220,6 +230,12 @@ class SubscriptionService extends ChangeNotifier {
     _syncToFirestore();
   }
 
+  /// Persist only usage counts (not subscription state).
+  /// Used by lifetime record methods to avoid unnecessary Firestore subscription syncs.
+  Future<void> _persistUsage() async {
+    await BrowserStorage.setString(_usageKey, jsonEncode(_usageCounts));
+  }
+
   // ── Firestore sync — write subscription state for cross-device consistency ───
   Future<void> _syncToFirestore() async {
     try {
@@ -335,9 +351,109 @@ class SubscriptionService extends ChangeNotifier {
   bool get canCreateGroup => groupsCreated < limits.maxGroupsCreated;
   bool get canCreateMeetup => meetupsThisMonth < limits.maxMeetupsPerMonth;
   bool get canStartDM => dmConversations < limits.maxDMConversations;
+  // ── Listings created (lifetime) ────────────────────────────────────────────
+  int get listingsCreatedTotal =>
+      _usageCounts[_listingsCreatedKey] ?? 0;
+  int get listingsCreatedRemaining =>
+      TierLimits.isUnlimited(limits.maxListingsCreatedLifetime)
+          ? 999
+          : (limits.maxListingsCreatedLifetime - listingsCreatedTotal)
+              .clamp(0, limits.maxListingsCreatedLifetime);
   bool get canCreateListing =>
-      marketplaceListings < limits.maxMarketplaceListings;
+      TierLimits.isUnlimited(limits.maxListingsCreatedLifetime) ||
+      listingsCreatedTotal < limits.maxListingsCreatedLifetime;
   bool get canSendMessage => messagesThisMonth < limits.maxMessagesPerMonth;
+
+  // ── Buyer contacts (lifetime) ─────────────────────────────────────────────
+  int get buyerContactsTotal =>
+      _usageCounts[_buyerContactsKey] ?? 0;
+  int get buyerContactsRemaining =>
+      TierLimits.isUnlimited(limits.maxBuyerContactsLifetime)
+          ? 999
+          : (limits.maxBuyerContactsLifetime - buyerContactsTotal)
+              .clamp(0, limits.maxBuyerContactsLifetime);
+  bool get canContactSeller =>
+      TierLimits.isUnlimited(limits.maxBuyerContactsLifetime) ||
+      buyerContactsTotal < limits.maxBuyerContactsLifetime;
+
+  // ── User-created groups (lifetime) ───────────────────────────────────────
+  int get userGroupsCreatedTotal =>
+      _usageCounts[_userGroupsCreatedKey] ?? 0;
+  int get userGroupsCreatedRemaining =>
+      TierLimits.isUnlimited(limits.maxUserCreatedGroupsLifetime)
+          ? 999
+          : (limits.maxUserCreatedGroupsLifetime - userGroupsCreatedTotal)
+              .clamp(0, limits.maxUserCreatedGroupsLifetime);
+  bool get canCreateUserGroup =>
+      TierLimits.isUnlimited(limits.maxUserCreatedGroupsLifetime) ||
+      userGroupsCreatedTotal < limits.maxUserCreatedGroupsLifetime;
+
+  // ── Free meetups created (lifetime) ──────────────────────────────────────
+  int get freeMeetupsCreatedTotal =>
+      _usageCounts[_freeMeetupsCreatedKey] ?? 0;
+  int get freeMeetupsCreatedRemaining =>
+      TierLimits.isUnlimited(limits.maxFreeMeetupsLifetime)
+          ? 999
+          : (limits.maxFreeMeetupsLifetime - freeMeetupsCreatedTotal)
+              .clamp(0, limits.maxFreeMeetupsLifetime);
+  bool get canCreateFreeMeetup =>
+      TierLimits.isUnlimited(limits.maxFreeMeetupsLifetime) ||
+      freeMeetupsCreatedTotal < limits.maxFreeMeetupsLifetime;
+
+  // ── Polls created (lifetime) ──────────────────────────────────────────────
+  int get pollsCreatedTotal =>
+      _usageCounts[_pollsCreatedKey] ?? 0;
+  int get pollsCreatedRemaining =>
+      TierLimits.isUnlimited(limits.maxPollsCreatedLifetime)
+          ? 999
+          : (limits.maxPollsCreatedLifetime - pollsCreatedTotal)
+              .clamp(0, limits.maxPollsCreatedLifetime);
+  bool get canCreatePoll =>
+      TierLimits.isUnlimited(limits.maxPollsCreatedLifetime) ||
+      pollsCreatedTotal < limits.maxPollsCreatedLifetime;
+
+  // ── Q&A questions (lifetime) ──────────────────────────────────────────────
+  int get questionsPostedTotal =>
+      _usageCounts[_questionsPostedKey] ?? 0;
+  int get questionsPostedRemaining =>
+      TierLimits.isUnlimited(limits.maxQuestionsLifetime)
+          ? 999
+          : (limits.maxQuestionsLifetime - questionsPostedTotal)
+              .clamp(0, limits.maxQuestionsLifetime);
+  bool get canPostQuestion =>
+      TierLimits.isUnlimited(limits.maxQuestionsLifetime) ||
+      questionsPostedTotal < limits.maxQuestionsLifetime;
+
+  // ── Saved items (lifetime) ────────────────────────────────────────────────
+  int get savedItemsTotal =>
+      _usageCounts[_savedItemsKey] ?? 0;
+  int get savedItemsRemaining =>
+      TierLimits.isUnlimited(limits.maxSavedItemsLifetime)
+          ? 999
+          : (limits.maxSavedItemsLifetime - savedItemsTotal)
+              .clamp(0, limits.maxSavedItemsLifetime);
+  bool get canSaveItem =>
+      TierLimits.isUnlimited(limits.maxSavedItemsLifetime) ||
+      savedItemsTotal < limits.maxSavedItemsLifetime;
+
+  // ── AI saved summaries (lifetime) ────────────────────────────────────────
+  int get aiSavedSummariesTotal =>
+      _usageCounts[_aiSavedSummariesKey] ?? 0;
+  int get aiSavedSummariesRemaining =>
+      TierLimits.isUnlimited(limits.maxAiSavedSummariesLifetime)
+          ? 999
+          : (limits.maxAiSavedSummariesLifetime - aiSavedSummariesTotal)
+              .clamp(0, limits.maxAiSavedSummariesLifetime);
+  bool get canUseAiSavedSummary =>
+      TierLimits.isUnlimited(limits.maxAiSavedSummariesLifetime) ||
+      aiSavedSummariesTotal < limits.maxAiSavedSummariesLifetime;
+
+  // ── Listing duration days ─────────────────────────────────────────────────
+  int get listingDurationDays => limits.listingDurationDays;
+  bool get hasUnlimitedListingDuration =>
+      TierLimits.isUnlimited(limits.listingDurationDays);
+
+
   bool get canCreatePrivateGroup => limits.canCreatePrivateGroups;
   bool get canCreateMeetupFeature => limits.canCreateMeetups;
   bool get canCreateEvent => canCreateMeetupFeature; // backward-compat
@@ -473,6 +589,75 @@ class SubscriptionService extends ChangeNotifier {
       _incrementUsage('ai_matchmaker_month');
   Future<void> recordAiSmartFeedRefresh() =>
       _incrementUsage('ai_feed_today');
+
+
+  // ===========================================================================
+  // USAGE RECORDING -- Lifetime gates (NEVER reset monthly)
+  // ===========================================================================
+
+  Future<void> recordListingCreated() async {
+    if (TierLimits.isUnlimited(limits.maxListingsCreatedLifetime)) return;
+    _usageCounts[_listingsCreatedKey] =
+        (_usageCounts[_listingsCreatedKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordBuyerContact() async {
+    if (TierLimits.isUnlimited(limits.maxBuyerContactsLifetime)) return;
+    _usageCounts[_buyerContactsKey] =
+        (_usageCounts[_buyerContactsKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordUserGroupCreated() async {
+    if (TierLimits.isUnlimited(limits.maxUserCreatedGroupsLifetime)) return;
+    _usageCounts[_userGroupsCreatedKey] =
+        (_usageCounts[_userGroupsCreatedKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordFreeMeetupCreated() async {
+    if (TierLimits.isUnlimited(limits.maxFreeMeetupsLifetime)) return;
+    _usageCounts[_freeMeetupsCreatedKey] =
+        (_usageCounts[_freeMeetupsCreatedKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordPollCreated() async {
+    if (TierLimits.isUnlimited(limits.maxPollsCreatedLifetime)) return;
+    _usageCounts[_pollsCreatedKey] =
+        (_usageCounts[_pollsCreatedKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordQuestionPosted() async {
+    if (TierLimits.isUnlimited(limits.maxQuestionsLifetime)) return;
+    _usageCounts[_questionsPostedKey] =
+        (_usageCounts[_questionsPostedKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordSavedItem() async {
+    if (TierLimits.isUnlimited(limits.maxSavedItemsLifetime)) return;
+    _usageCounts[_savedItemsKey] =
+        (_usageCounts[_savedItemsKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
+
+  Future<void> recordAiSavedSummary() async {
+    if (TierLimits.isUnlimited(limits.maxAiSavedSummariesLifetime)) return;
+    _usageCounts[_aiSavedSummariesKey] =
+        (_usageCounts[_aiSavedSummariesKey] ?? 0) + 1;
+    await _persistUsage();
+    notifyListeners();
+  }
 
   // ===========================================================================
   // SUBSCRIPTION PURCHASE / UPGRADE / DOWNGRADE
@@ -679,32 +864,39 @@ class SubscriptionService extends ChangeNotifier {
   /// Returns the minimum tier required for a feature
   SubscriptionTier minimumTierFor(String feature) {
     switch (feature) {
+      // ── Lifetime-gated features (Plus unlocks) ────────────────────────────
+      case 'listings_created':
+      case 'buyer_contacts':
+      case 'user_groups':
+      case 'free_meetups':
+      case 'polls':
+      case 'questions':
+      case 'saved_items':
+      case 'ai_saved_summaries':
+      case 'service_contact':
       // Core social -- Plus
+      case 'paid_meetups':
       case 'private_groups':
       case 'meetups':
       case 'events':
       case 'profile_badge':
-        return SubscriptionTier.plus;
-
       // AI -- Plus
       case 'ai_listing_generator':
+      case 'ai_chat_summaries':
+      case 'ai_event_recommendations':
       case 'ai_full_copilot':
       case 'ai_full_chat_summaries':
       case 'ai_full_event_discovery':
         return SubscriptionTier.plus;
 
-      // AI -- Partner exclusive
-      case 'ai_matchmaker':
-        return SubscriptionTier.partner;
-      case 'unlimited_ai':
-        return SubscriptionTier.partner;
-
-      // Partner-exclusive features
+      // ── Partner-exclusive features ────────────────────────────────────────
       case 'business_profile':
       case 'partner_analytics':
       case 'endorsement_replies':
       case 'feed_promotion':
       case 'unlimited_service_listings':
+      case 'ai_matchmaker':
+      case 'unlimited_ai':
         return SubscriptionTier.partner;
 
       // Free tier features
@@ -729,6 +921,35 @@ class SubscriptionService extends ChangeNotifier {
   String limitReachedMessage(String limitType) {
     final tierName = _subscription.tierDisplayName;
     switch (limitType) {
+      // ── Lifetime gate messages ─────────────────────────────────────────────
+      case 'listings_created':
+        return 'Free members can create up to ${limits.maxListingsCreatedLifetime} '
+            'listings. Upgrade to Huddl Plus for unlimited listings with 60-day duration.';
+      case 'buyer_contacts':
+        return 'Free members can contact up to ${limits.maxBuyerContactsLifetime} '
+            'sellers. Upgrade to Huddl Plus for unlimited messages and offers.';
+      case 'user_groups':
+        return 'Free members can create up to ${limits.maxUserCreatedGroupsLifetime} '
+            'hobby groups. Upgrade to Huddl Plus for unlimited groups.';
+      case 'free_meetups':
+        return 'Free members can create up to ${limits.maxFreeMeetupsLifetime} '
+            'meetups. Upgrade to Huddl Plus to organise unlimited meetups.';
+      case 'polls':
+        return 'Free members can create up to ${limits.maxPollsCreatedLifetime} '
+            'polls. Upgrade to Huddl Plus for unlimited polls.';
+      case 'questions':
+        return 'Free members can post up to ${limits.maxQuestionsLifetime} '
+            'questions. Upgrade to Huddl Plus for unlimited community Q&A.';
+      case 'saved_items':
+        return 'Free members can save up to ${limits.maxSavedItemsLifetime} '
+            'items. Upgrade to Huddl Plus to save everything you find.';
+      case 'ai_saved_summaries':
+        return 'Free members get ${limits.maxAiSavedSummariesLifetime} '
+            'AI saved summaries. Upgrade to Huddl Plus for unlimited intelligent search of your saves.';
+      case 'service_contact':
+        return 'Contact trusted local childminders, tutors and classes directly. '
+            'Upgrade to Huddl Plus for unlimited service provider contact.';
+
       // Core social limits
       case 'groups_join':
         return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Huddl Plus for unlimited groups!';

@@ -92,6 +92,23 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     _loadBoroughMembers();
     _loadUserGroups();
     _nameController.addListener(_onNameChanged);
+    _checkGroupCreationAllowance();
+  }
+
+  void _checkGroupCreationAllowance() {
+    final ss = SubscriptionService();
+    if (!ss.canCreateUserGroup) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/subscription_gate',
+            arguments: {
+              'featureTitle': 'Group creation limit reached',
+              'featureDescription': ss.limitReachedMessage('user_groups'),
+              'requiredPlan': 'Huddl Plus',
+              'featureIcon': Icons.diversity_3_outlined.codePoint,
+            });
+      });
+    }
   }
 
   // ── Duplicate name check on each keystroke ───────────────────────────────
@@ -736,16 +753,17 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   // ── Create group logic ────────────────────────────────────────────────
   Future<void> _createGroup() async {
-    // ── Subscription gate: group creation limit ────────────────────────
+    // ── Subscription gate: lifetime group creation limit ───────────────
     final subService = SubscriptionService();
     await subService.initialize();
-    if (!subService.canCreateGroup) {
+    if (!subService.canCreateUserGroup) {
       if (mounted) {
-        showUpgradePrompt(
-          context,
-          feature: 'groups_create',
-          message: subService.limitReachedMessage('groups_create'),
-        );
+        Navigator.pushNamed(context, '/subscription_gate', arguments: {
+          'featureTitle': 'Group creation limit reached',
+          'featureDescription': subService.limitReachedMessage('user_groups'),
+          'requiredPlan': 'Huddl Plus',
+          'featureIcon': Icons.diversity_3_outlined.codePoint,
+        });
       }
       return;
     }
@@ -983,7 +1001,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           ),
         );
         // Record usage for subscription tracking
-        subService.recordGroupCreate();
+        await subService.recordUserGroupCreated();
         Navigator.pop(context, newGroup);
       }
     } catch (e) {
@@ -1057,26 +1075,25 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     // ─────────── PHOTO UPLOAD (blue banner) ───────────
                     _buildPhotoUpload(),
 
-                    // ─────────── GROUPS CREATED COUNTER ───────────
-                    // Shown for finite tiers (Plus: 25 cap).
-                    // Partner is unlimited (999) so TierLimits.isUnlimited skips it.
+                    // ─────────── GROUPS CREATED COUNTER (lifetime) ───────────
                     Builder(builder: (context) {
-                      final ss  = SubscriptionService();
-                      final max = ss.limits.maxGroupsCreated;
-                      if (TierLimits.isUnlimited(max)) return const SizedBox.shrink();
-                      final remaining   = ss.groupsCreatedRemaining;
-                      final isNearLimit = remaining <= 3;
-                      final isAtLimit   = remaining == 0;
+                      final ss = SubscriptionService();
+                      if (TierLimits.isUnlimited(ss.limits.maxUserCreatedGroupsLifetime)) {
+                        return const SizedBox.shrink();
+                      }
+                      final used = ss.userGroupsCreatedTotal;
+                      final max = ss.limits.maxUserCreatedGroupsLifetime;
+                      final remaining = ss.userGroupsCreatedRemaining;
                       return Container(
                         margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isNearLimit
+                          color: remaining == 0
                               ? HuddlColors.primary.withValues(alpha: 0.08)
                               : context.hc.inputBg,
                           borderRadius: BorderRadius.circular(10),
-                          border: isNearLimit
+                          border: remaining == 0
                               ? Border.all(
                                   color: HuddlColors.primary.withValues(alpha: 0.20),
                                   width: 0.5)
@@ -1087,25 +1104,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             Icon(
                               Icons.diversity_3_outlined,
                               size: 14,
-                              color: isNearLimit
+                              color: remaining == 0
                                   ? HuddlColors.primary
                                   : context.hc.textTertiary,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                isAtLimit
-                                    ? 'You\'ve created $max groups — your Plus limit. '
-                                      'Upgrade to Partner for unlimited.'
-                                    : '$remaining of $max group'
-                                      '${remaining == 1 ? "" : "s"} remaining on Huddl Plus',
+                                remaining == 0
+                                    ? 'Free group limit reached — upgrade for unlimited'
+                                    : 'Free group ${used + 1} of $max',
                                 style: HuddlText.caption(
-                                  color: isNearLimit
+                                  color: remaining == 0
                                       ? HuddlColors.primary
                                       : context.hc.textTertiary,
-                                  weight: isNearLimit
-                                      ? FontWeight.w500
-                                      : FontWeight.w400,
                                 ),
                               ),
                             ),

@@ -15,7 +15,6 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
-import '../../widgets/upgrade_prompt.dart';
 import '../../constants/app_text_styles.dart';
 
 // =============================================================================
@@ -319,16 +318,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       return;
     }
 
-    // ── Subscription gate: listing creation limit ────────────────────
+    // ── Subscription gate: lifetime listing creation limit ─────────────
     final subService = SubscriptionService();
     await subService.initialize();
     if (!subService.canCreateListing) {
       if (mounted) {
-        showUpgradePrompt(
-          context,
-          feature: 'listings',
-          message: subService.limitReachedMessage('listings'),
-        );
+        Navigator.pushNamed(context, '/subscription_gate', arguments: {
+          'featureTitle': 'Free listing limit reached',
+          'featureDescription': subService.limitReachedMessage('listings_created'),
+          'requiredPlan': 'Huddl Plus',
+          'featureIcon': Icons.storefront_outlined.codePoint,
+        });
       }
       return;
     }
@@ -449,7 +449,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           ),
         );
         // Record usage for subscription tracking
-        subService.recordListingCreate();
+        await subService.recordListingCreated();
 
         // 🎉 First listing celebration overlay
         final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -560,6 +560,34 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       ),
       body: Column(
         children: [
+          // ── Listing slot counter (free users only) ─────────────────────────
+          Builder(builder: (context) {
+            final ss = SubscriptionService();
+            if (TierLimits.isUnlimited(ss.limits.maxListingsCreatedLifetime)) {
+              return const SizedBox.shrink();
+            }
+            final used = ss.listingsCreatedTotal;
+            final max = ss.limits.maxListingsCreatedLifetime;
+            final remaining = ss.listingsCreatedRemaining;
+            return Container(
+              width: double.infinity,
+              color: remaining == 0
+                  ? HuddlColors.primary.withValues(alpha: 0.08)
+                  : HuddlColors.primary.withValues(alpha: 0.04),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                remaining == 0
+                    ? 'All $max free listing slots used — upgrade for unlimited'
+                    : 'Free listing ${used + 1} of $max — 7-day duration',
+                style: HuddlText.caption(
+                  color: remaining == 0
+                      ? HuddlColors.primary
+                      : HuddlColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            );
+          }),
           // ── Thin orange progress strip — only shown on steps 0 & 1.
           // On step 2 the blue photo banner is flush below the AppBar so we
           // hide the indicator to avoid any colour clash at that seam.

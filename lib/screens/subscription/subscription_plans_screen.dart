@@ -440,7 +440,15 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         // Feature comparison
                         _FeatureComparisonTable(period: _period),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
+
+                        // Free tier limits summary — shown only to free users
+                        // to make upgrade value proposition concrete
+                        if (_service.isFree) const _FreeTierLimitsSummary(),
+
+                        if (_service.isFree) const SizedBox(height: 16),
+
+                        const SizedBox(height: 8),
 
                         // Restore purchases (Apple Guideline 3.1.1 — required)
                         TextButton(
@@ -1368,6 +1376,181 @@ class _FeatureComparisonTable extends StatelessWidget {
           Expanded(child: Center(child: checkIcon(welcome, HuddlColors.textHint))),
           Expanded(child: Center(child: checkIcon(plus, HuddlColors.textDark))),
           Expanded(child: Center(child: checkIcon(inner, HuddlColors.nearBlack))),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FREE TIER LIMITS SUMMARY
+//
+// Shown below the feature comparison table when the user is on the free
+// (Welcome) tier. Displays their current lifetime usage across the 8 gated
+// features as a concrete "you've used X of Y" nudge — making the upgrade
+// value proposition tangible rather than abstract.
+// ═══════════════════════════════════════════════════════════════════════════════
+class _FreeTierLimitsSummary extends StatelessWidget {
+  const _FreeTierLimitsSummary();
+
+  @override
+  Widget build(BuildContext context) {
+    final ss     = SubscriptionService();
+    final limits = ss.limits;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.hc.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: HuddlColors.primary.withValues(alpha: 0.06),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(15)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline,
+                    size: 16, color: HuddlColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Your free plan usage',
+                  style: HuddlText.body(
+                      weight: FontWeight.w600,
+                      color: HuddlColors.primary),
+                ),
+              ],
+            ),
+          ),
+          // Usage rows
+          _CompareRow(
+            label: 'Listings created',
+            used: ss.listingsCreatedTotal,
+            max: limits.maxListingsCreatedLifetime,
+          ),
+          _CompareRow(
+            label: 'Seller contacts',
+            used: ss.buyerContactsTotal,
+            max: limits.maxBuyerContactsLifetime,
+          ),
+          _CompareRow(
+            label: 'Groups created',
+            used: ss.userGroupsCreatedTotal,
+            max: limits.maxUserCreatedGroupsLifetime,
+          ),
+          _CompareRow(
+            label: 'Free meetups',
+            used: ss.freeMeetupsCreatedTotal,
+            max: limits.maxFreeMeetupsLifetime,
+          ),
+          _CompareRow(
+            label: 'Polls created',
+            used: ss.pollsCreatedTotal,
+            max: limits.maxPollsCreatedLifetime,
+          ),
+          _CompareRow(
+            label: 'Community posts',
+            used: ss.questionsPostedTotal,
+            max: limits.maxQuestionsLifetime,
+          ),
+          _CompareRow(
+            label: 'Items saved',
+            used: ss.savedItemsTotal,
+            max: limits.maxSavedItemsLifetime,
+          ),
+          _CompareRow(
+            label: 'AI summaries',
+            used: ss.aiSavedSummariesTotal,
+            max: limits.maxAiSavedSummariesLifetime,
+            isLast: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPARE ROW
+//
+// A single row in _FreeTierLimitsSummary showing used/max with a progress
+// bar. Turns accent-coloured when the user has hit the limit.
+// ─────────────────────────────────────────────────────────────────────────────
+class _CompareRow extends StatelessWidget {
+  final String label;
+  final int    used;
+  final int    max;
+  final bool   isLast;
+
+  const _CompareRow({
+    required this.label,
+    required this.used,
+    required this.max,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isUnlimited = TierLimits.isUnlimited(max);
+    final isFull      = !isUnlimited && used >= max;
+    final progress    = isUnlimited ? 0.0 : (max > 0 ? (used / max).clamp(0.0, 1.0) : 0.0);
+    final accentColor = isFull ? HuddlColors.primary : HuddlColors.textTertiary;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : const Border(
+                bottom: BorderSide(color: HuddlColors.gray100)),
+        borderRadius: isLast
+            ? const BorderRadius.vertical(bottom: Radius.circular(15))
+            : null,
+      ),
+      child: Row(
+        children: [
+          // Label
+          Expanded(
+            flex: 3,
+            child: Text(label,
+                style: HuddlText.caption(color: context.hc.textSecondary)),
+          ),
+          // Usage badge
+          SizedBox(
+            width: 64,
+            child: Text(
+              isUnlimited ? '∞' : '$used / $max',
+              textAlign: TextAlign.right,
+              style: HuddlText.caption(
+                  weight: FontWeight.w600, color: accentColor),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Progress bar
+          SizedBox(
+            width: 60,
+            child: isUnlimited
+                ? const SizedBox.shrink()
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 4,
+                      backgroundColor: HuddlColors.gray200,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isFull ? HuddlColors.primary : HuddlColors.textTertiary,
+                      ),
+                    ),
+                  ),
+          ),
         ],
       ),
     );

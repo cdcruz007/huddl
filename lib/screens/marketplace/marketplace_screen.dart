@@ -2060,8 +2060,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     final offers = _service.pendingOffers;
     final offersFirst = _ai.offersNeedAttention(offers);
 
-    // Separate active vs sold — show full sold history, no time filter
-    final active = myListings.where((i) => !i.isSold).toList();
+    // Separate active vs sold vs expired — show full sold history, no time filter
+    // Archive any expired listings (updates isExpiredFlag in-place)
+    _service.archiveExpiredListings();
+    final expired = myListings.where((i) => i.isExpiredFlag && !i.isSold).toList();
+    final active = myListings.where((i) => !i.isSold && !i.isExpiredFlag).toList();
     final sold = myListings.where((i) => i.isSold).toList();
     // Sort sold: most recently sold first
     sold.sort((a, b) => b.listedAt.compareTo(a.listedAt));
@@ -2134,6 +2137,59 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         children: [
+          // ── Listing slot counter (free users only) ──────────────────────
+          Builder(builder: (context) {
+            final ss = SubscriptionService();
+            if (TierLimits.isUnlimited(ss.limits.maxListingsCreatedLifetime)) {
+              return const SizedBox.shrink();
+            }
+            final used = ss.listingsCreatedTotal;
+            final max = ss.limits.maxListingsCreatedLifetime;
+            final remaining = ss.listingsCreatedRemaining;
+            return GestureDetector(
+              onTap: remaining == 0
+                  ? () => Navigator.pushNamed(context, '/subscription_plans')
+                  : null,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: remaining == 0
+                      ? HuddlColors.primary.withValues(alpha: 0.08)
+                      : hc.inputBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: remaining == 0
+                      ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.20))
+                      : null,
+                ),
+                child: Row(children: [
+                  Icon(Icons.storefront_outlined,
+                      size: 15,
+                      color: remaining == 0
+                          ? HuddlColors.primary
+                          : hc.textTertiary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      remaining == 0
+                          ? 'All $max free listing slots used — upgrade for unlimited'
+                          : '$used of $max free listing slots used · 7-day duration',
+                      style: HuddlText.caption(
+                        color: remaining == 0
+                            ? HuddlColors.primary
+                            : hc.textTertiary,
+                      ),
+                    ),
+                  ),
+                  if (remaining == 0)
+                    Text('Upgrade →',
+                        style: HuddlText.caption(
+                            color: HuddlColors.primary)),
+                ]),
+              ),
+            );
+          }),
+
           // ── Single-tap listing prompt — AI adapts the copy ──
           _buildSellCTA(hc),
 
@@ -2141,16 +2197,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           if (offersFirst && offers.isNotEmpty) ...[
             _buildOffersSection(hc, offers),
             if (active.isNotEmpty) _buildListingsSection(hc, active, 'Active listings'),
+            if (expired.isNotEmpty) _buildExpiredSection(hc, expired),
             if (recentlySold.isNotEmpty) _buildSoldSection(hc, recentlySold),
           ] else ...[
             if (active.isNotEmpty) _buildListingsSection(hc, active, 'My listings'),
+            if (expired.isNotEmpty) _buildExpiredSection(hc, expired),
             if (offers.isNotEmpty) _buildOffersSection(hc, offers),
             if (recentlySold.isNotEmpty) _buildSoldSection(hc, recentlySold),
           ],
 
           // ── Empty state ──
           // liveRegion: screen readers announce when seller's listings become empty
-          if (active.isEmpty && offers.isEmpty && sold.isEmpty)
+          if (active.isEmpty && expired.isEmpty && offers.isEmpty && sold.isEmpty)
             Semantics(
               liveRegion: true,
               child: Padding(
@@ -2178,6 +2236,140 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         ],
       ),
     );
+  }
+
+
+  // ── Expired listings section ─────────────────────────────────────────────
+  Widget _buildExpiredSection(HuddlContextColors hc, List<RehomeItem> expired) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text('Expired listings',
+            style: HuddlText.label(color: hc.textTertiary)),
+        const SizedBox(height: 8),
+        ...expired.map((item) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: hc.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: HuddlColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.title,
+                  style: HuddlText.body(
+                    weight: FontWeight.w600,
+                    color: hc.textTertiary,
+                  ).copyWith(decoration: TextDecoration.lineThrough)),
+              const SizedBox(height: 6),
+              Row(children: [
+                const Icon(Icons.schedule_outlined,
+                    size: 14, color: HuddlColors.textTertiary),
+                const SizedBox(width: 4),
+                Text('Listing expired after ${SubscriptionService().limits.listingDurationDays} days',
+                    style: HuddlText.caption(color: HuddlColors.textTertiary)),
+              ]),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _relistExpiredItem(item),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    SubscriptionService().listingsCreatedRemaining > 0
+                        ? 'Relist — ${SubscriptionService().listingsCreatedRemaining} '
+                          'slot${SubscriptionService().listingsCreatedRemaining == 1 ? "" : "s"} remaining'
+                        : 'Upgrade to relist',
+                    style: HuddlText.body(
+                        weight: FontWeight.w600,
+                        color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )),
+      ],
+    );
+  }
+
+  Future<void> _relistExpiredItem(RehomeItem item) async {
+    final ss = SubscriptionService();
+    await ss.initialize();
+
+    if (!ss.canCreateListing) {
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/subscription_gate', arguments: {
+        'featureTitle': 'Free listing limit reached',
+        'featureDescription':
+            'Relisting uses one of your 3 free listing slots. '
+            'Upgrade to Huddl Plus for unlimited listings with 60-day duration.',
+        'requiredPlan': 'Huddl Plus',
+        'featureIcon': Icons.storefront_outlined.codePoint,
+      });
+      return;
+    }
+
+    final remaining = ss.listingsCreatedRemaining;
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Relist this item?',
+            style: HuddlText.body(weight: FontWeight.w600)),
+        content: Text(
+          'Relisting uses 1 of your $remaining free listing '
+          '${remaining == 1 ? "slot" : "slots"}. '
+          'After relisting you will have ${remaining - 1} '
+          '${remaining - 1 == 1 ? "slot" : "slots"} remaining.',
+          style: HuddlText.body(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel',
+                style: HuddlText.body(color: ctx.hc.textTertiary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Relist',
+                style: HuddlText.body(
+                    color: HuddlColors.primary,
+                    weight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await ss.recordListingCreated();
+    final newExpiry = TierLimits.isUnlimited(ss.limits.listingDurationDays)
+        ? null
+        : DateTime.now().add(Duration(days: ss.listingDurationDays));
+    _service.relistItem(item.id, newExpiry: newExpiry);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${item.title} relisted.',
+            style: const TextStyle(color: Colors.white)),
+        backgroundColor: HuddlColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
+    }
   }
 
   // ── Sell CTA — compact single-row prompt, AI-adapted copy ──
@@ -2973,6 +3165,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildSavedTab(HuddlContextColors hc) {
     final allSaved = _service.savedItems;
 
+    // ── Saved items slot counter (free users only) ─────────────────────
+    final ssSaved = SubscriptionService();
+    final showSavedCounter = !TierLimits.isUnlimited(
+        ssSaved.limits.maxSavedItemsLifetime);
+
     // Filter by search query when search is active
     final q = _isSearchActive ? _searchQuery.toLowerCase().trim() : '';
     final saved = q.isEmpty
@@ -2997,6 +3194,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     return Column(
       children: [
+        // Saved items slot counter — free users only
+        if (showSavedCounter) Builder(builder: (context) {
+          final remaining = ssSaved.savedItemsRemaining;
+          final max       = ssSaved.limits.maxSavedItemsLifetime;
+          final used      = ssSaved.savedItemsTotal;
+          return Container(
+            width: double.infinity,
+            color: remaining == 0
+                ? HuddlColors.primary.withValues(alpha: 0.08)
+                : HuddlColors.primary.withValues(alpha: 0.04),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              remaining == 0
+                  ? 'Save limit reached ($used/$max) — upgrade for unlimited'
+                  : 'Saved $used of $max — $remaining slot${remaining == 1 ? "" : "s"} remaining',
+              style: HuddlText.caption(
+                  color: remaining == 0
+                      ? HuddlColors.primary
+                      : HuddlColors.textTertiary),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }),
         // Count row
         Semantics(
           liveRegion: true,

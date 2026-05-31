@@ -4454,6 +4454,41 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   // ── Create poll flow ──────────────────────────────────────────────────
   Future<void> _openCreatePoll() async {
     if (_pollCreating) return; // creation lock — prevent double-tap
+
+    // ── Subscription gate: lifetime poll limit ────────────────────────
+    final ss = SubscriptionService();
+    await ss.initialize();
+    if (!ss.canCreatePoll) {
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/subscription_gate', arguments: {
+        'featureTitle': 'Poll limit reached',
+        'featureDescription': ss.limitReachedMessage('polls'),
+        'requiredPlan': 'Huddl Plus',
+        'featureIcon': Icons.poll_outlined.codePoint,
+      });
+      return;
+    }
+    // Warning SnackBar when approaching limit (1 remaining)
+    final remaining = ss.pollsCreatedRemaining;
+    if (!TierLimits.isUnlimited(ss.limits.maxPollsCreatedLifetime) &&
+        remaining <= 1) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            remaining == 1
+                ? 'Last free poll — upgrade for unlimited'
+                : 'Free polls used — upgrade for unlimited',
+            style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+          ),
+          backgroundColor: HuddlColors.nearBlack,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ));
+      }
+    }
+
     final result = await Navigator.push<PollData>(
       context,
       HuddlSpringPageRoute(
@@ -4461,6 +4496,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       ),
     );
     if (result == null || !mounted) return;
+    // Record usage only after successful poll creation
+    await ss.recordPollCreated();
+
     if (_pollCreating) return; // double-check after await
     _pollCreating = true;
 
