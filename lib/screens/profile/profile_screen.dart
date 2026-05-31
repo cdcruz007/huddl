@@ -6888,6 +6888,37 @@ class _SettingsScreen extends StatelessWidget {
             ],
           ),
 
+          // ── SEND Support ──────────────────────────────────────────────
+          // Visible only when the parent has a school-age child (age 4–11).
+          if (() {
+            final children = profileState._onboarding.children;
+            if (children.isEmpty) return false;
+            final now = DateTime.now();
+            return children.any((c) {
+              final bday = c['birthday'];
+              if (bday == null || bday.toString().isEmpty) return false;
+              final dob = DateTime.tryParse(bday.toString());
+              if (dob == null) return false;
+              final ageYears = now.difference(dob).inDays / 365.25;
+              return ageYears >= 4.0 && ageYears < 12.0;
+            });
+          }())
+            _SettingsSection(
+              title: 'SEND Support',
+              items: [
+                _SettingsItem(
+                  icon: Icons.school_outlined,
+                  title: 'SEND Navigator',
+                  subtitle: 'EHCP, deadlines, AI advisor & support directory',
+                  iconColor: HuddlColors.teal,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/send');
+                  },
+                ),
+              ],
+            ),
+
           // ── Support ───────────────────────────────────────────────────
           _SettingsSection(
             title: 'Support',

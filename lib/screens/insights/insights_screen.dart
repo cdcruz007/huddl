@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
+import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_network_image.dart';
@@ -155,6 +156,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
               onSortTap: _showSortSheet,
             ),
             const SizedBox(height: 2),
+            // ── SEND Navigator banner (school-age children only) ───────
+            _SendNavigatorBanner(),
             // ── Unified feed ───────────────────────────────────────────
             Expanded(
               child: _UnifiedInsightsFeed(
@@ -168,6 +171,111 @@ class _InsightsScreenState extends State<InsightsScreen> {
       ),
     ), // Scaffold
     ); // NotificationListener
+  }
+}
+
+// ─── SEND Navigator banner (school-age children only) ────────────────────────
+
+class _SendNavigatorBanner extends StatelessWidget {
+  const _SendNavigatorBanner();
+
+  /// Returns true when the user has at least one child aged 4–11 years.
+  bool _isEligible() {
+    final onboarding = OnboardingDataService();
+    final children = onboarding.children;
+    if (children.isEmpty) return false;
+    final now = DateTime.now();
+    return children.any((c) {
+      final bday = c['birthday'];
+      if (bday == null || bday.toString().isEmpty) return false;
+      final dob = DateTime.tryParse(bday.toString());
+      if (dob == null) return false;
+      final ageYears = now.difference(dob).inDays / 365.25;
+      return ageYears >= 4.0 && ageYears < 12.0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isEligible()) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.pushNamed(context, '/send'),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF1A2E3A), const Color(0xFF0D3349)]
+                    : [const Color(0xFFE8F5F9), const Color(0xFFD0EEF6)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? HuddlColors.teal.withValues(alpha: 0.4)
+                    : HuddlColors.teal.withValues(alpha: 0.3),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.teal.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.school_outlined,
+                    size: 18,
+                    color: HuddlColors.teal,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SEND Navigator',
+                        style: HuddlText.body(
+                          weight: FontWeight.w600,
+                          color: isDark ? HuddlColors.teal : const Color(0xFF0A6C82),
+                        ),
+                      ),
+                      Text(
+                        'EHCP support, deadlines & AI advisor',
+                        style: HuddlText.caption(
+                          color: isDark
+                              ? HuddlColors.teal.withValues(alpha: 0.8)
+                              : const Color(0xFF0A6C82).withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: isDark
+                      ? HuddlColors.teal.withValues(alpha: 0.7)
+                      : const Color(0xFF0A6C82).withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

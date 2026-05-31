@@ -4900,8 +4900,7 @@ class _HomeScreenState extends State<HomeScreen>
     return GestureDetector(
       onTap: () {
         HuddlAnimations.mediumTap();
-        // Navigate to the Insights tab — SEND content now lives in the unified feed
-        _switchToDiscover(3); // Insights tab
+        Navigator.pushNamed(context, '/send');
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
