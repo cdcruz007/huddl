@@ -1755,6 +1755,8 @@ class _ListingCardState extends State<_ListingCard> {
                       onTap: _endorsing ? () {} : _toggleEndorse,
                       label: 'Endorse',
                       joinedLabel: 'Endorsed',
+                      unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                      unJoinedTextColor: HuddlColors.primary,
                     ),
                 ],
               ),
