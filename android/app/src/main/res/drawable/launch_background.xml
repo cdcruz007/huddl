@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Native splash: solid white matching the Flutter SplashScreen background.
+     No image — the animated logo is rendered by Flutter's SplashScreen widget.
+     This prevents the white-flash / wrong-colour blink on cold start. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+    <item>
+        <color android:color="#FFFFFF"/>
+    </item>
 </layer-list>
