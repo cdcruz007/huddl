@@ -5646,7 +5646,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   mood: hasActiveFilters ? HuddlMood.curious : HuddlMood.celebrating,
                   illustrationAsset: hasActiveFilters
                       ? null
-                      : 'assets/illustrations/community_wave.webp',
+                      : 'assets/illustrations/community_wave.png',
                   title: hasActiveFilters
                       ? 'No groups match your search'
                       : "You're in every group nearby",
@@ -7500,7 +7500,7 @@ class _EmptyMessagesState extends StatelessWidget {
     // and the user already belongs to groups.
     return const HuddlEmptyState(
       mood: HuddlMood.waving,
-      illustrationAsset: 'assets/illustrations/chat_high_five.webp',
+      illustrationAsset: 'assets/illustrations/chat_high_five.png',
       title: 'No conversations yet',
       subtitle:
           'Your group chats and direct messages will appear here once you start connecting.',

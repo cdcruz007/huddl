@@ -2239,7 +2239,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
                     illustrationAsset: _hasActiveFilter
                         ? null
-                        : 'assets/illustrations/location_community.webp',
+                        : 'assets/illustrations/location_community.png',
                     title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                     subtitle: _hasActiveFilter
                         ? 'Try adjusting your filters to see more meetups.'
@@ -3490,7 +3490,7 @@ class _EventsTabState extends State<_EventsTab> {
                         ? Icons.filter_list_off
                         : Icons.event_outlined,
                     illustrationAsset: (!hasActiveFilter && _localSearchQuery.isEmpty)
-                        ? 'assets/illustrations/calendar.webp'
+                        ? 'assets/illustrations/calendar.png'
                         : null,
                     title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
@@ -6013,7 +6013,7 @@ class _NearbyTabState extends State<_NearbyTab>
           child: items.isEmpty
               ? HuddlEmptyState(
                   mood: HuddlMood.curious,
-                  illustrationAsset: 'assets/illustrations/location_community.webp',
+                  illustrationAsset: 'assets/illustrations/location_community.png',
                   title: _filter == 'meetups'
                       ? 'No meetups nearby yet'
                       : _filter == 'events'

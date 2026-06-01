@@ -2378,7 +2378,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
           child: visible.isEmpty
               ? const HuddlEmptyState(
                   mood: HuddlMood.neutral,
-                  illustrationAsset: 'assets/illustrations/waiting.webp',
+                  illustrationAsset: 'assets/illustrations/waiting.png',
                   title: 'No upcoming deadlines',
                   subtitle:
                       'Tap "Add" to track EHCP reviews, school applications, or appeal windows.',

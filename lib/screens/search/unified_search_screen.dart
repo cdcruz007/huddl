@@ -405,7 +405,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
     if (_totalResults == 0) {
       return HuddlEmptyState(
         mood: HuddlMood.curious,
-        illustrationAsset: 'assets/illustrations/search_found.webp',
+        illustrationAsset: 'assets/illustrations/search_found.png',
         title: 'No results for "$_query"',
         subtitle:
             'Try different keywords — or browse Discover for local groups and meetups.',

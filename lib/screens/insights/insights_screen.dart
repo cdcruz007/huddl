@@ -593,7 +593,7 @@ class _CommunityTabState extends State<_CommunityTab>
           return _EmptyState(
             icon: Icons.auto_awesome_outlined,
             illustrationAsset: widget.searchQuery.isEmpty
-                ? 'assets/illustrations/growth_yellow.webp'
+                ? 'assets/illustrations/growth_yellow.png'
                 : null,
             title: widget.searchQuery.isNotEmpty
                 ? 'No results for "${widget.searchQuery}"'
