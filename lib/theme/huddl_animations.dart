@@ -501,9 +501,9 @@ class JoinButton extends StatefulWidget {
     required this.onTap,
     this.label = 'Join',
     this.joinedLabel = 'Joined',
-    this.joinedColor = const Color(0xFF1C1C1E),     // nearBlack — confirmed state
-    this.unJoinedColor = const Color(0xFFF7F7F7),   // light grey — available state
-    this.unJoinedTextColor = const Color(0xFF1C1C1E),
+    this.joinedColor = const Color(0xFF1C1C1E),       // nearBlack — confirmed state
+    this.unJoinedColor = const Color(0x1AFF965C),     // primary @ 10% — available state (HuddlColors.primary)
+    this.unJoinedTextColor = const Color(0xFFFF965C), // primary text — available state (HuddlColors.primary)
   });
 
   final bool isJoined;

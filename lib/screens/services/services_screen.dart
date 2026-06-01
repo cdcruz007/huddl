@@ -1345,6 +1345,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                       joinedColor: const Color(0xFF1C1C1E),
                       unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
+                      // joinedColor uses default nearBlack — explicit for clarity
                     ),
                   ),
                   if (_endorsing)
@@ -1755,6 +1756,7 @@ class _ListingCardState extends State<_ListingCard> {
                       onTap: _endorsing ? () {} : _toggleEndorse,
                       label: 'Endorse',
                       joinedLabel: 'Endorsed',
+                      joinedColor: const Color(0xFF1C1C1E),
                       unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
                     ),
