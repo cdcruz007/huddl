@@ -57,9 +57,14 @@ class OnboardingPhotoService {
 
   // ── Pexels API ──────────────────────────────────────────────────────────────
   // Free tier: 200 req/hour, 20,000/month. No per-image attribution required.
-  // Supply via: flutter run --dart-define=PEXELS_API_KEY=YOUR_KEY
+  // Override at build time: flutter run --dart-define=PEXELS_API_KEY=YOUR_KEY
   // Get a key:  https://www.pexels.com/api/
-  static const String _pexelsKey = String.fromEnvironment('PEXELS_API_KEY');
+  static const String _embeddedPexelsKey =
+      'T8pftt8eHd9A7taAgegYbb1IoJnCxADwkDyD6nuqKT1CfQVKpeDZ4nY2';
+  static const String _pexelsKey = String.fromEnvironment(
+    'PEXELS_API_KEY',
+    defaultValue: _embeddedPexelsKey,
+  );
   static const String _pexelsBase = 'https://api.pexels.com/v1/search';
 
   // ── Local borough → first asset mapping ────────────────────────────────────
