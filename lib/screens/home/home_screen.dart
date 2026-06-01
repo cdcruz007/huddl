@@ -4893,7 +4893,7 @@ class _HomeScreenState extends State<HomeScreen>
         decoration: BoxDecoration(
           color: hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: hc.borderTertiary, width: 0.5),
+          border: Border.all(color: hc.divider, width: 0.5),
         ),
         child: Row(
           children: [
