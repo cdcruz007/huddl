@@ -683,6 +683,7 @@ class _ExpertTabState extends State<_ExpertTab>
     if (sorted.isEmpty) {
       return _EmptyState(
         icon: Icons.menu_book_outlined,
+        illustrationAsset: 'assets/illustrations/ui_design.png',
         title: 'No expert guides found',
         subtitle: 'Try clearing the search or selecting a different category.',
       );
@@ -1996,6 +1997,7 @@ class _UnifiedInsightsFeedState extends State<_UnifiedInsightsFeed>
         if (allItems.isEmpty) {
           return _EmptyState(
             icon: Icons.auto_awesome_outlined,
+            illustrationAsset: 'assets/illustrations/growth_yellow.png',
             title: widget.searchQuery.isNotEmpty
                 ? 'No results for "${widget.searchQuery}"'
                 : 'No insights yet',

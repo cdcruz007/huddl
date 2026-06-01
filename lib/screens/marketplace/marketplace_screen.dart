@@ -3186,8 +3186,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       // liveRegion: screen readers announce when saved list becomes empty
       return Semantics(
         liveRegion: true,
-        child: HuddlEmptyState(
+        child: const HuddlEmptyState(
           mood: HuddlMood.supportive,
+          illustrationAsset: 'assets/illustrations/waving_thumbs.png',
           title: 'Nothing saved yet',
           subtitle: 'Tap the ❤️ on any listing to save it here.',
         ),

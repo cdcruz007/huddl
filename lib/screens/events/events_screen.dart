@@ -2853,6 +2853,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
     if (allGoing.isEmpty) {
       return _EmptyState(
         icon: Icons.event_available_outlined,
+        illustrationAsset: 'assets/illustrations/calendar.png',
         title: "You're not going to anything yet",
         subtitle:
             "Tap 'Count Me In' on a meetup or event to add it here!",
