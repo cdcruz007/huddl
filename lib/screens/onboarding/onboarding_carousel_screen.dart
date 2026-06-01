@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_photo_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
-import '../../widgets/common/huddl_network_image.dart';
 
 // ── Data class ────────────────────────────────────────────────────────────────
 class _HeroPageData {
@@ -304,11 +303,12 @@ class _CarouselPageState extends State<_CarouselPage>
                       bottom: Radius.circular(28),
                     ),
                     child: widget.isLoading
-                        // Slide 2 loading: shimmer while GPS + API resolves
-                        // (slides 1 and 3 never shimmer)
-                        ? const HuddlShimmer(
-                            width: double.infinity,
-                            height: double.infinity,
+                        // Slide 2 loading: show static fallback immediately —
+                        // shimmer + dark scrim looked like a broken black box.
+                        // The fallback asset is replaced once GPS resolves.
+                        ? Image.asset(
+                            'assets/images/onboarding_meetup.webp',
+                            fit: BoxFit.cover,
                           )
                         : widget.data.locationPhoto != null
                             // Pexels network photo
