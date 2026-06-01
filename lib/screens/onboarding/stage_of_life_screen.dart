@@ -201,7 +201,9 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
                           'Connect with others at the same stage. You can choose more than one.',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: HuddlColors.disabledText,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? HuddlColors.darkTextSecondary
+                                : HuddlColors.disabledText,
                             height: 1.5,
                           ),
                         ),
@@ -251,6 +253,13 @@ class _StageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = selected
+        ? HuddlColors.onboardingOrange.withValues(alpha: 0.10)
+        : (isDark ? HuddlColors.darkSurface : Colors.white);
+    final borderColor = selected
+        ? HuddlColors.onboardingOrange
+        : (isDark ? HuddlColors.darkDivider : HuddlColors.divider);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -259,21 +268,21 @@ class _StageCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: selected
-              ? HuddlColors.onboardingOrange.withValues(alpha: 0.06)
-              : Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? HuddlColors.onboardingOrange : HuddlColors.divider,
+            color: borderColor,
             width: selected ? 1.8 : 1.2,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
@@ -357,6 +366,9 @@ class _OrangeButton extends StatelessWidget {
       {required this.label, required this.enabled, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final disabledBg = isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.disabled;
+    final disabledFg = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
@@ -365,15 +377,18 @@ class _OrangeButton extends StatelessWidget {
         decoration: BoxDecoration(
             color: enabled
                 ? HuddlColors.onboardingOrange
-                : HuddlColors.disabled,
-            borderRadius: BorderRadius.circular(12)),
+                : disabledBg,
+            borderRadius: BorderRadius.circular(12),
+            border: !enabled && isDark
+                ? Border.all(color: HuddlColors.darkDivider, width: 1)
+                : null),
         alignment: Alignment.center,
         child: Text(label,
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color:
-                    enabled ? Colors.white : HuddlColors.disabledText)),
+                    enabled ? Colors.white : disabledFg)),
       ),
     );
   }

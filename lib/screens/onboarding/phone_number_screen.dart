@@ -175,19 +175,33 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     Text(
                       'We\'ll send a one-time code to verify it\'s you. Never used for marketing.',
                       style: TextStyle(
-                          fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
+                          fontSize: 14,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? HuddlColors.darkTextSecondary
+                              : HuddlColors.disabledText,
+                          height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
 
                     // Phone input row
-                    Container(
+                    Builder(builder: (context) {
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      final containerBg = isDark ? HuddlColors.darkInputBg : const Color(0xFFF5F5F5);
+                      final dividerColor = isDark ? HuddlColors.darkDivider : HuddlColors.inputBorder;
+                      final hintColor = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
+                      final labelHintColor = isDark
+                          ? HuddlColors.darkTextTertiary
+                          : HuddlColors.disabledText.withValues(alpha: 0.8);
+                      return Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: containerBg,
                         borderRadius: BorderRadius.circular(12),
                         border: _errorText != null
                             ? Border.all(color: HuddlColors.error, width: 1.5)
-                            : Border.all(color: Colors.transparent),
+                            : isDark
+                                ? Border.all(color: HuddlColors.darkDivider, width: 1)
+                                : Border.all(color: Colors.transparent),
                       ),
                       child: Row(
                         children: [
@@ -215,7 +229,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                           Container(
                               width: 1,
                               height: 28,
-                              color: HuddlColors.inputBorder),
+                              color: dividerColor),
                           // Phone input
                           Expanded(
                             child: Column(
@@ -228,8 +242,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                     'Mobile number',
                                     style: TextStyle(
                                         fontSize: 11,
-                                        color:
-                                            HuddlColors.disabledText.withValues(alpha: 0.8)),
+                                        color: labelHintColor),
                                   ),
                                 ),
                                 TextField(
@@ -244,10 +257,10 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                   maxLength: 10,
                                   style: TextStyle(
                                       fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     hintText: '7700 900 123',
                                     hintStyle: TextStyle(
-                                        fontSize: 16, color: HuddlColors.disabledText),
+                                        fontSize: 16, color: hintColor),
                                     border: InputBorder.none,
                                     counterText: '',
                                     contentPadding: EdgeInsets.fromLTRB(
@@ -259,7 +272,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                           ),
                         ],
                       ),
-                    ),
+                    );
+                    }),
 
                     const SizedBox(height: 8),
 
@@ -290,7 +304,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             _displayFormatted,
                             style: TextStyle(
                               fontSize: 12,
-                              color: _canContinue ? HuddlColors.onboardingOrange : HuddlColors.disabledText,
+                              color: _canContinue
+                                  ? HuddlColors.onboardingOrange
+                                  : (Theme.of(context).brightness == Brightness.dark
+                                      ? HuddlColors.darkTextTertiary
+                                      : HuddlColors.disabledText),
                               fontWeight: FontWeight.w500,
                             ),
                           )
@@ -299,7 +317,9 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             'UK mobile only (e.g. 07xxx xxx xxx)',
                             style: TextStyle(
                               fontSize: 11,
-                              color: HuddlColors.disabledText.withValues(alpha: 0.8),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.darkTextTertiary
+                                  : HuddlColors.disabledText.withValues(alpha: 0.8),
                             ),
                           ),
                         Text(
@@ -309,7 +329,9 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             fontWeight: FontWeight.w600,
                             color: _canContinue
                                 ? HuddlColors.onboardingOrange
-                                : HuddlColors.disabledText.withValues(alpha: 0.8),
+                                : (Theme.of(context).brightness == Brightness.dark
+                                    ? HuddlColors.darkTextTertiary
+                                    : HuddlColors.disabledText.withValues(alpha: 0.8)),
                           ),
                         ),
                       ],
@@ -396,20 +418,26 @@ class _OrangeButton extends StatelessWidget {
       {required this.label, required this.enabled, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final disabledBg = isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.disabled;
+    final disabledFg = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
-            borderRadius: BorderRadius.circular(12)),
+            color: enabled ? HuddlColors.onboardingOrange : disabledBg,
+            borderRadius: BorderRadius.circular(12),
+            border: !enabled && isDark
+                ? Border.all(color: HuddlColors.darkDivider, width: 1)
+                : null),
         alignment: Alignment.center,
         child: Text(label,
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: enabled ? Colors.white : HuddlColors.disabledText)),
+                color: enabled ? Colors.white : disabledFg)),
       ),
     );
   }

@@ -84,12 +84,14 @@ class _NameInputScreenState extends State<NameInputScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Center(
+                    Center(
                       child: Text(
                         'Other parents in Cambridge will see your first name only.',
                         style: TextStyle(
                           fontSize: 14,
-                          color: HuddlColors.disabledText,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? HuddlColors.darkTextSecondary
+                              : HuddlColors.disabledText,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -132,7 +134,9 @@ class _NameInputScreenState extends State<NameInputScreen> {
                         'For account recovery and occasional updates. Unsubscribe any time.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: HuddlColors.textSecondary,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? HuddlColors.darkTextSecondary
+                              : HuddlColors.textSecondary,
                           height: 1.55,
                         ),
                       ),
@@ -186,7 +190,7 @@ class _OnboardingAppBar extends StatelessWidget {
   }
 }
 
-/// Full-width orange button; grey when disabled
+/// Full-width orange button; dark-mode-aware disabled state
 class _OrangeButton extends StatelessWidget {
   final String label;
   final bool enabled;
@@ -196,14 +200,20 @@ class _OrangeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final disabledBg = isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.disabled;
+    final disabledFg = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-          color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
+          color: enabled ? HuddlColors.onboardingOrange : disabledBg,
           borderRadius: BorderRadius.circular(12),
+          border: !enabled && isDark
+              ? Border.all(color: HuddlColors.darkDivider, width: 1)
+              : null,
         ),
         alignment: Alignment.center,
         child: Text(
@@ -211,7 +221,7 @@ class _OrangeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: enabled ? Colors.white : HuddlColors.disabledText,
+            color: enabled ? Colors.white : disabledFg,
           ),
         ),
       ),
@@ -242,6 +252,9 @@ class _UnderlineInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldFill = isDark ? HuddlColors.darkInputBg : const Color(0xFFF5F5F5);
+    final hintColor = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -257,21 +270,25 @@ class _UnderlineInput extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               fontSize: 16,
-              color: HuddlColors.disabledText,
+              color: hintColor,
             ),
             filled: true,
-            fillColor: const Color(0xFFF5F5F5),
+            fillColor: fieldFill,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: isDark
+                  ? const BorderSide(color: HuddlColors.darkDivider, width: 1)
+                  : BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: showError
                   ? const BorderSide(color: Colors.redAccent, width: 1.5)
-                  : BorderSide.none,
+                  : isDark
+                      ? const BorderSide(color: HuddlColors.darkDivider, width: 1)
+                      : BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

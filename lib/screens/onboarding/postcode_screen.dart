@@ -103,32 +103,37 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          color: HuddlColors.textSecondary,
-                          height: 1.55,
-                        ),
-                        children: [
-                          const TextSpan(
-                            text: "We'll show you parents and groups ",
+                    Builder(builder: (context) {
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      final baseColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
+                      final boldColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack;
+                      return RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            color: baseColor,
+                            height: 1.55,
                           ),
-                          TextSpan(
-                            text: 'within walking distance.',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.nearBlack,
-                              fontSize: 16,
+                          children: [
+                            const TextSpan(
+                              text: "We'll show you parents and groups ",
                             ),
-                          ),
-                          const TextSpan(
-                            text: '\n\nYour exact location is never shared.',
-                          ),
-                        ],
-                      ),
-                    ),
+                            TextSpan(
+                              text: 'within walking distance.',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                color: boldColor,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: '\n\nYour exact location is never shared.',
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                     const SizedBox(height: 40),
                     _UnderlineInput(
                       controller: _ctrl,
@@ -207,7 +212,11 @@ class _UnderlineInput extends StatelessWidget {
       this.keyboardType = TextInputType.text});
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldFill = isDark ? HuddlColors.darkInputBg : const Color(0xFFF5F5F5);
+    final hintColor = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return TextField(
       controller: controller,
       onChanged: onChanged,
@@ -220,16 +229,20 @@ class _UnderlineInput extends StatelessWidget {
       style: HuddlText.body(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: HuddlText.body(color: HuddlColors.disabledText),
+        hintStyle: HuddlText.body(color: hintColor),
         filled: true,
-        fillColor: const Color(0xFFF5F5F5),
+        fillColor: fieldFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: isDark
+              ? const BorderSide(color: HuddlColors.darkDivider, width: 1)
+              : BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: isDark
+              ? const BorderSide(color: HuddlColors.darkDivider, width: 1)
+              : BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -250,20 +263,26 @@ class _OrangeButton extends StatelessWidget {
       {required this.label, required this.enabled, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final disabledBg = isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.disabled;
+    final disabledFg = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
-            borderRadius: BorderRadius.circular(12)),
+            color: enabled ? HuddlColors.onboardingOrange : disabledBg,
+            borderRadius: BorderRadius.circular(12),
+            border: !enabled && isDark
+                ? Border.all(color: HuddlColors.darkDivider, width: 1)
+                : null),
         alignment: Alignment.center,
         child: Text(label,
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: enabled ? Colors.white : HuddlColors.disabledText)),
+                color: enabled ? Colors.white : disabledFg)),
       ),
     );
   }
