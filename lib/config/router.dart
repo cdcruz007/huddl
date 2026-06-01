@@ -414,10 +414,10 @@ class AppRouter {
 
       // Marketplace — notification tap for offers/sales + profile quick-link.
       // Marketplace is now Discover sub-tab 4. Use _ShellTabRedirect to
-      // switch the existing shell to Discover and open the Market sub-tab.
+      // switch the existing shell to tab 3 without pushing a new shell.
       case '/marketplace':
         return FadePageRoute(
-          page: const _ShellTabRedirect(tabIndex: 2, discoverSubIndex: 4),
+          page: const _ShellTabRedirect(tabIndex: 3),
         );
 
       default:

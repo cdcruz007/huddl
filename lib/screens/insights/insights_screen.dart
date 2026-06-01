@@ -9,6 +9,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_network_image.dart';
 import '../../constants/app_text_styles.dart';
+import '../main_shell.dart';
 
 // ── UHD hero images per article ID (sourced from Pexels / Unsplash) ─────────
 const Map<String, String> _kArticleHeroImages = {
@@ -193,21 +194,18 @@ class _SendNavigatorBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => Navigator.pushNamed(context, '/send'),
+          onTap: () {
+            // SEND is Discover sub-tab 4 — switch shell to Discover then open SEND
+            MainShell.shellKey.currentState?.switchDiscoverTab(4);
+          },
           child: Ink(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF1A2E3A), const Color(0xFF0D3349)]
-                    : [const Color(0xFFE8F5F9), const Color(0xFFD0EEF6)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
+              color: isDark
+                  ? HuddlColors.primary.withValues(alpha: 0.12)
+                  : HuddlColors.primary.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark
-                    ? HuddlColors.teal.withValues(alpha: 0.4)
-                    : HuddlColors.teal.withValues(alpha: 0.3),
+                color: HuddlColors.primary.withValues(alpha: isDark ? 0.35 : 0.22),
               ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -217,13 +215,13 @@ class _SendNavigatorBanner extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: 0.15),
+                    color: HuddlColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.school_outlined,
                     size: 18,
-                    color: HuddlColors.teal,
+                    color: HuddlColors.primary,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -235,16 +233,14 @@ class _SendNavigatorBanner extends StatelessWidget {
                         'SEND Navigator',
                         style: HuddlText.body(
                           weight: FontWeight.w600,
-                          color: isDark ? HuddlColors.teal : const Color(0xFF0A6C82),
+                          color: HuddlColors.primary,
                         ),
                       ),
                       Text(
                         'EHCP support, deadlines & AI advisor',
-                        style: HuddlText.caption(
-                          color: isDark
-                              ? HuddlColors.teal.withValues(alpha: 0.8)
-                              : const Color(0xFF0A6C82).withValues(alpha: 0.75),
-                        ),
+                        style: HuddlText.caption(color: isDark
+                            ? HuddlColors.primary.withValues(alpha: 0.75)
+                            : HuddlColors.textSecondary),
                       ),
                     ],
                   ),
@@ -252,9 +248,7 @@ class _SendNavigatorBanner extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: isDark
-                      ? HuddlColors.teal.withValues(alpha: 0.7)
-                      : const Color(0xFF0A6C82).withValues(alpha: 0.6),
+                  color: HuddlColors.primary.withValues(alpha: 0.6),
                 ),
               ],
             ),

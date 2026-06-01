@@ -35,7 +35,7 @@ import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../services/services_screen.dart';
 import '../insights/insights_screen.dart';
-import '../marketplace/marketplace_screen.dart';
+import '../insights/send_hub_screen.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../search/unified_search_screen.dart';
@@ -503,7 +503,8 @@ class EventsScreenState extends State<EventsScreen>
                       Expanded(
                         child: TabBar(
                     controller: _tabController,
-                    isScrollable: false,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
                     splashFactory: NoSplash.splashFactory,
                     overlayColor: WidgetStateProperty.all(Colors.transparent),
                     labelColor: HuddlColors.primary,
@@ -515,7 +516,7 @@ class EventsScreenState extends State<EventsScreen>
                     indicatorWeight: 2.5,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 14),
                     tabs: [
                       Tab(child: _CountTab(
                         label: 'Groups',
@@ -529,7 +530,7 @@ class EventsScreenState extends State<EventsScreen>
                       )),
                       const Tab(text: 'Services'),
                       const Tab(text: 'Insights'),
-                      const Tab(text: 'Market'),
+                      const Tab(text: 'SEND'),
                     ],
                     onTap: (index) {
                       if (index == 0 || _selectedTab == 0) {
@@ -567,7 +568,7 @@ class EventsScreenState extends State<EventsScreen>
                     resetTrigger: _serviceResetTrigger,
                   ),
                   const InsightsScreen(),
-                  const MarketplaceScreen(),
+                  const SendHubScreen(embedded: true),
                 ],
               ),
             ),

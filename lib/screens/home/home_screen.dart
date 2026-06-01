@@ -1070,7 +1070,7 @@ class _HomeScreenState extends State<HomeScreen>
         break;
       case FeedItemType.newMarketplaceItem:
         setState(() => _marketTaps++);
-        _switchToDiscover(4);
+        _switchToTab(3);
         break;
       case FeedItemType.milestone:
         showModalBottomSheet(
@@ -1758,7 +1758,7 @@ class _HomeScreenState extends State<HomeScreen>
         icon: Icons.sell_outlined,
         color: HuddlColors.yellowDark,
         label: '$newMarket for sale',
-        onTap: () => _switchToDiscover(4),
+        onTap: () => _switchToTab(3),
       ));
     }
 
@@ -4891,22 +4891,16 @@ class _HomeScreenState extends State<HomeScreen>
       child: GestureDetector(
         onTap: () {
           HuddlAnimations.mediumTap();
-          Navigator.pushNamed(context, '/send');
+          _switchToDiscover(4);
         },
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [const Color(0xFF0D3349), const Color(0xFF0A4A5E)]
-                  : [const Color(0xFFD0EEF6), const Color(0xFFB8E4F0)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
+            color: isDark
+                ? HuddlColors.primary.withValues(alpha: 0.12)
+                : HuddlColors.primary.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark
-                  ? HuddlColors.teal.withValues(alpha: 0.45)
-                  : HuddlColors.teal.withValues(alpha: 0.35),
+              color: HuddlColors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -4916,11 +4910,11 @@ class _HomeScreenState extends State<HomeScreen>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.18),
+                  color: HuddlColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.school_outlined,
-                    size: 22, color: HuddlColors.teal),
+                child: Icon(Icons.school_outlined,
+                    size: 22, color: HuddlColors.primary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -4931,19 +4925,13 @@ class _HomeScreenState extends State<HomeScreen>
                       'SEND Navigator',
                       style: HuddlText.body(
                         weight: FontWeight.w700,
-                        color: isDark
-                            ? HuddlColors.teal
-                            : const Color(0xFF0A6C82),
+                        color: HuddlColors.primary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'EHCP support · Deadlines · AI advisor · Directory',
-                      style: HuddlText.caption(
-                        color: isDark
-                            ? HuddlColors.teal.withValues(alpha: 0.8)
-                            : const Color(0xFF0A6C82).withValues(alpha: 0.75),
-                      ),
+                      style: HuddlText.caption(color: hc.textSecondary),
                     ),
                   ],
                 ),
@@ -4951,9 +4939,7 @@ class _HomeScreenState extends State<HomeScreen>
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
-                color: isDark
-                    ? HuddlColors.teal.withValues(alpha: 0.7)
-                    : const Color(0xFF0A6C82).withValues(alpha: 0.6),
+                color: HuddlColors.primary.withValues(alpha: 0.6),
               ),
             ],
           ),
@@ -4968,16 +4954,18 @@ class _HomeScreenState extends State<HomeScreen>
     return GestureDetector(
       onTap: () {
         HuddlAnimations.mediumTap();
-        Navigator.pushNamed(context, '/send');
+        _switchToDiscover(4);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E2A3A) : const Color(0xFFEEF4FB),
+          color: isDark
+              ? HuddlColors.primary.withValues(alpha: 0.10)
+              : HuddlColors.primary.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? const Color(0xFF2E4A6A) : const Color(0xFFBFD7F0),
+            color: HuddlColors.primary.withValues(alpha: isDark ? 0.30 : 0.20),
             width: 1,
           ),
         ),
@@ -4988,15 +4976,13 @@ class _HomeScreenState extends State<HomeScreen>
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF2E4A6A)
-                    : const Color(0xFFD0E8FA),
+                color: HuddlColors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.school_outlined,
                 size: 22,
-                color: Color(0xFF1A73E8),
+                color: HuddlColors.primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -5008,12 +4994,12 @@ class _HomeScreenState extends State<HomeScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A73E8).withValues(alpha: 0.12),
+                      color: HuddlColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       'SEND Navigator',
-                      style: HuddlText.label(color: const Color(0xFF1A73E8)),
+                      style: HuddlText.label(color: HuddlColors.primary),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -5032,15 +5018,15 @@ class _HomeScreenState extends State<HomeScreen>
                       Text(
                         'Explore SEND guides',
                         style: HuddlText.caption(
-                          color: const Color(0xFF1A73E8),
+                          color: HuddlColors.primary,
                           weight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_rounded,
                         size: 14,
-                        color: Color(0xFF1A73E8),
+                        color: HuddlColors.primary,
                       ),
                     ],
                   ),
@@ -7229,7 +7215,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                               shell.switchTab(2);
                               break;
                             case FeedItemType.newMarketplaceItem:
-                              shell.switchDiscoverTab(4);
+                              shell.switchTab(3);
                               break;
                             case FeedItemType.newParent:
                             case FeedItemType.milestone:

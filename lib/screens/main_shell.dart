@@ -8,8 +8,8 @@ import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
 import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
+import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
-import 'insights/send_hub_screen.dart';
 import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
@@ -322,7 +322,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   /// Switch to a specific tab by index.
-  /// 0=Home, 1=Connect, 2=Discover, 3=SEND, 4=Profile
+  /// 0=Home, 1=Connect, 2=Discover, 3=Market, 4=Profile
   void switchTab(int index) => _switchTab(index);
 
   /// Switch to the Discover tab AND jump to a specific sub-tab within it.
@@ -359,7 +359,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       case 0: return const HomeScreen();
       case 1: return const GroupsScreen();
       case 2: return EventsScreen(key: _eventsKey);
-      case 3: return const SendHubScreen(embedded: true);
+      case 3: return const MarketplaceScreen();
       case 4: return const ProfileScreen();
       default: return const SizedBox.shrink();
     }
@@ -421,11 +421,11 @@ class _HuddlFloatingNavBar extends StatefulWidget {
 
 class _HuddlFloatingNavBarState extends State<_HuddlFloatingNavBar> {
   static const _tabs = [
-    _TabDef(Icons.home_outlined,       Icons.home,      'Home'),
-    _TabDef(Icons.people_outline,      Icons.people,    'Connect'),
-    _TabDef(Icons.explore_outlined,    Icons.explore,   'Discover'),
-    _TabDef(Icons.school_outlined,     Icons.school,    'SEND'),
-    _TabDef(Icons.person_outline,      Icons.person,    'Profile'),
+    _TabDef(Icons.home_outlined,       Icons.home,         'Home'),
+    _TabDef(Icons.people_outline,      Icons.people,       'Connect'),
+    _TabDef(Icons.explore_outlined,    Icons.explore,      'Discover'),
+    _TabDef(Icons.storefront_outlined, Icons.storefront,   'Market'),
+    _TabDef(Icons.person_outline,      Icons.person,       'Profile'),
   ];
 
   @override
