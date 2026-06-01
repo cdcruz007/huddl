@@ -4110,6 +4110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (blocked.isEmpty) {
             return const HuddlEmptyState(
                 mood: HuddlMood.neutral,
+                illustrationAsset: 'assets/illustrations/security.png',
                 title: 'No blocked users',
                 subtitle: 'Users you block from groups or DMs will appear here.',
               );

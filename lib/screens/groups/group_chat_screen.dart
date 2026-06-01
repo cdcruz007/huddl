@@ -6151,6 +6151,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Widget _emptyState() {
     return const HuddlEmptyState(
       mood: HuddlMood.waving,
+      illustrationAsset: 'assets/illustrations/chatting.png',
       title: 'No messages yet',
       subtitle: 'Say hello and start the conversation!',
     );

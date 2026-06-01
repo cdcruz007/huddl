@@ -2779,7 +2779,7 @@ class _EmptyDirectory extends StatelessWidget {
     return HuddlEmptyState(
       mood: hasFilter ? HuddlMood.curious : HuddlMood.supportive,
       illustrationAsset: hasFilter
-          ? null
+          ? 'assets/illustrations/not_found.png'
           : 'assets/illustrations/handshake.png',
       title: hasFilter
           ? 'No listings match your filter'

@@ -1902,6 +1902,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               ? (_hasActiveFilters || _searchQuery.isNotEmpty || _selectedCategory != null
                   ? HuddlEmptyState(
                       mood: HuddlMood.curious,
+                      illustrationAsset: 'assets/illustrations/not_found.png',
                       title: 'No items found',
                       subtitle: 'Try adjusting your filters to see more results.',
                       ctaLabel: 'Clear filters',
@@ -2099,6 +2100,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             child: filtered.isEmpty
                 ? const HuddlEmptyState(
                     mood: HuddlMood.curious,
+                    illustrationAsset: 'assets/illustrations/search_found.png',
                     title: 'No listings found',
                     subtitle: 'Try a different search term.',
                   )
@@ -3238,6 +3240,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           child: saved.isEmpty
               ? const HuddlEmptyState(
                   mood: HuddlMood.curious,
+                  illustrationAsset: 'assets/illustrations/search_found.png',
                   title: 'No results found',
                   subtitle: 'Try a different search or keyword.',
                 )

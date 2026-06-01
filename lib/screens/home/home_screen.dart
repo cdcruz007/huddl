@@ -1911,7 +1911,7 @@ class _HomeScreenState extends State<HomeScreen>
         color: isDark ? hc.surface : const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: HuddlColors.divider,
+          color: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
           width: 1,
         ),
       ),
@@ -1921,7 +1921,9 @@ class _HomeScreenState extends State<HomeScreen>
           Container(
             width: 5,
             decoration: BoxDecoration(
-              color: HuddlColors.nearBlack.withValues(alpha: 0.15),
+              color: isDark
+                  ? HuddlColors.darkDivider
+                  : HuddlColors.nearBlack.withValues(alpha: 0.15),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 bottomLeft: Radius.circular(16),
@@ -1934,13 +1936,17 @@ class _HomeScreenState extends State<HomeScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: HuddlColors.nearBlack.withValues(alpha: 0.08),
+              color: isDark
+                  ? HuddlColors.darkSurfaceVariant
+                  : HuddlColors.nearBlack.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_active_outlined,
               size: 20,
-              color: HuddlColors.nearBlack.withValues(alpha: 0.5),
+              color: isDark
+                  ? HuddlColors.darkTextSecondary
+                  : HuddlColors.nearBlack.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(width: 12),
@@ -5817,6 +5823,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               child: _comments.isEmpty
                   ? const HuddlEmptyState(
                       mood: HuddlMood.waving,
+                      illustrationAsset: 'assets/illustrations/chatting_2.png',
                       title: 'No comments yet',
                       subtitle: 'Be the first to comment!',
                       characterSize: 100,

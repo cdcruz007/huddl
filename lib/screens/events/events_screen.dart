@@ -2238,7 +2238,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 ? _EmptyState(
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
                     illustrationAsset: _hasActiveFilter
-                        ? null
+                        ? 'assets/illustrations/not_found.png'
                         : 'assets/illustrations/location_community.png',
                     title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                     subtitle: _hasActiveFilter
@@ -3492,7 +3492,7 @@ class _EventsTabState extends State<_EventsTab> {
                         : Icons.event_outlined,
                     illustrationAsset: (!hasActiveFilter && _localSearchQuery.isEmpty)
                         ? 'assets/illustrations/calendar.png'
-                        : null,
+                        : 'assets/illustrations/not_found.png',
                     title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
                         : hasActiveFilter
