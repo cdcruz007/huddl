@@ -9,6 +9,7 @@ import '../../theme/huddl_colors.dart';
 import 'package:intl/intl.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/huddl_character.dart';
 
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
@@ -2375,25 +2376,12 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
         // ── List ────────────────────────────────────────────────────────
         Expanded(
           child: visible.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.calendar_today_outlined,
-                          size: 48, color: HuddlColors.textHint),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No upcoming deadlines',
-                        style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Tap "Add" to track EHCP reviews,\nschool applications, or appeal windows.',
-                        style: HuddlText.body(color: HuddlColors.textHint).copyWith(height: 1.5),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+              ? const HuddlEmptyState(
+                  mood: HuddlMood.neutral,
+                  illustrationAsset: 'assets/illustrations/waiting.webp',
+                  title: 'No upcoming deadlines',
+                  subtitle:
+                      'Tap "Add" to track EHCP reviews, school applications, or appeal windows.',
                 )
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),

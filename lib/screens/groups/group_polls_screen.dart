@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/huddl_character.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/poll_service.dart';
 import 'poll_detail_screen.dart';
@@ -196,32 +197,16 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
   }
 
   Widget _buildPollsList(List<ActivePoll> polls, {required bool isActive}) {
-    final hc = context.hc;
-
     if (polls.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.poll_outlined,
-              size: 64,
-              color: hc.textTertiary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isActive ? 'No polls yet' : 'No closed polls',
-              style: HuddlText.body(),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isActive
-                  ? 'Polls created in this group will\nappear here for everyone to vote on.'
-                  : 'Expired or deleted polls will appear here',
-              style: HuddlText.body(),
-            ),
-          ],
-        ),
+      return HuddlEmptyState(
+        mood: HuddlMood.neutral,
+        illustrationAsset: isActive
+            ? 'assets/illustrations/questions.webp'
+            : null, // closed polls: icon fallback is appropriate
+        title: isActive ? 'No polls yet' : 'No closed polls',
+        subtitle: isActive
+            ? 'Polls created in this group will appear here for everyone to vote on.'
+            : 'Expired or deleted polls will appear here.',
       );
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/huddl_character.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
@@ -591,6 +592,9 @@ class _CommunityTabState extends State<_CommunityTab>
         if (articles.isEmpty) {
           return _EmptyState(
             icon: Icons.auto_awesome_outlined,
+            illustrationAsset: widget.searchQuery.isEmpty
+                ? 'assets/illustrations/growth_yellow.webp'
+                : null,
             title: widget.searchQuery.isNotEmpty
                 ? 'No results for "${widget.searchQuery}"'
                 : 'No community wisdom yet',
@@ -1757,36 +1761,22 @@ class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final String? illustrationAsset;
+
   const _EmptyState({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.illustrationAsset,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 52, color: HuddlColors.textHint),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: HuddlText.body(weight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: HuddlText.body(color: HuddlColors.textHint),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return HuddlEmptyState(
+      mood: HuddlMood.neutral,
+      illustrationAsset: illustrationAsset,
+      title: title,
+      subtitle: subtitle,
     );
   }
 }

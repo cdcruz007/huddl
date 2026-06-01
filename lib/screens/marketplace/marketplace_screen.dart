@@ -1916,6 +1916,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     )
                   : const HuddlEmptyState(
                       mood: HuddlMood.celebrating,
+                      illustrationAsset: 'assets/illustrations/mobile_store.webp',
                       title: 'Nothing listed yet',
                       subtitle: 'Be the first to list something — Cambridge parents love a good find.',
                     ))
@@ -2215,8 +2216,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 padding: const EdgeInsets.only(top: 32),
                 child: HuddlEmptyState(
                   mood: HuddlMood.celebrating,
+                  illustrationAsset: 'assets/illustrations/sending.webp',
                   title: 'No listings yet',
-                  subtitle: 'Tap above to snap a photo and list your first item.',
+                  subtitle: 'Tap the + button to snap a photo and list your first item.',
                 ),
               ),
             ),

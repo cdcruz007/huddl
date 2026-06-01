@@ -189,6 +189,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
   Widget _buildEmptyState(BuildContext context) {
     return const HuddlEmptyState(
       mood: HuddlMood.curious,
+      illustrationAsset: 'assets/illustrations/growth_yellow.webp',
       title: 'No analytics yet',
       subtitle: 'Analytics will appear here once your listing starts getting views and engagement.',
     );

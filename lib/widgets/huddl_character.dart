@@ -147,6 +147,7 @@ class HuddlEmptyState extends StatefulWidget {
     this.ctaLabel,
     this.onCtaTap,
     this.characterSize = 160,
+    this.illustrationAsset,
   });
 
   final HuddlMood mood;
@@ -155,6 +156,10 @@ class HuddlEmptyState extends StatefulWidget {
   final String? ctaLabel;
   final VoidCallback? onCtaTap;
   final double characterSize;
+  /// Optional path to a WebP illustration in assets/illustrations/.
+  /// When provided, replaces the HuddlCharacter icon with the illustration
+  /// rendered inside a warm soft-orange circle (the huddl warm-circle treatment).
+  final String? illustrationAsset;
 
   @override
   State<HuddlEmptyState> createState() => _HuddlEmptyStateState();
@@ -202,10 +207,15 @@ class _HuddlEmptyStateState extends State<HuddlEmptyState>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                HuddlCharacter(
-                  mood: widget.mood,
-                  size: widget.characterSize,
-                ),
+                widget.illustrationAsset != null
+                    ? _WarmCircleIllustration(
+                        assetPath: widget.illustrationAsset!,
+                        size: widget.characterSize,
+                      )
+                    : HuddlCharacter(
+                        mood: widget.mood,
+                        size: widget.characterSize,
+                      ),
                 const SizedBox(height: 20),
                 Text(
                   widget.title,
@@ -236,6 +246,55 @@ class _HuddlEmptyStateState extends State<HuddlEmptyState>
                   ),
                 ],
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// _WarmCircleIllustration — WebP illustration with warm-circle treatment
+//
+// Rendering treatment matches the huddl brand:
+//   • Soft orange-tinted circle background (#FFF5F0) — huddl's palest warm tint
+//   • Illustration at 80% opacity inside the circle
+//   • Circle diameter = size, illustration fills 80% of circle
+// =============================================================================
+class _WarmCircleIllustration extends StatelessWidget {
+  const _WarmCircleIllustration({
+    required this.assetPath,
+    required this.size,
+  });
+
+  final String assetPath;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final double circleSize = size;
+    final double imageSize = size * 0.80;
+
+    return Container(
+      width: circleSize,
+      height: circleSize,
+      decoration: const BoxDecoration(
+        color: Color(0xFFFFF5F0), // huddl warm pale-orange tint
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Opacity(
+          opacity: 0.82,
+          child: Image.asset(
+            assetPath,
+            width: imageSize,
+            height: imageSize,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.image_not_supported_outlined,
+              size: imageSize * 0.5,
+              color: HuddlColors.textHint,
             ),
           ),
         ),

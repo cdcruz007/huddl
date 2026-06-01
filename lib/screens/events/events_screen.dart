@@ -2237,6 +2237,9 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             child: filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
+                    illustrationAsset: _hasActiveFilter
+                        ? null
+                        : 'assets/illustrations/location_community.webp',
                     title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                     subtitle: _hasActiveFilter
                         ? 'Try adjusting your filters to see more meetups.'
@@ -3486,6 +3489,9 @@ class _EventsTabState extends State<_EventsTab> {
                     icon: hasActiveFilter
                         ? Icons.filter_list_off
                         : Icons.event_outlined,
+                    illustrationAsset: (!hasActiveFilter && _localSearchQuery.isEmpty)
+                        ? 'assets/illustrations/calendar.webp'
+                        : null,
                     title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
                         : hasActiveFilter
@@ -5445,6 +5451,7 @@ class _EmptyState extends StatelessWidget {
   final String subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? illustrationAsset;
 
   const _EmptyState({
     required this.icon,
@@ -5452,12 +5459,14 @@ class _EmptyState extends StatelessWidget {
     required this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.illustrationAsset,
   });
 
   @override
   Widget build(BuildContext context) {
     return HuddlEmptyState(
       mood: HuddlMood.neutral,
+      illustrationAsset: illustrationAsset,
       title: title,
       subtitle: subtitle,
       ctaLabel: actionLabel,
@@ -6004,6 +6013,7 @@ class _NearbyTabState extends State<_NearbyTab>
           child: items.isEmpty
               ? HuddlEmptyState(
                   mood: HuddlMood.curious,
+                  illustrationAsset: 'assets/illustrations/location_community.webp',
                   title: _filter == 'meetups'
                       ? 'No meetups nearby yet'
                       : _filter == 'events'

@@ -12,6 +12,7 @@ class ConnectEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => HuddlEmptyState(
         mood: HuddlMood.waving,
+        illustrationAsset: 'assets/illustrations/chat_high_five.webp',
         title: 'It starts with hello',
         subtitle:
             'Join a group in Discover and your conversations will live here.',
@@ -29,6 +30,7 @@ class SavedMessagesEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const HuddlEmptyState(
         mood: HuddlMood.neutral,
+        illustrationAsset: 'assets/illustrations/content.webp',
         title: 'Save the good stuff',
         subtitle:
             'Long-press any message in a group chat to save it here for later.',
@@ -45,6 +47,7 @@ class MyGroupsEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => HuddlEmptyState(
         mood: HuddlMood.waving,
+        illustrationAsset: 'assets/illustrations/community_wave.webp',
         title: 'Your crew is out there',
         subtitle:
             'Parents near you are already chatting — jump in and say hi.',
@@ -63,6 +66,7 @@ class MyMeetupsEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => HuddlEmptyState(
         mood: HuddlMood.celebrating,
+        illustrationAsset: 'assets/illustrations/calendar.webp',
         title: "No plans yet — let's fix that",
         subtitle:
             'There are meetups this week in Cambridge that match your family perfectly.',
@@ -81,6 +85,7 @@ class MyListingsEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => HuddlEmptyState(
         mood: HuddlMood.curious,
+        illustrationAsset: 'assets/illustrations/mobile_store.webp',
         title: 'That barely-used bouncer deserves a new home',
         subtitle:
             'List it in 60 seconds. Local parents are looking for exactly what you\'ve outgrown.',
@@ -98,9 +103,10 @@ class MarketSavedEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const HuddlEmptyState(
         mood: HuddlMood.neutral,
+        illustrationAsset: 'assets/illustrations/waving_thumbs.webp',
         title: 'Nothing saved yet',
         subtitle:
-            'Tap the ❤️ on any listing to save it. Great deals go fast in Cambridge.',
+            'Tap the heart on any listing to save it here.',
       );
 }
 
@@ -113,9 +119,10 @@ class CommunityInsightsEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const HuddlEmptyState(
         mood: HuddlMood.curious,
+        illustrationAsset: 'assets/illustrations/growth_yellow.webp',
         title: 'Wisdom is brewing',
         subtitle:
-            'When Cambridge parents share great advice in group chats, it surfaces here. The more active your groups, the richer this gets.',
+            'When Cambridge parents share great advice in group chats, it surfaces here.',
       );
 }
 
@@ -128,6 +135,7 @@ class SendSupportEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const HuddlEmptyState(
         mood: HuddlMood.supportive,
+        illustrationAsset: 'assets/illustrations/parent_baby.webp',
         characterSize: 140,
         title: "You're not alone in this",
         subtitle:

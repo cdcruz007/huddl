@@ -15,6 +15,7 @@ import '../../services/postcode_service.dart';
 import '../../theme/huddl_animations.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
+import '../../widgets/huddl_character.dart';
 import '../events/event_detail_screen.dart';
 import '../events/meetup_detail_screen.dart';
 import '../groups/group_chat_screen.dart';
@@ -402,32 +403,12 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
   // ── Results ───────────────────────────────────────────────────────────────
   Widget _buildResults() {
     if (_totalResults == 0) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.search_off_outlined,
-                size: 64,
-                color: HuddlColors.textTertiary,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No results for "$_query"',
-                style: HuddlText.heading(),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Try different keywords — or browse the Discover tab for local groups and meetups.',
-                style: HuddlText.body(),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+      return HuddlEmptyState(
+        mood: HuddlMood.curious,
+        illustrationAsset: 'assets/illustrations/search_found.webp',
+        title: 'No results for "$_query"',
+        subtitle:
+            'Try different keywords — or browse Discover for local groups and meetups.',
       );
     }
 
