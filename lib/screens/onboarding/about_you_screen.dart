@@ -105,7 +105,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                   icon: const Icon(
                     Icons.arrow_back_ios_new,
                     size: 18,
-                    color: HuddlColors.nearBlack,
+                    color: Colors.white,
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
