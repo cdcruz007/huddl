@@ -1218,11 +1218,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
 
-              // ── SEND Navigator banner ─────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSendBannerCard(hc, isDark),
-              ),
-
               // ── Smart feed items — filtered per tab ───────────────
               // UX-03: Spring physics on feed cards
               ...[
@@ -4884,155 +4879,49 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Feed item helpers ─────────────────────────────────────────────────────
 
-  // ── SEND Navigator home banner — always visible above the smart feed ──────
-  Widget _buildSendBannerCard(dynamic hc, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: GestureDetector(
-        onTap: () {
-          HuddlAnimations.mediumTap();
-          _switchToDiscover(4);
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? HuddlColors.primary.withValues(alpha: 0.12)
-                : HuddlColors.primary.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: HuddlColors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.school_outlined,
-                    size: 22, color: HuddlColors.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SEND Navigator',
-                      style: HuddlText.body(
-                        weight: FontWeight.w700,
-                        color: HuddlColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'EHCP support · Deadlines · AI advisor · Directory',
-                      style: HuddlText.caption(color: hc.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: HuddlColors.primary.withValues(alpha: 0.6),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  // ── SEND Navigator card ───────────────────────────────────────────────────
+  // ── SEND Navigator card — compact single-row entry in smart feed ─────────
   Widget _buildSendNavigatorCard(dynamic hc) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         HuddlAnimations.mediumTap();
         _switchToDiscover(4);
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: isDark
-              ? HuddlColors.primary.withValues(alpha: 0.10)
-              : HuddlColors.primary.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: HuddlColors.primary.withValues(alpha: isDark ? 0.30 : 0.20),
-            width: 1,
-          ),
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: hc.borderTertiary, width: 0.5),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                color: HuddlColors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                Icons.school_outlined,
-                size: 22,
-                color: HuddlColors.primary,
-              ),
+              child: Icon(Icons.school_outlined,
+                  size: 17, color: HuddlColors.primary),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Label pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'SEND Navigator',
-                      style: HuddlText.label(color: HuddlColors.primary),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Resources for school-age children',
-                    style: HuddlText.body(weight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Find guides, support and local services for children with additional needs.',
-                    style: HuddlText.caption(color: hc.textSecondary),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Text(
-                        'Explore SEND guides',
-                        style: HuddlText.caption(
-                          color: HuddlColors.primary,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 14,
-                        color: HuddlColors.primary,
-                      ),
-                    ],
-                  ),
+                  Text('SEND Navigator',
+                      style: HuddlText.body(
+                          weight: FontWeight.w600)),
+                  Text('EHCP · Deadlines · AI advisor · Local support',
+                      style: HuddlText.caption(color: hc.textSecondary)),
                 ],
               ),
             ),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: hc.textTertiary),
           ],
         ),
       ),
