@@ -1,7 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/onboarding_photo_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/common/huddl_network_image.dart';
 
 // ── Data class ────────────────────────────────────────────────────────────────
 class _HeroPageData {
@@ -12,6 +15,9 @@ class _HeroPageData {
   final String heading;              // 2 lines max, bold, white over image
   final String subheading;           // smaller, below image, nearBlack
   final Color accentColor;           // badge and stat colour
+  /// Non-null only for slide 2 when a Pexels network photo was resolved.
+  /// When set, _CarouselPage renders CachedNetworkImage instead of Image.asset.
+  final OnboardingPhotoResult? locationPhoto;
 
   const _HeroPageData({
     required this.heroImageAsset,
@@ -21,6 +27,7 @@ class _HeroPageData {
     required this.heading,
     required this.subheading,
     required this.accentColor,
+    this.locationPhoto,
   });
 }
 
@@ -37,11 +44,34 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  static const _pages = [
-    // PAGE 1 — "Is anyone near me?"
-    // Shows a warm group photo of parents. The stat "847 parents" is the
-    // social proof that makes a new user feel they are joining something real.
-    _HeroPageData(
+  // ── Location-aware photo state ────────────────────────────────────────────
+  OnboardingPhotoResult? _locationPhoto;
+  bool _locationPhotoLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectLocationPhoto();
+  }
+
+  Future<void> _detectLocationPhoto() async {
+    try {
+      final result = await OnboardingPhotoService().resolve();
+      if (mounted) {
+        setState(() {
+          _locationPhoto = result;
+          _locationPhotoLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _locationPhotoLoading = false);
+    }
+  }
+
+  // ── Pages getter — reads instance state, so cannot be static const ──────────
+  List<_HeroPageData> get _pages => [
+    // Slide 1 — community (unchanged, static asset)
+    const _HeroPageData(
       heroImageAsset: 'assets/images/onboarding_community.webp',
       overlayStatNumber: '847',
       overlayStatLabel: 'parents in Cambridge',
@@ -52,23 +82,32 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       accentColor: HuddlColors.primary,
     ),
 
-    // PAGE 2 — "Will I fit in?"
-    // Shows a meetup photo — real parents at a park playdate.
-    // The stat shows how many meetups happened this month — activity proof.
+    // Slide 2 — meetup: dynamic based on detected location
     _HeroPageData(
-      heroImageAsset: 'assets/images/onboarding_meetup.webp',
+      // Use local asset path when isAsset=true, otherwise fall back to default
+      // (Pexels network photos are rendered via locationPhoto field below)
+      heroImageAsset: (_locationPhoto?.isAsset == true &&
+              !(_locationPhoto?.isDefault ?? true))
+          ? _locationPhoto!.path
+          : 'assets/images/onboarding_meetup.webp',
+      // Pass network photos via locationPhoto — rendered as CachedNetworkImage
+      locationPhoto:
+          (_locationPhoto?.isAsset == false) ? _locationPhoto : null,
       overlayStatNumber: '23',
       overlayStatLabel: 'meetups this month',
-      badge: '☕ This Sunday · Victoria Park',
+      // Dynamic badge: borough name from GPS, or default text
+      badge: (_locationPhoto?.borough != null &&
+              !(_locationPhoto?.isDefault ?? true))
+          ? '☕ This Sunday · ${_locationPhoto!.borough}'
+          : '☕ This Sunday · Victoria Park',
       heading: 'Morning Coffee & Chat\nthis Sunday at 10am',
       subheading:
           '14 parents are going. Drop in, no commitment required.',
       accentColor: HuddlColors.infoBlue,
     ),
 
-    // PAGE 3 — "What will I actually do here?"
-    // Shows the market — a tangible, practical reason to join beyond chat.
-    _HeroPageData(
+    // Slide 3 — market (unchanged, static asset)
+    const _HeroPageData(
       heroImageAsset: 'assets/images/onboarding_market.webp',
       overlayStatNumber: '£0',
       overlayStatLabel: 'to join — always free',
@@ -99,6 +138,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = _pages;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -109,8 +149,12 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (i) => setState(() => _currentPage = i),
-                itemCount: _pages.length,
-                itemBuilder: (_, i) => _CarouselPage(data: _pages[i]),
+                itemCount: pages.length,
+                itemBuilder: (_, i) => _CarouselPage(
+                  data: pages[i],
+                  slideIndex: i,
+                  isLoading: i == 1 && _locationPhotoLoading,
+                ),
               ),
             ),
 
@@ -119,7 +163,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
             // ── Pill dot indicators — Instagram Stories pattern ───────────
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_pages.length, (i) {
+              children: List.generate(pages.length, (i) {
                 final active = i == _currentPage;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -142,7 +186,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: HuddlButton(
-                label: _currentPage < _pages.length - 1
+                label: _currentPage < pages.length - 1
                     ? 'Next'
                     : "I'm in — let's go →",
                 onPressed: _next,
@@ -194,7 +238,14 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 // ── Single carousel page — stateful for entrance animation ────────────────────
 class _CarouselPage extends StatefulWidget {
   final _HeroPageData data;
-  const _CarouselPage({required this.data});
+  final int slideIndex;
+  final bool isLoading; // true while location photo is being resolved (slide 2 only)
+
+  const _CarouselPage({
+    required this.data,
+    required this.slideIndex,
+    this.isLoading = false,
+  });
 
   @override
   State<_CarouselPage> createState() => _CarouselPageState();
@@ -247,23 +298,46 @@ class _CarouselPageState extends State<_CarouselPage>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Real photo — full bleed, rounded bottom corners
+                  // Photo — shimmer while loading, then local asset or network
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                       bottom: Radius.circular(28),
                     ),
-                    child: Image.asset(
-                      widget.data.heroImageAsset,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: HuddlColors.primaryPale,
-                        child: Icon(
-                          Icons.people,
-                          size: 80,
-                          color: HuddlColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
+                    child: widget.isLoading
+                        // Slide 2 loading: shimmer while GPS + API resolves
+                        // (slides 1 and 3 never shimmer)
+                        ? const HuddlShimmer(
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : widget.data.locationPhoto != null
+                            // Pexels network photo
+                            ? CachedNetworkImage(
+                                imageUrl: widget.data.locationPhoto!.path,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Image.asset(
+                                  'assets/images/onboarding_meetup.webp',
+                                  fit: BoxFit.cover,
+                                ),
+                                errorWidget: (_, __, ___) => Image.asset(
+                                  'assets/images/onboarding_meetup.webp',
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            // Local asset (default Cambridge or local borough .jpg)
+                            : Image.asset(
+                                widget.data.heroImageAsset,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: HuddlColors.primaryPale,
+                                  child: Icon(
+                                    Icons.people,
+                                    size: 80,
+                                    color: HuddlColors.primary
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                              ),
                   ),
                   // Gradient scrim — bottom 50% darkens for text legibility
                   ClipRRect(

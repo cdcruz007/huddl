@@ -238,6 +238,36 @@ class PostcodeService {
     return fallback;
   }
 
+  /// Resolves borough from GPS coordinates via postcodes.io reverse geocoding.
+  /// Returns the admin_district (e.g. "Cambridge", "Manchester") or null on failure.
+  /// Used by [OnboardingPhotoService] before the user has entered a postcode.
+  Future<String?> getBoroughFromCoords(double lat, double lng) async {
+    try {
+      final uri = Uri.parse(
+        'https://api.postcodes.io/postcodes'
+        '?lon=${lng.toStringAsFixed(6)}&lat=${lat.toStringAsFixed(6)}&limit=1',
+      );
+      final response = await http
+          .get(uri, headers: {'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode != 200) return null;
+      final body = json.decode(response.body) as Map<String, dynamic>;
+      if (body['status'] != 200) return null;
+
+      final results = body['result'] as List<dynamic>?;
+      if (results == null || results.isEmpty) return null;
+
+      final first = results.first as Map<String, dynamic>;
+      final borough = first['admin_district'] as String?;
+      if (kDebugMode) debugPrint('[PostcodeService] Reverse geocode → $borough');
+      return borough;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[PostcodeService] getBoroughFromCoords error: $e');
+      return null;
+    }
+  }
+
   /// Returns true if [postcode] belongs to the Cambridge launch area,
   /// using the postcodes.io API for accuracy.
   ///

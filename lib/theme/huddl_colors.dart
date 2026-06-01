@@ -164,6 +164,10 @@ class HuddlColors {
   // ── Backgrounds (light mode) ────────────────────────────────────────────
   static const Color background = Color(0xFFF6F6F6);
   static const Color white = Color(0xFFFFFFFF);
+  /// Warm white — light-mode scaffold background.
+  /// Imperceptibly warmer than pure white. Bridges app and website palette.
+  /// WCAG contrast vs nearBlack (#1C1C1E): 16.4:1 — well above AA (4.5:1).
+  static const Color warmWhite = Color(0xFFFFFAF7);
   static const Color peachLight = Color(0xFFFFF3ED);
   static const Color peachVeryLight = Color(0xFFFFF8F0);
   static const Color yellowLight = Color(0xFFFFF7C9);
