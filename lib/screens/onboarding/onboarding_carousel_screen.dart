@@ -68,20 +68,27 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   }
 
   // ── Pages getter — reads instance state, so cannot be static const ──────────
-  List<_HeroPageData> get _pages => [
-    // Slide 1 — community (unchanged, static asset)
-    const _HeroPageData(
+  List<_HeroPageData> get _pages {
+    // Resolved borough name, or 'Cambridge' as the launch-city fallback.
+    final borough = (_locationPhoto?.borough != null &&
+            !(_locationPhoto?.isDefault ?? true))
+        ? _locationPhoto!.borough!
+        : 'Cambridge';
+
+    return [
+    // Slide 1 — community: badge + stat update once GPS resolves
+    _HeroPageData(
       heroImageAsset: 'assets/images/onboarding_community.webp',
       overlayStatNumber: '847',
-      overlayStatLabel: 'parents in Cambridge',
-      badge: '📍 Cambridge',
+      overlayStatLabel: 'parents in $borough',
+      badge: '📍 $borough',
       heading: 'Your neighbourhood\nis full of parents like you',
       subheading:
           'Groups, meetups, and conversations — all within walking distance.',
       accentColor: HuddlColors.primary,
     ),
 
-    // Slide 2 — meetup: dynamic based on detected location
+    // Slide 2 — meetup: dynamic photo + badge based on detected location
     _HeroPageData(
       // Use local asset path when isAsset=true, otherwise fall back to default
       // (Pexels network photos are rendered via locationPhoto field below)
@@ -94,11 +101,8 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
           (_locationPhoto?.isAsset == false) ? _locationPhoto : null,
       overlayStatNumber: '23',
       overlayStatLabel: 'meetups this month',
-      // Dynamic badge: borough name from GPS, or default text
-      badge: (_locationPhoto?.borough != null &&
-              !(_locationPhoto?.isDefault ?? true))
-          ? '☕ This Sunday · ${_locationPhoto!.borough}'
-          : '☕ This Sunday · Victoria Park',
+      // Dynamic badge: resolved borough, or Cambridge fallback
+      badge: '☕ This Sunday · $borough',
       heading: 'Morning Coffee & Chat\nthis Sunday at 10am',
       subheading:
           '14 parents are going. Drop in, no commitment required.',
@@ -117,6 +121,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       accentColor: HuddlColors.yellow,
     ),
   ];
+  }
 
   void _next() {
     if (_currentPage < _pages.length - 1) {
