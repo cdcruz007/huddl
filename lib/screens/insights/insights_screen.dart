@@ -686,7 +686,7 @@ class _ExpertTabState extends State<_ExpertTab>
     if (sorted.isEmpty) {
       return _EmptyState(
         icon: HuddlIcons.menuBook,
-        illustrationAsset: 'assets/illustrations/ui_design.png',
+        illustrationAsset: 'assets/illustrations/ui_design.webp',
         title: 'No expert guides found',
         subtitle: 'Try clearing the search or selecting a different category.',
       );

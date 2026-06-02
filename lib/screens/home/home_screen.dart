@@ -6306,7 +6306,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               child: _comments.isEmpty
                   ? const HuddlEmptyState(
                       mood: HuddlMood.waving,
-                      illustrationAsset: 'assets/illustrations/chatting_2.png',
+                      illustrationAsset: 'assets/illustrations/chat_high_five.webp',
                       title: 'No comments yet',
                       subtitle: 'Be the first to comment!',
                       characterSize: 100,

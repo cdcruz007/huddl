@@ -2271,7 +2271,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 ? _EmptyState(
                     icon: _hasActiveFilter ? HuddlIcons.filterOff : HuddlIcons.usersThree,
                     illustrationAsset: _hasActiveFilter
-                        ? 'assets/illustrations/not_found.png'
+                        ? 'assets/illustrations/search_found.webp'
                         : 'assets/illustrations/location_community.webp',
                     title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                     subtitle: _hasActiveFilter
@@ -3525,7 +3525,7 @@ class _EventsTabState extends State<_EventsTab> {
                         : HuddlIcons.calendar,
                     illustrationAsset: (!hasActiveFilter && _localSearchQuery.isEmpty)
                         ? 'assets/illustrations/calendar.webp'
-                        : 'assets/illustrations/not_found.png',
+                        : 'assets/illustrations/search_found.webp',
                     title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
                         : hasActiveFilter

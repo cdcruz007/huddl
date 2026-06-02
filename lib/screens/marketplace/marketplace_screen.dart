@@ -1903,7 +1903,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               ? (_hasActiveFilters || _searchQuery.isNotEmpty || _selectedCategory != null
                   ? HuddlEmptyState(
                       mood: HuddlMood.curious,
-                      illustrationAsset: 'assets/illustrations/not_found.png',
+                      illustrationAsset: 'assets/illustrations/not_found.webp',
                       title: 'No items found',
                       subtitle: 'Try adjusting your filters to see more results.',
                       ctaLabel: 'Clear filters',

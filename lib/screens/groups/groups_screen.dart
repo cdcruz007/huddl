@@ -5646,7 +5646,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 child: HuddlEmptyState(
                   mood: hasActiveFilters ? HuddlMood.curious : HuddlMood.celebrating,
                   illustrationAsset: hasActiveFilters
-                      ? 'assets/illustrations/not_found.png'
+                      ? 'assets/illustrations/search_found.webp'
                       : 'assets/illustrations/community_wave.webp',
                   title: hasActiveFilters
                       ? 'No groups match your search'
