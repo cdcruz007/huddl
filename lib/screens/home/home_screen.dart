@@ -1,5 +1,6 @@
 import 'dart:convert';
 import '../../theme/huddl_icons.dart';
+import '../../widgets/huddl_category_icon.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -3676,20 +3677,14 @@ class _HomeScreenState extends State<HomeScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Category chip
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: nudge.bgColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    nudge.category,
-                                    style: HuddlText.caption(
-                                      color: nudge.bgColor,
-                                      weight: FontWeight.w700,
-                                    ),
+                                // Category chip — bespoke SVG glyph + label
+                                HuddlCategoryChip(
+                                  category: nudge.category,
+                                  iconSize: 20,
+                                  gap: 5,
+                                  textStyle: HuddlText.caption(
+                                    color: nudge.bgColor,
+                                    weight: FontWeight.w700,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
