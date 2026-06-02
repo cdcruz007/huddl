@@ -6338,17 +6338,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: HuddlColors.nearBlack.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+          // Celebrating phone illustration — free on white, no circle
+          Image.asset(
+            'assets/illustrations/celebrating_phone.webp',
+            width: 160,
+            height: 160,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.check_circle,
+              size: 80,
+              color: HuddlColors.primary,
             ),
-            child:
-                const Icon(Icons.check_circle, size: 48, color: HuddlColors.nearBlack),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             'Thank you!',
             style: HuddlText.display(),

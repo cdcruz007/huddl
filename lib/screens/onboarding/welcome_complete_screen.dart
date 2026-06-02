@@ -136,14 +136,14 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ── Celebration graphic — HuddlCharacter celebrating ──
+                    // ── Welcome illustration — community wave warm circle ──
                     AnimatedBuilder(
                       animation: _ctrl,
                       builder: (_, __) => Transform.scale(
                         scale: scaleAnim.value
                             .clamp(0.0, 1.15), // guard overshoot
-                        child: const HuddlCharacter(
-                          mood: HuddlMood.celebrating,
+                        child: const WarmCircleIllustration(
+                          assetPath: 'assets/illustrations/community_wave.webp',
                           size: 160,
                         ),
                       ),

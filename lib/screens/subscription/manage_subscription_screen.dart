@@ -7,6 +7,7 @@ import '../../services/subscription_service.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/huddl_character.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MANAGE SUBSCRIPTION — view usage, change plan, cancel, restore
@@ -94,17 +95,15 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
     final reason = await _showExitSurvey();
     if (reason == null) return; // User cancelled the survey
 
-    // Offer 1-month pause
+    // Offer 1-month pause — if accepted, show "Glad you're staying!" sheet
     final wantsPause = await _offerPause();
     if (wantsPause == true) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Subscription paused for 1 month. Welcome back anytime!',
-                style: HuddlText.body(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.textDark,
-          ),
+        await showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const _GladStayingSheet(),
         );
       }
       return;
@@ -226,52 +225,73 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
     return await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Wait \u2014 how about a free pause?',
-            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Column(
+          children: [
+            // Warm-circle illustration
+            const WarmCircleIllustration(
+              assetPath: 'assets/illustrations/celebrating_phone.webp',
+              size: 88,
+            ),
+            const SizedBox(height: 16),
+            Text('Before you go\u2026',
+                style: HuddlText.heading(color: context.hc.textPrimary),
+                textAlign: TextAlign.center),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              'Life gets busy — we get it. A free 1-month pause keeps your groups, '
+              'messages and data safe with no charge.',
+              style: HuddlText.body(color: context.hc.textSecondary)
+                  .copyWith(height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(16),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F7F7),
+                color: HuddlColors.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.pause_circle_outline,
-                      color: HuddlColors.textDark, size: 28),
-                  const SizedBox(width: 12),
+                      color: HuddlColors.primary, size: 22),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('1-Month Free Pause',
-                            style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
-                        Text(
-                          'Keep your data & groups. Resume when you\'re ready \u2014 no charge during the pause.',
-                          style: HuddlText.caption(color: context.hc.textSecondary),
-                        ),
-                      ],
+                    child: Text(
+                      'Resume automatically after 30 days — or whenever you\'re ready.',
+                      style: HuddlText.caption(
+                          color: HuddlColors.primary,
+                          weight: FontWeight.w500),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 4),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('No, cancel my plan',
-                style: HuddlText.body(color: HuddlColors.error)),
-          ),
           HuddlButton(
-            label: 'Pause Instead',
+            label: 'Pause for Free',
             variant: HuddlButtonVariant.primary,
-            fullWidth: false,
+            fullWidth: true,
             onPressed: () => Navigator.pop(ctx, true),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('No thanks, cancel my plan',
+                  style: HuddlText.body(color: HuddlColors.textHint)),
+            ),
           ),
         ],
       ),
@@ -632,6 +652,154 @@ class _PaymentInfoCard extends StatelessWidget {
     );
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// _GladStayingSheet — shown when user accepts the 1-month pause offer
+// Full-screen celebration moment: celebrating_phone.webp free on white
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _GladStayingSheet extends StatefulWidget {
+  const _GladStayingSheet();
+
+  @override
+  State<_GladStayingSheet> createState() => _GladStayingSheetState();
+}
+
+class _GladStayingSheetState extends State<_GladStayingSheet>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    Future.delayed(const Duration(milliseconds: 60), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.hc.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 20, 28, 36),
+          child: FadeTransition(
+            opacity: _fadeAnim,
+            child: SlideTransition(
+              position: _slideAnim,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Drag handle ───────────────────────────────────────────
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: context.hc.divider,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // ── Illustration: celebrating phone — free on surface ─────
+                  Image.asset(
+                    'assets/illustrations/celebrating_phone.webp',
+                    width: 160,
+                    height: 160,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.celebration_outlined,
+                      size: 80,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Heading ───────────────────────────────────────────────
+                  Text(
+                    'Glad you\'re staying! 🎉',
+                    style: HuddlText.display(color: context.hc.textPrimary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Body copy ─────────────────────────────────────────────
+                  Text(
+                    'Your subscription is paused for 1 month — no charge during that time. '
+                    'Your groups, data and settings are all exactly where you left them.',
+                    style: HuddlText.body(color: context.hc.textSecondary)
+                        .copyWith(height: 1.55),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Confirmation pill ─────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.pause_circle_outline,
+                            size: 18, color: HuddlColors.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Resumes automatically in 30 days',
+                          style: HuddlText.body(
+                              weight: FontWeight.w600,
+                              color: HuddlColors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // ── CTA ───────────────────────────────────────────────────
+                  HuddlButton(
+                    label: 'Back to my account',
+                    variant: HuddlButtonVariant.primary,
+                    fullWidth: true,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class _ExitSurveyDialog extends StatefulWidget {
   @override
