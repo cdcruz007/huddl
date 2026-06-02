@@ -49,7 +49,7 @@ class HuddlCharacter extends StatelessWidget {
   const HuddlCharacter({
     super.key,
     required this.mood,
-    this.size = 140,
+    this.size = 280,
   });
 
   final HuddlMood mood;
@@ -147,7 +147,7 @@ class HuddlEmptyState extends StatefulWidget {
     required this.subtitle,
     this.ctaLabel,
     this.onCtaTap,
-    this.characterSize = 160,
+    this.characterSize = 320,
     this.illustrationAsset,
   });
 
@@ -276,7 +276,7 @@ class WarmCircleIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double circleSize = size;
-    final double imageSize = size * 0.80;
+    final double imageSize = size * 0.92;
 
     return Container(
       width: circleSize,

@@ -237,13 +237,12 @@ class HuddlColors {
 
   // ── Misleading-name aliases: keep for compile-safety; prefer new names ─
   // OLD NAME        →  NEW TOKEN
-  // blue            →  brandTeal
   // lightBlue       →  primaryDark (same hex as primary)
   // paleBlue        →  primaryLight + some uses = orangePale
   // blueBackground  →  peachSurface
   // purpleAccent    →  brandTeal
   // pinkSoft        →  primaryLight
-  static const Color blue            = Color(0xFF199A85);  // → use brandTeal
+  // [blue removed — was a dead alias for brandTeal; no external call-sites]
   static const Color lightBlue       = Color(0xFFE8935E);  // → use primaryDark/orangeDeep
   static const Color paleBlue        = Color(0xFFFFCBA0);  // → use orangePale
   static const Color blueBackground  = Color(0xFFFFF3ED);  // → use peachSurface

@@ -287,7 +287,7 @@ class _HeartPopButtonState extends State<HeartPopButton>
         scale: _scale,
         child: Icon(
           widget.isLiked ? HuddlIcons.heartFill : HuddlIcons.heart,
-          color: widget.isLiked ? HuddlColors.primary : const Color(0xFF999999),
+          color: widget.isLiked ? HuddlColors.primary : HuddlColors.neutral600,
           size: widget.size,
         ),
       ),
@@ -398,7 +398,7 @@ class _ShimmerBoxState extends State<ShimmerBox>
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
+          color: isDark ? HuddlColors.darkShimmerBase : HuddlColors.shimmerBase,
           borderRadius: BorderRadius.circular(widget.borderRadius),
         ),
       );
@@ -417,14 +417,14 @@ class _ShimmerBoxState extends State<ShimmerBox>
               end: Alignment.centerRight,
               colors: isDark
                   ? const [
-                      Color(0xFF2A2A2A),
-                      Color(0xFF3A3A3A),
-                      Color(0xFF2A2A2A),
+                      HuddlColors.darkShimmerBase,
+                      HuddlColors.darkShimmerHighlight,
+                      HuddlColors.darkShimmerBase,
                     ]
                   : const [
-                      Color(0xFFE0E0E0),
-                      Color(0xFFF5F5F5),
-                      Color(0xFFE0E0E0),
+                      HuddlColors.shimmerBase,
+                      HuddlColors.shimmerHighlight,
+                      HuddlColors.shimmerBase,
                     ],
               stops: [
                 (_shimmer.value - 1).clamp(0.0, 1.0),
@@ -451,7 +451,7 @@ class CardSkeleton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
+            ? HuddlColors.neutral900
             : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -503,9 +503,9 @@ class JoinButton extends StatefulWidget {
     required this.onTap,
     this.label = 'Join',
     this.joinedLabel = 'Joined',
-    this.joinedColor = const Color(0xFF1C1C1E),       // nearBlack — confirmed state
-    this.unJoinedColor = const Color(0x1AFF965C),     // primary @ 10% — available state (HuddlColors.primary)
-    this.unJoinedTextColor = const Color(0xFFFF965C), // primary text — available state (HuddlColors.primary)
+    this.joinedColor = HuddlColors.nearBlack,         // confirmed state
+    this.unJoinedColor = const Color(0x1AFF965C),     // primary @ 10% — no direct token for alpha-only variant
+    this.unJoinedTextColor = HuddlColors.primary,     // available state
   });
 
   final bool isJoined;
@@ -579,7 +579,7 @@ class _JoinButtonState extends State<JoinButton>
               border: Border.all(
                 color: t > 0.5
                     ? widget.joinedColor.withValues(alpha: 0.3)
-                    : const Color(0xFFE8E8E8),
+                    : HuddlColors.inputBorderLight,  // light join-button border stroke
               ),
             ),
             child: Row(

@@ -1205,6 +1205,14 @@ class _HomeScreenState extends State<HomeScreen>
                           16, 20, 16, hasItems ? 8 : 12),
                       child: Row(
                         children: [
+                          const HuddlCategoryIcon(
+                            category: 'Meetups',
+                            size: 32,
+                            chipRadius: 9,
+                            iconPadding: 7,
+                            showBackground: true,
+                          ),
+                          const SizedBox(width: 10),
                           Text(
                             'Coming up',
                             style: HuddlText.body(
@@ -1247,6 +1255,14 @@ class _HomeScreenState extends State<HomeScreen>
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                     child: Row(
                       children: [
+                        const HuddlCategoryIcon(
+                          category: 'Local services',
+                          size: 32,
+                          chipRadius: 9,
+                          iconPadding: 7,
+                          showBackground: true,
+                        ),
+                        const SizedBox(width: 10),
                         Text(
                           'Local services',
                           style: HuddlText.body(
@@ -1892,7 +1908,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: HuddlIcons.nearMe,
         color: HuddlColors.primary,
-        assetPath: 'assets/illustrations/location_pin_peach_duo.webp',
+        categoryStr: 'Meetups',
         label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'} nearby',
         onTap: () => _switchToDiscover(1),
       ));
@@ -1901,7 +1917,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: HuddlIcons.calendar,
         color: HuddlColors.accentAmber,
-        assetPath: 'assets/illustrations/calendar_event.webp',
+        categoryStr: 'Events',
         label: '$newEvents new ${newEvents == 1 ? 'event' : 'events'}',
         onTap: () => _switchToDiscover(1),
       ));
@@ -1910,7 +1926,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: HuddlIcons.sellTag,
         color: HuddlColors.primary,
-        assetPath: 'assets/illustrations/mobile_store_woman.webp',
+        categoryStr: 'Marketplace',
         label: '$newMarket ${newMarket == 1 ? 'item' : 'items'} for sale nearby',
         onTap: () => _switchToTab(3),
       ));
@@ -1919,7 +1935,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: HuddlIcons.diversity,
         color: HuddlColors.infoBlue,
-        assetPath: 'assets/illustrations/community_wave.webp',
+        categoryStr: 'Groups',
         label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
         onTap: () => _switchToDiscover(0),
       ));
@@ -1928,7 +1944,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: HuddlIcons.handshake,
         color: HuddlColors.teal,
-        assetPath: 'assets/illustrations/handshake.webp',
+        categoryStr: 'Local services',
         label: '$newServices ${newServices == 1 ? 'local service' : 'local services'} added',
         onTap: () => _switchToDiscover(2),
       ));
@@ -2014,10 +2030,12 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 child: Row(
                   children: [
-                    row.assetPath != null
-                        ? WarmCircleIllustration(
-                            assetPath: row.assetPath!,
+                    row.categoryStr != null
+                        ? HuddlCategoryIcon(
+                            category: row.categoryStr!,
                             size: 36,
+                            chipRadius: 10,
+                            iconPadding: 8,
                           )
                         : Container(
                             width: 32, height: 32,
@@ -5845,6 +5863,7 @@ class _CatchUpItem {
   final String label;
   final VoidCallback onTap;
   final String? assetPath; // optional illustration override
+  final String? categoryStr; // HuddlCategory string for branded icon chip
 
   const _CatchUpItem({
     required this.icon,
@@ -5852,6 +5871,7 @@ class _CatchUpItem {
     required this.label,
     required this.onTap,
     this.assetPath,
+    this.categoryStr,
   });
 }
 

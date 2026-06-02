@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../theme/huddl_icons.dart';
+import '../../widgets/huddl_category_icon.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -691,21 +692,39 @@ class _SectionHeader extends StatelessWidget {
     this.onSeeAll,
   });
 
+  /// Maps search section labels to HuddlCategory strings.
+  static const _huddlCategoryLabels = {
+    'Groups', 'Meetups', 'Events', 'Services', 'Market',
+  };
+
   @override
   Widget build(BuildContext context) {
+    final isHuddlCategory = _huddlCategoryLabels.contains(label);
+    // Map 'Market' → 'Marketplace' and 'Services' → 'Local services' for the resolver
+    final categoryStr = label == 'Market' ? 'Marketplace'
+        : label == 'Services' ? 'Local services'
+        : label;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: color),
-          ),
+          isHuddlCategory
+              ? HuddlCategoryIcon(
+                  category: categoryStr,
+                  size: 30,
+                  chipRadius: 8,
+                  iconPadding: 6,
+                  backgroundOpacity: 0.12,
+                )
+              : Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 16, color: color),
+                ),
           const SizedBox(width: 8),
           Text(label, style: HuddlText.heading()),
           const SizedBox(width: 6),

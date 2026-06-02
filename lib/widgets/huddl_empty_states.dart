@@ -136,7 +136,7 @@ class SendSupportEmptyState extends StatelessWidget {
   Widget build(BuildContext context) => const HuddlEmptyState(
         mood: HuddlMood.supportive,
         illustrationAsset: 'assets/illustrations/parent_baby.webp',
-        characterSize: 140,
+        characterSize: 280,
         title: "You're not alone in this",
         subtitle:
             'The SEND journey is tough. Huddl is here to help you find the right support and connect with other families.',

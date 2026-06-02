@@ -72,15 +72,20 @@ void main() {
         await _bootApp(tester);
         final inChat = await _openGroupChat(tester);
 
+        // Precondition: must be inside a chat before looking for the mic button.
+        expect(inChat, isTrue,
+            reason:
+                'A1/A2: _openGroupChat must reach a chat screen. '
+                'Check that a group with a chat exists and the Connect→Chats '
+                'navigation path is intact.');
+
         // Find the microphone icon in the chat bar
         final micButton = find.byIcon(Icons.mic);
-        if (!inChat || micButton.evaluate().isEmpty) {
-          // Microphone may be inside an attachment sheet or press-and-hold —
-          // validate that the channel mock is wired correctly instead
-          expect(MockChannels.isPlayerPlaying, isFalse,
-              reason: 'Player should be idle before any interaction');
-          return; // Soft-skip: no mic button visible (user not in chat)
-        }
+        expect(micButton, findsWidgets,
+            reason:
+                'A1/A2: Mic button must be visible in the chat input bar. '
+                'If the recording UI moved, update the finder to match the '
+                'new widget (e.g. byTooltip, bySemanticsLabel).');
 
         // Long-press to start recording
         final gesture = await tester.startGesture(tester.getCenter(micButton.first));
@@ -149,14 +154,17 @@ void main() {
       await _bootApp(tester);
       final inChat = await _openGroupChat(tester);
 
-      if (!inChat) {
-        // Can't navigate to chat — just confirm no crash on boot
-        expect(find.byType(Scaffold), findsWidgets);
-        return;
-      }
+      // Precondition: must reach the chat before testing mic-deny behaviour.
+      expect(inChat, isTrue,
+          reason:
+              'A5: _openGroupChat must reach a chat screen even under mic-deny. '
+              'The navigation path must not depend on microphone permission.');
 
       final micButton = find.byIcon(Icons.mic);
-      if (micButton.evaluate().isEmpty) return;
+      expect(micButton, findsWidgets,
+          reason:
+              'A5: Mic button must be visible in the chat input bar under '
+              'mic-deny conditions so the tap-and-deny flow can be exercised.');
 
       await tester.tap(micButton.first);
       await tester.pumpAndSettle(const Duration(seconds: 3));

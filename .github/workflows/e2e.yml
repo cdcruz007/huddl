@@ -147,6 +147,7 @@ jobs:
             --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
             --dart-define=GOOGLE_PLACES_API_KEY="${{ secrets.GOOGLE_PLACES_API_KEY }}"
         env:
+          # Suppress build banner
           FLUTTER_SUPPRESS_ANALYTICS: 'true'
 
       - name: Build integration test APK
@@ -178,7 +179,7 @@ jobs:
     name: Android Emulator — Flutter Integration Tests (A–H)
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: [flutter-analyze-build]
+    needs: [flutter-analyze-build]   # Only run if build succeeds
 
     steps:
       - name: Checkout
@@ -244,6 +245,7 @@ jobs:
               -d emulator-5554 \
               --reporter expanded \
               2>&1 | tee /tmp/integration_test.log || true
+            # Mark CI success/failure based on log content
             if grep -q "All tests passed" /tmp/integration_test.log; then
               echo "All integration tests passed."
             else
@@ -271,8 +273,10 @@ jobs:
 
       - name: Scan for hardcoded AIza key literals
         run: |
+          # Reject any = 'AIza... or = "AIza... pattern (assignments, not comments/examples)
           HITS=$(grep -rn "= 'AIza[A-Za-z0-9_-]" lib/ functions/src/ 2>/dev/null || true)
           HITS2=$(grep -rn '= "AIza[A-Za-z0-9_-]' lib/ functions/src/ 2>/dev/null || true)
+          # firebase_options.dart apiKey fields are allowed (standard Firebase config)
           HITS_FILTERED=$(echo "$HITS$HITS2" | grep -v "firebase_options.dart" | grep -v "apiKey:" || true)
           if [ -n "$HITS_FILTERED" ]; then
             echo "::error::Hardcoded API key literal detected:"

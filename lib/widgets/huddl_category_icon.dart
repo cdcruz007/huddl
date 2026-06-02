@@ -20,6 +20,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/huddl_colors.dart';
+import '../theme/huddl_icons.dart';
 
 // ── Canonical category enum ────────────────────────────────────────────────
 enum HuddlCategory {
@@ -192,7 +193,7 @@ class HuddlCategoryIcon extends StatelessWidget {
         isDark: isDark,
         brandColor: HuddlColors.neutral300,
         child: Icon(
-          Icons.category_outlined,
+          HuddlIcons.label,
           size: size - iconPadding * 2,
           color: HuddlColors.neutral300,
         ),

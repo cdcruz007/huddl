@@ -52,7 +52,7 @@ class TutorialService {
       body: 'Every parent nearby has been where you are right now. Huddl connects you to them.',
       ctaLabel: "Let's meet them →",
       illustrationMood: 'waving',
-      accentColor: 0xFFFF965C, // orange
+      accentColor: 0xFFFF965C, // HuddlColors.primary
     ),
 
     // STEP 1 — Connect (the core value proposition)
@@ -63,7 +63,7 @@ class TutorialService {
       body: "You've been added to groups in Cambridge that match where you are right now.",
       ctaLabel: "See who's in your groups →",
       illustrationMood: 'community',
-      accentColor: 0xFF347FEF, // info blue
+      accentColor: 0xFF347FEF, // HuddlColors.infoBlue
     ),
 
     // STEP 2 — Discover (meetups and events)
@@ -74,7 +74,7 @@ class TutorialService {
       body: "Sunday walks, free baby groups, NCT events — filtered to your child's age, right now.",
       ctaLabel: "See what's on this week →",
       illustrationMood: 'exploring',
-      accentColor: 0xFF347FEF, // info blue
+      accentColor: 0xFF347FEF, // HuddlColors.infoBlue
     ),
 
     // STEP 3 — Market (practical, celebratory)
@@ -85,7 +85,7 @@ class TutorialService {
       body: 'Buy from a parent two streets away. List that bouncer in 60 seconds.',
       ctaLabel: "See what's nearby →",
       illustrationMood: 'market',
-      accentColor: 0xFFF3C54F, // yellow
+      accentColor: 0xFFF3C54F, // HuddlColors.accentAmber
     ),
 
     // STEP 4 — The close — celebratory, not informational
@@ -96,7 +96,7 @@ class TutorialService {
       body: 'Your community, your neighbours, your feed. Everything is ready.',
       ctaLabel: "I'm ready — let's go 🏡",
       illustrationMood: 'celebrating',
-      accentColor: 0xFFFF965C, // orange
+      accentColor: 0xFFFF965C, // HuddlColors.primary
     ),
   ];
 }
@@ -118,6 +118,6 @@ class TutorialStep {
     required this.body,
     required this.ctaLabel,
     required this.illustrationMood,
-    this.accentColor = 0xFFFF965C,
+    this.accentColor = 0xFFFF965C, // HuddlColors.primary
   });
 }
