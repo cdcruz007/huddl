@@ -1227,6 +1227,11 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
 
+              // ── Feature discovery hook (Market / Services / Groups) ────────
+              SliverToBoxAdapter(
+                child: _buildFeatureHookCard(hc, isDark),
+              ),
+
               // ── Smart feed items — filtered per tab ───────────────
               // UX-03: Spring physics on feed cards
               ...[
@@ -1656,31 +1661,47 @@ class _HomeScreenState extends State<HomeScreen>
               final topTwo = live.take(2).toList();
 
               if (topTwo.isEmpty) {
-                // Empty state
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 11),
-                  decoration: BoxDecoration(
-                    color: hc.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: hc.divider),
-                  ),
-                  child: Row(
-                    children: [
-                      const WarmCircleIllustration(
-                        assetPath: 'assets/illustrations/writing.webp',
-                        size: 44,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'No posts yet — be the first to share something with '
-                          '${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
-                          style: HuddlText.caption(color: hc.textTertiary).copyWith(height: 1.4),
-                          maxLines: 2,
+                // Empty state — bigger illustration + friendlier text
+                return GestureDetector(
+                  onTap: () {
+                    HuddlAnimations.lightTap();
+                    _openNoticeboardComposerSheet(hc, isDark);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                    decoration: BoxDecoration(
+                      color: hc.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: hc.divider),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const WarmCircleIllustration(
+                          assetPath: 'assets/illustrations/writing.webp',
+                          size: 72,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Nothing posted yet',
+                                style: HuddlText.body(weight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Be the first to share something with '
+                                '${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
+                                style: HuddlText.caption(color: hc.textTertiary).copyWith(height: 1.4),
+                                maxLines: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }
@@ -1718,6 +1739,9 @@ class _HomeScreenState extends State<HomeScreen>
   // ── AI Catch-Up Summary Card ──────────────────────────────────────────────
   // Always-visible card that surfaces what the user missed since last login:
   // new meetups, events, groups, market items. Dismissible per session.
+  // ── "Here's what you missed" catch-up card ─────────────────────────────
+  // Visual card with community_wave illustration. Shows counts of new items
+  // since last login as tappable rows. Dismissible per session.
   Widget _buildAiCatchUpCard(dynamic hc, bool isDark) {
     if (_catchUpDismissed) return const SizedBox.shrink();
 
@@ -1733,10 +1757,10 @@ class _HomeScreenState extends State<HomeScreen>
     final newMarket = _rehomeService.allItems
         .where((i) => i.listedAt.isAfter(sinceTime)).length;
 
-    // Build pill items — only include counts > 0
-    final pills = <_CatchUpItem>[];
+    // Build row items — only include counts > 0
+    final rows = <_CatchUpItem>[];
     if (newMeetups > 0) {
-      pills.add(_CatchUpItem(
+      rows.add(_CatchUpItem(
         icon: Icons.near_me_outlined,
         color: HuddlColors.primary,
         label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'}',
@@ -1744,7 +1768,7 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
     if (newEvents > 0) {
-      pills.add(_CatchUpItem(
+      rows.add(_CatchUpItem(
         icon: Icons.event_note_outlined,
         color: HuddlColors.infoBlue,
         label: '$newEvents new ${newEvents == 1 ? 'event' : 'events'}',
@@ -1752,7 +1776,7 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
     if (newGroupCount > 0) {
-      pills.add(_CatchUpItem(
+      rows.add(_CatchUpItem(
         icon: Icons.diversity_3_outlined,
         color: HuddlColors.nearBlack,
         label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
@@ -1760,86 +1784,122 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
     if (newMarket > 0) {
-      pills.add(_CatchUpItem(
+      rows.add(_CatchUpItem(
         icon: Icons.sell_outlined,
         color: HuddlColors.yellowDark,
-        label: '$newMarket for sale',
+        label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale nearby',
         onTap: () => _switchToTab(3),
       ));
     }
 
     // Nothing new — no card at all
-    if (pills.isEmpty) return const SizedBox.shrink();
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    // Days since last login for the header
+    final daysSince = DateTime.now().difference(sinceTime).inDays;
+    final sinceLabel = daysSince <= 1 ? 'today'
+        : daysSince <= 7 ? 'in the last $daysSince days'
+        : 'recently';
 
     return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 4),
-      child: SizedBox(
-        height: 34,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemCount: pills.length + 1, // +1 for dismiss pill
-          itemBuilder: (context, index) {
-            // Last item = dismiss × pill
-            if (index == pills.length) {
-              return GestureDetector(
-                onTap: () {
-                  HuddlAnimations.lightTap();
-                  setState(() => _catchUpDismissed = true);
-                },
-                child: Container(
-                  width: 34,
-                  decoration: BoxDecoration(
-                    color: hc.inputBg,
-                    borderRadius: BorderRadius.circular(17),
-                    border: Border.all(color: hc.divider, width: 0.5),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: hc.divider),
+          boxShadow: isDark
+              ? null
+              : [BoxShadow(color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header row ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 0),
+              child: Row(
+                children: [
+                  const WarmCircleIllustration(
+                    assetPath: 'assets/illustrations/community_wave.webp',
+                    size: 40,
                   ),
-                  child: Icon(Icons.close, size: 14, color: hc.textTertiary),
-                ),
-              );
-            }
-            final pill = pills[index];
-            return GestureDetector(
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Here's what you missed",
+                          style: HuddlText.body(weight: FontWeight.w700),
+                        ),
+                        Text(
+                          'New in your area $sinceLabel',
+                          style: HuddlText.caption(color: hc.textTertiary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      HuddlAnimations.lightTap();
+                      setState(() => _catchUpDismissed = true);
+                    },
+                    child: Container(
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(
+                        color: hc.surfaceAlt,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close, size: 14, color: hc.textTertiary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // ── Item rows ──────────────────────────────────────────────
+            ...rows.map((row) => GestureDetector(
               onTap: () {
-                HuddlAnimations.lightTap();
-                pill.onTap();
+                HuddlAnimations.selectionClick();
+                row.onTap();
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: pill.color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(
-                    color: pill.color.withValues(alpha: 0.25),
-                    width: 0.5,
-                  ),
+                  border: Border(top: BorderSide(color: hc.divider, width: 0.5)),
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(pill.icon, size: 13, color: pill.color),
-                    const SizedBox(width: 5),
-                    Text(
-                      pill.label,
-                      style: HuddlText.caption(
-                        color: pill.color,
-                        weight: FontWeight.w600,
+                    Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: row.color.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(row.icon, size: 16, color: row.color),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        row.label,
+                        style: HuddlText.body(weight: FontWeight.w500),
                       ),
                     ),
+                    Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
                   ],
                 ),
               ),
-            );
-          },
+            )),
+            const SizedBox(height: 4),
+          ],
         ),
       ),
     );
   }
 
 
-
-  // ── "Don't Forget" carousel ──────────────────────────────────────────────
   // Shows only confirmed-attending items (isGoing meetups + goingEvents).
   // Sorted soonest first. Each card shows a countdown "in X days" chip.
   Widget _buildDontForgetCarousel(dynamic hc, bool isDark) {
@@ -1921,7 +1981,7 @@ class _HomeScreenState extends State<HomeScreen>
     return GestureDetector(
       onTap: () {
         HuddlAnimations.lightTap();
-        _switchToTab(2); // → Discover tab
+        _switchToDiscover(1); // → Nearby tab
       },
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -1976,7 +2036,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          "RSVP to a meetup or event and it'll appear here with a countdown.",
+                          "Join a meetup or attend an event and it'll appear here with a countdown.",
                           style: HuddlText.caption(color: hc.textSecondary),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -1992,7 +2052,7 @@ class _HomeScreenState extends State<HomeScreen>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Browse events',
+                      'Browse Nearby',
                       style: HuddlText.caption(
                           color: Colors.white, weight: FontWeight.w600),
                     ),
@@ -3518,6 +3578,99 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── First-run onboarding card ──────────────────────────────────────────────
+  // ── Feature discovery hook card ──────────────────────────────────────────
+  // 3-tile spotlight: Market (buy/sell), Services, Groups — surfaces the app's
+  // strongest features to users who haven't explored yet. Always visible.
+  Widget _buildFeatureHookCard(dynamic hc, bool isDark) {
+    final tiles = [
+      _FeatureTile(
+        icon: Icons.sell_outlined,
+        color: const Color(0xFFE67E22),   // warm amber
+        label: 'Buy & Sell',
+        sublabel: 'Local market',
+        onTap: () { HuddlAnimations.selectionClick(); _switchToTab(3); },
+      ),
+      _FeatureTile(
+        icon: Icons.handyman_outlined,
+        color: const Color(0xFF2E86AB),   // teal blue
+        label: 'Services',
+        sublabel: 'Local experts',
+        onTap: () { HuddlAnimations.selectionClick(); _switchToDiscover(2); },
+      ),
+      _FeatureTile(
+        icon: Icons.diversity_3_outlined,
+        color: const Color(0xFF6C3483),   // purple
+        label: 'Groups',
+        sublabel: 'Find your people',
+        onTap: () { HuddlAnimations.selectionClick(); _switchToDiscover(0); },
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Explore ${_borough.isNotEmpty ? _borough : 'your area'}',
+            style: HuddlText.body(weight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: tiles.map((tile) => Expanded(
+              child: GestureDetector(
+                onTap: tile.onTap,
+                child: Container(
+                  margin: EdgeInsets.only(
+                    right: tile == tiles.last ? 0 : 8,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: hc.divider),
+                    boxShadow: isDark
+                        ? null
+                        : [BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 6, offset: const Offset(0, 2))],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: tile.color.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(tile.icon, size: 20, color: tile.color),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        tile.label,
+                        style: HuddlText.caption(weight: FontWeight.w700),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tile.sublabel,
+                        style: HuddlText.label(color: hc.textTertiary),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFirstRunCard(dynamic hc, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -5512,6 +5665,21 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 // ── AI Catch-Up card helper ───────────────────────────────────────────────
+class _FeatureTile {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String sublabel;
+  final VoidCallback onTap;
+  const _FeatureTile({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.sublabel,
+    required this.onTap,
+  });
+}
+
 class _CatchUpItem {
   final IconData icon;
   final Color color;
