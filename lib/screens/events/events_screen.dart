@@ -104,6 +104,8 @@ class EventsScreenState extends State<EventsScreen>
   final ValueNotifier<bool> _serviceSearchTrigger = ValueNotifier<bool>(false);
   // Fires true to reset/close search mode when leaving the Services tab.
   final ValueNotifier<bool> _serviceResetTrigger = ValueNotifier<bool>(false);
+  // Fires true to open inline search in the Insights tab.
+  final ValueNotifier<bool> _insightsSearchTrigger = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -484,6 +486,27 @@ class EventsScreenState extends State<EventsScreen>
                                       color: context.hc.textPrimary, size: 24),
                                 ),
                               ),
+                            )
+                          else if (_selectedTab == 3)
+                            Tooltip(
+                              message: 'Search insights · Hold for universal search',
+                              child: GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.lightTap();
+                                  _insightsSearchTrigger.value = true;
+                                },
+                                onLongPress: () {
+                                  HuddlAnimations.mediumTap();
+                                  Navigator.of(context).push(HuddlSpringPageRoute(
+                                    page: const UnifiedSearchScreen(),
+                                  ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(HuddlIcons.search,
+                                      color: context.hc.textPrimary, size: 24),
+                                ),
+                              ),
                             ),
                         ],
                       ),
@@ -568,7 +591,7 @@ class EventsScreenState extends State<EventsScreen>
                     searchTrigger: _serviceSearchTrigger,
                     resetTrigger: _serviceResetTrigger,
                   ),
-                  const InsightsScreen(),
+                  InsightsScreen(searchTrigger: _insightsSearchTrigger),
                   const SendHubScreen(embedded: true),
                 ],
               ),

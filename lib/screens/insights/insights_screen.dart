@@ -75,7 +75,8 @@ Color _sourceColor(String source) {
 // =============================================================================
 
 class InsightsScreen extends StatefulWidget {
-  const InsightsScreen({super.key});
+  final ValueNotifier<bool>? searchTrigger;
+  const InsightsScreen({super.key, this.searchTrigger});
 
   @override
   State<InsightsScreen> createState() => _InsightsScreenState();
@@ -89,6 +90,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
   // Sort options: 'newest' | 'a-z' | 'relevance'
   String _sortBy = 'relevance';
 
+  void _onSearchTrigger() {
+    if (widget.searchTrigger?.value == true) {
+      widget.searchTrigger!.value = false;
+      if (mounted) _toggleSearch();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -97,10 +105,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
         setState(() => _searchQuery = _searchController.text.trim().toLowerCase());
       }
     });
+    widget.searchTrigger?.addListener(_onSearchTrigger);
   }
 
   @override
   void dispose() {
+    widget.searchTrigger?.removeListener(_onSearchTrigger);
     _searchController.dispose();
     super.dispose();
   }
@@ -146,10 +156,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header: title + search icon ───────────────────────────
+            // ── Header: title row + animated inline search field ────────
             _Header(
               searchOpen: _searchOpen,
-              onSearchToggle: _toggleSearch,
               searchController: _searchController,
             ),
             // ── Filter/sort row ────────────────────────────────────────
@@ -263,16 +272,16 @@ class _SendNavigatorBanner extends StatelessWidget {
   }
 }
 
-// ─── Header (title + search icon) ────────────────────────────────────────────
+// ─── Header (title row + animated inline search field) ─────────────────────
+// The search icon itself lives in the shared Discover AppBar (events_screen.dart
+// tab 3 branch) — tapping it fires searchTrigger → _toggleSearch here.
 
 class _Header extends StatelessWidget {
   final bool searchOpen;
-  final VoidCallback onSearchToggle;
   final TextEditingController searchController;
 
   const _Header({
     required this.searchOpen,
-    required this.onSearchToggle,
     required this.searchController,
   });
 
@@ -285,7 +294,7 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Title row + search icon ────────────────────────────
+          // ── Title row (search icon lives in the shared Discover AppBar) ──
           Row(
             children: [
               Text(
@@ -294,19 +303,6 @@ class _Header extends StatelessWidget {
               ),
               const Spacer(),
               if (kDebugMode) _PendingReviewBadge(),
-              // Search toggle icon
-              IconButton(
-                onPressed: onSearchToggle,
-                icon: Icon(
-                  searchOpen ? HuddlIcons.searchOff : HuddlIcons.search,
-                  size: 22,
-                  color: searchOpen ? HuddlColors.primary : HuddlColors.textSecondary,
-                ),
-                tooltip: searchOpen ? 'Close search' : 'Search',
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 4),
             ],
           ),
           // ── Inline search field (animated) ─────────────────────
