@@ -156,6 +156,11 @@ class _HomeScreenState extends State<HomeScreen>
   int _groupTaps = 0;
   int _marketTaps = 0;
 
+  // ── Benefit carousel state ────────────────────────────────────────────────
+  late PageController _benefitPageCtrl;
+  int _benefitPageIndex = 0;
+  Timer? _benefitAutoScrollTimer;
+
   // ── Hero parallax scroll ──────────────────────────────────────────────────
   final ScrollController _heroScrollCtrl = ScrollController();
   double _heroScrollOffset = 0.0;
@@ -163,6 +168,16 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _benefitPageCtrl = PageController(viewportFraction: 0.92);
+    _benefitAutoScrollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      final nextPage = (_benefitPageIndex + 1) % _kBenefitNudges.length;
+      _benefitPageCtrl.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+      );
+    });
     _heroScrollCtrl.addListener(() {
       final offset = _heroScrollCtrl.offset;
       if ((offset - _heroScrollOffset).abs() > 1.0) {
@@ -197,6 +212,8 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _authStateSub?.cancel();
     _notifStreamSub?.cancel();
+    _benefitAutoScrollTimer?.cancel();
+    _benefitPageCtrl.dispose();
     _heroScrollCtrl.dispose();
     _greetingAnimCtrl.dispose();
     _postController.dispose();
@@ -1229,7 +1246,7 @@ class _HomeScreenState extends State<HomeScreen>
 
               // ── Feature discovery hook (Market / Services / Groups) ────────
               SliverToBoxAdapter(
-                child: _buildFeatureHookCard(hc, isDark),
+                child: _buildBenefitCarousel(hc, isDark),
               ),
 
               // ── Smart feed items — filtered per tab ───────────────
@@ -1589,6 +1606,53 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+
+          // ── Inline compose entry ─────────────────────────────────────────
+          GestureDetector(
+            onTap: () {
+              HuddlAnimations.lightTap();
+              _openNoticeboardComposerSheet(hc, isDark);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? HuddlColors.primary.withValues(alpha: 0.07)
+                    : const Color(0xFFFFF5F0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: HuddlColors.primary.withValues(alpha: 0.22),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.campaign_outlined,
+                    size: 18,
+                    color: HuddlColors.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Share something with ${_borough.isNotEmpty ? _borough : 'the community'}...',
+                      style: HuddlText.caption(
+                        color: isDark
+                            ? hc.textSecondary
+                            : HuddlColors.primary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.send_outlined,
+                    size: 16,
+                    color: HuddlColors.primary.withValues(alpha: 0.55),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 10),
 
@@ -3581,90 +3645,151 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Feature discovery hook card ──────────────────────────────────────────
   // 3-tile spotlight: Market (buy/sell), Services, Groups — surfaces the app's
   // strongest features to users who haven't explored yet. Always visible.
-  Widget _buildFeatureHookCard(dynamic hc, bool isDark) {
-    final tiles = [
-      _FeatureTile(
-        icon: Icons.sell_outlined,
-        color: const Color(0xFFE67E22),   // warm amber
-        label: 'Buy & Sell',
-        sublabel: 'Local market',
-        onTap: () { HuddlAnimations.selectionClick(); _switchToTab(3); },
-      ),
-      _FeatureTile(
-        icon: Icons.handyman_outlined,
-        color: const Color(0xFF2E86AB),   // teal blue
-        label: 'Services',
-        sublabel: 'Local experts',
-        onTap: () { HuddlAnimations.selectionClick(); _switchToDiscover(2); },
-      ),
-      _FeatureTile(
-        icon: Icons.diversity_3_outlined,
-        color: const Color(0xFF6C3483),   // purple
-        label: 'Groups',
-        sublabel: 'Find your people',
-        onTap: () { HuddlAnimations.selectionClick(); _switchToDiscover(0); },
-      ),
-    ];
-
+  Widget _buildBenefitCarousel(dynamic hc, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Explore ${_borough.isNotEmpty ? _borough : 'your area'}',
-            style: HuddlText.body(weight: FontWeight.w700),
+          // ── Section label ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Text(
+              'Life is better together',
+              style: HuddlText.body(weight: FontWeight.w700),
+            ),
           ),
+
+          // ── Carousel ─────────────────────────────────────────────────────
+          SizedBox(
+            height: 188,
+            child: PageView.builder(
+              controller: _benefitPageCtrl,
+              itemCount: _kBenefitNudges.length,
+              onPageChanged: (i) => setState(() => _benefitPageIndex = i),
+              itemBuilder: (context, index) {
+                final nudge = _kBenefitNudges[index];
+                return GestureDetector(
+                  onTap: () {
+                    HuddlAnimations.selectionClick();
+                    nudge.onTap(this);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    decoration: BoxDecoration(
+                      color: hc.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: hc.divider),
+                      boxShadow: isDark
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              )
+                            ],
+                    ),
+                    child: Row(
+                      children: [
+                        // Illustration panel
+                        ClipRRect(
+                          borderRadius: const BorderRadius.horizontal(
+                              left: Radius.circular(17)),
+                          child: Container(
+                            width: 120,
+                            color: nudge.bgColor.withValues(alpha: isDark ? 0.18 : 0.10),
+                            child: Center(
+                              child: WarmCircleIllustration(
+                                assetPath: nudge.assetPath,
+                                size: 88,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Text content
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Category chip
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: nudge.bgColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    nudge.category,
+                                    style: HuddlText.caption(
+                                      color: nudge.bgColor,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Nudge text
+                                Expanded(
+                                  child: Text(
+                                    nudge.nudge,
+                                    style: HuddlText.caption(
+                                      color: hc.textPrimary,
+                                    ).copyWith(height: 1.4),
+                                    maxLines: 4,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                // CTA
+                                Row(
+                                  children: [
+                                    Text(
+                                      nudge.cta,
+                                      style: HuddlText.caption(
+                                        color: nudge.bgColor,
+                                        weight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Icon(Icons.arrow_forward,
+                                        size: 11, color: nudge.bgColor),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // ── Page indicator dots ──────────────────────────────────────────
           const SizedBox(height: 10),
           Row(
-            children: tiles.map((tile) => Expanded(
-              child: GestureDetector(
-                onTap: tile.onTap,
-                child: Container(
-                  margin: EdgeInsets.only(
-                    right: tile == tiles.last ? 0 : 8,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: hc.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: hc.divider),
-                    boxShadow: isDark
-                        ? null
-                        : [BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 6, offset: const Offset(0, 2))],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 40, height: 40,
-                        decoration: BoxDecoration(
-                          color: tile.color.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(tile.icon, size: 20, color: tile.color),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        tile.label,
-                        style: HuddlText.caption(weight: FontWeight.w700),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        tile.sublabel,
-                        style: HuddlText.label(color: hc.textTertiary),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_kBenefitNudges.length, (i) {
+              final isActive = i == _benefitPageIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isActive ? 18 : 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? HuddlColors.primary
+                      : HuddlColors.primary.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(3),
                 ),
-              ),
-            )).toList(),
+              );
+            }),
           ),
         ],
       ),
@@ -5664,20 +5789,169 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
       oldDelegate.height != height || oldDelegate.child != child;
 }
 
-// ── AI Catch-Up card helper ───────────────────────────────────────────────
-class _FeatureTile {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final String sublabel;
-  final VoidCallback onTap;
-  const _FeatureTile({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.sublabel,
+// ── Benefit carousel data ─────────────────────────────────────────────────
+class _BenefitNudge {
+  final String category;
+  final String nudge;
+  final String cta;
+  final String assetPath;
+  final Color bgColor;
+  final void Function(_HomeScreenState state) onTap;
+
+  const _BenefitNudge({
+    required this.category,
+    required this.nudge,
+    required this.cta,
+    required this.assetPath,
+    required this.bgColor,
     required this.onTap,
   });
+}
+
+// ignore: prefer_const_constructors
+final List<_BenefitNudge> _kBenefitNudges = [
+  _BenefitNudge(
+    category: 'Marketplace',
+    nudge: "Why not give those outgrown trainers a second life? Someone nearby would love them for their little one.",
+    cta: 'Open Market',
+    assetPath: 'assets/illustrations/mobile_store.webp',
+    bgColor: Color(0xFFE67E22),
+    onTap: _nudgeTapMarket,
+  ),
+  _BenefitNudge(
+    category: 'Community',
+    nudge: "You're not alone on this parenting journey. Your neighbours get it — come find your people.",
+    cta: 'Find groups',
+    assetPath: 'assets/illustrations/community_wave.webp',
+    bgColor: Color(0xFF6C3483),
+    onTap: _nudgeTapGroups,
+  ),
+  _BenefitNudge(
+    category: 'Marketplace',
+    nudge: "That buggy in the corner could be exactly what a new parent down the road is searching for right now.",
+    cta: 'List an item',
+    assetPath: 'assets/illustrations/mobile_store.webp',
+    bgColor: Color(0xFFE67E22),
+    onTap: _nudgeTapMarket,
+  ),
+  _BenefitNudge(
+    category: 'Local services',
+    nudge: "Need a hand with something? There are trusted local people nearby who'd love to help.",
+    cta: 'Browse services',
+    assetPath: 'assets/illustrations/handshake.webp',
+    bgColor: Color(0xFF2E86AB),
+    onTap: _nudgeTapServices,
+  ),
+  _BenefitNudge(
+    category: 'Meetups',
+    nudge: "Sometimes the best thing for a tough week is a friendly face and a cup of tea. There's a meetup near you.",
+    cta: "See what's on",
+    assetPath: 'assets/illustrations/waving_orange.webp',
+    bgColor: Color(0xFFE84393),
+    onTap: _nudgeTapNearby,
+  ),
+  _BenefitNudge(
+    category: 'Marketplace',
+    nudge: "Toys gathering dust? Books that have been read? Pass them on to a family who'll treasure them.",
+    cta: 'Start selling',
+    assetPath: 'assets/illustrations/mobile_store.webp',
+    bgColor: Color(0xFFE67E22),
+    onTap: _nudgeTapMarket,
+  ),
+  _BenefitNudge(
+    category: 'Community',
+    nudge: "Local knowledge is gold. Your neighbours know the best parks, childminders, and hidden gems — ask them.",
+    cta: 'Post on the board',
+    assetPath: 'assets/illustrations/location_community.webp',
+    bgColor: Color(0xFF27AE60),
+    onTap: _nudgeTapNoticeboard,
+  ),
+  _BenefitNudge(
+    category: 'Local services',
+    nudge: "From gardening to childcare — when you hire local, you strengthen the whole neighbourhood.",
+    cta: 'Find local help',
+    assetPath: 'assets/illustrations/handshake.webp',
+    bgColor: Color(0xFF2E86AB),
+    onTap: _nudgeTapServices,
+  ),
+  _BenefitNudge(
+    category: 'Groups',
+    nudge: "There's a group of parents nearby going through exactly what you are. You'd fit right in.",
+    cta: 'Explore groups',
+    assetPath: 'assets/illustrations/chatting.webp',
+    bgColor: Color(0xFF6C3483),
+    onTap: _nudgeTapGroups,
+  ),
+  _BenefitNudge(
+    category: 'Meetups',
+    nudge: "Getting out of the house — even for an hour — can change the whole week. There's an event near you.",
+    cta: 'Browse events',
+    assetPath: 'assets/illustrations/growth_yellow.webp',
+    bgColor: Color(0xFFF39C12),
+    onTap: _nudgeTapNearby,
+  ),
+  _BenefitNudge(
+    category: 'Marketplace',
+    nudge: "Baby clothes grow out of before they wear out. List yours and let another family get the joy from them.",
+    cta: 'List for free',
+    assetPath: 'assets/illustrations/parent_baby.webp',
+    bgColor: Color(0xFFE67E22),
+    onTap: _nudgeTapMarket,
+  ),
+  _BenefitNudge(
+    category: 'Community',
+    nudge: "A noticeboard post takes 30 seconds and could connect you with exactly the person you need.",
+    cta: 'Share something',
+    assetPath: 'assets/illustrations/waving_thumbs.webp',
+    bgColor: Color(0xFF27AE60),
+    onTap: _nudgeTapNoticeboard,
+  ),
+  _BenefitNudge(
+    category: 'Local services',
+    nudge: "Know someone brilliant at what they do? Help them find customers in the neighbourhood by referring them.",
+    cta: 'See local services',
+    assetPath: 'assets/illustrations/handshake.webp',
+    bgColor: Color(0xFF2E86AB),
+    onTap: _nudgeTapServices,
+  ),
+  _BenefitNudge(
+    category: 'Meetups',
+    nudge: "The school gate is a starting point. Huddl helps you build the friendships that go beyond it.",
+    cta: 'Find meetups',
+    assetPath: 'assets/illustrations/community_wave.webp',
+    bgColor: Color(0xFFE84393),
+    onTap: _nudgeTapNearby,
+  ),
+  _BenefitNudge(
+    category: 'Groups',
+    nudge: "From SEN support to local sports — there's a group that gets your world. Come find yours.",
+    cta: 'Browse groups',
+    assetPath: 'assets/illustrations/search_found.webp',
+    bgColor: Color(0xFF6C3483),
+    onTap: _nudgeTapGroups,
+  ),
+];
+
+// Static tap handlers for const carousel items
+void _nudgeTapMarket(_HomeScreenState s) {
+  HuddlAnimations.selectionClick();
+  s._switchToTab(3);
+}
+void _nudgeTapGroups(_HomeScreenState s) {
+  HuddlAnimations.selectionClick();
+  s._switchToDiscover(0);
+}
+void _nudgeTapServices(_HomeScreenState s) {
+  HuddlAnimations.selectionClick();
+  s._switchToDiscover(2);
+}
+void _nudgeTapNearby(_HomeScreenState s) {
+  HuddlAnimations.selectionClick();
+  s._switchToDiscover(1);
+}
+void _nudgeTapNoticeboard(_HomeScreenState s) {
+  HuddlAnimations.selectionClick();
+  Navigator.pushNamed(s.context, '/noticeboard');
 }
 
 class _CatchUpItem {
