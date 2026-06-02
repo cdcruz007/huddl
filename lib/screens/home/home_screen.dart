@@ -1183,29 +1183,37 @@ class _HomeScreenState extends State<HomeScreen>
               // Sorted soonest first.
               ...[
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Coming up',
-                          style: HuddlText.body(
-                            color: hc.textPrimary,
-                            weight: FontWeight.w700,
+                  child: Builder(builder: (context) {
+                    // Determine if we have any confirmed items
+                    final hasItems = _upcomingMeetups.any(
+                          (m) => m.isGoing && m.dateTime.isAfter(DateTime.now())) ||
+                        _goingEvents.any((e) => e.dateTime.isAfter(DateTime.now()));
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          16, 20, 16, hasItems ? 8 : 12),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Coming up',
+                            style: HuddlText.body(
+                              color: hc.textPrimary,
+                              weight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => _switchToTab(2),
-                          child: Text(
-                            'See all',
-                            style: HuddlText.caption(
-                                color: HuddlColors.primary),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                          const Spacer(),
+                          if (hasItems)
+                            GestureDetector(
+                              onTap: () => _switchToTab(2),
+                              child: Text(
+                                'See all',
+                                style: HuddlText.caption(
+                                    color: HuddlColors.primary),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
                 ),
                 SliverToBoxAdapter(
                   child: _buildDontForgetCarousel(hc, isDark),
@@ -1906,82 +1914,94 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Compact empty state for "Coming up" — same style as _buildCarouselEmpty.
   /// WarmCircleIllustration + message + CTA, 120px tall, full-width card.
-  /// Empty state shown in the "Don't Forget" section when the user has no RSVPs.
-  /// Compact Row: accent bar + WarmCircleIllustration + title/caption + CTA pill.
+  /// Empty state for "Coming up" when user has no RSVPs.
+  /// Full-width hero card — same visual weight as the hero meetup photo card.
+  /// WarmCircleIllustration fills the image area; text + CTA below.
   Widget _buildDontForgetEmptyState(dynamic hc, bool isDark) {
-    return Container(
-      height: 120,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      decoration: BoxDecoration(
-        color: isDark ? hc.surface : const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
-          width: 1,
+    return GestureDetector(
+      onTap: () {
+        HuddlAnimations.lightTap();
+        _switchToTab(2); // → Discover tab
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
+            width: 1,
+          ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
-      ),
-      child: Row(
-        children: [
-          // Left neutral accent bar
-          Container(
-            width: 5,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? HuddlColors.darkDivider
-                  : HuddlColors.nearBlack.withValues(alpha: 0.15),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Illustration area — full-width, warm tinted background ──
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              child: Container(
+                width: double.infinity,
+                height: 180,
+                color: const Color(0xFFFFF5F0),
+                child: const Center(
+                  child: WarmCircleIllustration(
+                    assetPath: 'assets/illustrations/calendar.webp',
+                    size: 120,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          // Calendar illustration
-          const WarmCircleIllustration(
-            assetPath: 'assets/illustrations/calendar.webp',
-            size: 44,
-          ),
-          const SizedBox(width: 12),
-          // Text + CTA
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Nothing confirmed yet',
-                  style: HuddlText.body(weight: FontWeight.w600),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  "RSVP to a meetup or event and it'll appear here with a countdown.",
-                  style: HuddlText.caption(color: hc.textSecondary),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () {
-                    HuddlAnimations.lightTap();
-                    _switchToTab(2); // Discover tab
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            // ── Text + CTA ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nothing confirmed yet',
+                          style: HuddlText.body(weight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          "RSVP to a meetup or event and it'll appear here with a countdown.",
+                          style: HuddlText.caption(color: hc.textSecondary),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
                       color: HuddlColors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Browse events →',
-                      style: HuddlText.caption(weight: FontWeight.w600),
+                      'Browse events',
+                      style: HuddlText.caption(
+                          color: Colors.white, weight: FontWeight.w600),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-        ],
+          ],
+        ),
       ),
     );
   }
