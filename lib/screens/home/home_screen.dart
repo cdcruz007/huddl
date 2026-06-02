@@ -1158,28 +1158,20 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       backgroundColor: hc.scaffold,
-      floatingActionButton: FloatingActionButton.extended(
-              onPressed: () {
-                // Partners go to the full noticeboard screen; others focus inline composer
-                if (SubscriptionService().isPartner) {
-                  Navigator.pushNamed(context, '/noticeboard');
-                } else {
-                  FocusScope.of(context).requestFocus(FocusNode());
-                  _postController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: _postController.text.length));
-                }
-              },
-              backgroundColor: HuddlColors.primary,
-              elevation: 3,
-              icon: const Icon(Icons.campaign_outlined,
-                  color: Colors.white, size: 20),
-              label: Text(
-                'Post to ${_borough.isNotEmpty ? _borough : 'Cambridge'}',
-                style: HuddlText.body(
-                    color: Colors.white, weight: FontWeight.w600),
-              ),
-            ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      // ── Huddl Guide FAB \u2014 bottom-right, above floating nav bar ──────────────
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 72), // clear the floating nav
+        child: FloatingActionButton(
+          heroTag: 'huddl_guide_fab',
+          onPressed: _openAssistant,
+          backgroundColor: HuddlColors.primary,
+          elevation: 4,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.auto_awesome_rounded,
+              color: Colors.white, size: 22),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: RefreshIndicator(
           color: HuddlColors.textTertiary,
@@ -3393,7 +3385,7 @@ class _HomeScreenState extends State<HomeScreen>
         context,
         '/subscription_gate',
         arguments: {
-          'featureTitle': 'huddl Assistant',
+          'featureTitle': 'Huddl Guide',
           'featureDescription': isPlusUser
               ? 'You\'ve used your '
                 '${_subscriptionService.limits.maxAiCopilotChatsPerDay} '
@@ -3424,7 +3416,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ignore: unused_element
   Widget _buildSmartPostComposer(dynamic hc, bool isDark) {
     return Semantics(
-      label: 'Ask the huddl assistant',
+      label: 'Open Huddl Guide',
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
         padding: const EdgeInsets.all(12),
@@ -3455,7 +3447,7 @@ class _HomeScreenState extends State<HomeScreen>
                 decoration: InputDecoration(
                   hintText: _aiPostHint.isNotEmpty
                       ? _aiPostHint
-                      : 'Ask huddl assistant anything...',
+                      : 'Ask your Huddl Guide anything...',
                   hintStyle: HuddlText.body(),
                   border: InputBorder.none,
                   isDense: true,
@@ -3471,7 +3463,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(width: 6),
             Semantics(
-              label: 'Open huddl assistant',
+              label: 'Open Huddl Guide',
               button: true,
               child: GestureDetector(
                 onTap: _openAssistant,

@@ -436,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     for (final s in _stagesOfLife) {
       switch (s) {
         case 'aspiring':
-          labels.add('Trying for a baby');
+          labels.add('Hoping to conceive');  // softer, private language
         case 'expecting':
           if (_dueDate != null && _dueDate!.length >= 4) {
             labels.add('Expecting (due ${_dueDate!.substring(0, 4)})');
@@ -475,183 +475,275 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isFree    = sub.isFree;
     final isPartner = sub.isPartner;
 
+    if (isFree) {
+      // ── Free tier: warm peach upgrade prompt with illustration ────────
+      return GestureDetector(
+        onTap: () async {
+          await Navigator.pushNamed(context, '/subscription_plans');
+          if (mounted) setState(() {});
+        },
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFF5F0), Color(0xFFFFEDE0)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: HuddlColors.primary.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              WarmCircleIllustration(
+                assetPath: 'assets/illustrations/community_family.webp',
+                size: 52,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Join the full community',
+                      style: HuddlText.body(
+                          weight: FontWeight.w700,
+                          color: HuddlColors.nearBlack),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Groups, AI adviser, meetups \u2014 from \u00A34.99/mo',
+                      style: HuddlText.caption(
+                          color: HuddlColors.nearBlack
+                              .withValues(alpha: 0.65)),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'See plans',
+                  style: HuddlText.caption(
+                      weight: FontWeight.w700, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ── Paid tier (Plus / Partner): clean card showing plan name + price ──
     return GestureDetector(
       onTap: () async {
-        await Navigator.pushNamed(
-          context,
-          isFree ? '/subscription_plans' : '/manage_subscription',
-        );
+        await Navigator.pushNamed(context, '/manage_subscription');
         if (mounted) setState(() {});
       },
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          gradient: isFree
-              ? LinearGradient(
-                  colors: [
-                    HuddlColors.primary,
-                    HuddlColors.primary.withRed(230),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isFree ? null : HuddlColors.nearBlack,
+          color: HuddlColors.teal,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: (isFree ? HuddlColors.primary : Colors.black)
-                  .withValues(alpha: 0.20),
-              blurRadius: 16,
+              color: HuddlColors.teal.withValues(alpha: 0.25),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
-            // Plan icon
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withValues(alpha: 0.20),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isFree
-                    ? Icons.rocket_launch_outlined
-                    : isPartner
-                        ? Icons.verified_outlined
-                        : Icons.home_outlined,
+                isPartner ? Icons.verified_outlined : Icons.home_outlined,
                 color: Colors.white,
-                size: 22,
+                size: 20,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isFree
-                        ? 'Unlock your full community'
-                        : isPartner
-                            ? 'Huddl Partner'
-                            : 'Huddl Plus',
+                    isPartner ? 'Huddl Partner' : 'Huddl Plus',
                     style: HuddlText.body(
-                        weight: FontWeight.w700, color: HuddlColors.white),
+                        weight: FontWeight.w700, color: Colors.white),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
-                    isFree
-                        ? 'Groups, AI, meetups \u2014 from \u00A34.99/mo'
-                        : isPartner
-                            ? '\u00A3${sub.billingPeriod == BillingPeriod.annual ? "199.00/year" : "24.99/month"}'
-                            : '\u00A3${sub.billingPeriod == BillingPeriod.annual ? "39.99/year" : "4.99/month"}',
+                    isPartner
+                        ? '\u00A3${sub.billingPeriod == BillingPeriod.annual ? "199.00/year" : "24.99/month"} \u00b7 Active'
+                        : '\u00A3${sub.billingPeriod == BillingPeriod.annual ? "39.99/year" : "4.99/month"} \u00b7 Active',
                     style: HuddlText.caption(
-                        color: HuddlColors.white.withValues(alpha: 0.80)),
+                        color: Colors.white.withValues(alpha: 0.80)),
                   ),
                 ],
               ),
             ),
-            Icon(
-              isFree ? Icons.arrow_forward_ios_rounded : Icons.settings_outlined,
-              color: Colors.white.withValues(alpha: 0.70),
-              size: 16,
-            ),
+            Icon(Icons.chevron_right,
+                color: Colors.white.withValues(alpha: 0.70), size: 20),
           ],
         ),
       ),
     );
   }
 
-  // ── P11: Usage progress bars ──────────────────────────────────────────────
+  // ── P11: Usage summary — clean pill cards, brand palette only ──────────────
   Widget _buildUsageSection(dynamic hc) {
     final ss = _subscriptionService;
     final limits = ss.limits;
+    final isFree = ss.subscription.isFree;
 
-    // Each row shows either a live progress bar (capped) or an
-    // "Unlimited" pill (999+). Always rendered — never skipped.
-    Widget usageRow(String label, int used, int max) {
+    // Don't show raw usage for free tier — upgrade card already shown above
+    if (isFree) return const SizedBox.shrink();
+
+    // A compact stat chip: label + fraction or ∞ badge
+    Widget usageChip(String label, IconData icon, int used, int max) {
       final isUnlimited = TierLimits.isUnlimited(max);
       final ratio = isUnlimited ? 1.0 : (used / max).clamp(0.0, 1.0);
-      final isNearLimit = !isUnlimited && ratio >= 0.8;
+      final isNearLimit = !isUnlimited && ratio >= 0.80;
+      final isAtLimit   = !isUnlimited && ratio >= 1.0;
 
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Expanded(
-              child: Text(label,
-                  style: HuddlText.caption(color: hc.textSecondary)),
-            ),
-            if (isUnlimited)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: hc.surfaceAlt,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: HuddlColors.success.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: Text('Unlimited',
-                    style: HuddlText.label(color: HuddlColors.success)),
-              )
-            else
-              Text('$used / $max',
-                  style: HuddlText.caption(weight: FontWeight.w600, color: isNearLimit ? HuddlColors.error : hc.textTertiary)),
-          ]),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 5,
-              backgroundColor: hc.divider,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isUnlimited
-                    ? HuddlColors.success
-                    : isNearLimit
-                        ? HuddlColors.error
-                        : HuddlColors.primary),
-            ),
+      final barColor = isAtLimit
+          ? HuddlColors.error
+          : isNearLimit
+              ? HuddlColors.accentAmber
+              : HuddlColors.teal;
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isAtLimit
+                ? HuddlColors.error.withValues(alpha: 0.30)
+                : hc.divider,
           ),
-        ]),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14,
+                    color: isAtLimit ? HuddlColors.error : HuddlColors.teal),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(label,
+                      style: HuddlText.caption(
+                          color: hc.textSecondary,
+                          weight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ),
+                if (isUnlimited)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.teal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('\u221e',
+                        style: HuddlText.label(
+                            color: HuddlColors.teal).copyWith(
+                                fontWeight: FontWeight.w700)),
+                  )
+                else
+                  Text('$used / $max',
+                      style: HuddlText.caption(
+                          weight: FontWeight.w600,
+                          color: isAtLimit
+                              ? HuddlColors.error
+                              : isNearLimit
+                                  ? HuddlColors.accentAmber
+                                  : hc.textTertiary)),
+              ],
+            ),
+            if (!isUnlimited) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: ratio,
+                  minHeight: 3,
+                  backgroundColor: hc.divider,
+                  valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                ),
+              ),
+            ],
+          ],
+        ),
       );
     }
 
-    final bool hasCappedItems = !TierLimits.isUnlimited(limits.maxAiCopilotChatsPerDay);
-
     return Container(
-      color: hc.surface,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      color: hc.scaffold,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your plan usage',
-              style: HuddlText.body(weight: FontWeight.w600, color: hc.textPrimary)),
-          const SizedBox(height: 4),
-          Text('This month',
-              style: HuddlText.caption(color: hc.textTertiary)),
-          const SizedBox(height: 14),
-          usageRow('Groups joined', ss.groupsJoined, limits.maxGroups),
-          usageRow('Messages sent', ss.messagesThisMonth, limits.maxMessagesPerMonth),
-          usageRow('Marketplace listings', ss.marketplaceListings, limits.maxMarketplaceListings),
-          usageRow('Photos uploaded', ss.photosUploaded, limits.maxPhotoUploads),
-          usageRow('Meetups this month', ss.meetupsThisMonth, limits.maxMeetupsPerMonth),
-          usageRow('AI chats today', ss.aiCopilotChatsToday, limits.maxAiCopilotChatsPerDay),
-          if (hasCappedItems) ...[
-            const SizedBox(height: 2),
-            GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
-              child: Text('Upgrade for unlimited AI →',
-                  style: HuddlText.caption(color: HuddlColors.primary)),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Text('This month',
+                    style: HuddlText.body(
+                        weight: FontWeight.w600,
+                        color: hc.textPrimary)),
+                const Spacer(),
+                Text(
+                  ss.subscription.isPartner ? 'Partner plan' : 'Huddl Plus',
+                  style: HuddlText.caption(color: HuddlColors.teal,
+                      weight: FontWeight.w600),
+                ),
+              ],
             ),
-          ],
-          const SizedBox(height: 8),
+          ),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.0,
+            children: [
+              usageChip('Groups joined',
+                  Icons.people_outline, ss.groupsJoined, limits.maxGroups),
+              usageChip('Marketplace',
+                  Icons.storefront_outlined,
+                  ss.marketplaceListings,
+                  limits.maxMarketplaceListings),
+              usageChip('Meetups',
+                  Icons.event_outlined,
+                  ss.meetupsThisMonth,
+                  limits.maxMeetupsPerMonth),
+              usageChip('AI chats today',
+                  Icons.auto_awesome_outlined,
+                  ss.aiCopilotChatsToday,
+                  limits.maxAiCopilotChatsPerDay),
+            ],
+          ),
         ],
       ),
     );
@@ -775,23 +867,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-              // ── Quick actions grid ────────────────────────────────────
+              // ── Invite Friends — single prominent action row ───────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _buildQuickActionsGrid(hc),
+                  child: _buildInviteFriendsRow(hc),
                 ),
-              ),
-
-              // ── SEND Navigator ────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: _buildSendNavigatorCard(hc),
               ),
 
               // ── Subscription + usage ──────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: 12),
                   child: _buildSubscriptionCard(),
                 ),
               ),
@@ -1381,6 +1468,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// SEND Navigator banner — brand-orange card visible on the main profile body.
+  // ── Invite Friends prominent row (replaces quick actions grid) ─────────────
+  Widget _buildInviteFriendsRow(HuddlContextColors hc) {
+    return GestureDetector(
+      onTap: _showInviteFriendSheet,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF5F0), Color(0xFFFFEDE0)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: HuddlColors.primary.withValues(alpha: 0.22),
+          ),
+        ),
+        child: Row(
+          children: [
+            WarmCircleIllustration(
+              assetPath: 'assets/illustrations/waving_thumbs.webp',
+              size: 44,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Invite a friend to Huddl',
+                      style: HuddlText.body(
+                          weight: FontWeight.w700,
+                          color: HuddlColors.nearBlack)),
+                  const SizedBox(height: 2),
+                  Text('Help other parents discover their community',
+                      style: HuddlText.caption(
+                          color: HuddlColors.nearBlack
+                              .withValues(alpha: 0.60))),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: HuddlColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.share_outlined,
+                  size: 16, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Kept for settings screen reference but no longer shown on main profile
   Widget _buildSendNavigatorCard(HuddlContextColors hc) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
@@ -6732,9 +6875,8 @@ class _CountBadge extends StatelessWidget {
 // SETTINGS SCREEN — full-screen unified settings
 //
 // Replaces the old _openSettingsSheet() bottom sheet pattern.
-// Single entry point: gear icon in _buildIdentityHeader → Navigator.push here.
-// Seven sections: Account, Security, Privacy, Your data, Notifications,
-// Support, Legal. Sign-out button at the bottom.
+// Redesigned Settings — 4 scannable groups: Your Account, Privacy & Security,
+// Notifications & Data, Help & Legal. Sign-out at bottom.
 // =============================================================================
 
 class _SettingsScreen extends StatelessWidget {
@@ -6743,10 +6885,13 @@ class _SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sub = profileState._subscriptionService.subscription;
+    final isFree = sub.isFree;
+
     return Scaffold(
       backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: context.hc.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
@@ -6758,12 +6903,12 @@ class _SettingsScreen extends StatelessWidget {
         centerTitle: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.only(top: 8, bottom: 40),
+        padding: const EdgeInsets.only(top: 4, bottom: 40),
         children: [
 
-          // ── Account ───────────────────────────────────────────────────
+          // ── Your Account ───────────────────────────────────────────────
           _SettingsSection(
-            title: 'Account',
+            title: 'Your account',
             items: [
               _SettingsItem(
                 icon: Icons.person_outline,
@@ -6775,11 +6920,11 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.child_care,
-                title: 'Stage of life',
+                icon: Icons.child_care_outlined,
+                title: 'Family & stage of life',
                 subtitle: profileState._stageLabel.isNotEmpty
                     ? profileState._stageLabel
-                    : 'Set your stage',
+                    : 'Add your family details',
                 onTap: () {
                   Navigator.pop(context);
                   profileState._showStageOfLifeSheet();
@@ -6789,36 +6934,109 @@ class _SettingsScreen extends StatelessWidget {
                 icon: Icons.location_on_outlined,
                 title: 'Location',
                 subtitle:
-                    '${profileState._borough}${profileState._postcode != null ? ' (${profileState._postcode})' : ''}',
+                    '${profileState._borough}${profileState._postcode != null ? ' · ${profileState._postcode}' : ''}',
                 showOtpBadge: true,
                 onTap: () {
                   Navigator.pop(context);
                   profileState._showLocationSheet();
                 },
               ),
-              if (profileState._phone != null)
-                _SettingsItem(
-                  icon: Icons.phone_outlined,
-                  title: 'Phone number',
-                  subtitle: profileState._phone,
-                  showOtpBadge: true,
-                  onTap: () {
-                    Navigator.pop(context);
-                    profileState._showPhoneSheet();
-                  },
-                ),
               _SettingsItem(
                 icon: Icons.credit_card_outlined,
-                title: 'Subscription & billing',
-                subtitle: profileState._subscriptionService
-                    .subscription.tierDisplayName,
+                title: 'Plan & billing',
+                subtitle: isFree
+                    ? 'Free · Upgrade to Huddl Plus'
+                    : '${sub.tierDisplayName} · Active',
+                iconColor: isFree ? null : HuddlColors.teal,
                 onTap: () {
                   Navigator.pop(context);
-                  final route =
-                      profileState._subscriptionService.isFree
-                          ? '/subscription_plans'
-                          : '/manage_subscription';
+                  final route = isFree
+                      ? '/subscription_plans'
+                      : '/manage_subscription';
                   Navigator.pushNamed(context, route);
+                },
+              ),
+              if (SubscriptionService().isPlusOrAbove &&
+                  !SubscriptionService().isBusinessVerified)
+                _SettingsItem(
+                  icon: Icons.verified_outlined,
+                  title: 'Verify your business',
+                  subtitle: 'Unlock HMRC-verified badge on your listings',
+                  iconColor: HuddlColors.infoBlue,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/business_verification');
+                  },
+                ),
+              if (SubscriptionService().isPlusOrAbove &&
+                  SubscriptionService().isBusinessVerified)
+                _SettingsItem(
+                  icon: Icons.verified_rounded,
+                  title: 'Business verified',
+                  subtitle: 'HMRC badge active',
+                  iconColor: HuddlColors.teal,
+                  onTap: () {},
+                ),
+            ],
+          ),
+
+          // ── Privacy & Security ────────────────────────────────────────
+          _SettingsSection(
+            title: 'Privacy & security',
+            items: [
+              _SettingsItem(
+                icon: Icons.notifications_outlined,
+                title: 'Notifications',
+                subtitle: 'Groups, meetups, messages, marketplace',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showNotificationsSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.lock_outline,
+                title: 'Privacy',
+                subtitle: 'Profile visibility, read receipts, blocked users',
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showPrivacySheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.lock_reset_outlined,
+                title: 'Change password',
+                subtitle: 'Verified by SMS code',
+                showOtpBadge: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showChangePasswordSheet();
+                },
+              ),
+            ],
+          ),
+
+          // ── Your Data ─────────────────────────────────────────────────
+          _SettingsSection(
+            title: 'Your data',
+            items: [
+              _SettingsItem(
+                icon: Icons.visibility_outlined,
+                title: 'View my data',
+                subtitle: 'See everything Huddl holds about you',
+                iconColor: HuddlColors.infoBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showViewMyDataSheet();
+                },
+              ),
+              _SettingsItem(
+                icon: Icons.download_outlined,
+                title: 'Export my data',
+                subtitle: 'Download a portable copy',
+                iconColor: HuddlColors.infoBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  profileState._showExportDataSheet();
                 },
               ),
               _SettingsItem(
@@ -6830,126 +7048,10 @@ class _SettingsScreen extends StatelessWidget {
                   Navigator.pushNamed(context, '/backup_restore');
                 },
               ),
-
-              // ── Business verification ───────────────────────────────
-              // Visible only for Plus/Partner users — free (Welcome) users hidden.
-
-              // Unverified Plus/Partner: offer path to get verified
-              if (SubscriptionService().isPlusOrAbove &&
-                  !SubscriptionService().isBusinessVerified)
-                _SettingsItem(
-                  icon: Icons.verified_outlined,
-                  title: 'Verify your business',
-                  subtitle: 'Get the HMRC-verified badge and list your services',
-                  iconColor: HuddlColors.infoBlue,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/business_verification');
-                  },
-                ),
-
-              // Already verified Plus/Partner: show confirmed status
-              if (SubscriptionService().isPlusOrAbove &&
-                  SubscriptionService().isBusinessVerified)
-                _SettingsItem(
-                  icon: Icons.verified_rounded,
-                  title: 'Business verified',
-                  subtitle: 'HMRC Partner badge active on your listings',
-                  iconColor: HuddlColors.primary,
-                  onTap: () {},
-                ),
-            ],
-          ),
-
-          // ── Security ──────────────────────────────────────────────────
-          _SettingsSection(
-            title: 'Security',
-            items: [
               _SettingsItem(
-                icon: Icons.lock_reset_outlined,
-                title: 'Change password',
-                subtitle: 'Identity verified by SMS code',
-                showOtpBadge: true,
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showChangePasswordSheet();
-                },
-              ),
-              _SettingsItem(
-                icon: Icons.fingerprint,
-                title: 'Biometric login',
-                subtitle: 'Face ID or fingerprint unlock',
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showPrivacySheet();
-                },
-              ),
-            ],
-          ),
-
-          // ── Privacy ───────────────────────────────────────────────────
-          _SettingsSection(
-            title: 'Privacy',
-            items: [
-              _SettingsItem(
-                icon: Icons.privacy_tip_outlined,
-                title: 'Privacy settings',
-                subtitle: 'Profile visibility, read receipts, blocked users',
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showPrivacySheet();
-                },
-              ),
-              _SettingsItem(
-                icon: Icons.mic_outlined,
-                title: 'Voice message consent',
-                subtitle: 'Microphone access and audio data',
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showPrivacySheet();
-                },
-              ),
-            ],
-          ),
-
-          // ── Your Data (GDPR) ──────────────────────────────────────────
-          _SettingsSection(
-            title: 'Your data',
-            items: [
-              _SettingsItem(
-                icon: Icons.visibility_outlined,
-                title: 'View my data',
-                subtitle: 'See all personal data Huddl holds — Article 15',
-                iconColor: HuddlColors.infoBlue,
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showViewMyDataSheet();
-                },
-              ),
-              _SettingsItem(
-                icon: Icons.download_outlined,
-                title: 'Export my data',
-                subtitle: 'Download a portable copy — Article 20',
-                iconColor: HuddlColors.infoBlue,
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showExportDataSheet();
-                },
-              ),
-              _SettingsItem(
-                icon: Icons.tune_outlined,
-                title: 'Analytics preferences',
-                subtitle: 'Opt out of app analytics and crash reporting',
-                iconColor: HuddlColors.infoBlue,
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showAnalyticsPrefsSheet();
-                },
-              ),
-              _SettingsItem(
-                icon: Icons.delete_forever,
-                title: 'Delete my account & data',
-                subtitle: 'Permanently delete everything — Article 17',
+                icon: Icons.delete_forever_outlined,
+                title: 'Delete account',
+                subtitle: 'Permanently remove all your data',
                 iconColor: HuddlColors.error,
                 titleColor: HuddlColors.error,
                 onTap: () {
@@ -6960,48 +7062,14 @@ class _SettingsScreen extends StatelessWidget {
             ],
           ),
 
-          // ── Notifications ─────────────────────────────────────────────
+          // ── Help & About ──────────────────────────────────────────────
           _SettingsSection(
-            title: 'Notifications',
-            items: [
-              _SettingsItem(
-                icon: Icons.notifications_outlined,
-                title: 'Notification preferences',
-                subtitle: 'Groups, meetups, messages, market',
-                onTap: () {
-                  Navigator.pop(context);
-                  profileState._showNotificationsSheet();
-                },
-              ),
-            ],
-          ),
-
-          // ── SEND Support ──────────────────────────────────────────────
-          // Available to all users — SEND affects any family at any stage.
-          _SettingsSection(
-            title: 'SEND Support',
-            items: [
-              _SettingsItem(
-                icon: Icons.school_outlined,
-                title: 'SEND Navigator',
-                subtitle: 'EHCP, deadlines, AI advisor & support directory',
-                iconColor: HuddlColors.primary,
-                onTap: () {
-                  Navigator.pop(context);
-                  MainShell.shellKey.currentState?.switchDiscoverTab(4);
-                },
-              ),
-            ],
-          ),
-
-          // ── Support ───────────────────────────────────────────────────
-          _SettingsSection(
-            title: 'Support',
+            title: 'Help & about',
             items: [
               _SettingsItem(
                 icon: Icons.help_outline,
                 title: 'Help & support',
-                subtitle: 'FAQs and contact',
+                subtitle: 'FAQs and get in touch',
                 onTap: () {
                   Navigator.pop(context);
                   profileState._showHelpSheet();
@@ -7017,8 +7085,8 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.school_outlined,
-                title: 'Run tutorial',
+                icon: Icons.play_circle_outline,
+                title: 'Replay tutorial',
                 subtitle: 'Walk through the app again',
                 onTap: () {
                   Navigator.pop(context);
@@ -7026,9 +7094,18 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
+                icon: Icons.description_outlined,
+                title: 'Terms & privacy',
+                subtitle: 'Terms of service, privacy and cookie policy',
+                onTap: () => launchUrl(
+                  Uri.parse('https://www.huddlapp.co.uk/terms-of-service.html'),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
+              _SettingsItem(
                 icon: Icons.info_outline,
                 title: 'About Huddl',
-                subtitle: 'Version, credits, and legal',
+                subtitle: 'Version and credits',
                 onTap: () {
                   Navigator.pop(context);
                   profileState._showAboutSheet();
@@ -7038,7 +7115,7 @@ class _SettingsScreen extends StatelessWidget {
                 _SettingsItem(
                   icon: Icons.shield_outlined,
                   title: 'Admin dashboard',
-                  subtitle: 'Review user reports',
+                  iconColor: HuddlColors.error,
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/admin');
@@ -7047,44 +7124,8 @@ class _SettingsScreen extends StatelessWidget {
             ],
           ),
 
-          // ── Legal ─────────────────────────────────────────────────────
-          // Terms and Privacy open in external browser — URLs must match
-          // those declared in App Store Connect and Google Play Console.
-          _SettingsSection(
-            title: 'Legal',
-            items: [
-              _SettingsItem(
-                icon: Icons.description_outlined,
-                title: 'Terms of service',
-                onTap: () => launchUrl(
-                  Uri.parse(
-                      'https://www.huddlapp.co.uk/terms-of-service.html'),
-                  mode: LaunchMode.externalApplication,
-                ),
-              ),
-              _SettingsItem(
-                icon: Icons.privacy_tip_outlined,
-                title: 'Privacy policy',
-                onTap: () => launchUrl(
-                  Uri.parse(
-                      'https://www.huddlapp.co.uk/privacy-policy.html'),
-                  mode: LaunchMode.externalApplication,
-                ),
-              ),
-              _SettingsItem(
-                icon: Icons.cookie_outlined,
-                title: 'Cookie & analytics policy',
-                onTap: () => launchUrl(
-                  Uri.parse(
-                      'https://www.huddlapp.co.uk/cookie-policy.html'),
-                  mode: LaunchMode.externalApplication,
-                ),
-              ),
-            ],
-          ),
-
           // ── Sign out ──────────────────────────────────────────────────
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: HuddlButton(
@@ -7114,7 +7155,7 @@ class _SettingsScreen extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Center(
             child: Text(
               '© ${DateTime.now().year} Cruzen Ltd. All rights reserved.',

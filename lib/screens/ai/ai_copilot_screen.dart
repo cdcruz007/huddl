@@ -13,7 +13,7 @@ import '../../constants/app_text_styles.dart';
 
 
 // =============================================================================
-// §2B — Redesigned Huddl Co-pilot Screen
+// §2B — Huddl Guide Screen (formerly Co-pilot)
 //
 // Welcome state: personalised greeting, 3 dynamic contextual chips,
 //   5 curated quick actions (unique to AI — no tab duplicates).
@@ -100,9 +100,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   /// Falls back to local chip generation if the function is unavailable.
   Future<List<String>> _fetchOrGenerateChips() async {
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
+      final callable = FirebaseFunctions
+          .instanceFor(region: 'europe-west1')
+          .httpsCallable(
         'generateCopilotSuggestions',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
       );
       final result = await callable.call();
       final raw = (result.data as Map<dynamic, dynamic>?)?['suggestions'];
@@ -302,7 +304,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       title: Column(
         children: [
           Text(
-            'huddl Assistant',
+            'Huddl Guide',
             style: HuddlText.body(weight: FontWeight.w700),
           ),
           Row(
@@ -320,7 +322,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               ),
               const SizedBox(width: 5),
               Text(
-                _copilot.isOnline ? 'Online' : 'Offline mode',
+                _copilot.isOnline ? 'Ready to help' : 'Connecting...',
                 style: HuddlText.caption(),
               ),
             ],
@@ -367,14 +369,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           // Personalised greeting
           Text(
             _isInitialized && _firstName.isNotEmpty
-                ? 'Hi $_firstName! 👋 What\'s on your mind?'
-                : 'Hi there! 👋 What\'s on your mind?',
+                ? 'Hi $_firstName! What can I help with today?'
+                : 'Hi there! What can I help with today?',
             textAlign: TextAlign.center,
             style: HuddlText.display(),
           ),
           const SizedBox(height: 8),
           Text(
-            'I know your family, your area, and what\'s on locally. Ask me anything.',
+            'Your personal family guide — I know your area, your stage, and what\'s on locally.',
             textAlign: TextAlign.center,
             style: HuddlText.body(color: hc.textSecondary),
           ),
