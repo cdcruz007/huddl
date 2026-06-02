@@ -1742,7 +1742,9 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 10),
 
           // ── AI nudge row — suppress communityWelcome (shown inline above) ──
-          if (topNudge != null && topNudge.type != NudgeType.communityWelcome) ...[
+          if (topNudge != null &&
+              topNudge.type != NudgeType.communityWelcome &&
+              topNudge.type != NudgeType.knowledgeNudge) ...[
             GestureDetector(
               onTap: () {
                 HuddlAnimations.selectionClick();

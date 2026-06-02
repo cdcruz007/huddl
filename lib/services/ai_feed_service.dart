@@ -411,22 +411,6 @@ class AiFeedService with BoroughAiContext {
       ));
     }
 
-    // 7b. NCT early development nudge for expecting/newborn parents
-    if (stages.contains('expecting') || stages.contains('new_parent')) {
-      _nudges.add(NudgeCard(
-        id: 'nudge_first_1000_days',
-        type: NudgeType.knowledgeNudge,
-        title: 'Parenting tip: early brain development',
-        subtitle: '80% of brain development happens in the first few years. '
-            'Discover simple everyday activities that make a real difference \u2014 backed by NCT research.',
-        emoji: '\u{1F9E0}',
-        actionLabel: 'Explore Tips',
-        actionRoute: '/copilot',
-        relevanceScore: 0.92,
-        meta: {'source': 'NCT', 'url': 'https://www.nct.org.uk/first-1000-days'},
-      ));
-    }
-
     // 8. Trending marketplace item
     _nudges.add(NudgeCard(
       id: 'nudge_trending_market',
@@ -448,14 +432,8 @@ class AiFeedService with BoroughAiContext {
     // 9. NHS Vaccination reminder nudge
     _generateVaccinationNudges();
 
-    // 10. Bounty/NHS milestone tip nudge (knowledge-base-powered)
-    _generateKnowledgeMilestoneNudges();
-
     // 11. Netmums seasonal activity nudge
     _generateSeasonalNudges();
-
-    // 12. Knowledge article recommendation based on learning engine
-    _generateKnowledgeArticleNudge();
 
     // 13. Dad-specific nudge for fathers (Dadsnet content)
     _generateDadNudge();
@@ -524,33 +502,6 @@ class AiFeedService with BoroughAiContext {
     }
   }
 
-  /// Bounty/NHS milestone tips powered by knowledge base.
-  void _generateKnowledgeMilestoneNudges() {
-    for (final child in _onboarding.children) {
-      final birthday = child['birthday'];
-      final name = child['name'] ?? 'Your little one';
-      if (birthday == null) continue;
-
-      final ageMonths = _parseAgeMonthsFromBirthday(birthday);
-      if (ageMonths == null) continue;
-
-      final nextMilestone = _knowledgeBase.getNextMilestone(ageMonths);
-      if (nextMilestone != null) {
-        _nudges.add(NudgeCard(
-          id: 'nudge_kb_milestone_${nextMilestone.ageMonths}_$name',
-          type: NudgeType.knowledgeNudge,
-          title: '$name \u2014 ${nextMilestone.label}',
-          subtitle: '${nextMilestone.description} '
-              '(Source: Bounty & NHS)',
-          emoji: '\u{1F31F}',
-          actionLabel: 'Learn More',
-          relevanceScore: 0.85,
-          meta: {'source': 'Bounty/NHS', 'childName': name},
-        ));
-      }
-    }
-  }
-
   /// Netmums seasonal activity ideas from knowledge base.
   void _generateSeasonalNudges() {
     final seasonalTips = _knowledgeBase.getCurrentSeasonalTips();
@@ -577,39 +528,6 @@ class AiFeedService with BoroughAiContext {
       actionRoute: '/events',
       relevanceScore: 0.62,
       meta: {'source': 'Netmums', 'season': season},
-    ));
-  }
-
-  /// Knowledge article recommendation based on learning engine interests.
-  void _generateKnowledgeArticleNudge() {
-    final articles = _knowledgeBase.getArticlesForUser();
-    if (articles.isEmpty) return;
-
-    // Pick article matching user's top topic affinity
-    final topTopics = _learningEngine.profile.topTopics(5);
-    KnowledgeArticle? bestArticle;
-
-    for (final topic in topTopics) {
-      bestArticle = articles.cast<KnowledgeArticle?>().firstWhere(
-            (a) => a!.tags.any(
-                (t) => t.toLowerCase().contains(topic.topic.toLowerCase())),
-            orElse: () => null,
-          );
-      if (bestArticle != null) break;
-    }
-
-    bestArticle ??= articles.first;
-
-    _nudges.add(NudgeCard(
-      id: 'nudge_article_${bestArticle.id}',
-      type: NudgeType.knowledgeNudge,
-      title: bestArticle.title,
-      subtitle: '${bestArticle.summary} '
-          '(Source: ${bestArticle.source})',
-      emoji: '\u{1F4D6}',
-      actionLabel: 'Read',
-      relevanceScore: 0.58,
-      meta: {'articleId': bestArticle.id, 'source': bestArticle.source},
     ));
   }
 
@@ -668,21 +586,7 @@ class AiFeedService with BoroughAiContext {
         break;
       case LearningMaturity.personalised:
       case LearningMaturity.mature:
-        // For mature users, suggest based on their top unengaged topic
-        final topTopics = _learningEngine.profile.topTopics(3);
-        if (topTopics.isNotEmpty) {
-          final topic = topTopics.first;
-          _nudges.add(NudgeCard(
-            id: 'nudge_learning_topic_${topic.topic}',
-            type: NudgeType.knowledgeNudge,
-            title: 'You seem interested in ${topic.topic}',
-            subtitle: 'We found new content about ${topic.topic} '
-                'that other $borough parents are loving.',
-            emoji: '\u{2728}',
-            actionLabel: 'Explore',
-            relevanceScore: 0.64,
-          ));
-        }
+        // Mature-user topic nudges removed — copilot FAB handles discovery.
         break;
     }
   }
