@@ -1159,7 +1159,16 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       backgroundColor: hc.scaffold,
       floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _openNoticeboardComposerSheet(hc, isDark),
+              onPressed: () {
+                // Partners go to the full noticeboard screen; others focus inline composer
+                if (SubscriptionService().isPartner) {
+                  Navigator.pushNamed(context, '/noticeboard');
+                } else {
+                  FocusScope.of(context).requestFocus(FocusNode());
+                  _postController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _postController.text.length));
+                }
+              },
               backgroundColor: HuddlColors.primary,
               elevation: 3,
               icon: const Icon(Icons.campaign_outlined,
@@ -1648,55 +1657,94 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 8),
 
-          // ── Inline compose entry ─────────────────────────────────────────
-          GestureDetector(
-            onTap: () {
-              HuddlAnimations.lightTap();
-              _openNoticeboardComposerSheet(hc, isDark);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? HuddlColors.primary.withValues(alpha: 0.07)
-                    : const Color(0xFFFFF5F0),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: HuddlColors.primary.withValues(alpha: 0.22),
-                  width: 1,
-                ),
+          // ── Inline compose field — real TextField, posts directly ──────────
+          Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? HuddlColors.primary.withValues(alpha: 0.07)
+                  : const Color(0xFFFFF5F0),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: HuddlColors.primary.withValues(alpha: 0.22),
+                width: 1,
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.campaign_outlined,
-                    size: 18,
-                    color: HuddlColors.primary,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Share something with ${_borough.isNotEmpty ? _borough : 'the community'}...',
-                      style: HuddlText.caption(
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(width: 12),
+                Icon(
+                  Icons.campaign_outlined,
+                  size: 18,
+                  color: HuddlColors.primary.withValues(alpha: 0.70),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _postController,
+                    maxLines: null,
+                    minLines: 1,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    style: HuddlText.body(),
+                    decoration: InputDecoration(
+                      hintText: 'Share something with ${_borough.isNotEmpty ? _borough : 'the community'}...',
+                      hintStyle: HuddlText.body(
                         color: isDark
-                            ? hc.textSecondary
-                            : HuddlColors.primary.withValues(alpha: 0.7),
+                            ? hc.textTertiary
+                            : HuddlColors.primary.withValues(alpha: 0.55),
                       ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 0),
                     ),
                   ),
-                  Icon(
-                    Icons.send_outlined,
-                    size: 16,
-                    color: HuddlColors.primary.withValues(alpha: 0.55),
-                  ),
-                ],
-              ),
+                ),
+                // Send button
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _postController,
+                  builder: (_, val, __) {
+                    final hasText = val.text.trim().isNotEmpty;
+                    return GestureDetector(
+                      onTap: hasText
+                          ? () {
+                              final text = _postController.text.trim();
+                              _postController.clear();
+                              FocusScope.of(context).unfocus();
+                              _postToBoroughNoticeboard(text);
+                            }
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: hasText
+                                ? HuddlColors.primary
+                                : HuddlColors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.send_rounded,
+                            size: 16,
+                            color: hasText
+                                ? Colors.white
+                                : HuddlColors.primary.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
 
-          // ── AI nudge row (if any) ────────────────────────────────────────
-          if (topNudge != null) ...[
+          // ── AI nudge row — suppress communityWelcome (shown inline above) ──
+          if (topNudge != null && topNudge.type != NudgeType.communityWelcome) ...[
             GestureDetector(
               onTap: () {
                 HuddlAnimations.selectionClick();
@@ -1768,7 +1816,10 @@ class _HomeScreenState extends State<HomeScreen>
                 return GestureDetector(
                   onTap: () {
                     HuddlAnimations.lightTap();
-                    _openNoticeboardComposerSheet(hc, isDark);
+                    // Empty noticeboard — nudge user to the inline composer above
+                    if (SubscriptionService().isPartner) {
+                      Navigator.pushNamed(context, '/noticeboard');
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
@@ -3486,175 +3537,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Noticeboard composer bar ─────────────────────────────────────────────
-  // Tappable row that opens a bottom sheet to post to the borough noticeboard.
-  Widget _buildNoticeboardComposer(dynamic hc, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: GestureDetector(
-        onTap: () => _openNoticeboardComposerSheet(hc, isDark),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color: hc.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: hc.divider),
-            boxShadow: isDark
-                ? null
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.campaign_outlined, size: 20, color: hc.textTertiary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Post something to ${_borough.isNotEmpty ? _borough : 'your community'}...',
-                  style: HuddlText.body(color: hc.textTertiary),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(Icons.send_rounded, size: 14, color: Colors.white),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openNoticeboardComposerSheet(dynamic hc, bool isDark) {
-    if (SubscriptionService().isPartner) {
-      // Partner users compose via the full noticeboard screen,
-      // which hosts the Partner-aware business composer.
-      Navigator.pushNamed(context, '/noticeboard');
-      return;
-    }
-    _openStandardNoticeboardComposer(hc, isDark);
-  }
-
-  void _openStandardNoticeboardComposer(dynamic hc, bool isDark) {
-    final controller = TextEditingController();
-    HuddlAnimations.lightTap();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx).viewInsets.bottom),
-            child: Container(
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const HuddlBottomSheetHandle(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                      child: Text(
-                        'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                        style: HuddlText.body(weight: FontWeight.w700, color: hc.textPrimary),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                      child: TextField(
-                        controller: controller,
-                        autofocus: true,
-                        maxLength: 280,
-                        maxLines: 5,
-                        minLines: 3,
-                        decoration: InputDecoration(
-                          hintText:
-                              "Share something with your ${_borough.isNotEmpty ? _borough : 'community'} neighbours...",
-                          hintStyle: HuddlText.body(color: hc.textTertiary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: hc.divider),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: hc.divider),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: HuddlColors.primary),
-                          ),
-                          filled: true,
-                          fillColor: hc.scaffold,
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                        style: HuddlText.body(color: hc.textPrimary),
-                        onChanged: (_) => setSheetState(() {}),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: HuddlButton(
-                        label: 'Post to ${_borough.isNotEmpty ? _borough : 'community'}',
-                        onPressed: controller.text.trim().isEmpty
-                            ? null
-                            : () {
-                                final content = controller.text.trim();
-                                Navigator.pop(ctx);
-                                _postToBoroughNoticeboard(content);
-                              },
-                        variant: HuddlButtonVariant.primary,
-                        fullWidth: true,
-                      ),
-                    ),
-                    // Q&A remaining count — free users only
-                    Builder(builder: (bCtx) {
-                      final ss = SubscriptionService();
-                      if (TierLimits.isUnlimited(
-                          ss.limits.maxQuestionsLifetime)) {
-                        return const SizedBox.shrink();
-                      }
-                      final rem = ss.questionsPostedRemaining;
-                      return Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                        child: Text(
-                          rem == 0
-                              ? 'Free post limit reached — upgrade for unlimited'
-                              : '$rem free post${rem == 1 ? "" : "s"} remaining',
-                          style: HuddlText.label(
-                              color: rem == 0
-                                  ? HuddlColors.primary
-                                  : HuddlColors.textTertiary),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
 
   Future<void> _postToBoroughNoticeboard(String content) async {
     if (content.trim().isEmpty) return;
