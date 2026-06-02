@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -184,7 +185,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline,
+                        const Icon(HuddlIcons.info,
                             color: HuddlColors.nearBlack, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
@@ -327,7 +328,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Icon(Icons.people_outline,
+              Icon(HuddlIcons.usersThree,
                   size: 14, color: Colors.white.withValues(alpha: 0.75)),
               const SizedBox(width: 6),
               Text(
@@ -550,7 +551,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   color: Colors.white.withValues(alpha: 0.25),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 18, color: Colors.white),
+                child: const Icon(HuddlIcons.close, size: 18, color: Colors.white),
               ),
             ),
           ),
@@ -617,7 +618,7 @@ class _ScheduledChangeBanner extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isCancellation ? Icons.cancel_outlined : Icons.schedule,
+                isCancellation ? HuddlIcons.cancel : HuddlIcons.clock,
                 color: color,
                 size: 20,
               ),
@@ -985,7 +986,7 @@ class _PlanCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                              Icons.check_circle_rounded,
+                              HuddlIcons.checkCircleFill,
                               size: 18,
                               color: isFeatured ? Colors.white : tierColor,
                             ),
@@ -1022,7 +1023,7 @@ class _PlanCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.schedule,
+                    const Icon(HuddlIcons.clock,
                         color: HuddlColors.error, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1049,7 +1050,7 @@ class _PlanCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.schedule,
+                    const Icon(HuddlIcons.clock,
                         color: HuddlColors.nearBlack, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1128,11 +1129,11 @@ class _PlanCard extends StatelessWidget {
   static IconData _tierIcon(SubscriptionTier tier) {
     switch (tier) {
       case SubscriptionTier.welcome:
-        return Icons.explore_outlined;
+        return HuddlIcons.exploreOutlined;
       case SubscriptionTier.plus:
-        return Icons.home_outlined;
+        return HuddlIcons.home;
       case SubscriptionTier.partner:
-        return Icons.verified;
+        return HuddlIcons.verifiedFill;
     }
   }
 }
@@ -1353,7 +1354,7 @@ class _FeatureComparisonTable extends StatelessWidget {
 
   Widget _rowBool(String label, bool welcome, bool plus, bool partner) {
     Widget checkIcon(bool val, Color color) => Icon(
-          val ? Icons.check_circle : Icons.remove_circle_outline,
+          val ? HuddlIcons.checkCircle : HuddlIcons.removeCircle,
           size: 16,
           color: val ? color : HuddlColors.gray300,
         );
@@ -1414,7 +1415,7 @@ class _FreeTierLimitsSummary extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline,
+                const Icon(HuddlIcons.info,
                     size: 16, color: HuddlColors.primary),
                 const SizedBox(width: 8),
                 Text(

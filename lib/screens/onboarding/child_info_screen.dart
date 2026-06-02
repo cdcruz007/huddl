@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
@@ -105,7 +106,7 @@ class _ChildInfoScreenState extends State<ChildInfoScreen>
                           errorBuilder: (_, __, ___) => Container(
                             color: HuddlColors.primaryPale,
                             child: Icon(
-                              Icons.child_care,
+                              HuddlIcons.childCare,
                               size: 80,
                               color: HuddlColors.primary.withValues(alpha: 0.3),
                             ),
@@ -249,7 +250,7 @@ class _ChildInfoScreenState extends State<ChildInfoScreen>
                                   style: TextStyle(
                                       fontSize: 15, color: HuddlColors.disabledText),
                                 ),
-                                Icon(Icons.add,
+                                Icon(HuddlIcons.add,
                                     color: HuddlColors.onboardingOrange, size: 22),
                               ],
                             ),
@@ -304,7 +305,7 @@ class _OnboardingAppBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
+            HuddlIcons.arrowBack,
             size: 18,
             color: Colors.white,
           ),

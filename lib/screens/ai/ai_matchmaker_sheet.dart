@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/ai_matchmaker_service.dart';
@@ -86,7 +87,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                         gradient: HuddlColors.aiGradient,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(Icons.auto_awesome, color: context.hc.surface, size: 22),
+                      child: Icon(HuddlIcons.ai, color: context.hc.surface, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -106,7 +107,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: context.hc.textTertiary),
+                      icon: Icon(HuddlIcons.close, color: context.hc.textTertiary),
                     ),
                   ],
                 ),
@@ -294,7 +295,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 // Location
                 Row(
                   children: [
-                    Icon(Icons.location_on_outlined, size: 14, color: context.hc.textTertiary),
+                    Icon(HuddlIcons.locationPin, size: 14, color: context.hc.textTertiary),
                     const SizedBox(width: 4),
                     Text(
                       suggestion.suggestedLocation,
@@ -318,7 +319,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.wb_cloudy_outlined, size: 16, color: HuddlColors.nearBlack),
+                        const Icon(HuddlIcons.cloud, size: 16, color: HuddlColors.nearBlack),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -335,7 +336,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 14, color: HuddlColors.aiBlue),
+                    const Icon(HuddlIcons.ai, size: 14, color: HuddlColors.aiBlue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -413,7 +414,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.add, size: 16, color: HuddlColors.white),
+                            const Icon(HuddlIcons.add, size: 16, color: HuddlColors.white),
                             const SizedBox(width: 4),
                             Text(
                               'Create & Invite',

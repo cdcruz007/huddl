@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'common/huddl_button.dart';
 import '../theme/huddl_colors.dart';
 import '../models/subscription.dart';
@@ -77,7 +78,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.lock_outline,
+                child: const Icon(HuddlIcons.lock,
                     color: HuddlColors.textDark, size: 32),
               ),
               const SizedBox(height: 20),
@@ -97,7 +98,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   name: 'Huddl Plus',
                   price: '\u00A34.99/mo',
                   color: HuddlColors.primary,
-                  icon: Icons.home_outlined,
+                  icon: HuddlIcons.home,
                   benefits: const [
                     'Unlimited groups, DMs & meetups',
                     'Create private & invite-only groups',
@@ -119,7 +120,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                 name: 'Huddl Partner',
                 price: '\u00A324.99/mo',
                 color: HuddlColors.nearBlack,
-                icon: Icons.verified_outlined,
+                icon: HuddlIcons.verified,
                 benefits: const [
                   'Everything in Huddl Plus, fully unlimited',
                   'HMRC-verified badge + dedicated business profile',
@@ -157,7 +158,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.star_rounded,
+                      const Icon(HuddlIcons.starFill,
                           color: HuddlColors.textDark, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
@@ -257,7 +258,7 @@ class _QuickTierPreview extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: color, size: 20),
+            Icon(HuddlIcons.caretRight, color: color, size: 20),
           ],
         ),
       ),

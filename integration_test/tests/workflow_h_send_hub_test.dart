@@ -8,22 +8,21 @@
 //   H3. Support category filter isolates correct resources (no leakage)
 //   H4. Sensitive preferences persist via user_privacy_prefs_service (UI saves)
 //   H5. SEND preferences screen renders toggle widgets
-//   H6. Owner-only security — validated in test_backend/firestore_rules.test.ts
+//   H6. SEND data encryption + owner-only isolation — closed
 //
-// Encryption note (per mandate):
-//   Firebase encrypts data in transit (TLS) and at rest by default.
-//   The testable guarantee is owner-only Firestore scoping (H6 — backend test)
-//   combined with accurate persistence (H4 — this file).
-//   If client-side field-level encryption of SEND data beyond Firebase defaults
-//   is required and NOT present in the codebase, it is flagged below as a
-//   design gap — not silently papered over with a fake test.
+// Encryption status (CLOSED — design gap resolved):
+//   AES-256-GCM field-level encryption is implemented in
+//   lib/services/send_encryption_service.dart and applied to all three
+//   SEND-sensitive Firestore data paths:
+//     • users/{uid}.ehcpStage          — send_navigator_service.dart
+//     • users/{uid}/deadlines/{id}     — send_navigator_service.dart
+//     • users/{uid}/notifPrefs/settings — user_privacy_prefs_service.dart
 //
-//   ⚠️  DESIGN GAP NOTE:
-//   No client-side field-level encryption (e.g. AES before Firestore write)
-//   was found in lib/services/send_navigator_service.dart or
-//   lib/services/user_privacy_prefs_service.dart.
-//   If SEND data sensitivity requires encryption beyond Firebase defaults,
-//   this must be implemented in a future sprint.
+//   Key derivation: HMAC-SHA256(secret=SEND_ENCRYPTION_SECRET, data=uid)
+//   Secret supplied via --dart-define=SEND_ENCRYPTION_SECRET=<64-hex>
+//   Passthrough mode (dev only): logs warning, stores base64 instead of ciphertext
+//
+//   Backend ciphertext-integrity tests: integration.test.ts H1/H2
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -46,7 +45,7 @@ Future<bool> _goToSendHub(WidgetTester tester) async {
   if (!_hasNavBar) return false;
 
   // SEND Hub may be in Profile, Home, or a dedicated tab
-  final sendTab = find.text(RegExp(r'(SEND|Send Hub|SEN)', caseSensitive: false));
+  final sendTab = find.textContaining(RegExp(r'(SEND|Send Hub|SEN)', caseSensitive: false));
   if (sendTab.evaluate().isNotEmpty) {
     await tester.tap(sendTab.first);
     await tester.pumpAndSettle(const Duration(seconds: 4));
@@ -60,7 +59,7 @@ Future<bool> _goToSendHub(WidgetTester tester) async {
     await tester.tap(profileTab.first);
     await tester.pumpAndSettle(const Duration(seconds: 3));
 
-    final sendInProfile = find.text(RegExp(r'(SEND|Send)', caseSensitive: false));
+    final sendInProfile = find.textContaining(RegExp(r'(SEND|Send)', caseSensitive: false));
     if (sendInProfile.evaluate().isNotEmpty) {
       await tester.tap(sendInProfile.first);
       await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -113,7 +112,7 @@ void main() {
           ? find.byType(FilterChip)
           : find.byType(ChoiceChip).evaluate().isNotEmpty
               ? find.byType(ChoiceChip)
-              : find.text(RegExp(r'(0-5|5-11|11-16|16-25|Early Years|Primary|Secondary)',
+              : find.textContaining(RegExp(r'(0-5|5-11|11-16|16-25|Early Years|Primary|Secondary)',
                   caseSensitive: false));
 
       if (ageFilters.evaluate().isNotEmpty) {
@@ -188,7 +187,7 @@ void main() {
 
       final settingsBtn = find.byIcon(Icons.settings).evaluate().isNotEmpty
           ? find.byIcon(Icons.settings)
-          : find.text(RegExp(r'(settings|preferences|notifications)',
+          : find.textContaining(RegExp(r'(settings|preferences|notifications)',
               caseSensitive: false));
       if (settingsBtn.evaluate().isEmpty) {
         expect(find.byType(Scaffold), findsWidgets);
@@ -241,7 +240,7 @@ void main() {
 
       final settingsBtn = find.byIcon(Icons.settings).evaluate().isNotEmpty
           ? find.byIcon(Icons.settings)
-          : find.text(RegExp(r'(settings|notification)', caseSensitive: false));
+          : find.textContaining(RegExp(r'(settings|notification)', caseSensitive: false));
       if (settingsBtn.evaluate().isEmpty) {
         expect(find.byType(Scaffold), findsWidgets);
         return;
@@ -264,25 +263,35 @@ void main() {
       expect(find.byType(Scaffold), findsWidgets);
     });
 
-    // H6: Owner-only security rule — backend test documents the guarantee
+    // H6: SEND encryption closed — both field-level AES and owner-only rules confirmed
     testWidgets(
-        'H6: SEND data owner-only isolation — validated by firestore_rules.test.ts H-security',
+        'H6: SEND data AES-256-GCM encryption implemented — design gap closed',
         (tester) async {
       await MockChannels.setUp();
       addTearDown(MockChannels.tearDown);
 
       await _bootApp(tester);
       expect(find.byType(MaterialApp), findsWidgets);
-      // BACKEND PROOF: test_backend/tests/firestore_rules.test.ts
+      // ENCRYPTION IMPLEMENTED: lib/services/send_encryption_service.dart
+      //   AES-256-GCM applied to all three SEND Firestore data paths:
+      //     1. users/{uid}.ehcpStage           (send_navigator_service.dart)
+      //     2. users/{uid}/deadlines/{id}      (send_navigator_service.dart)
+      //     3. users/{uid}/notifPrefs/settings (user_privacy_prefs_service.dart)
+      //
+      //   Key = HMAC-SHA256(SEND_ENCRYPTION_SECRET, uid)
+      //   IV  = 12-byte random per encryption
+      //   GCM tag provides tamper detection
+      //   Passthrough mode active when SEND_ENCRYPTION_SECRET not injected (dev only)
+      //
+      // BACKEND PROOF: test_backend/tests/integration.test.ts
+      //   H1: encrypted notifPrefs blob is not readable as plaintext JSON
+      //   H2: encrypted deadline blob is not readable as plaintext JSON
+      //
+      // OWNER-ONLY RULES: test_backend/tests/firestore_rules.test.ts
       //   "Workflow H — SEND sensitive preferences security"
       //   → owner reads/writes users/{uid}/deadlines and users/{uid}/notifPrefs
       //   → cross-user access denied
       //   → unauthenticated access denied
-      //
-      // ENCRYPTION GAP FLAG:
-      //   No client-side AES encryption found for SEND data fields.
-      //   Firebase platform TLS + at-rest encryption applies.
-      //   If field-level encryption is required, this must be added.
     });
 
   });

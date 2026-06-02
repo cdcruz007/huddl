@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'dart:convert';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
@@ -1502,7 +1503,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
             SizedBox(width: 8),
             Text('Message copied to clipboard'),
           ],
@@ -1556,7 +1557,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const Icon(Icons.topic, color: HuddlColors.nearBlack, size: 22),
+                    const Icon(HuddlIcons.topic, color: HuddlColors.nearBlack, size: 22),
                     const SizedBox(width: 8),
                     Text(
                       'Saved Threads',
@@ -1584,7 +1585,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.topic_outlined, size: 36, color: HuddlColors.nearBlack),
+                          child: const Icon(HuddlIcons.topic, size: 36, color: HuddlColors.nearBlack),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -1620,7 +1621,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.topic, color: HuddlColors.nearBlack, size: 22),
+                          child: const Icon(HuddlIcons.topic, color: HuddlColors.nearBlack, size: 22),
                         ),
                         title: Text(
                           thread.topicName,
@@ -1639,7 +1640,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                Icon(Icons.chat_bubble_outline, size: 12, color: context.hc.textTertiary),
+                                Icon(HuddlIcons.chat, size: 12, color: context.hc.textTertiary),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${thread.totalMessages} messages',
@@ -1659,7 +1660,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           children: [
                             // Navigate to group
                             IconButton(
-                              icon: const Icon(Icons.open_in_new, size: 18, color: HuddlColors.textDark),
+                              icon: const Icon(HuddlIcons.openInNew, size: 18, color: HuddlColors.textDark),
                               tooltip: 'Go to group',
                               onPressed: () {
                                 Navigator.pop(c);
@@ -1672,7 +1673,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             ),
                             // Delete
                             IconButton(
-                              icon: Icon(Icons.delete_outline, size: 18, color: context.hc.textTertiary),
+                              icon: Icon(HuddlIcons.delete, size: 18, color: context.hc.textTertiary),
                               onPressed: () async {
                                 await _savedMessageService.unsaveThread(thread.id);
                                 if (c.mounted) Navigator.pop(c);
@@ -1727,7 +1728,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const Icon(Icons.topic, color: HuddlColors.nearBlack, size: 22),
+                    const Icon(HuddlIcons.topic, color: HuddlColors.nearBlack, size: 22),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1744,7 +1745,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           'groupImageUrl': thread.groupImageUrl,
                         });
                       },
-                      icon: const Icon(Icons.open_in_new, size: 16),
+                      icon: const Icon(HuddlIcons.openInNew, size: 16),
                       label: Text('Go to group',
                           style: HuddlText.caption(weight: FontWeight.w600)),
                       style: TextButton.styleFrom(foregroundColor: HuddlColors.textTertiary),
@@ -1877,7 +1878,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
+                child: const Icon(HuddlIcons.delete, size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1896,7 +1897,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               HuddlButton(
                 label: 'Unsend for everyone',
                 variant: HuddlButtonVariant.destructive,
-                leadingIcon: Icons.group_outlined,
+                leadingIcon: HuddlIcons.usersThree,
                 fullWidth: true,
                 onPressed: () {
                   Navigator.pop(c);
@@ -1908,7 +1909,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     SnackBar(
                       content: const Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                           SizedBox(width: 8),
                           Text('Message unsent for everyone'),
                         ],
@@ -1925,7 +1926,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               HuddlButton(
                 label: 'Unsend just for me',
                 variant: HuddlButtonVariant.secondary,
-                leadingIcon: Icons.person_outline,
+                leadingIcon: HuddlIcons.user,
                 fullWidth: true,
                 onPressed: () {
                   Navigator.pop(c);
@@ -1937,7 +1938,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     SnackBar(
                       content: const Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                           SizedBox(width: 8),
                           Text('Message unsent for you'),
                         ],
@@ -1999,7 +2000,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.topic_outlined, size: 32, color: HuddlColors.nearBlack),
+                      child: const Icon(HuddlIcons.topic, size: 32, color: HuddlColors.nearBlack),
                     ),
                     const SizedBox(height: 18),
                     Text(
@@ -2134,7 +2135,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         // Suffix clear button
                         suffixIcon: topicController.text.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.close, size: 16),
+                                icon: const Icon(HuddlIcons.close, size: 16),
                                 onPressed: () {
                                   topicController.clear();
                                   setDialogState(() {});
@@ -2160,7 +2161,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded,
+                            const Icon(HuddlIcons.info,
                                 size: 16, color: HuddlColors.infoBlue),
                             const SizedBox(width: 8),
                             Expanded(
@@ -2238,7 +2239,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.bookmark_added_rounded, color: Colors.white, size: 18),
+            const Icon(HuddlIcons.bookmarkFill, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(child: Text('Saved under "$topicName"')),
           ],
@@ -2269,7 +2270,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.block, size: 32, color: HuddlColors.error),
+                child: const Icon(HuddlIcons.block, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -2355,7 +2356,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         color: HuddlColors.error.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                      child: const Icon(HuddlIcons.flag, size: 22, color: HuddlColors.error),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2477,7 +2478,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         color: HuddlColors.error.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                      child: const Icon(HuddlIcons.flag, size: 22, color: HuddlColors.error),
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -2768,7 +2769,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.admin_panel_settings, size: 24, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.adminPanel, size: 24, color: context.hc.textPrimary),
                   const SizedBox(width: 10),
                   Text('Add Admin', style: HuddlText.heading(color: context.hc.textPrimary)),
                 ],
@@ -2787,7 +2788,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
-                    Icon(Icons.admin_panel_settings_outlined, size: 48, color: context.hc.textTertiary),
+                    Icon(HuddlIcons.adminPanel, size: 48, color: context.hc.textTertiary),
                     const SizedBox(height: 12),
                     Text('All members are already admins.', style: HuddlText.body(color: context.hc.textTertiary)),
                   ],
@@ -2809,7 +2810,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       trailing: HuddlButton(
                         label: 'Make Admin',
                         variant: HuddlButtonVariant.primary,
-                        leadingIcon: Icons.shield_outlined,
+                        leadingIcon: HuddlIcons.shield,
                         fullWidth: false,
                         onPressed: () {
                           Navigator.pop(c);
@@ -2856,7 +2857,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Row(children: [
-                    const Icon(Icons.admin_panel_settings, color: Colors.white, size: 18),
+                    const Icon(HuddlIcons.adminPanel, color: Colors.white, size: 18),
                     const SizedBox(width: 8),
                     Text('${member.name} is now an admin'),
                   ]),
@@ -2892,7 +2893,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.sentiment_dissatisfied_outlined,
+                child: const Icon(HuddlIcons.sentimentBad,
                     size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
@@ -3024,7 +3025,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.lock_outline, size: 32, color: HuddlColors.textDark),
+                child: const Icon(HuddlIcons.lock, size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 18),
               Text(
@@ -3094,7 +3095,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       children: [
-                        const Icon(Icons.share, color: HuddlColors.textDark, size: 22),
+                        const Icon(HuddlIcons.share, color: HuddlColors.textDark, size: 22),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -3158,7 +3159,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               member.parentType == 'mum' ? 'Mum' : 'Dad',
                               style: HuddlText.caption(),
                             ),
-                            trailing: const Icon(Icons.send, size: 20, color: HuddlColors.textDark),
+                            trailing: const Icon(HuddlIcons.send, size: 20, color: HuddlColors.textDark),
                             onTap: () {
                               Navigator.pop(c);
                               _validateAndShareWith(
@@ -3241,7 +3242,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.person_off_outlined, size: 32, color: HuddlColors.textDark),
+                child: const Icon(HuddlIcons.personOff, size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 18),
               Text(
@@ -3313,13 +3314,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const Spacer(),
                   if (_searchMatches.isNotEmpty) ...[
                     IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_up, size: 20),
+                      icon: const Icon(HuddlIcons.caretUp, size: 20),
                       onPressed: _prevMatch,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+                      icon: const Icon(HuddlIcons.caretDown, size: 20),
                       onPressed: _nextMatch,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -3677,14 +3678,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(Icons.forum_outlined, size: 13, color: HuddlColors.textDark),
+                                            Icon(HuddlIcons.forum, size: 13, color: HuddlColors.textDark),
                                             const SizedBox(width: 4),
                                             Text(
                                               '${_threadReplies[msg.id]!.length} ${_threadReplies[msg.id]!.length == 1 ? 'reply' : 'replies'}',
                                               style: HuddlText.caption(weight: FontWeight.w600),
                                             ),
                                             const SizedBox(width: 4),
-                                            Icon(Icons.chevron_right, size: 14, color: HuddlColors.textDark),
+                                            Icon(HuddlIcons.caretRight, size: 14, color: HuddlColors.textDark),
                                           ],
                                         ),
                                       ),
@@ -3772,13 +3773,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                               color: HuddlColors.primaryPale,
-                              child: const Icon(Icons.person,
+                              child: const Icon(HuddlIcons.user,
                                   size: 10, color: HuddlColors.primary),
                             ),
                           )
                         : Container(
                             color: HuddlColors.primaryPale,
-                            child: const Icon(Icons.person,
+                            child: const Icon(HuddlIcons.user,
                                 size: 10, color: HuddlColors.primary),
                           ),
                   ),
@@ -3806,7 +3807,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       elevation: 0,
       surfaceTintColor: HuddlColors.white,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+        icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () {
           setState(() {
             _isSearching = false;
@@ -3962,7 +3963,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       elevation: 0,
       surfaceTintColor: HuddlColors.white,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+        icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -4015,7 +4016,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             children: [
               IconButton(
                 icon: Icon(
-                  Icons.auto_awesome_outlined,
+                  HuddlIcons.ai,
                   color: (!hasAccess || !canUse)
                       ? HuddlColors.textTertiary
                       : context.hc.textSecondary,
@@ -4036,7 +4037,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               'unread messages in seconds.',
                           'requiredPlan': 'Huddl Plus',
                           'featureIcon':
-                              Icons.auto_awesome_outlined.codePoint,
+                              HuddlIcons.ai.codePoint,
                         });
                     return;
                   }
@@ -4113,12 +4114,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           );
         }),
         IconButton(
-          icon: Icon(Icons.search, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.search, color: context.hc.textPrimary),
           onPressed: () => setState(() => _isSearching = true),
         ),
         // 3-dot popup menu
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.moreVert, color: context.hc.textPrimary),
           offset: const Offset(0, 46),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           color: context.hc.surface,
@@ -4170,7 +4171,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      Icon(Icons.poll_outlined,
+                      Icon(HuddlIcons.poll,
                           size: 20, color: HuddlColors.textDark),
                       if (_activePollCount > 0)
                         Positioned(
@@ -4225,7 +4226,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               value: 'share',
               child: Row(
                 children: [
-                  Icon(Icons.share_outlined, size: 20, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.share, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text(
                     'Share group',
@@ -4239,7 +4240,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               value: 'details',
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 20, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.info, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text(
                     'Group details',
@@ -4253,7 +4254,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               value: 'saved',
               child: Row(
                 children: [
-                  Icon(Icons.bookmark_outline, size: 20, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.bookmark, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text(
                     'Saved messages',
@@ -4267,7 +4268,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               value: 'saved_threads',
               child: Row(
                 children: [
-                  const Icon(Icons.topic_outlined, size: 20, color: HuddlColors.nearBlack),
+                  const Icon(HuddlIcons.topic, size: 20, color: HuddlColors.nearBlack),
                   const SizedBox(width: 12),
                   Text(
                     'Saved threads',
@@ -4282,7 +4283,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'add_member',
                 child: Row(
                   children: [
-                    Icon(Icons.person_add_outlined, size: 20, color: context.hc.textPrimary),
+                    Icon(HuddlIcons.personAdd, size: 20, color: context.hc.textPrimary),
                     const SizedBox(width: 12),
                     Text(
                       'Add member',
@@ -4296,7 +4297,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'remove_member',
                 child: Row(
                   children: [
-                    const Icon(Icons.person_remove_outlined, size: 20, color: HuddlColors.error),
+                    const Icon(HuddlIcons.personRemove, size: 20, color: HuddlColors.error),
                     const SizedBox(width: 12),
                     Text(
                       'Remove member',
@@ -4310,7 +4311,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'add_admin',
                 child: Row(
                   children: [
-                    Icon(Icons.admin_panel_settings_outlined, size: 20, color: context.hc.textPrimary),
+                    Icon(HuddlIcons.adminPanel, size: 20, color: context.hc.textPrimary),
                     const SizedBox(width: 12),
                     Text(
                       'Add admin',
@@ -4325,7 +4326,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'leave',
                 child: Row(
                   children: [
-                    const Icon(Icons.exit_to_app, size: 20, color: HuddlColors.error),
+                    const Icon(HuddlIcons.exitToApp, size: 20, color: HuddlColors.error),
                     const SizedBox(width: 12),
                     Text(
                       'Leave group',
@@ -4358,19 +4359,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           ? Image.asset(
               url,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(Icons.people,
+              errorBuilder: (_, __, ___) => Icon(HuddlIcons.usersThree,
                   size: size * 0.5, color: HuddlColors.textDark),
             )
           : url.startsWith('http')
               ? Image.network(
                   url,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(Icons.people,
+                  errorBuilder: (_, __, ___) => Icon(HuddlIcons.usersThree,
                       size: size * 0.5, color: HuddlColors.textDark),
                 )
               : url.startsWith('data:')
                   ? _buildDataImage(size)
-                  : Icon(Icons.people, size: size * 0.5, color: HuddlColors.textDark),
+                  : Icon(HuddlIcons.usersThree, size: size * 0.5, color: HuddlColors.textDark),
     );
   }
 
@@ -4382,14 +4383,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         return Image.memory(
           Uint8List.fromList(bytes),
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Icon(Icons.people,
+          errorBuilder: (_, __, ___) => Icon(HuddlIcons.usersThree,
               size: size * 0.5, color: HuddlColors.textDark),
         );
       }
     } catch (_) {
       // fall through
     }
-    return Icon(Icons.people, size: size * 0.5, color: HuddlColors.textDark);
+    return Icon(HuddlIcons.usersThree, size: size * 0.5, color: HuddlColors.textDark);
   }
 
   Widget _buildInputBar() {
@@ -4421,7 +4422,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             children: [
               IconButton(
                 icon: const Icon(
-                  Icons.add_circle_outline,
+                  HuddlIcons.addCircle,
                   color: HuddlColors.primary,  // orange — action button
                   size: 26,
                 ),
@@ -4482,7 +4483,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+                          child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
                         ),
                       ),
                     );
@@ -4542,7 +4543,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.mic, size: 22, color: HuddlColors.white),
+                          child: const Icon(HuddlIcons.mic, size: 22, color: HuddlColors.white),
                         ),
                       ),
                     ),
@@ -4636,7 +4637,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         'featureTitle': 'Poll limit reached',
         'featureDescription': ss.limitReachedMessage('polls'),
         'requiredPlan': 'Huddl Plus',
-        'featureIcon': Icons.poll_outlined.codePoint,
+        'featureIcon': HuddlIcons.poll.codePoint,
       });
       return;
     }
@@ -4860,7 +4861,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_outline,
+              const Icon(HuddlIcons.checkCircle,
                   color: HuddlColors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(
@@ -5671,7 +5672,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         backgroundColor: ctx.hc.surface,
         title: Row(
           children: [
-            Icon(Icons.contacts_rounded, color: HuddlColors.primary, size: 24),
+            Icon(HuddlIcons.contacts, color: HuddlColors.primary, size: 24),
             const SizedBox(width: 10),
             Text(
               'Contacts Access',
@@ -6188,10 +6189,10 @@ class _SystemMessageBubble extends StatelessWidget {
             children: [
               Icon(
                 message.message.contains('joined')
-                    ? Icons.person_add_alt_1
+                    ? HuddlIcons.personAdd
                     : message.message.contains('left')
-                        ? Icons.person_remove_alt_1
-                        : Icons.info_outline,
+                        ? HuddlIcons.personRemove
+                        : HuddlIcons.info,
                 size: 14,
                 color: message.message.contains('joined')
                     ? HuddlColors.primary        // orange — positive (join)
@@ -6371,7 +6372,7 @@ class _ChatBubble extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (isSaved) ...[
-                              Icon(Icons.bookmark, size: 11,
+                              Icon(HuddlIcons.bookmark, size: 11,
                                   color: HuddlColors.textTertiary),
                               const SizedBox(width: 3),
                             ],
@@ -6463,7 +6464,7 @@ class _ChatBubble extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.chat_bubble_outline, size: 16, color: hc.textTertiary),
+                      Icon(HuddlIcons.chat, size: 16, color: hc.textTertiary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -6509,7 +6510,7 @@ class _ChatBubble extends StatelessWidget {
                             color: hc.scaffold,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.add, color: hc.textSecondary, size: 20),
+                          child: Icon(HuddlIcons.add, color: hc.textSecondary, size: 20),
                         ),
                       ),
                     ],
@@ -6518,7 +6519,7 @@ class _ChatBubble extends StatelessWidget {
                 Divider(height: 1, color: hc.divider),
                 ListTile(
                   leading: Icon(
-                    capturedIsSaved ? Icons.bookmark : (capturedOnSaveThread != null ? Icons.bookmark_add_outlined : Icons.bookmark_outline),
+                    capturedIsSaved ? HuddlIcons.bookmark : (capturedOnSaveThread != null ? HuddlIcons.bookmarkPlus : HuddlIcons.bookmark),
                     color: capturedIsSaved ? HuddlColors.error : hc.textPrimary,
                   ),
                   title: Text(
@@ -6531,7 +6532,7 @@ class _ChatBubble extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.copy_outlined, color: hc.textPrimary),
+                  leading: Icon(HuddlIcons.copy, color: hc.textPrimary),
                   title: Text('Copy text',
                       style: HuddlText.body()),
                   onTap: () {
@@ -6540,7 +6541,7 @@ class _ChatBubble extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.forum_outlined, color: hc.textPrimary),
+                  leading: Icon(HuddlIcons.forum, color: hc.textPrimary),
                   title: Text('Reply in thread',
                       style: HuddlText.body()),
                   onTap: () {
@@ -6549,7 +6550,7 @@ class _ChatBubble extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.forward_outlined, color: hc.textPrimary),
+                  leading: Icon(HuddlIcons.forward, color: hc.textPrimary),
                   title: Text('Forward',
                       style: HuddlText.body()),
                   onTap: () {
@@ -6559,7 +6560,7 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 if (capturedOnUnsend != null)
                   ListTile(
-                    leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
+                    leading: const Icon(HuddlIcons.delete, color: HuddlColors.error),
                     title: Text('Unsend message',
                         style: HuddlText.body(color: HuddlColors.error)),
                     onTap: () {
@@ -6569,7 +6570,7 @@ class _ChatBubble extends StatelessWidget {
                   ),
                 if (capturedOnSaveThread != null)
                   ListTile(
-                    leading: const Icon(Icons.topic_outlined, color: HuddlColors.nearBlack),
+                    leading: const Icon(HuddlIcons.topic, color: HuddlColors.nearBlack),
                     title: Text('Save reply thread',
                         style: HuddlText.body()),
                     onTap: () {
@@ -6580,7 +6581,7 @@ class _ChatBubble extends StatelessWidget {
                 if (capturedOnBlockUser != null)
                   ListTile(
                     leading: Icon(
-                      capturedIsBlockedUser ? Icons.check_circle_outline : Icons.block,
+                      capturedIsBlockedUser ? HuddlIcons.checkCircle : HuddlIcons.block,
                       color: HuddlColors.error,
                     ),
                     title: Text(
@@ -6594,7 +6595,7 @@ class _ChatBubble extends StatelessWidget {
                   ),
                 if (capturedOnReportUser != null)
                   ListTile(
-                    leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
+                    leading: const Icon(HuddlIcons.flag, color: HuddlColors.error),
                     title: Text(
                       'Report message',
                       style: HuddlText.body(color: HuddlColors.error),
@@ -6606,7 +6607,7 @@ class _ChatBubble extends StatelessWidget {
                   ),
                 if (capturedOnReportSender != null)
                   ListTile(
-                    leading: const Icon(Icons.person_off_outlined, color: HuddlColors.error),
+                    leading: const Icon(HuddlIcons.personOff, color: HuddlColors.error),
                     title: Text(
                       'Report ${capturedMessage.senderName}',
                       style: HuddlText.body(color: HuddlColors.error),
@@ -6708,7 +6709,7 @@ class _GroupDeletedMessageBubble extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.block, size: 14, color: context.hc.textTertiary),
+              Icon(HuddlIcons.block, size: 14, color: context.hc.textTertiary),
               const SizedBox(width: 6),
               Text(
                 'This message was deleted',
@@ -6749,15 +6750,15 @@ class _GroupMessageStatusIcon extends StatelessWidget {
 
     switch (effectiveStatus) {
       case MessageStatus.sending:
-        return Icon(Icons.access_time, size: 14, color: context.hc.textTertiary);
+        return Icon(HuddlIcons.clock, size: 14, color: context.hc.textTertiary);
       case MessageStatus.sent:
-        return Icon(Icons.check, size: 14, color: context.hc.textTertiary);
+        return Icon(HuddlIcons.check, size: 14, color: context.hc.textTertiary);
       case MessageStatus.delivered:
-        return Icon(Icons.done_all, size: 14, color: context.hc.textTertiary);
+        return Icon(HuddlIcons.check, size: 14, color: context.hc.textTertiary);
       case MessageStatus.read:
-        return const Icon(Icons.done_all, size: 14, color: HuddlColors.nearBlack);
+        return const Icon(HuddlIcons.check, size: 14, color: HuddlColors.nearBlack);
       case MessageStatus.error:
-        return const Icon(Icons.error_outline, size: 14, color: HuddlColors.error);
+        return const Icon(HuddlIcons.error, size: 14, color: HuddlColors.error);
     }
   }
 }
@@ -6937,7 +6938,7 @@ class _SenderAvatarState extends State<_SenderAvatar> {
                 shape: BoxShape.circle,
                 border: Border.all(color: context.hc.surface, width: 1.5),
               ),
-              child: const Icon(Icons.chat_bubble, size: 6, color: Colors.white),
+              child: const Icon(HuddlIcons.chatFill, size: 6, color: Colors.white),
             ),
           ),
       ],
@@ -7261,7 +7262,7 @@ class _GroupImageBubble extends StatelessWidget {
                             color: Colors.black.withValues(alpha: 0.5),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.forward,
+                          child: const Icon(HuddlIcons.forward,
                               size: 16, color: Colors.white),
                         ),
                       ),
@@ -7309,7 +7310,7 @@ class _GroupImageBubble extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.image_not_supported_outlined,
+            HuddlIcons.imageNotSupported,
             color: isDark ? HuddlColors.neutral600 : HuddlColors.neutral100,
             size: 32,
           ),
@@ -7565,7 +7566,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                                 errorBuilder: (_, __, ___) => Container(
                                   height: 130,
                                   color: HuddlColors.successBg,
-                                  child: const Icon(Icons.map_outlined,
+                                  child: const Icon(HuddlIcons.map,
                                       size: 40,
                                       color: HuddlColors.primaryDark),
                                 ),
@@ -7575,7 +7576,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                                 child: Align(
                                   alignment: const Alignment(0, -0.1),
                                   child: Icon(
-                                    Icons.location_on,
+                                    HuddlIcons.locationPinFill,
                                     size: 36,
                                     color: HuddlColors.error,
                                     shadows: const [
@@ -7634,8 +7635,8 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                             children: [
                               Icon(
                                 widget.isLive && stillLive
-                                    ? Icons.location_on
-                                    : Icons.location_on_outlined,
+                                    ? HuddlIcons.locationPinFill
+                                    : HuddlIcons.locationPin,
                                 size: 16,
                                 color: widget.isLive && stillLive
                                     ? HuddlColors.nearBlack
@@ -7664,7 +7665,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.access_time_rounded,
+                                  HuddlIcons.clock,
                                   size: 13,
                                   color: stillLive
                                       ? HuddlColors.nearBlack
@@ -7686,7 +7687,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                           padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                           child: Row(
                             children: [
-                              Icon(Icons.open_in_new,
+                              Icon(HuddlIcons.openInNew,
                                   size: 13, color: HuddlColors.textDark),
                               const SizedBox(width: 4),
                               Text(
@@ -7718,7 +7719,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.stop_circle_outlined,
+                                  Icon(HuddlIcons.stopCircle,
                                       size: 15, color: HuddlColors.error),
                                   const SizedBox(width: 6),
                                   Text(
@@ -7795,7 +7796,7 @@ class _LiveLocationDurationSheet extends StatelessWidget {
                       color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.location_on,
+                    child: const Icon(HuddlIcons.locationPinFill,
                         color: HuddlColors.nearBlack, size: 22),
                   ),
                   const SizedBox(width: 12),
@@ -7834,7 +7835,7 @@ class _LiveLocationDurationSheet extends StatelessWidget {
                             color: context.hc.textTertiary
                                 .withValues(alpha: 0.25)),
                       ),
-                      child: Icon(Icons.access_time_rounded,
+                      child: Icon(HuddlIcons.clock,
                           size: 20, color: context.hc.textSecondary),
                     ),
                     const SizedBox(width: 14),
@@ -7843,7 +7844,7 @@ class _LiveLocationDurationSheet extends StatelessWidget {
                       style: HuddlText.body(),
                     ),
                     const Spacer(),
-                    Icon(Icons.chevron_right,
+                    Icon(HuddlIcons.caretRight,
                         color: context.hc.textTertiary, size: 20),
                   ],
                 ),
@@ -7887,11 +7888,11 @@ class _GroupAttachSheet extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _gAttachIcon(context, Icons.camera_alt_rounded, 'Camera',
+                  _gAttachIcon(context, HuddlIcons.camera, 'Camera',
                       HuddlColors.primaryDark, HuddlColors.primary.withValues(alpha: 0.08), 'camera'),
-                  _gAttachIcon(context, Icons.photo_library_rounded, 'Gallery',
+                  _gAttachIcon(context, HuddlIcons.photoLibrary, 'Gallery',
                       HuddlColors.nearBlack, HuddlColors.peachSurface, 'gallery'),
-                  _gAttachIcon(context, Icons.insert_drive_file_rounded, 'Document',
+                  _gAttachIcon(context, HuddlIcons.file, 'Document',
                       HuddlColors.orangeDeep, HuddlColors.peachSurface, 'document'),
                 ],
               ),
@@ -7902,11 +7903,11 @@ class _GroupAttachSheet extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _gAttachIcon(context, Icons.location_on_rounded, 'Location',
+                  _gAttachIcon(context, HuddlIcons.locationPinFill, 'Location',
                       HuddlColors.primary, HuddlColors.primary.withValues(alpha: 0.08), 'location'),
-                  _gAttachIcon(context, Icons.person_rounded, 'Contact',
+                  _gAttachIcon(context, HuddlIcons.user, 'Contact',
                       HuddlColors.primary, HuddlColors.primary.withValues(alpha: 0.08), 'contact'),
-                  _gAttachIcon(context, Icons.poll_rounded, 'Poll',
+                  _gAttachIcon(context, HuddlIcons.poll, 'Poll',
                       HuddlColors.orangePale, HuddlColors.peachSurface, 'poll'),
                 ],
               ),
@@ -8004,7 +8005,7 @@ class _AiSummarySheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome, size: 20, color: HuddlColors.primary),
+                  const Icon(HuddlIcons.ai, size: 20, color: HuddlColors.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -8017,7 +8018,7 @@ class _AiSummarySheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(HuddlIcons.close),
                     onPressed: () => Navigator.pop(context),
                     iconSize: 20,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -8125,7 +8126,7 @@ class _AiSummarySheet extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.event_note,
+                          const Icon(HuddlIcons.calendar,
                               size: 18, color: HuddlColors.primary),
                           const SizedBox(width: 8),
                           Expanded(

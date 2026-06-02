@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -797,7 +798,7 @@ class _HomeScreenState extends State<HomeScreen>
               SnackBar(
                 content: Row(
                   children: [
-                    Icon(Icons.check_circle,
+                    Icon(HuddlIcons.checkCircle,
                         color: context.hc.surface, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
@@ -840,7 +841,7 @@ class _HomeScreenState extends State<HomeScreen>
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.check_circle,
+              Icon(HuddlIcons.checkCircle,
                   color: context.hc.surface, size: 18),
               const SizedBox(width: 8),
               Expanded(
@@ -877,8 +878,8 @@ class _HomeScreenState extends State<HomeScreen>
               const HuddlBottomSheetHandle(),
               _menuItem(
                 icon: announcement.isPinned
-                    ? Icons.push_pin
-                    : Icons.push_pin_outlined,
+                    ? HuddlIcons.pin
+                    : HuddlIcons.pin,
                 label: announcement.isPinned ? 'Unpin post' : 'Pin post',
                 onTap: () {
                   Navigator.pop(ctx);
@@ -892,8 +893,8 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               _menuItem(
                 icon: announcement.isBookmarked
-                    ? Icons.bookmark
-                    : Icons.bookmark_border,
+                    ? HuddlIcons.bookmark
+                    : HuddlIcons.bookmark,
                 label: announcement.isBookmarked
                     ? 'Remove bookmark'
                     : 'Bookmark post',
@@ -907,7 +908,7 @@ class _HomeScreenState extends State<HomeScreen>
                 },
               ),
               _menuItem(
-                icon: Icons.share_outlined,
+                icon: HuddlIcons.share,
                 label: 'Share post',
                 onTap: () {
                   Navigator.pop(ctx);
@@ -916,7 +917,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               if (isOwnPost)
                 _menuItem(
-                  icon: Icons.delete_outline,
+                  icon: HuddlIcons.delete,
                   label: 'Delete post',
                   color: HuddlColors.error,
                   onTap: () {
@@ -1167,7 +1168,7 @@ class _HomeScreenState extends State<HomeScreen>
           backgroundColor: HuddlColors.primary,
           elevation: 4,
           shape: const CircleBorder(),
-          child: const Icon(Icons.auto_awesome_rounded,
+          child: const Icon(HuddlIcons.ai,
               color: Colors.white, size: 22),
         ),
       ),
@@ -1379,7 +1380,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Tooltip(
                     message: 'Search groups, meetups, services & market',
                     child: IconButton(
-                      icon: const Icon(Icons.search),
+                      icon: const Icon(HuddlIcons.search),
                       color: hc.textPrimary,
                       onPressed: () {
                         HuddlAnimations.lightTap();
@@ -1400,7 +1401,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: HuddlBadge(
                     count: _notifBadgeCount,
                     child: IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
+                      icon: const Icon(HuddlIcons.bell),
                       color: hc.textPrimary,
                       onPressed: () {
                         HuddlAnimations.lightTap();
@@ -1472,7 +1473,7 @@ class _HomeScreenState extends State<HomeScreen>
                     color: hc.surfaceAlt,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.tune_rounded,
+                  child: Icon(HuddlIcons.filter,
                       size: 18, color: hc.textSecondary),
                 ),
               ),
@@ -1520,7 +1521,7 @@ class _HomeScreenState extends State<HomeScreen>
           // Location + member count — single inline row, no pill
           Row(
             children: [
-              Icon(Icons.location_on_rounded,
+              Icon(HuddlIcons.locationPinFill,
                   size: 13,
                   color: _borough.isNotEmpty
                       ? HuddlColors.primary
@@ -1666,7 +1667,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 const SizedBox(width: 12),
                 Icon(
-                  Icons.campaign_outlined,
+                  HuddlIcons.campaign,
                   size: 18,
                   color: HuddlColors.primary.withValues(alpha: 0.70),
                 ),
@@ -1719,7 +1720,7 @@ class _HomeScreenState extends State<HomeScreen>
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.send_rounded,
+                            HuddlIcons.send,
                             size: 16,
                             color: hasText
                                 ? Colors.white
@@ -1762,7 +1763,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.push_pin_outlined,
+                    Icon(HuddlIcons.pin,
                         size: 15, color: hc.textTertiary),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1773,7 +1774,7 @@ class _HomeScreenState extends State<HomeScreen>
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Icon(Icons.chevron_right,
+                    Icon(HuddlIcons.caretRight,
                         size: 18, color: hc.textTertiary),
                   ],
                 ),
@@ -1911,7 +1912,7 @@ class _HomeScreenState extends State<HomeScreen>
     final rows = <_CatchUpItem>[];
     if (newMeetups > 0) {
       rows.add(_CatchUpItem(
-        icon: Icons.near_me_outlined,
+        icon: HuddlIcons.nearMe,
         color: HuddlColors.primary,
         assetPath: 'assets/illustrations/location_pin_peach_duo.webp',
         label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'} nearby',
@@ -1920,7 +1921,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     if (newEvents > 0) {
       rows.add(_CatchUpItem(
-        icon: Icons.event_note_outlined,
+        icon: HuddlIcons.calendar,
         color: HuddlColors.accentAmber,
         assetPath: 'assets/illustrations/calendar_event.webp',
         label: '$newEvents new ${newEvents == 1 ? 'event' : 'events'}',
@@ -1929,7 +1930,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     if (newMarket > 0) {
       rows.add(_CatchUpItem(
-        icon: Icons.sell_outlined,
+        icon: HuddlIcons.sellTag,
         color: HuddlColors.primary,
         assetPath: 'assets/illustrations/mobile_store_woman.webp',
         label: '$newMarket ${newMarket == 1 ? 'item' : 'items'} for sale nearby',
@@ -1938,7 +1939,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     if (newGroupCount > 0) {
       rows.add(_CatchUpItem(
-        icon: Icons.diversity_3_outlined,
+        icon: HuddlIcons.diversity,
         color: HuddlColors.infoBlue,
         assetPath: 'assets/illustrations/community_wave.webp',
         label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
@@ -1947,7 +1948,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     if (newServices > 0) {
       rows.add(_CatchUpItem(
-        icon: Icons.handshake_outlined,
+        icon: HuddlIcons.handshake,
         color: HuddlColors.teal,
         assetPath: 'assets/illustrations/handshake.webp',
         label: '$newServices ${newServices == 1 ? 'local service' : 'local services'} added',
@@ -2015,7 +2016,7 @@ class _HomeScreenState extends State<HomeScreen>
                         color: hc.surfaceAlt,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.close, size: 14, color: hc.textTertiary),
+                      child: Icon(HuddlIcons.close, size: 14, color: hc.textTertiary),
                     ),
                   ),
                 ],
@@ -2055,7 +2056,7 @@ class _HomeScreenState extends State<HomeScreen>
                         style: HuddlText.body(weight: FontWeight.w500),
                       ),
                     ),
-                    Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
+                    Icon(HuddlIcons.caretRight, size: 18, color: hc.textTertiary),
                   ],
                 ),
               ),
@@ -2327,7 +2328,7 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle,
+                  const Icon(HuddlIcons.checkCircle,
                       size: 11,
                       color: HuddlColors.success),
                   const SizedBox(width: 4),
@@ -2381,7 +2382,7 @@ class _HomeScreenState extends State<HomeScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.access_time_outlined,
+                              HuddlIcons.clock,
                               size: 12,
                               color: item.badge == 'Today!'
                                   ? Colors.redAccent
@@ -2497,7 +2498,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (items.isEmpty) {
       return _buildCarouselEmpty(
-        hc, 'No new listings this week', Icons.explore_outlined,
+        hc, 'No new listings this week', HuddlIcons.exploreOutlined,
         illustrationAsset: 'assets/illustrations/mobile_store.webp',
       );
     }
@@ -2647,10 +2648,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _discoverImageFallback(_DiscoverType type, dynamic hc) {
     // Design rule: fallback icon colours all nearBlack
     final (icon, color) = switch (type) {
-      _DiscoverType.group  => (Icons.people_outline,     HuddlColors.nearBlack),
-      _DiscoverType.meetup => (Icons.place_outlined,     HuddlColors.nearBlack),
-      _DiscoverType.event  => (Icons.event_outlined,     HuddlColors.nearBlack),
-      _DiscoverType.sale   => (Icons.storefront_outlined,HuddlColors.nearBlack),
+      _DiscoverType.group  => (HuddlIcons.usersThree,     HuddlColors.nearBlack),
+      _DiscoverType.meetup => (HuddlIcons.locationPin,     HuddlColors.nearBlack),
+      _DiscoverType.event  => (HuddlIcons.calendar,     HuddlColors.nearBlack),
+      _DiscoverType.sale   => (HuddlIcons.storefront,HuddlColors.nearBlack),
     };
     return Container(
       color: color.withValues(alpha: 0.08),
@@ -2670,7 +2671,7 @@ class _HomeScreenState extends State<HomeScreen>
     final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
     if (groups.isEmpty) {
       return _buildCarouselEmpty(
-        hc, 'No new groups yet', Icons.people_outline,
+        hc, 'No new groups yet', HuddlIcons.usersThree,
         illustrationAsset: 'assets/illustrations/community_wave.webp',
       );
     }
@@ -2801,7 +2802,7 @@ class _HomeScreenState extends State<HomeScreen>
     final meetups = _upcomingMeetups.take(8).toList();
     if (meetups.isEmpty) {
       return _buildCarouselEmpty(
-        hc, 'No upcoming meetups', Icons.place,
+        hc, 'No upcoming meetups', HuddlIcons.locationPinFill,
         illustrationAsset: 'assets/illustrations/location_community.webp',
       );
     }
@@ -2823,7 +2824,7 @@ class _HomeScreenState extends State<HomeScreen>
               subtitle: '${m.dateDisplay} · ${m.location.isNotEmpty ? m.location : m.category}',
               badge: isGoing ? 'Going ✓' : null,
               stat: '${m.attendeeCount} attending',
-              statIcon: Icons.people_outline,
+              statIcon: HuddlIcons.usersThree,
               isSaved: isGoing,
               showSaveButton: false,
               aspectRatio: 1.1,
@@ -2845,7 +2846,7 @@ class _HomeScreenState extends State<HomeScreen>
     final events = _eventService.events.take(8).toList();
     if (events.isEmpty) {
       return _buildCarouselEmpty(
-        hc, 'No events listed yet', Icons.event_outlined,
+        hc, 'No events listed yet', HuddlIcons.calendar,
         illustrationAsset: 'assets/illustrations/calendar.webp',
       );
     }
@@ -2917,7 +2918,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 borderRadius: BorderRadius.circular(7),
                               ),
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Icon(Icons.check_circle, size: 10, color: Colors.white),
+                                const Icon(HuddlIcons.checkCircle, size: 10, color: Colors.white),
                                 const SizedBox(width: 3),
                                 Text('Going', style: HuddlText.label(color: Colors.white)),
                               ]),
@@ -2942,7 +2943,7 @@ class _HomeScreenState extends State<HomeScreen>
                         if (e.location.isNotEmpty) ...[  
                           const SizedBox(height: 3),
                           Row(children: [
-                            Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
+                            Icon(HuddlIcons.locationPin, size: 11, color: hc.textTertiary),
                             const SizedBox(width: 2),
                             Expanded(child: Text(e.location,
                               style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
@@ -2978,7 +2979,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       color: HuddlColors.neutral50,
       child: Center(
-        child: Icon(Icons.event_outlined, size: 32,
+        child: Icon(HuddlIcons.calendar, size: 32,
             color: HuddlColors.nearBlack.withValues(alpha: 0.3)),
       ),
     );
@@ -2990,7 +2991,7 @@ class _HomeScreenState extends State<HomeScreen>
     final services = _featuredServices.take(8).toList();
     if (services.isEmpty) {
       return _buildCarouselEmpty(
-        hc, 'No services listed yet', Icons.handshake_outlined,
+        hc, 'No services listed yet', HuddlIcons.handshake,
         illustrationAsset: 'assets/illustrations/handshake.webp',
       );
     }
@@ -3110,7 +3111,7 @@ class _HomeScreenState extends State<HomeScreen>
     final items = _rehomeService.allItems.take(8).toList();
     if (items.isEmpty) {
       return _buildCarouselEmpty(
-        hc, 'No items listed yet', Icons.storefront_outlined,
+        hc, 'No items listed yet', HuddlIcons.storefront,
         illustrationAsset: 'assets/illustrations/mobile_store.webp',
       );
     }
@@ -3203,7 +3204,7 @@ class _HomeScreenState extends State<HomeScreen>
                         if (item.sellerLocation.isNotEmpty) ...[
                           const SizedBox(height: 3),
                           Row(children: [
-                            Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
+                            Icon(HuddlIcons.locationPin, size: 11, color: hc.textTertiary),
                             const SizedBox(width: 2),
                             Expanded(child: Text(item.sellerLocation,
                               style: HuddlText.caption(color: hc.textTertiary).copyWith(fontStyle: FontStyle.italic),
@@ -3272,7 +3273,7 @@ class _HomeScreenState extends State<HomeScreen>
                     width: 22, height: 22, fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: HuddlColors.gray100,
-                      child: const Icon(Icons.person, size: 11, color: HuddlColors.textHint),
+                      child: const Icon(HuddlIcons.user, size: 11, color: HuddlColors.textHint),
                     ),
                   ),
                 ),
@@ -3394,7 +3395,7 @@ class _HomeScreenState extends State<HomeScreen>
                 '${_subscriptionService.limits.maxAiCopilotChatsPerDay} '
                 'free AI chats today. Upgrade to Huddl Plus for 25 a day.',
           'requiredPlan': isPlusUser ? 'Huddl Partner' : 'Huddl Plus',
-          'featureIcon': Icons.auto_awesome_outlined.codePoint,
+          'featureIcon': HuddlIcons.ai.codePoint,
           'showUpgrade': !isPlusUser,
         },
       );
@@ -3477,7 +3478,7 @@ class _HomeScreenState extends State<HomeScreen>
                         color: HuddlColors.primary,
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: const Icon(Icons.arrow_forward_rounded,
+                      child: const Icon(HuddlIcons.arrowForward,
                           size: 16, color: HuddlColors.white),
                     ),
                   ),
@@ -3496,7 +3497,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   children: [
                     Icon(
-                      Icons.auto_awesome_outlined,
+                      HuddlIcons.ai,
                       size: 11,
                       color: _subscriptionService.canUseAiCopilot
                           ? HuddlColors.textTertiary
@@ -3542,7 +3543,7 @@ class _HomeScreenState extends State<HomeScreen>
         'featureTitle': 'Q&A limit reached',
         'featureDescription': ss.limitReachedMessage('questions'),
         'requiredPlan': 'Huddl Plus',
-        'featureIcon': Icons.help_outline.codePoint,
+        'featureIcon': HuddlIcons.info.codePoint,
       });
       return;
     }
@@ -3556,7 +3557,7 @@ class _HomeScreenState extends State<HomeScreen>
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: context.hc.surface, size: 18),
+                Icon(HuddlIcons.checkCircle, color: context.hc.surface, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -3715,7 +3716,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                     ),
                                     const SizedBox(width: 2),
-                                    Icon(Icons.arrow_forward,
+                                    Icon(HuddlIcons.arrowForward,
                                         size: 11, color: nudge.bgColor),
                                   ],
                                 ),
@@ -3771,7 +3772,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         child: Row(
           children: [
-            Icon(Icons.diversity_3_outlined,
+            Icon(HuddlIcons.diversity,
                 size: 18, color: HuddlColors.primary),
             const SizedBox(width: 10),
             Expanded(
@@ -3814,7 +3815,7 @@ class _HomeScreenState extends State<HomeScreen>
                     'huddl_interaction_count', '3');
                 setState(() => _isFirstRun = false);
               },
-              child: Icon(Icons.close, size: 16, color: HuddlColors.textTertiary),
+              child: Icon(HuddlIcons.close, size: 16, color: HuddlColors.textTertiary),
             ),
           ],
         ),
@@ -3883,7 +3884,7 @@ class _HomeScreenState extends State<HomeScreen>
     dynamic candidate;
     String candidateType = '';
     String ctaLabel = 'View';
-    IconData candidateIcon = Icons.event_rounded;
+    IconData candidateIcon = HuddlIcons.calendar;
     Color candidateColor = HuddlColors.primary;   // warm orange default
     // ignore: no_leading_underscores_for_local_identifiers
     String _reasonTag = '';   // shown as a pill below the category tag
@@ -3938,21 +3939,21 @@ class _HomeScreenState extends State<HomeScreen>
 
       candidateType = 'MEETUP';
       ctaLabel = (candidate as Meetup).isGoing ? 'View' : 'Join';
-      candidateIcon = Icons.place_rounded;
+      candidateIcon = HuddlIcons.locationPinFill;
       candidateColor = HuddlColors.primary;         // warm orange meetup CTA
 
     } else if (_eventService.events.isNotEmpty) {
       candidate = _eventService.events.first;
       candidateType = 'EVENT';
       ctaLabel = 'Book';
-      candidateIcon = Icons.event_rounded;
+      candidateIcon = HuddlIcons.calendar;
       candidateColor = HuddlColors.primary;
       _reasonTag = 'New in ${_borough.isNotEmpty ? _borough : 'your area'}';
     } else if (_featuredServices.isNotEmpty) {
       candidate = _featuredServices.first;
       candidateType = 'SERVICE';
       ctaLabel = 'View';
-      candidateIcon = Icons.handshake_rounded;
+      candidateIcon = HuddlIcons.handshake;
       candidateColor = HuddlColors.success;         // teal — services
     }
 
@@ -3973,7 +3974,7 @@ class _HomeScreenState extends State<HomeScreen>
           // Section header
           Row(
             children: [
-              Icon(Icons.auto_awesome, size: 16, color: hc.textTertiary),
+              Icon(HuddlIcons.ai, size: 16, color: hc.textTertiary),
               const SizedBox(width: 8),
               Text(
                 'Today for you',
@@ -4084,7 +4085,7 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.location_on_outlined,
+                              Icon(HuddlIcons.locationPin,
                                   size: 13, color: hc.textTertiary),
                               const SizedBox(width: 3),
                               Expanded(
@@ -4282,7 +4283,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, size: 18, color: subtitleColor),
+            Icon(HuddlIcons.caretRight, size: 18, color: subtitleColor),
           ],
         ),
       ),
@@ -4299,7 +4300,7 @@ class _HomeScreenState extends State<HomeScreen>
       subtitle: '${meetup.dateDisplay} · ${meetup.timeDisplay}',
       badge: meetup.isGoing ? 'Going ✓' : null,
       stat: meetup.attendeeCount > 0 ? '${meetup.attendeeCount} going' : null,
-      statIcon: Icons.people_outline,
+      statIcon: HuddlIcons.usersThree,
       scrollOffset: _heroScrollOffset,
       aspectRatio: 1.55,
       borderRadius: 0,
@@ -4371,7 +4372,7 @@ class _HomeScreenState extends State<HomeScreen>
                         feature: HuddlFeature.meetups,
                       ),
                       const Spacer(),
-                      const Icon(Icons.check_circle,
+                      const Icon(HuddlIcons.checkCircle,
                           size: 14, color: HuddlColors.success),  // teal
                       const SizedBox(width: 3),
                       Text('Going',
@@ -4431,7 +4432,7 @@ class _HomeScreenState extends State<HomeScreen>
                               color: HuddlColors.nearBlack
                                   .withValues(alpha: 0.15),
                               child: const Center(
-                                child: Icon(Icons.event,
+                                child: Icon(HuddlIcons.calendar,
                                     size: 22,
                                     color: HuddlColors.nearBlack),
                               ),
@@ -4440,7 +4441,7 @@ class _HomeScreenState extends State<HomeScreen>
                         color:
                             HuddlColors.nearBlack.withValues(alpha: 0.15),
                         child: const Center(
-                          child: Icon(Icons.event,
+                          child: Icon(HuddlIcons.calendar,
                               size: 22, color: HuddlColors.nearBlack),
                         ),
                       ),
@@ -4472,7 +4473,7 @@ class _HomeScreenState extends State<HomeScreen>
                         forceUkWide: true,
                       ),
                       const Spacer(),
-                      Icon(Icons.check_circle,
+                      Icon(HuddlIcons.checkCircle,
                           size: 14, color: HuddlColors.success),  // teal
                       const SizedBox(width: 3),
                       Text('Going',
@@ -4489,7 +4490,7 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today,
+                      Icon(HuddlIcons.calendar,
                           size: 11,
                           color: context.hc.textTertiary),
                       const SizedBox(width: 4),
@@ -4507,7 +4508,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(height: 1),
                     Row(
                       children: [
-                        Icon(Icons.location_on,
+                        Icon(HuddlIcons.locationPinFill,
                             size: 11,
                             color: context.hc.textTertiary),
                         const SizedBox(width: 4),
@@ -4621,7 +4622,7 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.visibility_off_outlined,
+            Icon(HuddlIcons.visibilityOff,
                 color: context.hc.textSecondary, size: 20),
             const SizedBox(height: 2),
             Text('Hide',
@@ -4685,7 +4686,7 @@ class _HomeScreenState extends State<HomeScreen>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.push_pin,
+                                  Icon(HuddlIcons.pin,
                                       size: 9,
                                       color: context.hc.textTertiary),
                                   const SizedBox(width: 2),
@@ -4715,7 +4716,7 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.lightbulb_outline,
+                                Icon(HuddlIcons.lightbulb,
                                     size: 8,
                                     color: context.hc.textTertiary),
                                 const SizedBox(width: 3),
@@ -4740,7 +4741,7 @@ class _HomeScreenState extends State<HomeScreen>
                       width: 48,
                       height: 48,
                       child: Center(
-                        child: Icon(Icons.more_horiz,
+                        child: Icon(HuddlIcons.moreHoriz,
                             color: context.hc.textTertiary, size: 20),
                       ),
                     ),
@@ -4762,8 +4763,8 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 _compactAction(
                   icon: a.isLiked
-                      ? Icons.favorite
-                      : Icons.favorite_border,
+                      ? HuddlIcons.heartFill
+                      : HuddlIcons.heart,
                   label: '${a.likes}',
                   isActive: a.isLiked,
                   semantics:
@@ -4772,14 +4773,14 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 const SizedBox(width: 12),
                 _compactAction(
-                  icon: Icons.chat_bubble_outline,
+                  icon: HuddlIcons.chat,
                   label: '${a.comments}',
                   semantics: '${a.comments} comments',
                   onTap: () => _openComments(a),
                 ),
                 const SizedBox(width: 12),
                 _compactAction(
-                  icon: Icons.share_outlined,
+                  icon: HuddlIcons.share,
                   label:
                       a.shares > 0 ? '${a.shares}' : '',
                   semantics: 'Share post',
@@ -4830,7 +4831,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   Row(
                     children: [
-                      Icon(Icons.people_outline,
+                      Icon(HuddlIcons.usersThree,
                           size: 12, color: context.hc.textTertiary),
                       const SizedBox(width: 4),
                       Text(
@@ -4997,7 +4998,7 @@ class _HomeScreenState extends State<HomeScreen>
             Row(
               children: [
                 if (isVerified) ...[
-                  Icon(Icons.verified_rounded,
+                  Icon(HuddlIcons.verifiedFill,
                       size: 14, color: HuddlColors.primary),
                   const SizedBox(width: 4),
                 ],
@@ -5018,7 +5019,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.verified_rounded,
+                      const Icon(HuddlIcons.verifiedFill,
                           size: 10, color: HuddlColors.primary),
                       const SizedBox(width: 4),
                       Text(
@@ -5067,7 +5068,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ownerUid.isNotEmpty && ownerUid == currentUid;
               if (isOwner) {
                 return TextButton.icon(
-                  icon: const Icon(Icons.edit_outlined,
+                  icon: const Icon(HuddlIcons.edit,
                       size: 14, color: HuddlColors.primary),
                   label: Text(
                     'Edit listing',
@@ -5208,7 +5209,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded,
+                    Icon(HuddlIcons.caretRight,
                         size: 18, color: hc.textTertiary),
                   ],
                 ),
@@ -5228,7 +5229,7 @@ class _HomeScreenState extends State<HomeScreen>
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 11, 14, 11),
-              child: Icon(Icons.close_rounded,
+              child: Icon(HuddlIcons.close,
                   size: 16, color: hc.textTertiary),
             ),
           ),
@@ -5279,17 +5280,17 @@ class _HomeScreenState extends State<HomeScreen>
   IconData _feedIcon(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return Icons.person_add;
+        return HuddlIcons.personAdd;
       case FeedItemType.newGroup:
-        return Icons.people;
+        return HuddlIcons.usersThree;
       case FeedItemType.newEvent:
-        return Icons.event;
+        return HuddlIcons.calendar;
       case FeedItemType.newMarketplaceItem:
-        return Icons.storefront;
+        return HuddlIcons.storefront;
       case FeedItemType.milestone:
-        return Icons.emoji_events;
+        return HuddlIcons.emojiEvents;
       case FeedItemType.partnerPromoted:
-        return Icons.campaign_outlined;
+        return HuddlIcons.campaign;
     }
   }
 
@@ -5378,7 +5379,7 @@ class _HomeScreenState extends State<HomeScreen>
       errorBuilder: (_, __, ___) => Container(
         color: HuddlColors.gray100,
         child: const Center(
-          child: Icon(Icons.groups, size: 22, color: HuddlColors.textHint),
+          child: Icon(HuddlIcons.usersThree, size: 22, color: HuddlColors.textHint),
         ),
       ),
     );
@@ -5414,7 +5415,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       color: HuddlColors.gray100,
       child: const Center(
-        child: Icon(Icons.people, size: 22, color: HuddlColors.textHint),
+        child: Icon(HuddlIcons.usersThree, size: 22, color: HuddlColors.textHint),
       ),
     );
   }
@@ -5495,7 +5496,7 @@ class _HomeScreenState extends State<HomeScreen>
           height: size,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Icon(
-            Icons.person,
+            HuddlIcons.user,
             size: size * 0.5,
             color: HuddlColors.primary,
           ),
@@ -5579,8 +5580,8 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       padding: const EdgeInsets.only(top: 1),
                       child: Icon(
                         ann.isPinned
-                            ? Icons.push_pin
-                            : Icons.campaign_outlined,
+                            ? HuddlIcons.pin
+                            : HuddlIcons.campaign,
                         size: 15,
                         color: hc.textTertiary,
                       ),
@@ -5623,8 +5624,8 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       children: [
                         Icon(
                           _expanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
+                              ? HuddlIcons.caretUp
+                              : HuddlIcons.caretDown,
                           size: 18,
                           color: hc.textTertiary,
                         ),
@@ -5632,7 +5633,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                           onTap: widget.onMenu,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Icon(Icons.more_horiz,
+                            child: Icon(HuddlIcons.moreHoriz,
                                 size: 18, color: hc.textTertiary),
                           ),
                         ),
@@ -5653,8 +5654,8 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       // Like
                       _ActionButton(
                         icon: ann.isLiked
-                            ? Icons.favorite
-                            : Icons.favorite_border,
+                            ? HuddlIcons.heartFill
+                            : HuddlIcons.heart,
                         color: ann.isLiked
                             ? HuddlColors.error
                             : hc.textTertiary,
@@ -5665,7 +5666,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       ),
                       // Comment
                       _ActionButton(
-                        icon: Icons.chat_bubble_outline,
+                        icon: HuddlIcons.chat,
                         color: hc.textTertiary,
                         label: ann.comments > 0
                             ? '${ann.comments}'
@@ -5674,7 +5675,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       ),
                       // Share
                       _ActionButton(
-                        icon: Icons.share_outlined,
+                        icon: HuddlIcons.share,
                         color: hc.textTertiary,
                         label: ann.shares > 0
                             ? '${ann.shares}'
@@ -5684,7 +5685,7 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       const Spacer(),
                       // Bookmark indicator
                       if (ann.isBookmarked)
-                        Icon(Icons.bookmark,
+                        Icon(HuddlIcons.bookmark,
                             size: 16, color: HuddlColors.primary),
                     ],
                   ),
@@ -6083,7 +6084,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
               child: Row(
                 children: [
-                  Icon(Icons.tune, color: hc.textTertiary, size: 20),
+                  Icon(HuddlIcons.filter, color: hc.textTertiary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text('What appears in your feed',
@@ -6118,32 +6119,32 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
 
             // ── Activity & attendance ───────────────────────────────────
             _sectionLabel('Activity & attendance', hc),
-            _tile('meetups', Icons.near_me_outlined, 'Meetups near you',
+            _tile('meetups', HuddlIcons.nearMe, 'Meetups near you',
                 'New meetups posted in your area',
                 color: HuddlColors.primary),
-            _tile('events', Icons.event_note_outlined, 'Events',
+            _tile('events', HuddlIcons.calendar, 'Events',
                 'Paid events and community gatherings',
                 color: HuddlColors.accentAmber),
 
             // ── Community ──────────────────────────────────────────────
             _sectionLabel('Community', hc),
-            _tile('announcements', Icons.campaign_outlined,
+            _tile('announcements', HuddlIcons.campaign,
                 'Noticeboard posts',
                 'What your neighbours are sharing',
                 color: HuddlColors.primaryLight),
-            _tile('suggestions', Icons.diversity_3_outlined,
+            _tile('suggestions', HuddlIcons.diversity,
                 'Groups & suggestions',
                 'Groups that match your interests',
                 color: HuddlColors.infoBlue),
 
             // ── Market & services ──────────────────────────────────────
             _sectionLabel('Market & services', hc),
-            _tile('marketplace', Icons.sell_outlined,
+            _tile('marketplace', HuddlIcons.sellTag,
                 'Items for sale nearby',
                 'New listings in your area',
                 color: HuddlColors.primary),
             if (ss.isPlusOrAbove)
-              _tile('tips', Icons.lightbulb_outline,
+              _tile('tips', HuddlIcons.lightbulb,
                   'AI tips & suggestions',
                   'Personalised nudges based on your activity',
                   color: HuddlColors.teal),
@@ -6219,7 +6220,7 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Icon(
-                enabled ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                enabled ? HuddlIcons.checkCircleFill : HuddlIcons.radioOff,
                 key: ValueKey(enabled),
                 size: 22,
                 color: enabled ? iconColor : hc.textTertiary,
@@ -6465,8 +6466,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                                 children: [
                                                   Icon(
                                                     c.isLiked
-                                                        ? Icons.favorite
-                                                        : Icons.favorite_border,
+                                                        ? HuddlIcons.heartFill
+                                                        : HuddlIcons.heart,
                                                     size: 14,
                                                     color: c.isLiked
                                                         ? HuddlColors.accentCoral
@@ -6520,7 +6521,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Row(
                   children: [
-                    Icon(Icons.reply_rounded,
+                    Icon(HuddlIcons.reply,
                         size: 14, color: HuddlColors.textSecondary),
                     const SizedBox(width: 6),
                     Expanded(
@@ -6531,7 +6532,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     ),
                     GestureDetector(
                       onTap: _cancelReply,
-                      child: Icon(Icons.close_rounded,
+                      child: Icon(HuddlIcons.close,
                           size: 16, color: HuddlColors.textHint),
                     ),
                   ],
@@ -6594,7 +6595,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                   strokeWidth: 2,
                                   color: HuddlColors.white),
                             )
-                          : const Icon(Icons.send_rounded,
+                          : const Icon(HuddlIcons.send,
                               size: 18, color: HuddlColors.white),
                     ),
                   ),
@@ -6669,37 +6670,37 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
   IconData _iconFor(String type) {
     switch (type) {
       // Messaging
-      case 'new_dm':            return Icons.chat_bubble_outline;
-      case 'new_group_message': return Icons.group;
-      case 'voice_message_dm':  return Icons.mic;
-      case 'voice_message_group': return Icons.mic;
-      case 'message_reaction':  return Icons.favorite;
-      case 'thread_reply':      return Icons.reply;
+      case 'new_dm':            return HuddlIcons.chat;
+      case 'new_group_message': return HuddlIcons.usersThree;
+      case 'voice_message_dm':  return HuddlIcons.mic;
+      case 'voice_message_group': return HuddlIcons.mic;
+      case 'message_reaction':  return HuddlIcons.heartFill;
+      case 'thread_reply':      return HuddlIcons.reply;
       // Groups & social
-      case 'group_invitation':    return Icons.group_add;
-      case 'invitation_accepted': return Icons.check_circle_outline;
-      case 'group_member_joined': return Icons.person_add;
-      case 'post_liked':          return Icons.favorite;
-      case 'post_commented':      return Icons.comment_outlined;
-      case 'comment_replied':     return Icons.reply;
-      case 'poll_created':        return Icons.poll_outlined;
+      case 'group_invitation':    return HuddlIcons.userGroupPlus;
+      case 'invitation_accepted': return HuddlIcons.checkCircle;
+      case 'group_member_joined': return HuddlIcons.personAdd;
+      case 'post_liked':          return HuddlIcons.heartFill;
+      case 'post_commented':      return HuddlIcons.chat;
+      case 'comment_replied':     return HuddlIcons.reply;
+      case 'poll_created':        return HuddlIcons.poll;
       // Events
-      case 'meetup_rsvp':         return Icons.event_available;
-      case 'meetup_reminder':     return Icons.alarm;
-      case 'new_meetup_nearby':   return Icons.location_on_outlined;
-      case 'event_update':        return Icons.update;
+      case 'meetup_rsvp':         return HuddlIcons.calendarCheck;
+      case 'meetup_reminder':     return HuddlIcons.alarm;
+      case 'new_meetup_nearby':   return HuddlIcons.locationPin;
+      case 'event_update':        return HuddlIcons.refresh;
       // Marketplace
-      case 'offer_received':      return Icons.local_offer_outlined;
-      case 'offer_accepted':      return Icons.handshake_outlined;
-      case 'offer_declined':      return Icons.cancel_outlined;
-      case 'item_sold':           return Icons.sell_outlined;
-      case 'saved_item_sold':     return Icons.bookmark_remove_outlined;
-      case 'item_relisted':       return Icons.refresh;
+      case 'offer_received':      return HuddlIcons.localOffer;
+      case 'offer_accepted':      return HuddlIcons.handshake;
+      case 'offer_declined':      return HuddlIcons.cancel;
+      case 'item_sold':           return HuddlIcons.sellTag;
+      case 'saved_item_sold':     return HuddlIcons.bookmark;
+      case 'item_relisted':       return HuddlIcons.refresh;
       // System
-      case 'subscription_activated': return Icons.star_outline;
-      case 'payment_failed':         return Icons.payment;
-      case 'welcome':                return Icons.waving_hand;
-      default:                       return Icons.notifications_outlined;
+      case 'subscription_activated': return HuddlIcons.star;
+      case 'payment_failed':         return HuddlIcons.payment;
+      case 'welcome':                return HuddlIcons.waving;
+      default:                       return HuddlIcons.bell;
     }
   }
 
@@ -6941,7 +6942,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                     const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications,
+                    const Icon(HuddlIcons.bellFill,
                         size: 22),
                     const SizedBox(width: 8),
                     Text(
@@ -7009,7 +7010,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.notifications_none,
+                                  Icon(HuddlIcons.bell,
                                       size: 48,
                                       color: context.hc.textTertiary
                                           .withValues(alpha: 0.4)),
@@ -7314,7 +7315,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                const Icon(Icons.share,
+                const Icon(HuddlIcons.share,
                     size: 22),
                 const SizedBox(width: 8),
                 Text(
@@ -7332,7 +7333,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
               decoration: InputDecoration(
                 hintText: 'Search groups or members...',
                 hintStyle: HuddlText.body(color: context.hc.textTertiary),
-                prefixIcon: Icon(Icons.search,
+                prefixIcon: Icon(HuddlIcons.search,
                     size: 20, color: context.hc.textTertiary),
                 filled: true,
                 fillColor: context.hc.scaffold,
@@ -7535,7 +7536,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
       width: 44,
       height: 44,
       color: HuddlColors.gray100,
-      child: const Icon(Icons.people,
+      child: const Icon(HuddlIcons.usersThree,
           size: 22, color: HuddlColors.textHint),
     );
   }
@@ -7606,13 +7607,13 @@ class _ActivityDetailSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _detailRow(
-                      Icons.info_outline, 'Details', item.subtitle),
+                      HuddlIcons.info, 'Details', item.subtitle),
                   const SizedBox(height: 16),
                   _detailRow(
-                      Icons.access_time, 'When', item.timeAgo),
+                      HuddlIcons.clock, 'When', item.timeAgo),
                   const SizedBox(height: 16),
                   _detailRow(
-                      Icons.location_on_outlined,
+                      HuddlIcons.locationPin,
                       'Location',
                       borough.isNotEmpty
                           ? borough
@@ -7626,7 +7627,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                         .map((e) => Padding(
                               padding:
                                   const EdgeInsets.only(bottom: 12),
-                              child: _detailRow(Icons.label_outline,
+                              child: _detailRow(HuddlIcons.label,
                                   e.key, e.value.toString()),
                             )),
                   ],
@@ -7696,17 +7697,17 @@ class _ActivityDetailSheet extends StatelessWidget {
   IconData _iconForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return Icons.person_add;
+        return HuddlIcons.personAdd;
       case FeedItemType.newGroup:
-        return Icons.people;
+        return HuddlIcons.usersThree;
       case FeedItemType.newEvent:
-        return Icons.event;
+        return HuddlIcons.calendar;
       case FeedItemType.newMarketplaceItem:
-        return Icons.storefront;
+        return HuddlIcons.storefront;
       case FeedItemType.milestone:
-        return Icons.emoji_events;
+        return HuddlIcons.emojiEvents;
       case FeedItemType.partnerPromoted:
-        return Icons.campaign_outlined;
+        return HuddlIcons.campaign;
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
 import '../../constants/app_text_styles.dart';
@@ -197,7 +198,7 @@ class _HuddlSinglePhotoCardState extends State<HuddlSinglePhotoCard>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          widget.statIcon ?? Icons.star,
+                          widget.statIcon ?? HuddlIcons.star,
                           size: 13,
                           color: isDark
                               ? HuddlColors.darkTextPrimary
@@ -390,7 +391,7 @@ class _HuddlMosaicPhotoCardState extends State<HuddlMosaicPhotoCard>
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.star, size: 13,
+                        Icon(HuddlIcons.star, size: 13,
                             color: isDark
                                 ? HuddlColors.darkTextPrimary
                                 : HuddlColors.textDark),
@@ -501,7 +502,7 @@ class _HuddlPhotoImage extends StatelessWidget {
       url: url,
       width: double.infinity,
       height: double.infinity,
-      fallbackIcon: fallbackIcon ?? Icons.image_outlined,
+      fallbackIcon: fallbackIcon ?? HuddlIcons.image,
       fallbackIconSize: 24,
     );
   }
@@ -588,7 +589,7 @@ class _HeartButtonState extends State<_HeartButton>
         child: ScaleTransition(
           scale: _scaleAnim,
           child: Icon(
-            widget.isSaved ? Icons.favorite : Icons.favorite_border,
+            widget.isSaved ? HuddlIcons.heartFill : HuddlIcons.heart,
             size: 18,
             color: widget.isSaved ? HuddlColors.error : Colors.white,
           ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -273,7 +274,7 @@ class EventsScreenState extends State<EventsScreen>
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.notifications_off_outlined,
+                          Icon(HuddlIcons.bellSlash,
                               size: 48,
                               color: context.hc.textTertiary.withValues(alpha: 0.5)),
                           const SizedBox(height: 12),
@@ -301,7 +302,7 @@ class EventsScreenState extends State<EventsScreen>
                             color: HuddlColors.neutral50,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.groups,
+                          child: const Icon(HuddlIcons.usersThree,
                               color: HuddlColors.textDark, size: 22),
                         ),
                         title: Text(
@@ -314,7 +315,7 @@ class EventsScreenState extends State<EventsScreen>
                           '${meetup.dateDisplay} · ${meetup.timeDisplay}',
                           style: HuddlText.caption(),
                         ),
-                        trailing: Icon(Icons.chevron_right,
+                        trailing: Icon(HuddlIcons.caretRight,
                             color: context.hc.textTertiary, size: 20),
                         onTap: () {
                           Navigator.pop(ctx);
@@ -336,7 +337,7 @@ class EventsScreenState extends State<EventsScreen>
                             color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.event,
+                          child: const Icon(HuddlIcons.calendar,
                               color: HuddlColors.nearBlack, size: 22),
                         ),
                         title: Text(
@@ -349,7 +350,7 @@ class EventsScreenState extends State<EventsScreen>
                           '${event.dateDisplay} · ${event.timeDisplay}',
                           style: HuddlText.caption(),
                         ),
-                        trailing: Icon(Icons.chevron_right,
+                        trailing: Icon(HuddlIcons.caretRight,
                             color: context.hc.textTertiary, size: 20),
                         onTap: () {
                           Navigator.pop(ctx);
@@ -437,7 +438,7 @@ class EventsScreenState extends State<EventsScreen>
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
-                                  child: Icon(Icons.search,
+                                  child: Icon(HuddlIcons.search,
                                       color: context.hc.textPrimary, size: 24),
                                 ),
                               ),
@@ -458,7 +459,7 @@ class EventsScreenState extends State<EventsScreen>
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
-                                  child: Icon(Icons.search,
+                                  child: Icon(HuddlIcons.search,
                                       color: context.hc.textPrimary, size: 24),
                                 ),
                               ),
@@ -479,7 +480,7 @@ class EventsScreenState extends State<EventsScreen>
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
-                                  child: Icon(Icons.search,
+                                  child: Icon(HuddlIcons.search,
                                       color: context.hc.textPrimary, size: 24),
                                 ),
                               ),
@@ -635,7 +636,7 @@ class EventsScreenState extends State<EventsScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                    child: const Icon(HuddlIcons.add, color: Colors.white, size: 28),
                   ),
                 ),
               ],
@@ -668,7 +669,7 @@ class EventsScreenState extends State<EventsScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                    child: const Icon(HuddlIcons.add, color: Colors.white, size: 28),
                   ),
                 ),
                 if (!SubscriptionService().canCreateMeetupFeature)
@@ -682,7 +683,7 @@ class EventsScreenState extends State<EventsScreen>
                         color: HuddlColors.textDark,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.lock_outlined,
+                      child: const Icon(HuddlIcons.lock,
                           size: 11, color: Colors.white),
                     ),
                   ),
@@ -718,7 +719,7 @@ class EventsScreenState extends State<EventsScreen>
                     ),
                   ],
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 28),
+                child: const Icon(HuddlIcons.add, color: Colors.white, size: 28),
               ),
             ),
           ),
@@ -1186,7 +1187,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         title: Row(
           children: [
             Icon(
-              isGroup ? Icons.group : Icons.lock,
+              isGroup ? HuddlIcons.usersThree : HuddlIcons.lockFill,
               color: HuddlColors.textDark,
               size: 24,
             ),
@@ -1294,7 +1295,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         ),
                       ),
                       child: isChecked
-                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          ? const Icon(HuddlIcons.check, size: 18, color: Colors.white)
                           : null,
                     ),
                     const SizedBox(width: 14),
@@ -1359,7 +1360,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               : orange.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(Icons.auto_awesome_rounded,
+                        child: Icon(HuddlIcons.ai,
                           size: 18,
                           color: sheetSortBy == 'smartSort' ? Colors.white : orange,
                         ),
@@ -1394,7 +1395,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         ),
                       ),
                       if (sheetSortBy == 'smartSort')
-                        Icon(Icons.check_circle, size: 22, color: orange),
+                        Icon(HuddlIcons.checkCircle, size: 22, color: orange),
                     ],
                   ),
                   if (scoreFactors.isNotEmpty) ...[
@@ -1429,8 +1430,8 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     children: [
                       Icon(
                         sheetSmartSort
-                            ? Icons.psychology_rounded
-                            : Icons.psychology_alt_outlined,
+                            ? HuddlIcons.psychology
+                            : HuddlIcons.psychology,
                         size: 16,
                         color: sheetSmartSort ? orange : textSecGray,
                       ),
@@ -1583,16 +1584,16 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
           // ── Category icon map ──────────────────────────────────
           const Map<String, IconData> catIcons = {
-            'All':                 Icons.apps_rounded,
-            'Hanging out':         Icons.chat_bubble_outline_rounded,
-            'Pregnancy':           Icons.pregnant_woman_outlined,
-            'Playdate':            Icons.directions_run_rounded,
-            'Sports & exercise':   Icons.fitness_center_outlined,
-            'Coffee & tea':        Icons.coffee_outlined,
-            'Parks & Walks':       Icons.park_outlined,
-            'Food & nutrition':    Icons.restaurant_outlined,
-            'Performance & shows': Icons.theater_comedy_outlined,
-            'Other':               Icons.more_horiz_rounded,
+            'All':                 HuddlIcons.gridView,
+            'Hanging out':         HuddlIcons.chat,
+            'Pregnancy':           HuddlIcons.pregnant,
+            'Playdate':            HuddlIcons.run,
+            'Sports & exercise':   HuddlIcons.fitness,
+            'Coffee & tea':        HuddlIcons.coffee,
+            'Parks & Walks':       HuddlIcons.park,
+            'Food & nutrition':    HuddlIcons.restaurant,
+            'Performance & shows': HuddlIcons.theater,
+            'Other':               HuddlIcons.moreHoriz,
           };
 
           // ── Count active sheet filters for CTA label ──────────
@@ -1653,7 +1654,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 onTap: () => Navigator.pop(ctx),
                                 child: Padding(
                                   padding: const EdgeInsets.all(4),
-                                  child: Icon(Icons.close_rounded, size: 20, color: orange),
+                                  child: Icon(HuddlIcons.close, size: 20, color: orange),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1787,7 +1788,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.location_off_rounded, size: 18, color: HuddlColors.neutral300),
+                                    const Icon(HuddlIcons.locationOff, size: 18, color: HuddlColors.neutral300),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
@@ -1799,7 +1800,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                         style: HuddlText.caption(color: HuddlColors.neutral600),
                                       ),
                                     ),
-                                    const Icon(Icons.chevron_right_rounded, size: 18, color: HuddlColors.neutral100),
+                                    const Icon(HuddlIcons.caretRight, size: 18, color: HuddlColors.neutral100),
                                   ],
                                 ),
                               ),
@@ -1824,7 +1825,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 .where((c) => (c['label'] as String) != 'All')
                                 .map((chip) {
                               final label = chip['label'] as String;
-                              final icon  = catIcons[label] ?? Icons.label_outline;
+                              final icon  = catIcons[label] ?? HuddlIcons.label;
                               final sel   = sheetCategories.contains(label);
                               return filterChip(
                                 label: label,
@@ -1918,7 +1919,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                             style: HuddlText.body(color: textSecGray),
                                           ),
                                   ),
-                                  Icon(Icons.calendar_month_outlined, color: orange, size: 22),
+                                  Icon(HuddlIcons.calendar, color: orange, size: 22),
                                 ],
                               ),
                             ),
@@ -2060,7 +2061,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(left: 12, right: 6),
-                    child: Icon(Icons.search, size: 18,
+                    child: Icon(HuddlIcons.search, size: 18,
                         color: HuddlColors.textHint),
                   ),
                   Expanded(
@@ -2091,7 +2092,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       }),
                       child: const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Icon(Icons.close, size: 16,
+                        child: Icon(HuddlIcons.close, size: 16,
                             color: HuddlColors.textTertiary),
                       ),
                     )
@@ -2142,7 +2143,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 clipBehavior: Clip.none,
                                 children: [
                                   Icon(
-                                    Icons.tune_rounded,
+                                    HuddlIcons.filter,
                                     size: 18,
                                     color: _hasActiveFilter
                                         ? HuddlColors.primary
@@ -2198,7 +2199,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.people_outline,
+                            const Icon(HuddlIcons.usersThree,
                                 size: 14, color: HuddlColors.primary),
                             const SizedBox(width: 5),
                             Text(_selectedParticipant,
@@ -2210,7 +2211,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 setState(
                                     () => _selectedParticipant = 'All');
                               },
-                              child: const Icon(Icons.close,
+                              child: const Icon(HuddlIcons.close,
                                   size: 14, color: HuddlColors.primary),
                             ),
                           ],
@@ -2231,7 +2232,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 Row(
                   children: [
                     Icon(
-                      Icons.place_outlined,
+                      HuddlIcons.locationPin,
                       size: 13,
                       color: HuddlColors.textTertiary,
                     ),
@@ -2268,7 +2269,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             color: HuddlColors.neutral50,
             child: filtered.isEmpty
                 ? _EmptyState(
-                    icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
+                    icon: _hasActiveFilter ? HuddlIcons.filterOff : HuddlIcons.usersThree,
                     illustrationAsset: _hasActiveFilter
                         ? 'assets/illustrations/not_found.png'
                         : 'assets/illustrations/location_community.webp',
@@ -2536,7 +2537,7 @@ class _ImGoingCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.close, color: context.hc.surface, size: 22),
+            Icon(HuddlIcons.close, color: context.hc.surface, size: 22),
             const SizedBox(height: 2),
             Text(isPast ? 'Clear' : 'Cancel',
               style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white)),
@@ -2773,7 +2774,7 @@ class _GoingAvatar extends StatelessWidget {
       color: HuddlColors.neutral50,
       child: Center(
         child: Icon(
-          isMeetup ? Icons.groups : Icons.event,
+          isMeetup ? HuddlIcons.usersThree : HuddlIcons.calendar,
           size: 54 * 0.45,
           color: HuddlColors.textDark,
         ),
@@ -2884,7 +2885,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
 
     if (allGoing.isEmpty) {
       return _EmptyState(
-        icon: Icons.event_available_outlined,
+        icon: HuddlIcons.calendarCheck,
         illustrationAsset: 'assets/illustrations/calendar.webp',
         title: "You're not going to anything yet",
         subtitle:
@@ -2898,7 +2899,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
+            Icon(HuddlIcons.searchOff, size: 48, color: context.hc.textTertiary),
             const SizedBox(height: 12),
             Text(
               'No results for "$_searchQuery"',
@@ -2926,7 +2927,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
         children: [
           if (upcoming.isNotEmpty) ...[
             _SectionLabel(
-              icon: Icons.upcoming_outlined,
+              icon: HuddlIcons.upcoming,
               label: 'Upcoming',
               color: HuddlColors.primaryDark,
             ),
@@ -2940,7 +2941,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
           if (past.isNotEmpty) ...[
             const SizedBox(height: 16),
             _SectionLabel(
-              icon: Icons.history,
+              icon: HuddlIcons.history,
               label: 'Past',
               color: context.hc.textTertiary,
             ),
@@ -3365,7 +3366,7 @@ class _EventsTabState extends State<_EventsTab> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.tune_rounded,
+                                HuddlIcons.filter,
                                 size: 18,
                                 color: hasActiveFilter
                                     ? HuddlColors.primary
@@ -3415,7 +3416,7 @@ class _EventsTabState extends State<_EventsTab> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.only(left: 12, right: 6),
-                        child: Icon(Icons.search, size: 18,
+                        child: Icon(HuddlIcons.search, size: 18,
                             color: HuddlColors.textHint),
                       ),
                       Expanded(
@@ -3446,7 +3447,7 @@ class _EventsTabState extends State<_EventsTab> {
                           }),
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Icon(Icons.close, size: 16,
+                            child: Icon(HuddlIcons.close, size: 16,
                                 color: HuddlColors.textTertiary),
                           ),
                         )
@@ -3472,8 +3473,8 @@ class _EventsTabState extends State<_EventsTab> {
                   children: [
                     Icon(
                       _evLocalization == 'online'
-                          ? Icons.wifi_rounded
-                          : Icons.place_outlined,
+                          ? HuddlIcons.wifi
+                          : HuddlIcons.locationPin,
                       size: 13,
                       color: HuddlColors.textTertiary,
                     ),
@@ -3520,8 +3521,8 @@ class _EventsTabState extends State<_EventsTab> {
                 : events.isEmpty
                 ? _EmptyState(
                     icon: hasActiveFilter
-                        ? Icons.filter_list_off
-                        : Icons.event_outlined,
+                        ? HuddlIcons.filterOff
+                        : HuddlIcons.calendar,
                     illustrationAsset: (!hasActiveFilter && _localSearchQuery.isEmpty)
                         ? 'assets/illustrations/calendar.webp'
                         : 'assets/illustrations/not_found.png',
@@ -3684,7 +3685,7 @@ class _EventsTabState extends State<_EventsTab> {
                         ),
                       ),
                       child: isChecked
-                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          ? const Icon(HuddlIcons.check, size: 18, color: Colors.white)
                           : null,
                     ),
                     const SizedBox(width: 14),
@@ -3749,7 +3750,7 @@ class _EventsTabState extends State<_EventsTab> {
                               : orange.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(Icons.auto_awesome_rounded,
+                        child: Icon(HuddlIcons.ai,
                           size: 18,
                           color: sheetSortBy == 'smartSort' ? Colors.white : orange,
                         ),
@@ -3784,7 +3785,7 @@ class _EventsTabState extends State<_EventsTab> {
                         ),
                       ),
                       if (sheetSortBy == 'smartSort')
-                        Icon(Icons.check_circle, size: 22, color: orange),
+                        Icon(HuddlIcons.checkCircle, size: 22, color: orange),
                     ],
                   ),
                   if (evScoreFactors.isNotEmpty) ...[
@@ -3819,8 +3820,8 @@ class _EventsTabState extends State<_EventsTab> {
                     children: [
                       Icon(
                         sheetSmartSort
-                            ? Icons.psychology_rounded
-                            : Icons.psychology_alt_outlined,
+                            ? HuddlIcons.psychology
+                            : HuddlIcons.psychology,
                         size: 16,
                         color: sheetSmartSort ? orange : textSecGray,
                       ),
@@ -3959,13 +3960,13 @@ class _EventsTabState extends State<_EventsTab> {
 
           // ── Category icon map ──────────────────────────────────
           const Map<String, IconData> catIcons = {
-            'Hanging out':         Icons.chat_bubble_outline_rounded,
-            'Pregnancy':           Icons.pregnant_woman_outlined,
-            'Playdate':            Icons.directions_run_rounded,
-            'Sports & exercise':   Icons.fitness_center_outlined,
-            'Coffee & tea':        Icons.coffee_outlined,
-            'Parks & Walks':       Icons.park_outlined,
-            'Performance & shows': Icons.theater_comedy_outlined,
+            'Hanging out':         HuddlIcons.chat,
+            'Pregnancy':           HuddlIcons.pregnant,
+            'Playdate':            HuddlIcons.run,
+            'Sports & exercise':   HuddlIcons.fitness,
+            'Coffee & tea':        HuddlIcons.coffee,
+            'Parks & Walks':       HuddlIcons.park,
+            'Performance & shows': HuddlIcons.theater,
           };
 
 
@@ -4028,7 +4029,7 @@ class _EventsTabState extends State<_EventsTab> {
                                 onTap: () => Navigator.pop(ctx),
                                 child: Padding(
                                   padding: const EdgeInsets.all(4),
-                                  child: Icon(Icons.close_rounded, size: 20, color: orange),
+                                  child: Icon(HuddlIcons.close, size: 20, color: orange),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -4156,7 +4157,7 @@ class _EventsTabState extends State<_EventsTab> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.location_off_rounded, size: 18, color: HuddlColors.neutral300),
+                                    const Icon(HuddlIcons.locationOff, size: 18, color: HuddlColors.neutral300),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
@@ -4168,7 +4169,7 @@ class _EventsTabState extends State<_EventsTab> {
                                         style: HuddlText.caption(color: HuddlColors.neutral600),
                                       ),
                                     ),
-                                    const Icon(Icons.chevron_right_rounded, size: 18, color: HuddlColors.neutral100),
+                                    const Icon(HuddlIcons.caretRight, size: 18, color: HuddlColors.neutral100),
                                   ],
                                 ),
                               ),
@@ -4264,7 +4265,7 @@ class _EventsTabState extends State<_EventsTab> {
                                     : Text('Date range',
                                         style: HuddlText.body(color: textSecGray)),
                                 ),
-                                Icon(Icons.calendar_month_outlined,
+                                Icon(HuddlIcons.calendar,
                                     color: orange, size: 22),
                               ]),
                             ),
@@ -4435,7 +4436,7 @@ class _MeetupSearchRow extends StatelessWidget {
                 height: 56,
                 child: HuddlPhotoImage(
                   url: meetup.imageUrl,
-                  fallbackIcon: Icons.people_rounded,
+                  fallbackIcon: HuddlIcons.usersThree,
                 ),
               ),
             ),
@@ -4541,7 +4542,7 @@ class _MeetupCardState extends State<_MeetupCard> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -4720,7 +4721,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.lock_outline, size: 11, color: Colors.white),
+                                const Icon(HuddlIcons.lock, size: 11, color: Colors.white),
                                 const SizedBox(width: 3),
                                 Text(
                                   'Private',
@@ -4767,7 +4768,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                     // Date + time row (calendar icon, mirrors Events card)
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined,
+                        Icon(HuddlIcons.calendar,
                             size: 13, color: _cardMeta),
                         const SizedBox(width: 5),
                         Text(
@@ -4790,7 +4791,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                     // Location row
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined,
+                        const Icon(HuddlIcons.locationPin,
                             size: 14, color: _cardMeta),
                         const SizedBox(width: 4),
                         Expanded(
@@ -4837,7 +4838,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                                             Container(
                                           color: catStyle.color
                                               .withValues(alpha: 0.25),
-                                          child: Icon(Icons.person,
+                                          child: Icon(HuddlIcons.user,
                                               size: 12,
                                               color: catStyle.color),
                                         ),
@@ -4934,7 +4935,7 @@ class _EventListCardState extends State<_EventListCard> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -5089,7 +5090,7 @@ class _EventListCardState extends State<_EventListCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                              const Icon(HuddlIcons.ai, size: 10, color: Colors.white),
                               const SizedBox(width: 3),
                               Text(
                                 'AI Found',
@@ -5167,7 +5168,7 @@ class _EventListCardState extends State<_EventListCard> {
                     // Date + time row — light grey
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined,
+                        Icon(HuddlIcons.calendar,
                             size: 13, color: HuddlColors.textTertiary),
                         const SizedBox(width: 5),
                         Text(
@@ -5189,7 +5190,7 @@ class _EventListCardState extends State<_EventListCard> {
                     Row(
                       children: [
                         Icon(
-                          isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
+                          isOnline ? HuddlIcons.videocam : HuddlIcons.locationPin,
                           size: 14,
                           color: context.hc.textTertiary,
                         ),
@@ -5242,7 +5243,7 @@ class _EventListCardState extends State<_EventListCard> {
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Container(
                                       color: eventTypeBlue.withValues(alpha: 0.25),
-                                      child: Icon(Icons.person,
+                                      child: Icon(HuddlIcons.user,
                                           size: 12, color: eventTypeBlue),
                                     ),
                                   ),
@@ -5335,7 +5336,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             color: HuddlColors.nearBlack.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: const Icon(Icons.insights, size: 10, color: HuddlColors.primary),
+          child: const Icon(HuddlIcons.insights, size: 10, color: HuddlColors.primary),
         ),
         const SizedBox(width: 5),
         Text(
@@ -5363,7 +5364,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.primary),
+                  const Icon(HuddlIcons.thumbUp, size: 12, color: HuddlColors.primary),
                   const SizedBox(width: 3),
                   Text('Yes', style: HuddlText.label(color: HuddlColors.nearBlack)),
                 ],
@@ -5383,7 +5384,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.thumb_down_alt_outlined, size: 12,
+                  Icon(HuddlIcons.thumbDown, size: 12,
                     color: context.hc.textTertiary.withValues(alpha: 0.7)),
                   const SizedBox(width: 3),
                   Text('No', style: HuddlText.label(color: context.hc.textTertiary)),
@@ -5542,21 +5543,21 @@ class _CatStyle {
 _CatStyle _meetupCategoryStyle(String category) {
   switch (category) {
     case 'Coffee':
-      return const _CatStyle(HuddlColors.primaryDark, Icons.coffee);
+      return const _CatStyle(HuddlColors.primaryDark, HuddlIcons.coffee);
     case 'Playdate':
-      return const _CatStyle(HuddlColors.primary, Icons.child_care);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.childCare);
     case 'Sport':
-      return const _CatStyle(HuddlColors.nearBlack, Icons.sports_golf);
+      return const _CatStyle(HuddlColors.nearBlack, HuddlIcons.golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.primary, Icons.directions_walk);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.walk);
     case 'Social':
-      return const _CatStyle(HuddlColors.primary, Icons.celebration);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.celebration);
     case 'Food':
-      return const _CatStyle(HuddlColors.primary, Icons.restaurant);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.restaurant);
     case 'Other':
-      return const _CatStyle(HuddlColors.nearBlack, Icons.more_horiz);
+      return const _CatStyle(HuddlColors.nearBlack, HuddlIcons.moreHoriz);
     default:
-      return const _CatStyle(HuddlColors.nearBlack, Icons.groups);
+      return const _CatStyle(HuddlColors.nearBlack, HuddlIcons.usersThree);
   }
 }
 
@@ -5794,7 +5795,7 @@ class _SmartNudgeBanner extends StatelessWidget {
                   HuddlAnimations.lightTap();
                   onDismiss();
                 },
-                icon: const Icon(Icons.close_rounded, size: 18),
+                icon: const Icon(HuddlIcons.close, size: 18),
                 color: hc.textTertiary,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -6040,14 +6041,14 @@ class _NearbyTabState extends State<_NearbyTab>
               const SizedBox(width: 8),
               _NearbyFilterChip(
                 label: 'Meetups',
-                icon: Icons.edit_location_alt_outlined,
+                icon: HuddlIcons.editLocation,
                 selected: _filter == 'meetups',
                 onTap: () => setState(() => _filter = 'meetups'),
               ),
               const SizedBox(width: 8),
               _NearbyFilterChip(
                 label: 'Events',
-                icon: Icons.event_note_outlined,
+                icon: HuddlIcons.calendar,
                 selected: _filter == 'events',
                 onTap: () => setState(() => _filter = 'events'),
               ),

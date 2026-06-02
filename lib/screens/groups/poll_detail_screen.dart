@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -444,7 +445,7 @@ class _PollCardBody extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.info_outline,
+                const Icon(HuddlIcons.info,
                     size: 14, color: HuddlColors.primary),
                 const SizedBox(width: 6),
                 Text(
@@ -575,7 +576,7 @@ class _PollCardBody extends StatelessWidget {
                       if (poll.isCalendarMode)
                         const Padding(
                           padding: EdgeInsets.only(right: 6),
-                          child: Icon(Icons.calendar_today_outlined,
+                          child: Icon(HuddlIcons.calendar,
                               size: 14, color: HuddlColors.textHint),
                         ),
                       Expanded(
@@ -707,7 +708,7 @@ class _PollHeader extends StatelessWidget {
             color: HuddlColors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.poll_outlined,
+          child: const Icon(HuddlIcons.poll,
               size: 16, color: HuddlColors.primary),
         ),
         const SizedBox(width: 8),
@@ -735,7 +736,7 @@ class _PollHeader extends StatelessWidget {
         // Creator 3-dot menu
         if (isCreator)
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert,
+            icon: Icon(HuddlIcons.moreVert,
                 size: 20,
                 color: context.hc.textTertiary.withValues(alpha: 0.7)),
             padding: EdgeInsets.zero,
@@ -753,7 +754,7 @@ class _PollHeader extends StatelessWidget {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline,
+                    const Icon(HuddlIcons.delete,
                         size: 20, color: HuddlColors.error),
                     const SizedBox(width: 12),
                     Text(
@@ -788,7 +789,7 @@ class _PollQuestion extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_outlined,
+                Icon(HuddlIcons.calendar,
                     size: 12,
                     color: HuddlColors.primary.withValues(alpha: 0.7)),
                 const SizedBox(width: 4),
@@ -895,7 +896,7 @@ class _PollFooter extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          Icon(Icons.how_to_vote_outlined,
+          Icon(HuddlIcons.howToVote,
               size: 14, color: context.hc.textTertiary),
           const SizedBox(width: 4),
           Text(
@@ -904,7 +905,7 @@ class _PollFooter extends StatelessWidget {
           ),
           if (poll.closesAt != null) ...[
             const SizedBox(width: 10),
-            Icon(Icons.access_time,
+            Icon(HuddlIcons.clock,
                 size: 14,
                 color: poll.isExpired
                     ? HuddlColors.error
@@ -950,7 +951,7 @@ class _CheckIcon extends StatelessWidget {
         ),
       ),
       child: selected
-          ? const Icon(Icons.check, size: 14, color: Colors.white)
+          ? const Icon(HuddlIcons.check, size: 14, color: Colors.white)
           : null,
     );
   }
@@ -1018,7 +1019,7 @@ class PollResultsScreen extends StatelessWidget {
             elevation: 0,
             surfaceTintColor: Colors.transparent,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+              icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -1032,7 +1033,7 @@ class PollResultsScreen extends StatelessWidget {
                   FirebaseAuth.instance.currentUser?.uid &&
                   onDeletePoll != null)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline,
+                  icon: const Icon(HuddlIcons.delete,
                       color: HuddlColors.error, size: 22),
                   onPressed: () {
                     Navigator.pop(context);
@@ -1087,7 +1088,7 @@ class PollResultsScreen extends StatelessWidget {
                       color: HuddlColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.poll_outlined,
+                    child: const Icon(HuddlIcons.poll,
                         size: 18, color: HuddlColors.primary),
                   ),
                   const SizedBox(width: 10),
@@ -1123,7 +1124,7 @@ class PollResultsScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_outlined,
+                      Icon(HuddlIcons.calendar,
                           size: 13,
                           color: HuddlColors.primary.withValues(alpha: 0.7)),
                       const SizedBox(width: 4),
@@ -1169,7 +1170,7 @@ class PollResultsScreen extends StatelessWidget {
                     if (poll.isCalendarMode)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Icon(Icons.calendar_today_outlined,
+                        child: Icon(HuddlIcons.calendar,
                             size: 16,
                             color: isMyVote
                                 ? HuddlColors.primary
@@ -1234,7 +1235,7 @@ class PollResultsScreen extends StatelessWidget {
           HuddlButton(
             label: 'Delete Poll',
             variant: HuddlButtonVariant.destructive,
-            leadingIcon: Icons.delete_outline,
+            leadingIcon: HuddlIcons.delete,
             fullWidth: true,
             onPressed: () {
               Navigator.pop(context);
@@ -1390,7 +1391,7 @@ class PollCard extends StatelessWidget {
                     color: HuddlColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.poll_outlined,
+                  child: const Icon(HuddlIcons.poll,
                       size: 16, color: HuddlColors.primary),
                 ),
                 const SizedBox(width: 8),
@@ -1414,7 +1415,7 @@ class PollCard extends StatelessWidget {
                     ),
                   ),
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert,
+                  icon: Icon(HuddlIcons.moreVert,
                       size: 20,
                       color: context.hc.textTertiary.withValues(alpha: 0.7)),
                   padding: EdgeInsets.zero,
@@ -1446,8 +1447,8 @@ class PollCard extends StatelessWidget {
                           child: Row(children: [
                             Icon(
                                 poll.isPinned
-                                    ? Icons.push_pin_outlined
-                                    : Icons.push_pin,
+                                    ? HuddlIcons.pin
+                                    : HuddlIcons.pin,
                                 size: 20,
                                 color: context.hc.textPrimary),
                             const SizedBox(width: 12),
@@ -1459,7 +1460,7 @@ class PollCard extends StatelessWidget {
                       items.add(PopupMenuItem<String>(
                         value: 'results',
                         child: Row(children: [
-                          Icon(Icons.bar_chart_outlined,
+                          Icon(HuddlIcons.barChart,
                               size: 20, color: context.hc.textPrimary),
                           const SizedBox(width: 12),
                           Text('See Results',
@@ -1469,7 +1470,7 @@ class PollCard extends StatelessWidget {
                       items.add(PopupMenuItem<String>(
                         value: 'delete',
                         child: Row(children: [
-                          const Icon(Icons.delete_outline,
+                          const Icon(HuddlIcons.delete,
                               size: 20, color: HuddlColors.error),
                           const SizedBox(width: 12),
                           Text('Delete Poll',
@@ -1500,7 +1501,7 @@ class PollCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.info_outline,
+                    const Icon(HuddlIcons.info,
                         size: 14, color: HuddlColors.primary),
                     const SizedBox(width: 6),
                     Text(
@@ -1551,7 +1552,7 @@ class PollCard extends StatelessWidget {
                       if (poll.data.isCalendarMode)
                         const Padding(
                           padding: EdgeInsets.only(right: 6),
-                          child: Icon(Icons.calendar_today_outlined,
+                          child: Icon(HuddlIcons.calendar,
                               size: 14, color: HuddlColors.textHint),
                         ),
                       Expanded(
@@ -1574,7 +1575,7 @@ class PollCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.how_to_vote_outlined,
+                Icon(HuddlIcons.howToVote,
                     size: 14, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
@@ -1585,7 +1586,7 @@ class PollCard extends StatelessWidget {
                 ),
                 if (poll.data.expiresAt != null) ...[
                   const SizedBox(width: 12),
-                  Icon(Icons.access_time,
+                  Icon(HuddlIcons.clock,
                       size: 14,
                       color: expired
                           ? HuddlColors.error
@@ -1691,7 +1692,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                         color: HuddlColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.poll_outlined,
+                      child: const Icon(HuddlIcons.poll,
                           size: 18, color: HuddlColors.primary),
                     ),
                     const SizedBox(width: 12),
@@ -1703,7 +1704,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close,
+                      icon: Icon(HuddlIcons.close,
                           color: context.hc.textTertiary, size: 22),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -1819,7 +1820,7 @@ class PollDetailScreen extends StatelessWidget {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -1830,7 +1831,7 @@ class PollDetailScreen extends StatelessWidget {
         actions: [
           if (poll.isCreatedByMe && onDeletePoll != null)
             IconButton(
-              icon: const Icon(Icons.delete_outline,
+              icon: const Icon(HuddlIcons.delete,
                   color: HuddlColors.error, size: 22),
               onPressed: () {
                 Navigator.pop(context);
@@ -1936,7 +1937,7 @@ class PollDetailScreen extends StatelessWidget {
             HuddlButton(
               label: 'Delete Poll',
               variant: HuddlButtonVariant.destructive,
-              leadingIcon: Icons.delete_outline,
+              leadingIcon: HuddlIcons.delete,
               fullWidth: true,
               onPressed: () {
                 Navigator.pop(context);

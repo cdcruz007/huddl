@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -283,7 +284,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                   Navigator.pop(context);
                 },
                 child: const Icon(
-                  Icons.arrow_back_ios_new,
+                  HuddlIcons.arrowBack,
                   size: 20,
                   color: HuddlColors.nearBlack,
                 ),
@@ -315,7 +316,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                       hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
                       border: InputBorder.none,
                       prefixIcon: const Icon(
-                        Icons.search,
+                        HuddlIcons.search,
                         color: HuddlColors.textTertiary,
                         size: 20,
                       ),
@@ -329,7 +330,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                                 });
                               },
                               child: const Icon(
-                                Icons.cancel,
+                                HuddlIcons.cancel,
                                 color: HuddlColors.textTertiary,
                                 size: 18,
                               ),
@@ -381,10 +382,10 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
           Text('Popular in $borough', style: HuddlText.heading()),
           const SizedBox(height: 12),
           ...[
-            ('Sleep training groups',   Icons.people_outline,            HuddlColors.primary),
-            ('Sunday morning walks',    Icons.location_on_outlined,      HuddlColors.infoBlue),
-            ('Nearly new baby gear',    Icons.storefront_outlined,       HuddlColors.yellow),
-            ('Paediatric physio',       Icons.health_and_safety_outlined, HuddlColors.primary),
+            ('Sleep training groups',   HuddlIcons.usersThree,            HuddlColors.primary),
+            ('Sunday morning walks',    HuddlIcons.locationPin,      HuddlColors.infoBlue),
+            ('Nearly new baby gear',    HuddlIcons.storefront,       HuddlColors.yellow),
+            ('Paediatric physio',       HuddlIcons.medical, HuddlColors.primary),
           ].map((item) => _PopularRow(
             label: item.$1,
             icon: item.$2,
@@ -427,7 +428,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         // ── Groups ────────────────────────────────────────────────────
         if (_groupResults.isNotEmpty) ...[
           _SectionHeader(
-            icon: Icons.people_outline,
+            icon: HuddlIcons.usersThree,
             label: 'Groups',
             color: HuddlColors.primary,
             count: _groupResults.length,
@@ -454,7 +455,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         // ── Meetups ───────────────────────────────────────────────────
         if (_meetupResults.isNotEmpty) ...[
           _SectionHeader(
-            icon: Icons.location_on_outlined,
+            icon: HuddlIcons.locationPin,
             label: 'Meetups',
             color: HuddlColors.infoBlue,
             count: _meetupResults.length,
@@ -477,7 +478,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         // ── Events ────────────────────────────────────────────────────
         if (_eventResults.isNotEmpty) ...[
           _SectionHeader(
-            icon: Icons.calendar_today_outlined,
+            icon: HuddlIcons.calendar,
             label: 'Events',
             color: HuddlColors.infoBlue,
             count: _eventResults.length,
@@ -500,7 +501,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         // ── Services ──────────────────────────────────────────────────
         if (_serviceResults.isNotEmpty) ...[
           _SectionHeader(
-            icon: Icons.storefront_outlined,
+            icon: HuddlIcons.storefront,
             label: 'Services',
             color: HuddlColors.teal,
             count: _serviceResults.length,
@@ -520,7 +521,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         // ── Market ────────────────────────────────────────────────────
         if (_marketResults.isNotEmpty) ...[
           _SectionHeader(
-            icon: Icons.sell_outlined,
+            icon: HuddlIcons.sellTag,
             label: 'Market',
             color: HuddlColors.yellow,
             count: _marketResults.length,
@@ -543,7 +544,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
         // ── Members ───────────────────────────────────────────────────
         if (_memberResults.isNotEmpty) ...[
           _SectionHeader(
-            icon: Icons.person_outline,
+            icon: HuddlIcons.user,
             label: 'Members',
             color: HuddlColors.teal,
             count: _memberResults.length,
@@ -624,7 +625,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(
-                          Icons.send_outlined,
+                          HuddlIcons.send,
                           size: 15,
                           color: HuddlColors.teal,
                         ),
@@ -811,7 +812,7 @@ class _ResultRow extends StatelessWidget {
             ],
             const SizedBox(width: 8),
             const Icon(
-              Icons.chevron_right,
+              HuddlIcons.caretRight,
               color: HuddlColors.textTertiary,
               size: 18,
             ),
@@ -904,7 +905,7 @@ class _GroupResultRow extends StatelessWidget {
 
   Widget _fallback() => Container(
     color: HuddlColors.primaryPale,
-    child: const Icon(Icons.people, color: HuddlColors.primary, size: 22),
+    child: const Icon(HuddlIcons.usersThree, color: HuddlColors.primary, size: 22),
   );
 }
 
@@ -929,7 +930,7 @@ class _MeetupResultRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Icon(
-        Icons.location_on_outlined,
+        HuddlIcons.locationPin,
         color: HuddlColors.infoBlue,
         size: 22,
       ),
@@ -964,7 +965,7 @@ class _EventResultRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Icon(
-        Icons.calendar_today_outlined,
+        HuddlIcons.calendar,
         color: HuddlColors.infoBlue,
         size: 22,
       ),
@@ -1047,7 +1048,7 @@ class _MarketResultRow extends StatelessWidget {
 
   Widget _fallback() => Container(
     color: HuddlColors.yellowBackground,
-    child: const Icon(Icons.sell_outlined, color: HuddlColors.yellow, size: 22),
+    child: const Icon(HuddlIcons.sellTag, color: HuddlColors.yellow, size: 22),
   );
 }
 
@@ -1133,7 +1134,7 @@ class _PopularRow extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.north_west,
+              HuddlIcons.northWest,
               size: 14,
               color: context.hc.textSecondary,
             ),

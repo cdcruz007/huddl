@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'huddl_network_image.dart';
 
 // COMPATIBILITY SHIM — all new code should use HuddlNetworkImage directly.
@@ -21,7 +22,7 @@ class SafeNetworkImage extends StatelessWidget {
     this.height,
     this.fit = BoxFit.cover,
     this.borderRadius,
-    this.placeholderIcon = Icons.image_outlined,
+    this.placeholderIcon = HuddlIcons.image,
     this.placeholderIconSize = 32,
     this.placeholderColor,
   });

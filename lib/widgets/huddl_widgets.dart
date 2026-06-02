@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 import 'common/huddl_button.dart';
@@ -379,7 +380,7 @@ class HuddlAvatar extends StatelessWidget {
       height: size,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Center(
-        child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary),
+        child: Icon(HuddlIcons.user, size: size * 0.5, color: HuddlColors.primary),
       ),
     );
   }
@@ -482,7 +483,7 @@ class HuddlSearchBar extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 12),
-          Icon(Icons.search, size: 20, color: context.hc.textTertiary),
+          Icon(HuddlIcons.search, size: 20, color: context.hc.textTertiary),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -575,7 +576,7 @@ class HuddlImageCard extends StatelessWidget {
                 url: imageUrl,
                 width: double.infinity,
                 height: imageHeight,
-                fallbackIcon: Icons.image_outlined,
+                fallbackIcon: HuddlIcons.image,
                 fallbackIconSize: 32,
               ),
             ),

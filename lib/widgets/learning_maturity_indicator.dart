@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../../services/ai_learning_engine_service.dart';
 import '../../services/daily_ai_refresh_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -239,7 +240,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            needsRefresh ? Icons.refresh : Icons.check_circle_outline,
+            needsRefresh ? HuddlIcons.refresh : HuddlIcons.checkCircle,
             size: 20,
             color: needsRefresh ? HuddlColors.warning : HuddlColors.success,
           ),

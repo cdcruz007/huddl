@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -106,7 +107,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               'featureTitle': 'Group creation limit reached',
               'featureDescription': ss.limitReachedMessage('user_groups'),
               'requiredPlan': 'Huddl Plus',
-              'featureIcon': Icons.diversity_3_outlined.codePoint,
+              'featureIcon': HuddlIcons.diversity.codePoint,
             });
       });
     }
@@ -247,7 +248,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                     color: HuddlColors.neutral50, shape: BoxShape.circle),
-                child: const Icon(Icons.photo_library_outlined,
+                child: const Icon(HuddlIcons.photoLibrary,
                     color: HuddlColors.textDark),
               ),
               title: const Text('Choose from gallery',
@@ -263,7 +264,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                     color: HuddlColors.neutral50, shape: BoxShape.circle),
-                child: const Icon(Icons.camera_alt_outlined,
+                child: const Icon(HuddlIcons.camera,
                     color: HuddlColors.textDark),
               ),
               title: const Text('Take a photo',
@@ -336,7 +337,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Widget _emptyPhotoFallback() => Container(
         color: _bannerBg,
         child: const Center(
-          child: Icon(Icons.add_photo_alternate_outlined,
+          child: Icon(HuddlIcons.photoLibrary,
               size: 48, color: HuddlColors.primaryLight),   // HuddlColors.primaryLight
         ),
       );
@@ -469,7 +470,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                           .withValues(alpha: 0.15),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.close,
+                                    child: const Icon(HuddlIcons.close,
                                         size: 14, color: HuddlColors.primary),
                                   ),
                                 ),
@@ -497,7 +498,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search members...',
                         hintStyle: HuddlText.body(color: context.hc.textTertiary),
-                        prefixIcon: Icon(Icons.search,
+                        prefixIcon: Icon(HuddlIcons.search,
                             size: 20, color: context.hc.textTertiary),
                         suffixIcon: _memberSearchQuery.isNotEmpty
                             ? GestureDetector(
@@ -506,7 +507,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                   setState(() => _memberSearchQuery = '');
                                   setSheetState(() {});
                                 },
-                                child: Icon(Icons.close,
+                                child: Icon(HuddlIcons.close,
                                     size: 18, color: context.hc.textTertiary),
                               )
                             : null,
@@ -597,7 +598,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                   ),
                                 ),
                                 child: isSelected
-                                    ? const Icon(Icons.check,
+                                    ? const Icon(HuddlIcons.check,
                                         size: 16, color: Colors.white)
                                     : null,
                               ),
@@ -658,7 +659,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     member.name,
                     style: HuddlText.caption(),
                   ),
-                  deleteIcon: const Icon(Icons.close, size: 16),
+                  deleteIcon: const Icon(HuddlIcons.close, size: 16),
                   onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
                   backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(
@@ -687,7 +688,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.person_add_outlined,
+                    HuddlIcons.personAdd,
                     size: 20,
                     color: _selectedMemberIds.isNotEmpty
                         ? HuddlColors.primary
@@ -703,7 +704,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     ),
                   ),
                   Icon(
-                    Icons.chevron_right,
+                    HuddlIcons.caretRight,
                     size: 20,
                     color: _selectedMemberIds.isNotEmpty
                         ? HuddlColors.primary
@@ -782,7 +783,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'featureTitle': 'Group creation limit reached',
           'featureDescription': subService.limitReachedMessage('user_groups'),
           'requiredPlan': 'Huddl Plus',
-          'featureIcon': Icons.diversity_3_outlined.codePoint,
+          'featureIcon': HuddlIcons.diversity.codePoint,
         });
       }
       return;
@@ -1029,7 +1030,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(_privacy == 'private'
@@ -1068,7 +1069,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded,
+            Icon(HuddlIcons.warning,
                 color: HuddlColors.textDark, size: 24),
             const SizedBox(width: 10),
             Expanded(
@@ -1147,7 +1148,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         child: Row(
                           children: [
                             Icon(
-                              Icons.diversity_3_outlined,
+                              HuddlIcons.diversity,
                               size: 14,
                               color: remaining == 0
                                   ? HuddlColors.primary
@@ -1192,7 +1193,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.info_outline,
+                                const Icon(HuddlIcons.info,
                                     size: 14, color: _accentOrange),
                                 const SizedBox(width: 5),
                                 Expanded(
@@ -1252,7 +1253,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             description:
                                 'Everyone in your local community can see and join your group.',
                             isSelected: _privacy == 'public',
-                            icon: Icons.public,
+                            icon: HuddlIcons.language,
                             onTap: () => setState(() {
                               _privacy = 'public';
                               _selectedParentGroupId = null;
@@ -1265,7 +1266,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             description:
                                 'Only members of a specific group can see and join your group.',
                             isSelected: _privacy == 'group',
-                            icon: Icons.group,
+                            icon: HuddlIcons.usersThree,
                             onTap: () => setState(() {
                               _privacy = 'group';
                             }),
@@ -1301,7 +1302,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                       ? 'Invite only — choose specific people in ${_userBorough ?? 'your borough'} to invite.'
                                       : 'Invite only — upgrade to Huddl Plus to unlock.',
                                   isSelected: _privacy == 'private',
-                                  icon: Icons.lock_outline,
+                                  icon: HuddlIcons.lock,
                                   onTap: canPrivate
                                       ? () => setState(() {
                                             _privacy = 'private';
@@ -1332,7 +1333,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
-                                        Icons.lock_outlined,
+                                        HuddlIcons.lock,
                                         size: 11,
                                         color: Colors.white,
                                       ),
@@ -1380,7 +1381,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Icon(Icons.arrow_back_ios, size: 18, color: _accentOrange),
+            child: Icon(HuddlIcons.arrowBack, size: 18, color: _accentOrange),
           ),
         ),
       ),
@@ -1471,7 +1472,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.edit_outlined,
+                      const Icon(HuddlIcons.edit,
                           color: Colors.white, size: 16),
                       const SizedBox(width: 6),
                       Text('Change photo',
@@ -1505,7 +1506,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.add_photo_alternate_outlined,
+              HuddlIcons.photoLibrary,
               color: HuddlColors.primaryLight,   // HuddlColors.primaryLight
               size: 48,
             ),
@@ -1585,7 +1586,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         ),
       ),
       child: checked
-          ? const Icon(Icons.check, size: 16, color: Colors.white)
+          ? const Icon(HuddlIcons.check, size: 16, color: Colors.white)
           : null,
     );
   }
@@ -1602,7 +1603,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.info_outline,
+            const Icon(HuddlIcons.info,
                 size: 16, color: HuddlColors.textDark),
             const SizedBox(width: 8),
             Expanded(
@@ -1633,7 +1634,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           isExpanded: true,
           hint: Text('Select a parent group',
               style: HuddlText.body(color: context.hc.textTertiary)),
-          icon: Icon(Icons.keyboard_arrow_down,
+          icon: Icon(HuddlIcons.caretDown,
               color: _selectedParentGroupId != null
                   ? HuddlColors.primary
                   : HuddlColors.textHint),
@@ -1652,7 +1653,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(
-                      child: Icon(Icons.people,
+                      child: Icon(HuddlIcons.usersThree,
                           size: 14, color: HuddlColors.textDark),
                     ),
                   ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -572,7 +573,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
             child: Row(
               children: [
                 const SizedBox(width: 14),
-                Icon(Icons.search, size: 20, color: context.hc.textTertiary),
+                Icon(HuddlIcons.search, size: 20, color: context.hc.textTertiary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
@@ -597,7 +598,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                     },
                     child: Padding(
                       padding: EdgeInsets.all(8),
-                      child: Icon(Icons.close,
+                      child: Icon(HuddlIcons.close,
                           size: 18, color: context.hc.textTertiary),
                     ),
                   ),
@@ -632,7 +633,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.person_outline, size: 16),
+                      const Icon(HuddlIcons.user, size: 16),
                       const SizedBox(width: 6),
                       Text('Members (${_memberTargets.length})'),
                     ],
@@ -643,7 +644,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.people_outline, size: 16),
+                      const Icon(HuddlIcons.usersThree, size: 16),
                       const SizedBox(width: 6),
                       Text('Groups (${_groupTargets.length})'),
                     ],
@@ -696,7 +697,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded,
+              Icon(HuddlIcons.searchOff,
                   size: 40, color: context.hc.textTertiary),
               const SizedBox(height: 12),
               Text(
@@ -731,17 +732,17 @@ class _ForwardSheetState extends State<_ForwardSheet>
 
   Widget _meetupPlaceholder() => Container(
         color: HuddlColors.neutral50,
-        child: const Center(child: Icon(Icons.event, size: 24, color: HuddlColors.textDark)),
+        child: const Center(child: Icon(HuddlIcons.calendar, size: 24, color: HuddlColors.textDark)),
       );
 
   Widget _groupPlaceholder() => Container(
         color: HuddlColors.neutral50,
-        child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.textDark)),
+        child: const Center(child: Icon(HuddlIcons.usersThree, size: 24, color: HuddlColors.textDark)),
       );
 
   Widget _eventPlaceholder() => Container(
         color: HuddlColors.nearBlack.withValues(alpha: 0.12),
-        child: const Center(child: Icon(Icons.event_outlined, size: 24, color: HuddlColors.nearBlack)),
+        child: const Center(child: Icon(HuddlIcons.calendar, size: 24, color: HuddlColors.nearBlack)),
       );
 
   /// Builds the preview section — image thumbnail + caption, or text preview.
@@ -795,7 +796,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.textTertiary),
+                          const Icon(HuddlIcons.calendar, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -813,7 +814,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.textTertiary),
+                          const Icon(HuddlIcons.locationPin, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -881,7 +882,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                     padding: const EdgeInsets.only(top: 2),
                     child: Row(
                       children: [
-                        const Icon(Icons.people_outline, size: 11, color: HuddlColors.textTertiary),
+                        const Icon(HuddlIcons.usersThree, size: 11, color: HuddlColors.textTertiary),
                         const SizedBox(width: 4),
                         Text(
                           '$memberCount members',
@@ -948,7 +949,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.event_outlined, size: 11, color: HuddlColors.textTertiary),
+                      const Icon(HuddlIcons.calendar, size: 11, color: HuddlColors.textTertiary),
                       const SizedBox(width: 4),
                       Text(
                         'Event',
@@ -968,7 +969,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.textTertiary),
+                          const Icon(HuddlIcons.calendar, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -986,7 +987,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.textTertiary),
+                          const Icon(HuddlIcons.locationPin, size: 11, color: HuddlColors.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -1029,7 +1030,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                   width: 56,
                   height: 56,
                   color: HuddlColors.neutral50,
-                  child: const Icon(Icons.image,
+                  child: const Icon(HuddlIcons.image,
                       size: 24, color: HuddlColors.textDark),
                 ),
               ),
@@ -1077,7 +1078,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 color: HuddlColors.peachSurface,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.location_on,
+              child: const Icon(HuddlIcons.locationPinFill,
                   size: 20, color: HuddlColors.error),
             ),
             const SizedBox(width: 10),
@@ -1112,7 +1113,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 color: HuddlColors.neutral50,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.person,
+              child: const Icon(HuddlIcons.user,
                   size: 20, color: HuddlColors.textDark),
             ),
             const SizedBox(width: 10),
@@ -1155,7 +1156,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 color: HuddlColors.nearBlack.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.insert_drive_file,
+              child: const Icon(HuddlIcons.file,
                   size: 20, color: HuddlColors.nearBlack),
             ),
             const SizedBox(width: 10),
@@ -1182,7 +1183,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
       ),
       child: Row(
         children: [
-          Icon(Icons.chat_bubble_outline,
+          Icon(HuddlIcons.chat,
               size: 16, color: context.hc.textTertiary),
           const SizedBox(width: 8),
           Expanded(

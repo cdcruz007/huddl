@@ -239,7 +239,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 4));
 
       // Look for Saved tab
-      final savedTab = find.text(RegExp(r'(Saved|Bookmarks)',
+      final savedTab = find.textContaining(RegExp(r'(Saved|Bookmarks)',
           caseSensitive: false));
       if (savedTab.evaluate().isNotEmpty) {
         await tester.tap(savedTab.first);

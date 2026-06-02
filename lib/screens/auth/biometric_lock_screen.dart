@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_logo.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../theme/huddl_colors.dart';
@@ -166,8 +167,8 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
                     children: [
                       Icon(
                         _isFaceId
-                            ? Icons.face_retouching_natural_rounded
-                            : Icons.fingerprint_rounded,
+                            ? HuddlIcons.faceRetouching
+                            : HuddlIcons.fingerprint,
                         size: 24,
                         color: _hasFailed
                             ? HuddlColors.error

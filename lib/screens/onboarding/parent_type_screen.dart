@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -88,7 +89,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen>
                           errorBuilder: (_, __, ___) => Container(
                             color: HuddlColors.primaryPale,
                             child: Icon(
-                              Icons.people,
+                              HuddlIcons.usersThree,
                               size: 80,
                               color: HuddlColors.primary.withValues(alpha: 0.3),
                             ),
@@ -189,7 +190,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen>
                         _ParentTypeCard(
                           label: 'Mum',
                           subtitle: 'Join as a parent',
-                          icon: Icons.face_2,
+                          icon: HuddlIcons.user,
                           accentColor: HuddlColors.onboardingOrange,
                           selected: _selected == 'Mum',
                           onTap: () => setState(() => _selected = 'Mum'),
@@ -199,7 +200,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen>
                         _ParentTypeCard(
                           label: 'Dad',
                           subtitle: 'Join as a parent',
-                          icon: Icons.face,
+                          icon: HuddlIcons.user,
                           accentColor: HuddlColors.onboardingOrange,
                           selected: _selected == 'Dad',
                           onTap: () => setState(() => _selected = 'Dad'),
@@ -305,7 +306,7 @@ class _ParentTypeCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              Icon(Icons.check_circle, size: 22, color: accentColor),
+              Icon(HuddlIcons.checkCircle, size: 22, color: accentColor),
           ],
         ),
       ),
@@ -326,7 +327,7 @@ class _OnboardingAppBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
+            HuddlIcons.arrowBack,
             size: 18,
             color: Colors.white,
           ),

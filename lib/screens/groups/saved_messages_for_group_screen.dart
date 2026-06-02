@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/saved_message_service.dart';
 import '../../constants/app_text_styles.dart';
@@ -66,7 +67,7 @@ class _SavedMessagesForGroupScreenState
         backgroundColor: context.hc.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -111,7 +112,7 @@ class _SavedMessagesForGroupScreenState
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.bookmark_outline,
+                child: const Icon(HuddlIcons.bookmark,
                     size: 40, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 20),
@@ -145,7 +146,7 @@ class _SavedMessagesForGroupScreenState
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 24),
             color: HuddlColors.error.withValues(alpha: 0.1),
-            child: const Icon(Icons.delete_outline, color: HuddlColors.error),
+            child: const Icon(HuddlIcons.delete, color: HuddlColors.error),
           ),
           onDismissed: (_) async {
             await _savedMessageService.unsaveMessage(msg.id);
@@ -185,7 +186,7 @@ class _SavedMessagesForGroupScreenState
                   // Sender + time
                   Row(
                     children: [
-                      const Icon(Icons.bookmark,
+                      const Icon(HuddlIcons.bookmark,
                           size: 16, color: HuddlColors.textDark),
                       const SizedBox(width: 8),
                       Expanded(

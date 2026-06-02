@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/ai_listing_service.dart';
 import '../../services/rehome_service.dart';
@@ -166,7 +167,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: context.hc.textTertiary),
+                      icon: Icon(HuddlIcons.close, color: context.hc.textTertiary),
                     ),
                   ],
                 ),
@@ -239,7 +240,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                             color: HuddlColors.aiBlue.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.add_a_photo, size: 36, color: HuddlColors.aiBlue),
+                          child: const Icon(HuddlIcons.cameraPlus, size: 36, color: HuddlColors.aiBlue),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -278,7 +279,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             ),
             suffixIcon: IconButton(
               onPressed: _simulatePhotoAnalysis,
-              icon: const Icon(Icons.auto_awesome, color: HuddlColors.aiBlue),
+              icon: const Icon(HuddlIcons.ai, color: HuddlColors.aiBlue),
             ),
           ),
         ),
@@ -293,12 +294,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _quickItemChip('Bugaboo pushchair', Icons.child_friendly),
-            _quickItemChip('Baby clothes bundle', Icons.checkroom),
-            _quickItemChip('Stokke high chair', Icons.chair),
-            _quickItemChip('Toys & games', Icons.extension),
-            _quickItemChip('Car seat', Icons.directions_car),
-            _quickItemChip('Books', Icons.auto_stories),
+            _quickItemChip('Bugaboo pushchair', HuddlIcons.childFriendly),
+            _quickItemChip('Baby clothes bundle', HuddlIcons.wardrobe),
+            _quickItemChip('Stokke high chair', HuddlIcons.chair),
+            _quickItemChip('Toys & games', HuddlIcons.extension),
+            _quickItemChip('Car seat', HuddlIcons.work),
+            _quickItemChip('Books', HuddlIcons.books),
           ],
         ),
       ],
@@ -349,7 +350,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, size: 18, color: HuddlColors.success),
+                const Icon(HuddlIcons.checkCircle, size: 18, color: HuddlColors.success),
                 const SizedBox(width: 6),
                 Text(
                   'Details filled in automatically',
@@ -372,7 +373,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.warning_amber, color: HuddlColors.error, size: 20),
+                const Icon(HuddlIcons.warning, color: HuddlColors.error, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(draft.safetyNote!,
@@ -383,11 +384,11 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           ),
 
         // Title
-        _buildEditableField('Title', _titleController, Icons.title),
+        _buildEditableField('Title', _titleController, HuddlIcons.title),
         const SizedBox(height: 12),
 
         // Description
-        _buildEditableField('Description', _descController, Icons.description, maxLines: 4),
+        _buildEditableField('Description', _descController, HuddlIcons.description, maxLines: 4),
         const SizedBox(height: 16),
 
         // Price section
@@ -457,7 +458,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                   child: Row(
                     children: [
                       Icon(
-                        comp.priceVerdict == 'great_deal' ? Icons.thumb_up : Icons.info_outline,
+                        comp.priceVerdict == 'great_deal' ? HuddlIcons.thumbUp : HuddlIcons.info,
                         size: 16,
                         color: comp.priceVerdict == 'great_deal'
                             ? HuddlColors.success
@@ -490,7 +491,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             const SizedBox(width: 8),
             Expanded(child: _buildInfoChip('Age Stage', draft.suggestedAgeStage.shortLabel, draft.suggestedAgeStage.icon)),
             const SizedBox(width: 8),
-            Expanded(child: _buildInfoChip('Condition', draft.suggestedCondition.label, Icons.verified)),
+            Expanded(child: _buildInfoChip('Condition', draft.suggestedCondition.label, HuddlIcons.verifiedFill)),
           ],
         ),
         const SizedBox(height: 16),
@@ -548,7 +549,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.publish, color: context.hc.surface, size: 20),
+                        Icon(HuddlIcons.publish, color: context.hc.surface, size: 20),
                         const SizedBox(width: 8),
                         Text('Publish Listing', style: HuddlText.body(weight: FontWeight.w600)),
                       ],

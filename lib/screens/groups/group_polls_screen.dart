@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/huddl_character.dart';
@@ -140,7 +141,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
           backgroundColor: hc.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: hc.textPrimary),
+            icon: Icon(HuddlIcons.arrowBack, color: hc.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text('Polls',
@@ -157,7 +158,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
         backgroundColor: hc.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(

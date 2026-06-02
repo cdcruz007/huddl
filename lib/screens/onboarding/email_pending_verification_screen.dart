@@ -15,6 +15,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/common/huddl_logo.dart';
@@ -250,7 +251,7 @@ class _EmailPendingVerificationScreenState
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline,
+                          const Icon(HuddlIcons.info,
                               color: HuddlColors.textDark, size: 20),
                           const SizedBox(width: 12),
                           Expanded(

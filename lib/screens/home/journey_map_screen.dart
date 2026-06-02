@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/user_journey_map.dart';
 import '../../constants/app_text_styles.dart';
@@ -29,7 +30,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
         backgroundColor: hc.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: hc.textPrimary, size: 20),
+          icon: Icon(HuddlIcons.arrowBack, color: hc.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
           tooltip: 'Back',
         ),
@@ -157,7 +158,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                           if (i < journey.emotionalArc.length - 1)
                             Padding(
                               padding: const EdgeInsets.only(top: 6),
-                              child: Icon(Icons.arrow_forward,
+                              child: Icon(HuddlIcons.arrowForward,
                                   size: 14, color: hc.textTertiary),
                             ),
                         ],
@@ -407,7 +408,7 @@ class _PainPointTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded,
+          const Icon(HuddlIcons.warning,
               size: 18, color: HuddlColors.error),
           const SizedBox(width: 10),
           Expanded(
@@ -422,7 +423,7 @@ class _PainPointTile extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.check_circle_outline,
+                    const Icon(HuddlIcons.checkCircle,
                         size: 14, color: HuddlColors.nearBlack),
                     const SizedBox(width: 4),
                     Expanded(
@@ -480,7 +481,7 @@ class _CompetitorTile extends StatelessWidget {
               if (isHuddl)
                 const Padding(
                   padding: EdgeInsets.only(right: 6),
-                  child: Icon(Icons.star, size: 16, color: HuddlColors.primary),
+                  child: Icon(HuddlIcons.star, size: 16, color: HuddlColors.primary),
                 ),
               Text(
                 entry.name,
@@ -492,7 +493,7 @@ class _CompetitorTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.add_circle_outline,
+              const Icon(HuddlIcons.addCircle,
                   size: 14, color: HuddlColors.nearBlack),
               const SizedBox(width: 4),
               Expanded(
@@ -508,7 +509,7 @@ class _CompetitorTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.remove_circle_outline,
+                const Icon(HuddlIcons.removeCircle,
                     size: 14, color: HuddlColors.error),
                 const SizedBox(width: 4),
                 Expanded(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:flutter/services.dart';
@@ -175,7 +176,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -204,7 +205,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
             SizedBox(width: 8),
             Text('Group link copied to clipboard'),
           ],
@@ -268,7 +269,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               Navigator.pop(ctx);
                               _shareGroup();
                             },
-                            icon: const Icon(Icons.link, size: 18, color: HuddlColors.textDark),
+                            icon: const Icon(HuddlIcons.link, size: 18, color: HuddlColors.textDark),
                             label: Text(
                               'Share link',
                               style: HuddlText.body(),
@@ -284,7 +285,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.people_outline,
+                              Icon(HuddlIcons.usersThree,
                                   size: 48,
                                   color: context.hc.textTertiary.withValues(alpha: 0.5)),
                               const SizedBox(height: 12),
@@ -399,7 +400,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.sentiment_dissatisfied_outlined,
+                child: const Icon(HuddlIcons.sentimentBad,
                     size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
@@ -511,7 +512,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             HuddlButton(
               label: _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join',
               variant: _isJoined ? HuddlButtonVariant.confirmed : HuddlButtonVariant.primary,
-              leadingIcon: _isJoined ? Icons.chat_bubble_outline : Icons.group_add_outlined,
+              leadingIcon: _isJoined ? HuddlIcons.chat : HuddlIcons.userGroupPlus,
               isLoading: _isJoining,
               fullWidth: true,
               onPressed: _isJoining
@@ -531,7 +532,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 HuddlButton(
                   label: 'Invite Members',
                   variant: HuddlButtonVariant.secondary,
-                  leadingIcon: Icons.person_add_outlined,
+                  leadingIcon: HuddlIcons.personAdd,
                   fullWidth: true,
                   onPressed: _showInviteMembersSheet,
                 ),
@@ -558,18 +559,18 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             pinned: true,
             backgroundColor: context.hc.surface,
             leading: _CircleButton(
-              icon: Icons.arrow_back,
+              icon: HuddlIcons.arrowBack,
               onTap: () => Navigator.pop(context),
             ),
             actions: [
               // Edit button for private-group creators only
               if (_canEdit && _isJoined)
                 _CircleButton(
-                  icon: _isEditing ? Icons.check : Icons.edit,
+                  icon: _isEditing ? HuddlIcons.check : HuddlIcons.edit,
                   onTap: _toggleEditing,
                 ),
               _CircleButton(
-                icon: Icons.more_vert,
+                icon: HuddlIcons.moreVert,
                 onTap: () => _showMoreActions(context),
               ),
               const SizedBox(width: 8),
@@ -599,7 +600,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, size: 14, color: HuddlColors.nearBlack),
+                          const Icon(HuddlIcons.star, size: 14, color: HuddlColors.nearBlack),
                           const SizedBox(width: 4),
                           Text(
                             'You created this group',
@@ -651,7 +652,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   Row(
                     children: [
                       Icon(
-                        widget.isPrivate ? Icons.lock_outline : Icons.public,
+                        widget.isPrivate ? HuddlIcons.lock : HuddlIcons.language,
                         size: 16,
                         color: context.hc.textTertiary,
                       ),
@@ -661,7 +662,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         style: HuddlText.body(color: context.hc.textSecondary),
                       ),
                       const SizedBox(width: 16),
-                      Icon(Icons.people_outline,
+                      Icon(HuddlIcons.usersThree,
                           size: 16, color: context.hc.textTertiary),
                       const SizedBox(width: 4),
                       Text(
@@ -697,8 +698,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             setState(() => _aboutExpanded = !_aboutExpanded),
                         child: Icon(
                           _aboutExpanded
-                              ? Icons.expand_less
-                              : Icons.expand_more,
+                              ? HuddlIcons.caretUp
+                              : HuddlIcons.caretDown,
                           color: context.hc.textTertiary,
                         ),
                       ),
@@ -833,7 +834,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.bookmark_outline,
+                    child: const Icon(HuddlIcons.bookmark,
                         color: HuddlColors.textDark, size: 22),
                   ),
                   title: Text(
@@ -844,7 +845,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     '$savedCount saved message${savedCount != 1 ? 's' : ''}',
                     style: HuddlText.caption(color: context.hc.textTertiary),
                   ),
-                  trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+                  trailing: Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
                   onTap: () {
                     Navigator.pushNamed(context, '/saved_messages_for_group', arguments: {
                       'groupId': widget.groupId,
@@ -871,7 +872,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.poll_outlined,
+                    child: const Icon(HuddlIcons.poll,
                         color: HuddlColors.textDark, size: 22),
                   ),
                   title: Text(
@@ -882,7 +883,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     'View group polls',
                     style: HuddlText.caption(color: context.hc.textTertiary),
                   ),
-                  trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+                  trailing: Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
                   onTap: () {
                     // Navigate to dedicated polls screen
                     Navigator.push(
@@ -990,7 +991,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 18, color: HuddlColors.textDark),
+                    Icon(HuddlIcons.info, size: 18, color: HuddlColors.textDark),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -1003,12 +1004,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
               const SizedBox(height: 4),
               ListTile(
-                leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
+                leading: Icon(HuddlIcons.share, color: context.hc.textPrimary),
                 title: Text('Share group', style: HuddlText.body()),
                 onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
               ListTile(
-                leading: Icon(Icons.group_add_outlined, color: HuddlColors.textDark),
+                leading: Icon(HuddlIcons.userGroupPlus, color: HuddlColors.textDark),
                 title: Text('Join group', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.textDark)),
                 onTap: () { Navigator.pop(c); _joinGroup(); },
               ),
@@ -1029,7 +1030,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.shield_outlined, size: 18, color: HuddlColors.nearBlack),
+                      Icon(HuddlIcons.shield, size: 18, color: HuddlColors.nearBlack),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1052,7 +1053,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.lock_outline, size: 18, color: context.hc.textSecondary),
+                      Icon(HuddlIcons.lock, size: 18, color: context.hc.textSecondary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1075,7 +1076,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 18, color: context.hc.textSecondary),
+                      Icon(HuddlIcons.info, size: 18, color: context.hc.textSecondary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1090,7 +1091,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               // ── ADMIN-ONLY options ────────────────────────────────────
               if (_isAdmin) ...[
                 ListTile(
-                  leading: Icon(Icons.edit_outlined, color: context.hc.textPrimary),
+                  leading: Icon(HuddlIcons.edit, color: context.hc.textPrimary),
                   title: Text('Edit group', style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
@@ -1116,7 +1117,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.manage_accounts_outlined, color: context.hc.textPrimary),
+                  leading: Icon(HuddlIcons.manageAccounts, color: context.hc.textPrimary),
                   title: Text('Manage admins', style: HuddlText.body()),
                   onTap: () {
                     Navigator.pop(c);
@@ -1133,7 +1134,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
               // ── ALL MEMBERS options ───────────────────────────────────
               ListTile(
-                leading: Icon(Icons.notifications_outlined, color: context.hc.textPrimary),
+                leading: Icon(HuddlIcons.bell, color: context.hc.textPrimary),
                 title: Text('Mute notifications', style: HuddlText.body()),
                 onTap: () {
                   Navigator.pop(c);
@@ -1141,7 +1142,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.bookmark_outline, color: context.hc.textPrimary),
+                leading: Icon(HuddlIcons.bookmark, color: context.hc.textPrimary),
                 title: Text('Saved messages', style: HuddlText.body()),
                 onTap: () {
                   Navigator.pop(c);
@@ -1152,7 +1153,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
+                leading: Icon(HuddlIcons.share, color: context.hc.textPrimary),
                 title: Text('Share group', style: HuddlText.body()),
                 onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
@@ -1160,14 +1161,14 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               // ── ADMIN: Delete group ───────────────────────────────────
               if (_isAdmin)
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: HuddlColors.error),
+                  leading: const Icon(HuddlIcons.delete, color: HuddlColors.error),
                   title: Text('Delete group', style: HuddlText.body(color: HuddlColors.error)),
                   onTap: () { Navigator.pop(c); _confirmDeleteGroup(ctx); },
                 ),
 
               // ── Leave group (admin → admin leave flow, member → standard) ─
               ListTile(
-                leading: const Icon(Icons.exit_to_app, color: HuddlColors.error),
+                leading: const Icon(HuddlIcons.exitToApp, color: HuddlColors.error),
                 title: Text('Leave group', style: HuddlText.body(color: HuddlColors.error)),
                 onTap: () {
                   Navigator.pop(c);
@@ -1234,7 +1235,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               Container(
                 width: 56, height: 56,
                 decoration: BoxDecoration(color: HuddlColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.delete_outline, size: 32, color: HuddlColors.error),
+                child: const Icon(HuddlIcons.delete, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text('Leave and delete this group?',
@@ -1357,7 +1358,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                       ],
                                     ),
                                   ),
-                                  if (isSelected) const Icon(Icons.check_circle, color: HuddlColors.primary, size: 22),
+                                  if (isSelected) const Icon(HuddlIcons.checkCircle, color: HuddlColors.primary, size: 22),
                                 ],
                               ),
                             ),
@@ -1593,7 +1594,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               Container(
                 width: 56, height: 56,
                 decoration: BoxDecoration(color: HuddlColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.delete_outline, size: 32, color: HuddlColors.error),
+                child: const Icon(HuddlIcons.delete, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text('Delete this group?',

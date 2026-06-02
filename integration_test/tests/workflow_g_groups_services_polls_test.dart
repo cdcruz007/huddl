@@ -50,7 +50,7 @@ Future<bool> _goToConnect(WidgetTester tester) async {
 Future<bool> _goToGroups(WidgetTester tester) async {
   if (!await _goToConnect(tester)) return false;
   // Try "Groups" sub-tab inside Connect
-  final groupsTab = find.text(RegExp(r'(Groups|Communities)', caseSensitive: false));
+  final groupsTab = find.textContaining(RegExp(r'(Groups|Communities)', caseSensitive: false));
   if (groupsTab.evaluate().isNotEmpty) {
     await tester.tap(groupsTab.first);
     await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -108,7 +108,7 @@ void main() {
 
       // After tapping join: button should either become "Member", "Leave",
       // or a confirmation appears
-      final memberState = find.text(RegExp(
+      final memberState = find.textContaining(RegExp(
         r'(member|joined|leave|leaving)',
         caseSensitive: false,
       ));
@@ -138,8 +138,7 @@ void main() {
       }
 
       // Navigate to services — may be in Connect or Home
-      final servicesBtn = find.text(
-          RegExp(r'(Services|Local Services|Directory)', caseSensitive: false));
+      final servicesBtn = find.textContaining(RegExp(r'(Services|Local Services|Directory)', caseSensitive: false));
       if (servicesBtn.evaluate().isNotEmpty) {
         await tester.tap(servicesBtn.first);
         await tester.pumpAndSettle(const Duration(seconds: 4));
@@ -160,8 +159,7 @@ void main() {
         return;
       }
 
-      final servicesBtn = find.text(
-          RegExp(r'(Services|Local Services)', caseSensitive: false));
+      final servicesBtn = find.textContaining(RegExp(r'(Services|Local Services)', caseSensitive: false));
       if (servicesBtn.evaluate().isEmpty) {
         expect(find.byType(Scaffold), findsWidgets);
         return;
@@ -170,8 +168,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 4));
 
       // Try tapping a category filter chip/button
-      final healthFilter = find.text(
-          RegExp(r'(health|healthcare|medical)', caseSensitive: false));
+      final healthFilter = find.textContaining(RegExp(r'(health|healthcare|medical)', caseSensitive: false));
       if (healthFilter.evaluate().isNotEmpty) {
         await tester.tap(healthFilter.first);
         await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -203,8 +200,7 @@ void main() {
         return;
       }
 
-      final servicesBtn = find.text(
-          RegExp(r'(Services|Local Services)', caseSensitive: false));
+      final servicesBtn = find.textContaining(RegExp(r'(Services|Local Services)', caseSensitive: false));
       if (servicesBtn.evaluate().isEmpty) {
         expect(find.byType(Scaffold), findsWidgets);
         return;
@@ -263,8 +259,7 @@ void main() {
       }
 
       // Try Insights/Home for polls
-      final insightsTab = find.text(
-          RegExp(r'(Insights|Polls|Community)', caseSensitive: false));
+      final insightsTab = find.textContaining(RegExp(r'(Insights|Polls|Community)', caseSensitive: false));
       if (insightsTab.evaluate().isNotEmpty) {
         await tester.tap(insightsTab.first);
         await tester.pumpAndSettle(const Duration(seconds: 4));
@@ -288,15 +283,14 @@ void main() {
       }
 
       // Navigate to a screen with polls
-      final insightsTab = find.text(
-          RegExp(r'(Insights|Polls)', caseSensitive: false));
+      final insightsTab = find.textContaining(RegExp(r'(Insights|Polls)', caseSensitive: false));
       if (insightsTab.evaluate().isNotEmpty) {
         await tester.tap(insightsTab.first);
         await tester.pumpAndSettle(const Duration(seconds: 4));
       }
 
       // Find a vote button (radio button, checkbox, or vote text)
-      final voteBtn = find.text(RegExp(r'(vote|option \d|yes|no|maybe)',
+      final voteBtn = find.textContaining(RegExp(r'(vote|option \d|yes|no|maybe)',
           caseSensitive: false));
       if (voteBtn.evaluate().isNotEmpty) {
         await tester.tap(voteBtn.first);

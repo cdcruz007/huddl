@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -14,7 +15,7 @@ class PrivacyPolicyDetailScreen extends StatelessWidget {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left,
+          icon: const Icon(HuddlIcons.caretLeft,
               size: 30, color: HuddlColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
@@ -978,7 +979,7 @@ For any questions about voice message data processing, contact our Data Protecti
       ),
       child: Row(
         children: [
-          const Icon(Icons.update, color: HuddlColors.textDark, size: 20),
+          const Icon(HuddlIcons.refresh, color: HuddlColors.textDark, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1011,7 +1012,7 @@ For any questions about voice message data processing, contact our Data Protecti
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.verified_user, color: HuddlColors.success, size: 22),
+          const Icon(HuddlIcons.verifiedUserFill, color: HuddlColors.success, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1047,7 +1048,7 @@ For any questions about voice message data processing, contact our Data Protecti
         children: [
           Row(
             children: [
-              const Icon(Icons.privacy_tip, color: HuddlColors.textDark, size: 22),
+              const Icon(HuddlIcons.privacy, color: HuddlColors.textDark, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -1105,7 +1106,7 @@ For any questions about voice message data processing, contact our Data Protecti
         children: [
           Row(
             children: [
-              const Icon(Icons.shield, color: HuddlColors.textDark, size: 22),
+              const Icon(HuddlIcons.shield, color: HuddlColors.textDark, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

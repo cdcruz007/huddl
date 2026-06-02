@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../constants/app_text_styles.dart';
@@ -151,7 +152,7 @@ class _StarRatingPickerState extends State<_StarRatingPicker> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Icon(
-              filled ? Icons.star_rounded : Icons.star_outline_rounded,
+              filled ? HuddlIcons.starFill : HuddlIcons.star,
               size: 32,
               color: filled ? HuddlColors.amberWarm : HuddlColors.textTertiary,
             ),
@@ -172,10 +173,10 @@ Widget _buildStarDisplay(double rating, {int count = 0, double size = 13}) {
       for (int i = 0; i < 5; i++)
         Icon(
           i < fullStars
-              ? Icons.star_rounded
+              ? HuddlIcons.starFill
               : (i == fullStars && hasHalf
-                  ? Icons.star_half_rounded
-                  : Icons.star_outline_rounded),
+                  ? HuddlIcons.starHalf
+                  : HuddlIcons.star),
           size: size,
           color: i < fullStars || (i == fullStars && hasHalf)
               ? HuddlColors.amberWarm
@@ -586,7 +587,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.tune_rounded,
+                                HuddlIcons.filter,
                                 size: 16,
                                 color: hasActiveFilter
                                     ? HuddlColors.primary
@@ -647,7 +648,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         children: [
                           const Padding(
                             padding: EdgeInsets.only(left: 12, right: 6),
-                            child: Icon(Icons.search, size: 18,
+                            child: Icon(HuddlIcons.search, size: 18,
                                 color: HuddlColors.textDark),
                           ),
                           Expanded(
@@ -679,7 +680,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               },
                               child: const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Icon(Icons.close,
+                                child: Icon(HuddlIcons.close,
                                     size: 16,
                                     color: HuddlColors.textTertiary),
                               ),
@@ -731,7 +732,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_outlined,
+                    const Icon(HuddlIcons.verified,
                         size: 18, color: HuddlColors.infoBlue),
                     const SizedBox(width: 10),
                     Expanded(
@@ -844,7 +845,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               'directory. Requires Huddl Plus with business '
                               'verification.',
                           'requiredPlan': 'Huddl Plus',
-                          'featureIcon': Icons.store_outlined.codePoint,
+                          'featureIcon': HuddlIcons.storefront.codePoint,
                         });
                     return;
                   }
@@ -875,7 +876,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 child: const SizedBox(
                   width: 52,
                   height: 52,
-                  child: Icon(Icons.add, color: Colors.white, size: 26),
+                  child: Icon(HuddlIcons.add, color: Colors.white, size: 26),
                 ),
               ),
             ),
@@ -989,7 +990,7 @@ class _CategorySheetTile extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_rounded,
+              const Icon(HuddlIcons.check,
                   size: 18, color: HuddlColors.primary),
           ],
         ),
@@ -1613,7 +1614,7 @@ class _ListingCardState extends State<_ListingCard> {
                       height: 190,
                       color: catColor.withValues(alpha: 0.14),
                       child: Center(
-                        child: Icon(Icons.store_mall_directory_outlined,
+                        child: Icon(HuddlIcons.storefront,
                             size: 48, color: catColor.withValues(alpha: 0.6)),
                       ),
                     ),
@@ -1649,7 +1650,7 @@ class _ListingCardState extends State<_ListingCard> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified, size: 13, color: Colors.white),
+                          const Icon(HuddlIcons.verifiedFill, size: 13, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
                             'Partner',
@@ -1707,7 +1708,7 @@ class _ListingCardState extends State<_ListingCard> {
                   // Tagline / borough (mirrors Event location row)
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined,
+                      Icon(HuddlIcons.locationPin,
                           size: 14, color: context.hc.textTertiary),
                       const SizedBox(width: 5),
                       Expanded(
@@ -1821,7 +1822,7 @@ class _VerifiedBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isVerified ? Icons.verified_rounded : Icons.people_rounded,
+            isVerified ? HuddlIcons.verifiedFill : HuddlIcons.usersThree,
             size: 11,
             color: color,
           ),
@@ -2229,7 +2230,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.chat_bubble_outline_rounded,
+                              const Icon(HuddlIcons.chat,
                                   size: 13, color: Colors.white),
                               const SizedBox(width: 5),
                               Text(
@@ -2266,7 +2267,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.location_on_outlined,
+                    Icon(HuddlIcons.locationPin,
                         size: 15, color: hc.textTertiary),
                     const SizedBox(width: 5),
                     Expanded(
@@ -2304,12 +2305,12 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               runSpacing: 6,
               children: [
                 _StatPill(
-                  icon: Icons.thumb_up_rounded,
+                  icon: HuddlIcons.thumbUpFill,
                   label: '$_endorseCount ${_endorseCount == 1 ? "endorsement" : "endorsements"}',
                   color: HuddlColors.nearBlack,
                 ),
                 _StatPill(
-                  icon: Icons.visibility_outlined,
+                  icon: HuddlIcons.visibility,
                   label: '${listing.viewCount} ${listing.viewCount == 1 ? "view" : "views"}',
                   color: HuddlColors.nearBlack,
                 ),
@@ -2323,7 +2324,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star_rounded, size: 14, color: HuddlColors.amberWarm),
+                        const Icon(HuddlIcons.starFill, size: 14, color: HuddlColors.amberWarm),
                         const SizedBox(width: 4),
                         Text(
                           '${listing.communityRating!.toStringAsFixed(1)} community rating'
@@ -2340,8 +2341,8 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               HuddlButton(
                 label: _hasEndorsed ? 'Endorsed' : 'Endorse this service',
                 leadingIcon: _hasEndorsed
-                    ? Icons.thumb_up_rounded
-                    : Icons.thumb_up_off_alt_rounded,
+                    ? HuddlIcons.thumbUpFill
+                    : HuddlIcons.thumbUp,
                 isLoading: _endorsing,
                 variant: _hasEndorsed
                     ? HuddlButtonVariant.secondary
@@ -2352,7 +2353,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             // ── Contact CTAs ─────────────────────────────────────────────
             if (listing.phone != null) ...[
               _ContactRow(
-                icon: Icons.phone_outlined,
+                icon: HuddlIcons.phone,
                 label: listing.phone!,
                 color: HuddlColors.nearBlack,
                 onTap: () async {
@@ -2364,7 +2365,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                           'featureTitle': 'Contact this service',
                           'featureDescription': ss.limitReachedMessage('service_contact'),
                           'requiredPlan': 'Huddl Plus',
-                          'featureIcon': Icons.phone_outlined.codePoint,
+                          'featureIcon': HuddlIcons.phone.codePoint,
                         });
                     return;
                   }
@@ -2392,7 +2393,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.lock_outline_rounded, size: 13,
+                      const Icon(HuddlIcons.lock, size: 13,
                           color: HuddlColors.textTertiary),
                       const SizedBox(width: 4),
                       Text('Huddl Plus to contact',
@@ -2408,7 +2409,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               const SizedBox(height: 4),
               HuddlButton(
                 label: 'Book Now',
-                leadingIcon: Icons.calendar_today_outlined,
+                leadingIcon: HuddlIcons.calendar,
                 onPressed: () async {
                   // Gate: service contact requires Plus
                   final ss = SubscriptionService();
@@ -2418,7 +2419,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                           'featureTitle': 'Contact this service',
                           'featureDescription': ss.limitReachedMessage('service_contact'),
                           'requiredPlan': 'Huddl Plus',
-                          'featureIcon': Icons.calendar_today_outlined.codePoint,
+                          'featureIcon': HuddlIcons.calendar.codePoint,
                         });
                     return;
                   }
@@ -2437,7 +2438,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
             ],
             if (listing.website != null) ...[
               _ContactRow(
-                icon: Icons.language_outlined,
+                icon: HuddlIcons.language,
                 label: listing.website!,
                 color: HuddlColors.nearBlack,
                 onTap: () async {
@@ -2470,7 +2471,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               const SizedBox(height: 4),
               HuddlButton(
                 label: 'Enquire via Huddl',
-                leadingIcon: Icons.chat_bubble_outline_rounded,
+                leadingIcon: HuddlIcons.chat,
                 onPressed: () {
                   Navigator.pop(context);
                   Navigator.of(context).pushNamed(
@@ -2605,7 +2606,7 @@ class _EndorsementTile extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded, size: 12, color: HuddlColors.amberWarm),
+                      const Icon(HuddlIcons.starFill, size: 12, color: HuddlColors.amberWarm),
                       const SizedBox(width: 2),
                       Text(
                         '${endorsement.rating}',
@@ -2641,7 +2642,7 @@ class _EndorsementTile extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.subdirectory_arrow_right_rounded,
+                  Icon(HuddlIcons.subArrowRight,
                       size: 14, color: HuddlColors.primary),
                   const SizedBox(width: 6),
                   Expanded(
@@ -2685,12 +2686,12 @@ class _EndorsementTile extends StatelessWidget {
                           'Reply publicly to parent endorsements on your listings. '
                           'Exclusive to Huddl Partner.',
                       'requiredPlan': 'Huddl Partner',
-                      'featureIcon': Icons.reply_rounded.codePoint,
+                      'featureIcon': HuddlIcons.reply.codePoint,
                     }),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.lock_outline,
+                    const Icon(HuddlIcons.lock,
                         size: 11, color: HuddlColors.textTertiary),
                     const SizedBox(width: 4),
                     Text(
@@ -2777,7 +2778,7 @@ class _ContactRow extends StatelessWidget {
                     HuddlText.body(color: hc.textPrimary),
               ),
             ),
-            Icon(Icons.open_in_new, size: 14, color: hc.textTertiary),
+            Icon(HuddlIcons.openInNew, size: 14, color: hc.textTertiary),
           ],
         ),
       ),
@@ -2939,7 +2940,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                       gradient: HuddlColors.aiGradient,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.add_business_rounded,
+                    child: const Icon(HuddlIcons.addBusiness,
                         color: Colors.white, size: 18),
                   ),
                   const SizedBox(width: 10),
@@ -2975,7 +2976,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                           gradient: HuddlColors.aiGradient,
                           borderRadius: BorderRadius.circular(9),
                         ),
-                        child: const Icon(Icons.auto_awesome,
+                        child: const Icon(HuddlIcons.ai,
                             color: Colors.white, size: 14),
                       ),
                       const SizedBox(width: 10),
@@ -3020,7 +3021,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.person_outline_rounded,
+                            const Icon(HuddlIcons.user,
                                 size: 14, color: HuddlColors.nearBlack),
                             const SizedBox(width: 6),
                             Expanded(
@@ -3061,7 +3062,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                   HuddlButton(
                     label: _extracting ? 'Analysing\u2026' : 'Extract recommendations',
                     variant: HuddlButtonVariant.primary,
-                    leadingIcon: Icons.search,
+                    leadingIcon: HuddlIcons.search,
                     isLoading: _extracting,
                     fullWidth: true,
                     onPressed: _extracting ? null : _runExtraction,
@@ -3121,8 +3122,8 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                 children: [
                   Icon(
                     _showManual
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
+                        ? HuddlIcons.caretUp
+                        : HuddlIcons.caretDown,
                     color: hc.textSecondary,
                   ),
                   const SizedBox(width: 6),
@@ -3219,7 +3220,7 @@ class _ExtractedRecommendationCardState
         ),
         child: Row(
           children: [
-            const Icon(Icons.check_circle_rounded,
+            const Icon(HuddlIcons.checkCircleFill,
                 color: HuddlColors.success, size: 20),
             const SizedBox(width: 8),
             Text('${rec.name} added!',
@@ -3457,7 +3458,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.person_outline_rounded,
+                      const Icon(HuddlIcons.user,
                           size: 15, color: HuddlColors.nearBlack),
                       const SizedBox(width: 6),
                       Text(

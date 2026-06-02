@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
 import 'common/huddl_card.dart';
 import '../screens/groups/group_details_screen.dart';
@@ -23,7 +24,7 @@ class GroupInviteCard extends StatelessWidget {
       return Container(
         color: hc.surfaceAlt,
         child: Center(
-          child: Icon(Icons.group, size: 48, color: hc.textTertiary),
+          child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
         ),
       );
     }
@@ -37,7 +38,7 @@ class GroupInviteCard extends StatelessWidget {
         errorBuilder: (_, __, ___) => Container(
           color: hc.surfaceAlt,
           child: Center(
-            child: Icon(Icons.group, size: 48, color: hc.textTertiary),
+            child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
           ),
         ),
       );
@@ -54,14 +55,14 @@ class GroupInviteCard extends StatelessWidget {
           return Container(
             color: hc.surfaceAlt,
             child: Center(
-              child: Icon(Icons.group, size: 48, color: hc.textTertiary),
+              child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
             ),
           );
         },
         errorBuilder: (_, __, ___) => Container(
           color: hc.surfaceAlt,
           child: Center(
-            child: Icon(Icons.group, size: 48, color: hc.textTertiary),
+            child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
           ),
         ),
       );
@@ -71,7 +72,7 @@ class GroupInviteCard extends StatelessWidget {
     return Container(
       color: hc.surfaceAlt,
       child: Center(
-        child: Icon(Icons.group, size: 48, color: hc.textTertiary),
+        child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
       ),
     );
   }
@@ -150,7 +151,7 @@ class GroupInviteCard extends StatelessWidget {
                       // Member count and creator
                       Row(
                         children: [
-                          Icon(Icons.people,
+                          Icon(HuddlIcons.usersThree,
                               size: 14, color: hc.textTertiary),
                           const SizedBox(width: 4),
                           Text(
@@ -159,7 +160,7 @@ class GroupInviteCard extends StatelessWidget {
                           ),
                           if (creatorName.isNotEmpty) ...[
                             const SizedBox(width: 12),
-                            Icon(Icons.person,
+                            Icon(HuddlIcons.user,
                                 size: 14, color: hc.textTertiary),
                             const SizedBox(width: 4),
                             Expanded(
@@ -178,7 +179,7 @@ class GroupInviteCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.location_on,
+                            Icon(HuddlIcons.locationPinFill,
                                 size: 14, color: hc.textTertiary),
                             const SizedBox(width: 4),
                             Text(

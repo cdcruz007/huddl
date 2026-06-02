@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../services/business_verification_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/underlined_text_field.dart';
@@ -117,12 +118,12 @@ class _BusinessVerificationScreenState
         elevation: 0,
         leading: _step == 0
             ? IconButton(
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(HuddlIcons.close),
                 onPressed: () => Navigator.pop(context),
               )
             : (_step < 2
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded),
+                    icon: const Icon(HuddlIcons.arrowBack),
                     onPressed: () {
                       _pageCtrl.previousPage(
                           duration: const Duration(milliseconds: 300),
@@ -177,7 +178,7 @@ class _BusinessVerificationScreenState
           ),
           const SizedBox(height: 28),
           _StageCard(
-            icon: Icons.business_rounded,
+            icon: HuddlIcons.business,
             title: 'Limited company',
             subtitle: 'Verified instantly via Companies House',
             selected: _entityType == BusinessEntityType.limitedCompany,
@@ -186,7 +187,7 @@ class _BusinessVerificationScreenState
           ),
           const SizedBox(height: 12),
           _StageCard(
-            icon: Icons.receipt_long_rounded,
+            icon: HuddlIcons.receipt,
             title: 'VAT-registered business',
             subtitle: 'Verified instantly via HMRC',
             selected: _entityType == BusinessEntityType.vatRegistered,
@@ -195,7 +196,7 @@ class _BusinessVerificationScreenState
           ),
           const SizedBox(height: 12),
           _StageCard(
-            icon: Icons.person_rounded,
+            icon: HuddlIcons.user,
             title: 'Sole trader',
             subtitle: 'Self-declaration with UTR reference',
             selected: _entityType == BusinessEntityType.soleTrader,
@@ -262,7 +263,7 @@ class _BusinessVerificationScreenState
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded,
+                  const Icon(HuddlIcons.error,
                       size: 18, color: HuddlColors.error),
                   const SizedBox(width: 10),
                   Expanded(
@@ -401,7 +402,7 @@ class _BusinessVerificationScreenState
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.verified_outlined,
+              HuddlIcons.verified,
               size: 80,
               color: HuddlColors.primary,
             ),
@@ -519,7 +520,7 @@ class _StageCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle_rounded,
+              const Icon(HuddlIcons.checkCircleFill,
                   color: HuddlColors.primary, size: 20),
           ],
         ),

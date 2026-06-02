@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/huddl_colors.dart';
 import '../services/rehome_service.dart';
@@ -72,14 +73,14 @@ class ItemInviteCard extends StatelessWidget {
                           placeholder: (_, __) => Container(
                             color: hc.surfaceAlt,
                             child: Center(
-                              child: Icon(Icons.shopping_bag,
+                              child: Icon(HuddlIcons.shoppingBag,
                                   size: 48, color: hc.textTertiary),
                             ),
                           ),
                           errorWidget: (_, __, ___) => Container(
                             color: hc.surfaceAlt,
                             child: Center(
-                              child: Icon(Icons.shopping_bag,
+                              child: Icon(HuddlIcons.shoppingBag,
                                   size: 48, color: hc.textTertiary),
                             ),
                           ),
@@ -87,7 +88,7 @@ class ItemInviteCard extends StatelessWidget {
                       : Container(
                           color: hc.surfaceAlt,
                           child: Center(
-                            child: Icon(Icons.shopping_bag,
+                            child: Icon(HuddlIcons.shoppingBag,
                                 size: 48, color: hc.textTertiary),
                           ),
                         ),
@@ -148,7 +149,7 @@ class ItemInviteCard extends StatelessWidget {
                       if (sellerName.isNotEmpty)
                         Row(
                           children: [
-                            Icon(Icons.person,
+                            Icon(HuddlIcons.user,
                                 size: 14, color: hc.textTertiary),
                             const SizedBox(width: 4),
                             Expanded(
@@ -165,7 +166,7 @@ class ItemInviteCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.location_on,
+                            Icon(HuddlIcons.locationPinFill,
                                 size: 14, color: hc.textTertiary),
                             const SizedBox(width: 4),
                             Expanded(

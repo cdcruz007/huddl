@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/browser_storage.dart';
@@ -81,7 +82,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
                 color: HuddlColors.neutral50,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.shield_outlined, size: 28, color: HuddlColors.textDark),
+              child: const Icon(HuddlIcons.shield, size: 28, color: HuddlColors.textDark),
             ),
             const SizedBox(height: 16),
 
@@ -104,17 +105,17 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
 
             // ── What happens list ─────────────────────────────────────────
             _BulletRow(
-              icon: Icons.check_circle_outline,
+              icon: HuddlIcons.checkCircle,
               text: 'Automated checks help catch harmful content before it reaches others',
             ),
             const SizedBox(height: 8),
             _BulletRow(
-              icon: Icons.block_outlined,
+              icon: HuddlIcons.block,
               text: 'Anything that breaks our community guidelines is quietly blocked — not stored',
             ),
             const SizedBox(height: 8),
             _BulletRow(
-              icon: Icons.flag_outlined,
+              icon: HuddlIcons.flag,
               text: 'You can always report a message using the long-press menu',
             ),
             const SizedBox(height: 20),
@@ -208,7 +209,7 @@ class ChatSafetyStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.shield_outlined, size: 12, color: HuddlColors.textDark),
+          Icon(HuddlIcons.shield, size: 12, color: HuddlColors.textDark),
           const SizedBox(width: 5),
           Expanded(
             child: Text(

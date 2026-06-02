@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -106,7 +107,7 @@ class _DueDateScreenState extends State<DueDateScreen>
                           errorBuilder: (_, __, ___) => Container(
                             color: HuddlColors.primaryPale,
                             child: Icon(
-                              Icons.child_friendly,
+                              HuddlIcons.childFriendly,
                               size: 80,
                               color: HuddlColors.primary.withValues(alpha: 0.3),
                             ),
@@ -332,7 +333,7 @@ class _OnboardingAppBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
+            HuddlIcons.arrowBack,
             size: 18,
             color: Colors.white,
           ),

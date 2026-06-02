@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -761,10 +762,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     RangeValues sheetPriceRange = const RangeValues(0, 500);
     int sheetSortIndex = _sortIndex;
     const sortOptions = [
-      ('Most relevant',     Icons.auto_awesome_outlined),
-      ('Newest first',      Icons.schedule_outlined),
-      ('Price: low → high', Icons.south_outlined),
-      ('Price: high → low', Icons.north_outlined),
+      ('Most relevant',     HuddlIcons.ai),
+      ('Newest first',      HuddlIcons.clock),
+      ('Price: low → high', HuddlIcons.southDir),
+      ('Price: high → low', HuddlIcons.northDir),
     ];
 
     showModalBottomSheet(
@@ -852,7 +853,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           children: [
                             // Tile: Like New
                             Expanded(child: _FilterIconTile(
-                              icon: Icons.star_outline_rounded,
+                              icon: HuddlIcons.star,
                               label: 'Like New',
                               isSelected: sheetCond == ItemCondition.likeNew,
                               onTap: () {
@@ -866,7 +867,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             const SizedBox(width: 10),
                             // Tile: Brand New
                             Expanded(child: _FilterIconTile(
-                              icon: Icons.auto_awesome_rounded,
+                              icon: HuddlIcons.ai,
                               label: 'Brand New',
                               isSelected: sheetCond == ItemCondition.brandNew,
                               onTap: () {
@@ -880,7 +881,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             const SizedBox(width: 10),
                             // Tile: Free
                             Expanded(child: _FilterIconTile(
-                              icon: Icons.volunteer_activism_outlined,
+                              icon: HuddlIcons.volunteerActivism,
                               label: 'Free items',
                               isSelected: sheetPrice == PriceType.free,
                               onTap: () {
@@ -1223,7 +1224,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     color: HuddlColors.error.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.delete_outline,
+                  child: const Icon(HuddlIcons.delete,
                       size: 28, color: HuddlColors.error),
                 ),
                 const SizedBox(height: 16),
@@ -1267,7 +1268,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               SnackBar(
                                 content: Row(
                                   children: [
-                                    const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                                    const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                                     const SizedBox(width: 8),
                                     Expanded(child: Text('"${item.title}" has been delisted')),
                                   ],
@@ -1339,7 +1340,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                    child: const Icon(HuddlIcons.add, color: Colors.white, size: 28),
                   ),
                 ),
               ),
@@ -1387,7 +1388,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
-                      _isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined,
+                      _isGridView ? HuddlIcons.viewList : HuddlIcons.gridView,
                       key: ValueKey(_isGridView),
                       size: 22,
                       color: hc.textSecondary,
@@ -1417,7 +1418,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       child: Padding(
                         padding: const EdgeInsets.all(4),
                         child: Icon(
-                          Icons.search,
+                          HuddlIcons.search,
                           color: hc.textSecondary,
                           size: 22,
                         ),
@@ -1442,7 +1443,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       child: Row(
                         children: [
                           const SizedBox(width: 12),
-                          Icon(Icons.search, size: 16,
+                          Icon(HuddlIcons.search, size: 16,
                               color: hc.textTertiary.withValues(alpha: 0.7)),
                           const SizedBox(width: 6),
                           Expanded(
@@ -1475,7 +1476,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Icon(Icons.close, size: 15,
+                                child: Icon(HuddlIcons.close, size: 15,
                                     color: hc.textTertiary),
                               ),
                             ),
@@ -1850,7 +1851,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           clipBehavior: Clip.none,
                           children: [
                             Icon(
-                              Icons.tune_rounded,
+                              HuddlIcons.filter,
                               size: 18,
                               color: hasActiveSortOrFilter
                                   ? HuddlColors.primary
@@ -2166,7 +2167,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       : null,
                 ),
                 child: Row(children: [
-                  Icon(Icons.storefront_outlined,
+                  Icon(HuddlIcons.storefront,
                       size: 15,
                       color: remaining == 0
                           ? HuddlColors.primary
@@ -2270,7 +2271,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ).copyWith(decoration: TextDecoration.lineThrough)),
               const SizedBox(height: 6),
               Row(children: [
-                const Icon(Icons.schedule_outlined,
+                const Icon(HuddlIcons.clock,
                     size: 14, color: HuddlColors.textTertiary),
                 const SizedBox(width: 4),
                 Text('Listing expired after ${SubscriptionService().limits.listingDurationDays} days',
@@ -2319,7 +2320,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             'Relisting uses one of your 3 free listing slots. '
             'Upgrade to Huddl Plus for unlimited listings with 60-day duration.',
         'requiredPlan': 'Huddl Plus',
-        'featureIcon': Icons.storefront_outlined.codePoint,
+        'featureIcon': HuddlIcons.storefront.codePoint,
       });
       return;
     }
@@ -2412,7 +2413,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         color: hc.inputBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.camera_alt_rounded,
+                      child: Icon(HuddlIcons.camera,
                           color: HuddlColors.primary, size: 18), // orange icon
                     ),
                     const SizedBox(width: 12),
@@ -2422,7 +2423,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w500),
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios,
+                    Icon(HuddlIcons.arrowForward,
                         size: 13, color: hc.textTertiary),
                   ],
                 ),
@@ -2449,7 +2450,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                   'listing title, description, and price in seconds.',
                               'requiredPlan': 'Huddl Plus',
                               'featureIcon':
-                                  Icons.auto_awesome_outlined.codePoint,
+                                  HuddlIcons.ai.codePoint,
                             });
                         return;
                       }
@@ -2485,7 +2486,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.auto_awesome_outlined,
+                            HuddlIcons.ai,
                             size: 16,
                             color: (!hasAccess || !canUse)
                                 ? HuddlColors.primary
@@ -2722,7 +2723,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     final accentColor = isAccept ? HuddlColors.success : HuddlColors.error;
     final actionLabel = isAccept ? 'Accept offer' : 'Decline offer';
-    final icon = isAccept ? Icons.handshake_outlined : Icons.close_outlined;
+    final icon = isAccept ? HuddlIcons.handshake : HuddlIcons.close;
 
     // Suggested quick replies differ by action
     final quickReplies = isAccept
@@ -2919,7 +2920,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                       .showSnackBar(SnackBar(
                                     content: Row(
                                       children: [
-                                        const Icon(Icons.handshake,
+                                        const Icon(HuddlIcons.handshake,
                                             color: Colors.white, size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
@@ -3054,11 +3055,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Divider(height: 1, color: hc.divider),
               // AI-ordered actions — most relevant first
               if (!item.isSold) ...[
-                _sheetAction(Icons.edit_outlined, 'Edit listing', hc, () {
+                _sheetAction(HuddlIcons.edit, 'Edit listing', hc, () {
                   Navigator.pop(context);
                   _openEditListing(item);
                 }),
-                _sheetAction(Icons.check_circle_outline, 'Mark as sold', hc, () {
+                _sheetAction(HuddlIcons.checkCircle, 'Mark as sold', hc, () {
                   Navigator.pop(context);
                   HuddlAnimations.mediumTap();
                   _service.markSold(item.id);
@@ -3098,7 +3099,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(children: [
-                        const Icon(Icons.celebration, color: Colors.white, size: 18),
+                        const Icon(HuddlIcons.celebration, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Expanded(child: Text('"${item.title}" marked as sold!')),
                       ]),
@@ -3109,7 +3110,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   );
                 }),
               ] else ...[
-                _sheetAction(Icons.refresh, 'Relist item', hc, () {
+                _sheetAction(HuddlIcons.refresh, 'Relist item', hc, () {
                   Navigator.pop(context);
                   HuddlAnimations.mediumTap();
                   _service.relistItem(item.id);
@@ -3125,7 +3126,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(children: [
-                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Expanded(child: Text('"${item.title}" is back on sale')),
                       ]),
@@ -3136,7 +3137,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   );
                 }),
               ],
-              _sheetAction(Icons.delete_outline, 'Delist', hc, () {
+              _sheetAction(HuddlIcons.delete, 'Delist', hc, () {
                 Navigator.pop(context);
                 _confirmDelistItem(item);
               }, isDestructive: true),
@@ -3422,7 +3423,7 @@ class _UrgencySignalRow extends StatelessWidget {
     // Priority 1 — Offers pending (highest intent signal)
     if (item.offerCount > 0) {
       return _UrgencySignal(
-        icon: Icons.local_offer_outlined,
+        icon: HuddlIcons.localOffer,
         label: item.offerCount == 1
             ? '1 person made an offer'
             : '${item.offerCount} people made offers',
@@ -3433,7 +3434,7 @@ class _UrgencySignalRow extends StatelessWidget {
     // Priority 2 — High view count (social proof)
     if (item.viewCount >= 10) {
       return _UrgencySignal(
-        icon: Icons.visibility_outlined,
+        icon: HuddlIcons.visibility,
         label: item.viewCount >= 50
             ? '${item.viewCount}+ views — popular item'
             : '${item.viewCount} people viewed this',
@@ -3444,7 +3445,7 @@ class _UrgencySignalRow extends StatelessWidget {
     // Priority 3 — Free item (goes fast)
     if (item.isFree) {
       return _UrgencySignal(
-        icon: Icons.volunteer_activism_outlined,
+        icon: HuddlIcons.volunteerActivism,
         label: 'Free — first to message gets it',
         color: HuddlColors.yellowDark,
       );
@@ -3454,7 +3455,7 @@ class _UrgencySignalRow extends StatelessWidget {
     final hoursSinceListed = DateTime.now().difference(item.listedAt).inHours;
     if (hoursSinceListed < 24) {
       return _UrgencySignal(
-        icon: Icons.access_time_outlined,
+        icon: HuddlIcons.clock,
         label: hoursSinceListed < 2
             ? 'Just listed'
             : 'Listed ${item.timeAgo}',
@@ -3465,7 +3466,7 @@ class _UrgencySignalRow extends StatelessWidget {
     // Priority 5 — Brand new condition (value signal)
     if (item.condition == ItemCondition.brandNew) {
       return _UrgencySignal(
-        icon: Icons.auto_awesome,
+        icon: HuddlIcons.ai,
         label: 'Brand new — never used',
         color: HuddlColors.primary,
       );
@@ -3589,7 +3590,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.photo_library_outlined,
+                              const Icon(HuddlIcons.photoLibrary,
                                   size: 10, color: Colors.white),
                               const SizedBox(width: 3),
                               Text(
@@ -3684,7 +3685,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                     // Location row
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined,
+                        Icon(HuddlIcons.locationPin,
                             size: 11, color: hc.textTertiary),
                         const SizedBox(width: 2),
                         Expanded(
@@ -3720,7 +3721,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.local_offer_outlined, size: 10, color: HuddlColors.primary),
+          Icon(HuddlIcons.localOffer, size: 10, color: HuddlColors.primary),
           const SizedBox(width: 3),
           Text(
             '${item.offerCount} offer${item.offerCount == 1 ? '' : 's'}',
@@ -3733,7 +3734,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.visibility_outlined, size: 10, color: HuddlColors.infoBlue),
+          Icon(HuddlIcons.visibility, size: 10, color: HuddlColors.infoBlue),
           const SizedBox(width: 3),
           Text(
             '${item.viewCount} views',
@@ -3951,7 +3952,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                       // Location row
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined,
+                          Icon(HuddlIcons.locationPin,
                               size: 14, color: hc.textTertiary),
                           const SizedBox(width: 5),
                           Expanded(
@@ -3998,7 +3999,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Container(
                                       color: HuddlColors.neutral50,
-                                      child: Icon(Icons.person,
+                                      child: Icon(HuddlIcons.user,
                                           size: 14,
                                           color: HuddlColors.textHint),
                                     ),
@@ -4135,7 +4136,7 @@ class _MarketSearchRow extends StatelessWidget {
                   // Location row + urgency signal beneath
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined,
+                      Icon(HuddlIcons.locationPin,
                           size: 12, color: hc.textTertiary),
                       const SizedBox(width: 2),
                       Expanded(
@@ -4340,7 +4341,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.photo_library_outlined, size: 11, color: Colors.white),
+                            const Icon(HuddlIcons.photoLibrary, size: 11, color: Colors.white),
                             const SizedBox(width: 3),
                             Text(
                               '${item.imageUrls.length}',
@@ -4380,7 +4381,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
+                        Icon(HuddlIcons.locationPin, size: 12, color: hc.textTertiary),
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
@@ -4424,7 +4425,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
                                         color: HuddlColors.neutral50,
-                                        child: const Icon(Icons.person, size: 11, color: HuddlColors.textHint),
+                                        child: const Icon(HuddlIcons.user, size: 11, color: HuddlColors.textHint),
                                       ),
                                     ),
                                   ),
@@ -4874,11 +4875,11 @@ class _SellListingTileState extends State<_SellListingTile>
 
   IconData _insightIcon(String type) {
     return switch (type) {
-      'offers' => Icons.local_offer_outlined,
-      'price' => Icons.trending_down,
-      'photos' => Icons.add_a_photo_outlined,
-      'relist' => Icons.refresh,
-      _ => Icons.info_outline,
+      'offers' => HuddlIcons.localOffer,
+      'price' => HuddlIcons.trendingDown,
+      'photos' => HuddlIcons.cameraPlus,
+      'relist' => HuddlIcons.refresh,
+      _ => HuddlIcons.info,
     };
   }
 
@@ -5046,7 +5047,7 @@ class _SellListingTileState extends State<_SellListingTile>
                           behavior: HitTestBehavior.opaque,
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
-                            child: Icon(Icons.more_vert,
+                            child: Icon(HuddlIcons.moreVert,
                                 size: 18, color: hc.textTertiary),
                           ),
                         ),
@@ -5099,7 +5100,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                       height: 48,
                                       child: Center(
                                         child: Icon(
-                                          Icons.thumb_up_outlined,
+                                          HuddlIcons.thumbUp,
                                           size: 14,
                                           color: _insightColor(insight.type).withValues(alpha: 0.7),
                                         ),
@@ -5121,7 +5122,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                       height: 48,
                                       child: Center(
                                         child: Icon(
-                                          Icons.thumb_down_outlined,
+                                          HuddlIcons.thumbDown,
                                           size: 14,
                                           color: _insightColor(insight.type).withValues(alpha: 0.7),
                                         ),
@@ -5170,7 +5171,7 @@ class _SellListingTileState extends State<_SellListingTile>
                 style: HuddlText.caption(color: HuddlColors.error, weight: FontWeight.w600),
               ),
               const SizedBox(width: 6),
-              const Icon(Icons.delete_outline, size: 20, color: HuddlColors.error),
+              const Icon(HuddlIcons.delete, size: 20, color: HuddlColors.error),
             ],
           ),
         ),
@@ -5219,10 +5220,10 @@ class _SmartOfferTile extends StatelessWidget {
 
   IconData _sentimentIcon() {
     return switch (sentiment) {
-      'strong' => Icons.thumb_up_outlined,
-      'fair' => Icons.thumbs_up_down_outlined,
-      'low' => Icons.trending_down,
-      _ => Icons.info_outline,
+      'strong' => HuddlIcons.thumbUp,
+      'fair' => HuddlIcons.thumbsUpDown,
+      'low' => HuddlIcons.trendingDown,
+      _ => HuddlIcons.info,
     };
   }
 
@@ -5244,7 +5245,7 @@ class _SmartOfferTile extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.handshake, size: 20, color: HuddlColors.success),
+            const Icon(HuddlIcons.handshake, size: 20, color: HuddlColors.success),
             const SizedBox(width: 6),
             Text(
               'Accept',
@@ -5269,7 +5270,7 @@ class _SmartOfferTile extends StatelessWidget {
               style: HuddlText.caption(color: HuddlColors.error, weight: FontWeight.w600),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.close, size: 20, color: HuddlColors.error),
+            const Icon(HuddlIcons.close, size: 20, color: HuddlColors.error),
           ],
         ),
       ),
@@ -5618,7 +5619,7 @@ class _FilterChip extends StatelessWidget {
                   color: HuddlColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_rounded,
+                child: const Icon(HuddlIcons.check,
                     size: 14, color: Colors.white),
               )
             else
@@ -5693,7 +5694,7 @@ class _MultiSelectChip extends StatelessWidget {
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded,
+                  ? const Icon(HuddlIcons.check,
                       size: 14, color: Colors.white)
                   : null,
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,16 +17,16 @@ import '../../constants/app_text_styles.dart';
 // ── matchReasonIcons: maps Cloud Function icon keys → Flutter IconData ──────
 // Keys match the strings written by the generateEventRecommendations CF.
 const Map<String, IconData> _matchReasonIcons = {
-  'location' : Icons.location_on,
-  'age'      : Icons.child_care,
-  'star'     : Icons.star_rounded,
-  'calendar' : Icons.calendar_today,
-  'category' : Icons.category,
-  'uk_wide'  : Icons.public,
-  'people'   : Icons.people,
-  'free'     : Icons.money_off,
-  'online'   : Icons.videocam,
-  'new'      : Icons.fiber_new,
+  'location' : HuddlIcons.locationPinFill,
+  'age'      : HuddlIcons.childCare,
+  'star'     : HuddlIcons.starFill,
+  'calendar' : HuddlIcons.calendar,
+  'category' : HuddlIcons.topic,
+  'uk_wide'  : HuddlIcons.language,
+  'people'   : HuddlIcons.usersThree,
+  'free'     : HuddlIcons.moneyOff,
+  'online'   : HuddlIcons.videocam,
+  'new'      : HuddlIcons.fiberNew,
 };
 
 class EventDetailScreen extends StatefulWidget {
@@ -283,14 +284,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             pinned: true,
             backgroundColor: context.hc.surface,
             leading: _EventCircleButton(
-              icon: Icons.arrow_back,
+              icon: HuddlIcons.arrowBack,
               onTap: () => Navigator.pop(context),
             ),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: _EventCircleButton(
-                  icon: Icons.share_outlined,
+                  icon: HuddlIcons.share,
                   onTap: () => _shareEvent(),
                 ),
               ),
@@ -304,7 +305,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     tag: 'event_cover_${widget.event['id'] ?? ''}',
                     child: _buildEventDetailCover(
                       imageUrl: e['imageUrl'] as String? ?? '',
-                      fallbackIcon: (e['icon'] is IconData ? e['icon'] as IconData : null) ?? Icons.event_outlined,
+                      fallbackIcon: (e['icon'] is IconData ? e['icon'] as IconData : null) ?? HuddlIcons.calendar,
                       fallbackColor: color,
                     ),
                   ),
@@ -348,7 +349,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.videocam, size: 14, color: HuddlColors.white),
+                                const Icon(HuddlIcons.videocam, size: 14, color: HuddlColors.white),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Online',
@@ -373,7 +374,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.business, size: 13, color: HuddlColors.white),
+                          const Icon(HuddlIcons.business, size: 13, color: HuddlColors.white),
                           const SizedBox(width: 4),
                           Text(
                             organiser,
@@ -457,7 +458,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   child: Column(
                     children: [
                       _DetailRow(
-                        icon: Icons.calendar_today_outlined,
+                        icon: HuddlIcons.calendar,
                         iconColor: metaIconColor,
                         title: e['date'] as String? ?? '',
                         subtitle: e['time'] as String? ?? '',
@@ -465,8 +466,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const Divider(height: 24),
                       _DetailRow(
                         icon: isOnline
-                            ? Icons.videocam_outlined
-                            : Icons.location_on_outlined,
+                            ? HuddlIcons.videocam
+                            : HuddlIcons.locationPin,
                         iconColor: metaIconColor,
                         title: e['location'] as String? ?? '',
                         subtitle: isOnline
@@ -475,14 +476,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                       const Divider(height: 24),
                       _DetailRow(
-                        icon: Icons.people_outline,
+                        icon: HuddlIcons.usersThree,
                         iconColor: metaIconColor,
                         title: () { final n = e['attendees'] as int? ?? 0; return '$n ${n == 1 ? 'person' : 'people'} going'; }(),
                         subtitle: 'Registrations open',
                       ),
                       const Divider(height: 24),
                       _DetailRow(
-                        icon: Icons.attach_money,
+                        icon: HuddlIcons.money,
                         iconColor: isFree ? HuddlColors.success : color,
                         title: isFree ? 'Free' : (e['price'] as String? ?? ''),
                         subtitle: isFree
@@ -492,7 +493,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       if ((e['borough'] as String? ?? '').isNotEmpty) ...[
                         const Divider(height: 24),
                         _DetailRow(
-                          icon: Icons.map_outlined,
+                          icon: HuddlIcons.map,
                           iconColor: context.hc.textSecondary,
                           title: e['borough'] as String? ?? '',
                           subtitle: 'Borough',
@@ -571,8 +572,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             label: _hasEnded ? 'Ended' : (_isRegistered ? 'Going' : 'Join'),
             variant: _isRegistered ? HuddlButtonVariant.confirmed : HuddlButtonVariant.primary,
             leadingIcon: _hasEnded
-                ? Icons.event_busy
-                : (_isRegistered ? Icons.check_circle : Icons.group_add_outlined),
+                ? HuddlIcons.calendarX
+                : (_isRegistered ? HuddlIcons.checkCircle : HuddlIcons.userGroupPlus),
             // Disabled when event has ended
             onPressed: _hasEnded ? null : () async {
               HapticFeedback.mediumImpact();
@@ -601,7 +602,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       content: Row(
                         children: [
                           Icon(
-                            isNowGoing ? Icons.check_circle : Icons.close,
+                            isNowGoing ? HuddlIcons.checkCircle : HuddlIcons.close,
                             color: Colors.white,
                             size: 18,
                           ),
@@ -656,7 +657,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   color: HuddlColors.nearBlack,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.star_rounded, color: Colors.white, size: 14),
+                child: const Icon(HuddlIcons.starFill, color: Colors.white, size: 14),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -710,7 +711,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.family_restroom, size: 14, color: HuddlColors.nearBlack),
+                const Icon(HuddlIcons.family, size: 14, color: HuddlColors.nearBlack),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -739,7 +740,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
-                        child: Icon(Icons.check_circle, size: 14, color: HuddlColors.nearBlack),
+                        child: Icon(HuddlIcons.checkCircle, size: 14, color: HuddlColors.nearBlack),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -776,7 +777,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   color: HuddlColors.nearBlack.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.rate_review, size: 14, color: HuddlColors.nearBlack),
+                child: const Icon(HuddlIcons.rateReview, size: 14, color: HuddlColors.nearBlack),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -800,7 +801,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               child: Row(
                 children: [
                   Icon(
-                    _userFeedback! ? Icons.thumb_up_alt : Icons.thumb_down_alt,
+                    _userFeedback! ? HuddlIcons.thumbUp : HuddlIcons.thumbDown,
                     size: 18,
                     color: _userFeedback! ? HuddlColors.nearBlack : context.hc.textTertiary,
                   ),
@@ -837,7 +838,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.thumb_up_alt_outlined, size: 18, color: HuddlColors.nearBlack),
+                          const Icon(HuddlIcons.thumbUp, size: 18, color: HuddlColors.nearBlack),
                           const SizedBox(width: 8),
                           Text('Yes, helpful', style: HuddlText.body(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
                         ],
@@ -864,7 +865,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.thumb_down_alt_outlined, size: 18,
+                          Icon(HuddlIcons.thumbDown, size: 18,
                             color: context.hc.textTertiary.withValues(alpha: 0.7)),
                           const SizedBox(width: 8),
                           Text('Not for me', style: HuddlText.body(color: context.hc.textTertiary)),
@@ -908,7 +909,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   color: HuddlColors.nearBlack,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
+                child: const Icon(HuddlIcons.starFill, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -948,7 +949,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ..._firestoreMatchReasons.take(4).map((reason) {
               final iconKey  = reason['icon']  as String? ?? 'star';
               final label    = reason['label'] as String? ?? '';
-              final iconData = _matchReasonIcons[iconKey] ?? Icons.star_rounded;
+              final iconData = _matchReasonIcons[iconKey] ?? HuddlIcons.starFill;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -1010,7 +1011,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final sourceName = (e['sourceName'] as String? ?? '').isNotEmpty
         ? e['sourceName'] as String
         : (e['aiSourceName'] as String? ?? 'the web');
-    final sourceIcon = e['aiSourceIcon'] as IconData? ?? Icons.language;
+    final sourceIcon = e['aiSourceIcon'] as IconData? ?? HuddlIcons.language;
     final sourceUrl = e['sourceUrl'] as String? ?? '';
 
     return Container(
@@ -1029,7 +1030,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   color: HuddlColors.nearBlack,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
+                child: const Icon(HuddlIcons.starFill, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1104,7 +1105,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, size: 12, color: Colors.white),
+                          const Icon(HuddlIcons.starFill, size: 12, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
                             'New Find',
@@ -1125,7 +1126,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: HuddlColors.nearBlack),
+                      const Icon(HuddlIcons.info, size: 16, color: HuddlColors.nearBlack),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1168,7 +1169,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           const SizedBox(height: 12),
           ...bullets.map((bullet) => _ExpectItem(
-            icon: Icons.check_circle_outline,
+            icon: HuddlIcons.checkCircle,
             color: HuddlColors.nearBlack,
             text: bullet,
           )),
@@ -1230,7 +1231,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.group_outlined, color: color.withValues(alpha: 0.5), size: 32),
+                  Icon(HuddlIcons.usersThree, color: color.withValues(alpha: 0.5), size: 32),
                   const SizedBox(height: 8),
                   Text(
                     'No one has RSVP\'d yet.\nBe the first to go!',
@@ -1276,7 +1277,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             child: CircleAvatar(
                               radius: 16,
                               backgroundColor: color.withValues(alpha: 0.15),
-                              child: Icon(Icons.person, size: 16, color: color),
+                              child: Icon(HuddlIcons.user, size: 16, color: color),
                             ),
                           ),
                         ),

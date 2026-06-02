@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'browser_storage.dart';
+import 'send_encryption_service.dart';
 
 /// Singleton that holds the user's privacy and notification preferences.
 ///
@@ -85,13 +86,16 @@ class UserPrivacyPrefsService {
             .doc('settings')
             .get();
         if (doc.exists) {
-          final data = doc.data() ?? {};
-          if (data[keyPushEnabled]       is bool) pushEnabled       = data[keyPushEnabled];
-          if (data[keyGroupMessages]     is bool) groupMessages     = data[keyGroupMessages];
-          if (data[keyDmMessages]        is bool) dmMessages        = data[keyDmMessages];
-          if (data[keyEventReminders]    is bool) eventReminders    = data[keyEventReminders];
-          if (data[keyCommunityUpdates]  is bool) communityUpdates  = data[keyCommunityUpdates];
-          if (data[keyLockScreenAlerts]  is bool) lockScreenAlerts  = data[keyLockScreenAlerts];
+          final raw = doc.data() ?? {};
+          // Decrypt the document (handles both encrypted and legacy plaintext)
+          final data =
+              SendEncryptionService().decryptMap(raw, uid: uid) ?? raw;
+          if (data[keyPushEnabled]       is bool) pushEnabled       = data[keyPushEnabled]       as bool;
+          if (data[keyGroupMessages]     is bool) groupMessages     = data[keyGroupMessages]     as bool;
+          if (data[keyDmMessages]        is bool) dmMessages        = data[keyDmMessages]        as bool;
+          if (data[keyEventReminders]    is bool) eventReminders    = data[keyEventReminders]    as bool;
+          if (data[keyCommunityUpdates]  is bool) communityUpdates  = data[keyCommunityUpdates]  as bool;
+          if (data[keyLockScreenAlerts]  is bool) lockScreenAlerts  = data[keyLockScreenAlerts]  as bool;
         }
       } catch (e) {
         if (kDebugMode) debugPrint('[UserPrivacyPrefs] Firestore load error: $e');
@@ -126,12 +130,25 @@ class UserPrivacyPrefsService {
     if (notifKeys.contains(key)) {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
+        // Build the full notif-prefs snapshot and encrypt as one blob.
+        // We replace the entire doc (no merge) so the schema stays consistent:
+        // the doc is always { '_enc': '<AES-256-GCM blob>' }.
+        final prefsMap = <String, dynamic>{
+          keyPushEnabled:      pushEnabled,
+          keyGroupMessages:    groupMessages,
+          keyDmMessages:       dmMessages,
+          keyEventReminders:   eventReminders,
+          keyCommunityUpdates: communityUpdates,
+          keyLockScreenAlerts: lockScreenAlerts,
+        };
+        final encDoc =
+            SendEncryptionService().encryptMap(prefsMap, uid: uid);
         FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
             .collection('notifPrefs')
             .doc('settings')
-            .set({key: value}, SetOptions(merge: true))
+            .set(encDoc) // full replacement — schema is always { '_enc': blob }
             .catchError((Object e) {
           if (kDebugMode) debugPrint('[UserPrivacyPrefs] Firestore sync error: $e');
         });

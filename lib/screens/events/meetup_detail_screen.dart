@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -165,7 +166,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.group, color: context.hc.surface, size: 18),
+              Icon(HuddlIcons.usersThree, color: context.hc.surface, size: 18),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text('Meetup group chat created under Messages tab'),
@@ -308,7 +309,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.share_outlined, color: HuddlColors.textDark, size: 20),
+                    child: const Icon(HuddlIcons.share, color: HuddlColors.textDark, size: 20),
                   ),
                   title: Text('Share Meet-up', style: HuddlText.body()),
                   onTap: () {
@@ -323,7 +324,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       color: HuddlColors.peachSurface,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.copy_outlined, color: HuddlColors.nearBlack, size: 20),
+                    child: const Icon(HuddlIcons.copy, color: HuddlColors.nearBlack, size: 20),
                   ),
                   title: Text('Copy Link', style: HuddlText.body()),
                   onTap: () {
@@ -350,7 +351,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         color: HuddlColors.neutral50,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.people_outline, color: HuddlColors.textDark, size: 20),
+                      child: const Icon(HuddlIcons.usersThree, color: HuddlColors.textDark, size: 20),
                     ),
                     title: Text('Manage Attendees', style: HuddlText.body()),
                     onTap: () {
@@ -366,7 +367,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         color: HuddlColors.peachSurface,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.edit_outlined, color: HuddlColors.nearBlack, size: 20),
+                      child: const Icon(HuddlIcons.edit, color: HuddlColors.nearBlack, size: 20),
                     ),
                     title: Text('Edit meetup', style: HuddlText.body()),
                     onTap: () {
@@ -385,7 +386,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         color: HuddlColors.errorLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.delete_outline, color: HuddlColors.error, size: 20),
+                      child: const Icon(HuddlIcons.delete, color: HuddlColors.error, size: 20),
                     ),
                     title: Text('Cancel Meet-up', style: HuddlText.body(color: HuddlColors.error)),
                     onTap: () {
@@ -449,7 +450,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.group_outlined,
+                              Icon(HuddlIcons.usersThree,
                                   size: 48,
                                   color: HuddlColors.textTertiary),
                               const SizedBox(height: 12),
@@ -736,12 +737,12 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 ? HuddlButtonVariant.confirmed
                 : HuddlButtonVariant.primary,
             leadingIcon: _hasEnded
-                ? Icons.event_busy_outlined
+                ? HuddlIcons.calendarX
                 : _isFull
-                    ? Icons.group_off_outlined
+                    ? HuddlIcons.usersThree
                     : _meetup.isGoing
-                        ? Icons.check_circle
-                        : Icons.group_add_outlined,
+                        ? HuddlIcons.checkCircle
+                        : HuddlIcons.userGroupPlus,
             fullWidth: true,
             onPressed: (_isFull && !_meetup.isGoing) || _hasEnded ? null : () {
               HapticFeedback.mediumImpact();
@@ -750,7 +751,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -822,7 +823,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new, size: 16, color: HuddlColors.textSecondary),
+                        child: const Icon(HuddlIcons.arrowBack, size: 16, color: HuddlColors.textSecondary),
                       ),
                     ),
                   ),
@@ -838,7 +839,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.more_vert, size: 20, color: HuddlColors.textSecondary),
+                        child: const Icon(HuddlIcons.moreVert, size: 20, color: HuddlColors.textSecondary),
                       ),
                     ),
                   ),
@@ -908,7 +909,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           style: HuddlText.body(),
                         ),
                         const Spacer(),
-                        const Icon(Icons.chevron_right, size: 20, color: _detailMeta),
+                        const Icon(HuddlIcons.caretRight, size: 20, color: _detailMeta),
                       ],
                     ),
                   ),
@@ -932,19 +933,19 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   // Location info row — show wifi banner for online meetups
                   if (_meetup.isOnline)
                     _InfoRow(
-                      icon: Icons.wifi_outlined,
+                      icon: HuddlIcons.wifi,
                       text: 'Online meetup',
                     )
                   else
                     _InfoRow(
-                      icon: Icons.location_on_outlined,
+                      icon: HuddlIcons.locationPin,
                       text: _meetup.location.isEmpty ? 'Location TBC' : _meetup.location,
                     ),
                   const SizedBox(height: 12),
 
                   // Date/time info row
                   _InfoRow(
-                    icon: Icons.access_time_outlined,
+                    icon: HuddlIcons.clock,
                     text: '${_meetup.dateDisplay}, ${_meetup.timeDisplay}',
                   ),
                   const SizedBox(height: 12),
@@ -952,7 +953,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   // Price info row
                   Row(
                     children: [
-                      const Icon(Icons.sell_outlined, size: 20, color: _detailMeta),
+                      const Icon(HuddlIcons.sellTag, size: 20, color: _detailMeta),
                       const SizedBox(width: 8),
                       Text(
                         'Price  ',
@@ -1001,13 +1002,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     const SizedBox(height: 16),
                     if (_meetup.repeat != MeetupRepeat.none)
                       _InfoRow(
-                        icon: Icons.repeat,
+                        icon: HuddlIcons.refresh,
                         text: _meetup.repeatDisplay ?? 'Repeating',
                       ),
                     if (_meetup.privacy != MeetupPrivacy.public) ...[
                       const SizedBox(height: 12),
                       _InfoRow(
-                        icon: _meetup.privacy == MeetupPrivacy.group ? Icons.group : Icons.lock_outline,
+                        icon: _meetup.privacy == MeetupPrivacy.group ? HuddlIcons.usersThree : HuddlIcons.lock,
                         text: _meetup.privacy == MeetupPrivacy.group
                             ? 'Group Meet-up${_meetup.groupName != null ? " · ${_meetup.groupName}" : ""}'
                             : 'Private Meet-up · Invite only',
@@ -1148,7 +1149,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           width: size, height: size, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
             color: HuddlColors.neutral50,
-            child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.textDark)),
+            child: Center(child: Icon(HuddlIcons.user, size: size * 0.5, color: HuddlColors.textDark)),
           ),
         ),
       ),
@@ -1221,19 +1222,19 @@ class _CatStyleInfo {
 _CatStyleInfo _getCatStyle(String category) {
   switch (category) {
     case 'Coffee':
-      return const _CatStyleInfo(HuddlColors.primaryDark, Icons.coffee);
+      return const _CatStyleInfo(HuddlColors.primaryDark, HuddlIcons.coffee);
     case 'Playdate':
-      return const _CatStyleInfo(HuddlColors.primary, Icons.child_care);
+      return const _CatStyleInfo(HuddlColors.primary, HuddlIcons.childCare);
     case 'Sport':
-      return const _CatStyleInfo(HuddlColors.nearBlack, Icons.sports_golf);
+      return const _CatStyleInfo(HuddlColors.nearBlack, HuddlIcons.golf);
     case 'Walk':
-      return const _CatStyleInfo(HuddlColors.orangePale, Icons.directions_walk);
+      return const _CatStyleInfo(HuddlColors.orangePale, HuddlIcons.walk);
     case 'Social':
-      return const _CatStyleInfo(HuddlColors.primary, Icons.celebration);
+      return const _CatStyleInfo(HuddlColors.primary, HuddlIcons.celebration);
     case 'Food':
-      return const _CatStyleInfo(HuddlColors.primary, Icons.restaurant);
+      return const _CatStyleInfo(HuddlColors.primary, HuddlIcons.restaurant);
     default:
-      return const _CatStyleInfo(HuddlColors.nearBlack, Icons.groups);
+      return const _CatStyleInfo(HuddlColors.nearBlack, HuddlIcons.usersThree);
   }
 }
 

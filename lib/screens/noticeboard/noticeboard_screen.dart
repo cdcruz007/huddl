@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
@@ -197,7 +198,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                             color: HuddlColors.primary.withValues(alpha: 0.10),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.verified_rounded,
+                          child: const Icon(HuddlIcons.verifiedFill,
                               size: 16, color: HuddlColors.primary),
                         ),
                         const SizedBox(width: 10),
@@ -332,7 +333,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.store_outlined,
+                                        Icon(HuddlIcons.storefront,
                                             size: 12,
                                             color: isSelected
                                                 ? Colors.white
@@ -424,7 +425,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
         backgroundColor: hc.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -453,8 +454,8 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
             child: Row(children: [
               Icon(
                 _subscriptionService.isPartner
-                    ? Icons.verified_rounded
-                    : Icons.campaign_outlined,
+                    ? HuddlIcons.verifiedFill
+                    : HuddlIcons.campaign,
                 size: 20,
                 color: _subscriptionService.isPartner
                     ? HuddlColors.primary
@@ -476,7 +477,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                   color: HuddlColors.primary,
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: const Icon(Icons.send_rounded,
+                child: const Icon(HuddlIcons.send,
                     size: 14, color: Colors.white),
               ),
             ]),
@@ -499,7 +500,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
                   color: HuddlColors.error,
-                  child: const Icon(Icons.delete_outline, color: Colors.white),
+                  child: const Icon(HuddlIcons.delete, color: Colors.white),
                 ),
                 onDismissed: (_) => _dismissAnnouncement(posts[i]),
                 child: _buildPostCard(posts[i], hc, isDark),
@@ -554,7 +555,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
-                    Icons.verified_rounded,
+                    HuddlIcons.verifiedFill,
                     size: 20,
                     color: HuddlColors.primary,
                   ),
@@ -606,7 +607,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.verified_rounded,
+                                  HuddlIcons.verifiedFill,
                                   size: 10,
                                   color: HuddlColors.primary,
                                 ),
@@ -633,7 +634,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
               ),
 
               if (ann.isPinned)
-                Icon(Icons.push_pin, size: 14, color: HuddlColors.textTertiary),
+                Icon(HuddlIcons.pin, size: 14, color: HuddlColors.textTertiary),
             ],
           ),
 
@@ -672,7 +673,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                 child: Row(
                   children: [
                     const Icon(
-                      Icons.store_outlined,
+                      HuddlIcons.storefront,
                       size: 16,
                       color: HuddlColors.primary,
                     ),
@@ -703,7 +704,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
           Row(
             children: [
               _actionBtn(
-                icon: ann.isLiked ? Icons.favorite : Icons.favorite_border,
+                icon: ann.isLiked ? HuddlIcons.heartFill : HuddlIcons.heart,
                 color: ann.isLiked ? HuddlColors.error : hc.textTertiary,
                 label: ann.likes > 0 ? ann.likes.toString() : 'Like',
                 onTap: () async {
@@ -713,14 +714,14 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
               ),
               const SizedBox(width: 16),
               _actionBtn(
-                icon: Icons.chat_bubble_outline,
+                icon: HuddlIcons.chat,
                 color: hc.textTertiary,
                 label: ann.comments > 0 ? ann.comments.toString() : 'Comment',
                 onTap: () {},
               ),
               const SizedBox(width: 16),
               _actionBtn(
-                icon: Icons.share_outlined,
+                icon: HuddlIcons.share,
                 color: hc.textTertiary,
                 label: 'Share',
                 onTap: () {

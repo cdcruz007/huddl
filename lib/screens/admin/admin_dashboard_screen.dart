@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -201,7 +202,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, size: 28, color: HuddlColors.textDark),
+          icon: const Icon(HuddlIcons.caretLeft, size: 28, color: HuddlColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -236,7 +237,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 color: HuddlColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.lock_outline, size: 36, color: HuddlColors.error),
+              child: const Icon(HuddlIcons.lock, size: 36, color: HuddlColors.error),
             ),
             const SizedBox(height: 20),
             Text(
@@ -301,7 +302,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: HuddlColors.error),
+                  const Icon(HuddlIcons.error, size: 48, color: HuddlColors.error),
                   const SizedBox(height: 16),
                   Text(
                     'Could not load reports.\n\n'
@@ -334,7 +335,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inbox_outlined, size: 56, color: Theme.of(context).dividerColor),
+                Icon(HuddlIcons.inbox, size: 56, color: Theme.of(context).dividerColor),
                 const SizedBox(height: 16),
                 Text(
                   'No ${_filter.label.toLowerCase()} reports',
@@ -492,14 +493,14 @@ class _ReportCardState extends State<_ReportCard> {
       };
 
   IconData _typeIcon(String type) => switch (type) {
-        'spam'                  => Icons.mark_email_unread_outlined,
-        'harassment'            => Icons.person_off_outlined,
-        'hate_speech'           => Icons.record_voice_over_outlined,
-        'inappropriate_content' => Icons.visibility_off_outlined,
-        'misinformation'        => Icons.fact_check_outlined,
-        'scam'                  => Icons.money_off_outlined,
-        'child_safety_concern'  => Icons.child_care_outlined,
-        _                       => Icons.flag_outlined,
+        'spam'                  => HuddlIcons.email,
+        'harassment'            => HuddlIcons.personOff,
+        'hate_speech'           => HuddlIcons.voiceOver,
+        'inappropriate_content' => HuddlIcons.visibilityOff,
+        'misinformation'        => HuddlIcons.factCheck,
+        'scam'                  => HuddlIcons.moneyOff,
+        'child_safety_concern'  => HuddlIcons.childCare,
+        _                       => HuddlIcons.flag,
       };
 
   String _formatTimestamp(dynamic ts) {
@@ -602,7 +603,7 @@ class _ReportCardState extends State<_ReportCard> {
                 _DetailRow(
                   label: 'Filed',
                   value: _formatTimestamp(timestamp),
-                  icon: Icons.schedule_outlined,
+                  icon: HuddlIcons.clock,
                 ),
                 const SizedBox(height: 10),
 
@@ -611,7 +612,7 @@ class _ReportCardState extends State<_ReportCard> {
                   _DetailRow(
                     label: 'Reason',
                     value: docReason,
-                    icon: Icons.flag_outlined,
+                    icon: HuddlIcons.flag,
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -629,8 +630,8 @@ class _ReportCardState extends State<_ReportCard> {
                         label: _contextLabel(ctx),
                         value: name,
                         icon: ctx == 'dm_message'
-                            ? Icons.chat_bubble_outline
-                            : Icons.group_outlined,
+                            ? HuddlIcons.chat
+                            : HuddlIcons.usersThree,
                       ),
                       const SizedBox(height: 10),
                     ],
@@ -665,11 +666,11 @@ class _ReportCardState extends State<_ReportCard> {
                 if (d == null)
                   const _LoadingRow()
                 else ...[
-                  _DetailRow(label: 'Name',  value: d.reporterName,  icon: Icons.person_outline),
+                  _DetailRow(label: 'Name',  value: d.reporterName,  icon: HuddlIcons.user),
                   const SizedBox(height: 4),
-                  _DetailRow(label: 'Phone', value: d.reporterPhone, icon: Icons.phone_outlined),
+                  _DetailRow(label: 'Phone', value: d.reporterPhone, icon: HuddlIcons.phone),
                   const SizedBox(height: 4),
-                  _DetailRow(label: 'Email', value: d.reporterEmail, icon: Icons.email_outlined),
+                  _DetailRow(label: 'Email', value: d.reporterEmail, icon: HuddlIcons.email),
                 ],
                 const SizedBox(height: 10),
 
@@ -679,11 +680,11 @@ class _ReportCardState extends State<_ReportCard> {
                 if (d == null)
                   const _LoadingRow()
                 else ...[
-                  _DetailRow(label: 'Name',  value: d.targetName,  icon: Icons.person_outline),
+                  _DetailRow(label: 'Name',  value: d.targetName,  icon: HuddlIcons.user),
                   const SizedBox(height: 4),
-                  _DetailRow(label: 'Phone', value: d.targetPhone, icon: Icons.phone_outlined),
+                  _DetailRow(label: 'Phone', value: d.targetPhone, icon: HuddlIcons.phone),
                   const SizedBox(height: 4),
-                  _DetailRow(label: 'Email', value: d.targetEmail, icon: Icons.email_outlined),
+                  _DetailRow(label: 'Email', value: d.targetEmail, icon: HuddlIcons.email),
                 ],
               ],
             ),
@@ -697,7 +698,7 @@ class _ReportCardState extends State<_ReportCard> {
               child: Row(
                 children: [
                   Icon(
-                    _showRawIds ? Icons.expand_less : Icons.expand_more,
+                    _showRawIds ? HuddlIcons.caretUp : HuddlIcons.caretDown,
                     size: 16, color: HuddlColors.disabledText,
                   ),
                   const SizedBox(width: 4),
@@ -742,7 +743,7 @@ class _ReportCardState extends State<_ReportCard> {
                     Expanded(
                       child: _ActionButton(
                         label: 'Mark reviewed',
-                        icon: Icons.visibility_outlined,
+                        icon: HuddlIcons.visibility,
                         color: HuddlColors.warning,
                         onTap: () => widget.onAction(widget.reportId, 'reviewed'),
                       ),
@@ -751,7 +752,7 @@ class _ReportCardState extends State<_ReportCard> {
                   Expanded(
                     child: _ActionButton(
                       label: 'Action',
-                      icon: Icons.gavel_outlined,
+                      icon: HuddlIcons.gavel,
                       color: HuddlColors.primary,
                       // Opens Warn / Remove content / Suspend sub-sheet
                       onTap: _openActionSheet,
@@ -761,7 +762,7 @@ class _ReportCardState extends State<_ReportCard> {
                   Expanded(
                     child: _ActionButton(
                       label: 'Dismiss',
-                      icon: Icons.close,
+                      icon: HuddlIcons.close,
                       color: HuddlColors.disabledText,
                       onTap: () => widget.onAction(widget.reportId, 'dismissed'),
                     ),
@@ -869,19 +870,19 @@ class _ActionSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       (
-        icon: Icons.warning_amber_rounded,
+        icon: HuddlIcons.warning,
         color: HuddlColors.warning,
         label: 'Warn user',
         sublabel: 'Send the user an official warning',
       ),
       (
-        icon: Icons.delete_outline,
+        icon: HuddlIcons.delete,
         color: HuddlColors.error,
         label: 'Remove content',
         sublabel: 'Delete the reported message or listing',
       ),
       (
-        icon: Icons.block_outlined,
+        icon: HuddlIcons.block,
         color: Colors.red.shade800,
         label: 'Suspend user',
         sublabel: 'Temporarily suspend the reported account',
@@ -955,7 +956,7 @@ class _ActionSheet extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: a.color.withValues(alpha: 0.5)),
+                    Icon(HuddlIcons.caretRight, color: a.color.withValues(alpha: 0.5)),
                   ],
                 ),
               ),

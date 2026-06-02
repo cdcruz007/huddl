@@ -16,6 +16,7 @@ dependencies:
   google_fonts: ^6.2.1
   cached_network_image: ^3.4.1
   flutter_svg: ^2.0.17
+  phosphor_flutter: 2.0.1
   flutter_staggered_grid_view: ^0.7.0
   intl: ^0.20.2
   image_picker: ^1.1.2
@@ -66,6 +67,10 @@ dependencies:
   permission_handler: ^11.4.0      # Camera, location, contacts, microphone
   lottie: ^3.3.3
 
+  # SEND field-level encryption (AES-256-GCM, pure Dart — Web + Android compatible)
+  encrypt: ^5.0.3
+  crypto: ^3.0.6          # HMAC-SHA256 key derivation for SendEncryptionService
+
   # dependency_overrides: force web sub-packages to versions that accept
   # firebase_core 3.1.0. These are the platform-web implementations bundled
   # inside firebase_auth and firebase_messaging — they are not used on iOS/Android
@@ -97,6 +102,7 @@ flutter:
     # ── Icons and logomark (SVG) ─────────────────────────────────────
     - assets/icons/
     - assets/icons/illustrations/
+    - assets/icons/category/
 
     # ── Images (PNG logos + WebP photos) ─────────────────────────────
     - assets/images/

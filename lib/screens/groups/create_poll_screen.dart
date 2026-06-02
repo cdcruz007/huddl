@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/cupertino.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -252,7 +253,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: Icon(Icons.close, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.close, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -289,7 +290,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.people_outline,
+                const Icon(HuddlIcons.usersThree,
                     size: 18, color: HuddlColors.textDark),
                 const SizedBox(width: 8),
                 Expanded(
@@ -327,7 +328,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             child: Row(
               children: [
                 Icon(
-                  Icons.calendar_today_outlined,
+                  HuddlIcons.calendar,
                   size: 20,
                   color: _isCalendarMode
                       ? HuddlColors.primary
@@ -386,7 +387,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   ),
                   if (_optionCtrls.length > 2)
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline,
+                      icon: const Icon(HuddlIcons.removeCircle,
                           size: 22, color: HuddlColors.error),
                       onPressed: () => _removeOption(i),
                     ),
@@ -397,7 +398,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           if (_optionCtrls.length < 8)
             TextButton.icon(
               onPressed: _addOption,
-              icon: const Icon(Icons.add_circle_outline,
+              icon: const Icon(HuddlIcons.addCircle,
                   size: 20, color: HuddlColors.textDark),
               label: Text(
                 'Add poll option',
@@ -426,7 +427,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.calendar_today_outlined,
+                    HuddlIcons.calendar,
                     size: 20,
                     color: _expiresAt != null
                         ? HuddlColors.primary
@@ -443,7 +444,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   if (_expiresAt != null)
                     GestureDetector(
                       onTap: () => setState(() => _expiresAt = null),
-                      child: Icon(Icons.close,
+                      child: Icon(HuddlIcons.close,
                           size: 18, color: context.hc.textTertiary),
                     ),
                 ],
@@ -462,7 +463,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.check_box_outlined,
+                Icon(HuddlIcons.checkSquare,
                     size: 20, color: context.hc.textTertiary),
                 const SizedBox(width: 12),
                 Expanded(
@@ -517,7 +518,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               ),
             ),
             Icon(
-              Icons.calendar_today_outlined,
+              HuddlIcons.calendar,
               size: 20,
               color: date != null ? HuddlColors.primary : context.hc.textTertiary,
             ),

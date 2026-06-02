@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import '../theme/huddl_colors.dart';
 import '../services/messages_ai_service.dart';
@@ -160,7 +161,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     gradient: HuddlColors.aiGradient,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.auto_awesome, size: 18, color: Colors.white),
+                  child: const Icon(HuddlIcons.ai, size: 18, color: Colors.white),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -188,7 +189,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.verified, size: 12, color: HuddlColors.success),
+                      const Icon(HuddlIcons.verifiedFill, size: 12, color: HuddlColors.success),
                       const SizedBox(width: 3),
                       Text('Smart', style: HuddlText.label()),
                     ],
@@ -249,7 +250,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              _isListening ? Icons.mic : Icons.mic_none,
+                              _isListening ? HuddlIcons.mic : HuddlIcons.mic,
                               size: 18,
                               color: _isListening ? Colors.white : HuddlColors.textDark,
                             ),
@@ -268,7 +269,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                         color: HuddlColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.arrow_upward, size: 18, color: Colors.white),
+                      child: const Icon(HuddlIcons.arrowUp, size: 18, color: Colors.white),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -286,7 +287,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 children: [
                   Text('Suggested actions', style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary)),
                   const SizedBox(width: 6),
-                  Icon(Icons.auto_awesome, size: 12, color: context.hc.textTertiary),
+                  Icon(HuddlIcons.ai, size: 12, color: context.hc.textTertiary),
                 ],
               ),
             ),
@@ -350,7 +351,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                         ],
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios, size: 12, color: context.hc.textTertiary),
+                    Icon(HuddlIcons.arrowForward, size: 12, color: context.hc.textTertiary),
                   ],
                 ),
               ),
@@ -370,7 +371,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 14, color: HuddlColors.nearBlack),
+                  const Icon(HuddlIcons.info, size: 14, color: HuddlColors.nearBlack),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -397,10 +398,10 @@ class _QuickActionChip extends StatelessWidget {
 
   IconData get _icon {
     switch (action.iconName) {
-      case 'auto_awesome': return Icons.auto_awesome;
-      case 'mail': return Icons.mail_outline;
-      case 'chat': return Icons.chat_bubble_outline;
-      default: return Icons.flash_on;
+      case 'auto_awesome': return HuddlIcons.ai;
+      case 'mail': return HuddlIcons.email;
+      case 'chat': return HuddlIcons.chat;
+      default: return HuddlIcons.flash;
     }
   }
 

@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
@@ -368,7 +369,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -390,7 +391,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.refresh, size: 40, color: context.hc.textTertiary),
+                        Icon(HuddlIcons.refresh, size: 40, color: context.hc.textTertiary),
                         const SizedBox(height: 12),
                         Text(_error!,
                           style: HuddlText.body(color: context.hc.textTertiary),
@@ -449,7 +450,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
               child: Row(
                 children: [
                   const SizedBox(width: 12),
-                  Icon(Icons.search, size: 18, color: context.hc.textTertiary),
+                  Icon(HuddlIcons.search, size: 18, color: context.hc.textTertiary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
@@ -277,7 +278,7 @@ class _SubscriptionCheckoutScreenState
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Checkout',
@@ -309,7 +310,7 @@ class _SubscriptionCheckoutScreenState
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.schedule,
+                                const Icon(HuddlIcons.clock,
                                     color: HuddlColors.nearBlack, size: 20),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -390,7 +391,7 @@ class _SubscriptionCheckoutScreenState
                             children: [
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
-                                child: Icon(Icons.check_circle_outline,
+                                child: Icon(HuddlIcons.checkCircle,
                                     size: 18, color: color),
                               ),
                               const SizedBox(width: 10),
@@ -508,7 +509,7 @@ class _SubscriptionCheckoutScreenState
                           await launchUrl(Uri.parse(url),
                               mode: LaunchMode.externalApplication);
                         },
-                        icon: const Icon(Icons.open_in_browser,
+                        icon: const Icon(HuddlIcons.openInBrowser,
                             size: 16, color: HuddlColors.nearBlack),
                         label: Text('Re-open payment page',
                             style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
@@ -565,8 +566,8 @@ class _SubscriptionCheckoutScreenState
                       leadingIcon: _isProcessing
                           ? null
                           : (_isScheduled
-                              ? Icons.schedule
-                              : (_payService.isWeb ? Icons.lock_outline : Icons.payment)),
+                              ? HuddlIcons.clock
+                              : (_payService.isWeb ? HuddlIcons.lock : HuddlIcons.payment)),
                     ),
                     // Restore purchases link (Apple 3.1.1 requirement)
                     const SizedBox(height: 8),
@@ -650,7 +651,7 @@ class _PaymentMethodsSection extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.shield_outlined,
+                const Icon(HuddlIcons.shield,
                     color: HuddlColors.nearBlack, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
@@ -672,13 +673,13 @@ class _PaymentMethodsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _cardBrandIcon(Icons.credit_card, 'Visa'),
-              _cardBrandIcon(Icons.credit_card, 'Mastercard'),
-              _cardBrandIcon(Icons.credit_card, 'Amex'),
+              _cardBrandIcon(HuddlIcons.creditCard, 'Visa'),
+              _cardBrandIcon(HuddlIcons.creditCard, 'Mastercard'),
+              _cardBrandIcon(HuddlIcons.creditCard, 'Amex'),
               if (paymentService.isWeb || defaultTargetPlatform == TargetPlatform.iOS)
-                _cardBrandIcon(Icons.apple, 'Apple Pay'),
+                _cardBrandIcon(HuddlIcons.apple, 'Apple Pay'),
               if (paymentService.isWeb || defaultTargetPlatform == TargetPlatform.android)
-                _cardBrandIcon(Icons.g_mobiledata, 'Google Pay'),
+                _cardBrandIcon(HuddlIcons.gMobiledata, 'Google Pay'),
             ],
           ),
         ],
@@ -736,15 +737,15 @@ class _PaymentBadge extends StatelessWidget {
   static IconData _iconForMethod(PaymentMethod m) {
     switch (m.type) {
       case PaymentMethodType.appStore:
-        return Icons.apple;
+        return HuddlIcons.apple;
       case PaymentMethodType.googlePlay:
-        return Icons.g_mobiledata;
+        return HuddlIcons.gMobiledata;
       case PaymentMethodType.stripe:
-        return Icons.credit_card;
+        return HuddlIcons.creditCard;
       case PaymentMethodType.applePay:
-        return Icons.apple;
+        return HuddlIcons.apple;
       case PaymentMethodType.googlePay:
-        return Icons.g_mobiledata;
+        return HuddlIcons.gMobiledata;
     }
   }
 }
@@ -778,7 +779,7 @@ class _PaymentProviderRow extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.check_circle, color: HuddlColors.nearBlack, size: 20),
+        const Icon(HuddlIcons.checkCircle, color: HuddlColors.nearBlack, size: 20),
       ],
     );
   }
@@ -786,15 +787,15 @@ class _PaymentProviderRow extends StatelessWidget {
   static IconData _iconFor(PaymentMethod m) {
     switch (m.type) {
       case PaymentMethodType.appStore:
-        return Icons.phone_iphone;
+        return HuddlIcons.phoneDevice;
       case PaymentMethodType.googlePlay:
-        return Icons.phone_android;
+        return HuddlIcons.phoneDevice;
       case PaymentMethodType.stripe:
-        return Icons.credit_card;
+        return HuddlIcons.creditCard;
       case PaymentMethodType.applePay:
-        return Icons.apple;
+        return HuddlIcons.apple;
       case PaymentMethodType.googlePay:
-        return Icons.g_mobiledata;
+        return HuddlIcons.gMobiledata;
     }
   }
 }
@@ -833,7 +834,7 @@ class _OrderSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
-              isPartner ? Icons.workspace_premium : Icons.home_outlined,
+              isPartner ? HuddlIcons.premiumFill : HuddlIcons.home,
               color: color,
               size: 28,
             ),
@@ -890,7 +891,7 @@ class _BillingOptionTile extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              isSelected ? HuddlIcons.radioOnFill : HuddlIcons.radioOff,
               color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
               size: 22,
             ),
@@ -946,7 +947,7 @@ class _SuccessDialog extends StatelessWidget {
                 color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.celebration, color: color, size: 40),
+              child: Icon(HuddlIcons.celebration, color: color, size: 40),
             ),
             const SizedBox(height: 20),
             Text(
@@ -1010,7 +1011,7 @@ class _ScheduledSuccessDialog extends StatelessWidget {
                 color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.schedule, color: color, size: 40),
+              child: Icon(HuddlIcons.clock, color: color, size: 40),
             ),
             const SizedBox(height: 20),
             Text(
@@ -1036,7 +1037,7 @@ class _ScheduledSuccessDialog extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.info_outline, color: color, size: 16),
+                  Icon(HuddlIcons.info, color: color, size: 16),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(

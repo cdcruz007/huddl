@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_logo.dart';
 import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
@@ -160,7 +161,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                 color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.waving_hand_rounded,
+              child: Icon(HuddlIcons.wavingHandFill,
                   size: 22, color: HuddlColors.onboardingOrange),
             ),
             const SizedBox(width: 12),
@@ -264,7 +265,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                 child: Row(children: [
                   IconButton(
-                    icon: const Icon(Icons.chevron_left,
+                    icon: const Icon(HuddlIcons.caretLeft,
                         size: 30, color: HuddlColors.onboardingOrange),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,

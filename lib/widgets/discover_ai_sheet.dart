@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import '../theme/huddl_colors.dart';
 import '../services/discover_ai_service.dart';
@@ -133,15 +134,15 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
   IconData _quickActionIcon(String iconName) {
     switch (iconName) {
       case 'trending_up':
-        return Icons.trending_up;
+        return HuddlIcons.trendingUp;
       case 'add_circle':
-        return Icons.add_circle_outline;
+        return HuddlIcons.addCircle;
       case 'explore':
-        return Icons.explore;
+        return HuddlIcons.explore;
       case 'auto_awesome':
-        return Icons.auto_awesome;
+        return HuddlIcons.ai;
       default:
-        return Icons.flash_on;
+        return HuddlIcons.flash;
     }
   }
 
@@ -184,7 +185,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       gradient: HuddlColors.aiGradient,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.auto_awesome,
+                    child: const Icon(HuddlIcons.ai,
                         size: 18, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
@@ -216,7 +217,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified,
+                          const Icon(HuddlIcons.verifiedFill,
                               size: 12, color: HuddlColors.nearBlack),
                           const SizedBox(width: 3),
                           Text(
@@ -292,7 +293,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  _isListening ? Icons.mic : Icons.mic_none,
+                                  _isListening ? HuddlIcons.mic : HuddlIcons.mic,
                                   size: 18,
                                   color: _isListening
                                       ? Colors.white
@@ -318,7 +319,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                             color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.arrow_upward,
+                          child: const Icon(HuddlIcons.arrowUp,
                               size: 18, color: Colors.white),
                         ),
                       ),
@@ -341,7 +342,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       style: HuddlText.caption(weight: FontWeight.w600, color: context.hc.textTertiary),
                     ),
                     const SizedBox(width: 6),
-                    Icon(Icons.auto_awesome,
+                    Icon(HuddlIcons.ai,
                         size: 12, color: context.hc.textTertiary),
                   ],
                 ),
@@ -457,7 +458,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                               ],
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios,
+                          Icon(HuddlIcons.arrowForward,
                               size: 12, color: context.hc.textTertiary),
                         ],
                       ),
@@ -480,7 +481,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline,
+                        const Icon(HuddlIcons.info,
                             size: 14, color: HuddlColors.nearBlack),
                         const SizedBox(width: 8),
                         Expanded(
@@ -508,7 +509,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.thumbs_up_down,
+                    const Icon(HuddlIcons.thumbsUpDown,
                         size: 14, color: HuddlColors.nearBlack),
                     const SizedBox(width: 8),
                     Expanded(

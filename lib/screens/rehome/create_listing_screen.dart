@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -172,7 +173,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                     color: HuddlColors.neutral50, shape: BoxShape.circle),
-                child: const Icon(Icons.photo_library_outlined,
+                child: const Icon(HuddlIcons.photoLibrary,
                     color: HuddlColors.textDark),
               ),
               title: const Text('Choose from gallery',
@@ -190,7 +191,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                     color: HuddlColors.neutral50, shape: BoxShape.circle),
-                child: const Icon(Icons.camera_alt_outlined,
+                child: const Icon(HuddlIcons.camera,
                     color: HuddlColors.textDark),
               ),
               title: const Text('Take a photo',
@@ -327,7 +328,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'featureTitle': 'Free listing limit reached',
           'featureDescription': subService.limitReachedMessage('listings_created'),
           'requiredPlan': 'Huddl Plus',
-          'featureIcon': Icons.storefront_outlined.codePoint,
+          'featureIcon': HuddlIcons.storefront.codePoint,
         });
       }
       return;
@@ -378,7 +379,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(child: Text('${updated.title} updated successfully!')),
             ]),
@@ -439,7 +440,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(child: Text('${newItem.title} listed successfully!')),
             ]),
@@ -753,7 +754,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                               ),
                             ),
                             if (isSelected)
-                              const Icon(Icons.check_circle, size: 22, color: HuddlColors.primary),
+                              const Icon(HuddlIcons.checkCircle, size: 22, color: HuddlColors.primary),
                           ],
                         ),
                       ),
@@ -829,7 +830,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, size: 16, color: _orange),
+                          Icon(HuddlIcons.info, size: 16, color: _orange),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1014,7 +1015,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.add_photo_alternate_outlined,
+                HuddlIcons.photoLibrary,
                 color: Colors.white,
                 size: 48,
               ),
@@ -1059,7 +1060,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                             color: Colors.black.withValues(alpha: 0.5),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, size: 16, color: Colors.white),
+                          child: const Icon(HuddlIcons.close, size: 16, color: Colors.white),
                         ),
                       ),
                     ),
@@ -1120,7 +1121,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.add_a_photo, size: 14, color: Colors.white),
+                      const Icon(HuddlIcons.cameraPlus, size: 14, color: Colors.white),
                       const SizedBox(width: 4),
                       Text('Add more',
                           style: HuddlText.caption(color: Colors.white)),
@@ -1166,7 +1167,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return Container(
       color: HuddlColors.neutral50,
       child: const Center(
-        child: Icon(Icons.image_outlined, size: 48, color: HuddlColors.textDark),
+        child: Icon(HuddlIcons.image, size: 48, color: HuddlColors.textDark),
       ),
     );
   }
@@ -1324,7 +1325,7 @@ class _AgeStageCard extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, size: 22, color: HuddlColors.primary),
+              const Icon(HuddlIcons.checkCircle, size: 22, color: HuddlColors.primary),
           ],
         ),
       ),
@@ -1395,7 +1396,7 @@ class _CategoryListTile extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, size: 22, color: HuddlColors.primary),
+              const Icon(HuddlIcons.checkCircle, size: 22, color: HuddlColors.primary),
           ],
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -73,7 +74,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context, null),
         ),
         title: Text(
@@ -126,7 +127,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     color: context.hc.scaffold,
-                    child: Icon(Icons.broken_image,
+                    child: Icon(HuddlIcons.brokenImage,
                         color: context.hc.textTertiary),
                   ),
                 ),
@@ -142,7 +143,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
                           color: HuddlColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.check,
+                        child: const Icon(HuddlIcons.check,
                             size: 18, color: Colors.white),
                       ),
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
@@ -261,7 +262,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.pause_circle_outline,
+                  const Icon(HuddlIcons.pauseCircle,
                       color: HuddlColors.primary, size: 22),
                   const SizedBox(width: 10),
                   Expanded(
@@ -311,7 +312,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Subscription',
@@ -355,7 +356,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
-                icon: Icons.people_outline,
+                icon: HuddlIcons.usersThree,
                 label: 'Groups Joined',
                 used: _service.groupsJoined,
                 limit: limits.maxGroups,
@@ -363,7 +364,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.add_circle_outline,
+                icon: HuddlIcons.addCircle,
                 label: 'Groups Created',
                 used: _service.groupsCreated,
                 limit: limits.maxGroupsCreated,
@@ -371,7 +372,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.groups_outlined,
+                icon: HuddlIcons.usersThree,
                 label: 'Meetups This Month',
                 used: _service.meetupsThisMonth,
                 limit: limits.maxMeetupsPerMonth,
@@ -379,7 +380,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.chat_bubble_outline,
+                icon: HuddlIcons.chat,
                 label: 'DM Conversations',
                 used: _service.dmConversations,
                 limit: limits.maxDMConversations,
@@ -387,7 +388,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.message_outlined,
+                icon: HuddlIcons.chat,
                 label: 'Messages This Month',
                 used: _service.messagesThisMonth,
                 limit: limits.maxMessagesPerMonth,
@@ -395,7 +396,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.storefront_outlined,
+                icon: HuddlIcons.storefront,
                 label: 'Marketplace Listings',
                 used: _service.marketplaceListings,
                 limit: limits.maxMarketplaceListings,
@@ -409,7 +410,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
-                icon: Icons.star_rounded,
+                icon: HuddlIcons.starFill,
                 label: 'AI Copilot Chats Today',
                 used: _service.aiCopilotChatsToday,
                 limit: limits.maxAiCopilotChatsPerDay,
@@ -417,7 +418,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.summarize_outlined,
+                icon: HuddlIcons.summarize,
                 label: 'AI Chat Summaries Today',
                 used: _service.aiChatSummariesToday,
                 limit: limits.maxAiChatSummariesPerDay,
@@ -425,7 +426,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
-                icon: Icons.event_outlined,
+                icon: HuddlIcons.calendar,
                 label: 'AI Event Discoveries This Week',
                 used: _service.aiEventDiscoveriesThisWeek,
                 limit: limits.maxAiEventDiscoveriesPerWeek,
@@ -434,7 +435,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               if (limits.aiListingGenerator) ...[
                 const SizedBox(height: 8),
                 _UsageCard(
-                  icon: Icons.sell_outlined,
+                  icon: HuddlIcons.sellTag,
                   label: 'AI Listing Generations This Month',
                   used: _service.aiListingGenerationsThisMonth,
                   limit: limits.maxAiListingGenerationsPerMonth,
@@ -444,7 +445,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               if (limits.aiMeetupMatchmaker) ...[
                 const SizedBox(height: 8),
                 _UsageCard(
-                  icon: Icons.handshake_outlined,
+                  icon: HuddlIcons.handshake,
                   label: 'AI Matchmaker Requests This Month',
                   used: _service.aiMatchmakerRequestsThisMonth,
                   limit: limits.maxAiMatchmakerRequestsPerMonth,
@@ -474,7 +475,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.rocket_launch,
+                      const Icon(HuddlIcons.rocket,
                           color: HuddlColors.textDark, size: 36),
                       const SizedBox(height: 12),
                       Text('Unlock Your Full Community',
@@ -504,7 +505,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.restore, size: 18),
+                        : const Icon(HuddlIcons.refresh, size: 18),
                     label: Text('Restore Purchases',
                         style: HuddlText.body(color: context.hc.textTertiary)),
                   ),
@@ -526,10 +527,10 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                           : 'Manage in Google Play'),
                   variant: HuddlButtonVariant.secondary,
                   leadingIcon: kIsWeb
-                      ? Icons.credit_card
+                      ? HuddlIcons.creditCard
                       : (defaultTargetPlatform == TargetPlatform.iOS
-                          ? Icons.apple
-                          : Icons.g_mobiledata),
+                          ? HuddlIcons.apple
+                          : HuddlIcons.gMobiledata),
                   onPressed: () {
                     if (kIsWeb) {
                       _payService.openSubscriptionManagement();
@@ -621,10 +622,10 @@ class _PaymentInfoCard extends StatelessWidget {
             ),
             child: Icon(
               kIsWeb
-                  ? Icons.credit_card
+                  ? HuddlIcons.creditCard
                   : (defaultTargetPlatform == TargetPlatform.iOS
-                      ? Icons.apple
-                      : Icons.g_mobiledata),
+                      ? HuddlIcons.apple
+                      : HuddlIcons.gMobiledata),
               color: HuddlColors.nearBlack,
               size: 20,
             ),
@@ -645,7 +646,7 @@ class _PaymentInfoCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right,
+          Icon(HuddlIcons.caretRight,
               color: context.hc.textTertiary, size: 20),
         ],
       ),
@@ -732,7 +733,7 @@ class _GladStayingSheetState extends State<_GladStayingSheet>
                     height: 160,
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const Icon(
-                      Icons.celebration_outlined,
+                      HuddlIcons.celebration,
                       size: 80,
                       color: HuddlColors.primary,
                     ),
@@ -768,7 +769,7 @@ class _GladStayingSheetState extends State<_GladStayingSheet>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.pause_circle_outline,
+                        const Icon(HuddlIcons.pauseCircle,
                             size: 18, color: HuddlColors.primary),
                         const SizedBox(width: 8),
                         Text(
@@ -847,8 +848,8 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
                       children: [
                         Icon(
                           _selectedReason == r
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_off,
+                              ? HuddlIcons.radioOnFill
+                              : HuddlIcons.radioOff,
                           color: _selectedReason == r
                               ? HuddlColors.primary
                               : HuddlColors.textHint,
@@ -912,13 +913,13 @@ class _CurrentPlanCard extends StatelessWidget {
     final isFree = subscription.isFree;
 
     Color accentColor = HuddlColors.textHint;
-    IconData icon = Icons.explore_outlined;
+    IconData icon = HuddlIcons.exploreOutlined;
     if (isPlus) {
       accentColor = HuddlColors.primary;
-      icon = Icons.home_outlined;
+      icon = HuddlIcons.home;
     } else if (isPartner) {
       accentColor = HuddlColors.nearBlack;
-      icon = Icons.workspace_premium;
+      icon = HuddlIcons.premiumFill;
     }
 
     return Container(
@@ -1115,7 +1116,7 @@ class _ManageScheduledBanner extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isCancellation ? Icons.cancel_outlined : Icons.schedule,
+                isCancellation ? HuddlIcons.cancel : HuddlIcons.clock,
                 color: color,
                 size: 20,
               ),

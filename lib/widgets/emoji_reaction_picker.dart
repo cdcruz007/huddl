@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
 import '../theme/huddl_animations.dart';
 import '../constants/app_text_styles.dart';
@@ -117,7 +118,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                 color: context.hc.scaffold,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.add, color: context.hc.textSecondary, size: 20),
+              child: Icon(HuddlIcons.add, color: context.hc.textSecondary, size: 20),
             ),
           ),
         ],
@@ -181,7 +182,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close, size: 20),
+                  icon: const Icon(HuddlIcons.close, size: 20),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],

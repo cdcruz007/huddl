@@ -12,6 +12,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -192,7 +193,7 @@ class _CreatePartnerListingScreenState
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified,
+                  const Icon(HuddlIcons.verifiedFill,
                       color: HuddlColors.primary, size: 20),
                   const SizedBox(width: 10),
                   Expanded(

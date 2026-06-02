@@ -1,4 +1,5 @@
 import 'dart:ui';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../constants/app_text_styles.dart';
 // import 'package:flutter/services.dart'; // removed — provided by material.dart
@@ -123,14 +124,14 @@ class _HuddlSearchPillState extends State<HuddlSearchPill>
       child: Row(
         children: [
           const SizedBox(width: 18),
-          Icon(Icons.search, size: 20, color: textColor),
+          Icon(HuddlIcons.search, size: 20, color: textColor),
           const SizedBox(width: 12),
           // Vertical divider
           Container(width: 1, height: 22,
               color: (isDark ? HuddlColors.darkDivider : HuddlColors.divider)),
           const SizedBox(width: 12),
           // Location pin
-          Icon(Icons.location_on_outlined, size: 15,
+          Icon(HuddlIcons.locationPin, size: 15,
               color: HuddlColors.textTertiary),
           const SizedBox(width: 4),
           Expanded(
@@ -148,7 +149,7 @@ class _HuddlSearchPillState extends State<HuddlSearchPill>
               color: textColor,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: Icon(Icons.tune, size: 16,
+            child: Icon(HuddlIcons.filter, size: 16,
                 color: isDark ? HuddlColors.darkBackground : HuddlColors.white),
           ),
         ],
@@ -283,7 +284,7 @@ class _HuddlSearchExpandedState extends State<HuddlSearchExpanded>
                               onTap: _close,
                               child: SizedBox(
                                 width: 52,
-                                child: Icon(Icons.arrow_back,
+                                child: Icon(HuddlIcons.arrowBack,
                                     size: 20, color: textColor),
                               ),
                             ),
@@ -323,7 +324,7 @@ class _HuddlSearchExpandedState extends State<HuddlSearchExpanded>
                                           : HuddlColors.gray300,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Icon(Icons.close, size: 13,
+                                    child: Icon(HuddlIcons.close, size: 13,
                                         color: textColor),
                                   ),
                                 ),
@@ -428,7 +429,7 @@ class _SuggestionTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.north_west, size: 16,
+            Icon(HuddlIcons.northWest, size: 16,
                 color: isDark
                     ? HuddlColors.darkTextTertiary
                     : HuddlColors.textTertiary),
@@ -449,6 +450,6 @@ class HuddlSearchSuggestion {
   const HuddlSearchSuggestion({
     required this.label,
     this.sublabel,
-    this.icon = Icons.search,
+    this.icon = HuddlIcons.search,
   });
 }

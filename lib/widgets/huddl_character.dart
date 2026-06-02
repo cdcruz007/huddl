@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/huddl_colors.dart';
 import '../constants/app_text_styles.dart';
@@ -57,21 +58,21 @@ class HuddlCharacter extends StatelessWidget {
   IconData get _icon {
     switch (mood) {
       case HuddlMood.neutral:
-        return Icons.people_outline_rounded;
+        return HuddlIcons.usersThree;
       case HuddlMood.celebrating:
-        return Icons.celebration_outlined;
+        return HuddlIcons.celebration;
       case HuddlMood.curious:
-        return Icons.search_rounded;
+        return HuddlIcons.search;
       case HuddlMood.supportive:
-        return Icons.favorite_border_rounded;
+        return HuddlIcons.heart;
       case HuddlMood.waving:
-        return Icons.waving_hand_outlined;
+        return HuddlIcons.waving;
       case HuddlMood.locked:
-        return Icons.lock_outline_rounded;
+        return HuddlIcons.lock;
       case HuddlMood.upgrade:
-        return Icons.star_border_rounded;
+        return HuddlIcons.star;
       case HuddlMood.noticeboard:
-        return Icons.campaign_outlined;
+        return HuddlIcons.campaign;
     }
   }
 
@@ -293,7 +294,7 @@ class WarmCircleIllustration extends StatelessWidget {
             height: imageSize,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => Icon(
-              Icons.image_not_supported_outlined,
+              HuddlIcons.imageNotSupported,
               size: imageSize * 0.5,
               color: HuddlColors.textHint,
             ),

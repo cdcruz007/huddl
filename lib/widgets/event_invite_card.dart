@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 import '../screens/events/event_detail_screen.dart';
@@ -125,7 +126,7 @@ class EventInviteCard extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.videocam, size: 12, color: HuddlColors.white),
+                                    Icon(HuddlIcons.videocam, size: 12, color: HuddlColors.white),
                                     const SizedBox(width: 3),
                                     Text(
                                       'Online',
@@ -166,7 +167,7 @@ class EventInviteCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.people, size: 13, color: HuddlColors.white),
+                              const Icon(HuddlIcons.usersThree, size: 13, color: HuddlColors.white),
                               const SizedBox(width: 4),
                               Text(
                                 '$attendees going',
@@ -188,7 +189,7 @@ class EventInviteCard extends StatelessWidget {
                       // "Shared an event" label
                       Row(
                         children: [
-                          Icon(Icons.event_outlined, size: 12, color: catStyle.color),
+                          Icon(HuddlIcons.calendar, size: 12, color: catStyle.color),
                           const SizedBox(width: 4),
                           Text(
                             'Shared an event',
@@ -207,7 +208,7 @@ class EventInviteCard extends StatelessWidget {
                       // Date + time
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined,
+                          Icon(HuddlIcons.calendar,
                               size: 13, color: catStyle.color),
                           const SizedBox(width: 5),
                           Text(
@@ -216,7 +217,7 @@ class EventInviteCard extends StatelessWidget {
                           ),
                           if (time.isNotEmpty) ...[
                             const SizedBox(width: 10),
-                            Icon(Icons.access_time,
+                            Icon(HuddlIcons.clock,
                                 size: 13, color: catStyle.color),
                             const SizedBox(width: 4),
                             Flexible(
@@ -234,7 +235,7 @@ class EventInviteCard extends StatelessWidget {
                       // Location
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined,
+                          Icon(HuddlIcons.locationPin,
                               size: 13, color: catStyle.color),
                           const SizedBox(width: 5),
                           Expanded(
@@ -278,7 +279,7 @@ class EventInviteCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.open_in_new, size: 12, color: catStyle.color),
+                                Icon(HuddlIcons.openInNew, size: 12, color: catStyle.color),
                                 const SizedBox(width: 4),
                                 Text(
                                   'View',
@@ -400,25 +401,25 @@ class _EventCatStyle {
 _EventCatStyle _getEventCatStyle(String category) {
   switch (category.toLowerCase()) {
     case 'class':
-      return const _EventCatStyle(HuddlColors.primary, Icons.school_outlined);
+      return const _EventCatStyle(HuddlColors.primary, HuddlIcons.school);
     case 'workshop':
-      return const _EventCatStyle(HuddlColors.primaryDark, Icons.handyman_outlined);
+      return const _EventCatStyle(HuddlColors.primaryDark, HuddlIcons.settings);
     case 'community':
-      return const _EventCatStyle(HuddlColors.nearBlack, Icons.people_outlined);
+      return const _EventCatStyle(HuddlColors.nearBlack, HuddlIcons.usersThree);
     case 'health':
-      return const _EventCatStyle(HuddlColors.nearBlack, Icons.health_and_safety_outlined);
+      return const _EventCatStyle(HuddlColors.nearBlack, HuddlIcons.medical);
     case 'play':
-      return const _EventCatStyle(HuddlColors.primary, Icons.child_care_outlined);
+      return const _EventCatStyle(HuddlColors.primary, HuddlIcons.childCare);
     case 'sport':
-      return const _EventCatStyle(HuddlColors.nearBlack, Icons.sports_outlined);
+      return const _EventCatStyle(HuddlColors.nearBlack, HuddlIcons.sports);
     case 'music':
-      return const _EventCatStyle(HuddlColors.primaryDark, Icons.music_note_outlined);
+      return const _EventCatStyle(HuddlColors.primaryDark, HuddlIcons.musicNote);
     case 'food':
-      return const _EventCatStyle(HuddlColors.primary, Icons.restaurant_outlined);
+      return const _EventCatStyle(HuddlColors.primary, HuddlIcons.restaurant);
     case 'arts':
     case 'art':
-      return const _EventCatStyle(HuddlColors.accentCoral, Icons.palette_outlined);
+      return const _EventCatStyle(HuddlColors.accentCoral, HuddlIcons.palette);
     default:
-      return const _EventCatStyle(HuddlColors.nearBlack, Icons.event_outlined);
+      return const _EventCatStyle(HuddlColors.nearBlack, HuddlIcons.calendar);
   }
 }

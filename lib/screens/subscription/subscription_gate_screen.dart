@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
@@ -29,28 +30,28 @@ import '../../widgets/huddl_character.dart';
 /// Falls back to unlock_key if no specific match.
 String _illustrationForFeature(int iconCodePoint) {
   // store / marketplace listing
-  if (iconCodePoint == Icons.store_outlined.codePoint ||
-      iconCodePoint == Icons.sell_outlined.codePoint) {
+  if (iconCodePoint == HuddlIcons.storefront.codePoint ||
+      iconCodePoint == HuddlIcons.sellTag.codePoint) {
     return 'assets/illustrations/mobile_store_woman.webp';
   }
   // phone / contact / messages
-  if (iconCodePoint == Icons.phone_outlined.codePoint ||
-      iconCodePoint == Icons.chat_bubble_outline.codePoint ||
-      iconCodePoint == Icons.message_outlined.codePoint) {
+  if (iconCodePoint == HuddlIcons.phone.codePoint ||
+      iconCodePoint == HuddlIcons.chat.codePoint ||
+      iconCodePoint == HuddlIcons.chat.codePoint) {
     return 'assets/illustrations/questions_two.webp';
   }
   // calendar / booking
-  if (iconCodePoint == Icons.calendar_today_outlined.codePoint ||
-      iconCodePoint == Icons.event_outlined.codePoint) {
+  if (iconCodePoint == HuddlIcons.calendar.codePoint ||
+      iconCodePoint == HuddlIcons.calendar.codePoint) {
     return 'assets/illustrations/calendar_event.webp';
   }
   // people / groups
-  if (iconCodePoint == Icons.people_outline.codePoint ||
-      iconCodePoint == Icons.group_outlined.codePoint) {
+  if (iconCodePoint == HuddlIcons.usersThree.codePoint ||
+      iconCodePoint == HuddlIcons.usersThree.codePoint) {
     return 'assets/illustrations/community_wave.webp';
   }
   // handshake / services
-  if (iconCodePoint == Icons.handshake_outlined.codePoint) {
+  if (iconCodePoint == HuddlIcons.handshake.codePoint) {
     return 'assets/illustrations/handshake.webp';
   }
   // default
@@ -68,7 +69,7 @@ class SubscriptionGateScreen extends StatelessWidget {
     required this.featureTitle,
     required this.featureDescription,
     this.requiredPlan = 'Huddl Plus',
-    this.featureIcon = Icons.lock_outline_rounded,
+    this.featureIcon = HuddlIcons.lock,
   });
 
   /// Convenience static method — preferred over Navigator.pushNamed for
@@ -78,7 +79,7 @@ class SubscriptionGateScreen extends StatelessWidget {
     required String featureTitle,
     required String featureDescription,
     String requiredPlan = 'Huddl Plus',
-    IconData featureIcon = Icons.lock_outline_rounded,
+    IconData featureIcon = HuddlIcons.lock,
   }) async {
     final result = await Navigator.pushNamed(
       context,
@@ -95,15 +96,15 @@ class SubscriptionGateScreen extends StatelessWidget {
 
   // Plus benefit tiles shown below the hero
   static const List<(IconData, String)> _plusBenefits = [
-    (Icons.people_outline,
+    (HuddlIcons.usersThree,
         'Every parent conversation in Cambridge'),
-    (Icons.auto_awesome_outlined,
+    (HuddlIcons.ai,
         'AI finds local events before you search'),
-    (Icons.sell_outlined,
+    (HuddlIcons.sellTag,
         'AI writes your preloved listings'),
-    (Icons.summarize_outlined,
+    (HuddlIcons.summarize,
         'Group summaries catch you up instantly'),
-    (Icons.verified_outlined,
+    (HuddlIcons.verified,
         'Your Huddl Plus badge'),
   ];
 
@@ -149,7 +150,7 @@ class SubscriptionGateScreen extends StatelessWidget {
                         color: HuddlColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.close,
+                      child: Icon(HuddlIcons.close,
                           size: 16, color: HuddlColors.primary),
                     ),
                   ),

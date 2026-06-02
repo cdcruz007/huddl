@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
@@ -136,7 +137,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
                         color: iconColor.withValues(alpha: 0.15),
                       ),
                       child: Icon(
-                        _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        _isPlaying ? HuddlIcons.pause : HuddlIcons.play,
                         color: iconColor,
                         size: 24,
                       ),
@@ -329,7 +330,7 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
                 shape: BoxShape.circle,
                 color: HuddlColors.error.withValues(alpha: 0.1),
               ),
-              child: const Icon(Icons.delete_outline, color: HuddlColors.error, size: 20),
+              child: const Icon(HuddlIcons.delete, color: HuddlColors.error, size: 20),
             ),
           ),
           const SizedBox(width: 12),
@@ -337,7 +338,7 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
           AnimatedBuilder(
             animation: _pulseCtrl,
             builder: (_, __) => Icon(
-              Icons.mic,
+              HuddlIcons.mic,
               color: Color.lerp(HuddlColors.error, HuddlColors.errorSoft, _pulseCtrl.value),
               size: 20,
             ),
@@ -366,7 +367,7 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
                 color: HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, color: Colors.white, size: 18),
+              child: const Icon(HuddlIcons.send, color: Colors.white, size: 18),
             ),
           ),
         ],

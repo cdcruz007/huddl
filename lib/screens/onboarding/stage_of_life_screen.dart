@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -23,9 +24,9 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
   late final Animation<double> _contentFade;
 
   static const _stages = [
-    _StageItem(id: 'aspiring',  label: 'Trying for a baby',  icon: Icons.favorite_border),
-    _StageItem(id: 'expecting', label: 'Expecting a baby',    icon: Icons.child_friendly),
-    _StageItem(id: 'parent',    label: 'I have a child',      icon: Icons.face),
+    _StageItem(id: 'aspiring',  label: 'Trying for a baby',  icon: HuddlIcons.heart),
+    _StageItem(id: 'expecting', label: 'Expecting a baby',    icon: HuddlIcons.childFriendly),
+    _StageItem(id: 'parent',    label: 'I have a child',      icon: HuddlIcons.user),
   ];
 
   @override
@@ -110,7 +111,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
                           errorBuilder: (_, __, ___) => Container(
                             color: HuddlColors.primaryPale,
                             child: Icon(
-                              Icons.people,
+                              HuddlIcons.usersThree,
                               size: 80,
                               color: HuddlColors.primary.withValues(alpha: 0.3),
                             ),
@@ -318,7 +319,7 @@ class _StageCard extends StatelessWidget {
                   color: HuddlColors.onboardingOrange,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 15),
+                child: const Icon(HuddlIcons.check, color: Colors.white, size: 15),
               ),
           ],
         ),
@@ -347,7 +348,7 @@ class _OnboardingAppBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
+            HuddlIcons.arrowBack,
             size: 18,
             color: Colors.white,
           ),

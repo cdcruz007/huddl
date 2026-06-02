@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import '../../services/browser_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -298,7 +299,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       centerTitle: true,
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: Icon(Icons.arrow_back_ios_new_rounded,
+        icon: Icon(HuddlIcons.arrowBack,
             color: hc.textPrimary, size: 20),
       ),
       title: Column(
@@ -339,7 +340,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               setState(() {});
             },
             icon:
-                Icon(Icons.refresh, color: hc.textTertiary, size: 22),
+                Icon(HuddlIcons.refresh, color: hc.textTertiary, size: 22),
             tooltip: 'New conversation',
           ),
         const SizedBox(width: 4),
@@ -361,7 +362,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome,
+            child: const Icon(HuddlIcons.ai,
                 size: 36, color: HuddlColors.textDark),
           ),
           const SizedBox(height: 16),
@@ -462,7 +463,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome,
+            const Icon(HuddlIcons.ai,
                 size: 13, color: HuddlColors.textDark),
             const SizedBox(width: 6),
             Flexible(
@@ -574,7 +575,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome,
+            child: const Icon(HuddlIcons.ai,
                 size: 14, color: HuddlColors.textDark),
           ),
           Flexible(
@@ -690,7 +691,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome,
+            child: const Icon(HuddlIcons.ai,
                 size: 14, color: HuddlColors.textDark),
           ),
           Container(
@@ -796,7 +797,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                     : HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.arrow_forward_rounded,
+              child: Icon(HuddlIcons.arrowForward,
                   color: Colors.white, size: 20),
             ),
           ),

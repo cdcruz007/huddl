@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
@@ -81,7 +82,7 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.shield_outlined,
+                          HuddlIcons.shield,
                           size: 40,
                           color: HuddlColors.textDark,
                         ),
@@ -131,19 +132,19 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _SummaryRow(
-                            icon: Icons.person_outline,
+                            icon: HuddlIcons.user,
                             title: 'Account data',
                             detail: 'Name, email, postcode — used to connect you with your local parenting community.',
                           ),
                           const SizedBox(height: 12),
                           _SummaryRow(
-                            icon: Icons.child_care_outlined,
+                            icon: HuddlIcons.childCare,
                             title: 'Children\'s data',
                             detail: 'If you add a child\'s age or due date, this data is stored to personalise your experience.',
                           ),
                           const SizedBox(height: 12),
                           _SummaryRow(
-                            icon: Icons.lock_outline,
+                            icon: HuddlIcons.lock,
                             title: 'How we protect it',
                             detail: 'Data is encrypted in transit and at rest. We never sell personal data to third parties.',
                           ),
@@ -316,7 +317,7 @@ class _OnboardingAppBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
+            HuddlIcons.arrowBack,
             size: 18,
             color: Colors.white,
           ),

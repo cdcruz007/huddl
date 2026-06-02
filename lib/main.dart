@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import './theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint, kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -163,7 +164,7 @@ void main() async {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const Icon(HuddlIcons.error, color: Colors.red, size: 48),
                   const SizedBox(height: 16),
                   const Text('Something went wrong',
                       style: TextStyle(

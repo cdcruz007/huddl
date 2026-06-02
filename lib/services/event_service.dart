@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/group.dart';
@@ -163,7 +164,7 @@ class Event {
       'whatToExpect': whatToExpect,
       'isAiDiscovered': isAiDiscovered,
       'aiSourceName': aiSource?.name ?? '',
-      'aiSourceIcon': aiSource?.icon ?? Icons.language,
+      'aiSourceIcon': aiSource?.icon ?? HuddlIcons.language,
       'sourceUrl': sourceUrl,
       // isDiscoverSomethingNew is set by Cloud Function after ingestion;
       // default false here — Firestore document overrides on read.

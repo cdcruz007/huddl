@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -162,7 +163,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded,
+              const Icon(HuddlIcons.error,
                   size: 48, color: HuddlColors.error),
               const SizedBox(height: 16),
               Text(_error!,
@@ -190,14 +191,14 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
             pinned: true,
             backgroundColor: hc.surface,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: const Icon(HuddlIcons.arrowBack),
               color: HuddlColors.nearBlack,
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
               if (FirebaseAuth.instance.currentUser?.uid == widget.partnerUid)
                 IconButton(
-                  icon: const Icon(Icons.bar_chart_rounded),
+                  icon: const Icon(HuddlIcons.barChart),
                   color: HuddlColors.primary,
                   onPressed: () =>
                       Navigator.pushNamed(context, '/partner_analytics'),
@@ -262,7 +263,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.verified_rounded,
+                                  const Icon(HuddlIcons.verifiedFill,
                                       size: 12, color: HuddlColors.primary),
                                   const SizedBox(width: 4),
                                   Text(
@@ -278,7 +279,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.location_on_outlined,
+                                Icon(HuddlIcons.locationPin,
                                     size: 13,
                                     color: HuddlColors.nearBlack
                                         .withValues(alpha: 0.6)),
@@ -375,7 +376,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
           label: 'Book / Enquire',
           variant: HuddlButtonVariant.primary,
           fullWidth: true,
-          leadingIcon: Icons.open_in_new_rounded,
+          leadingIcon: HuddlIcons.openInNew,
           onPressed: () async {
             final hasScheme =
                 url.startsWith('http://') || url.startsWith('https://');
@@ -431,7 +432,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
               HuddlButton(
                 label: 'Book / Enquire',
                 variant: HuddlButtonVariant.primary,
-                leadingIcon: Icons.open_in_new_rounded,
+                leadingIcon: HuddlIcons.openInNew,
                 fullWidth: true,
                 onPressed: () async {
                   final url = listing.externalBookingUrl!;
@@ -492,7 +493,7 @@ class _ListingMiniCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.work_outline_rounded,
+                Icon(HuddlIcons.work,
                     size: 16, color: HuddlColors.primary),
                 const SizedBox(width: 6),
                 Expanded(
@@ -524,7 +525,7 @@ class _ListingMiniCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.thumb_up_rounded, size: 11, color: HuddlColors.primary),
+                const Icon(HuddlIcons.thumbUpFill, size: 11, color: HuddlColors.primary),
                 const SizedBox(width: 4),
                 Text(
                   '${listing.endorsementCount}',
@@ -595,7 +596,7 @@ class _EndorsementRow extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.subdirectory_arrow_right_rounded,
+                  const Icon(HuddlIcons.subArrowRight,
                       size: 14, color: HuddlColors.primary),
                   const SizedBox(width: 6),
                   Expanded(

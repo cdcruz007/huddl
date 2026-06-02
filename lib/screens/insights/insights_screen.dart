@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/huddl_character.dart';
@@ -222,7 +223,7 @@ class _SendNavigatorBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    Icons.school_outlined,
+                    HuddlIcons.school,
                     size: 18,
                     color: HuddlColors.primary,
                   ),
@@ -249,7 +250,7 @@ class _SendNavigatorBanner extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.arrow_forward_ios_rounded,
+                  HuddlIcons.arrowForward,
                   size: 14,
                   color: HuddlColors.primary.withValues(alpha: 0.6),
                 ),
@@ -297,7 +298,7 @@ class _Header extends StatelessWidget {
               IconButton(
                 onPressed: onSearchToggle,
                 icon: Icon(
-                  searchOpen ? Icons.search_off_rounded : Icons.search_rounded,
+                  searchOpen ? HuddlIcons.searchOff : HuddlIcons.search,
                   size: 22,
                   color: searchOpen ? HuddlColors.primary : HuddlColors.textSecondary,
                 ),
@@ -324,12 +325,12 @@ class _Header extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Search insights…',
                   hintStyle: HuddlText.body(color: HuddlColors.textHint),
-                  prefixIcon: const Icon(Icons.search, color: HuddlColors.textTertiary, size: 20),
+                  prefixIcon: const Icon(HuddlIcons.search, color: HuddlColors.textTertiary, size: 20),
                   suffixIcon: ValueListenableBuilder<TextEditingValue>(
                     valueListenable: searchController,
                     builder: (_, v, __) => v.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
+                            icon: const Icon(HuddlIcons.close, size: 16),
                             onPressed: searchController.clear,
                             color: HuddlColors.textHint,
                           )
@@ -421,7 +422,7 @@ class _FilterSortRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.tune_rounded,
+                HuddlIcons.filter,
                 size: 15,
                 color: (sortActive || hasFilter)
                     ? Colors.white
@@ -449,9 +450,9 @@ class _SortSheet extends StatelessWidget {
   const _SortSheet({required this.current, required this.onSelected});
 
   static const _options = [
-    ('relevance', 'Relevance', Icons.auto_awesome_outlined),
-    ('newest',    'Newest first', Icons.schedule_outlined),
-    ('a-z',       'A – Z', Icons.sort_by_alpha_outlined),
+    ('relevance', 'Relevance', HuddlIcons.ai),
+    ('newest',    'Newest first', HuddlIcons.clock),
+    ('a-z',       'A – Z', HuddlIcons.sortAscending),
   ];
 
   @override
@@ -477,7 +478,7 @@ class _SortSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              const Icon(Icons.tune_rounded, size: 18, color: HuddlColors.textTertiary),
+              const Icon(HuddlIcons.filter, size: 18, color: HuddlColors.textTertiary),
               const SizedBox(width: 8),
               Text('Sort by',
                 style: HuddlText.body(weight: FontWeight.w700)),
@@ -515,7 +516,7 @@ class _SortSheet extends StatelessWidget {
                     ),
                     if (selected) ...[
                       const Spacer(),
-                      const Icon(Icons.check_rounded, size: 18, color: HuddlColors.primary),
+                      const Icon(HuddlIcons.check, size: 18, color: HuddlColors.primary),
                     ],
                   ],
                 ),
@@ -593,7 +594,7 @@ class _CommunityTabState extends State<_CommunityTab>
 
         if (articles.isEmpty) {
           return _EmptyState(
-            icon: Icons.auto_awesome_outlined,
+            icon: HuddlIcons.ai,
             illustrationAsset: widget.searchQuery.isEmpty
                 ? 'assets/illustrations/growth_yellow.webp'
                 : 'assets/illustrations/search_found.webp',
@@ -684,7 +685,7 @@ class _ExpertTabState extends State<_ExpertTab>
 
     if (sorted.isEmpty) {
       return _EmptyState(
-        icon: Icons.menu_book_outlined,
+        icon: HuddlIcons.menuBook,
         illustrationAsset: 'assets/illustrations/ui_design.png',
         title: 'No expert guides found',
         subtitle: 'Try clearing the search or selecting a different category.',
@@ -755,8 +756,8 @@ class _WisdomCard extends StatelessWidget {
                 children: [
                   Icon(
                     article.isParentShared
-                        ? Icons.person_outline_rounded
-                        : Icons.auto_awesome,
+                        ? HuddlIcons.user
+                        : HuddlIcons.ai,
                     size: 13,
                     color: article.isParentShared
                         ? HuddlColors.accentAmber
@@ -803,7 +804,7 @@ class _WisdomCard extends StatelessWidget {
                       color: HuddlColors.primary.withValues(alpha: 0.06),
                       child: Center(
                         child: Icon(
-                          Icons.image_not_supported_outlined,
+                          HuddlIcons.imageNotSupported,
                           size: 32,
                           color: HuddlColors.textTertiary,
                         ),
@@ -874,7 +875,7 @@ class _WisdomCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(
-                            Icons.favorite_outline,
+                            HuddlIcons.heart,
                             size: 14,
                             color: HuddlColors.textHint,
                           ),
@@ -1011,7 +1012,7 @@ class _ExpertCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified_rounded,
+                          const Icon(HuddlIcons.verifiedFill,
                               size: 11, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
@@ -1073,7 +1074,7 @@ class _ExpertCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.menu_book_outlined, size: 13, color: HuddlColors.textHint),
+                      Icon(HuddlIcons.menuBook, size: 13, color: HuddlColors.textHint),
                       const SizedBox(width: 5),
                       Text(
                         'Expert guide',
@@ -1117,7 +1118,7 @@ class _PhotoFallback extends StatelessWidget {
     return Container(
       color: color.withValues(alpha: 0.15),
       child: Center(
-        child: Icon(Icons.menu_book_rounded, size: 48, color: color.withValues(alpha: 0.4)),
+        child: Icon(HuddlIcons.menuBook, size: 48, color: color.withValues(alpha: 0.4)),
       ),
     );
   }
@@ -1147,7 +1148,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: const Icon(HuddlIcons.arrowBack, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -1157,7 +1158,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
             child: TextButton.icon(
               onPressed: _upvoted ? null : _upvote,
               icon: Icon(
-                _upvoted ? Icons.favorite : Icons.favorite_outline,
+                _upvoted ? HuddlIcons.heartFill : HuddlIcons.heart,
                 size: 18,
                 color: _upvoted ? HuddlColors.error : HuddlColors.textSecondary,
               ),
@@ -1187,7 +1188,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.lightbulb,
+                      const Icon(HuddlIcons.lightbulb,
                           size: 12, color: HuddlColors.textDark),
                       const SizedBox(width: 4),
                       Text(
@@ -1276,7 +1277,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
             // Engagement stats
             Row(
               children: [
-                Icon(Icons.favorite,
+                Icon(HuddlIcons.heartFill,
                     size: 16,
                     color: _upvoted ? HuddlColors.error : HuddlColors.textHint),
                 const SizedBox(width: 4),
@@ -1350,7 +1351,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
+                child: const Icon(HuddlIcons.arrowBack,
                     size: 18, color: HuddlColors.textPrimary),
               ),
             ),
@@ -1402,7 +1403,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.verified_rounded, size: 12, color: Colors.white),
+                            const Icon(HuddlIcons.verifiedFill, size: 12, color: Colors.white),
                             const SizedBox(width: 4),
                             Text(article.source,
                               style: HuddlText.caption(weight: FontWeight.w600, color: Colors.white)),
@@ -1461,7 +1462,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                                 color: HuddlColors.nearBlack.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.open_in_new_rounded, size: 16, color: HuddlColors.nearBlack),
+                              child: const Icon(HuddlIcons.openInNew, size: 16, color: HuddlColors.nearBlack),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1479,7 +1480,7 @@ class _ExpertArticleScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded, size: 20, color: HuddlColors.nearBlack),
+                            const Icon(HuddlIcons.caretRight, size: 20, color: HuddlColors.nearBlack),
                           ],
                         ),
                       ),
@@ -1521,7 +1522,7 @@ class _PendingReviewBadge extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.pending_actions,
+                const Icon(HuddlIcons.clockCountdown,
                     size: 14, color: HuddlColors.warning),
                 const SizedBox(width: 4),
                 Text(
@@ -1583,7 +1584,7 @@ class _ReviewQueueSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  const Icon(Icons.pending_actions,
+                  const Icon(HuddlIcons.clockCountdown,
                       color: HuddlColors.warning, size: 20),
                   const SizedBox(width: 8),
                   Text(
@@ -1815,7 +1816,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_outlined,
+            const Icon(HuddlIcons.cloudOff,
                 size: 48, color: HuddlColors.textHint),
             const SizedBox(height: 12),
             Text(
@@ -2017,7 +2018,7 @@ class _UnifiedInsightsFeedState extends State<_UnifiedInsightsFeed>
 
         if (allItems.isEmpty) {
           return _EmptyState(
-            icon: Icons.auto_awesome_outlined,
+            icon: HuddlIcons.ai,
             illustrationAsset: 'assets/illustrations/growth_yellow.webp',
             title: widget.searchQuery.isNotEmpty
                 ? 'No results for "${widget.searchQuery}"'
@@ -2137,7 +2138,7 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             const Expanded(child: Text('Thanks! Your insight is now live.')),
           ]),
@@ -2212,7 +2213,7 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
               controller: _urlCtrl,
               label: 'Link (URL)',
               hint: 'https://nhs.uk/...',
-              icon: Icons.link_rounded,
+              icon: HuddlIcons.link,
               keyboardType: TextInputType.url,
               onChanged: (_) => setState(() {}),
             ),
@@ -2223,7 +2224,7 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
               controller: _titleCtrl,
               label: 'Title',
               hint: 'e.g. "10 things I wish I\'d known about sleep regressions"',
-              icon: Icons.title_rounded,
+              icon: HuddlIcons.title,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
@@ -2233,7 +2234,7 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
               controller: _descCtrl,
               label: 'Why it helped (optional)',
               hint: 'A short note on why you\'re recommending this…',
-              icon: Icons.short_text_rounded,
+              icon: HuddlIcons.shortText,
               maxLines: 3,
             ),
             const SizedBox(height: 12),

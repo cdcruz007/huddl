@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import 'browser_storage.dart';
@@ -71,7 +72,7 @@ class _PermissionDialog extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.photo_library_outlined,
+                HuddlIcons.photoLibrary,
                 size: 34,
                 color: HuddlColors.textDark,
               ),

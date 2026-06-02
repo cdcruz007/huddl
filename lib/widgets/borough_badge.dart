@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
 import '../services/borough_scope_guard.dart';
 import '../constants/app_text_styles.dart';
@@ -76,7 +77,7 @@ class BoroughBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.public, size: iconSize, color: HuddlColors.textTertiary),
+            Icon(HuddlIcons.language, size: iconSize, color: HuddlColors.textTertiary),
             const SizedBox(width: 3),
             Text(
               'UK-wide',
@@ -106,7 +107,7 @@ class BoroughBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.location_on_outlined, size: iconSize, color: textColor),
+          Icon(HuddlIcons.locationPin, size: iconSize, color: textColor),
           const SizedBox(width: 3),
           Text(
             boroughName,
@@ -145,7 +146,7 @@ class BoroughScopeChip extends StatelessWidget {
       case FeatureScope.ukWide:
         return _buildChip(
           context: context,
-          icon: Icons.public,
+          icon: HuddlIcons.language,
           label: 'UK-wide',
           color: HuddlColors.textTertiary,
           isDark: isDark,
@@ -153,7 +154,7 @@ class BoroughScopeChip extends StatelessWidget {
       case FeatureScope.boroughOnly:
         return _buildChip(
           context: context,
-          icon: Icons.location_on_outlined,
+          icon: HuddlIcons.locationPin,
           label: boroughName.isNotEmpty ? boroughName : 'Your borough',
           color: HuddlColors.textTertiary,
           isDark: isDark,
@@ -161,7 +162,7 @@ class BoroughScopeChip extends StatelessWidget {
       case FeatureScope.boroughAware:
         return _buildChip(
           context: context,
-          icon: Icons.near_me_outlined,
+          icon: HuddlIcons.nearMe,
           label: boroughName.isNotEmpty ? 'Near $boroughName' : 'Nearby',
           color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary,
           isDark: isDark,
@@ -231,7 +232,7 @@ class BoroughHeader extends StatelessWidget {
     switch (scope) {
       case FeatureScope.ukWide:
         label = customLabel ?? 'Showing events across the UK';
-        icon = Icons.public;
+        icon = HuddlIcons.language;
         color = HuddlColors.textTertiary;
         break;
       case FeatureScope.boroughOnly:
@@ -239,7 +240,7 @@ class BoroughHeader extends StatelessWidget {
             (boroughName.isNotEmpty
                 ? 'Showing results in $boroughName'
                 : 'Showing results in your borough');
-        icon = Icons.location_on_outlined;
+        icon = HuddlIcons.locationPin;
         color = HuddlColors.textTertiary;
         break;
       case FeatureScope.boroughAware:
@@ -247,7 +248,7 @@ class BoroughHeader extends StatelessWidget {
             (boroughName.isNotEmpty
                 ? 'Prioritising results near $boroughName'
                 : 'Showing nearby results');
-        icon = Icons.near_me_outlined;
+        icon = HuddlIcons.nearMe;
         color = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
         break;
     }
@@ -317,7 +318,7 @@ class BoroughGateMessage extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.info_outline,
+            HuddlIcons.info,
             size: 20,
             color: HuddlColors.textTertiary,
           ),

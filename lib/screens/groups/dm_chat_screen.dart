@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -551,7 +552,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         SnackBar(
           content: const Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 18),
+              Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
               SizedBox(width: 8),
               Text('Message resent'),
             ],
@@ -662,13 +663,13 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   const Spacer(),
                   if (_searchMatches.isNotEmpty) ...[
                     IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_up, size: 20),
+                      icon: const Icon(HuddlIcons.caretUp, size: 20),
                       onPressed: _prevMatch,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+                      icon: const Icon(HuddlIcons.caretDown, size: 20),
                       onPressed: _nextMatch,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -968,7 +969,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+        icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -1002,11 +1003,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.search, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.search, color: context.hc.textPrimary),
           onPressed: () => setState(() => _isSearching = true),
         ),
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.moreVert, color: context.hc.textPrimary),
           offset: const Offset(0, 46),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           color: context.hc.surface,
@@ -1047,7 +1048,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'block',
               child: Row(
                 children: [
-                  Icon(_isBlocked ? Icons.check_circle_outline : Icons.block,
+                  Icon(_isBlocked ? HuddlIcons.checkCircle : HuddlIcons.block,
                       size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text(_isBlocked ? 'Unblock user' : 'Block user',
@@ -1059,7 +1060,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'user_details',
               child: Row(
                 children: [
-                  Icon(Icons.person_outline, size: 20, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.user, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text('User details',
                       style: HuddlText.body()),
@@ -1070,7 +1071,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'saved',
               child: Row(
                 children: [
-                  Icon(Icons.bookmark_outline, size: 20, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.bookmark, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text('Saved messages',
                       style: HuddlText.body()),
@@ -1081,7 +1082,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'search',
               child: Row(
                 children: [
-                  Icon(Icons.search, size: 20, color: context.hc.textPrimary),
+                  Icon(HuddlIcons.search, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text('Search messages',
                       style: HuddlText.body()),
@@ -1092,7 +1093,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'mute',
               child: Row(
                 children: [
-                  Icon(_conversationId != null && _dmService.isMuted(_conversationId!) ? Icons.notifications_active : Icons.notifications_off_outlined, size: 20, color: context.hc.textPrimary),
+                  Icon(_conversationId != null && _dmService.isMuted(_conversationId!) ? HuddlIcons.bellRingingFill : HuddlIcons.bellSlash, size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text(_conversationId != null && _dmService.isMuted(_conversationId!) ? 'Unmute notifications' : 'Mute notifications',
                       style: HuddlText.body()),
@@ -1103,7 +1104,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'delete',
               child: Row(
                 children: [
-                  const Icon(Icons.delete_outline, size: 20, color: HuddlColors.error),
+                  const Icon(HuddlIcons.delete, size: 20, color: HuddlColors.error),
                   const SizedBox(width: 12),
                   Text('Delete conversation',
                       style: HuddlText.body(color: HuddlColors.error)),
@@ -1126,7 +1127,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+        icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () {
           setState(() {
             _isSearching = false;
@@ -1166,7 +1167,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
             SizedBox(width: 8),
             Text('Message copied to clipboard'),
           ],
@@ -1249,13 +1250,13 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ),
                 child: Column(
                   children: [
-                    _profileInfoRow(Icons.person_outline, 'Parent type', 'Mum'),
+                    _profileInfoRow(HuddlIcons.user, 'Parent type', 'Mum'),
                     Divider(height: 20, color: context.hc.divider),
-                    _profileInfoRow(Icons.location_on_outlined, 'Area', 'Cambridge'),
+                    _profileInfoRow(HuddlIcons.locationPin, 'Area', 'Cambridge'),
                     Divider(height: 20, color: context.hc.divider),
-                    _profileInfoRow(Icons.child_care_outlined, 'Stage', 'Toddler (1-3 years)'),
+                    _profileInfoRow(HuddlIcons.childCare, 'Stage', 'Toddler (1-3 years)'),
                     Divider(height: 20, color: context.hc.divider),
-                    _profileInfoRow(Icons.calendar_today_outlined, 'Member since', 'January 2024'),
+                    _profileInfoRow(HuddlIcons.calendar, 'Member since', 'January 2024'),
                   ],
                 ),
               ),
@@ -1266,7 +1267,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     child: HuddlButton(
                       label: 'Message',
                       variant: HuddlButtonVariant.secondary,
-                      leadingIcon: Icons.chat_bubble_outline,
+                      leadingIcon: HuddlIcons.chat,
                       fullWidth: true,
                       onPressed: () {
                         Navigator.pop(c);
@@ -1279,7 +1280,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     child: HuddlButton(
                       label: _isBlocked ? 'Unblock' : 'Block',
                       variant: HuddlButtonVariant.destructive,
-                      leadingIcon: Icons.block,
+                      leadingIcon: HuddlIcons.block,
                       fullWidth: true,
                       onPressed: () {
                         Navigator.pop(c);
@@ -1298,7 +1299,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     Navigator.pop(c);
                     _showReportUserDialog(widget.recipientId, widget.recipientName);
                   },
-                  icon: const Icon(Icons.flag_outlined, size: 18, color: HuddlColors.error),
+                  icon: const Icon(HuddlIcons.flag, size: 18, color: HuddlColors.error),
                   label: Text(
                     'Report ${widget.recipientName}',
                     style: HuddlText.body(),
@@ -1341,7 +1342,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.block, size: 20, color: HuddlColors.error),
+            const Icon(HuddlIcons.block, size: 20, color: HuddlColors.error),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1403,7 +1404,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
             children: [
               IconButton(
                 icon: const Icon(
-                  Icons.add_circle_outline,
+                  HuddlIcons.addCircle,
                   color: HuddlColors.primary,  // orange — action button
                   size: 26,
                 ),
@@ -1462,7 +1463,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+                          child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
                         ),
                       ),
                     );
@@ -1521,7 +1522,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.mic, size: 22, color: HuddlColors.white),
+                          child: const Icon(HuddlIcons.mic, size: 22, color: HuddlColors.white),
                         ),
                       ),
                     ),
@@ -1586,7 +1587,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
+                child: const Icon(HuddlIcons.delete, size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1605,7 +1606,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               HuddlButton(
                 label: 'Unsend for everyone',
                 variant: HuddlButtonVariant.destructive,
-                leadingIcon: Icons.group_outlined,
+                leadingIcon: HuddlIcons.usersThree,
                 fullWidth: true,
                 onPressed: () {
                   Navigator.pop(c);
@@ -1616,7 +1617,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     SnackBar(
                       content: const Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                           SizedBox(width: 8),
                           Text('Message unsent for everyone'),
                         ],
@@ -1633,7 +1634,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
               HuddlButton(
                 label: 'Unsend just for me',
                 variant: HuddlButtonVariant.secondary,
-                leadingIcon: Icons.person_outline,
+                leadingIcon: HuddlIcons.user,
                 fullWidth: true,
                 onPressed: () {
                   Navigator.pop(c);
@@ -1644,7 +1645,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     SnackBar(
                       content: const Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                          Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                           SizedBox(width: 8),
                           Text('Message unsent for you'),
                         ],
@@ -1749,7 +1750,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.block, size: 32, color: HuddlColors.error),
+                child: const Icon(HuddlIcons.block, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1835,7 +1836,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         color: HuddlColors.error.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                      child: const Icon(HuddlIcons.flag, size: 22, color: HuddlColors.error),
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -1952,7 +1953,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         color: HuddlColors.error.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                      child: const Icon(HuddlIcons.flag, size: 22, color: HuddlColors.error),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2080,7 +2081,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const Icon(Icons.bookmark, color: HuddlColors.textDark, size: 22),
+                    const Icon(HuddlIcons.bookmark, color: HuddlColors.textDark, size: 22),
                     const SizedBox(width: 8),
                     Text(
                       'Saved Messages',
@@ -2108,7 +2109,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             color: HuddlColors.neutral50,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.textDark),
+                          child: const Icon(HuddlIcons.bookmark, size: 36, color: HuddlColors.textDark),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -2137,7 +2138,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     itemBuilder: (_, i) {
                       final msg = saved[i];
                       return ListTile(
-                        leading: const Icon(Icons.bookmark, color: HuddlColors.textDark, size: 20),
+                        leading: const Icon(HuddlIcons.bookmark, color: HuddlColors.textDark, size: 20),
                         title: Text(
                           msg.message,
                           style: HuddlText.body(color: context.hc.textPrimary),
@@ -2149,7 +2150,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                           style: HuddlText.caption(color: context.hc.textTertiary),
                         ),
                         trailing: IconButton(
-                          icon: Icon(Icons.delete_outline, size: 18, color: context.hc.textTertiary),
+                          icon: Icon(HuddlIcons.delete, size: 18, color: context.hc.textTertiary),
                           onPressed: () {
                             _savedMessageService.unsaveMessage(msg.id);
                             Navigator.pop(c);
@@ -2522,7 +2523,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         backgroundColor: ctx.hc.surface,
         title: Row(
           children: [
-            Icon(Icons.contacts_rounded, color: HuddlColors.primary, size: 24),
+            Icon(HuddlIcons.contacts, color: HuddlColors.primary, size: 24),
             const SizedBox(width: 10),
             Text(
               'Contacts Access',
@@ -2792,7 +2793,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.bookmark_added, color: Colors.white, size: 18),
+            const Icon(HuddlIcons.bookmarkFill, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             const Expanded(child: Text('Message saved to Saved tab')),
           ],
@@ -2933,7 +2934,7 @@ class _DMBubble extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (isSaved) ...[
-                              Icon(Icons.bookmark, size: 11,
+                              Icon(HuddlIcons.bookmark, size: 11,
                                   color: HuddlColors.textTertiary),
                               const SizedBox(width: 3),
                             ],
@@ -2958,7 +2959,7 @@ class _DMBubble extends StatelessWidget {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.refresh, size: 12, color: HuddlColors.error),
+                                          const Icon(HuddlIcons.refresh, size: 12, color: HuddlColors.error),
                                           const SizedBox(width: 2),
                                           Text(
                                             'Retry',
@@ -3043,7 +3044,7 @@ class _DMBubble extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.chat_bubble_outline, size: 16, color: hc.textTertiary),
+                      Icon(HuddlIcons.chat, size: 16, color: hc.textTertiary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -3091,7 +3092,7 @@ class _DMBubble extends StatelessWidget {
                             color: hc.scaffold,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.add, color: hc.textSecondary, size: 20),
+                          child: Icon(HuddlIcons.add, color: hc.textSecondary, size: 20),
                         ),
                       ),
                     ],
@@ -3100,7 +3101,7 @@ class _DMBubble extends StatelessWidget {
                 Divider(height: 1, color: hc.divider),
                 ListTile(
                   leading: Icon(
-                    capturedIsSaved ? Icons.bookmark : Icons.bookmark_outline,
+                    capturedIsSaved ? HuddlIcons.bookmark : HuddlIcons.bookmark,
                     color: capturedIsSaved ? HuddlColors.error : hc.textPrimary,
                   ),
                   title: Text(
@@ -3113,7 +3114,7 @@ class _DMBubble extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.copy_outlined, color: hc.textPrimary),
+                  leading: Icon(HuddlIcons.copy, color: hc.textPrimary),
                   title: Text('Copy text',
                       style: HuddlText.body()),
                   onTap: () {
@@ -3122,7 +3123,7 @@ class _DMBubble extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.forward_outlined, color: hc.textPrimary),
+                  leading: Icon(HuddlIcons.forward, color: hc.textPrimary),
                   title: Text('Forward',
                       style: HuddlText.body()),
                   onTap: () {
@@ -3132,7 +3133,7 @@ class _DMBubble extends StatelessWidget {
                 ),
                 if (capturedOnUnsend != null)
                   ListTile(
-                    leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
+                    leading: const Icon(HuddlIcons.delete, color: HuddlColors.error),
                     title: Text('Unsend message',
                         style: HuddlText.body(color: HuddlColors.error)),
                     onTap: () {
@@ -3142,7 +3143,7 @@ class _DMBubble extends StatelessWidget {
                   ),
                 if (capturedOnReportUser != null)
                   ListTile(
-                    leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
+                    leading: const Icon(HuddlIcons.flag, color: HuddlColors.error),
                     title: Text('Report message',
                         style: HuddlText.body(color: HuddlColors.error)),
                     onTap: () {
@@ -3246,7 +3247,7 @@ class _DeletedMessageBubble extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.block, size: 14, color: context.hc.textTertiary),
+              Icon(HuddlIcons.block, size: 14, color: context.hc.textTertiary),
               const SizedBox(width: 6),
               Text(
                 'This message was deleted',
@@ -3293,27 +3294,27 @@ class _MessageStatusIcon extends StatelessWidget {
       case MessageStatus.sending:
         return Semantics(
           label: 'Sending',
-          child: Icon(Icons.access_time, size: 14, color: context.hc.textTertiary),
+          child: Icon(HuddlIcons.clock, size: 14, color: context.hc.textTertiary),
         );
       case MessageStatus.sent:
         return Semantics(
           label: 'Sent',
-          child: Icon(Icons.check, size: 14, color: context.hc.textTertiary),
+          child: Icon(HuddlIcons.check, size: 14, color: context.hc.textTertiary),
         );
       case MessageStatus.delivered:
         return Semantics(
           label: 'Delivered',
-          child: Icon(Icons.done_all, size: 14, color: context.hc.textTertiary),
+          child: Icon(HuddlIcons.check, size: 14, color: context.hc.textTertiary),
         );
       case MessageStatus.read:
         return Semantics(
           label: 'Read',
-          child: const Icon(Icons.done_all, size: 14, color: HuddlColors.nearBlack),
+          child: const Icon(HuddlIcons.check, size: 14, color: HuddlColors.nearBlack),
         );
       case MessageStatus.error:
         return Semantics(
           label: 'Failed to send, tap to retry',
-          child: const Icon(Icons.error_outline, size: 14, color: HuddlColors.error),
+          child: const Icon(HuddlIcons.error, size: 14, color: HuddlColors.error),
         );
     }
   }
@@ -3702,7 +3703,7 @@ class _ImageBubble extends StatelessWidget {
                         color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.forward,
+                      child: const Icon(HuddlIcons.forward,
                           size: 16, color: Colors.white),
                     ),
                   ),
@@ -3736,7 +3737,7 @@ class _ImageBubble extends StatelessWidget {
         width: 200,
         height: 200,
         color: HuddlColors.neutral50,
-        child: Icon(Icons.broken_image, color: HuddlColors.textTertiary, size: 48),
+        child: Icon(HuddlIcons.brokenImage, color: HuddlColors.textTertiary, size: 48),
       );
 
   String _formatTime(DateTime dt) {
@@ -3887,7 +3888,7 @@ class _LocationBubble extends StatelessWidget {
                             errorBuilder: (_, __, ___) => Container(
                               height: 130,
                               color: HuddlColors.successBg,
-                              child: const Icon(Icons.map_outlined, size: 40, color: HuddlColors.primaryDark),
+                              child: const Icon(HuddlIcons.map, size: 40, color: HuddlColors.primaryDark),
                             ),
                           ),
                           // Red pin overlay
@@ -3895,7 +3896,7 @@ class _LocationBubble extends StatelessWidget {
                             child: Align(
                               alignment: Alignment.center,
                               child: Icon(
-                                Icons.location_on,
+                                HuddlIcons.locationPinFill,
                                 size: 36,
                                 color: HuddlColors.error,
                                 shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
@@ -3909,7 +3910,7 @@ class _LocationBubble extends StatelessWidget {
                       padding: const EdgeInsets.all(10),
                       child: Row(
                         children: [
-                          Icon(Icons.location_on_outlined, size: 16, color: context.hc.textSecondary),
+                          Icon(HuddlIcons.locationPin, size: 16, color: context.hc.textSecondary),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -3929,7 +3930,7 @@ class _LocationBubble extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                       child: Row(
                         children: [
-                          Icon(Icons.open_in_new, size: 13, color: HuddlColors.textDark),
+                          Icon(HuddlIcons.openInNew, size: 13, color: HuddlColors.textDark),
                           const SizedBox(width: 4),
                           Text(
                             'Open in Google Maps',
@@ -4020,7 +4021,7 @@ class _ContactBubble extends StatelessWidget {
                             : HuddlColors.neutral50,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.person, color: context.hc.textPrimary, size: 24),
+                      child: Icon(HuddlIcons.user, color: context.hc.textPrimary, size: 24),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -4042,7 +4043,7 @@ class _ContactBubble extends StatelessWidget {
                             color: Colors.black.withValues(alpha: 0.06),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.forward, size: 14, color: context.hc.textSecondary),
+                          child: Icon(HuddlIcons.forward, size: 14, color: context.hc.textSecondary),
                         ),
                       ),
                   ],
@@ -4052,7 +4053,7 @@ class _ContactBubble extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 child: Row(
                   children: [
-                    Icon(Icons.phone, size: 13, color: context.hc.textPrimary),
+                    Icon(HuddlIcons.phone, size: 13, color: context.hc.textPrimary),
                     const SizedBox(width: 4),
                     Text('Call', style: HuddlText.caption(color: context.hc.textPrimary)),
                     const Spacer(),

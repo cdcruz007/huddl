@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
 import '../services/media_attach_service.dart';
 import '../constants/app_text_styles.dart';
@@ -133,7 +134,7 @@ class DocumentBubble extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         child: Icon(
-                          Icons.shortcut_rounded,
+                          HuddlIcons.shortcut,
                           size: 18,
                           color: context.hc.textTertiary,
                         ),
@@ -158,7 +159,7 @@ class DocumentBubble extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.refresh_rounded,
+                      const Icon(HuddlIcons.refresh,
                           size: 14, color: Colors.red),
                       const SizedBox(width: 4),
                       Flexible(

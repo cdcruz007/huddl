@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import 'huddl_colors.dart';
 
@@ -285,7 +286,7 @@ class _HeartPopButtonState extends State<HeartPopButton>
       child: ScaleTransition(
         scale: _scale,
         child: Icon(
-          widget.isLiked ? Icons.favorite : Icons.favorite_border,
+          widget.isLiked ? HuddlIcons.heartFill : HuddlIcons.heart,
           color: widget.isLiked ? HuddlColors.primary : const Color(0xFF999999),
           size: widget.size,
         ),
@@ -585,7 +586,7 @@ class _JoinButtonState extends State<JoinButton>
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (t > 0.5) ...[
-                  Icon(Icons.check, size: 14, color: fg),
+                  Icon(HuddlIcons.check, size: 14, color: fg),
                   const SizedBox(width: 4),
                 ],
                 Text(

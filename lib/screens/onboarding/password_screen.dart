@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/onboarding_data_service.dart';
@@ -416,7 +417,7 @@ class _Req extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            met ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+            met ? HuddlIcons.checkCircleFill : HuddlIcons.radioOff,
             size: 14,
             color: met
                 ? HuddlColors.success
@@ -500,8 +501,8 @@ class _PasswordInput extends StatelessWidget {
             suffixIcon: IconButton(
               icon: Icon(
                 obscure
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
+                    ? HuddlIcons.visibilityOff
+                    : HuddlIcons.visibility,
                 color: isDark ? HuddlColors.darkTextSecondary : HuddlColors.disabledText,
                 size: 22,
               ),
@@ -527,7 +528,7 @@ class _OnboardingAppBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
+            HuddlIcons.arrowBack,
             size: 18,
             color: Colors.white,
           ),

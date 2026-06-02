@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/huddl_colors.dart';
@@ -90,7 +91,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
         backgroundColor: hc.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(HuddlIcons.arrowBack),
           color: hc.textPrimary,
           onPressed: () => Navigator.pop(context),
         ),
@@ -101,7 +102,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(HuddlIcons.refresh),
             color: HuddlColors.primary,
             onPressed: _loadAnalytics,
           ),
@@ -122,7 +123,7 @@ class _PartnerAnalyticsScreenState extends State<PartnerAnalyticsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded,
+          const Icon(HuddlIcons.error,
               size: 48, color: HuddlColors.error),
           const SizedBox(height: 16),
           Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/borough_scope_guard.dart';
@@ -70,7 +71,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(HuddlIcons.delete),
             tooltip: 'Clear analytics',
             onPressed: () async {
               await _analytics.clearAll();

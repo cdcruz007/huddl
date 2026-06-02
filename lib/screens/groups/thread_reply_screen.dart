@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -204,7 +205,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                   color: HuddlColors.infoBluePale,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.photo_library_outlined,
+                child: const Icon(HuddlIcons.photoLibrary,
                     color: HuddlColors.infoBlue),
               ),
               title: Text('Photo library', style: HuddlText.body()),
@@ -220,7 +221,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                   color: HuddlColors.primaryPale,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.camera_alt_outlined,
+                child: const Icon(HuddlIcons.camera,
                     color: HuddlColors.primary),
               ),
               title: Text('Take photo', style: HuddlText.body()),
@@ -323,7 +324,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: HuddlColors.textDark, size: 20),
+          icon: const Icon(HuddlIcons.arrowBack, color: HuddlColors.textDark, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -501,7 +502,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                           width: MediaQuery.of(context).size.width * 0.60,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.broken_image_outlined),
+                              const Icon(HuddlIcons.brokenImage),
                         ),
                       )
                     else
@@ -550,7 +551,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
             ),
             const SizedBox(height: 12),
             ListTile(
-              leading: Icon(Icons.copy_outlined, color: context.hc.textPrimary),
+              leading: Icon(HuddlIcons.copy, color: context.hc.textPrimary),
               title: Text('Copy text',
                   style: HuddlText.body()),
               onTap: () {
@@ -560,7 +561,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                   SnackBar(
                     content: const Row(
                       children: [
-                        Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                         SizedBox(width: 8),
                         Text('Message copied'),
                       ],
@@ -601,7 +602,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                     ),
                   )
                 : const Icon(
-                    Icons.add_circle_outline,
+                    HuddlIcons.addCircle,
                     color: HuddlColors.nearBlack,
                   ),
             onPressed: _isUploading ? null : _showAttachSheet,
@@ -646,7 +647,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 color: HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+              child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
             ),
           ),
         ],

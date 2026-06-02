@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -197,7 +198,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -233,7 +234,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
               child: Row(
                 children: [
                   const SizedBox(width: 12),
-                  Icon(Icons.search, size: 20, color: context.hc.textTertiary),
+                  Icon(HuddlIcons.search, size: 20, color: context.hc.textTertiary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
@@ -297,7 +298,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.refresh, size: 40, color: context.hc.textTertiary),
+                              Icon(HuddlIcons.refresh, size: 40, color: context.hc.textTertiary),
                               const SizedBox(height: 12),
                               Text(_error!,
                                   style: HuddlText.body(color: context.hc.textTertiary),
@@ -392,7 +393,7 @@ class _MemberTile extends StatelessWidget {
             const SizedBox(height: 16),
             // Make admin
             ListTile(
-              leading: Icon(Icons.shield_outlined, color: context.hc.textPrimary),
+              leading: Icon(HuddlIcons.shield, color: context.hc.textPrimary),
               title: Text('Make admin',
                 style: HuddlText.body(color: context.hc.textPrimary)),
               onTap: () {
@@ -402,7 +403,7 @@ class _MemberTile extends StatelessWidget {
             ),
             // Remove from group
             ListTile(
-              leading: const Icon(Icons.person_remove_outlined, color: HuddlColors.error),
+              leading: const Icon(HuddlIcons.personRemove, color: HuddlColors.error),
               title: Text('Remove from group',
                 style: HuddlText.body(color: HuddlColors.error)),
               onTap: () {
@@ -537,11 +538,11 @@ class _MemberTile extends StatelessWidget {
         // Section 6E: show ⋮ button for admin users (not on own row)
         trailing: _canActOnMember
             ? IconButton(
-                icon: Icon(Icons.more_vert, color: context.hc.textTertiary, size: 22),
+                icon: Icon(HuddlIcons.moreVert, color: context.hc.textTertiary, size: 22),
                 onPressed: () => _showOptions(context),
                 tooltip: 'Member options',
               )
-            : Icon(Icons.chevron_right, color: context.hc.textTertiary),
+            : Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
         onTap: () {},
       ),
     );

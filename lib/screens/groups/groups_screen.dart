@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -175,7 +176,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                             child: Padding(
                               padding: const EdgeInsets.all(4),
                               child: Icon(
-                                Icons.search,
+                                HuddlIcons.search,
                                 color: context.hc.textSecondary,
                                 size: 22,
                               ),
@@ -199,7 +200,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                               child: Row(
                                 children: [
                                   const SizedBox(width: 12),
-                                  Icon(Icons.search,
+                                  Icon(HuddlIcons.search,
                                       size: 16,
                                       color: context.hc.textTertiary
                                           .withValues(alpha: 0.7)),
@@ -233,7 +234,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 8),
-                                        child: Icon(Icons.close,
+                                        child: Icon(HuddlIcons.close,
                                             size: 15,
                                             color: context.hc.textTertiary),
                                       ),
@@ -356,10 +357,10 @@ class _MessagesTabState extends State<_MessagesTab> {
   // 0 = All, 1 = Groups only, 2 = DMs only, 3 = Unread first
   int _messageFilterIndex = 0;
   static const List<(String, IconData)> _messageFilterOptions = [
-    ('All',          Icons.chat_bubble_outline_rounded),
-    ('Groups only',  Icons.group_outlined),
-    ('DMs only',     Icons.person_outline_rounded),
-    ('Unread first', Icons.mark_chat_unread_outlined),
+    ('All',          HuddlIcons.chat),
+    ('Groups only',  HuddlIcons.usersThree),
+    ('DMs only',     HuddlIcons.user),
+    ('Unread first', HuddlIcons.markChatUnread),
   ];
 
   @override
@@ -1181,7 +1182,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                               child: const SizedBox(
                                 width: 48,
                                 height: 48,
-                                child: Icon(Icons.close,
+                                child: Icon(HuddlIcons.close,
                                     size: 24,
                                     color: HuddlColors.textPrimary),
                               ),
@@ -1257,7 +1258,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                   ),
                                   const Spacer(),
                                   if (isSelected)
-                                    const Icon(Icons.check_rounded,
+                                    const Icon(HuddlIcons.check,
                                         size: 20,
                                         color: HuddlColors.primary),
                                 ],
@@ -1316,7 +1317,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               const SizedBox(height: 16),
               _ActionTile(
-                icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                icon: isPinned ? HuddlIcons.pin : HuddlIcons.pin,
                 label: isPinned ? 'Unpin' : 'Pin',
                 onTap: () {
                   HuddlAnimations.lightTap();
@@ -1334,8 +1335,8 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               _ActionTile(
                 icon: isMuted
-                    ? Icons.notifications_active
-                    : Icons.notifications_off_outlined,
+                    ? HuddlIcons.bellRingingFill
+                    : HuddlIcons.bellSlash,
                 label: isMuted ? 'Unmute' : 'Mute',
                 onTap: () {
                   HuddlAnimations.lightTap();
@@ -1359,8 +1360,8 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               _ActionTile(
                 icon: _unreadGroupIds.contains(group.id)
-                    ? Icons.mark_chat_read_outlined
-                    : Icons.mark_chat_unread_outlined,
+                    ? HuddlIcons.markChatRead
+                    : HuddlIcons.markChatUnread,
                 label: _unreadGroupIds.contains(group.id)
                     ? 'Mark as read'
                     : 'Mark as unread',
@@ -1380,7 +1381,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               // Archive is only available for user-created groups, not default/listed community groups
               if (!group.isDefault)
                 _ActionTile(
-                  icon: Icons.archive_outlined,
+                  icon: HuddlIcons.archive,
                   label: 'Archive',
                   onTap: () {
                     Navigator.pop(c);
@@ -1407,7 +1408,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               // Delete is only available for private group creator/admin
               if (group.isPrivate && group.creatorId == 'current_user')
                 _ActionTile(
-                  icon: Icons.delete_outline,
+                  icon: HuddlIcons.delete,
                   label: 'Delete',
                   color: HuddlColors.error,
                   onTap: () {
@@ -1433,7 +1434,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               // Leave group — hidden for default groups unless user has changed postcode
               if (!group.isDefault || _onboardingService.hasChangedBorough)
                 _ActionTile(
-                  icon: Icons.exit_to_app,
+                  icon: HuddlIcons.exitToApp,
                   label: 'Leave group',
                   color: HuddlColors.error,
                   onTap: () {
@@ -1444,7 +1445,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               const SizedBox(height: 4),
               Divider(height: 1, color: context.hc.divider),
               _ActionTile(
-                icon: Icons.close,
+                icon: HuddlIcons.close,
                 label: 'Cancel',
                 onTap: () => Navigator.pop(c),
               ),
@@ -1474,7 +1475,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.sentiment_dissatisfied_outlined,
+                child: const Icon(HuddlIcons.sentimentBad,
                     size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
@@ -1825,7 +1826,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                   clipBehavior: Clip.none,
                                   children: [
                                     Icon(
-                                      Icons.tune_rounded,
+                                      HuddlIcons.filter,
                                       size: 18,
                                       color: hasActive
                                           ? HuddlColors.primary
@@ -1895,7 +1896,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   child: const SizedBox(
                     width: 52,
                     height: 52,
-                    child: Icon(Icons.edit_outlined, color: Colors.white, size: 22),
+                    child: Icon(HuddlIcons.edit, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -1961,7 +1962,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                       color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(9),
                     ),
-                    child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
+                    child: const Icon(HuddlIcons.ai, size: 18, color: HuddlColors.textDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1983,7 +1984,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   AnimatedRotation(
                     turns: _catchUpExpanded ? 0.5 : 0.0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                    child: Icon(HuddlIcons.caretDown,
                         size: 22, color: context.hc.textTertiary),
                   ),
                   const SizedBox(width: 2),
@@ -1991,7 +1992,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   IconButton(
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
+                    icon: Icon(HuddlIcons.close, size: 16, color: context.hc.textTertiary),
                     onPressed: () {
                       HuddlAnimations.lightTap();
                       setState(() => _catchUpDismissed = true);
@@ -2077,7 +2078,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 borderRadius: BorderRadius.circular(10),
                 child: HuddlPhotoImage(
                   url: imageUrl,
-                  fallbackIcon: Icons.people_rounded,
+                  fallbackIcon: HuddlIcons.usersThree,
                 ),
               ),
             ),
@@ -2145,7 +2146,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.priority_high_rounded, size: 9, color: HuddlColors.primary),
+                                const Icon(HuddlIcons.priority, size: 9, color: HuddlColors.primary),
                                 const SizedBox(width: 3),
                                 Text('Needs reply',
                                     style: HuddlText.label(color: HuddlColors.primary)),
@@ -2180,7 +2181,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                       padding: const EdgeInsets.only(top: 5),
                       child: Row(
                         children: [
-                          const Icon(Icons.event_rounded, size: 10, color: HuddlColors.nearBlack),
+                          const Icon(HuddlIcons.calendar, size: 10, color: HuddlColors.nearBlack),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -2197,7 +2198,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             ),
             const SizedBox(width: 8),
             // Go to chat arrow
-            Icon(Icons.chevron_right_rounded, size: 18, color: context.hc.textTertiary),
+            Icon(HuddlIcons.caretRight, size: 18, color: context.hc.textTertiary),
           ],
         ),
       ),
@@ -2221,7 +2222,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               color: HuddlColors.neutral50,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
+            child: const Icon(HuddlIcons.ai, size: 18, color: HuddlColors.textDark),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -2278,7 +2279,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 16, color: HuddlColors.warningDark),
+                  const Icon(HuddlIcons.info, size: 16, color: HuddlColors.warningDark),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(_errorMessage, style: HuddlText.caption()),
@@ -2372,7 +2373,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   key: ValueKey('swipe_${item.id}'),
                   isUnread: isUnread,
                   swipeLeftLabel: item.isGroup ? 'Leave' : 'Delete',
-                  swipeLeftIcon: item.isGroup ? Icons.exit_to_app : Icons.delete,
+                  swipeLeftIcon: item.isGroup ? HuddlIcons.exitToApp : HuddlIcons.delete,
                   onDelete: () {
                     if (item.isGroup && item.groupItem != null) {
                       if (item.groupItem!.isDefault && !_onboardingService.hasChangedBorough) {
@@ -2477,7 +2478,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   color: HuddlColors.neutral50,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.search_off,
+                child: const Icon(HuddlIcons.searchOff,
                     size: 32, color: HuddlColors.textDark),
               ),
               const SizedBox(height: 16),
@@ -2860,7 +2861,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               const SizedBox(height: 16),
               _ActionTile(
-                icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                icon: isPinned ? HuddlIcons.pin : HuddlIcons.pin,
                 label: isPinned ? 'Unpin' : 'Pin',
                 onTap: () {
                   HuddlAnimations.lightTap();
@@ -2878,8 +2879,8 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               _ActionTile(
                 icon: isMuted
-                    ? Icons.notifications_active
-                    : Icons.notifications_off_outlined,
+                    ? HuddlIcons.bellRingingFill
+                    : HuddlIcons.bellSlash,
                 label: isMuted ? 'Unmute' : 'Mute',
                 onTap: () {
                   HuddlAnimations.lightTap();
@@ -2904,8 +2905,8 @@ class _MessagesTabState extends State<_MessagesTab> {
               ),
               _ActionTile(
                 icon: isUnread
-                    ? Icons.mark_chat_read_outlined
-                    : Icons.mark_chat_unread_outlined,
+                    ? HuddlIcons.markChatRead
+                    : HuddlIcons.markChatUnread,
                 label: isUnread ? 'Mark as read' : 'Mark as unread',
                 onTap: () async {
                   Navigator.pop(c);
@@ -2922,7 +2923,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
               ),
               _ActionTile(
-                icon: Icons.delete_outline,
+                icon: HuddlIcons.delete,
                 label: 'Delete',
                 color: HuddlColors.error,
                 onTap: () {
@@ -2948,7 +2949,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               const SizedBox(height: 4),
               Divider(height: 1, color: context.hc.divider),
               _ActionTile(
-                icon: Icons.close,
+                icon: HuddlIcons.close,
                 label: 'Cancel',
                 onTap: () => Navigator.pop(c),
               ),
@@ -3018,7 +3019,7 @@ class _GroupMessageRow extends StatelessWidget {
                       Row(
                         children: [
                           if (isPinned) ...[
-                            Icon(Icons.push_pin,
+                            Icon(HuddlIcons.pin,
                                 size: 14, color: HuddlColors.textTertiary),
                             const SizedBox(width: 4),
                           ],
@@ -3053,7 +3054,7 @@ class _GroupMessageRow extends StatelessWidget {
                           ),
                           if (isMuted) ...[
                             const SizedBox(width: 4),
-                            Icon(Icons.notifications_off,
+                            Icon(HuddlIcons.bellSlash,
                                 size: 14, color: context.hc.textTertiary),
                           ],
                           const SizedBox(width: 6),
@@ -3240,7 +3241,7 @@ class _InvitationCard extends StatelessWidget {
   /// Build group image — handles data:base64, http/https URLs, asset paths
   Widget _buildGroupImage(String imageUrl) {
     if (imageUrl.isEmpty) {
-      return const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark);
+      return const Icon(HuddlIcons.userGroupPlus, size: 24, color: HuddlColors.textDark);
     }
 
     // Data URL (base64 image from image picker)
@@ -3255,18 +3256,18 @@ class _InvitationCard extends StatelessWidget {
             width: 48,
             height: 48,
             errorBuilder: (_, __, ___) =>
-                const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark),
+                const Icon(HuddlIcons.userGroupPlus, size: 24, color: HuddlColors.textDark),
           );
         }
       } catch (_) {}
-      return const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark);
+      return const Icon(HuddlIcons.userGroupPlus, size: 24, color: HuddlColors.textDark);
     }
 
     // Network URL
     if (imageUrl.startsWith('http')) {
       return HuddlPhotoImage(
         url: imageUrl,
-        fallbackIcon: Icons.group_add,
+        fallbackIcon: HuddlIcons.userGroupPlus,
       );
     }
 
@@ -3278,11 +3279,11 @@ class _InvitationCard extends StatelessWidget {
         width: 48,
         height: 48,
         errorBuilder: (_, __, ___) =>
-            const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark),
+            const Icon(HuddlIcons.userGroupPlus, size: 24, color: HuddlColors.textDark),
       );
     }
 
-    return const Icon(Icons.group_add, size: 24, color: HuddlColors.textDark);
+    return const Icon(HuddlIcons.userGroupPlus, size: 24, color: HuddlColors.textDark);
   }
 }
 
@@ -3344,7 +3345,7 @@ class _DMMessageRow extends StatelessWidget {
                       Row(
                         children: [
                           if (isPinned) ...[
-                            Icon(Icons.push_pin,
+                            Icon(HuddlIcons.pin,
                                 size: 14,
                                 color: HuddlColors.textTertiary),
                             const SizedBox(width: 4),
@@ -3359,7 +3360,7 @@ class _DMMessageRow extends StatelessWidget {
                           ),
                           if (isMuted) ...[
                             const SizedBox(width: 4),
-                            Icon(Icons.notifications_off,
+                            Icon(HuddlIcons.bellSlash,
                                 size: 14, color: context.hc.textTertiary),
                           ],
                           const SizedBox(width: 6),
@@ -4365,7 +4366,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         title: Row(
           children: [
             Icon(
-              isGroupTier ? Icons.group : Icons.lock,
+              isGroupTier ? HuddlIcons.usersThree : HuddlIcons.lockFill,
               color: HuddlColors.textDark,
               size: 24,
             ),
@@ -4609,7 +4610,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           content: Row(
             children: [
               // Yellow check icon — celebratory join confirmation.
-              const Icon(Icons.check_circle, color: HuddlColors.yellow, size: 20),
+              const Icon(HuddlIcons.checkCircle, color: HuddlColors.yellow, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -4694,7 +4695,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                   },
                                   child: SizedBox(
                                     width: 48, height: 48,
-                                    child: Icon(Icons.close, size: 24,
+                                    child: Icon(HuddlIcons.close, size: 24,
                                         color: context.hc.textPrimary),
                                   ),
                                 ),
@@ -4774,7 +4775,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                           ),
                                         ),
                                         child: isChecked
-                                            ? const Icon(Icons.check,
+                                            ? const Icon(HuddlIcons.check,
                                                 size: 18, color: HuddlColors.white)
                                             : null,
                                       ),
@@ -4864,7 +4865,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       ),
                                       const Spacer(),
                                       if (isActive)
-                                        const Icon(Icons.check_circle,
+                                        const Icon(HuddlIcons.checkCircle,
                                             size: 20,
                                             color: HuddlColors.primary),
                                     ],
@@ -4966,7 +4967,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         : HuddlColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.auto_awesome_rounded,
+                  child: Icon(HuddlIcons.ai,
                     size: 18,
                     color: isSelected ? Colors.white : HuddlColors.primary,
                   ),
@@ -5005,7 +5006,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle,
+                  const Icon(HuddlIcons.checkCircle,
                       size: 22, color: HuddlColors.primary),
               ],
             ),
@@ -5038,8 +5039,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               children: [
                 Icon(
                   smartEnabled
-                      ? Icons.psychology_rounded
-                      : Icons.psychology_alt_outlined,
+                      ? HuddlIcons.psychology
+                      : HuddlIcons.psychology,
                   size: 16,
                   color: smartEnabled
                       ? HuddlColors.primary
@@ -5146,13 +5147,13 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   IconData _sortIcon(String option) {
     switch (option) {
       case 'Most Members':
-        return Icons.group;
+        return HuddlIcons.usersThree;
       case 'Newest':
-        return Icons.schedule;
+        return HuddlIcons.clock;
       case 'A-Z':
-        return Icons.sort_by_alpha;
+        return HuddlIcons.sortAscending;
       default:
-        return Icons.explore;
+        return HuddlIcons.explore;
     }
   }
 
@@ -5182,7 +5183,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: HuddlColors.warningDark),
+                      const Icon(HuddlIcons.info, size: 16, color: HuddlColors.warningDark),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text('Could not load your profile. Showing all groups.',
@@ -5242,7 +5243,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.tune_rounded,
+                                  HuddlIcons.filter,
                                   size: 18,
                                   color: hasActiveFilters
                                       ? HuddlColors.primary
@@ -5287,7 +5288,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             children: [
                               const Padding(
                                 padding: EdgeInsets.only(left: 12, right: 6),
-                                child: Icon(Icons.search, size: 18,
+                                child: Icon(HuddlIcons.search, size: 18,
                                     color: HuddlColors.textDark),
                               ),
                               Expanded(
@@ -5330,7 +5331,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                                    child: Icon(Icons.close, size: 16,
+                                    child: Icon(HuddlIcons.close, size: 16,
                                         color: context.hc.textTertiary),
                                   ),
                                 )
@@ -5373,7 +5374,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.search, size: 11, color: HuddlColors.nearBlack),
+                              Icon(HuddlIcons.search, size: 11, color: HuddlColors.nearBlack),
                               const SizedBox(width: 4),
                               Text(s.query, style: HuddlText.caption(weight: FontWeight.w500, color: HuddlColors.nearBlack)),
                             ],
@@ -5402,7 +5403,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.search, size: 12, color: context.hc.textTertiary),
+                          Icon(HuddlIcons.search, size: 12, color: context.hc.textTertiary),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(contextLine,
@@ -5420,7 +5421,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: Icon(
-                                  Icons.close_rounded,
+                                  HuddlIcons.close,
                                   size: 14,
                                   color: context.hc.textTertiary,
                                 ),
@@ -5686,54 +5687,54 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   // General / Popular
-  'disc_first_time_mums':     {'icon': Icons.child_friendly,      'color': HuddlColors.primary},
-  'disc_dads_connect':        {'icon': Icons.man,                  'color': HuddlColors.nearBlack},
-  'disc_bump_to_baby':        {'icon': Icons.pregnant_woman,       'color': HuddlColors.primaryLight},
-  'disc_pregnancy_antenatal': {'icon': Icons.favorite,             'color': HuddlColors.accentCoral},
-  'disc_newborn_club':        {'icon': Icons.baby_changing_station,'color': HuddlColors.primary},
-  'disc_single_parents':      {'icon': Icons.person,               'color': HuddlColors.nearBlack},
-  'disc_lgbtq_parents':       {'icon': Icons.diversity_3,          'color': HuddlColors.primary},
-  'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.nearBlack},
+  'disc_first_time_mums':     {'icon': HuddlIcons.childFriendly,      'color': HuddlColors.primary},
+  'disc_dads_connect':        {'icon': HuddlIcons.man,                  'color': HuddlColors.nearBlack},
+  'disc_bump_to_baby':        {'icon': HuddlIcons.pregnant,       'color': HuddlColors.primaryLight},
+  'disc_pregnancy_antenatal': {'icon': HuddlIcons.heartFill,             'color': HuddlColors.accentCoral},
+  'disc_newborn_club':        {'icon': HuddlIcons.baby,'color': HuddlColors.primary},
+  'disc_single_parents':      {'icon': HuddlIcons.user,               'color': HuddlColors.nearBlack},
+  'disc_lgbtq_parents':       {'icon': HuddlIcons.diversity,          'color': HuddlColors.primary},
+  'disc_adoption_fostering':  {'icon': HuddlIcons.family,      'color': HuddlColors.nearBlack},
   // Language & Culture
-  'disc_dutch_parents':       {'icon': Icons.language,             'color': HuddlColors.nearBlack},
-  'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.primary},
+  'disc_dutch_parents':       {'icon': HuddlIcons.language,             'color': HuddlColors.nearBlack},
+  'disc_german_parents':      {'icon': HuddlIcons.language,             'color': HuddlColors.primary},
   // Sleep & Feeding
-  'disc_baby_sleep':          {'icon': Icons.bedtime,              'color': HuddlColors.yellowMedium},
-  'disc_breastfeeding':       {'icon': Icons.child_care,           'color': HuddlColors.primary},
-  'disc_weaning_first_foods': {'icon': Icons.restaurant,           'color': HuddlColors.primary},
-  'disc_child_nutrition':     {'icon': Icons.lunch_dining,         'color': HuddlColors.primary},
-  'disc_healthy_meals':       {'icon': Icons.restaurant,           'color': HuddlColors.primary},
-  'disc_allergies_dietary':   {'icon': Icons.no_food,              'color': HuddlColors.error},
+  'disc_baby_sleep':          {'icon': HuddlIcons.bedtime,              'color': HuddlColors.yellowMedium},
+  'disc_breastfeeding':       {'icon': HuddlIcons.childCare,           'color': HuddlColors.primary},
+  'disc_weaning_first_foods': {'icon': HuddlIcons.restaurant,           'color': HuddlColors.primary},
+  'disc_child_nutrition':     {'icon': HuddlIcons.food,         'color': HuddlColors.primary},
+  'disc_healthy_meals':       {'icon': HuddlIcons.restaurant,           'color': HuddlColors.primary},
+  'disc_allergies_dietary':   {'icon': HuddlIcons.close,              'color': HuddlColors.error},
   // Education & Learning
-  'disc_montessori_parenting':{'icon': Icons.school,               'color': HuddlColors.nearBlack},
-  'disc_forest_school':       {'icon': Icons.park,                 'color': HuddlColors.nearBlack},
-  'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.primary},
-  'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.nearBlack},
+  'disc_montessori_parenting':{'icon': HuddlIcons.school,               'color': HuddlColors.nearBlack},
+  'disc_forest_school':       {'icon': HuddlIcons.park,                 'color': HuddlColors.nearBlack},
+  'disc_home_education':      {'icon': HuddlIcons.home,                 'color': HuddlColors.primary},
+  'disc_baby_sign_language':  {'icon': HuddlIcons.signLanguage,        'color': HuddlColors.nearBlack},
   // Activities & Play
-  'disc_baby_sensory':        {'icon': Icons.toys,                 'color': HuddlColors.primary},
-  'disc_toddler_activities':  {'icon': Icons.directions_run,       'color': HuddlColors.accentCoral},
-  'disc_cambridge_playgrounds':{'icon': Icons.outdoor_grill,       'color': HuddlColors.nearBlack},
+  'disc_baby_sensory':        {'icon': HuddlIcons.toys,                 'color': HuddlColors.primary},
+  'disc_toddler_activities':  {'icon': HuddlIcons.run,       'color': HuddlColors.accentCoral},
+  'disc_cambridge_playgrounds':{'icon': HuddlIcons.grill,       'color': HuddlColors.nearBlack},
   // Fitness & Sport
-  'disc_buggy_runners':       {'icon': Icons.directions_run,       'color': HuddlColors.accentCoral},
-  'disc_postnatal_fitness':   {'icon': Icons.fitness_center,       'color': HuddlColors.accentCoral},
-  'disc_postnatal_yoga':      {'icon': Icons.self_improvement,     'color': HuddlColors.primary},
-  'disc_buggy_bootcamp':      {'icon': Icons.sports,               'color': HuddlColors.accentCoral},
-  'disc_cambridge_tennis':    {'icon': Icons.sports_tennis,        'color': HuddlColors.nearBlack},
-  'disc_cambridge_sports':    {'icon': Icons.sports_soccer,        'color': HuddlColors.nearBlack},
+  'disc_buggy_runners':       {'icon': HuddlIcons.run,       'color': HuddlColors.accentCoral},
+  'disc_postnatal_fitness':   {'icon': HuddlIcons.fitness,       'color': HuddlColors.accentCoral},
+  'disc_postnatal_yoga':      {'icon': HuddlIcons.wellness,     'color': HuddlColors.primary},
+  'disc_buggy_bootcamp':      {'icon': HuddlIcons.sports,               'color': HuddlColors.accentCoral},
+  'disc_cambridge_tennis':    {'icon': HuddlIcons.tennis,        'color': HuddlColors.nearBlack},
+  'disc_cambridge_sports':    {'icon': HuddlIcons.soccer,        'color': HuddlColors.nearBlack},
   // Wellbeing & Support
-  'disc_mental_health':       {'icon': Icons.spa,                  'color': HuddlColors.primaryLight},
-  'disc_nct_cambridge':       {'icon': Icons.group,                'color': HuddlColors.primary},
-  'disc_special_needs_send':  {'icon': Icons.accessibility_new,    'color': HuddlColors.nearBlack},
-  'disc_parents_multiples':   {'icon': Icons.people,               'color': HuddlColors.primary},
-  'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.nearBlack},
+  'disc_mental_health':       {'icon': HuddlIcons.spa,                  'color': HuddlColors.primaryLight},
+  'disc_nct_cambridge':       {'icon': HuddlIcons.usersThree,                'color': HuddlColors.primary},
+  'disc_special_needs_send':  {'icon': HuddlIcons.accessibility,    'color': HuddlColors.nearBlack},
+  'disc_parents_multiples':   {'icon': HuddlIcons.usersThree,               'color': HuddlColors.primary},
+  'disc_dad_baby':            {'icon': HuddlIcons.man,                  'color': HuddlColors.nearBlack},
   // Childcare & Practicalities
-  'disc_nanny_share':         {'icon': Icons.home,                 'color': HuddlColors.yellowMedium},
-  'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.primary},
-  'disc_working_parents':     {'icon': Icons.work_outline,         'color': HuddlColors.primary},
-  'disc_child_sleep_consultants':{'icon': Icons.nightlight,        'color': HuddlColors.yellowMedium},
+  'disc_nanny_share':         {'icon': HuddlIcons.home,                 'color': HuddlColors.yellowMedium},
+  'disc_back_to_work':        {'icon': HuddlIcons.work,                 'color': HuddlColors.primary},
+  'disc_working_parents':     {'icon': HuddlIcons.work,         'color': HuddlColors.primary},
+  'disc_child_sleep_consultants':{'icon': HuddlIcons.nightMode,        'color': HuddlColors.yellowMedium},
   // Lifestyle
-  'disc_eco_parenting':       {'icon': Icons.eco,                  'color': HuddlColors.nearBlack},
-  'disc_travel_tribe':        {'icon': Icons.flight_takeoff,       'color': HuddlColors.nearBlack},
+  'disc_eco_parenting':       {'icon': HuddlIcons.eco,                  'color': HuddlColors.nearBlack},
+  'disc_travel_tribe':        {'icon': HuddlIcons.arrowUp,       'color': HuddlColors.nearBlack},
 };
 
 // ── Small placeholder thumbnail for search result rows ────────────────────────
@@ -5798,7 +5799,7 @@ class _DiscoverGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _discoverCardStyles[group.id] ??
-        {'icon': Icons.people, 'color': HuddlColors.primary};
+        {'icon': HuddlIcons.usersThree, 'color': HuddlColors.primary};
     final Color catColor = style['color'] as Color;
     final IconData catIcon = style['icon'] as IconData;
 
@@ -5893,7 +5894,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                                           Container(
                                         color: catColor
                                             .withValues(alpha: 0.25),
-                                        child: Icon(Icons.person,
+                                        child: Icon(HuddlIcons.user,
                                             size: 12, color: catColor),
                                       ),
                                     ),
@@ -6251,7 +6252,7 @@ class _SavedTabState extends State<_SavedTab> {
             child: Row(
               children: [
                 const SizedBox(width: 12),
-                Icon(Icons.search, size: 16, color: context.hc.textTertiary),
+                Icon(HuddlIcons.search, size: 16, color: context.hc.textTertiary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
@@ -6277,7 +6278,7 @@ class _SavedTabState extends State<_SavedTab> {
                     }),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Icon(Icons.close, size: 14, color: context.hc.textTertiary),
+                      child: Icon(HuddlIcons.close, size: 14, color: context.hc.textTertiary),
                     ),
                   ),
               ],
@@ -6359,7 +6360,7 @@ class _SavedTabState extends State<_SavedTab> {
               ),
               child: Center(
                 child: Icon(
-                  isEvents ? Icons.event_rounded : Icons.topic_rounded,
+                  isEvents ? HuddlIcons.calendar : HuddlIcons.topic,
                   size: 14,
                   color: isEvents ? HuddlColors.primary : HuddlColors.nearBlack,
                 ),
@@ -6388,7 +6389,7 @@ class _SavedTabState extends State<_SavedTab> {
               ),
             ),
             Icon(
-              isCollapsed ? Icons.expand_more : Icons.expand_less,
+              isCollapsed ? HuddlIcons.caretDown : HuddlIcons.caretUp,
               size: 20,
               color: ctx.hc.textTertiary,
             ),
@@ -6433,7 +6434,7 @@ class _SavedTabState extends State<_SavedTab> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
+          Icon(HuddlIcons.searchOff, size: 48, color: context.hc.textTertiary),
           const SizedBox(height: 12),
           Text(
             'No results for "$q"',
@@ -6631,7 +6632,7 @@ class _SavedMessageCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
-                          child: Icon(Icons.people, size: 14, color: HuddlColors.textDark),
+                          child: Icon(HuddlIcons.usersThree, size: 14, color: HuddlColors.textDark),
                         ),
                       )
                     : MemberAvatar(
@@ -6648,7 +6649,7 @@ class _SavedMessageCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(
-                            isGroup ? Icons.group : Icons.person,
+                            isGroup ? HuddlIcons.usersThree : HuddlIcons.user,
                             size: 12,
                             color: HuddlColors.textDark,
                           ),
@@ -6715,7 +6716,7 @@ class _SavedMessageCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.open_in_new, size: 12, color: context.hc.textTertiary),
+                Icon(HuddlIcons.openInNew, size: 12, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
                   'Tap to go to ${isGroup ? 'group' : 'conversation'}',
@@ -6788,7 +6789,7 @@ class _SavedThreadCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
-                    child: Icon(Icons.topic, size: 14, color: HuddlColors.nearBlack),
+                    child: Icon(HuddlIcons.topic, size: 14, color: HuddlColors.nearBlack),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -6798,7 +6799,7 @@ class _SavedThreadCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.forum, size: 12, color: HuddlColors.nearBlack),
+                          const Icon(HuddlIcons.forum, size: 12, color: HuddlColors.nearBlack),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -6927,7 +6928,7 @@ class _SavedThreadCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.open_in_new, size: 12, color: context.hc.textTertiary),
+                Icon(HuddlIcons.openInNew, size: 12, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
                   savedThread.replies.isEmpty
@@ -7019,7 +7020,7 @@ class _SavedEventCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.bookmark,
+                            const Icon(HuddlIcons.bookmark,
                                 size: 11, color: HuddlColors.primary),
                             const SizedBox(width: 4),
                             Text(
@@ -7061,7 +7062,7 @@ class _SavedEventCard extends StatelessWidget {
                   if (savedEvent.date.isNotEmpty)
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined,
+                        Icon(HuddlIcons.calendar,
                             size: 12, color: context.hc.textTertiary),
                         const SizedBox(width: 4),
                         Expanded(
@@ -7082,8 +7083,8 @@ class _SavedEventCard extends StatelessWidget {
                     children: [
                       Icon(
                         savedEvent.isOnline
-                            ? Icons.videocam_outlined
-                            : Icons.location_on_outlined,
+                            ? HuddlIcons.videocam
+                            : HuddlIcons.locationPin,
                         size: 12,
                         color: context.hc.textTertiary,
                       ),
@@ -7103,7 +7104,7 @@ class _SavedEventCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Icon(Icons.open_in_new, size: 11, color: context.hc.textTertiary),
+                      Icon(HuddlIcons.openInNew, size: 11, color: context.hc.textTertiary),
                       const SizedBox(width: 3),
                       Text(
                         'Tap to view event',
@@ -7124,7 +7125,7 @@ class _SavedEventCard extends StatelessWidget {
     return Container(
       color: HuddlColors.neutral50,
       child: const Center(
-        child: Icon(Icons.event, size: 28, color: HuddlColors.textDark),
+        child: Icon(HuddlIcons.calendar, size: 28, color: HuddlColors.textDark),
       ),
     );
   }
@@ -7149,7 +7150,7 @@ class _SwipeActionRow extends StatefulWidget {
     required this.onDelete,
     required this.onToggleRead,
     this.swipeLeftLabel = 'Delete',
-    this.swipeLeftIcon = Icons.delete,
+    this.swipeLeftIcon = HuddlIcons.delete,
   });
 
   @override
@@ -7243,8 +7244,8 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
                             children: [
                               Icon(
                                 widget.isUnread
-                                    ? Icons.mark_chat_read
-                                    : Icons.mark_chat_unread,
+                                    ? HuddlIcons.markChatRead
+                                    : HuddlIcons.markChatUnread,
                                 color: Colors.white,
                                 size: 22,
                               ),
@@ -7395,7 +7396,7 @@ class _DeepSearchResultRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Icon(
-                Icons.subdirectory_arrow_right,
+                HuddlIcons.subArrowRight,
                 size: 16,
                 color: context.hc.textTertiary.withValues(alpha: 0.6),
               ),
@@ -7533,7 +7534,7 @@ class _AiFeedbackRow extends StatelessWidget {
           child: Container(
             width: 24, height: 24,
             alignment: Alignment.center,
-            child: Icon(Icons.thumb_up_alt_outlined,
+            child: Icon(HuddlIcons.thumbUp,
                 size: 12, color: context.hc.textTertiary.withValues(alpha: 0.5)),
           ),
         ),
@@ -7542,7 +7543,7 @@ class _AiFeedbackRow extends StatelessWidget {
           child: Container(
             width: 24, height: 24,
             alignment: Alignment.center,
-            child: Icon(Icons.thumb_down_alt_outlined,
+            child: Icon(HuddlIcons.thumbDown,
                 size: 12, color: context.hc.textTertiary.withValues(alpha: 0.5)),
           ),
         ),

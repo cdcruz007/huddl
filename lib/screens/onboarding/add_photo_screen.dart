@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
@@ -100,13 +101,13 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
               const SizedBox(height: 16),
               _darkSheetTile(
                 ctx: ctx,
-                icon: Icons.photo_library_outlined,
+                icon: HuddlIcons.photoLibrary,
                 label: 'Choose from photos',
                 onTap: () { Navigator.pop(ctx); _pickFrom(ImageSource.gallery); },
               ),
               _darkSheetTile(
                 ctx: ctx,
-                icon: Icons.camera_alt_outlined,
+                icon: HuddlIcons.camera,
                 label: 'Take a photo',
                 onTap: () { Navigator.pop(ctx); _pickFrom(ImageSource.camera); },
               ),
@@ -209,7 +210,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new,
+                      icon: const Icon(HuddlIcons.arrowBack,
                           size: 18, color: HuddlColors.nearBlack),
                     ),
                   ),
@@ -282,7 +283,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                         border: Border.all(color: Colors.white, width: 2.5),
                       ),
                       child: const Icon(
-                        Icons.camera_alt,
+                        HuddlIcons.camera,
                         color: Colors.white,
                         size: 22,
                       ),
@@ -324,7 +325,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                   HuddlButton(
                     label: hasPhoto ? 'Change photo' : 'Add photo',
                     variant: HuddlButtonVariant.secondary,
-                    leadingIcon: Icons.camera_alt_outlined,
+                    leadingIcon: HuddlIcons.camera,
                     fullWidth: true,
                     onPressed: _isLoading ? null : _showPickerOptions,
                   ),
@@ -386,7 +387,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
         width: 260,
         height: 260,
         color: HuddlColors.neutral50,
-        child: const Icon(Icons.person, size: 80, color: HuddlColors.textHint),
+        child: const Icon(HuddlIcons.user, size: 80, color: HuddlColors.textHint),
       ),
     );
   }

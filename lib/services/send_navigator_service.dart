@@ -6,6 +6,7 @@ import 'ai_api_helper.dart';
 import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
+import 'send_encryption_service.dart';
 
 // ─── Typed AI error ───────────────────────────────────────────────────────────
 
@@ -306,10 +307,13 @@ class SendNavigatorService {
             .collection('users')
             .doc(uid)
             .get();
-        final firestoreVal = doc.data()?['ehcpStage'] as String?;
-        if (firestoreVal != null) {
+        final rawVal = doc.data()?['ehcpStage'] as String?;
+        if (rawVal != null) {
+          // Decrypt the stored value (passthrough-safe if secret not set)
+          final firestoreVal =
+              SendEncryptionService().decrypt(rawVal, uid: uid) ?? rawVal;
           _cachedStage = EhcpStageX.fromString(firestoreVal);
-          // Keep BrowserStorage in sync
+          // Keep BrowserStorage in sync with the decrypted value
           await BrowserStorage.setString(_stageKey, firestoreVal);
           return _cachedStage!;
         }
@@ -339,10 +343,13 @@ class SendNavigatorService {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
+      // Encrypt before writing — AES-256-GCM, key bound to uid
+      final encStage =
+          SendEncryptionService().encrypt(stage.storageValue, uid: uid);
       FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .set({'ehcpStage': stage.storageValue}, SetOptions(merge: true))
+          .set({'ehcpStage': encStage}, SetOptions(merge: true))
           .catchError((Object e) {
         if (kDebugMode) debugPrint('[SEND] _writeStageToFirestore error: $e');
       });
@@ -688,10 +695,14 @@ class SendNavigatorService {
             .collection('deadlines')
             .get();
         if (snap.docs.isNotEmpty) {
+          // Decrypt each document before deserialising into SendDeadline
           _deadlines = snap.docs
-              .map((d) => SendDeadline.fromJson(
-                    Map<String, dynamic>.from(d.data()),
-                  ))
+              .map((d) {
+                final raw = Map<String, dynamic>.from(d.data());
+                final plain =
+                    SendEncryptionService().decryptMap(raw, uid: uid) ?? raw;
+                return SendDeadline.fromJson(plain);
+              })
               .toList();
           _deadlinesLoaded = true;
           return List.unmodifiable(_deadlines);
@@ -754,7 +765,10 @@ class SendNavigatorService {
           .doc(uid)
           .collection('deadlines');
       for (final d in _deadlines) {
-        batch.set(col.doc(d.id), d.toJson());
+        // Encrypt the deadline document before writing to Firestore
+        final encDoc =
+            SendEncryptionService().encryptMap(d.toJson(), uid: uid);
+        batch.set(col.doc(d.id), encDoc);
       }
       batch.commit().catchError((Object e) {
         if (kDebugMode) debugPrint('[SEND] _persistDeadlinesToFirestore batch error: $e');

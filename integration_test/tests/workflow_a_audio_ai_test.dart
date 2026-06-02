@@ -93,7 +93,7 @@ void main() {
         // The mock record channel's stop() returns kMockVoiceNotePath —
         // verify via the channel directly (we can't read the service's internal
         // field, but we assert no error snackbar appeared)
-        final errorSnack = find.text(RegExp(
+        final errorSnack = find.textContaining(RegExp(
           r'(Failed to record|microphone|permission|error)',
           caseSensitive: false,
         ));

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Allows users to manually export and import all their Huddl data.
+import '../../theme/huddl_icons.dart';
 // Automatic backup behaviour (Android Auto Backup / iOS iCloud) is also
 // explained here so users understand what is happening in the background.
 //
@@ -183,7 +184,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         backgroundColor: context.hc.surface,
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded,
+            const Icon(HuddlIcons.warning,
                 color: HuddlColors.primary, size: 22),
             const SizedBox(width: 8),
             Text('Restore backup?',
@@ -252,7 +253,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(
         children: [
-          const Icon(Icons.check_circle, color: Colors.white, size: 18),
+          const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
           const SizedBox(width: 10),
           Expanded(
               child: Text(msg,
@@ -292,7 +293,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         title: Text('Backup & Restore',
             style: HuddlText.heading(color: Colors.white)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: const Icon(HuddlIcons.arrowBack, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -310,7 +311,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
           if (!kIsWeb) ...[
             _InfoCard(
-              icon: Icons.cloud_outlined,
+              icon: HuddlIcons.cloud,
               iconColor: HuddlColors.nearBlack,
               title: Platform.isIOS
                   ? 'iCloud backup (iOS)'
@@ -332,7 +333,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
           if (kIsWeb)
             _InfoCard(
-              icon: Icons.info_outline,
+              icon: HuddlIcons.info,
               iconColor: HuddlColors.nearBlack,
               title: 'Web — manual backup only',
               body: 'Automatic backup is not available in the web version. '
@@ -346,7 +347,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           const SizedBox(height: 10),
 
           _InfoCard(
-            icon: Icons.shield_outlined,
+            icon: HuddlIcons.shield,
             iconColor: HuddlColors.nearBlack,
             title: 'What is included',
             body: 'All messages, photos, groups, polls, meetups, events, '
@@ -359,7 +360,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
           // Export card
           _ActionCard(
-            icon: Icons.upload_outlined,
+            icon: HuddlIcons.upload,
             iconColor: HuddlColors.textDark,
             title: 'Export backup',
             subtitle: _lastBackup != null
@@ -374,7 +375,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
           // Import card
           _ActionCard(
-            icon: Icons.download_outlined,
+            icon: HuddlIcons.download,
             iconColor: HuddlColors.nearBlack,
             title: 'Restore from backup',
             subtitle: 'Paste the contents of a previous backup file to '
@@ -452,7 +453,7 @@ class _AutoBackupStatusCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              kIsWeb ? Icons.info_outline : Icons.cloud_done_outlined,
+              kIsWeb ? HuddlIcons.info : HuddlIcons.cloudDone,
               color: kIsWeb ? HuddlColors.primary : HuddlColors.nearBlack,
               size: 22,
             ),
@@ -634,7 +635,7 @@ class _ExportResultSheet extends StatelessWidget {
                   color: HuddlColors.nearBlack.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle_outline,
+                child: const Icon(HuddlIcons.checkCircle,
                     color: HuddlColors.nearBlack, size: 22),
               ),
               const SizedBox(width: 12),
@@ -692,7 +693,7 @@ class _ExportResultSheet extends StatelessWidget {
             label: 'Copy backup to clipboard',
             variant: HuddlButtonVariant.primary,
             fullWidth: true,
-            leadingIcon: Icons.copy,
+            leadingIcon: HuddlIcons.copy,
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: json));
               if (context.mounted) {
@@ -750,7 +751,7 @@ class _StorageDetailCard extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  Icon(Icons.storage_outlined,
+                  Icon(HuddlIcons.storage,
                       size: 16,
                       color: HuddlColors.textTertiary),
                   const SizedBox(width: 12),
@@ -765,7 +766,7 @@ class _StorageDetailCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.check_circle,
+                  const Icon(HuddlIcons.checkCircle,
                       size: 16, color: HuddlColors.nearBlack),
                 ],
               ),
@@ -810,7 +811,7 @@ class _TipsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.lightbulb_outline,
+              const Icon(HuddlIcons.lightbulb,
                   color: HuddlColors.primary, size: 18),
               const SizedBox(width: 8),
               Text('Tips',
@@ -824,7 +825,7 @@ class _TipsCard extends StatelessWidget {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(top: 5),
-                  child: Icon(Icons.circle,
+                  child: Icon(HuddlIcons.circleFill,
                       size: 5, color: HuddlColors.primary),
                 ),
                 const SizedBox(width: 8),

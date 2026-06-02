@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -96,23 +97,23 @@ extension AgeStageExt on AgeStage {
   IconData get icon {
     switch (this) {
       case AgeStage.newborn:
-        return Icons.child_friendly;
+        return HuddlIcons.childFriendly;
       case AgeStage.baby0to12:
-        return Icons.baby_changing_station;
+        return HuddlIcons.baby;
       case AgeStage.baby1to2:
-        return Icons.directions_walk;
+        return HuddlIcons.walk;
       case AgeStage.toddler:
-        return Icons.toys;
+        return HuddlIcons.toys;
       case AgeStage.earlyYears:
-        return Icons.school;
+        return HuddlIcons.school;
       case AgeStage.kids:
-        return Icons.sports_soccer;
+        return HuddlIcons.soccer;
       case AgeStage.olderKids:
-        return Icons.backpack;
+        return HuddlIcons.backpack;
       case AgeStage.maternity:
-        return Icons.pregnant_woman;
+        return HuddlIcons.pregnant;
       case AgeStage.allAges:
-        return Icons.all_inclusive;
+        return HuddlIcons.allInclusive;
     }
   }
 }
@@ -163,25 +164,25 @@ extension ItemCategoryExt on ItemCategory {
   IconData get icon {
     switch (this) {
       case ItemCategory.boysClothes:
-        return Icons.checkroom;
+        return HuddlIcons.wardrobe;
       case ItemCategory.girlsClothes:
-        return Icons.checkroom;
+        return HuddlIcons.wardrobe;
       case ItemCategory.toysAndGames:
-        return Icons.extension;
+        return HuddlIcons.extension;
       case ItemCategory.pushchairsAndPrams:
-        return Icons.child_friendly;
+        return HuddlIcons.childFriendly;
       case ItemCategory.forTheCar:
-        return Icons.directions_car;
+        return HuddlIcons.work;
       case ItemCategory.furniture:
-        return Icons.chair;
+        return HuddlIcons.chair;
       case ItemCategory.books:
-        return Icons.auto_stories;
+        return HuddlIcons.books;
       case ItemCategory.maternity:
-        return Icons.pregnant_woman;
+        return HuddlIcons.pregnant;
       case ItemCategory.babyCareAndAccessories:
-        return Icons.baby_changing_station;
+        return HuddlIcons.baby;
       case ItemCategory.other:
-        return Icons.more_horiz;
+        return HuddlIcons.moreHoriz;
     }
   }
 
@@ -247,13 +248,13 @@ extension ItemConditionExt on ItemCondition {
   IconData get icon {
     switch (this) {
       case ItemCondition.brandNew:
-        return Icons.auto_awesome;
+        return HuddlIcons.ai;
       case ItemCondition.likeNew:
-        return Icons.star_outline;
+        return HuddlIcons.star;
       case ItemCondition.good:
-        return Icons.thumb_up_outlined;
+        return HuddlIcons.thumbUp;
       case ItemCondition.wellUsed:
-        return Icons.replay_outlined;
+        return HuddlIcons.replay;
     }
   }
 

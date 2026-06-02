@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
 import '../theme/huddl_animations.dart';
 import '../constants/app_text_styles.dart';
@@ -95,7 +96,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
               _DialItem(
                 animation:  _fade,
                 delay:      0.0,
-                icon:       Icons.storefront_rounded,
+                icon:       HuddlIcons.storefrontFill,
                 label:      'Local Services',
                 color:      HuddlColors.primaryLight,  // soft warm orange
                 onPressed:  () => _onAction(widget.onServicesPressed),
@@ -104,7 +105,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
               _DialItem(
                 animation:  _fade,
                 delay:      0.05,
-                icon:       Icons.accessibility_new_rounded,
+                icon:       HuddlIcons.accessibility,
                 label:      'SEND Navigator',
                 color:      HuddlColors.success,        // teal — accessibility
                 onPressed:  () => _onAction(widget.onSendPressed),
@@ -113,7 +114,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
               _DialItem(
                 animation:  _fade,
                 delay:      0.1,
-                icon:       Icons.auto_awesome_rounded,
+                icon:       HuddlIcons.ai,
                 label:      'Huddl Wisdom',
                 color:      HuddlColors.primary,    // amber — wisdom
                 onPressed:  () => _onAction(widget.onInsightsPressed),
@@ -122,7 +123,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
               _DialItem(
                 animation:  _fade,
                 delay:      0.15,
-                icon:       Icons.smart_toy_outlined,
+                icon:       HuddlIcons.robot,
                 label:      'AI Copilot',
                 color:      HuddlColors.primary,        // brand orange — AI
                 onPressed:  () => _onAction(widget.onAiPressed),
@@ -146,7 +147,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Icon(
-                _open ? Icons.close_rounded : Icons.add_rounded,
+                _open ? HuddlIcons.close : HuddlIcons.add,
                 key: ValueKey(_open),
                 size: 26,
               ),

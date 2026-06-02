@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -14,7 +15,7 @@ class TermsOfServiceScreen extends StatelessWidget {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left,
+          icon: const Icon(HuddlIcons.caretLeft,
               size: 30, color: HuddlColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
@@ -794,7 +795,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
       ),
       child: Row(
         children: [
-          const Icon(Icons.update, color: HuddlColors.textDark, size: 20),
+          const Icon(HuddlIcons.refresh, color: HuddlColors.textDark, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -829,7 +830,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
         children: [
           Row(
             children: [
-              const Icon(Icons.description, color: HuddlColors.textDark, size: 22),
+              const Icon(HuddlIcons.description, color: HuddlColors.textDark, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -887,7 +888,7 @@ Cruzen Ltd makes no warranty that the analytics data will accurately reflect com
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_rounded, color: HuddlColors.warning, size: 22),
+              const Icon(HuddlIcons.warningFill, color: HuddlColors.warning, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

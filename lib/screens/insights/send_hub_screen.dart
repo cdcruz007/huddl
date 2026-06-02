@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -167,7 +168,7 @@ class _SendHeader extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                    icon: const Icon(HuddlIcons.arrowBack, size: 18),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -181,7 +182,7 @@ class _SendHeader extends StatelessWidget {
                       color: _kSendAccent,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.diversity_3,
+                    child: const Icon(HuddlIcons.diversity,
                         color: Colors.white, size: 16),
                   ),
                   const SizedBox(width: 10),
@@ -314,7 +315,7 @@ class _EhcpNavigatorTabState extends State<_EhcpNavigatorTab> {
         children: [
           // ── Stage picker ─────────────────────────────────────────────────
           _SectionLabel(
-            icon: Icons.assignment,
+            icon: HuddlIcons.assignment,
             label: 'Where are you in the EHCP process?',
           ),
           const SizedBox(height: 10),
@@ -418,8 +419,8 @@ class _StagePickerItem extends StatelessWidget {
             ),
             Icon(
               isSelected
-                  ? Icons.check_circle
-                  : Icons.radio_button_unchecked,
+                  ? HuddlIcons.checkCircle
+                  : HuddlIcons.radioOff,
               color: isSelected ? color : HuddlColors.textHint,
               size: 20,
             ),
@@ -444,7 +445,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Headline ──────────────────────────────────────────────────────
-        _SectionLabel(icon: Icons.lightbulb_outline, label: g.headline),
+        _SectionLabel(icon: HuddlIcons.lightbulb, label: g.headline),
         const SizedBox(height: 10),
 
         // ── Timeline note ─────────────────────────────────────────────────
@@ -460,7 +461,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.access_time,
+              const Icon(HuddlIcons.clock,
                   size: 16, color: HuddlColors.warning),
               const SizedBox(width: 8),
               Expanded(
@@ -475,7 +476,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
         const SizedBox(height: 16),
 
         // ── Next steps ────────────────────────────────────────────────────
-        _SectionLabel(icon: Icons.checklist_rounded, label: 'Next steps'),
+        _SectionLabel(icon: HuddlIcons.checklist, label: 'Next steps'),
         const SizedBox(height: 8),
         ...g.nextSteps.asMap().entries.map((e) => _NumberedStep(
               number: e.key + 1,
@@ -484,7 +485,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
         const SizedBox(height: 16),
 
         // ── Your rights ───────────────────────────────────────────────────
-        _SectionLabel(icon: Icons.gavel_rounded, label: 'Your legal rights'),
+        _SectionLabel(icon: HuddlIcons.gavel, label: 'Your legal rights'),
         const SizedBox(height: 8),
         ...g.yourRights.map((r) => _RightItem(text: r)),
         const SizedBox(height: 16),
@@ -505,7 +506,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.description_outlined,
+                const Icon(HuddlIcons.description,
                     size: 16, color: HuddlColors.nearBlack),
                 const SizedBox(width: 8),
                 Expanded(
@@ -522,7 +523,7 @@ class _EhcpGuidancePanel extends StatelessWidget {
 
         // ── Resources ──────────────────────────────────────────────────────
         _SectionLabel(
-            icon: Icons.volunteer_activism_outlined,
+            icon: HuddlIcons.volunteerActivism,
             label: 'Recommended support'),
         const SizedBox(height: 8),
         ...g.resources.map((r) => _ResourceCard(resource: r)),
@@ -584,7 +585,7 @@ class _RightItem extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 3),
-            child: Icon(Icons.shield_outlined,
+            child: Icon(HuddlIcons.shield,
                 size: 14, color: _kSendCrimson),
           ),
           const SizedBox(width: 8),
@@ -637,8 +638,8 @@ class _ResourceCard extends StatelessWidget {
             children: [
               Icon(
                 resource.isCharity
-                    ? Icons.favorite_outline
-                    : Icons.account_balance_outlined,
+                    ? HuddlIcons.heart
+                    : HuddlIcons.bank,
                 size: 14,
                 color: resource.isCharity
                     ? _kSendCrimson
@@ -665,7 +666,7 @@ class _ResourceCard extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: Row(
                 children: [
-                  const Icon(Icons.phone_outlined,
+                  const Icon(HuddlIcons.phone,
                       size: 12, color: HuddlColors.textHint),
                   const SizedBox(width: 4),
                   Text(
@@ -682,7 +683,7 @@ class _ResourceCard extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             child: Row(
               children: [
-                const Icon(Icons.open_in_new, size: 11, color: HuddlColors.textHint),
+                const Icon(HuddlIcons.openInNew, size: 11, color: HuddlColors.textHint),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -1048,7 +1049,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
                 const SizedBox(width: 2),
                 IconButton(
                   onPressed: _clearChat,
-                  icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                  icon: const Icon(HuddlIcons.delete, size: 18),
                   color: HuddlColors.textHint,
                   tooltip: 'Clear conversation',
                   padding: EdgeInsets.zero,
@@ -1130,7 +1131,7 @@ class _SendAiConsentGate extends StatelessWidget {
                 color: _kSendAccent.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.privacy_tip_outlined,
+              child: const Icon(HuddlIcons.privacy,
                   color: _kSendAccent, size: 30),
             ),
           ),
@@ -1154,7 +1155,7 @@ class _SendAiConsentGate extends StatelessWidget {
 
           // ── What it is ────────────────────────────────────────────────
           _ConsentSection(
-            icon: Icons.auto_awesome_outlined,
+            icon: HuddlIcons.ai,
             color: _kSendAccent,
             title: 'What this AI Advisor is',
             body: 'A conversational AI assistant informed by publicly '
@@ -1167,7 +1168,7 @@ class _SendAiConsentGate extends StatelessWidget {
 
           // ── What it isn't ─────────────────────────────────────────────
           _ConsentSection(
-            icon: Icons.gavel_outlined,
+            icon: HuddlIcons.gavel,
             color: _kSendCrimson,
             title: 'What it is NOT',
             body: 'It is not a solicitor, not a therapist, and not a '
@@ -1180,7 +1181,7 @@ class _SendAiConsentGate extends StatelessWidget {
 
           // ── Data & infrastructure ─────────────────────────────────────
           _ConsentSection(
-            icon: Icons.cloud_outlined,
+            icon: HuddlIcons.cloud,
             color: HuddlColors.nearBlack,
             title: 'How your messages are processed',
             body: 'Your messages are sent to Google\'s AI infrastructure '
@@ -1195,7 +1196,7 @@ class _SendAiConsentGate extends StatelessWidget {
 
           // ── Special category data ─────────────────────────────────────
           _ConsentSection(
-            icon: Icons.shield_outlined,
+            icon: HuddlIcons.shield,
             color: HuddlColors.warning,
             title: 'Special category data (GDPR Article 9)',
             body: 'Questions about your child\'s disability, diagnosis, or '
@@ -1210,7 +1211,7 @@ class _SendAiConsentGate extends StatelessWidget {
 
           // ── Crisis & safeguarding ─────────────────────────────────────
           _ConsentSection(
-            icon: Icons.favorite_outline,
+            icon: HuddlIcons.heart,
             color: _kSendCrimson,
             title: 'If you\'re in crisis',
             body: 'If you or your child are in immediate danger, please '
@@ -1342,7 +1343,7 @@ class _AiDisclaimerStripState extends State<_AiDisclaimerStrip> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded,
+          const Icon(HuddlIcons.info,
               size: 13, color: HuddlColors.warning),
           const SizedBox(width: 7),
           Expanded(
@@ -1355,7 +1356,7 @@ class _AiDisclaimerStripState extends State<_AiDisclaimerStrip> {
             onTap: () => setState(() => _dismissed = true),
             child: const Padding(
               padding: EdgeInsets.only(left: 8),
-              child: Icon(Icons.close_rounded,
+              child: Icon(HuddlIcons.close,
                   size: 14, color: HuddlColors.warningDark),
             ),
           ),
@@ -1405,7 +1406,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
               color: _kSendCrimson.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.favorite_outline,
+            child: const Icon(HuddlIcons.heart,
                 color: _kSendCrimson, size: 26),
           ),
           const SizedBox(height: 14),
@@ -1427,7 +1428,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
 
           // ── Emergency ──────────────────────────────────────────────────
           _CrisisContactCard(
-            icon: Icons.emergency_outlined,
+            icon: HuddlIcons.emergency,
             color: HuddlColors.error,
             label: 'Immediate danger',
             name: 'Emergency services',
@@ -1437,7 +1438,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
 
           // ── Contact helpline ───────────────────────────────────────────
           _CrisisContactCard(
-            icon: Icons.phone_in_talk_outlined,
+            icon: HuddlIcons.phone,
             color: _kSendAccent,
             label: 'Free SEND family helpline',
             name: 'Contact charity',
@@ -1447,7 +1448,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
 
           // ── Samaritans ─────────────────────────────────────────────────
           _CrisisContactCard(
-            icon: Icons.support_agent_outlined,
+            icon: HuddlIcons.support,
             color: HuddlColors.nearBlack,
             label: 'Emotional support — 24 / 7',
             name: 'Samaritans',
@@ -1457,7 +1458,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
 
           // ── GP ─────────────────────────────────────────────────────────
           _CrisisContactCard(
-            icon: Icons.local_hospital_outlined,
+            icon: HuddlIcons.medical,
             color: HuddlColors.nearBlack,
             label: 'Non-emergency medical / mental health',
             name: 'Your GP or NHS 111',
@@ -1574,7 +1575,7 @@ class _AdvisorModeToggle extends StatelessWidget {
         children: [
           _SegmentButton(
             label: 'EHCP Advisor',
-            icon: Icons.school_outlined,
+            icon: HuddlIcons.school,
             isActive: !isAnon,
             activeColor: _kSendAccent,
             selectedBg: selectedBg,
@@ -1584,7 +1585,7 @@ class _AdvisorModeToggle extends StatelessWidget {
           ),
           _SegmentButton(
             label: 'Anonymous Q&A',
-            icon: Icons.visibility_off_outlined,
+            icon: HuddlIcons.visibilityOff,
             isActive: isAnon,
             activeColor: _kSendAccent,
             selectedBg: selectedBg,
@@ -1693,7 +1694,7 @@ class _StageContextPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.layers_outlined, size: 11, color: _kSendAccent),
+            const Icon(HuddlIcons.layers, size: 11, color: _kSendAccent),
             const SizedBox(width: 4),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 80),
@@ -1704,7 +1705,7 @@ class _StageContextPill extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 3),
-            const Icon(Icons.edit_outlined, size: 10, color: _kSendAccent),
+            const Icon(HuddlIcons.edit, size: 10, color: _kSendAccent),
           ],
         ),
       ),
@@ -1823,7 +1824,7 @@ class _EmptyChat extends StatelessWidget {
                       style: HuddlText.body(color: HuddlColors.textDark),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios_rounded,
+                  Icon(HuddlIcons.arrowForward,
                       size: 12, color: HuddlColors.textHint),
                 ],
               ),
@@ -1888,7 +1889,7 @@ class _ChatBubble extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.wifi_off_rounded,
+                  const Icon(HuddlIcons.wifiOff,
                       size: 14, color: HuddlColors.error),
                   const SizedBox(width: 6),
                   Text(
@@ -2143,7 +2144,7 @@ class _SendButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: Colors.white),
               )
-            : const Icon(Icons.send_rounded,
+            : const Icon(HuddlIcons.send,
                 color: Colors.white, size: 18),
       ),
     );
@@ -2268,7 +2269,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                 // Date picker
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today_outlined,
+                  leading: const Icon(HuddlIcons.calendar,
                       size: 18),
                   title: Text(
                     _formatDate(pickedDate),
@@ -2366,7 +2367,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
               HuddlButton(
                 label: 'Add',
                 variant: HuddlButtonVariant.primary,
-                leadingIcon: Icons.add,
+                leadingIcon: HuddlIcons.add,
                 fullWidth: false,
                 onPressed: _showAddDialog,
               ),
@@ -2427,12 +2428,12 @@ class _DeadlineCard extends StatelessWidget {
   }
 
   static IconData _categoryIcon(DeadlineCategory c) => switch (c) {
-        DeadlineCategory.schoolApplication => Icons.school_outlined,
-        DeadlineCategory.ehcpReview => Icons.assignment_outlined,
-        DeadlineCategory.appealWindow => Icons.gavel_outlined,
-        DeadlineCategory.tribunalHearing => Icons.balance_outlined,
-        DeadlineCategory.fundingApplication => Icons.account_balance_outlined,
-        DeadlineCategory.other => Icons.event_outlined,
+        DeadlineCategory.schoolApplication => HuddlIcons.school,
+        DeadlineCategory.ehcpReview => HuddlIcons.assignment,
+        DeadlineCategory.appealWindow => HuddlIcons.gavel,
+        DeadlineCategory.tribunalHearing => HuddlIcons.balance,
+        DeadlineCategory.fundingApplication => HuddlIcons.bank,
+        DeadlineCategory.other => HuddlIcons.calendar,
       };
 
   @override
@@ -2451,7 +2452,7 @@ class _DeadlineCard extends StatelessWidget {
           color: HuddlColors.errorLight,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline, color: HuddlColors.error),
+        child: const Icon(HuddlIcons.delete, color: HuddlColors.error),
       ),
       onDismissed: (_) => onDelete(),
       child: Container(
@@ -2531,7 +2532,7 @@ class _DeadlineCard extends StatelessWidget {
                   ),
                 ),
                 child: deadline.isCompleted
-                    ? const Icon(Icons.check,
+                    ? const Icon(HuddlIcons.check,
                         size: 14, color: Colors.white)
                     : null,
               ),
@@ -2683,8 +2684,8 @@ class _DirectoryCard extends StatelessWidget {
                 ),
                 child: Icon(
                   resource.isCharity
-                      ? Icons.volunteer_activism_outlined
-                      : Icons.account_balance_outlined,
+                      ? HuddlIcons.volunteerActivism
+                      : HuddlIcons.bank,
                   size: 18,
                   color: resource.isCharity
                       ? _kSendCrimson
@@ -2726,7 +2727,7 @@ class _DirectoryCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    const Icon(Icons.phone_outlined,
+                    const Icon(HuddlIcons.phone,
                         size: 13, color: HuddlColors.textHint),
                     const SizedBox(width: 5),
                     Text(
@@ -2746,7 +2747,7 @@ class _DirectoryCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.open_in_new,
+                  const Icon(HuddlIcons.openInNew,
                       size: 12, color: HuddlColors.textHint),
                   const SizedBox(width: 5),
                   Expanded(

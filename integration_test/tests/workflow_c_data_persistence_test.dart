@@ -122,7 +122,7 @@ void main() {
       await _goToMyHuddl(tester);
 
       // Look for Saved / Bookmarks tab
-      final savedTab = find.text(RegExp(r'(Saved|Bookmarks|Wishlist)',
+      final savedTab = find.textContaining(RegExp(r'(Saved|Bookmarks|Wishlist)',
           caseSensitive: false));
       if (savedTab.evaluate().isNotEmpty) {
         await tester.tap(savedTab.first);
@@ -130,7 +130,7 @@ void main() {
 
         // Either a list of saved items or an empty state
         final hasContent = find.byType(ListView).evaluate().isNotEmpty ||
-            find.text(RegExp(r'(No saved|Nothing saved|empty)',
+            find.textContaining(RegExp(r'(No saved|Nothing saved|empty)',
                     caseSensitive: false))
                 .evaluate()
                 .isNotEmpty;

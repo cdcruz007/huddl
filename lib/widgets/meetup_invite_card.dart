@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 import '../services/meetup_service.dart';
@@ -163,8 +164,8 @@ class MeetupInviteCard extends StatelessWidget {
                                   children: [
                                     Icon(
                                       privacy == MeetupPrivacy.group
-                                          ? Icons.group
-                                          : Icons.lock,
+                                          ? HuddlIcons.usersThree
+                                          : HuddlIcons.lockFill,
                                       size: 12,
                                       color: context.hc.surface,
                                     ),
@@ -207,7 +208,7 @@ class MeetupInviteCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.people, size: 13, color: HuddlColors.white),
+                            const Icon(HuddlIcons.usersThree, size: 13, color: HuddlColors.white),
                             const SizedBox(width: 4),
                             Text(
                               '$attendeeCount${maxAttendees != null ? '/$maxAttendees' : ''} going',
@@ -236,7 +237,7 @@ class MeetupInviteCard extends StatelessWidget {
                       // Date + time
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined,
+                          Icon(HuddlIcons.calendar,
                               size: 13, color: catStyle.color),
                           const SizedBox(width: 5),
                           Text(
@@ -244,7 +245,7 @@ class MeetupInviteCard extends StatelessWidget {
                             style: HuddlText.caption(),
                           ),
                           const SizedBox(width: 10),
-                          Icon(Icons.access_time,
+                          Icon(HuddlIcons.clock,
                               size: 13, color: catStyle.color),
                           const SizedBox(width: 4),
                           Flexible(
@@ -261,7 +262,7 @@ class MeetupInviteCard extends StatelessWidget {
                       // Location
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined,
+                          Icon(HuddlIcons.locationPin,
                               size: 13, color: catStyle.color),
                           const SizedBox(width: 5),
                           Expanded(
@@ -307,7 +308,7 @@ class MeetupInviteCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.open_in_new, size: 12, color: catStyle.color),
+                                Icon(HuddlIcons.openInNew, size: 12, color: catStyle.color),
                                 const SizedBox(width: 4),
                                 Text(
                                   'View',
@@ -458,20 +459,20 @@ class _CatStyle {
 _CatStyle _getCatStyle(String category) {
   switch (category) {
     case 'Coffee':
-      return const _CatStyle(HuddlColors.primaryDark, Icons.coffee);
+      return const _CatStyle(HuddlColors.primaryDark, HuddlIcons.coffee);
     case 'Playdate':
-      return const _CatStyle(HuddlColors.primary, Icons.child_care);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.childCare);
     case 'Sport':
-      return const _CatStyle(HuddlColors.nearBlack, Icons.sports_golf);
+      return const _CatStyle(HuddlColors.nearBlack, HuddlIcons.golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.primary, Icons.directions_walk);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.walk);
     case 'Social':
-      return const _CatStyle(HuddlColors.primary, Icons.celebration);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.celebration);
     case 'Food':
-      return const _CatStyle(HuddlColors.primary, Icons.restaurant);
+      return const _CatStyle(HuddlColors.primary, HuddlIcons.restaurant);
     case 'Other':
-      return const _CatStyle(HuddlColors.nearBlack, Icons.more_horiz);
+      return const _CatStyle(HuddlColors.nearBlack, HuddlIcons.moreHoriz);
     default:
-      return const _CatStyle(HuddlColors.nearBlack, Icons.groups);
+      return const _CatStyle(HuddlColors.nearBlack, HuddlIcons.usersThree);
   }
 }

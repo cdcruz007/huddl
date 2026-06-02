@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -346,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: HuddlColors.neutral50,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.waving_hand_rounded,
+              child: Icon(HuddlIcons.wavingHandFill,
                   size: 22, color: HuddlColors.textSecondary),
             ),
             const SizedBox(width: 12),
@@ -397,7 +398,7 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: context.hc.textPrimary, size: 20),
+          icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -603,8 +604,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: IconButton(
                               icon: Icon(
                                 _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
+                                    ? HuddlIcons.visibilityOff
+                                    : HuddlIcons.visibility,
                                 size: 20,
                                 color: context.hc.textTertiary,
                               ),
@@ -983,8 +984,8 @@ class _BiometricLoginButton extends StatelessWidget {
           children: [
             Icon(
               isFaceId
-                  ? Icons.face_retouching_natural_rounded
-                  : Icons.fingerprint_rounded,
+                  ? HuddlIcons.faceRetouching
+                  : HuddlIcons.fingerprint,
               size: 26,
               color: context.hc.textSecondary,
             ),

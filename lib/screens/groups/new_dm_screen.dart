@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/huddl_user_service.dart';
@@ -118,7 +119,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: Icon(Icons.close, color: context.hc.textPrimary),
+          icon: Icon(HuddlIcons.close, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -140,7 +141,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline,
+                        Icon(HuddlIcons.error,
                             size: 48, color: context.hc.textTertiary),
                         const SizedBox(height: 16),
                         Text(
@@ -172,7 +173,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                         child: Row(
                           children: [
                             const SizedBox(width: 14),
-                            Icon(Icons.search,
+                            Icon(HuddlIcons.search,
                                 size: 20, color: context.hc.textTertiary),
                             const SizedBox(width: 8),
                             Expanded(
@@ -199,7 +200,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
-                                  child: Icon(Icons.close,
+                                  child: Icon(HuddlIcons.close,
                                       size: 18, color: context.hc.textTertiary),
                                 ),
                               ),
@@ -227,7 +228,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.person_search,
+                                  Icon(HuddlIcons.personSearchIcon,
                                       size: 48, color: context.hc.textTertiary),
                                   const SizedBox(height: 12),
                                   Text(
@@ -334,7 +335,7 @@ class _MemberTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
             ],
-            Icon(Icons.chat_bubble_outline,
+            Icon(HuddlIcons.chat,
                 size: 20, color: context.hc.textTertiary),
           ],
         ),

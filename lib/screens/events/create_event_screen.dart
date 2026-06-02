@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -71,12 +72,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   // ── Categories ──
   static const _categories = [
-    {'label': 'Workshop', 'icon': Icons.school},
-    {'label': 'Class', 'icon': Icons.music_note},
-    {'label': 'Play', 'icon': Icons.child_care},
-    {'label': 'Health', 'icon': Icons.medical_services_outlined},
-    {'label': 'Community', 'icon': Icons.celebration},
-    {'label': 'Other', 'icon': Icons.event},
+    {'label': 'Workshop', 'icon': HuddlIcons.school},
+    {'label': 'Class', 'icon': HuddlIcons.musicNote},
+    {'label': 'Play', 'icon': HuddlIcons.childCare},
+    {'label': 'Health', 'icon': HuddlIcons.medical},
+    {'label': 'Community', 'icon': HuddlIcons.celebration},
+    {'label': 'Other', 'icon': HuddlIcons.calendar},
   ];
 
   final _eventService = EventService();
@@ -181,7 +182,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
             ),
             ListTile(
-              leading: Icon(_isCreating ? Icons.hourglass_top : Icons.save_outlined,
+              leading: Icon(_isCreating ? HuddlIcons.hourglass : HuddlIcons.save,
                   color: context.hc.textPrimary),
               title: Text(_isCreating ? 'Saving...' : 'Save as draft',
                   style: HuddlText.body()),
@@ -191,7 +192,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline,
+              leading: const Icon(HuddlIcons.delete,
                   color: HuddlColors.error),
               title: Text('Discard',
                   style: HuddlText.body(color: HuddlColors.error)),
@@ -335,7 +336,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 decoration: BoxDecoration(
                     color: HuddlColors.neutral50,
                     shape: BoxShape.circle),
-                child: const Icon(Icons.photo_library_outlined,
+                child: const Icon(HuddlIcons.photoLibrary,
                     color: HuddlColors.textDark),
               ),
               title: const Text('Choose from gallery',
@@ -352,7 +353,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 decoration: BoxDecoration(
                     color: HuddlColors.neutral50,
                     shape: BoxShape.circle),
-                child: const Icon(Icons.camera_alt_outlined,
+                child: const Icon(HuddlIcons.camera,
                     color: HuddlColors.textDark),
               ),
               title: const Text('Take a photo',
@@ -447,7 +448,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     // Map category to color/icon for Event model
     // Design rule: no per-category colour coding — nearBlack for all types
     const Color catColor = HuddlColors.nearBlack;
-    IconData catIcon = Icons.event;
+    IconData catIcon = HuddlIcons.calendar;
     for (final cat in _categories) {
       if (cat['label'] == _category) {
         catIcon = cat['icon'] as IconData;
@@ -507,7 +508,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [
-        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+        const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
         const SizedBox(width: 8),
         Expanded(
             child: Text('"${event.title}" created successfully!')),
@@ -544,7 +545,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   color: HuddlColors.gray100,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.chevron_left,
+                child: Icon(HuddlIcons.caretLeft,
                     size: 26, color: context.hc.textPrimary),
               ),
             ),
@@ -568,7 +569,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     color: HuddlColors.gray100,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.more_horiz,
+                  child: Icon(HuddlIcons.moreHoriz,
                       size: 22, color: context.hc.textPrimary),
                 ),
               ),
@@ -649,7 +650,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ? _formatDate(_startDate!)
                     : null,
                 hint: 'Start date',
-                icon: Icons.calendar_today_outlined,
+                icon: HuddlIcons.calendar,
                 iconColor: HuddlColors.textDark,
                 onTap: _pickStartDate,
               ),
@@ -663,7 +664,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ? _formatTime(_startTime!)
                     : null,
                 hint: 'Start time',
-                icon: Icons.access_time,
+                icon: HuddlIcons.clock,
                 iconColor: HuddlColors.textHint,
                 onTap: _pickStartTime,
               ),
@@ -686,7 +687,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ? _formatDate(_endDate!)
                       : null,
                   hint: 'End date',
-                  icon: Icons.calendar_today_outlined,
+                  icon: HuddlIcons.calendar,
                   iconColor: HuddlColors.textDark,
                   onTap: _pickEndDate,
                 ),
@@ -709,7 +710,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ? _formatTime(_endTime!)
                       : null,
                   hint: 'End time',
-                  icon: Icons.access_time,
+                  icon: HuddlIcons.clock,
                   iconColor: HuddlColors.textHint,
                   onTap: _pickEndTime,
                 ),
@@ -884,7 +885,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           _maxAttendees = (_maxAttendees ?? 0) + 5;
                         });
                       },
-                      child: const Icon(Icons.add,
+                      child: const Icon(HuddlIcons.add,
                           color: HuddlColors.primary, size: 22),
                     ),
                   ],
@@ -967,7 +968,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                   child:
                       Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.edit,
+                    const Icon(HuddlIcons.edit,
                         size: 14, color: Colors.white),
                     const SizedBox(width: 4),
                     Text('Change',
@@ -1005,7 +1006,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.image_outlined,
+                  Icon(HuddlIcons.image,
                       size: 28,
                       color: HuddlColors.textHint),
                   Positioned(
@@ -1018,7 +1019,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         color: HuddlColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add,
+                      child: const Icon(HuddlIcons.add,
                           size: 12, color: Colors.white),
                     ),
                   ),
@@ -1039,7 +1040,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       color: HuddlColors.neutral50,
       child: Center(
         child:
-            Icon(Icons.image_outlined, size: 48, color: HuddlColors.textHint),
+            Icon(HuddlIcons.image, size: 48, color: HuddlColors.textHint),
       ),
     );
   }
@@ -1142,7 +1143,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 style: HuddlText.body(),
               ),
             ),
-            const Icon(Icons.add, size: 20, color: HuddlColors.textDark),
+            const Icon(HuddlIcons.add, size: 20, color: HuddlColors.textDark),
           ],
         ),
       ),
@@ -1201,7 +1202,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ),
       ),
       child: checked
-          ? const Icon(Icons.check, size: 16, color: Colors.white)
+          ? const Icon(HuddlIcons.check, size: 16, color: Colors.white)
           : null,
     );
   }
@@ -1287,7 +1288,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.info_outline,
+            const Icon(HuddlIcons.info,
                 size: 16, color: HuddlColors.textDark),
             const SizedBox(width: 8),
             Expanded(
@@ -1318,7 +1319,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           isExpanded: true,
           hint: Text('Select a group',
               style: HuddlText.body(color: context.hc.textTertiary)),
-          icon: Icon(Icons.keyboard_arrow_down,
+          icon: Icon(HuddlIcons.caretDown,
               color: _selectedGroupId != null
                   ? HuddlColors.primary
                   : HuddlColors.textHint),
@@ -1337,7 +1338,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(
-                      child: Icon(Icons.people,
+                      child: Icon(HuddlIcons.usersThree,
                           size: 14, color: HuddlColors.textDark),
                     ),
                   ),

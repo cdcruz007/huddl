@@ -166,7 +166,7 @@ void main() {
       // Either a BottomSheet or AlertDialog should appear
       final hasSheet = find.byType(BottomSheet).evaluate().isNotEmpty ||
           find.byType(AlertDialog).evaluate().isNotEmpty ||
-          find.text(RegExp(r'(Reply|Thread|React|Save|Copy|Delete)',
+          find.textContaining(RegExp(r'(Reply|Thread|React|Save|Copy|Delete)',
                   caseSensitive: false))
               .evaluate()
               .isNotEmpty;
@@ -200,7 +200,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // Look for Save in action sheet
-      final saveOption = find.text(RegExp(r'save', caseSensitive: false));
+      final saveOption = find.textContaining(RegExp(r'save', caseSensitive: false));
       if (saveOption.evaluate().isNotEmpty) {
         await tester.tap(saveOption.first);
         await tester.pumpAndSettle(const Duration(seconds: 2));
@@ -226,7 +226,7 @@ void main() {
       }
 
       // Try DM / Messages tab
-      final dmTab = find.text(RegExp(r'(DM|Direct|Messages|Inbox)',
+      final dmTab = find.textContaining(RegExp(r'(DM|Direct|Messages|Inbox)',
           caseSensitive: false));
       if (dmTab.evaluate().isNotEmpty) {
         await tester.tap(dmTab.first);

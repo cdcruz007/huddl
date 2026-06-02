@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/common/huddl_logo.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -186,7 +187,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Icon(
-                                Icons.people,
+                                HuddlIcons.usersThree,
                                 color: HuddlColors.infoBlue,
                                 size: 22,
                               ),
@@ -253,7 +254,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
                                         ),
                                         child: const Center(
                                           child: Icon(
-                                            Icons.people_alt_rounded,
+                                            HuddlIcons.usersThree,
                                             size: 16,
                                             color: HuddlColors.infoBlue,
                                           ),

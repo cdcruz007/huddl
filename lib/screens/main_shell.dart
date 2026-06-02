@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -140,7 +141,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           duration: const Duration(seconds: 4),
           content: Row(
             children: [
-              const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
+              const Icon(HuddlIcons.bellFill, color: Colors.white, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -421,11 +422,11 @@ class _HuddlFloatingNavBar extends StatefulWidget {
 
 class _HuddlFloatingNavBarState extends State<_HuddlFloatingNavBar> {
   static const _tabs = [
-    _TabDef(Icons.home_outlined,       Icons.home,         'Home'),
-    _TabDef(Icons.people_outline,      Icons.people,       'Connect'),
-    _TabDef(Icons.explore_outlined,    Icons.explore,      'Discover'),
-    _TabDef(Icons.storefront_outlined, Icons.storefront,   'Market'),
-    _TabDef(Icons.person_outline,      Icons.person,       'Profile'),
+    _TabDef(HuddlIcons.home,       HuddlIcons.home,         'Home'),
+    _TabDef(HuddlIcons.usersThree,      HuddlIcons.usersThree,       'Connect'),
+    _TabDef(HuddlIcons.exploreOutlined,    HuddlIcons.explore,      'Discover'),
+    _TabDef(HuddlIcons.storefront, HuddlIcons.storefront,   'Market'),
+    _TabDef(HuddlIcons.user,      HuddlIcons.user,       'Profile'),
   ];
 
   @override

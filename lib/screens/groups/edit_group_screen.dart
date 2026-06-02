@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -142,7 +143,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                   color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.photo_library_outlined, color: HuddlColors.textDark),
+                child: const Icon(HuddlIcons.photoLibrary, color: HuddlColors.textDark),
               ),
               title: Text('Choose from gallery',
                 style: HuddlText.body()),
@@ -160,7 +161,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     color: HuddlColors.neutral50,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.textDark),
+                  child: const Icon(HuddlIcons.camera, color: HuddlColors.textDark),
                 ),
                 title: Text('Take a photo',
                   style: HuddlText.body()),
@@ -310,7 +311,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           SnackBar(
             content: const Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 18),
+                Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                 SizedBox(width: 8),
                 Text('Group updated successfully.'),
               ],
@@ -354,7 +355,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+            icon: Icon(HuddlIcons.arrowBack, color: context.hc.textPrimary),
             onPressed: () async {
               final shouldPop = await _onWillPop();
               if (shouldPop && context.mounted) Navigator.pop(context);
@@ -508,7 +509,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                              Icons.camera_alt_outlined,
+                              HuddlIcons.camera,
                               color: Colors.white, size: 22),
                         ),
                         const SizedBox(height: 8),
@@ -570,7 +571,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
   }
 
   Widget _photoPlaceholder() => Center(
-    child: Icon(Icons.image_outlined, size: 48,
+    child: Icon(HuddlIcons.image, size: 48,
         color: HuddlColors.textTertiary),
   );
 
@@ -630,7 +631,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 ),
               ),
               child: selected
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  ? const Icon(HuddlIcons.check, size: 14, color: Colors.white)
                   : null,
             ),
             const SizedBox(width: 12),

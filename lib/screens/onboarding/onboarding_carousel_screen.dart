@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_photo_service.dart';
@@ -336,7 +337,7 @@ class _CarouselPageState extends State<_CarouselPage>
                                 errorBuilder: (_, __, ___) => Container(
                                   color: HuddlColors.primaryPale,
                                   child: Icon(
-                                    Icons.people,
+                                    HuddlIcons.usersThree,
                                     size: 80,
                                     color: HuddlColors.primary
                                         .withValues(alpha: 0.3),

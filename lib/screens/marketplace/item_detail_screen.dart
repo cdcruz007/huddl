@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -215,7 +216,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         'featureTitle': 'Save limit reached',
         'featureDescription': ss.limitReachedMessage('saved_items'),
         'requiredPlan': 'Huddl Plus',
-        'featureIcon': Icons.bookmark_outline.codePoint,
+        'featureIcon': HuddlIcons.bookmark.codePoint,
       });
       return;
     }
@@ -235,7 +236,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         'featureTitle': 'Free seller contacts used',
         'featureDescription': ss.limitReachedMessage('buyer_contacts'),
         'requiredPlan': 'Huddl Plus',
-        'featureIcon': Icons.chat_bubble_outline.codePoint,
+        'featureIcon': HuddlIcons.chat.codePoint,
       });
       return false;
     }
@@ -251,7 +252,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         content: Row(
           children: [
             Icon(
-              item.isSaved ? Icons.favorite : Icons.favorite_border,
+              item.isSaved ? HuddlIcons.heartFill : HuddlIcons.heart,
               color: Colors.white,
               size: 18,
             ),
@@ -278,7 +279,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           'featureTitle': 'Free seller contacts used',
           'featureDescription': ss.limitReachedMessage('buyer_contacts'),
           'requiredPlan': 'Huddl Plus',
-          'featureIcon': Icons.chat_bubble_outline.codePoint,
+          'featureIcon': HuddlIcons.chat.codePoint,
         });
         return;
       }
@@ -396,7 +397,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 SnackBar(
                   content: Row(
                     children: [
-                      const Icon(Icons.check_circle,
+                      const Icon(HuddlIcons.checkCircle,
                           color: Colors.white, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
@@ -551,7 +552,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             color: HuddlColors.error.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.flag_outlined,
+                          child: const Icon(HuddlIcons.flag,
                               size: 22, color: HuddlColors.error),
                         ),
                         const SizedBox(width: 12),
@@ -652,17 +653,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   pinned: true,
                   backgroundColor: hc.surface,
                   leading: _ItemCircleButton(
-                    icon: Icons.arrow_back,
+                    icon: HuddlIcons.arrowBack,
                     onTap: () => Navigator.pop(context),
                   ),
                   actions: [
                     _ItemCircleButton(
-                      icon: Icons.share_outlined,
+                      icon: HuddlIcons.share,
                       onTap: _shareItem,
                     ),
                     if (!_isOwnItem)
                       _ItemCircleButton(
-                        icon: item.isSaved ? Icons.favorite : Icons.favorite_border,
+                        icon: item.isSaved ? HuddlIcons.heartFill : HuddlIcons.heart,
                         onTap: _handleSaveAction,
                         color: item.isSaved ? HuddlColors.error : Colors.white,
                       ),
@@ -671,8 +672,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         padding: const EdgeInsets.only(right: 8),
                         child: _ItemCircleButton(
                           icon: _hasAlreadyReported
-                              ? Icons.flag
-                              : Icons.flag_outlined,
+                              ? HuddlIcons.flag
+                              : HuddlIcons.flag,
                           color: _hasAlreadyReported
                               ? HuddlColors.error
                               : Colors.white,
@@ -749,7 +750,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               // Location + age + category — single clean row
                               Row(
                                 children: [
-                                  Icon(Icons.location_on_outlined, size: 14, color: hc.textTertiary),
+                                  Icon(HuddlIcons.locationPin, size: 14, color: hc.textTertiary),
                                   const SizedBox(width: 3),
                                   Text(item.sellerLocation,
                                     style: HuddlText.caption()),
@@ -836,7 +837,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Icon(Icons.location_on_outlined,
+                                            Icon(HuddlIcons.locationPin,
                                                 size: 13, color: hc.textTertiary),
                                             const SizedBox(width: 3),
                                             Text(item.sellerLocation,
@@ -869,7 +870,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                             style: HuddlText.body(color: hc.textPrimary, weight: FontWeight.w600)),
                                         const SizedBox(height: 2),
                                         Row(children: [
-                                          Icon(Icons.location_on_outlined,
+                                          Icon(HuddlIcons.locationPin,
                                               size: 12, color: hc.textTertiary),
                                           const SizedBox(width: 3),
                                           Text(item.sellerLocation,
@@ -878,7 +879,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                       ],
                                     ),
                                   ),
-                                  Icon(Icons.chevron_right,
+                                  Icon(HuddlIcons.caretRight,
                                       size: 18, color: hc.textTertiary),
                                 ],
                               ),
@@ -891,7 +892,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                           child: Row(
                             children: [
-                              Icon(Icons.shield_outlined, size: 14,
+                              Icon(HuddlIcons.shield, size: 14,
                                 color: hc.textTertiary.withValues(alpha: 0.6)),
                               const SizedBox(width: 8),
                               Text('Meet in public. Check items before paying.',
@@ -925,7 +926,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.visibility_outlined, size: 16, color: HuddlColors.infoBlue),
+            const Icon(HuddlIcons.visibility, size: 16, color: HuddlColors.infoBlue),
             const SizedBox(width: 8),
             Text(
               '${item.viewCount} parents have viewed this',
@@ -945,7 +946,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.local_offer_outlined, size: 16, color: HuddlColors.primary),
+            const Icon(HuddlIcons.localOffer, size: 16, color: HuddlColors.primary),
             const SizedBox(width: 8),
             Text(
               item.offerCount == 1
@@ -967,7 +968,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.volunteer_activism_outlined, size: 16, color: HuddlColors.yellowDark),
+            const Icon(HuddlIcons.volunteerActivism, size: 16, color: HuddlColors.yellowDark),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -984,7 +985,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (hours < 6) {
       return Row(
         children: [
-          const Icon(Icons.access_time_outlined, size: 14, color: HuddlColors.textTertiary),
+          const Icon(HuddlIcons.clock, size: 14, color: HuddlColors.textTertiary),
           const SizedBox(width: 6),
           Text(
             'Just listed ${item.timeAgo}',
@@ -1174,7 +1175,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             child: HuddlButton(
               label: 'Mark sold',
               variant: HuddlButtonVariant.secondary,
-              leadingIcon: Icons.sell_outlined,
+              leadingIcon: HuddlIcons.sellTag,
               onPressed: () {
                 HapticFeedback.mediumImpact();
                 _service.markSold(item.id);
@@ -1182,7 +1183,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Expanded(child: Text('"${item.title}" marked as sold')),
                       ],
@@ -1203,7 +1204,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             button: true,
             child: HuddlButton(
               label: 'Edit listing',
-              leadingIcon: Icons.edit_outlined,
+              leadingIcon: HuddlIcons.edit,
               onPressed: _openEditListing,
             ),
           ),
@@ -1225,7 +1226,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle,
+              const Icon(HuddlIcons.checkCircle,
                   size: 18, color: HuddlColors.error),
               const SizedBox(width: 6),
               Text(
@@ -1242,7 +1243,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             button: true,
             child: HuddlButton(
               label: 'Relist item',
-              leadingIcon: Icons.refresh,
+              leadingIcon: HuddlIcons.refresh,
               onPressed: () {
                 HapticFeedback.mediumImpact();
                 _service.relistItem(item.id);
@@ -1250,7 +1251,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Expanded(child: Text('"${item.title}" is back on sale')),
                       ],
@@ -1306,7 +1307,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       : null,
                 ),
                 child: Row(children: [
-                  Icon(Icons.chat_bubble_outline,
+                  Icon(HuddlIcons.chat,
                       size: 14,
                       color: remaining == 0
                           ? HuddlColors.primary
@@ -1346,7 +1347,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 borderRadius: BorderRadius.circular(14),
                 onTap: _handleSaveAction,
                 child: Icon(
-                  item.isSaved ? Icons.favorite : Icons.favorite_border,
+                  item.isSaved ? HuddlIcons.heartFill : HuddlIcons.heart,
                   color: item.isSaved
                       ? HuddlColors.error
                       : hc.textTertiary,

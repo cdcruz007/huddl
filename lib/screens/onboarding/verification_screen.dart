@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
@@ -286,7 +287,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.refresh_rounded,
+              child: Icon(HuddlIcons.refresh,
                   size: 22, color: HuddlColors.onboardingOrange),
             ),
             const SizedBox(width: 12),
@@ -412,7 +413,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Row(children: [
                 IconButton(
-                    icon: const Icon(Icons.chevron_left, size: 30, color: kOrange),
+                    icon: const Icon(HuddlIcons.caretLeft, size: 30, color: kOrange),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero),
                 const Expanded(

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
@@ -573,7 +574,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isPartner ? Icons.verified_outlined : Icons.home_outlined,
+                isPartner ? HuddlIcons.verified : HuddlIcons.home,
                 color: Colors.white,
                 size: 20,
               ),
@@ -599,7 +600,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right,
+            Icon(HuddlIcons.caretRight,
                 color: Colors.white.withValues(alpha: 0.70), size: 20),
           ],
         ),
@@ -729,17 +730,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             childAspectRatio: 2.0,
             children: [
               usageChip('Groups joined',
-                  Icons.people_outline, ss.groupsJoined, limits.maxGroups),
+                  HuddlIcons.usersThree, ss.groupsJoined, limits.maxGroups),
               usageChip('Marketplace',
-                  Icons.storefront_outlined,
+                  HuddlIcons.storefront,
                   ss.marketplaceListings,
                   limits.maxMarketplaceListings),
               usageChip('Meetups',
-                  Icons.event_outlined,
+                  HuddlIcons.calendar,
                   ss.meetupsThisMonth,
                   limits.maxMeetupsPerMonth),
               usageChip('AI chats today',
-                  Icons.auto_awesome_outlined,
+                  HuddlIcons.ai,
                   ss.aiCopilotChatsToday,
                   limits.maxAiCopilotChatsPerDay),
             ],
@@ -788,7 +789,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline,
+                          const Icon(HuddlIcons.info,
                               color: HuddlColors.textDark, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
@@ -797,7 +798,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: HuddlText.body(color: HuddlColors.textDark),
                             ),
                           ),
-                          const Icon(Icons.chevron_right,
+                          const Icon(HuddlIcons.caretRight,
                               color: HuddlColors.textDark, size: 18),
                         ],
                       ),
@@ -913,7 +914,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   .withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.verified_rounded,
+                            child: const Icon(HuddlIcons.verifiedFill,
                                 size: 20, color: HuddlColors.primary),
                           ),
                           const SizedBox(width: 12),
@@ -980,7 +981,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded,
+                            const Icon(HuddlIcons.warning,
                                 size: 18, color: HuddlColors.orangeDeep),
                             const SizedBox(width: 10),
                             Expanded(
@@ -1015,7 +1016,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Partner',
                       items: [
                         _MenuItem(
-                          icon: Icons.store_outlined,
+                          icon: HuddlIcons.storefront,
                           title: 'Business Profile',
                           subtitle: _subscriptionService.isBusinessVerified
                               ? 'Your public Partner listing page'
@@ -1034,7 +1035,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           },
                         ),
                         _MenuItem(
-                          icon: Icons.bar_chart_outlined,
+                          icon: HuddlIcons.barChart,
                           title: 'Analytics',
                           subtitle: _subscriptionService.isBusinessVerified
                               ? 'Views, clicks & endorsement trends'
@@ -1068,7 +1069,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ListTile(
                         contentPadding:
                             const EdgeInsets.symmetric(horizontal: 16),
-                        leading: const Icon(Icons.logout,
+                        leading: const Icon(HuddlIcons.logout,
                             color: HuddlColors.error),
                         title: Text('Log out',
                             style: HuddlText.body(
@@ -1108,7 +1109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text('My Profile', style: HuddlText.display()),
               IconButton(
-                icon: Icon(Icons.settings_outlined,
+                icon: Icon(HuddlIcons.settings,
                     color: hc.textPrimary),
                 onPressed: _openSettingsSheet,
               ),
@@ -1130,7 +1131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: hc.surface, width: 2),
                   ),
-                  child: const Icon(Icons.camera_alt,
+                  child: const Icon(HuddlIcons.camera,
                       size: 14, color: HuddlColors.white),
                 ),
               ],
@@ -1173,8 +1174,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Icon(
                         _subscriptionService.isPartner
-                            ? Icons.verified_outlined
-                            : Icons.home_outlined,
+                            ? HuddlIcons.verified
+                            : HuddlIcons.home,
                         color: hc.surface,
                         size: 12,
                       ),
@@ -1194,7 +1195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.location_on_outlined,
+              const Icon(HuddlIcons.locationPin,
                   size: 16, color: HuddlColors.textHint),
               const SizedBox(width: 4),
               Text(_borough,
@@ -1231,7 +1232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.lock_outline,
+                          Icon(HuddlIcons.lock,
                               size: 11,
                               color: HuddlColors.textTertiary),
                           const SizedBox(width: 5),
@@ -1274,7 +1275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.verified_rounded,
+                    const Icon(HuddlIcons.verifiedFill,
                         size: 12, color: HuddlColors.primary),
                     const SizedBox(width: 5),
                     Text(
@@ -1430,7 +1431,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.people_outline,
+                          child: const Icon(HuddlIcons.usersThree,
                               size: 22, color: HuddlColors.primary),
                         ),
                         const SizedBox(width: 12),
@@ -1450,7 +1451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right,
+                        Icon(HuddlIcons.caretRight,
                             size: 18, color: hc.textTertiary),
                       ],
                     ),
@@ -1514,7 +1515,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.share_outlined,
+              child: const Icon(HuddlIcons.share,
                   size: 16, color: Colors.white),
             ),
           ],
@@ -1553,7 +1554,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: HuddlColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.school_outlined,
+                child: Icon(HuddlIcons.school,
                     size: 22, color: HuddlColors.primary),
               ),
               const SizedBox(width: 12),
@@ -1577,7 +1578,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios_rounded,
+                HuddlIcons.arrowForward,
                 size: 16,
                 color: HuddlColors.primary.withValues(alpha: 0.6),
               ),
@@ -1702,7 +1703,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: InputDecoration(
                     labelText: 'Name',
                     labelStyle: HuddlText.body(color: context.hc.textTertiary),
-                    prefixIcon: Icon(Icons.person_outline,
+                    prefixIcon: Icon(HuddlIcons.user,
                         size: 20, color: context.hc.textTertiary),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1730,7 +1731,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: InputDecoration(
                     labelText: 'About me',
                     labelStyle: HuddlText.body(color: context.hc.textTertiary),
-                    prefixIcon: Icon(Icons.edit_note,
+                    prefixIcon: Icon(HuddlIcons.note,
                         size: 20, color: context.hc.textTertiary),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1839,7 +1840,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _parentType.toLowerCase() == 'dad' ? Icons.face : Icons.face_3,
+                          _parentType.toLowerCase() == 'dad' ? HuddlIcons.user : HuddlIcons.user,
                           size: 22,
                           color: HuddlColors.textDark,
                         ),
@@ -1864,7 +1865,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       if (parentTypeLocked)
-                        Icon(Icons.lock_outline,
+                        Icon(HuddlIcons.lock,
                             size: 18, color: context.hc.textTertiary),
                     ],
                   ),
@@ -1888,9 +1889,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
 
               ...[
-                ('aspiring', 'Trying for a baby', Icons.favorite_outline, HuddlColors.accentCoral),
-                ('expecting', 'Expecting', Icons.pregnant_woman, HuddlColors.textDark),
-                ('parent', 'Already a parent', Icons.child_care, HuddlColors.nearBlack),
+                ('aspiring', 'Trying for a baby', HuddlIcons.heart, HuddlColors.accentCoral),
+                ('expecting', 'Expecting', HuddlIcons.pregnant, HuddlColors.textDark),
+                ('parent', 'Already a parent', HuddlIcons.childCare, HuddlColors.nearBlack),
               ].map((entry) {
                 final isOn = selected.contains(entry.$1);
                 return Padding(
@@ -1947,7 +1948,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                             child: isOn
-                                ? const Icon(Icons.check,
+                                ? const Icon(HuddlIcons.check,
                                     size: 16, color: Colors.white)
                                 : null,
                           ),
@@ -2001,7 +2002,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       title: Text(y,
                                           style: HuddlText.body(weight: FontWeight.w500, color: HuddlColors.textDark)),
                                       trailing: isSel
-                                          ? const Icon(Icons.check_circle,
+                                          ? const Icon(HuddlIcons.checkCircle,
                                               color: HuddlColors.primary)
                                           : null,
                                       onTap: () {
@@ -2028,7 +2029,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.calendar_today,
+                          Icon(HuddlIcons.calendar,
                               size: 18, color: context.hc.textPrimary),
                           const SizedBox(width: 12),
                           Text(
@@ -2038,7 +2039,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: HuddlText.body(color: HuddlColors.textHint),
                           ),
                           const Spacer(),
-                          Icon(Icons.keyboard_arrow_down,
+                          Icon(HuddlIcons.caretDown,
                               size: 20, color: context.hc.textTertiary),
                         ],
                       ),
@@ -2073,7 +2074,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.add,
+                              const Icon(HuddlIcons.add,
                                   size: 16, color: HuddlColors.textDark),
                               const SizedBox(width: 4),
                               Text('Add child',
@@ -2175,7 +2176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: HuddlColors.error.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.close,
+                              child: const Icon(HuddlIcons.close,
                                   size: 16, color: HuddlColors.error),
                             ),
                           ),
@@ -2271,7 +2272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline,
+                    const Icon(HuddlIcons.info,
                         size: 18, color: HuddlColors.textDark),
                     const SizedBox(width: 8),
                     Expanded(
@@ -2293,7 +2294,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _sheetField(postcodeCtrl, 'New postcode', Icons.location_on_outlined),
+              child: _sheetField(postcodeCtrl, 'New postcode', HuddlIcons.locationPin),
             ),
             const SizedBox(height: 24),
             Padding(
@@ -2322,7 +2323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: HuddlColors.neutral50,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.location_off,
+                              child: const Icon(HuddlIcons.locationOff,
                                   size: 28, color: HuddlColors.textDark),
                             ),
                             const SizedBox(height: 16),
@@ -2441,7 +2442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline,
+                      const Icon(HuddlIcons.info,
                           size: 18, color: HuddlColors.textDark),
                       const SizedBox(width: 8),
                       Expanded(
@@ -2560,7 +2561,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded,
+                        const Icon(HuddlIcons.warning,
                             size: 20, color: HuddlColors.primaryDark),
                         const SizedBox(width: 10),
                         Expanded(
@@ -2631,7 +2632,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: HuddlButton(
                     label: isBusy ? 'Sending SMS…' : 'Send verification code',
                     isLoading: isBusy,
-                    leadingIcon: Icons.send_outlined,
+                    leadingIcon: HuddlIcons.send,
                     onPressed: isBusy
                         ? null
                         : () async {
@@ -2738,7 +2739,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: HuddlButton(
                   label: isBusy ? 'Verifying…' : 'Confirm new number',
                   isLoading: isBusy,
-                  leadingIcon: Icons.check_circle_outline,
+                  leadingIcon: HuddlIcons.checkCircle,
                   onPressed: isBusy
                       ? null
                       : () async {
@@ -2858,7 +2859,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline,
+                        const Icon(HuddlIcons.info,
                             size: 18, color: HuddlColors.primaryDark),
                         const SizedBox(width: 10),
                         Expanded(
@@ -2891,7 +2892,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: HuddlButton(
                     label: isBusy ? 'Sending code…' : 'Send verification code',
                     isLoading: isBusy,
-                    leadingIcon: Icons.send_outlined,
+                    leadingIcon: HuddlIcons.send,
                     onPressed: isBusy
                         ? null
                         : () async {
@@ -2995,13 +2996,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: InputDecoration(
                       labelText: 'New password',
                       labelStyle: HuddlText.caption(),
-                      prefixIcon: const Icon(Icons.lock_reset_outlined,
+                      prefixIcon: const Icon(HuddlIcons.lockReset,
                           size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
                           newPwVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                              ? HuddlIcons.visibilityOff
+                              : HuddlIcons.visibility,
                           size: 20,
                           color: ctx.hc.textTertiary,
                         ),
@@ -3038,12 +3039,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: InputDecoration(
                       labelText: 'Confirm new password',
                       labelStyle: HuddlText.caption(),
-                      prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                      prefixIcon: const Icon(HuddlIcons.lock, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
                           confirmPwVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                              ? HuddlIcons.visibilityOff
+                              : HuddlIcons.visibility,
                           size: 20,
                           color: ctx.hc.textTertiary,
                         ),
@@ -3083,7 +3084,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: HuddlButton(
                     label: isBusy ? 'Updating…' : 'Change Password',
                     isLoading: isBusy,
-                    leadingIcon: Icons.check_circle_outline,
+                    leadingIcon: HuddlIcons.checkCircle,
                     onPressed: isBusy
                         ? null
                         : () async {
@@ -3216,7 +3217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: HuddlText.body(color: context.hc.textPrimary)),
                   subtitle: Text('${g.memberCount} members',
                       style: HuddlText.caption(color: context.hc.textTertiary)),
-                  trailing: Icon(Icons.chevron_right,
+                  trailing: Icon(HuddlIcons.caretRight,
                       color: context.hc.textTertiary),
                   onTap: () {
                     Navigator.pop(c);
@@ -3366,7 +3367,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: Text(
                       '${m.dateDisplay} \u2022 ${m.location} \u2022 ${m.attendeeCount} attending',
                       style: HuddlText.caption(color: context.hc.textTertiary)),
-                  trailing: Icon(Icons.chevron_right,
+                  trailing: Icon(HuddlIcons.caretRight,
                       color: context.hc.textTertiary),
                   dense: true,
                 );
@@ -3378,17 +3379,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   IconData _meetupCategoryIcon(String category) {
     switch (category.toLowerCase()) {
       case 'coffee':
-        return Icons.coffee;
+        return HuddlIcons.coffee;
       case 'playdate':
-        return Icons.child_care;
+        return HuddlIcons.childCare;
       case 'sport':
-        return Icons.sports;
+        return HuddlIcons.sports;
       case 'walk':
-        return Icons.directions_walk;
+        return HuddlIcons.walk;
       case 'social':
-        return Icons.celebration;
+        return HuddlIcons.celebration;
       default:
-        return Icons.event;
+        return HuddlIcons.calendar;
     }
   }
 
@@ -3422,7 +3423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: HuddlButton(
                     label: 'Go to Market',
                     variant: HuddlButtonVariant.secondary,
-                    leadingIcon: Icons.add_circle_outline,
+                    leadingIcon: HuddlIcons.addCircle,
                     onPressed: () {
                       Navigator.pop(c);
                       MainShell.shellKey.currentState?.switchTab(3);
@@ -3509,7 +3510,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Text('Sold',
                                 style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
                           )
-                        : const Icon(Icons.chevron_right,
+                        : const Icon(HuddlIcons.caretRight,
                             color: HuddlColors.textTertiary),
                     onTap: () {
                       Navigator.pop(c);
@@ -3525,7 +3526,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: HuddlButton(
                   label: 'Go to Market',
                   variant: HuddlButtonVariant.secondary,
-                  leadingIcon: Icons.storefront_outlined,
+                  leadingIcon: HuddlIcons.storefront,
                   onPressed: () {
                     Navigator.pop(c);
                     MainShell.shellKey.currentState?.switchTab(3);
@@ -3571,7 +3572,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 ...msgs.take(10).map((m) => ListTile(
                       leading: Icon(
-                          m.isFromGroup ? Icons.group : Icons.person,
+                          m.isFromGroup ? HuddlIcons.usersThree : HuddlIcons.user,
                           color: HuddlColors.textDark,
                           size: 20),
                       title: Text(m.message,
@@ -3590,7 +3591,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: HuddlText.body(weight: FontWeight.w600, color: context.hc.textTertiary)),
                 ),
                 ...threads.take(10).map((t) => ListTile(
-                      leading: Icon(Icons.topic,
+                      leading: Icon(HuddlIcons.topic,
                           color: context.hc.textSecondary, size: 20),
                       title: Text(t.topicName,
                           style: HuddlText.body(color: context.hc.textPrimary)),
@@ -3656,7 +3657,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded,
+                        const Icon(HuddlIcons.warning,
                             size: 18, color: HuddlColors.warning),
                         const SizedBox(width: 10),
                         Expanded(
@@ -3697,7 +3698,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               // ── Master toggle ─────────────────────────────────────────────
               _toggleTile(
-                Icons.notifications_active_outlined,
+                HuddlIcons.bellRinging,
                 'Push notifications',
                 'Enable or disable all notifications',
                 _pushEnabled,
@@ -3734,7 +3735,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _toggleTile(Icons.group_outlined, 'Group messages',
+                      _toggleTile(HuddlIcons.usersThree, 'Group messages',
                           'Notifications for new group messages',
                           _groupMessages, (v) {
                         setLocal(() => _groupMessages = v);
@@ -3742,14 +3743,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _saveSetting(
                             UserPrivacyPrefsService.keyGroupMessages, v);
                       }),
-                      _toggleTile(Icons.chat_outlined, 'Direct messages',
+                      _toggleTile(HuddlIcons.chat, 'Direct messages',
                           'Notifications for new DMs', _dmMessages, (v) {
                         setLocal(() => _dmMessages = v);
                         setState(() {});
                         _saveSetting(
                             UserPrivacyPrefsService.keyDmMessages, v);
                       }),
-                      _toggleTile(Icons.event_outlined, 'Meetup reminders',
+                      _toggleTile(HuddlIcons.calendar, 'Meetup reminders',
                           'Reminders for upcoming meetups', _eventReminders,
                           (v) {
                         setLocal(() => _eventReminders = v);
@@ -3758,7 +3759,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             UserPrivacyPrefsService.keyEventReminders, v);
                       }),
                       _toggleTile(
-                          Icons.campaign_outlined,
+                          HuddlIcons.campaign,
                           'Community updates',
                           'Borough announcements and updates',
                           _communityUpdates, (v) {
@@ -3769,7 +3770,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }),
                       const Divider(height: 1, indent: 16, endIndent: 16),
                       _toggleTile(
-                        Icons.lock_outline_rounded,
+                        HuddlIcons.lock,
                         'Lock screen alerts',
                         'Show message previews on lock screen when phone is locked',
                         _lockScreenAlerts,
@@ -3810,7 +3811,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
                 child: Row(
                   children: [
-                    Icon(Icons.security_rounded,
+                    Icon(HuddlIcons.shieldCheck,
                         size: 16, color: HuddlColors.textDark),
                     const SizedBox(width: 6),
                     Text(
@@ -3832,8 +3833,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Icon(
                     _biometricLabel.contains('Face')
-                        ? Icons.face_retouching_natural_rounded
-                        : Icons.fingerprint_rounded,
+                        ? HuddlIcons.faceRetouching
+                        : HuddlIcons.fingerprint,
                     size: 20,
                     color: HuddlColors.textDark,
                   ),
@@ -3910,7 +3911,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
                 child: Row(
                   children: [
-                    Icon(Icons.privacy_tip_outlined,
+                    Icon(HuddlIcons.privacy,
                         size: 16, color: HuddlColors.textDark),
                     const SizedBox(width: 6),
                     Text(
@@ -3923,7 +3924,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
 
             _toggleTile(
-                Icons.circle,
+                HuddlIcons.circleFill,
                 'Show online status',
                 'Let others see when you\u2019re online',
                 _showOnline, (v) {
@@ -3931,20 +3932,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               setState(() {});
               _saveSetting(UserPrivacyPrefsService.keyShowOnline, v);
             }),
-            _toggleTile(Icons.person_outline, 'Profile visibility',
+            _toggleTile(HuddlIcons.user, 'Profile visibility',
                 'Let others view your profile', _showProfile, (v) {
               setLocal(() => _showProfile = v);
               setState(() {});
               _saveSetting(UserPrivacyPrefsService.keyShowProfile, v);
             }),
-            _toggleTile(Icons.people_outline, 'Show groups',
+            _toggleTile(HuddlIcons.usersThree, 'Show groups',
                 'Let others see which groups you\u2019re in', _showGroups,
                 (v) {
               setLocal(() => _showGroups = v);
               setState(() {});
               _saveSetting(UserPrivacyPrefsService.keyShowGroups, v);
             }),
-            _toggleTile(Icons.done_all, 'Read receipts',
+            _toggleTile(HuddlIcons.check, 'Read receipts',
                 'Let others see when you\u2019ve read messages', _readReceipts,
                 (v) {
               setLocal(() => _readReceipts = v);
@@ -3958,7 +3959,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
               child: Row(
                 children: [
-                  const Icon(Icons.mic_outlined, size: 16, color: HuddlColors.textDark),
+                  const Icon(HuddlIcons.mic, size: 16, color: HuddlColors.textDark),
                   const SizedBox(width: 6),
                   Text(
                     'VOICE MESSAGES',
@@ -3983,7 +3984,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, size: 16, color: HuddlColors.nearBlack),
+                        const Icon(HuddlIcons.info, size: 16, color: HuddlColors.nearBlack),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -4018,7 +4019,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  _voiceConsent ? Icons.mic : Icons.mic_off_outlined,
+                  _voiceConsent ? HuddlIcons.mic : HuddlIcons.micOff,
                   size: 20,
                   color: _voiceConsent ? HuddlColors.primary : HuddlColors.textHint,
                 ),
@@ -4053,7 +4054,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(20)),
                       title: Row(
                         children: [
-                          const Icon(Icons.mic, color: HuddlColors.textDark, size: 24),
+                          const Icon(HuddlIcons.mic, color: HuddlColors.textDark, size: 24),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text('Enable Voice Messages?',
@@ -4159,7 +4160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 4),
             ListTile(
-              leading: const Icon(Icons.block, color: HuddlColors.error, size: 22),
+              leading: const Icon(HuddlIcons.block, color: HuddlColors.error, size: 22),
               title: Text('Blocked users',
                   style: HuddlText.body(color: context.hc.textPrimary)),
               subtitle: Text(
@@ -4167,7 +4168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? 'No blocked users'
                       : '${_blockService.blockedUserIds.length} blocked',
                   style: HuddlText.caption(color: context.hc.textTertiary)),
-              trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+              trailing: Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
                 _showBlockedUsersSheet();
@@ -4181,12 +4182,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             // GDPR — View My Data
             ListTile(
-              leading: const Icon(Icons.visibility_outlined, color: HuddlColors.brandTeal, size: 22),
+              leading: const Icon(HuddlIcons.visibility, color: HuddlColors.brandTeal, size: 22),
               title: Text('View my data',
                   style: HuddlText.body(color: context.hc.textPrimary)),
               subtitle: Text('See all personal data Huddl holds about you (Article 15)',
                   style: HuddlText.caption(color: context.hc.textTertiary)),
-              trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+              trailing: Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
                 _showViewMyDataSheet();
@@ -4195,12 +4196,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Divider(indent: 16, endIndent: 16),
             // GDPR — Export My Data
             ListTile(
-              leading: const Icon(Icons.download_outlined, color: HuddlColors.brandTeal, size: 22),
+              leading: const Icon(HuddlIcons.download, color: HuddlColors.brandTeal, size: 22),
               title: Text('Export my data',
                   style: HuddlText.body(color: context.hc.textPrimary)),
               subtitle: Text('Download a portable copy of your data (Article 20)',
                   style: HuddlText.caption(color: context.hc.textTertiary)),
-              trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+              trailing: Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
                 _showExportDataSheet();
@@ -4209,12 +4210,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Divider(indent: 16, endIndent: 16),
             // GDPR — Delete Account
             ListTile(
-              leading: const Icon(Icons.delete_forever, color: HuddlColors.error, size: 22),
+              leading: const Icon(HuddlIcons.delete, color: HuddlColors.error, size: 22),
               title: Text('Delete my account & data',
                   style: HuddlText.body(color: HuddlColors.error)),
               subtitle: Text('Permanently erase all data (Article 17 \u2014 Right to Erasure)',
                   style: HuddlText.caption(color: context.hc.textTertiary)),
-              trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+              trailing: Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
               onTap: () {
                 Navigator.pop(c);
                 _showDeleteAccountSheet();
@@ -4322,7 +4323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       color: HuddlColors.neutral50,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.block,
+                                    child: const Icon(HuddlIcons.block,
                                         size: 28,
                                         color: HuddlColors.textDark),
                                   ),
@@ -4649,7 +4650,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline,
+                        const Icon(HuddlIcons.info,
                             size: 18, color: HuddlColors.brandTeal),
                         const SizedBox(width: 8),
                         Expanded(
@@ -4675,7 +4676,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.warning_amber_rounded,
+                          const Icon(HuddlIcons.warning,
                               size: 16, color: HuddlColors.warning),
                           const SizedBox(width: 8),
                           Expanded(
@@ -4823,7 +4824,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.info_outline,
+                          const Icon(HuddlIcons.info,
                               size: 20, color: HuddlColors.brandTeal),
                           const SizedBox(width: 8),
                           Expanded(
@@ -4898,7 +4899,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ? 'Exported successfully'
                           : 'Export my data',
                   isLoading: exporting,
-                  leadingIcon: exported ? Icons.check : Icons.download,
+                  leadingIcon: exported ? HuddlIcons.check : HuddlIcons.download,
                   onPressed: exporting || exported
                       ? null
                       : () async {
@@ -5064,7 +5065,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: HuddlColors.neutral50,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.security,
+                    child: const Icon(HuddlIcons.shieldCheck,
                         size: 28, color: HuddlColors.textDark),
                   ),
                   const SizedBox(height: 16),
@@ -5233,7 +5234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber,
+                        const Icon(HuddlIcons.warning,
                             size: 22, color: HuddlColors.error),
                         const SizedBox(width: 8),
                         Text('This action is permanent',
@@ -5333,7 +5334,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 6),
-            child: Icon(Icons.remove, size: 14, color: HuddlColors.error),
+            child: Icon(HuddlIcons.remove, size: 14, color: HuddlColors.error),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -5368,7 +5369,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: HuddlColors.error.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.delete_forever,
+                    child: const Icon(HuddlIcons.delete,
                         size: 28, color: HuddlColors.error),
                   ),
                   const SizedBox(height: 18),
@@ -5638,7 +5639,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (c) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _helpTile(Icons.question_answer_outlined, 'FAQs',
+          _helpTile(HuddlIcons.questionAnswer, 'FAQs',
               'Find answers to common questions', () {
             Navigator.pop(c);
             _showFAQScreen();
@@ -5744,7 +5745,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Center(
-                        child: Icon(Icons.people, size: 36, color: HuddlColors.textDark)),
+                        child: Icon(HuddlIcons.usersThree, size: 36, color: HuddlColors.textDark)),
                   ),
                   const SizedBox(height: 8),
                   Text('huddl',
@@ -5825,7 +5826,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   height: 120,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
-                    Icons.logout, size: 28, color: HuddlColors.error,
+                    HuddlIcons.logout, size: 28, color: HuddlColors.error,
                   ),
                 ),
               ),
@@ -5940,7 +5941,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Icon(Icons.close_rounded,
+                      child: const Icon(HuddlIcons.close,
                         color: Colors.white, size: 22),
                     ),
                     const Spacer(),
@@ -6021,7 +6022,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   ListTile(
                                     leading: const Icon(
-                                      Icons.photo_library_outlined,
+                                      HuddlIcons.photoLibrary,
                                       color: Colors.white),
                                     title: Text('Choose from gallery',
                                       style: HuddlText.body(color: Colors.white)),
@@ -6033,7 +6034,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   ListTile(
                                     leading: const Icon(
-                                      Icons.camera_alt_outlined,
+                                      HuddlIcons.camera,
                                       color: Colors.white),
                                     title: Text('Take a photo',
                                       style: HuddlText.body(color: Colors.white)),
@@ -6045,7 +6046,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   if (_photoUrl != null && _photoUrl!.isNotEmpty)
                                     ListTile(
-                                      leading: Icon(Icons.delete_outline,
+                                      leading: Icon(HuddlIcons.delete,
                                         color: HuddlColors.error),
                                       title: Text('Remove photo',
                                         style: HuddlText.body(color: HuddlColors.error)),
@@ -6289,7 +6290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 88,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => const Icon(
-            Icons.person,
+            HuddlIcons.user,
             size: 44,
             color: HuddlColors.primary,
           ),
@@ -6309,7 +6310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: HuddlButton(
         label: 'Give Feedback',
-        leadingIcon: Icons.rate_review_outlined,
+        leadingIcon: HuddlIcons.rateReview,
         onPressed: _openFeedbackScreen,
       ),
     );
@@ -6421,7 +6422,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.lightbulb_outline,
+                                    const Icon(HuddlIcons.lightbulb,
                                         size: 18, color: HuddlColors.textDark),
                                     const SizedBox(width: 8),
                                     Expanded(
@@ -6500,7 +6501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 160,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => const Icon(
-              Icons.check_circle,
+              HuddlIcons.checkCircle,
               size: 80,
               color: HuddlColors.primary,
             ),
@@ -6661,7 +6662,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style:
               HuddlText.caption(color: context.hc.textTertiary)),
       trailing:
-          Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
+          Icon(HuddlIcons.caretRight, size: 20, color: context.hc.textTertiary),
       onTap: onTap,
     );
   }
@@ -6730,7 +6731,7 @@ class _GroupCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.people_outline,
+                      Icon(HuddlIcons.usersThree,
                           size: 11, color: context.hc.textTertiary),
                       const SizedBox(width: 3),
                       Text(
@@ -6751,7 +6752,7 @@ class _GroupCard extends StatelessWidget {
   Widget _imageFallback() => Container(
         color: HuddlColors.neutral50,
         child: const Center(
-            child: Icon(Icons.people, size: 28, color: HuddlColors.textDark)));
+            child: Icon(HuddlIcons.usersThree, size: 28, color: HuddlColors.textDark)));
 }
 
 class _StatItem extends StatelessWidget {
@@ -6840,7 +6841,7 @@ class _MenuItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis)
           : null,
       trailing:
-          trailing ?? Icon(Icons.chevron_right, color: context.hc.textTertiary),
+          trailing ?? Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
       onTap: onTap,
     );
   }
@@ -6865,7 +6866,7 @@ class _CountBadge extends StatelessWidget {
                 style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.textTertiary)),
           ),
         const SizedBox(width: 4),
-        Icon(Icons.chevron_right, color: context.hc.textTertiary),
+        Icon(HuddlIcons.caretRight, color: context.hc.textTertiary),
       ],
     );
   }
@@ -6895,7 +6896,7 @@ class _SettingsScreen extends StatelessWidget {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new,
+          icon: Icon(HuddlIcons.arrowBack,
               size: 18, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
@@ -6911,7 +6912,7 @@ class _SettingsScreen extends StatelessWidget {
             title: 'Your account',
             items: [
               _SettingsItem(
-                icon: Icons.person_outline,
+                icon: HuddlIcons.user,
                 title: 'Edit profile',
                 subtitle: 'Name, bio, and photo',
                 onTap: () {
@@ -6920,7 +6921,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.child_care_outlined,
+                icon: HuddlIcons.childCare,
                 title: 'Family & stage of life',
                 subtitle: profileState._stageLabel.isNotEmpty
                     ? profileState._stageLabel
@@ -6931,7 +6932,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.location_on_outlined,
+                icon: HuddlIcons.locationPin,
                 title: 'Location',
                 subtitle:
                     '${profileState._borough}${profileState._postcode != null ? ' · ${profileState._postcode}' : ''}',
@@ -6942,7 +6943,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.credit_card_outlined,
+                icon: HuddlIcons.creditCard,
                 title: 'Plan & billing',
                 subtitle: isFree
                     ? 'Free · Upgrade to Huddl Plus'
@@ -6959,7 +6960,7 @@ class _SettingsScreen extends StatelessWidget {
               if (SubscriptionService().isPlusOrAbove &&
                   !SubscriptionService().isBusinessVerified)
                 _SettingsItem(
-                  icon: Icons.verified_outlined,
+                  icon: HuddlIcons.verified,
                   title: 'Verify your business',
                   subtitle: 'Unlock HMRC-verified badge on your listings',
                   iconColor: HuddlColors.infoBlue,
@@ -6971,7 +6972,7 @@ class _SettingsScreen extends StatelessWidget {
               if (SubscriptionService().isPlusOrAbove &&
                   SubscriptionService().isBusinessVerified)
                 _SettingsItem(
-                  icon: Icons.verified_rounded,
+                  icon: HuddlIcons.verifiedFill,
                   title: 'Business verified',
                   subtitle: 'HMRC badge active',
                   iconColor: HuddlColors.teal,
@@ -6985,7 +6986,7 @@ class _SettingsScreen extends StatelessWidget {
             title: 'Privacy & security',
             items: [
               _SettingsItem(
-                icon: Icons.notifications_outlined,
+                icon: HuddlIcons.bell,
                 title: 'Notifications',
                 subtitle: 'Groups, meetups, messages, marketplace',
                 onTap: () {
@@ -6994,7 +6995,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.lock_outline,
+                icon: HuddlIcons.lock,
                 title: 'Privacy',
                 subtitle: 'Profile visibility, read receipts, blocked users',
                 onTap: () {
@@ -7003,7 +7004,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.lock_reset_outlined,
+                icon: HuddlIcons.lockReset,
                 title: 'Change password',
                 subtitle: 'Verified by SMS code',
                 showOtpBadge: true,
@@ -7020,7 +7021,7 @@ class _SettingsScreen extends StatelessWidget {
             title: 'Your data',
             items: [
               _SettingsItem(
-                icon: Icons.visibility_outlined,
+                icon: HuddlIcons.visibility,
                 title: 'View my data',
                 subtitle: 'See everything Huddl holds about you',
                 iconColor: HuddlColors.infoBlue,
@@ -7030,7 +7031,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.download_outlined,
+                icon: HuddlIcons.download,
                 title: 'Export my data',
                 subtitle: 'Download a portable copy',
                 iconColor: HuddlColors.infoBlue,
@@ -7040,7 +7041,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.backup_outlined,
+                icon: HuddlIcons.backup,
                 title: 'Backup & restore',
                 subtitle: 'Export or restore your app data',
                 onTap: () {
@@ -7049,7 +7050,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.delete_forever_outlined,
+                icon: HuddlIcons.delete,
                 title: 'Delete account',
                 subtitle: 'Permanently remove all your data',
                 iconColor: HuddlColors.error,
@@ -7067,7 +7068,7 @@ class _SettingsScreen extends StatelessWidget {
             title: 'Help & about',
             items: [
               _SettingsItem(
-                icon: Icons.help_outline,
+                icon: HuddlIcons.info,
                 title: 'Help & support',
                 subtitle: 'FAQs and get in touch',
                 onTap: () {
@@ -7076,7 +7077,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.feedback_outlined,
+                icon: HuddlIcons.feedback,
                 title: 'Send feedback',
                 subtitle: 'Tell us what you think',
                 onTap: () {
@@ -7085,7 +7086,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.play_circle_outline,
+                icon: HuddlIcons.playCircle,
                 title: 'Replay tutorial',
                 subtitle: 'Walk through the app again',
                 onTap: () {
@@ -7094,7 +7095,7 @@ class _SettingsScreen extends StatelessWidget {
                 },
               ),
               _SettingsItem(
-                icon: Icons.description_outlined,
+                icon: HuddlIcons.description,
                 title: 'Terms & privacy',
                 subtitle: 'Terms of service, privacy and cookie policy',
                 onTap: () => launchUrl(
@@ -7103,7 +7104,7 @@ class _SettingsScreen extends StatelessWidget {
                 ),
               ),
               _SettingsItem(
-                icon: Icons.info_outline,
+                icon: HuddlIcons.info,
                 title: 'About Huddl',
                 subtitle: 'Version and credits',
                 onTap: () {
@@ -7113,7 +7114,7 @@ class _SettingsScreen extends StatelessWidget {
               ),
               if (profileState._isAdmin)
                 _SettingsItem(
-                  icon: Icons.shield_outlined,
+                  icon: HuddlIcons.shield,
                   title: 'Admin dashboard',
                   iconColor: HuddlColors.error,
                   onTap: () {
@@ -7309,7 +7310,7 @@ class _SettingsItem extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.verified_user_outlined,
+                    Icon(HuddlIcons.verifiedUser,
                         size: 11, color: HuddlColors.primary),
                     const SizedBox(width: 3),
                     Text(
@@ -7319,7 +7320,7 @@ class _SettingsItem extends StatelessWidget {
                   ],
                 ),
               ),
-            Icon(Icons.chevron_right,
+            Icon(HuddlIcons.caretRight,
                 size: 18, color: context.hc.textTertiary),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
 import '../constants/app_text_styles.dart';
 
@@ -48,21 +49,21 @@ class _AttachBottomSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _AttachIcon(
-                    icon: Icons.camera_alt_rounded,
+                    icon: HuddlIcons.camera,
                     label: 'Camera',
                     color: HuddlColors.attachPhoto,
                     bgColor: HuddlColors.attachPhotoBg,
                     onTap: () => Navigator.pop(context, AttachAction.camera),
                   ),
                   _AttachIcon(
-                    icon: Icons.photo_library_rounded,
+                    icon: HuddlIcons.photoLibrary,
                     label: 'Gallery',
                     color: HuddlColors.attachFile,
                     bgColor: HuddlColors.attachFileBg,
                     onTap: () => Navigator.pop(context, AttachAction.gallery),
                   ),
                   _AttachIcon(
-                    icon: Icons.insert_drive_file_rounded,
+                    icon: HuddlIcons.file,
                     label: 'Document',
                     color: HuddlColors.attachLocation,
                     bgColor: HuddlColors.attachLocationBg,
@@ -78,14 +79,14 @@ class _AttachBottomSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _AttachIcon(
-                    icon: Icons.location_on_rounded,
+                    icon: HuddlIcons.locationPinFill,
                     label: 'Location',
                     color: HuddlColors.attachContact,
                     bgColor: HuddlColors.attachContactBg,
                     onTap: () => Navigator.pop(context, AttachAction.location),
                   ),
                   _AttachIcon(
-                    icon: Icons.person_rounded,
+                    icon: HuddlIcons.user,
                     label: 'Contact',
                     color: HuddlColors.attachPoll,
                     bgColor: HuddlColors.attachPollBg,

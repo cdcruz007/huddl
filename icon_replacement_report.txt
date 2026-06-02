@@ -1,0 +1,332 @@
+Icon Replacement Report
+============================================================
+
+Files changed: 98
+Files unchanged: 103
+Call-sites replaced: 1686
+
+UNMAPPED ICONS (121) — require manual review:
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.person_off_outlined — NOT IN MAP
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.money_off_outlined — NOT IN MAP
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.block_outlined — NOT IN MAP
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.publish — NOT IN MAP
+  lib/screens/ai/ai_matchmaker_sheet.dart: Icons.wb_cloudy_outlined — NOT IN MAP
+  lib/screens/auth/biometric_lock_screen.dart: Icons.fingerprint_rounded — NOT IN MAP
+  lib/screens/auth/login_screen.dart: Icons.fingerprint_rounded — NOT IN MAP
+  lib/screens/events/create_event_screen.dart: Icons.hourglass_top — NOT IN MAP
+  lib/screens/events/create_event_screen.dart: Icons.save_outlined — NOT IN MAP
+  lib/screens/events/create_meetup_screen.dart: Icons.person_add_outlined — NOT IN MAP
+  lib/screens/events/create_meetup_screen.dart: Icons.person_add_outlined — NOT IN MAP
+  lib/screens/events/event_detail_screen.dart: Icons.group_add_outlined — NOT IN MAP
+  lib/screens/events/event_detail_screen.dart: Icons.thumb_up_alt_outlined — NOT IN MAP
+  lib/screens/events/event_detail_screen.dart: Icons.thumb_down_alt_outlined — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.directions_run_rounded — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.label_outline — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.filter_list_off — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.filter_list_off — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.directions_run_rounded — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.thumb_up_alt_outlined — NOT IN MAP
+  lib/screens/events/events_screen.dart: Icons.thumb_down_alt_outlined — NOT IN MAP
+  lib/screens/events/meetup_detail_screen.dart: Icons.copy_outlined — NOT IN MAP
+  lib/screens/events/meetup_detail_screen.dart: Icons.group_off_outlined — NOT IN MAP
+  lib/screens/events/meetup_detail_screen.dart: Icons.group_add_outlined — NOT IN MAP
+  lib/screens/groups/create_group_screen.dart: Icons.diversity_3_outlined — NOT IN MAP
+  lib/screens/groups/create_group_screen.dart: Icons.person_add_outlined — NOT IN MAP
+  lib/screens/groups/create_group_screen.dart: Icons.diversity_3_outlined — NOT IN MAP
+  lib/screens/groups/create_group_screen.dart: Icons.diversity_3_outlined — NOT IN MAP
+  lib/screens/groups/create_poll_screen.dart: Icons.check_box_outlined — NOT IN MAP
+  lib/screens/groups/dm_chat_screen.dart: Icons.contacts_rounded — NOT IN MAP
+  lib/screens/groups/dm_chat_screen.dart: Icons.copy_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.person_off_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.person_add_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.person_remove_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.contacts_rounded — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.person_remove_alt_1 — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.copy_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.person_off_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.image_not_supported_outlined — NOT IN MAP
+  lib/screens/groups/group_chat_screen.dart: Icons.insert_drive_file_rounded — NOT IN MAP
+  lib/screens/groups/group_details_screen.dart: Icons.group_add_outlined — NOT IN MAP
+  lib/screens/groups/group_details_screen.dart: Icons.person_add_outlined — NOT IN MAP
+  lib/screens/groups/group_details_screen.dart: Icons.group_add_outlined — NOT IN MAP
+  lib/screens/groups/group_details_screen.dart: Icons.manage_accounts_outlined — NOT IN MAP
+  lib/screens/groups/group_members_screen.dart: Icons.person_remove_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_unread_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_read_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_unread_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.priority_high_rounded — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_read_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_unread_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.nightlight — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.flight_takeoff — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_read — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.mark_chat_unread — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.thumb_up_alt_outlined — NOT IN MAP
+  lib/screens/groups/groups_screen.dart: Icons.thumb_down_alt_outlined — NOT IN MAP
+  lib/screens/groups/thread_reply_screen.dart: Icons.broken_image_outlined — NOT IN MAP
+  lib/screens/groups/thread_reply_screen.dart: Icons.copy_outlined — NOT IN MAP
+  lib/screens/home/home_screen.dart: Icons.diversity_3_outlined — NOT IN MAP
+  lib/screens/home/home_screen.dart: Icons.diversity_3_outlined — NOT IN MAP
+  lib/screens/home/home_screen.dart: Icons.handshake_rounded — NOT IN MAP
+  lib/screens/home/home_screen.dart: Icons.diversity_3_outlined — NOT IN MAP
+  lib/screens/home/home_screen.dart: Icons.label_outline — NOT IN MAP
+  lib/screens/insights/insights_screen.dart: Icons.image_not_supported_outlined — NOT IN MAP
+  lib/screens/insights/insights_screen.dart: Icons.menu_book_rounded — NOT IN MAP
+  lib/screens/insights/insights_screen.dart: Icons.title_rounded — NOT IN MAP
+  lib/screens/insights/insights_screen.dart: Icons.short_text_rounded — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.volunteer_activism_outlined — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.account_balance_outlined — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.privacy_tip_outlined — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.emergency_outlined — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.account_balance_outlined — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.volunteer_activism_outlined — NOT IN MAP
+  lib/screens/insights/send_hub_screen.dart: Icons.account_balance_outlined — NOT IN MAP
+  lib/screens/legal/privacy_policy_detail_screen.dart: Icons.privacy_tip — NOT IN MAP
+  lib/screens/marketplace/item_detail_screen.dart: Icons.volunteer_activism_outlined — NOT IN MAP
+  lib/screens/marketplace/marketplace_screen.dart: Icons.volunteer_activism_outlined — NOT IN MAP
+  lib/screens/marketplace/marketplace_screen.dart: Icons.view_list_outlined — NOT IN MAP
+  lib/screens/marketplace/marketplace_screen.dart: Icons.grid_view_outlined — NOT IN MAP
+  lib/screens/marketplace/marketplace_screen.dart: Icons.volunteer_activism_outlined — NOT IN MAP
+  lib/screens/marketplace/marketplace_screen.dart: Icons.thumbs_up_down_outlined — NOT IN MAP
+  lib/screens/profile/backup_restore_screen.dart: Icons.upload_outlined — NOT IN MAP
+  lib/screens/profile/backup_restore_screen.dart: Icons.download_outlined — NOT IN MAP
+  lib/screens/profile/backup_restore_screen.dart: Icons.copy — NOT IN MAP
+  lib/screens/profile/backup_restore_screen.dart: Icons.storage_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.lock_reset_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.fingerprint_rounded — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.privacy_tip_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.download_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.download — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.rate_review_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.lock_reset_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.download_outlined — NOT IN MAP
+  lib/screens/profile/profile_screen.dart: Icons.feedback_outlined — NOT IN MAP
+  lib/screens/services/services_screen.dart: Icons.thumb_up_off_alt_rounded — NOT IN MAP
+  lib/screens/services/services_screen.dart: Icons.add_business_rounded — NOT IN MAP
+  lib/screens/subscription/business_verification_screen.dart: Icons.business_rounded — NOT IN MAP
+  lib/screens/subscription/business_verification_screen.dart: Icons.receipt_long_rounded — NOT IN MAP
+  lib/screens/subscription/manage_subscription_screen.dart: Icons.pause_circle_outline — NOT IN MAP
+  lib/screens/subscription/manage_subscription_screen.dart: Icons.apple — NOT IN MAP
+  lib/screens/subscription/manage_subscription_screen.dart: Icons.apple — NOT IN MAP
+  lib/screens/subscription/manage_subscription_screen.dart: Icons.celebration_outlined — NOT IN MAP
+  lib/screens/subscription/manage_subscription_screen.dart: Icons.pause_circle_outline — NOT IN MAP
+  lib/screens/subscription/manage_subscription_screen.dart: Icons.radio_button_off — NOT IN MAP
+  lib/screens/subscription/subscription_checkout_screen.dart: Icons.apple — NOT IN MAP
+  lib/screens/subscription/subscription_checkout_screen.dart: Icons.apple — NOT IN MAP
+  lib/screens/subscription/subscription_checkout_screen.dart: Icons.apple — NOT IN MAP
+  lib/screens/subscription/subscription_checkout_screen.dart: Icons.apple — NOT IN MAP
+  lib/screens/subscription/subscription_checkout_screen.dart: Icons.radio_button_off — NOT IN MAP
+  lib/services/ai_event_discovery_service.dart: Icons.facebook — NOT IN MAP
+  lib/services/ai_event_discovery_service.dart: Icons.facebook — NOT IN MAP
+  lib/services/ai_event_discovery_service.dart: Icons.forest — NOT IN MAP
+  lib/services/ai_event_discovery_service.dart: Icons.newspaper — NOT IN MAP
+  lib/services/ai_event_discovery_service.dart: Icons.support — NOT IN MAP
+  lib/widgets/attach_bottom_sheet.dart: Icons.insert_drive_file_rounded — NOT IN MAP
+  lib/widgets/chat_safety_notice.dart: Icons.block_outlined — NOT IN MAP
+  lib/widgets/event_invite_card.dart: Icons.music_note_outlined — NOT IN MAP
+  lib/widgets/huddl_character.dart: Icons.celebration_outlined — NOT IN MAP
+  lib/widgets/huddl_character.dart: Icons.waving_hand_outlined — NOT IN MAP
+  lib/widgets/huddl_character.dart: Icons.image_not_supported_outlined — NOT IN MAP
+
+ALL REPLACEMENTS (1686):
+  lib/main.dart: Icons.error_outline → HuddlIcons.error
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.chevron_left → HuddlIcons.caretLeft
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.lock_outline → HuddlIcons.lock
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.error_outline → HuddlIcons.error
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.inbox_outlined → HuddlIcons.inbox
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.mark_email_unread_outlined → HuddlIcons.email
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.record_voice_over_outlined → HuddlIcons.voiceOver
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.visibility_off_outlined → HuddlIcons.visibilityOff
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.fact_check_outlined → HuddlIcons.factCheck
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.child_care_outlined → HuddlIcons.childCare
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.flag_outlined → HuddlIcons.flag
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.schedule_outlined → HuddlIcons.clock
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.flag_outlined → HuddlIcons.flag
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.chat_bubble_outline → HuddlIcons.chat
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.group_outlined → HuddlIcons.usersThree
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.person_outline → HuddlIcons.user
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.phone_outlined → HuddlIcons.phone
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.email_outlined → HuddlIcons.email
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.person_outline → HuddlIcons.user
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.phone_outlined → HuddlIcons.phone
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.email_outlined → HuddlIcons.email
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.expand_less → HuddlIcons.caretUp
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.expand_more → HuddlIcons.caretDown
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.visibility_outlined → HuddlIcons.visibility
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.gavel_outlined → HuddlIcons.gavel
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.close → HuddlIcons.close
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.warning_amber_rounded → HuddlIcons.warning
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.delete_outline → HuddlIcons.delete
+  lib/screens/admin/admin_dashboard_screen.dart: Icons.chevron_right → HuddlIcons.caretRight
+  lib/screens/ai/ai_copilot_screen.dart: Icons.arrow_back_ios_new_rounded → HuddlIcons.arrowBack
+  lib/screens/ai/ai_copilot_screen.dart: Icons.refresh → HuddlIcons.refresh
+  lib/screens/ai/ai_copilot_screen.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_copilot_screen.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_copilot_screen.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_copilot_screen.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_copilot_screen.dart: Icons.arrow_forward_rounded → HuddlIcons.arrowForward
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.close → HuddlIcons.close
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.add_a_photo → HuddlIcons.cameraPlus
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.child_friendly → HuddlIcons.childFriendly
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.checkroom → HuddlIcons.wardrobe
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.chair → HuddlIcons.chair
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.extension → HuddlIcons.extension
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.directions_car → HuddlIcons.work
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.auto_stories → HuddlIcons.books
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.warning_amber → HuddlIcons.warning
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.title → HuddlIcons.title
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.description → HuddlIcons.description
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.thumb_up → HuddlIcons.thumbUp
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.info_outline → HuddlIcons.info
+  lib/screens/ai/ai_listing_generator_sheet.dart: Icons.verified → HuddlIcons.verifiedFill
+  lib/screens/ai/ai_matchmaker_sheet.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_matchmaker_sheet.dart: Icons.close → HuddlIcons.close
+  lib/screens/ai/ai_matchmaker_sheet.dart: Icons.location_on_outlined → HuddlIcons.locationPin
+  lib/screens/ai/ai_matchmaker_sheet.dart: Icons.auto_awesome → HuddlIcons.ai
+  lib/screens/ai/ai_matchmaker_sheet.dart: Icons.add → HuddlIcons.add
+  lib/screens/auth/biometric_lock_screen.dart: Icons.face_retouching_natural_rounded → HuddlIcons.faceRetouching
+  lib/screens/auth/login_otp_screen.dart: Icons.waving_hand_rounded → HuddlIcons.wavingHandFill
+  lib/screens/auth/login_otp_screen.dart: Icons.chevron_left → HuddlIcons.caretLeft
+  lib/screens/auth/login_screen.dart: Icons.waving_hand_rounded → HuddlIcons.wavingHandFill
+  lib/screens/auth/login_screen.dart: Icons.arrow_back_ios → HuddlIcons.arrowBack
+  lib/screens/auth/login_screen.dart: Icons.visibility_off_outlined → HuddlIcons.visibilityOff
+  lib/screens/auth/login_screen.dart: Icons.visibility_outlined → HuddlIcons.visibility
+  lib/screens/auth/login_screen.dart: Icons.face_retouching_natural_rounded → HuddlIcons.faceRetouching
+  lib/screens/debug/borough_debug_screen.dart: Icons.delete_outline → HuddlIcons.delete
+  lib/screens/events/create_event_screen.dart: Icons.school → HuddlIcons.school
+  lib/screens/events/create_event_screen.dart: Icons.music_note → HuddlIcons.musicNote
+  lib/screens/events/create_event_screen.dart: Icons.child_care → HuddlIcons.childCare
+  lib/screens/events/create_event_screen.dart: Icons.medical_services_outlined → HuddlIcons.medical
+  lib/screens/events/create_event_screen.dart: Icons.celebration → HuddlIcons.celebration
+  lib/screens/events/create_event_screen.dart: Icons.event → HuddlIcons.calendar
+  lib/screens/events/create_event_screen.dart: Icons.delete_outline → HuddlIcons.delete
+  lib/screens/events/create_event_screen.dart: Icons.photo_library_outlined → HuddlIcons.photoLibrary
+  lib/screens/events/create_event_screen.dart: Icons.camera_alt_outlined → HuddlIcons.camera
+  lib/screens/events/create_event_screen.dart: Icons.event → HuddlIcons.calendar
+  lib/screens/events/create_event_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/create_event_screen.dart: Icons.chevron_left → HuddlIcons.caretLeft
+  lib/screens/events/create_event_screen.dart: Icons.more_horiz → HuddlIcons.moreHoriz
+  lib/screens/events/create_event_screen.dart: Icons.calendar_today_outlined → HuddlIcons.calendar
+  lib/screens/events/create_event_screen.dart: Icons.access_time → HuddlIcons.clock
+  lib/screens/events/create_event_screen.dart: Icons.calendar_today_outlined → HuddlIcons.calendar
+  lib/screens/events/create_event_screen.dart: Icons.access_time → HuddlIcons.clock
+  lib/screens/events/create_event_screen.dart: Icons.add → HuddlIcons.add
+  lib/screens/events/create_event_screen.dart: Icons.edit → HuddlIcons.edit
+  lib/screens/events/create_event_screen.dart: Icons.image_outlined → HuddlIcons.image
+  lib/screens/events/create_event_screen.dart: Icons.add → HuddlIcons.add
+  lib/screens/events/create_event_screen.dart: Icons.image_outlined → HuddlIcons.image
+  lib/screens/events/create_event_screen.dart: Icons.add → HuddlIcons.add
+  lib/screens/events/create_event_screen.dart: Icons.check → HuddlIcons.check
+  lib/screens/events/create_event_screen.dart: Icons.info_outline → HuddlIcons.info
+  lib/screens/events/create_event_screen.dart: Icons.keyboard_arrow_down → HuddlIcons.caretDown
+  lib/screens/events/create_event_screen.dart: Icons.people → HuddlIcons.usersThree
+  lib/screens/events/create_meetup_screen.dart: Icons.people_outline → HuddlIcons.usersThree
+  lib/screens/events/create_meetup_screen.dart: Icons.pregnant_woman → HuddlIcons.pregnant
+  lib/screens/events/create_meetup_screen.dart: Icons.child_care → HuddlIcons.childCare
+  lib/screens/events/create_meetup_screen.dart: Icons.fitness_center → HuddlIcons.fitness
+  lib/screens/events/create_meetup_screen.dart: Icons.coffee → HuddlIcons.coffee
+  lib/screens/events/create_meetup_screen.dart: Icons.park → HuddlIcons.park
+  lib/screens/events/create_meetup_screen.dart: Icons.restaurant → HuddlIcons.restaurant
+  lib/screens/events/create_meetup_screen.dart: Icons.theater_comedy → HuddlIcons.theater
+  lib/screens/events/create_meetup_screen.dart: Icons.more_horiz → HuddlIcons.moreHoriz
+  lib/screens/events/create_meetup_screen.dart: Icons.people_outline → HuddlIcons.usersThree
+  lib/screens/events/create_meetup_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/create_meetup_screen.dart: Icons.arrow_back_ios → HuddlIcons.arrowBack
+  lib/screens/events/create_meetup_screen.dart: Icons.location_on_outlined → HuddlIcons.locationPin
+  lib/screens/events/create_meetup_screen.dart: Icons.wifi → HuddlIcons.wifi
+  lib/screens/events/create_meetup_screen.dart: Icons.calendar_today_outlined → HuddlIcons.calendar
+  lib/screens/events/create_meetup_screen.dart: Icons.access_time_outlined → HuddlIcons.clock
+  lib/screens/events/create_meetup_screen.dart: Icons.access_time_outlined → HuddlIcons.clock
+  lib/screens/events/create_meetup_screen.dart: Icons.keyboard_arrow_down → HuddlIcons.caretDown
+  lib/screens/events/create_meetup_screen.dart: Icons.public → HuddlIcons.language
+  lib/screens/events/create_meetup_screen.dart: Icons.group_outlined → HuddlIcons.usersThree
+  lib/screens/events/create_meetup_screen.dart: Icons.lock_outline → HuddlIcons.lock
+  lib/screens/events/create_meetup_screen.dart: Icons.add_photo_alternate_outlined → HuddlIcons.photoLibrary
+  lib/screens/events/create_meetup_screen.dart: Icons.edit_outlined → HuddlIcons.edit
+  lib/screens/events/create_meetup_screen.dart: Icons.keyboard_arrow_down → HuddlIcons.caretDown
+  lib/screens/events/create_meetup_screen.dart: Icons.people → HuddlIcons.usersThree
+  lib/screens/events/create_meetup_screen.dart: Icons.close → HuddlIcons.close
+  lib/screens/events/create_meetup_screen.dart: Icons.chevron_right → HuddlIcons.caretRight
+  lib/screens/events/create_meetup_screen.dart: Icons.close → HuddlIcons.close
+  lib/screens/events/create_meetup_screen.dart: Icons.search → HuddlIcons.search
+  lib/screens/events/create_meetup_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/create_meetup_screen.dart: Icons.circle_outlined → HuddlIcons.circle
+  lib/screens/events/create_meetup_screen.dart: Icons.check → HuddlIcons.check
+  lib/screens/events/edit_meetup_screen.dart: Icons.people_outline → HuddlIcons.usersThree
+  lib/screens/events/edit_meetup_screen.dart: Icons.pregnant_woman → HuddlIcons.pregnant
+  lib/screens/events/edit_meetup_screen.dart: Icons.child_care → HuddlIcons.childCare
+  lib/screens/events/edit_meetup_screen.dart: Icons.fitness_center → HuddlIcons.fitness
+  lib/screens/events/edit_meetup_screen.dart: Icons.coffee → HuddlIcons.coffee
+  lib/screens/events/edit_meetup_screen.dart: Icons.park → HuddlIcons.park
+  lib/screens/events/edit_meetup_screen.dart: Icons.restaurant → HuddlIcons.restaurant
+  lib/screens/events/edit_meetup_screen.dart: Icons.theater_comedy → HuddlIcons.theater
+  lib/screens/events/edit_meetup_screen.dart: Icons.more_horiz → HuddlIcons.moreHoriz
+  lib/screens/events/edit_meetup_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/edit_meetup_screen.dart: Icons.arrow_back_ios → HuddlIcons.arrowBack
+  lib/screens/events/edit_meetup_screen.dart: Icons.location_on_outlined → HuddlIcons.locationPin
+  lib/screens/events/edit_meetup_screen.dart: Icons.wifi → HuddlIcons.wifi
+  lib/screens/events/edit_meetup_screen.dart: Icons.calendar_today_outlined → HuddlIcons.calendar
+  lib/screens/events/edit_meetup_screen.dart: Icons.access_time_outlined → HuddlIcons.clock
+  lib/screens/events/edit_meetup_screen.dart: Icons.access_time_outlined → HuddlIcons.clock
+  lib/screens/events/edit_meetup_screen.dart: Icons.keyboard_arrow_down → HuddlIcons.caretDown
+  lib/screens/events/edit_meetup_screen.dart: Icons.public → HuddlIcons.language
+  lib/screens/events/edit_meetup_screen.dart: Icons.group_outlined → HuddlIcons.usersThree
+  lib/screens/events/edit_meetup_screen.dart: Icons.lock_outline → HuddlIcons.lock
+  lib/screens/events/edit_meetup_screen.dart: Icons.check → HuddlIcons.check
+  lib/screens/events/edit_meetup_screen.dart: Icons.add_photo_alternate_outlined → HuddlIcons.photoLibrary
+  lib/screens/events/event_detail_screen.dart: Icons.location_on → HuddlIcons.locationPinFill
+  lib/screens/events/event_detail_screen.dart: Icons.child_care → HuddlIcons.childCare
+  lib/screens/events/event_detail_screen.dart: Icons.star_rounded → HuddlIcons.starFill
+  lib/screens/events/event_detail_screen.dart: Icons.calendar_today → HuddlIcons.calendar
+  lib/screens/events/event_detail_screen.dart: Icons.category → HuddlIcons.topic
+  lib/screens/events/event_detail_screen.dart: Icons.public → HuddlIcons.language
+  lib/screens/events/event_detail_screen.dart: Icons.people → HuddlIcons.usersThree
+  lib/screens/events/event_detail_screen.dart: Icons.money_off → HuddlIcons.moneyOff
+  lib/screens/events/event_detail_screen.dart: Icons.videocam → HuddlIcons.videocam
+  lib/screens/events/event_detail_screen.dart: Icons.fiber_new → HuddlIcons.fiberNew
+  lib/screens/events/event_detail_screen.dart: Icons.arrow_back → HuddlIcons.arrowBack
+  lib/screens/events/event_detail_screen.dart: Icons.share_outlined → HuddlIcons.share
+  lib/screens/events/event_detail_screen.dart: Icons.event_outlined → HuddlIcons.calendar
+  lib/screens/events/event_detail_screen.dart: Icons.videocam → HuddlIcons.videocam
+  lib/screens/events/event_detail_screen.dart: Icons.business → HuddlIcons.business
+  lib/screens/events/event_detail_screen.dart: Icons.calendar_today_outlined → HuddlIcons.calendar
+  lib/screens/events/event_detail_screen.dart: Icons.videocam_outlined → HuddlIcons.videocam
+  lib/screens/events/event_detail_screen.dart: Icons.location_on_outlined → HuddlIcons.locationPin
+  lib/screens/events/event_detail_screen.dart: Icons.people_outline → HuddlIcons.usersThree
+  lib/screens/events/event_detail_screen.dart: Icons.attach_money → HuddlIcons.money
+  lib/screens/events/event_detail_screen.dart: Icons.map_outlined → HuddlIcons.map
+  lib/screens/events/event_detail_screen.dart: Icons.event_busy → HuddlIcons.calendarX
+  lib/screens/events/event_detail_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/event_detail_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/event_detail_screen.dart: Icons.close → HuddlIcons.close
+  lib/screens/events/event_detail_screen.dart: Icons.star_rounded → HuddlIcons.starFill
+  lib/screens/events/event_detail_screen.dart: Icons.family_restroom → HuddlIcons.family
+  lib/screens/events/event_detail_screen.dart: Icons.check_circle → HuddlIcons.checkCircle
+  lib/screens/events/event_detail_screen.dart: Icons.rate_review → HuddlIcons.rateReview
+  lib/screens/events/event_detail_screen.dart: Icons.thumb_up_alt → HuddlIcons.thumbUp
+  lib/screens/events/event_detail_screen.dart: Icons.thumb_down_alt → HuddlIcons.thumbDown
+  lib/screens/events/event_detail_screen.dart: Icons.star_rounded → HuddlIcons.starFill
+  lib/screens/events/event_detail_screen.dart: Icons.star_rounded → HuddlIcons.starFill
+  lib/screens/events/event_detail_screen.dart: Icons.language → HuddlIcons.language
+  lib/screens/events/event_detail_screen.dart: Icons.star_rounded → HuddlIcons.starFill
+  lib/screens/events/event_detail_screen.dart: Icons.star_rounded → HuddlIcons.starFill
+  lib/screens/events/event_detail_screen.dart: Icons.info_outline → HuddlIcons.info
+  lib/screens/events/event_detail_screen.dart: Icons.check_circle_outline → HuddlIcons.checkCircle
+  lib/screens/events/event_detail_screen.dart: Icons.group_outlined → HuddlIcons.usersThree
+  lib/screens/events/event_detail_screen.dart: Icons.person → HuddlIcons.user
+  lib/screens/events/events_screen.dart: Icons.notifications_off_outlined → HuddlIcons.bellSlash
+  lib/screens/events/events_screen.dart: Icons.groups → HuddlIcons.usersThree
+  lib/screens/events/events_screen.dart: Icons.chevron_right → HuddlIcons.caretRight
+  lib/screens/events/events_screen.dart: Icons.event → HuddlIcons.calendar
+  lib/screens/events/events_screen.dart: Icons.chevron_right → HuddlIcons.caretRight
+  lib/screens/events/events_screen.dart: Icons.search → HuddlIcons.search
+  lib/screens/events/events_screen.dart: Icons.search → HuddlIcons.search
+  lib/screens/events/events_screen.dart: Icons.search → HuddlIcons.search
+  lib/screens/events/events_screen.dart: Icons.add → HuddlIcons.add
+  lib/screens/events/events_screen.dart: Icons.add → HuddlIcons.add
+  lib/screens/events/events_screen.dart: Icons.lock_outlined → HuddlIcons.lock
+  lib/screens/events/events_screen.dart: Icons.add → HuddlIcons.add
+  lib/screens/events/events_screen.dart: Icons.group → HuddlIcons.usersThree
+  ... and 1486 more

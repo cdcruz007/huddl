@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -90,15 +91,15 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ── Categories matching screenshots ──
   static const _categories = [
-    {'label': 'Hanging out', 'icon': Icons.people_outline},
-    {'label': 'Pregnancy', 'icon': Icons.pregnant_woman},
-    {'label': 'Playdate', 'icon': Icons.child_care},
-    {'label': 'Sports & exercise', 'icon': Icons.fitness_center},
-    {'label': 'Coffee & tea', 'icon': Icons.coffee},
-    {'label': 'Parks & Walks', 'icon': Icons.park},
-    {'label': 'Food & nutrition', 'icon': Icons.restaurant},
-    {'label': 'Performance & shows', 'icon': Icons.theater_comedy},
-    {'label': 'Other', 'icon': Icons.more_horiz},
+    {'label': 'Hanging out', 'icon': HuddlIcons.usersThree},
+    {'label': 'Pregnancy', 'icon': HuddlIcons.pregnant},
+    {'label': 'Playdate', 'icon': HuddlIcons.childCare},
+    {'label': 'Sports & exercise', 'icon': HuddlIcons.fitness},
+    {'label': 'Coffee & tea', 'icon': HuddlIcons.coffee},
+    {'label': 'Parks & Walks', 'icon': HuddlIcons.park},
+    {'label': 'Food & nutrition', 'icon': HuddlIcons.restaurant},
+    {'label': 'Performance & shows', 'icon': HuddlIcons.theater},
+    {'label': 'Other', 'icon': HuddlIcons.moreHoriz},
   ];
 
   static const _repeatOptions = [
@@ -339,7 +340,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           'featureTitle': 'Meetup limit reached',
           'featureDescription': subService.limitReachedMessage('free_meetups'),
           'requiredPlan': 'Huddl Plus',
-          'featureIcon': Icons.people_outline.codePoint,
+          'featureIcon': HuddlIcons.usersThree.codePoint,
         });
       }
       return;
@@ -481,7 +482,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [
-        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+        const Icon(HuddlIcons.checkCircle, color: Colors.white, size: 18),
         const SizedBox(width: 8),
         const Expanded(child: Text('Meetup created!')),
       ]),
@@ -881,7 +882,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Icon(Icons.arrow_back_ios, size: 18, color: _accentOrange),
+            child: Icon(HuddlIcons.arrowBack, size: 18, color: _accentOrange),
           ),
         ),
       ),
@@ -1003,7 +1004,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(left: 14),
-                  child: Icon(Icons.location_on_outlined, size: 20, color: _accentOrange),
+                  child: Icon(HuddlIcons.locationPin, size: 20, color: _accentOrange),
                 ),
                 Expanded(
                   child: PlacesAutocompleteField(
@@ -1030,7 +1031,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.wifi, size: 18, color: _accentOrange),
+                const Icon(HuddlIcons.wifi, size: 18, color: _accentOrange),
                 const SizedBox(width: 10),
                 Text(
                   'Online meetup',
@@ -1078,7 +1079,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         _buildIconRightTapField(
           value: _selectedDate != null ? _formatDate(_selectedDate!) : null,
           hint: 'Date',
-          icon: Icons.calendar_today_outlined,
+          icon: HuddlIcons.calendar,
           onTap: _pickDate,
         ),
         const SizedBox(height: 10),
@@ -1089,7 +1090,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               child: _buildIconRightTapField(
                 value: _startTime != null ? _formatTime(_startTime!) : null,
                 hint: 'From',
-                icon: Icons.access_time_outlined,
+                icon: HuddlIcons.clock,
                 onTap: _pickStartTime,
               ),
             ),
@@ -1098,7 +1099,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               child: _buildIconRightTapField(
                 value: _endTime != null ? _formatTime(_endTime!) : null,
                 hint: 'To',
-                icon: Icons.access_time_outlined,
+                icon: HuddlIcons.clock,
                 onTap: _pickEndTime,
               ),
             ),
@@ -1179,7 +1180,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 value: _repeatFrequency,
                 isExpanded: true,
                 hint: Text('Frequency', style: HuddlText.body(color: _hintGray)),
-                icon: Icon(Icons.keyboard_arrow_down, color: _sectionText.withValues(alpha: 0.6)),
+                icon: Icon(HuddlIcons.caretDown, color: _sectionText.withValues(alpha: 0.6)),
                 style: HuddlText.body(color: _sectionText),
                 items: _repeatOptions
                     .where((o) => o != 'Does not repeat')
@@ -1424,13 +1425,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       children: [
         _privacyRadioTile(
           value: 'public',
-          icon: Icons.public,
+          icon: HuddlIcons.language,
           title: 'Public',
           subtitle: 'Everyone in your local authority can see and join your event.',
         ),
         _privacyRadioTile(
           value: 'group',
-          icon: Icons.group_outlined,
+          icon: HuddlIcons.usersThree,
           title: 'Group',
           subtitle: 'Only members of a specific group can see and join your event.',
         ),
@@ -1445,7 +1446,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         ],
         _privacyRadioTile(
           value: 'private',
-          icon: Icons.lock_outline,
+          icon: HuddlIcons.lock,
           title: 'Private',
           subtitle: 'Invite specific friends.',
         ),
@@ -1552,7 +1553,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.person_add_outlined, size: 14, color: HuddlColors.nearBlack),
+                  const Icon(HuddlIcons.personAdd, size: 14, color: HuddlColors.nearBlack),
                   const SizedBox(width: 6),
                   Text('Invite friends +',
                       style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.nearBlack)),
@@ -1578,7 +1579,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            Icons.add_photo_alternate_outlined,
+            HuddlIcons.photoLibrary,
             color: HuddlColors.neutral300,
             size: 48,
           ),
@@ -1616,7 +1617,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.edit_outlined, color: Colors.white, size: 16),
+                      const Icon(HuddlIcons.edit, color: Colors.white, size: 16),
                       const SizedBox(width: 6),
                       Text('Change photo',
                           style: HuddlText.body(color: Colors.white)),
@@ -1659,7 +1660,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           value: selectedGroupId,
           isExpanded: true,
           hint: Text('Select a group', style: HuddlText.body(color: _hintGray)),
-          icon: Icon(Icons.keyboard_arrow_down, color: selectedGroupId != null ? _accentBlue : _hintGray),
+          icon: Icon(HuddlIcons.caretDown, color: selectedGroupId != null ? _accentBlue : _hintGray),
           style: HuddlText.body(color: _sectionText),
           items: _userGroups.map((g) => DropdownMenuItem(
                 value: g.id,
@@ -1667,7 +1668,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(color: _accentBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
-                    child: const Icon(Icons.people, size: 14, color: _accentBlue),
+                    child: const Icon(HuddlIcons.usersThree, size: 14, color: _accentBlue),
                   ),
                   const SizedBox(width: 8),
                   Expanded(child: Text(g.name, overflow: TextOverflow.ellipsis,
@@ -1705,7 +1706,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     ? CircleAvatar(backgroundImage: NetworkImage(photoUrl), radius: 14)
                     : MemberAvatar(name: member.name, size: 28, parentType: member.parentType),
                 label: Text(member.name, style: HuddlText.caption()),
-                deleteIcon: const Icon(Icons.close, size: 16),
+                deleteIcon: const Icon(HuddlIcons.close, size: 16),
                 onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
                 backgroundColor: _accentBlue.withValues(alpha: 0.08),
                 shape: RoundedRectangleBorder(
@@ -1733,7 +1734,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.person_add_outlined, size: 18,
+                Icon(HuddlIcons.personAdd, size: 18,
                     color: _selectedMemberIds.isNotEmpty ? _accentBlue : _hintGray),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1744,7 +1745,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     style: HuddlText.body(color: _selectedMemberIds.isNotEmpty ? _sectionText : _hintGray),
                   ),
                 ),
-                Icon(Icons.chevron_right, size: 18, color: _hintGray),
+                Icon(HuddlIcons.caretRight, size: 18, color: _hintGray),
               ],
             ),
           ),
@@ -1834,7 +1835,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                         ? CircleAvatar(backgroundImage: NetworkImage(photoUrl), radius: 12)
                                         : MemberAvatar(name: m.name, size: 24, parentType: m.parentType),
                                     label: Text(m.name.split(' ').first, style: HuddlText.caption()),
-                                    deleteIcon: const Icon(Icons.close, size: 14),
+                                    deleteIcon: const Icon(HuddlIcons.close, size: 14),
                                     onDeleted: () { setSheetState(() => _selectedMemberIds.remove(id)); setState(() {}); },
                                     backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                                     visualDensity: VisualDensity.compact,
@@ -1855,7 +1856,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             decoration: InputDecoration(
                               hintText: 'Search members...',
                               hintStyle: HuddlText.body(color: context.hc.textTertiary),
-                              prefixIcon: Icon(Icons.search, color: context.hc.textTertiary, size: 20),
+                              prefixIcon: Icon(HuddlIcons.search, color: context.hc.textTertiary, size: 20),
                               filled: true, fillColor: context.hc.scaffold,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -1887,7 +1888,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                 subtitle: Text(member.parentType == 'mum' ? 'Mum' : 'Dad',
                                     style: HuddlText.caption(color: context.hc.textTertiary)),
                                 trailing: Icon(
-                                  isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                  isSelected ? HuddlIcons.checkCircle : HuddlIcons.circle,
                                   color: isSelected ? HuddlColors.primary : HuddlColors.gray300, size: 24,
                                 ),
                                 onTap: () {
@@ -1938,7 +1939,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         ),
       ),
       child: checked
-          ? const Icon(Icons.check, size: 15, color: Colors.white)
+          ? const Icon(HuddlIcons.check, size: 15, color: Colors.white)
           : null,
     );
   }

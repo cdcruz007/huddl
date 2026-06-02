@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 
@@ -12,7 +13,7 @@ import '../../theme/huddl_colors.dart';
 //
 // Usage:
 //   HuddlNetworkImage(url: item.imageUrl, width: 64, height: 64)
-//   HuddlNetworkImage(url: group.imageUrl, fallbackIcon: Icons.people)
+//   HuddlNetworkImage(url: group.imageUrl, fallbackIcon: HuddlIcons.usersThree)
 //   HuddlNetworkImage(url: meetup.imageUrl, aspectRatio: 16/9)
 // =============================================================================
 
@@ -25,7 +26,7 @@ class HuddlNetworkImage extends StatelessWidget {
     this.aspectRatio,   // if set, wraps in AspectRatio — ignores height
     this.fit = BoxFit.cover,
     this.borderRadius,
-    this.fallbackIcon = Icons.image_outlined,
+    this.fallbackIcon = HuddlIcons.image,
     this.fallbackIconSize = 28.0,
     this.fallbackColor,  // null = warm grey
     this.fallbackWidget, // fully custom fallback — overrides icon

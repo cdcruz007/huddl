@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
@@ -55,7 +56,7 @@ class BoroughUiHelpers {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.location_off, color: HuddlColors.white, size: 18),
+            const Icon(HuddlIcons.locationOff, color: HuddlColors.white, size: 18),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -89,7 +90,7 @@ class BoroughUiHelpers {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.location_off,
+            Icon(HuddlIcons.locationOff,
                 color: HuddlColors.primary, size: 22),
             const SizedBox(width: 8),
             Expanded(

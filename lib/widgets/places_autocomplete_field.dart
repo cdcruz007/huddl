@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../theme/huddl_icons.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -225,7 +226,7 @@ class _PlacesAutocompleteFieldState extends State<PlacesAutocompleteField> {
                     )
                   : widget.controller.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.close, size: 16,
+                          icon: const Icon(HuddlIcons.close, size: 16,
                               color: HuddlColors.neutral300),
                           onPressed: () {
                             widget.controller.clear();
@@ -286,7 +287,7 @@ class _SuggestionList extends StatelessWidget {
                       horizontal: 14, vertical: 10),
                   child: Row(
                     children: [
-                      Icon(Icons.location_on_outlined,
+                      Icon(HuddlIcons.locationPin,
                           size: 16, color: accentColor),
                       const SizedBox(width: 10),
                       Expanded(
