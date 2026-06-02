@@ -1881,6 +1881,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: Icons.near_me_outlined,
         color: HuddlColors.primary,
+        assetPath: 'assets/illustrations/location_pin_peach_duo.webp',
         label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'} nearby',
         onTap: () => _switchToDiscover(1),
       ));
@@ -1889,6 +1890,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: Icons.event_note_outlined,
         color: HuddlColors.accentAmber,
+        assetPath: 'assets/illustrations/calendar_event.webp',
         label: '$newEvents new ${newEvents == 1 ? 'event' : 'events'}',
         onTap: () => _switchToDiscover(1),
       ));
@@ -1897,6 +1899,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: Icons.sell_outlined,
         color: HuddlColors.primary,
+        assetPath: 'assets/illustrations/mobile_store_woman.webp',
         label: '$newMarket ${newMarket == 1 ? 'item' : 'items'} for sale nearby',
         onTap: () => _switchToTab(3),
       ));
@@ -1905,6 +1908,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: Icons.diversity_3_outlined,
         color: HuddlColors.infoBlue,
+        assetPath: 'assets/illustrations/community_wave.webp',
         label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
         onTap: () => _switchToDiscover(0),
       ));
@@ -1913,6 +1917,7 @@ class _HomeScreenState extends State<HomeScreen>
       rows.add(_CatchUpItem(
         icon: Icons.handshake_outlined,
         color: HuddlColors.teal,
+        assetPath: 'assets/illustrations/handshake.webp',
         label: '$newServices ${newServices == 1 ? 'local service' : 'local services'} added',
         onTap: () => _switchToDiscover(2),
       ));
@@ -1998,14 +2003,19 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 32, height: 32,
-                      decoration: BoxDecoration(
-                        color: row.color.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(row.icon, size: 16, color: row.color),
-                    ),
+                    row.assetPath != null
+                        ? WarmCircleIllustration(
+                            assetPath: row.assetPath!,
+                            size: 36,
+                          )
+                        : Container(
+                            width: 32, height: 32,
+                            decoration: BoxDecoration(
+                              color: row.color.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(row.icon, size: 16, color: row.color),
+                          ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -5293,15 +5303,9 @@ class _HomeScreenState extends State<HomeScreen>
                 padding: const EdgeInsets.fromLTRB(14, 11, 8, 11),
                 child: Row(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.school_outlined,
-                          size: 17, color: HuddlColors.primary),
+                    const WarmCircleIllustration(
+                      assetPath: 'assets/illustrations/questions_two.webp',
+                      size: 36,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -6053,12 +6057,14 @@ class _CatchUpItem {
   final Color color;
   final String label;
   final VoidCallback onTap;
+  final String? assetPath; // optional illustration override
 
   const _CatchUpItem({
     required this.icon,
     required this.color,
     required this.label,
     required this.onTap,
+    this.assetPath,
   });
 }
 

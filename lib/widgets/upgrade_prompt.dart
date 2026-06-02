@@ -4,6 +4,7 @@ import '../theme/huddl_colors.dart';
 import '../models/subscription.dart';
 import '../services/subscription_service.dart';
 import '../constants/app_text_styles.dart';
+import 'huddl_character.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UPGRADE PROMPT — reusable paywall dialog shown when a gated feature is hit
@@ -290,7 +291,10 @@ class UpgradeBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.star_rounded, color: HuddlColors.yellow, size: 20),
+            const WarmCircleIllustration(
+              assetPath: 'assets/illustrations/unlock_key.webp',
+              size: 38,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,
