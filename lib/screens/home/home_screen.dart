@@ -1201,11 +1201,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildAiCatchUpCard(hc, isDark),
                 ),
 
-              // ── First-run onboarding card ──────────────────────────
-              if (_isFirstRun)
-                SliverToBoxAdapter(
-                  child: _buildFirstRunCard(hc, isDark),
-                ),
+              // First-run onboarding card removed — duplicated by AI Catch-Up card.
 
               // ── "Don't Forget" — confirmed-attending items ────────
               // Always shown (with an empty state CTA when no RSVPs yet).
@@ -5848,30 +5844,35 @@ class _BenefitNudge {
   });
 }
 
-// ignore: prefer_const_constructors
+// Brand colour assignments for carousel nudges:
+//   Marketplace  → HuddlColors.primary       (#FF965C  warm orange)
+//   Meetups      → HuddlColors.accentAmber    (#F3C54F  warm yellow)
+//   Services     → HuddlColors.teal           (#199A85  teal)
+//   Groups       → HuddlColors.infoBlue       (#347FEF  info blue)
+//   Community    → HuddlColors.primaryLight   (#FFAD7F  medium orange)
 final List<_BenefitNudge> _kBenefitNudges = [
   _BenefitNudge(
     category: 'Marketplace',
     nudge: "Why not give those outgrown trainers a second life? Someone nearby would love them for their little one.",
     cta: 'Open Market',
     assetPath: 'assets/illustrations/mobile_store.webp',
-    bgColor: Color(0xFFE67E22),
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapMarket,
   ),
   _BenefitNudge(
-    category: 'Community',
+    category: 'Groups',
     nudge: "You're not alone on this parenting journey. Your neighbours get it — come find your people.",
     cta: 'Find groups',
     assetPath: 'assets/illustrations/community_wave.webp',
-    bgColor: Color(0xFF6C3483),
+    bgColor: HuddlColors.infoBlue,
     onTap: _nudgeTapGroups,
   ),
   _BenefitNudge(
     category: 'Marketplace',
     nudge: "That buggy in the corner could be exactly what a new parent down the road is searching for right now.",
     cta: 'List an item',
-    assetPath: 'assets/illustrations/mobile_store.webp',
-    bgColor: Color(0xFFE67E22),
+    assetPath: 'assets/illustrations/parent_baby.webp',
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapMarket,
   ),
   _BenefitNudge(
@@ -5879,7 +5880,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Need a hand with something? There are trusted local people nearby who'd love to help.",
     cta: 'Browse services',
     assetPath: 'assets/illustrations/handshake.webp',
-    bgColor: Color(0xFF2E86AB),
+    bgColor: HuddlColors.teal,
     onTap: _nudgeTapServices,
   ),
   _BenefitNudge(
@@ -5887,7 +5888,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Sometimes the best thing for a tough week is a friendly face and a cup of tea. There's a meetup near you.",
     cta: "See what's on",
     assetPath: 'assets/illustrations/waving_orange.webp',
-    bgColor: Color(0xFFE84393),
+    bgColor: HuddlColors.accentAmber,
     onTap: _nudgeTapNearby,
   ),
   _BenefitNudge(
@@ -5895,7 +5896,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Toys gathering dust? Books that have been read? Pass them on to a family who'll treasure them.",
     cta: 'Start selling',
     assetPath: 'assets/illustrations/mobile_store.webp',
-    bgColor: Color(0xFFE67E22),
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapMarket,
   ),
   _BenefitNudge(
@@ -5903,7 +5904,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Local knowledge is gold. Your neighbours know the best parks, childminders, and hidden gems — ask them.",
     cta: 'Post on the board',
     assetPath: 'assets/illustrations/location_community.webp',
-    bgColor: Color(0xFF27AE60),
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapNoticeboard,
   ),
   _BenefitNudge(
@@ -5911,7 +5912,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "From gardening to childcare — when you hire local, you strengthen the whole neighbourhood.",
     cta: 'Find local help',
     assetPath: 'assets/illustrations/handshake.webp',
-    bgColor: Color(0xFF2E86AB),
+    bgColor: HuddlColors.teal,
     onTap: _nudgeTapServices,
   ),
   _BenefitNudge(
@@ -5919,7 +5920,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "There's a group of parents nearby going through exactly what you are. You'd fit right in.",
     cta: 'Explore groups',
     assetPath: 'assets/illustrations/chatting.webp',
-    bgColor: Color(0xFF6C3483),
+    bgColor: HuddlColors.infoBlue,
     onTap: _nudgeTapGroups,
   ),
   _BenefitNudge(
@@ -5927,31 +5928,31 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Getting out of the house — even for an hour — can change the whole week. There's an event near you.",
     cta: 'Browse events',
     assetPath: 'assets/illustrations/growth_yellow.webp',
-    bgColor: Color(0xFFF39C12),
+    bgColor: HuddlColors.accentAmber,
     onTap: _nudgeTapNearby,
   ),
   _BenefitNudge(
     category: 'Marketplace',
-    nudge: "Baby clothes grow out of before they wear out. List yours and let another family get the joy from them.",
+    nudge: "Baby clothes grow out before they wear out. List yours and let another family get the joy from them.",
     cta: 'List for free',
-    assetPath: 'assets/illustrations/parent_baby.webp',
-    bgColor: Color(0xFFE67E22),
+    assetPath: 'assets/illustrations/waving_thumbs.webp',
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapMarket,
   ),
   _BenefitNudge(
     category: 'Community',
     nudge: "A noticeboard post takes 30 seconds and could connect you with exactly the person you need.",
     cta: 'Share something',
-    assetPath: 'assets/illustrations/waving_thumbs.webp',
-    bgColor: Color(0xFF27AE60),
+    assetPath: 'assets/illustrations/waving_orange.webp',
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapNoticeboard,
   ),
   _BenefitNudge(
     category: 'Local services',
-    nudge: "Know someone brilliant at what they do? Help them find customers in the neighbourhood by referring them.",
+    nudge: "Know someone brilliant at what they do? Help them find customers in the neighbourhood.",
     cta: 'See local services',
-    assetPath: 'assets/illustrations/handshake.webp',
-    bgColor: Color(0xFF2E86AB),
+    assetPath: 'assets/illustrations/search_found.webp',
+    bgColor: HuddlColors.teal,
     onTap: _nudgeTapServices,
   ),
   _BenefitNudge(
@@ -5959,15 +5960,15 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "The school gate is a starting point. Huddl helps you build the friendships that go beyond it.",
     cta: 'Find meetups',
     assetPath: 'assets/illustrations/community_wave.webp',
-    bgColor: Color(0xFFE84393),
+    bgColor: HuddlColors.accentAmber,
     onTap: _nudgeTapNearby,
   ),
   _BenefitNudge(
     category: 'Groups',
     nudge: "From SEN support to local sports — there's a group that gets your world. Come find yours.",
     cta: 'Browse groups',
-    assetPath: 'assets/illustrations/search_found.webp',
-    bgColor: Color(0xFF6C3483),
+    assetPath: 'assets/illustrations/chatting.webp',
+    bgColor: HuddlColors.infoBlue,
     onTap: _nudgeTapGroups,
   ),
 ];

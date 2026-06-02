@@ -1448,10 +1448,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// 2×2 quick action grid: Find Parents, Marketplace, Noticeboard, Invite.
   Widget _buildQuickActionsGrid(HuddlContextColors hc) {
     final actions = [
-      (Icons.people_outline,            'Find Parents',  HuddlColors.primary, () => Navigator.pushNamed(context, '/unified_search', arguments: {'query': 'parents'})),
-      (Icons.storefront_outlined,       'Marketplace',   HuddlColors.primary, () => Navigator.pushNamed(context, '/marketplace')),
-      (Icons.campaign_outlined,         'Noticeboard',   HuddlColors.primary, () => Navigator.pushNamed(context, '/noticeboard')),
-      (Icons.person_add_alt_1_outlined, 'Invite Friend', HuddlColors.primary, _showInviteFriendSheet),
+      (
+        'assets/illustrations/community_wave.webp',
+        'Find Parents',
+        () => Navigator.pushNamed(context, '/unified_search',
+            arguments: {'query': 'parents'}),
+      ),
+      (
+        'assets/illustrations/mobile_store.webp',
+        'Marketplace',
+        () => Navigator.pushNamed(context, '/marketplace'),
+      ),
+      (
+        'assets/illustrations/writing.webp',
+        'Noticeboard',
+        () => Navigator.pushNamed(context, '/noticeboard'),
+      ),
+      (
+        'assets/illustrations/waving_thumbs.webp',
+        'Invite Friend',
+        _showInviteFriendSheet,
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1468,7 +1485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSpacing: 10,
           childAspectRatio: 2.4,
           children: actions.map((a) {
-            final (icon, label, color, onTap) = a;
+            final (assetPath, label, onTap) = a;
             return ScaleOnPress(
               scale: 0.96,
               onTap: onTap,
@@ -1481,14 +1498,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(icon, size: 16, color: color),
+                    WarmCircleIllustration(
+                      assetPath: assetPath,
+                      size: 38,
                     ),
                     const SizedBox(width: 8),
                     Text(label,
