@@ -3522,26 +3522,32 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     final asset = pt == 'dad'
         ? 'assets/images/avatars/John.png'
         : 'assets/images/avatars/Emma.png';
-    return ClipOval(
-      child: Image.asset(
-        asset,
-        width: widget.size,
-        height: widget.size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
-          return Container(
+    return Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: const BoxDecoration(
+        color: HuddlColors.peachWarm,
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(
+        child: Opacity(
+          opacity: 0.82,
+          child: Image.asset(
+            asset,
             width: widget.size,
             height: widget.size,
-            color: HuddlColors.textTertiary.withValues(alpha: 0.30),
-            child: Center(
-              child: Text(
-                initial,
-                style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white),
-              ),
-            ),
-          );
-        },
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) {
+              final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
+              return Center(
+                child: Text(
+                  initial,
+                  style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.white),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

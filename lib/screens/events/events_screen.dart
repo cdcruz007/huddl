@@ -5103,14 +5103,10 @@ class _EventListCardState extends State<_EventListCard> {
                     left: 12,
                     child: Row(
                       children: [
-                        // AI Found badge — icon-only, subtle treatment
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(HuddlIcons.ai, size: 12, color: Colors.white),
+                        // AI Found — bare sparkle icon, no background
+                        const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(HuddlIcons.aiFill, size: 16, color: Colors.white),
                         ),
                         // "New" badge — infoBluePale bg with infoBlue text (informational).
                         if (isNew) ...[

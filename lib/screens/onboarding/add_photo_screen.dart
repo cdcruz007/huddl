@@ -378,16 +378,23 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
   }
 
   Widget _defaultAvatar() {
-    return Image.asset(
-      _defaultAvatarAsset,
-      width: 260,
-      height: 260,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
-        width: 260,
-        height: 260,
-        color: HuddlColors.neutral50,
-        child: const Icon(HuddlIcons.user, size: 80, color: HuddlColors.textHint),
+    // Warm-circle treatment: peachWarm fill + 82% opacity (matches WarmCircleIllustration).
+    return ColoredBox(
+      color: HuddlColors.peachWarm,
+      child: Opacity(
+        opacity: 0.82,
+        child: Image.asset(
+          _defaultAvatarAsset,
+          width: 260,
+          height: 260,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 260,
+            height: 260,
+            color: HuddlColors.neutral50,
+            child: const Icon(HuddlIcons.user, size: 80, color: HuddlColors.textHint),
+          ),
+        ),
       ),
     );
   }

@@ -6096,32 +6096,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Fallback avatar for dark background
+  // Warm-circle treatment: peachWarm circle bg + 82% opacity (matches WarmCircleIllustration).
   Widget _fallbackAvatarDark() {
-    // Show gender-appropriate illustrated avatar on dark background.
-    // Dad → John.png, Mum/other → Emma.png
     final asset = _parentType == 'dad'
         ? 'assets/images/avatars/John.png'
         : 'assets/images/avatars/Emma.png';
     return Container(
       width: 180, height: 180,
-      color: HuddlColors.darkSurfaceVariant,
-      child: ClipRect(
-        child: Image.asset(
-          asset,
-          width: 180,
-          height: 180,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) {
-            final raw = _name.trim();
-            final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-            final initials = parts.length >= 2
-                ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
-                : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
-            return Center(
-              child: Text(initials,
-                style: HuddlText.display(color: Colors.white.withValues(alpha: 0.7))),
-            );
-          },
+      decoration: const BoxDecoration(
+        color: HuddlColors.peachWarm,
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(
+        child: Opacity(
+          opacity: 0.82,
+          child: Image.asset(
+            asset,
+            width: 180,
+            height: 180,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) {
+              final raw = _name.trim();
+              final parts = raw.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+              final initials = parts.length >= 2
+                  ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+                  : (parts.isNotEmpty ? parts.first[0].toUpperCase() : '?');
+              return Center(
+                child: Text(initials,
+                  style: HuddlText.display(color: Colors.white.withValues(alpha: 0.7))),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -6269,30 +6274,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _fallbackAvatar() {
     // Show gender-appropriate illustrated avatar when no profile photo is set.
     // Dad → John.png, Mum/other → Emma.png
+    // Warm-circle treatment matches WarmCircleIllustration: peachWarm bg + 82% opacity.
     final asset = _parentType == 'dad'
         ? 'assets/images/avatars/John.png'
         : 'assets/images/avatars/Emma.png';
     return Container(
       width: 88,
       height: 88,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.primary.withValues(alpha: 0.08),
-        border: Border.all(
-          color: HuddlColors.primary.withValues(alpha: 0.25),
-          width: 1.5,
-        ),
+        color: HuddlColors.peachWarm,
       ),
       child: ClipOval(
-        child: Image.asset(
-          asset,
-          width: 88,
-          height: 88,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(
-            HuddlIcons.user,
-            size: 44,
-            color: HuddlColors.primary,
+        child: Opacity(
+          opacity: 0.82,
+          child: Image.asset(
+            asset,
+            width: 88,
+            height: 88,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Icon(
+              HuddlIcons.user,
+              size: 44,
+              color: HuddlColors.primary,
+            ),
           ),
         ),
       ),

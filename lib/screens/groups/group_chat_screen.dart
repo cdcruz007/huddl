@@ -6869,26 +6869,32 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     final asset = pt == 'dad'
         ? 'assets/images/avatars/John.png'
         : 'assets/images/avatars/Emma.png';
-    return ClipOval(
-      child: Image.asset(
-        asset,
-        width: 32,
-        height: 32,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
-          return Container(
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: const BoxDecoration(
+        color: HuddlColors.peachWarm,
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(
+        child: Opacity(
+          opacity: 0.82,
+          child: Image.asset(
+            asset,
             width: 32,
             height: 32,
-            color: HuddlColors.textTertiary.withValues(alpha: 0.30),
-            child: Center(
-              child: Text(
-                initial,
-                style: HuddlText.body(weight: FontWeight.w700),
-              ),
-            ),
-          );
-        },
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) {
+              final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
+              return Center(
+                child: Text(
+                  initial,
+                  style: HuddlText.body(weight: FontWeight.w700),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
