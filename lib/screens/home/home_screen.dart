@@ -1624,12 +1624,23 @@ class _HomeScreenState extends State<HomeScreen>
           // ── Section header ───────────────────────────────────────────────
           Row(
             children: [
-              Text(
-                '${_borough.isNotEmpty ? _borough : 'Community'} board',
-                style: HuddlText.body(
-                    color: hc.textPrimary, weight: FontWeight.w700),
+              const HuddlCategoryIcon(
+                category: 'Community',
+                size: 32,
+                chipRadius: 9,
+                iconPadding: 7,
+                showBackground: true,
               ),
-              const Spacer(),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${_borough.isNotEmpty ? _borough : 'Community'} board',
+                  style: HuddlText.body(
+                      color: hc.textPrimary, weight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: () {
                   HuddlAnimations.selectionClick();
@@ -3657,9 +3668,11 @@ class _HomeScreenState extends State<HomeScreen>
                             width: 120,
                             color: nudge.bgColor.withValues(alpha: isDark ? 0.18 : 0.10),
                             child: Center(
-                              child: WarmCircleIllustration(
-                                assetPath: nudge.assetPath,
-                                size: 88,
+                              child: HuddlCategoryIcon(
+                                category: nudge.category,
+                                size: 80,
+                                chipRadius: 20,
+                                iconPadding: 18,
                               ),
                             ),
                           ),
