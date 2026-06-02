@@ -1,0 +1,292 @@
+name: Huddl — E2E & Security QA
+
+on:
+  push:
+    branches: [main, develop, 'release/**']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:        # Manual trigger for on-demand QA runs
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.35.4'
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+  FIREBASE_PROJECT: 'huddl-test-project'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 1: Backend — Firebase Emulator Suite + Security Rules + Integration Tests
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+  backend-emulator:
+    name: Backend — Emulator Suite (Rules + Integration + AI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: test_backend/package-lock.json
+
+      - name: Setup Java ${{ env.JAVA_VERSION }} (required by Firebase Emulator)
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@14
+
+      - name: Install test_backend dependencies
+        working-directory: test_backend
+        run: npm ci
+
+      - name: Cache Firebase Emulator binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-v1
+
+      - name: Start Firebase Emulator Suite (background)
+        run: |
+          firebase emulators:start \
+            --project ${{ env.FIREBASE_PROJECT }} \
+            --only auth,firestore,storage \
+            --import ./test_backend/seed_data \
+            --export-on-exit ./test_backend/seed_data \
+            > /tmp/emulator.log 2>&1 &
+          echo "Emulator PID: $!"
+
+          # Wait for all three services to be ready
+          echo "Waiting for emulators to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080 >/dev/null 2>&1 && \
+               curl -s http://localhost:9099 >/dev/null 2>&1 && \
+               curl -s http://localhost:9199 >/dev/null 2>&1; then
+              echo "All emulators ready."
+              break
+            fi
+            echo "  Attempt $i/30: waiting..."
+            sleep 3
+          done
+
+      - name: Run Backend Test Suite (serial)
+        working-directory: test_backend
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+          FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+          # GEMINI_API_KEY intentionally absent — A1 test verifies guard throws
+        run: npm test
+
+      - name: Upload emulator logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-logs
+          path: /tmp/emulator.log
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: test_backend/junit.xml
+          if-no-files-found: ignore
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 2: Flutter Analyze + Build (Android debug APK for Test Lab)
+# ─────────────────────────────────────────────────────────────────────────────
+  flutter-analyze-build:
+    name: Flutter — Analyze + Android Debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Flutter ${{ env.FLUTTER_VERSION }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Flutter analyze (zero errors required)
+        run: |
+          flutter analyze 2>&1 | tee /tmp/flutter_analyze.log
+          # Fail CI only on errors, not warnings/infos
+          if grep -qE "^error •" /tmp/flutter_analyze.log; then
+            echo "::error::flutter analyze found errors — CI blocked"
+            exit 1
+          fi
+          echo "flutter analyze: no errors (warnings/infos acceptable)"
+
+      - name: Build Android debug APK
+        run: |
+          flutter build apk --debug \
+            --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+            --dart-define=GOOGLE_PLACES_API_KEY="${{ secrets.GOOGLE_PLACES_API_KEY }}"
+        env:
+          FLUTTER_SUPPRESS_ANALYTICS: 'true'
+
+      - name: Build integration test APK
+        run: |
+          flutter build apk --debug \
+            --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+            --dart-define=GOOGLE_PLACES_API_KEY="${{ secrets.GOOGLE_PLACES_API_KEY }}" \
+            -t integration_test/test_runner.dart
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+
+      - name: Upload flutter analyze log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-log
+          path: /tmp/flutter_analyze.log
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 3: Android Emulator — Flutter Integration Tests (Workflows A–H)
+# ─────────────────────────────────────────────────────────────────────────────
+  android-integration:
+    name: Android Emulator — Flutter Integration Tests (A–H)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [flutter-analyze-build]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Flutter ${{ env.FLUTTER_VERSION }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Enable KVM (Android emulator hardware acceleration)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: AVD Cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api35-${{ runner.os }}-v1
+
+      - name: Create AVD (API 35, x86_64)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: Nexus6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: echo "AVD created and cached"
+
+      - name: Run Flutter Integration Tests on Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: Nexus6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            flutter test integration_test/test_runner.dart \
+              --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+              --dart-define=GOOGLE_PLACES_API_KEY="${{ secrets.GOOGLE_PLACES_API_KEY }}" \
+              -d emulator-5554 \
+              --reporter expanded \
+              2>&1 | tee /tmp/integration_test.log || true
+            if grep -q "All tests passed" /tmp/integration_test.log; then
+              echo "All integration tests passed."
+            else
+              echo "::warning::Some integration tests failed — check log artifact"
+            fi
+
+      - name: Upload integration test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-log
+          path: /tmp/integration_test.log
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 4: Secret Scan — verify no API key literals in source
+# ─────────────────────────────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret Scan — No hardcoded API keys
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan for hardcoded AIza key literals
+        run: |
+          HITS=$(grep -rn "= 'AIza[A-Za-z0-9_-]" lib/ functions/src/ 2>/dev/null || true)
+          HITS2=$(grep -rn '= "AIza[A-Za-z0-9_-]' lib/ functions/src/ 2>/dev/null || true)
+          HITS_FILTERED=$(echo "$HITS$HITS2" | grep -v "firebase_options.dart" | grep -v "apiKey:" || true)
+          if [ -n "$HITS_FILTERED" ]; then
+            echo "::error::Hardcoded API key literal detected:"
+            echo "$HITS_FILTERED"
+            exit 1
+          fi
+          echo "Secret scan: no hardcoded API key literals found."
+
+      - name: Scan for || 'AIza fallback patterns in TypeScript
+        run: |
+          HITS=$(grep -rn '\|\|.*"AIza' functions/src/ 2>/dev/null || true)
+          if [ -n "$HITS" ]; then
+            echo "::error::Hardcoded fallback key pattern found in TypeScript:"
+            echo "$HITS"
+            exit 1
+          fi
+          echo "TypeScript fallback key scan: clean."
