@@ -569,11 +569,6 @@ class _HomeScreenState extends State<HomeScreen>
       reason: 'Resources and support for school-age children',
     ));
 
-    // 8. Preview stubs — shown only when there is no real community data yet.
-    // Gives new users a realistic sense of what the feed looks like when active.
-    if (ranked.isEmpty) {
-      items.addAll(_previewStubFeedItems());
-    }
 
     // ── Apply feed preference filters ─────────────────────────────────────
     items.removeWhere((item) {
@@ -652,117 +647,6 @@ class _HomeScreenState extends State<HomeScreen>
       }
     }
   }
-
-  // ── Preview stub data — shown when Firestore is empty (new community) ──────
-  // Demonstrates every feed card type so users understand what populates
-  // each section once their community is active. Never shown over real data.
-  List<_SmartFeedItem> _previewStubFeedItems() {
-    final now = DateTime.now();
-    return [
-      // Community activity 1 — new group joined nearby
-      _SmartFeedItem(
-        type: _SmartFeedType.communityActivity,
-        relevanceScore: 0.90,
-        reason: 'New in your area',
-        feedItem: FeedItem(
-          id: 'stub_group_1',
-          type: FeedItemType.newGroup,
-          title: 'Cambridge Dads FC just joined Huddl',
-          subtitle: '14 members · Football & fitness',
-          createdAt: now.subtract(const Duration(minutes: 23)),
-        ),
-      ),
-      // Community activity 2 — new parent joined
-      _SmartFeedItem(
-        type: _SmartFeedType.communityActivity,
-        relevanceScore: 0.85,
-        reason: 'Near you',
-        feedItem: FeedItem(
-          id: 'stub_parent_1',
-          type: FeedItemType.newParent,
-          title: 'Sarah joined your neighbourhood',
-          subtitle: 'Mum · Toddler age · CB2',
-          createdAt: now.subtract(const Duration(hours: 2)),
-        ),
-      ),
-      // Community activity 3 — marketplace item
-      _SmartFeedItem(
-        type: _SmartFeedType.communityActivity,
-        relevanceScore: 0.78,
-        reason: '0.4 miles away',
-        feedItem: FeedItem(
-          id: 'stub_market_1',
-          type: FeedItemType.newMarketplaceItem,
-          title: 'Bugaboo Fox 5 · £180',
-          subtitle: 'Good condition · Collection CB1',
-          createdAt: now.subtract(const Duration(hours: 5)),
-        ),
-      ),
-      // Community activity 4 — new event/meetup
-      _SmartFeedItem(
-        type: _SmartFeedType.communityActivity,
-        relevanceScore: 0.72,
-        reason: 'Suggested for you',
-        feedItem: FeedItem(
-          id: 'stub_event_1',
-          type: FeedItemType.newEvent,
-          title: 'Storytime at Cambridge Central Library',
-          subtitle: 'Thu 10am · Free · 8 going',
-          createdAt: now.subtract(const Duration(hours: 8)),
-        ),
-      ),
-    ];
-  }
-
-  // ── Stub announcements for noticeboard preview ────────────────────────────
-  List<Announcement> _previewStubAnnouncements() {
-    final borough = _borough.isNotEmpty ? _borough : 'Cambridge';
-    final now = DateTime.now();
-    return [
-      Announcement(
-        id: 'stub_ann_1',
-        authorName: 'Emma T.',
-        borough: borough,
-        content: '☀️ Anyone up for a morning walk with the pushchairs this Saturday? Thinking Grantchester Meadows around 10am — all welcome!',
-        createdAt: now.subtract(const Duration(hours: 3)),
-        likes: 7,
-        comments: 4,
-      ),
-      Announcement(
-        id: 'stub_ann_2',
-        authorName: 'James K.',
-        borough: borough,
-        content: 'Heads up — the toddler swimming session at the Parkside Pool has moved to Tuesdays from next week. See the council site for updated times.',
-        createdAt: now.subtract(const Duration(hours: 9)),
-        likes: 12,
-        comments: 2,
-      ),
-    ];
-  }
-
-  // ── Stub "Coming up" meetup — shown when user has no RSVPs ───────────────
-  Meetup _previewStubGoingMeetup() {
-    final next = DateTime.now().add(const Duration(days: 3, hours: 10));
-    return Meetup(
-      id: 'stub_meetup_going',
-      title: 'Morning Coffee & Catch-up',
-      description: 'A relaxed get-together for local parents.',
-      category: 'Coffee',
-      dateDisplay: 'SAT, ${next.day} ${_monthAbbr(next.month)}',
-      timeDisplay: '10:00 – 11:30 AM',
-      dateTime: next,
-      location: 'The Anchor Café, Cambridge',
-      organiserName: 'Priya S.',
-      attendeeCount: 6,
-      isGoing: true,
-      imageUrl: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=300',
-      borough: _borough.isNotEmpty ? _borough : 'Cambridge',
-      isFree: true,
-    );
-  }
-
-  String _monthAbbr(int m) =>
-      const ['','JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m];
 
   // ── AI: Generate contextual assistant hint ────────────────────────────────
   void _generateAiPostHint() {
@@ -1763,33 +1647,33 @@ class _HomeScreenState extends State<HomeScreen>
 
               final topTwo = live.take(2).toList();
 
-              // When Firestore has no posts yet, show stub preview posts
-              // so users understand exactly what this section will look like.
-              final display = topTwo.isNotEmpty ? topTwo : _previewStubAnnouncements();
               if (topTwo.isEmpty) {
-                // Stub preview — labelled so users know these are examples
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        children: [
-                          Icon(Icons.auto_awesome_outlined,
-                              size: 12, color: hc.textTertiary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Preview — posts from your neighbours will appear here',
-                            style: HuddlText.label(color: hc.textTertiary),
-                          ),
-                        ],
+                // Empty state
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: hc.divider),
+                  ),
+                  child: Row(
+                    children: [
+                      const WarmCircleIllustration(
+                        assetPath: 'assets/illustrations/writing.webp',
+                        size: 44,
                       ),
-                    ),
-                    ...display.map((ann) => Opacity(
-                          opacity: 0.72,
-                          child: _buildNoticeboardRow(ann, hc, isDark),
-                        )),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'No posts yet — be the first to share something with '
+                          '${_borough.isNotEmpty ? _borough : 'your'} neighbours.',
+                          style: HuddlText.caption(color: hc.textTertiary).copyWith(height: 1.4),
+                          maxLines: 2,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }
 
@@ -1995,57 +1879,7 @@ class _HomeScreenState extends State<HomeScreen>
     items.sort((a, b) => a.sortDate.compareTo(b.sortDate));
 
     if (items.isEmpty) {
-      // Show a stub "Going" card so users see a realistic Coming Up card
-      // instead of an empty state. Displayed at 80% opacity with a
-      // "Preview" label so it is clearly an example, not real data.
-      final stub = _previewStubGoingMeetup();
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-            child: Row(
-              children: [
-                Icon(Icons.auto_awesome_outlined,
-                    size: 12, color: hc.textTertiary),
-                const SizedBox(width: 4),
-                Text(
-                  "Preview — RSVP to a meetup and it'll appear here",
-                  style: HuddlText.label(color: hc.textTertiary),
-                ),
-              ],
-            ),
-          ),
-          Opacity(
-            opacity: 0.80,
-            child: SizedBox(
-              height: 252,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  SizedBox(
-                    width: 200,
-                    child: _buildDontForgetCard(
-                      _DiscoverItem(
-                        type: _DiscoverType.meetup,
-                        sortDate: stub.dateTime,
-                        title: stub.title,
-                        subtitle: '${stub.dateDisplay} · ${stub.location}',
-                        imageUrl: stub.imageUrl,
-                        badge: 'In 3 days',
-                        onTap: () {},
-                      ),
-                      hc,
-                      isDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
+      return _buildDontForgetEmptyState(hc, isDark);
     }
 
     return SizedBox(
@@ -2070,144 +1904,89 @@ class _HomeScreenState extends State<HomeScreen>
     return 'In $diff days';
   }
 
-  /// Full-width empty state for "Coming up" — shown when user has no RSVPs.
-  /// Spans the full screen width (margin 16px each side) like other feed cards.
+  /// Compact empty state for "Coming up" — same style as _buildCarouselEmpty.
+  /// WarmCircleIllustration + message + CTA, 120px tall, full-width card.
+  /// Empty state shown in the "Don't Forget" section when the user has no RSVPs.
+  /// Compact Row: accent bar + WarmCircleIllustration + title/caption + CTA pill.
   Widget _buildDontForgetEmptyState(dynamic hc, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-      child: HuddlCard(
-        variant: HuddlCardVariant.standard,
-        padding: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Hero — warm tinted, full width ────────────────────────
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Container(
-                width: double.infinity,
-                height: 130,
-                color: const Color(0xFFFFF5F0),
-                child: Center(
-                  child: Opacity(
-                    opacity: 0.82,
-                    child: Image.asset(
-                      'assets/illustrations/calendar.webp',
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 52,
-                        color: HuddlColors.primary,
-                      ),
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      decoration: BoxDecoration(
+        color: isDark ? hc.surface : const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Left neutral accent bar
+          Container(
+            width: 5,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? HuddlColors.darkDivider
+                  : HuddlColors.nearBlack.withValues(alpha: 0.15),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Calendar illustration
+          const WarmCircleIllustration(
+            assetPath: 'assets/illustrations/calendar.webp',
+            size: 44,
+          ),
+          const SizedBox(width: 12),
+          // Text + CTA
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Nothing confirmed yet',
+                  style: HuddlText.body(weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  "RSVP to a meetup or event and it'll appear here with a countdown.",
+                  style: HuddlText.caption(color: hc.textSecondary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () {
+                    HuddlAnimations.lightTap();
+                    _switchToTab(2); // Discover tab
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Browse events →',
+                      style: HuddlText.caption(weight: FontWeight.w600),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-            // ── Strip ─────────────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              color: isDark
-                  ? HuddlColors.darkSurfaceVariant
-                  : const Color(0xFFF7F7F7),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.event_available_outlined,
-                    size: 12,
-                    color: isDark
-                        ? HuddlColors.darkTextTertiary
-                        : HuddlColors.textHint,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    'RSVP to confirm',
-                    style: HuddlText.label(
-                      color: isDark
-                          ? HuddlColors.darkTextTertiary
-                          : HuddlColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // ── Body — title, caption, Browse CTA right-aligned ───────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Nothing confirmed yet',
-                          style: HuddlText.body(
-                            weight: FontWeight.w600,
-                            color: hc.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          "RSVP to a meetup or event and it'll appear here.",
-                          style: HuddlText.label(color: hc.textSecondary),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      HuddlAnimations.lightTap();
-                      _switchToTab(2);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.transparent : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: HuddlColors.primary,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.explore_outlined,
-                            size: 13,
-                            color: HuddlColors.primary,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'Browse',
-                            style: HuddlText.caption(
-                              weight: FontWeight.w600,
-                              color: HuddlColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+        ],
       ),
     );
   }
 
-  /// Specialised "Don't Forget" card — identical hero/body to _buildDiscoverCard
+    /// Specialised "Don't Forget" card — identical hero/body to _buildDiscoverCard
   /// but renders the countdown badge prominently in amber + a "Going ✓" strip.
   Widget _buildDontForgetCard(_DiscoverItem item, dynamic hc, bool isDark) {
     // Design rule: all type pills nearBlack — no per-type colour coding
