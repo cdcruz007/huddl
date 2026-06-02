@@ -1904,80 +1904,149 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Empty state shown in the "Don't Forget" section when the user has no RSVPs.
-  /// Amber-tinted, with a dashed border and a CTA that navigates to Connect tab.
+  /// Matches the real card dimensions (200×252) so the section height is identical
+  /// whether or not the user has any confirmed RSVPs.
   Widget _buildDontForgetEmptyState(dynamic hc, bool isDark) {
-    return Container(
-      height: 120,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      decoration: BoxDecoration(
-        color: isDark ? hc.surface : const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
-          width: 1,
-        ),
-      ),
-      child: Row(
+    return SizedBox(
+      height: 252,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        physics: const NeverScrollableScrollPhysics(),
         children: [
-          // Left neutral accent bar
-          Container(
-            width: 5,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? HuddlColors.darkDivider
-                  : HuddlColors.nearBlack.withValues(alpha: 0.15),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
+          SizedBox(
+            width: 200,
+            child: HuddlCard(
+              variant: HuddlCardVariant.standard,
+              padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Hero area — warm-tinted illustration ──────────────
+                  SizedBox(
+                    height: 115,
+                    width: 200,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFF5F0), // huddl warm pale-orange tint
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                      ),
+                      child: Center(
+                        child: Opacity(
+                          opacity: 0.82,
+                          child: Image.asset(
+                            'assets/illustrations/calendar.webp',
+                            width: 88,
+                            height: 88,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 44,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ── "RSVP to confirm" strip — mirrors "You're going!" ──
+                  Container(
+                    width: double.infinity,
+                    color: isDark
+                        ? HuddlColors.darkSurfaceVariant
+                        : const Color(0xFFF7F7F7),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.event_available_outlined,
+                            size: 11,
+                            color: isDark
+                                ? HuddlColors.darkTextTertiary
+                                : HuddlColors.textHint),
+                        const SizedBox(width: 4),
+                        Text(
+                          'RSVP to confirm',
+                          style: HuddlText.label(
+                            color: isDark
+                                ? HuddlColors.darkTextTertiary
+                                : HuddlColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // ── Card body ─────────────────────────────────────────
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Nothing confirmed yet',
+                            style: HuddlText.body(
+                              weight: FontWeight.w600,
+                              color: hc.textPrimary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'RSVP to a meetup or event and it\'ll appear here.',
+                            style: HuddlText.label(color: hc.textSecondary),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const Spacer(),
+                          // Browse CTA — mirrors countdown pill position
+                          GestureDetector(
+                            onTap: () {
+                              HuddlAnimations.lightTap();
+                              _switchToTab(2); // Discover tab
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: HuddlColors.primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.explore_outlined,
+                                    size: 12,
+                                    color: HuddlColors.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Browse events',
+                                    style: HuddlText.caption(
+                                      weight: FontWeight.w600,
+                                      color: HuddlColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          // Calendar illustration — replaces bell icon
-          const WarmCircleIllustration(
-            assetPath: 'assets/illustrations/calendar.webp',
-            size: 44,
-          ),
-          const SizedBox(width: 12),
-          // Text + CTA
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Nothing confirmed yet",
-                  style: HuddlText.body(weight: FontWeight.w600),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  "RSVP to a meetup or event and it'll appear here with a countdown.",
-                  style: HuddlText.caption(color: hc.textSecondary),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () {
-                    HuddlAnimations.lightTap();
-                    _switchToTab(2); // Discover tab
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Browse events →',
-                      style: HuddlText.caption(weight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
         ],
       ),
     );
