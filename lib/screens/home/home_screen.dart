@@ -118,6 +118,9 @@ class _HomeScreenState extends State<HomeScreen>
   // ── AI catch-up card state ──────────────────────────────────────────────
   bool _catchUpDismissed = false;
 
+  // ── SEND Navigator dismissal (persisted — user can hide it permanently) ──
+  bool _sendNavDismissed = false;
+
   // ── Notification state ───────────────────────────────────────────────────
   bool _notificationsRead = false;
   int _realUnreadNotifCount = 0;           // live count from Firestore
@@ -460,6 +463,14 @@ class _HomeScreenState extends State<HomeScreen>
         if (mounted) setState(() => _feedPrefs = merged);
       }
     } catch (_) {}
+
+    // Load SEND Navigator dismissal flag
+    try {
+      final raw = await BrowserStorage.getString('send_nav_dismissed_v1');
+      if (raw == 'true' && mounted) {
+        setState(() => _sendNavDismissed = true);
+      }
+    } catch (_) {}
   }
 
   Future<void> _saveFeedPrefs() async {
@@ -579,12 +590,14 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
 
-    // 7. SEND Navigator card — shown to all users (SEND affects any family).
-    items.add(_SmartFeedItem(
-      type: _SmartFeedType.sendNavigator,
-      relevanceScore: 0.70,
-      reason: 'Resources and support for school-age children',
-    ));
+    // 7. SEND Navigator card — dismissible; only injected if not hidden by user.
+    if (!_sendNavDismissed) {
+      items.add(_SmartFeedItem(
+        type: _SmartFeedType.sendNavigator,
+        relevanceScore: 0.70,
+        reason: 'Resources and support for school-age children',
+      ));
+    }
 
 
     // ── Apply feed preference filters ─────────────────────────────────────
@@ -605,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen>
         case _SmartFeedType.partnerPromoted:
           return false; // always shown — Partner paid for placement
         case _SmartFeedType.sendNavigator:
-          return false; // always shown for eligible parents
+          return _sendNavDismissed; // hidden once user dismisses
       }
     });
 
@@ -5208,50 +5221,77 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Feed item helpers ─────────────────────────────────────────────────────
 
 
-  // ── SEND Navigator card — compact single-row entry in smart feed ─────────
+  // ── SEND Navigator card — dismissible compact entry in smart feed ─────────
   Widget _buildSendNavigatorCard(dynamic hc) {
-    return GestureDetector(
-      onTap: () {
-        HuddlAnimations.mediumTap();
-        _switchToDiscover(4);
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          color: hc.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: hc.divider, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(8),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      decoration: BoxDecoration(
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: hc.divider, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          // ── Tappable content area ────────────────────────────────────────
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HuddlAnimations.mediumTap();
+                _switchToDiscover(4);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 11, 8, 11),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.school_outlined,
+                          size: 17, color: HuddlColors.primary),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('SEND Navigator',
+                              style: HuddlText.body(weight: FontWeight.w600)),
+                          Text('EHCP · Deadlines · AI advisor · Local support',
+                              style: HuddlText.caption(
+                                  color: hc.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 18, color: hc.textTertiary),
+                  ],
+                ),
               ),
-              child: Icon(Icons.school_outlined,
-                  size: 17, color: HuddlColors.primary),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('SEND Navigator',
-                      style: HuddlText.body(
-                          weight: FontWeight.w600)),
-                  Text('EHCP · Deadlines · AI advisor · Local support',
-                      style: HuddlText.caption(color: hc.textSecondary)),
-                ],
-              ),
+          ),
+
+          // ── Dismiss button ───────────────────────────────────────────────
+          GestureDetector(
+            onTap: () async {
+              HuddlAnimations.lightTap();
+              setState(() => _sendNavDismissed = true);
+              try {
+                await BrowserStorage.setString('send_nav_dismissed_v1', 'true');
+              } catch (_) {}
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 11, 14, 11),
+              child: Icon(Icons.close_rounded,
+                  size: 16, color: hc.textTertiary),
             ),
-            Icon(Icons.chevron_right_rounded,
-                size: 18, color: hc.textTertiary),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
