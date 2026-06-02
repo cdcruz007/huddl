@@ -3660,19 +3660,28 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     child: Row(
                       children: [
-                        // Illustration panel
+                        // Illustration panel — warm peach, flat WebP
                         ClipRRect(
                           borderRadius: const BorderRadius.horizontal(
                               left: Radius.circular(17)),
                           child: Container(
-                            width: 120,
-                            color: nudge.bgColor.withValues(alpha: isDark ? 0.18 : 0.10),
+                            width: 130,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF2C1F17)
+                                  : const Color(0xFFFFF0E8),
+                            ),
                             child: Center(
-                              child: HuddlCategoryIcon(
-                                category: nudge.category,
-                                size: 80,
-                                chipRadius: 20,
-                                iconPadding: 18,
+                              child: Opacity(
+                                opacity: 0.88,
+                                child: Image.asset(
+                                  nudge.assetPath,
+                                  width: 110,
+                                  height: 110,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) =>
+                                      const SizedBox.shrink(),
+                                ),
                               ),
                             ),
                           ),
