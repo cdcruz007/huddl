@@ -1917,7 +1917,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     )
                   : const HuddlEmptyState(
                       mood: HuddlMood.celebrating,
-                      illustrationAsset: 'assets/illustrations/mobile_store.png',
+                      illustrationAsset: 'assets/illustrations/mobile_store.webp',
                       title: 'Nothing listed yet',
                       subtitle: 'Be the first to list something — Cambridge parents love a good find.',
                     ))
@@ -2100,7 +2100,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             child: filtered.isEmpty
                 ? const HuddlEmptyState(
                     mood: HuddlMood.curious,
-                    illustrationAsset: 'assets/illustrations/search_found.png',
+                    illustrationAsset: 'assets/illustrations/search_found.webp',
                     title: 'No listings found',
                     subtitle: 'Try a different search term.',
                   )
@@ -2218,7 +2218,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 padding: const EdgeInsets.only(top: 32),
                 child: HuddlEmptyState(
                   mood: HuddlMood.celebrating,
-                  illustrationAsset: 'assets/illustrations/sending.png',
+                  illustrationAsset: 'assets/illustrations/sending.webp',
                   title: 'No listings yet',
                   subtitle: 'Tap the + button to snap a photo and list your first item.',
                 ),
@@ -3190,7 +3190,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         liveRegion: true,
         child: const HuddlEmptyState(
           mood: HuddlMood.supportive,
-          illustrationAsset: 'assets/illustrations/waving_thumbs.png',
+          illustrationAsset: 'assets/illustrations/waving_thumbs.webp',
           title: 'Nothing saved yet',
           subtitle: 'Tap the ❤️ on any listing to save it here.',
         ),
@@ -3240,7 +3240,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           child: saved.isEmpty
               ? const HuddlEmptyState(
                   mood: HuddlMood.curious,
-                  illustrationAsset: 'assets/illustrations/search_found.png',
+                  illustrationAsset: 'assets/illustrations/search_found.webp',
                   title: 'No results found',
                   subtitle: 'Try a different search or keyword.',
                 )

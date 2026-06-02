@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/huddl_character.dart';
 
 
 /// Shown when a user enters a postcode outside the Cambridge launch area.
@@ -23,13 +24,12 @@ class NotAvailableScreen extends StatelessWidget {
               // ── Top spacer ────────────────────────────────────────────
               SizedBox(height: size.height * 0.06),
 
-              // ── Icon ──────────────────────────────────────────────────
-              Expanded(
+              // ── Illustration ───────────────────────────────────────────
+              const Expanded(
                 child: Center(
-                  child: Icon(
-                    Icons.campaign_outlined,
-                    size: 120,
-                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.6),
+                  child: WarmCircleIllustration(
+                    assetPath: 'assets/illustrations/location_community.webp',
+                    size: 160,
                   ),
                 ),
               ),

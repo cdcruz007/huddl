@@ -2509,10 +2509,21 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               )
             else if (_endorsements.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'No endorsements yet — be the first local parent to vouch!',
-                  style: HuddlText.body(color: hc.textSecondary),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Row(
+                  children: [
+                    const WarmCircleIllustration(
+                      assetPath: 'assets/illustrations/waving_thumbs.webp',
+                      size: 44,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'No endorsements yet — be the first local parent to vouch!',
+                        style: HuddlText.body(color: hc.textSecondary),
+                      ),
+                    ),
+                  ],
                 ),
               )
             else
@@ -2780,7 +2791,7 @@ class _EmptyDirectory extends StatelessWidget {
       mood: hasFilter ? HuddlMood.curious : HuddlMood.supportive,
       illustrationAsset: hasFilter
           ? 'assets/illustrations/not_found.png'
-          : 'assets/illustrations/handshake.png',
+          : 'assets/illustrations/handshake.webp',
       title: hasFilter
           ? 'No listings match your filter'
           : 'No listings in your area yet',

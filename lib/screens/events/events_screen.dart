@@ -2239,7 +2239,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
                     illustrationAsset: _hasActiveFilter
                         ? 'assets/illustrations/not_found.png'
-                        : 'assets/illustrations/location_community.png',
+                        : 'assets/illustrations/location_community.webp',
                     title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                     subtitle: _hasActiveFilter
                         ? 'Try adjusting your filters to see more meetups.'
@@ -2853,7 +2853,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
     if (allGoing.isEmpty) {
       return _EmptyState(
         icon: Icons.event_available_outlined,
-        illustrationAsset: 'assets/illustrations/calendar.png',
+        illustrationAsset: 'assets/illustrations/calendar.webp',
         title: "You're not going to anything yet",
         subtitle:
             "Tap 'Count Me In' on a meetup or event to add it here!",
@@ -3491,7 +3491,7 @@ class _EventsTabState extends State<_EventsTab> {
                         ? Icons.filter_list_off
                         : Icons.event_outlined,
                     illustrationAsset: (!hasActiveFilter && _localSearchQuery.isEmpty)
-                        ? 'assets/illustrations/calendar.png'
+                        ? 'assets/illustrations/calendar.webp'
                         : 'assets/illustrations/not_found.png',
                     title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
@@ -6014,7 +6014,7 @@ class _NearbyTabState extends State<_NearbyTab>
           child: items.isEmpty
               ? HuddlEmptyState(
                   mood: HuddlMood.curious,
-                  illustrationAsset: 'assets/illustrations/location_community.png',
+                  illustrationAsset: 'assets/illustrations/location_community.webp',
                   title: _filter == 'meetups'
                       ? 'No meetups nearby yet'
                       : _filter == 'events'

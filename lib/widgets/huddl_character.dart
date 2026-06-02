@@ -208,7 +208,7 @@ class _HuddlEmptyStateState extends State<HuddlEmptyState>
               mainAxisSize: MainAxisSize.min,
               children: [
                 widget.illustrationAsset != null
-                    ? _WarmCircleIllustration(
+                    ? WarmCircleIllustration(
                         assetPath: widget.illustrationAsset!,
                         size: widget.characterSize,
                       )
@@ -255,15 +255,16 @@ class _HuddlEmptyStateState extends State<HuddlEmptyState>
 }
 
 // =============================================================================
-// _WarmCircleIllustration — WebP illustration with warm-circle treatment
+// WarmCircleIllustration — WebP illustration with warm-circle treatment
 //
 // Rendering treatment matches the huddl brand:
 //   • Soft orange-tinted circle background (#FFF5F0) — huddl's palest warm tint
 //   • Illustration at 80% opacity inside the circle
 //   • Circle diameter = size, illustration fills 80% of circle
 // =============================================================================
-class _WarmCircleIllustration extends StatelessWidget {
-  const _WarmCircleIllustration({
+class WarmCircleIllustration extends StatelessWidget {
+  const WarmCircleIllustration({
+    super.key,
     required this.assetPath,
     required this.size,
   });

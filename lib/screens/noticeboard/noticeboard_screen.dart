@@ -749,7 +749,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
   Widget _buildEmptyState(dynamic hc) {
     return HuddlEmptyState(
       mood: HuddlMood.noticeboard,
-      illustrationAsset: 'assets/illustrations/community_wave.png',
+      illustrationAsset: 'assets/illustrations/community_wave.webp',
       title: 'No posts yet',
       subtitle: 'Be the first to post something to ${_borough.isNotEmpty ? _borough : 'your community'}.',
       ctaLabel: 'Post to community',

@@ -29,6 +29,19 @@ class TermsOfServiceScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Illustration header ───────────────────────────────────
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Image.asset(
+                  'assets/illustrations/writing.webp',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
             _buildLastUpdated(),
             const SizedBox(height: 20),
             _buildIntroduction(),

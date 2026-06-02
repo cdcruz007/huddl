@@ -201,7 +201,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
       return HuddlEmptyState(
         mood: HuddlMood.neutral,
         illustrationAsset: isActive
-            ? 'assets/illustrations/questions.png'
+            ? 'assets/illustrations/questions.webp'
             : null, // closed polls: icon fallback is appropriate
         title: isActive ? 'No polls yet' : 'No closed polls',
         subtitle: isActive

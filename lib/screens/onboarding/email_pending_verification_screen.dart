@@ -24,6 +24,7 @@ import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/huddl_character.dart';
 
 class EmailPendingVerificationScreen extends StatefulWidget {
   const EmailPendingVerificationScreen({super.key});
@@ -174,19 +175,10 @@ class _EmailPendingVerificationScreenState
 
                     const SizedBox(height: 44),
 
-                    // Envelope icon
-                    Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7F7F7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.mark_email_unread_rounded,
-                        size: 56,
-                        color: HuddlColors.textDark,
-                      ),
+                    // Sending illustration — warm circle treatment
+                    const WarmCircleIllustration(
+                      assetPath: 'assets/illustrations/sending.webp',
+                      size: 160,
                     ),
 
                     const SizedBox(height: 32),

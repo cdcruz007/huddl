@@ -593,8 +593,8 @@ class _CommunityTabState extends State<_CommunityTab>
           return _EmptyState(
             icon: Icons.auto_awesome_outlined,
             illustrationAsset: widget.searchQuery.isEmpty
-                ? 'assets/illustrations/growth_yellow.png'
-                : 'assets/illustrations/search_found.png',
+                ? 'assets/illustrations/growth_yellow.webp'
+                : 'assets/illustrations/search_found.webp',
             title: widget.searchQuery.isNotEmpty
                 ? 'No results for "${widget.searchQuery}"'
                 : 'No community wisdom yet',
@@ -1997,7 +1997,7 @@ class _UnifiedInsightsFeedState extends State<_UnifiedInsightsFeed>
         if (allItems.isEmpty) {
           return _EmptyState(
             icon: Icons.auto_awesome_outlined,
-            illustrationAsset: 'assets/illustrations/growth_yellow.png',
+            illustrationAsset: 'assets/illustrations/growth_yellow.webp',
             title: widget.searchQuery.isNotEmpty
                 ? 'No results for "${widget.searchQuery}"'
                 : 'No insights yet',

@@ -1658,8 +1658,10 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.campaign_outlined,
-                          size: 15, color: hc.textTertiary),
+                      const WarmCircleIllustration(
+                        assetPath: 'assets/illustrations/writing.webp',
+                        size: 44,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1931,23 +1933,10 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           const SizedBox(width: 14),
-          // Bell icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? HuddlColors.darkSurfaceVariant
-                  : HuddlColors.nearBlack.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.notifications_active_outlined,
-              size: 20,
-              color: isDark
-                  ? HuddlColors.darkTextSecondary
-                  : HuddlColors.nearBlack.withValues(alpha: 0.5),
-            ),
+          // Calendar illustration — replaces bell icon
+          const WarmCircleIllustration(
+            assetPath: 'assets/illustrations/calendar.webp',
+            size: 44,
           ),
           const SizedBox(width: 12),
           // Text + CTA
@@ -2256,7 +2245,10 @@ class _HomeScreenState extends State<HomeScreen>
     items.sort((a, b) => b.sortDate.compareTo(a.sortDate));
 
     if (items.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No new listings this week', Icons.explore_outlined);
+      return _buildCarouselEmpty(
+        hc, 'No new listings this week', Icons.explore_outlined,
+        illustrationAsset: 'assets/illustrations/mobile_store.webp',
+      );
     }
 
     return SizedBox(
@@ -2426,7 +2418,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildGroupsCarousel(dynamic hc) {
     final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
     if (groups.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
+      return _buildCarouselEmpty(
+        hc, 'No new groups yet', Icons.people_outline,
+        illustrationAsset: 'assets/illustrations/community_wave.webp',
+      );
     }
     return SizedBox(
       height: 280,
@@ -2554,7 +2549,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildMeetupsCarousel(dynamic hc) {
     final meetups = _upcomingMeetups.take(8).toList();
     if (meetups.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No upcoming meetups', Icons.place);
+      return _buildCarouselEmpty(
+        hc, 'No upcoming meetups', Icons.place,
+        illustrationAsset: 'assets/illustrations/location_community.webp',
+      );
     }
     return SizedBox(
       height: 280,
@@ -2595,7 +2593,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildEventsCarousel(dynamic hc) {
     final events = _eventService.events.take(8).toList();
     if (events.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No events listed yet', Icons.event_outlined);
+      return _buildCarouselEmpty(
+        hc, 'No events listed yet', Icons.event_outlined,
+        illustrationAsset: 'assets/illustrations/calendar.webp',
+      );
     }
     return SizedBox(
       height: 320,
@@ -2737,7 +2738,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildServicesCarousel(dynamic hc) {
     final services = _featuredServices.take(8).toList();
     if (services.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No services listed yet', Icons.handshake_outlined);
+      return _buildCarouselEmpty(
+        hc, 'No services listed yet', Icons.handshake_outlined,
+        illustrationAsset: 'assets/illustrations/handshake.webp',
+      );
     }
     return SizedBox(
       height: 320,
@@ -2847,7 +2851,10 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildMarketCarousel(dynamic hc) {
     final items = _rehomeService.allItems.take(8).toList();
     if (items.isEmpty) {
-      return _buildCarouselEmpty(hc, 'No items listed yet', Icons.storefront_outlined);
+      return _buildCarouselEmpty(
+        hc, 'No items listed yet', Icons.storefront_outlined,
+        illustrationAsset: 'assets/illustrations/mobile_store.webp',
+      );
     }
     return SizedBox(
       height: 320,
@@ -3045,9 +3052,14 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildCarouselEmpty(dynamic hc, String message, IconData icon) {
+  Widget _buildCarouselEmpty(
+    dynamic hc,
+    String message,
+    IconData icon, {
+    String? illustrationAsset,
+  }) {
     return Container(
-      height: 110,
+      height: 120,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: hc.surface,
@@ -3065,10 +3077,19 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: hc.textTertiary),
-            const SizedBox(height: 6),
-            Text(message,
-                style: HuddlText.body(color: hc.textTertiary)),
+            if (illustrationAsset != null)
+              WarmCircleIllustration(
+                assetPath: illustrationAsset,
+                size: 64,
+              )
+            else
+              Icon(icon, size: 24, color: hc.textTertiary),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: HuddlText.body(color: hc.textTertiary),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

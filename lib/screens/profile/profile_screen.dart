@@ -4110,7 +4110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (blocked.isEmpty) {
             return const HuddlEmptyState(
                 mood: HuddlMood.neutral,
-                illustrationAsset: 'assets/illustrations/security.png',
+                illustrationAsset: 'assets/illustrations/security.webp',
                 title: 'No blocked users',
                 subtitle: 'Users you block from groups or DMs will appear here.',
               );
@@ -5662,16 +5662,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: HuddlColors.error.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+              Opacity(
+                opacity: 0.88,
+                child: Image.asset(
+                  'assets/illustrations/uncertain.webp',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.logout, size: 28, color: HuddlColors.error,
+                  ),
                 ),
-                child: const Icon(Icons.logout, size: 28, color: HuddlColors.error),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               Text('Log out?',
                   style: HuddlText.heading(color: context.hc.textPrimary)),
               const SizedBox(height: 12),
