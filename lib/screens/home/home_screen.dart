@@ -113,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen>
     'announcements': true,
     'suggestions': true,
     'tips': true,
+    'marketplace': true,
   };
 
   // ── AI catch-up card state ──────────────────────────────────────────────
@@ -613,7 +614,12 @@ class _HomeScreenState extends State<HomeScreen>
         case _SmartFeedType.group:
           return !(_feedPrefs['suggestions'] ?? true);
         case _SmartFeedType.aiNudge:
+          return !(_feedPrefs['tips'] ?? true);
         case _SmartFeedType.communityActivity:
+          // Filter marketplace items separately from general tips
+          if (item.feedItem?.type == FeedItemType.newMarketplaceItem) {
+            return !(_feedPrefs['marketplace'] ?? true);
+          }
           return !(_feedPrefs['tips'] ?? true);
         case _SmartFeedType.partnerPromoted:
           return false; // always shown — Partner paid for placement
@@ -1253,7 +1259,42 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
 
-              // ── Feature discovery hook (Market / Services / Groups) ────────
+              // ── Local services carousel — all tiers see it; Partner listings
+              //    get a verified badge. Shown only when data has loaded.
+              if (_featuredServices.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Local services',
+                          style: HuddlText.body(
+                              weight: FontWeight.w700,
+                              color: hc.textPrimary),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () {
+                            HuddlAnimations.selectionClick();
+                            _switchToDiscover(2);
+                          },
+                          child: Text(
+                            'See all',
+                            style: HuddlText.caption(
+                                color: HuddlColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildServicesCarousel(hc),
+                ),
+              ],
+
+              // ── Feature discovery hook (benefit nudges carousel) ───────────
               SliverToBoxAdapter(
                 child: _buildBenefitCarousel(hc, isDark),
               ),
@@ -1821,47 +1862,59 @@ class _HomeScreenState extends State<HomeScreen>
     final sinceTime = _feedService.lastLogin
         ?? DateTime.now().subtract(const Duration(days: 7));
 
+    // Count items that are genuinely new since last login
     final newMeetups = _upcomingMeetups
-        .where((m) => m.dateTime.isAfter(sinceTime)).length;
+        .where((m) => m.createdAt.isAfter(sinceTime)).length;
     final newEvents = _eventService.events
         .where((e) => e.dateTime.isAfter(sinceTime)).length;
     final newGroupCount = _newPublicGroups
         .where((g) => !_isDefaultOnboardingGroup(g)).length;
     final newMarket = _rehomeService.allItems
         .where((i) => i.listedAt.isAfter(sinceTime)).length;
+    final newServices = _featuredServices
+        .where((s) => s.createdAt.isAfter(sinceTime)).length;
 
     // Build row items — only include counts > 0
+    // Order: meetups → events → market (transactional) → groups → services
     final rows = <_CatchUpItem>[];
     if (newMeetups > 0) {
       rows.add(_CatchUpItem(
         icon: Icons.near_me_outlined,
         color: HuddlColors.primary,
-        label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'}',
+        label: '$newMeetups new ${newMeetups == 1 ? 'meetup' : 'meetups'} nearby',
         onTap: () => _switchToDiscover(1),
       ));
     }
     if (newEvents > 0) {
       rows.add(_CatchUpItem(
         icon: Icons.event_note_outlined,
-        color: HuddlColors.infoBlue,
+        color: HuddlColors.accentAmber,
         label: '$newEvents new ${newEvents == 1 ? 'event' : 'events'}',
         onTap: () => _switchToDiscover(1),
-      ));
-    }
-    if (newGroupCount > 0) {
-      rows.add(_CatchUpItem(
-        icon: Icons.diversity_3_outlined,
-        color: HuddlColors.nearBlack,
-        label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
-        onTap: () => _switchToDiscover(0),
       ));
     }
     if (newMarket > 0) {
       rows.add(_CatchUpItem(
         icon: Icons.sell_outlined,
-        color: HuddlColors.yellowDark,
-        label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale nearby',
+        color: HuddlColors.primary,
+        label: '$newMarket ${newMarket == 1 ? 'item' : 'items'} for sale nearby',
         onTap: () => _switchToTab(3),
+      ));
+    }
+    if (newGroupCount > 0) {
+      rows.add(_CatchUpItem(
+        icon: Icons.diversity_3_outlined,
+        color: HuddlColors.infoBlue,
+        label: '$newGroupCount ${newGroupCount == 1 ? 'group' : 'groups'} nearby',
+        onTap: () => _switchToDiscover(0),
+      ));
+    }
+    if (newServices > 0) {
+      rows.add(_CatchUpItem(
+        icon: Icons.handshake_outlined,
+        color: HuddlColors.teal,
+        label: '$newServices ${newServices == 1 ? 'local service' : 'local services'} added',
+        onTap: () => _switchToDiscover(2),
       ));
     }
 
@@ -6114,7 +6167,16 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
+    final ss = SubscriptionService();
     final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    // Tier label shown in subtitle — contextual for the user
+    final tierLabel = ss.isPartner
+        ? 'Huddl Partner'
+        : ss.isPlus
+            ? 'Huddl Plus'
+            : 'Welcome';
+
     return SafeArea(
       top: false,
       child: Container(
@@ -6122,19 +6184,33 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
           color: hc.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        // Clip so rounded corners show properly
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const HuddlBottomSheetHandle(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
               child: Row(
                 children: [
                   Icon(Icons.tune, color: hc.textTertiary, size: 20),
                   const SizedBox(width: 8),
-                  Text('Feed Preferences',
-                      style: HuddlText.heading(color: hc.textPrimary)),
+                  Expanded(
+                    child: Text('What appears in your feed',
+                        style: HuddlText.heading(color: hc.textPrimary)),
+                  ),
+                  // Tier pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      tierLabel,
+                      style: HuddlText.label(color: HuddlColors.primary),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -6142,22 +6218,45 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Choose which content appears in your feed.',
+                'Toggle each section on or off. Changes apply immediately.',
                 style: HuddlText.caption(color: hc.textSecondary),
               ),
             ),
             const SizedBox(height: 12),
             const Divider(height: 1),
-            _tile('meetups', Icons.groups, 'Meetups I\'m going to',
-                'High priority \u2014 shown at the top'),
-            _tile('events', Icons.event, 'Events I\'m attending',
-                'Reminders as the date approaches'),
+
+            // ── Activity & attendance ───────────────────────────────────
+            _sectionLabel('Activity & attendance', hc),
+            _tile('meetups', Icons.near_me_outlined, 'Meetups near you',
+                'New meetups posted in your area',
+                color: HuddlColors.primary),
+            _tile('events', Icons.event_note_outlined, 'Events',
+                'Paid events and community gatherings',
+                color: HuddlColors.accentAmber),
+
+            // ── Community ──────────────────────────────────────────────
+            _sectionLabel('Community', hc),
             _tile('announcements', Icons.campaign_outlined,
-                'Community announcements', 'Pinned posts and popular activity'),
-            _tile('suggestions', Icons.group_add,
-                'Suggested meetups & groups', 'New meetups and groups near you'),
-            _tile('tips', Icons.lightbulb_outline, 'Tips & suggestions',
-                'Personalised suggestions based on your activity'),
+                'Noticeboard posts',
+                'What your neighbours are sharing',
+                color: HuddlColors.primaryLight),
+            _tile('suggestions', Icons.diversity_3_outlined,
+                'Groups & suggestions',
+                'Groups that match your interests',
+                color: HuddlColors.infoBlue),
+
+            // ── Market & services ──────────────────────────────────────
+            _sectionLabel('Market & services', hc),
+            _tile('marketplace', Icons.sell_outlined,
+                'Items for sale nearby',
+                'New listings in your area',
+                color: HuddlColors.primary),
+            if (ss.isPlusOrAbove)
+              _tile('tips', Icons.lightbulb_outline,
+                  'AI tips & suggestions',
+                  'Personalised nudges based on your activity',
+                  color: HuddlColors.teal),
+
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -6178,24 +6277,47 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
     );
   }
 
-  Widget _tile(String key, IconData icon, String title, String subtitle) {
+  Widget _sectionLabel(String label, dynamic hc) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+      child: Text(
+        label.toUpperCase(),
+        style: HuddlText.label(color: hc.textTertiary),
+      ),
+    );
+  }
+
+  Widget _tile(String key, IconData icon, String title, String subtitle,
+      {Color? color}) {
     final enabled = _prefs[key] ?? true;
     final hc = context.hc;
+    final iconColor = color ?? HuddlColors.primary;
     return InkWell(
       onTap: () => _toggle(key),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Icon(icon, size: 22,
-                color: enabled ? HuddlColors.primary : hc.textTertiary),
-            const SizedBox(width: 14),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: (enabled ? iconColor : hc.textTertiary)
+                    .withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18,
+                  color: enabled ? iconColor : hc.textTertiary),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: HuddlText.body(color: enabled ? hc.textPrimary : hc.textTertiary)),
+                      style: HuddlText.body(
+                          weight: FontWeight.w600,
+                          color: enabled ? hc.textPrimary : hc.textTertiary)),
                   const SizedBox(height: 2),
                   Text(subtitle,
                       style: HuddlText.caption(color: hc.textTertiary)),
@@ -6206,10 +6328,10 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Icon(
-                enabled ? Icons.check_circle : Icons.circle_outlined,
+                enabled ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
                 key: ValueKey(enabled),
-                size: 24,
-                color: enabled ? HuddlColors.textDark : hc.textTertiary,  // Phase 1: feed-pref toggle → textDark
+                size: 22,
+                color: enabled ? iconColor : hc.textTertiary,
               ),
             ),
           ],
