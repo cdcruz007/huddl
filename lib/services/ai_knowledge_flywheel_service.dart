@@ -117,6 +117,12 @@ class CommunityWisdomArticle {
   // Optional hero image URL — set by moderator when publishing
   final String? heroImageUrl;
 
+  // Parent-shared link — true when submitted via the + FAB compose sheet
+  final bool isParentShared;
+
+  // External URL for parent-shared link cards
+  final String? externalUrl;
+
   const CommunityWisdomArticle({
     required this.id,
     required this.title,
@@ -143,6 +149,8 @@ class CommunityWisdomArticle {
     this.upvotes = 0,
     this.viewCount = 0,
     this.heroImageUrl,
+    this.isParentShared = false,
+    this.externalUrl,
   });
 
   // ── Firestore serialisation ────────────────────────────────────────────────
@@ -178,6 +186,8 @@ class CommunityWisdomArticle {
         'upvotes':                upvotes,
         'view_count':             viewCount,
         if (heroImageUrl != null) 'hero_image_url': heroImageUrl,
+        if (isParentShared) 'is_parent_shared': true,
+        if (externalUrl != null) 'external_url': externalUrl,
       };
 
   factory CommunityWisdomArticle.fromFirestore(
@@ -228,6 +238,8 @@ class CommunityWisdomArticle {
       upvotes:               data['upvotes'] as int? ?? 0,
       viewCount:             data['view_count'] as int? ?? 0,
       heroImageUrl:          data['hero_image_url'] as String?,
+      isParentShared:        data['is_parent_shared'] as bool? ?? false,
+      externalUrl:           data['external_url'] as String?,
     );
   }
 
@@ -241,6 +253,8 @@ class CommunityWisdomArticle {
     int? upvotes,
     int? viewCount,
     String? heroImageUrl,
+    bool? isParentShared,
+    String? externalUrl,
   }) =>
       CommunityWisdomArticle(
         id:                    id,
@@ -268,6 +282,8 @@ class CommunityWisdomArticle {
         upvotes:               upvotes ?? this.upvotes,
         viewCount:             viewCount ?? this.viewCount,
         heroImageUrl:          heroImageUrl ?? this.heroImageUrl,
+        isParentShared:        isParentShared ?? this.isParentShared,
+        externalUrl:           externalUrl ?? this.externalUrl,
       );
 }
 
@@ -654,6 +670,58 @@ Rules:
     }).catchError((e) {
       if (kDebugMode) debugPrint('[Flywheel] recordView error: $e');
     });
+  }
+
+  // ── Parent-shared link submission ─────────────────────────────────────────
+
+  /// Allows any logged-in parent to share an external URL as a published
+  /// insight.  Written directly as `published` — no moderation step needed
+  /// for URL-only shares (no AI-extracted content, no consent requirement).
+  ///
+  /// Returns the new article ID on success, null on failure.
+  Future<String?> submitParentSharedLink({
+    required String title,
+    required String summary,
+    required String externalUrl,
+    required KnowledgeCategory category,
+    required String contributorFirstName,
+    required String contributorBorough,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return null;
+    try {
+      final now = DateTime.now();
+      final docRef = _wisdomCol.doc();
+      final article = CommunityWisdomArticle(
+        id:                    docRef.id,
+        title:                 title.trim(),
+        summary:               summary.trim(),
+        body:                  summary.trim(),
+        category:              category,
+        tags:                  [],
+        groupId:               'parent_share',
+        groupName:             'Parent Recommendation',
+        originalMessageIds:    [],
+        contributorFirstName:  contributorFirstName,
+        contributorBorough:    contributorBorough,
+        contributorCredit:     '$contributorFirstName, $contributorBorough parent',
+        aiGeneratedSummary:    '',
+        engagementScore:       0.0,
+        status:                WisdomArticleStatus.published,
+        extractedAt:           now,
+        authorUid:             uid,
+        consentGranted:        true,
+        publishedAt:           now,
+        isParentShared:        true,
+        externalUrl:           externalUrl.trim(),
+      );
+      await docRef.set(article.toFirestore());
+      if (kDebugMode) debugPrint('[Flywheel] parent-shared link submitted: ${docRef.id}');
+      return docRef.id;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Flywheel] submitParentSharedLink error: $e');
+      return null;
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

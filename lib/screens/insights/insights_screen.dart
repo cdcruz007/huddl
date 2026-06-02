@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/huddl_character.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../theme/huddl_animations.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../../widgets/common/huddl_network_image.dart';
 import '../../constants/app_text_styles.dart';
@@ -125,6 +127,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  void _showShareSheet() {
+    HuddlAnimations.mediumTap();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _ParentShareComposeSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return NotificationListener<_TagFilterNotification>(
@@ -139,6 +151,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
       },
       child: Scaffold(
       backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showShareSheet,
+        backgroundColor: HuddlColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        tooltip: 'Share an insight',
+        child: const Icon(Icons.add_rounded, size: 28),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,11 +758,13 @@ class _WisdomCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top bar — AI curated badge + category
+            // Top bar — "Parent shared" badge or "AI curated" label + category
             Container(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
               decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.07),
+                color: article.isParentShared
+                    ? HuddlColors.accentAmber.withValues(alpha: 0.10)
+                    : HuddlColors.primary.withValues(alpha: 0.07),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -750,14 +773,23 @@ class _WisdomCard extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    Icons.auto_awesome,
+                    article.isParentShared
+                        ? Icons.person_outline_rounded
+                        : Icons.auto_awesome,
                     size: 13,
-                    color: HuddlColors.primary,
+                    color: article.isParentShared
+                        ? HuddlColors.accentAmber
+                        : HuddlColors.primary,
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    'AI curated',
-                    style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.primary),
+                    article.isParentShared ? 'Parent shared' : 'AI curated',
+                    style: HuddlText.caption(
+                      weight: FontWeight.w600,
+                      color: article.isParentShared
+                          ? HuddlColors.accentAmber
+                          : HuddlColors.primary,
+                    ),
                   ),
                   const Spacer(),
                   _CategoryBadge(category: article.category),
@@ -898,6 +930,14 @@ class _WisdomCard extends StatelessWidget {
 
   void _openArticle(BuildContext context) {
     AiKnowledgeFlywheelService().recordView(article.id);
+    if (article.isParentShared && article.externalUrl != null) {
+      final raw = article.externalUrl!;
+      final uri = Uri.parse(
+          raw.startsWith('http') ? raw : 'https://$raw');
+      launchUrl(uri, mode: LaunchMode.externalApplication)
+          .catchError((_) => false);
+      return;
+    }
     Navigator.of(context).push(
       HuddlSpringPageRoute(page: _WisdomArticleScreen(article: article)),
     );
@@ -2051,4 +2091,329 @@ class _InsightFeedItem {
   double get sortWeight => isExpert
       ? expertArticle!.relevanceWeight.toDouble()
       : communityArticle!.upvotes.toDouble();
+}
+
+// =============================================================================
+// PARENT SHARE COMPOSE SHEET
+//
+// Shown when any logged-in parent taps the + FAB on the Insights screen.
+// Collects: URL, title, short description, category.
+// Submits directly to `community_wisdom` as published (parent-sourced, no AI).
+// =============================================================================
+
+class _ParentShareComposeSheet extends StatefulWidget {
+  const _ParentShareComposeSheet();
+
+  @override
+  State<_ParentShareComposeSheet> createState() =>
+      _ParentShareComposeSheetState();
+}
+
+class _ParentShareComposeSheetState extends State<_ParentShareComposeSheet> {
+  final _urlCtrl   = TextEditingController();
+  final _titleCtrl = TextEditingController();
+  final _descCtrl  = TextEditingController();
+  KnowledgeCategory _category = KnowledgeCategory.parentalWellbeing;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _urlCtrl.dispose();
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  bool get _isValid =>
+      _urlCtrl.text.trim().isNotEmpty &&
+      _titleCtrl.text.trim().isNotEmpty;
+
+  Future<void> _submit() async {
+    if (!_isValid || _submitting) return;
+    HuddlAnimations.mediumTap();
+    setState(() { _submitting = true; _error = null; });
+
+    final user = FirebaseAuth.instance.currentUser;
+    final firstName = (user?.displayName ?? 'Parent').split(' ').first;
+
+    final id = await AiKnowledgeFlywheelService().submitParentSharedLink(
+      title:                _titleCtrl.text.trim(),
+      summary:              _descCtrl.text.trim().isNotEmpty
+                              ? _descCtrl.text.trim()
+                              : _titleCtrl.text.trim(),
+      externalUrl:          _urlCtrl.text.trim(),
+      category:             _category,
+      contributorFirstName: firstName,
+      contributorBorough:   'Cambridge',
+    );
+
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+    if (id != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Thanks! Your insight is now live.')),
+          ]),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } else {
+      setState(() => _error = 'Something went wrong. Please try again.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).viewInsets.bottom +
+        MediaQuery.of(context).padding.bottom;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPad + 24),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.inputBorderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Header
+            Row(
+              children: [
+                const WarmCircleIllustration(
+                  assetPath: 'assets/illustrations/growth_yellow.webp',
+                  size: 40,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Share an insight',
+                          style: HuddlText.display()),
+                      Text(
+                        'Recommend a helpful article for other parents',
+                        style: HuddlText.caption(
+                            color: HuddlColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // URL field
+            _ComposeField(
+              controller: _urlCtrl,
+              label: 'Link (URL)',
+              hint: 'https://nhs.uk/...',
+              icon: Icons.link_rounded,
+              keyboardType: TextInputType.url,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+
+            // Title field
+            _ComposeField(
+              controller: _titleCtrl,
+              label: 'Title',
+              hint: 'e.g. "10 things I wish I\'d known about sleep regressions"',
+              icon: Icons.title_rounded,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+
+            // Description field (optional)
+            _ComposeField(
+              controller: _descCtrl,
+              label: 'Why it helped (optional)',
+              hint: 'A short note on why you\'re recommending this…',
+              icon: Icons.short_text_rounded,
+              maxLines: 3,
+            ),
+            const SizedBox(height: 12),
+
+            // Category picker
+            _CategoryPicker(
+              selected: _category,
+              onChanged: (cat) => setState(() => _category = cat),
+            ),
+            const SizedBox(height: 6),
+
+            // Error message
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!,
+                  style: HuddlText.caption(color: HuddlColors.error)),
+            ],
+            const SizedBox(height: 20),
+
+            // Submit button
+            SizedBox(
+              width: double.infinity,
+              child: HuddlButton(
+                label: _submitting ? 'Sharing…' : 'Share with parents',
+                onPressed: (_isValid && !_submitting) ? _submit : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Compact labelled text field for compose sheet ─────────────────────────────
+class _ComposeField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final int maxLines;
+  final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+
+  const _ComposeField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: HuddlText.caption(
+                weight: FontWeight.w600,
+                color: HuddlColors.textSecondary)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: HuddlText.body(),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
+            prefixIcon: Icon(icon, size: 18, color: HuddlColors.textTertiary),
+            filled: true,
+            fillColor: const Color(0xFFFFF5F0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: HuddlColors.primary.withValues(alpha: 0.50),
+                  width: 1.5),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: maxLines > 1 ? 12 : 0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Category chip row picker ──────────────────────────────────────────────────
+class _CategoryPicker extends StatelessWidget {
+  final KnowledgeCategory selected;
+  final ValueChanged<KnowledgeCategory> onChanged;
+
+  const _CategoryPicker({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  // Surface the most common categories for quick selection
+  static const _featured = [
+    (KnowledgeCategory.parentalWellbeing, 'Wellbeing'),
+    (KnowledgeCategory.health,            'Health'),
+    (KnowledgeCategory.sleep,             'Sleep'),
+    (KnowledgeCategory.feeding,           'Feeding'),
+    (KnowledgeCategory.development,       'Development'),
+    (KnowledgeCategory.education,         'Education'),
+    (KnowledgeCategory.mentalHealth,      'Mental health'),
+    (KnowledgeCategory.finance,           'Finance'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Category',
+            style: HuddlText.caption(
+                weight: FontWeight.w600,
+                color: HuddlColors.textSecondary)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: _featured.map((entry) {
+            final (cat, label) = entry;
+            final isSel = selected == cat;
+            return GestureDetector(
+              onTap: () {
+                HuddlAnimations.lightTap();
+                onChanged(cat);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSel
+                      ? HuddlColors.primary
+                      : HuddlColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  label,
+                  style: HuddlText.caption(
+                    weight: FontWeight.w600,
+                    color: isSel ? Colors.white : HuddlColors.primary,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
 }

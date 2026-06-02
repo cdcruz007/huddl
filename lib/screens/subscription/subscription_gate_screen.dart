@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
+import '../../widgets/huddl_character.dart';
 
 // =============================================================================
 // SUBSCRIPTION GATE SCREEN
 //
-// Shown when a free user taps a locked feature. Full-screen, orange header,
-// shows exactly what they tried to do and why it needs Plus.
+// Shown when a free user taps a locked feature. Full-screen, warm illustrated
+// header, shows exactly what they tried to do and why it needs Plus.
 // Single CTA: "Unlock with Huddl Plus" → pushes to subscription_plans.
 //
 // Usage:
@@ -23,6 +24,38 @@ import '../../models/subscription.dart';
 //     'requiredPlan': 'Huddl Plus',
 //   });
 // =============================================================================
+
+/// Maps a feature icon codePoint → a warm illustration asset path.
+/// Falls back to unlock_key if no specific match.
+String _illustrationForFeature(int iconCodePoint) {
+  // store / marketplace listing
+  if (iconCodePoint == Icons.store_outlined.codePoint ||
+      iconCodePoint == Icons.sell_outlined.codePoint) {
+    return 'assets/illustrations/mobile_store_woman.webp';
+  }
+  // phone / contact / messages
+  if (iconCodePoint == Icons.phone_outlined.codePoint ||
+      iconCodePoint == Icons.chat_bubble_outline.codePoint ||
+      iconCodePoint == Icons.message_outlined.codePoint) {
+    return 'assets/illustrations/questions_two.webp';
+  }
+  // calendar / booking
+  if (iconCodePoint == Icons.calendar_today_outlined.codePoint ||
+      iconCodePoint == Icons.event_outlined.codePoint) {
+    return 'assets/illustrations/calendar_event.webp';
+  }
+  // people / groups
+  if (iconCodePoint == Icons.people_outline.codePoint ||
+      iconCodePoint == Icons.group_outlined.codePoint) {
+    return 'assets/illustrations/community_wave.webp';
+  }
+  // handshake / services
+  if (iconCodePoint == Icons.handshake_outlined.codePoint) {
+    return 'assets/illustrations/handshake.webp';
+  }
+  // default
+  return 'assets/illustrations/unlock_key.webp';
+}
 
 class SubscriptionGateScreen extends StatelessWidget {
   final String featureTitle;
@@ -77,30 +110,34 @@ class SubscriptionGateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
+    final topPad    = MediaQuery.of(context).padding.top;
+    final illustrationAsset = _illustrationForFeature(featureIcon.codePoint);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
 
-          // ── Orange hero — matches plans screen ──────────────────────────
+          // ── Warm illustrated hero — soft peach gradient replaces solid orange ──
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-              24,
-              MediaQuery.of(context).padding.top + 20,
-              24,
-              28,
-            ),
+            padding: EdgeInsets.fromLTRB(24, topPad + 16, 24, 28),
             decoration: const BoxDecoration(
-              color: HuddlColors.primary,
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(28)),
+              // Layered warm gradient: lightest peach at top → slightly richer at base
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFFF5F0), // warmest peach
+                  Color(0xFFFFEDE0), // soft apricot
+                ],
+              ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Close button
+                // Close button — dark text on light bg
                 Align(
                   alignment: Alignment.topRight,
                   child: GestureDetector(
@@ -109,42 +146,69 @@ class SubscriptionGateScreen extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: HuddlColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close,
-                          size: 16, color: Colors.white),
+                      child: Icon(Icons.close,
+                          size: 16, color: HuddlColors.primary),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Feature icon badge
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child:
-                      Icon(featureIcon, color: Colors.white, size: 28),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  featureTitle,
-                  style: GoogleFonts.poppins(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    height: 1.15,
-                  ),
-                ),
                 const SizedBox(height: 8),
+
+                // Illustration + text side-by-side
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Warm illustration circle
+                    WarmCircleIllustration(
+                      assetPath: illustrationAsset,
+                      size: 72,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // "Huddl Plus" eyebrow
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              requiredPlan,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            featureTitle,
+                            style: GoogleFonts.poppins(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: HuddlColors.nearBlack,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
                 Text(
                   featureDescription,
                   style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 14,
+                    color: HuddlColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
@@ -203,8 +267,7 @@ class SubscriptionGateScreen extends StatelessWidget {
 
           // ── CTA ─────────────────────────────────────────────────────────
           Padding(
-            padding:
-                EdgeInsets.fromLTRB(24, 12, 24, bottomPad + 24),
+            padding: EdgeInsets.fromLTRB(24, 12, 24, bottomPad + 24),
             child: Column(
               children: [
                 SizedBox(
@@ -232,7 +295,7 @@ class SubscriptionGateScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16)),
                     ),
                     child: Text(
-                      'Unlock with $requiredPlan \u2014 from \u00A34.99/mo',
+                      'Unlock with $requiredPlan — from £4.99/mo',
                       style: GoogleFonts.poppins(
                           fontSize: 15, fontWeight: FontWeight.w700),
                     ),
