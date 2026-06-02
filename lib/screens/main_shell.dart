@@ -135,7 +135,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           backgroundColor: HuddlColors.primary,
           duration: const Duration(seconds: 4),
@@ -369,146 +369,114 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,  // let body go behind the floating nav
       body: Stack(
-        children: [
-          // ── Screen stack ──────────────────────────────────────────────
-          ...List.generate(5, (index) {
-            return Offstage(
-              offstage: _currentIndex != index,
-              child: _buildScreen(index),
-            );
-          }),
-          // ── Floating pill nav bar ─────────────────────────────────────
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 12,
-            child: _HuddlFloatingNavBar(
-              currentIndex: _currentIndex,
-              onTap: _switchTab,
-            ),
-          ),
-        ],
+        children: List.generate(5, (index) {
+          return Offstage(
+            offstage: _currentIndex != index,
+            child: _buildScreen(index),
+          );
+        }),
+      ),
+      bottomNavigationBar: _HuddlNavBar(
+        currentIndex: _currentIndex,
+        onTap: _switchTab,
       ),
     );
   }
 }
 
 // =============================================================================
-// HUDDL FLOATING PILL NAV BAR
+// HUDDL BOTTOM NAV BAR
 // =============================================================================
-// Design language:
-//   • Floating rounded-rectangle pill that hovers above the screen content
-//   • White frosted glass surface, deep shadow, 32px corner radius
-//   • Active tab: orange filled circle background behind icon + orange label
-//   • Inactive: outlined icon, muted label
-//   • Spring-scale pop animation on tap
-//   • Haptic feedback on every tap
+// Full-width flush navigation bar — no pill, no margins, no shadow.
+// Same icons, labels, orange active state, and spring animation as before.
+// A single 0.5px top border provides the only visual separation from content.
 // =============================================================================
 
-class _HuddlFloatingNavBar extends StatefulWidget {
+class _HuddlNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const _HuddlFloatingNavBar({
+  const _HuddlNavBar({
     required this.currentIndex,
     required this.onTap,
   });
 
-  @override
-  State<_HuddlFloatingNavBar> createState() => _HuddlFloatingNavBarState();
-}
-
-class _HuddlFloatingNavBarState extends State<_HuddlFloatingNavBar> {
   static const _tabs = [
-    _TabDef(HuddlIcons.home,       HuddlIcons.home,         'Home'),
-    _TabDef(HuddlIcons.usersThree,      HuddlIcons.usersThree,       'Connect'),
-    _TabDef(HuddlIcons.exploreOutlined,    HuddlIcons.explore,      'Discover'),
-    _TabDef(HuddlIcons.storefront, HuddlIcons.storefront,   'Market'),
-    _TabDef(HuddlIcons.user,      HuddlIcons.user,       'Profile'),
+    _TabDef(HuddlIcons.home,            HuddlIcons.home,            'Home'),
+    _TabDef(HuddlIcons.usersThree,      HuddlIcons.usersThree,      'Connect'),
+    _TabDef(HuddlIcons.exploreOutlined, HuddlIcons.explore,         'Discover'),
+    _TabDef(HuddlIcons.storefront,      HuddlIcons.storefront,      'Market'),
+    _TabDef(HuddlIcons.user,            HuddlIcons.user,            'Profile'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? HuddlColors.darkSurface : Colors.white;
+    final divider = isDark ? HuddlColors.darkDivider : HuddlColors.divider;
 
     return Container(
-      height: 64,
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
-            blurRadius: 24,
-            spreadRadius: 0,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.06),
-            blurRadius: 8,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border(
+          top: BorderSide(color: divider, width: 0.5),
+        ),
       ),
-      child: Row(
-        children: List.generate(_tabs.length, (i) {
-          return Expanded(
-            child: _FloatingNavItem(
-              tab: _tabs[i],
-              index: i,
-              currentIndex: widget.currentIndex,
-              isDark: isDark,
-              isFirst: i == 0,
-              isLast: i == _tabs.length - 1,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                widget.onTap(i);
-              },
-            ),
-          );
-        }),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: List.generate(_tabs.length, (i) {
+              return Expanded(
+                child: _NavItem(
+                  tab: _tabs[i],
+                  index: i,
+                  currentIndex: currentIndex,
+                  isDark: isDark,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onTap(i);
+                  },
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
 }
 
-// ── Individual floating nav item ─────────────────────────────────────────────
+// ── Individual nav item ───────────────────────────────────────────────────────
 
-class _FloatingNavItem extends StatefulWidget {
+class _NavItem extends StatefulWidget {
   final _TabDef tab;
   final int index;
   final int currentIndex;
   final bool isDark;
-  final bool isFirst;
-  final bool isLast;
   final VoidCallback onTap;
   final bool hasUnread;
 
-  const _FloatingNavItem({
+  const _NavItem({
     required this.tab,
     required this.index,
     required this.currentIndex,
     required this.isDark,
-    required this.isFirst,
-    required this.isLast,
     required this.onTap,
     this.hasUnread = false,
   });
 
   @override
-  State<_FloatingNavItem> createState() => _FloatingNavItemState();
+  State<_NavItem> createState() => _NavItemState();
 }
 
-class _FloatingNavItemState extends State<_FloatingNavItem>
+class _NavItemState extends State<_NavItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _scale;
   late Animation<double> _iconOpacity;
-  late Animation<Offset> _labelSlide;
 
   bool get _isActive => widget.index == widget.currentIndex;
 
@@ -517,30 +485,27 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 280),
+      duration: const Duration(milliseconds: 260),
       value: _isActive ? 1.0 : 0.0,
     );
+    // Spring-pop scale: grow to 1.18 then settle at 1.0
     _scale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.22), weight: 35),
-      TweenSequenceItem(tween: Tween(begin: 1.22, end: 1.0), weight: 65),
-    ]).animate(_ctrl);
-    _iconOpacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
-    _labelSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+      TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 1.18), weight: 35),
+      TweenSequenceItem(
+          tween: Tween(begin: 1.18, end: 1.0), weight: 65),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _iconOpacity =
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
   }
 
   @override
-  void didUpdateWidget(_FloatingNavItem old) {
+  void didUpdateWidget(_NavItem old) {
     super.didUpdateWidget(old);
     final wasActive = old.index == old.currentIndex;
     final isNowActive = widget.index == widget.currentIndex;
-    if (!wasActive && isNowActive) {
-      _ctrl.forward(from: 0);
-    } else if (wasActive && !isNowActive) {
-      _ctrl.reverse();
-    }
+    if (!wasActive && isNowActive) _ctrl.forward(from: 0);
+    else if (wasActive && !isNowActive) _ctrl.reverse();
   }
 
   @override
@@ -552,14 +517,9 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
   @override
   Widget build(BuildContext context) {
     final activeColor = HuddlColors.primary;
-    final inactiveColor =
-        widget.isDark ? HuddlColors.darkTextTertiary : HuddlColors.textHint;
-
-    // Rounded clip for first/last items so they follow the pill shape
-    final borderRadius = BorderRadius.horizontal(
-      left: widget.isFirst ? const Radius.circular(32) : Radius.zero,
-      right: widget.isLast ? const Radius.circular(32) : Radius.zero,
-    );
+    final inactiveColor = widget.isDark
+        ? HuddlColors.darkTextTertiary
+        : HuddlColors.textHint;
 
     return Semantics(
       label: widget.tab.label,
@@ -568,87 +528,72 @@ class _FloatingNavItemState extends State<_FloatingNavItem>
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
-        child: ClipRRect(
-          borderRadius: borderRadius,
-          child: AnimatedBuilder(
-            animation: _ctrl,
-            builder: (context, _) {
-              final labelColor =
-                  Color.lerp(inactiveColor, activeColor, _ctrl.value)!;
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Icon with orange circle background when active
-                  Transform.scale(
-                    scale: _scale.value,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 38,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: _isActive
-                            ? HuddlColors.primary.withValues(alpha: 0.12)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Opacity(
-                            opacity:
-                                (1.0 - _iconOpacity.value).clamp(0.0, 1.0),
-                            child: Icon(widget.tab.icon,
-                                size: 22, color: inactiveColor),
-                          ),
-                          Opacity(
-                            opacity: _iconOpacity.value.clamp(0.0, 1.0),
-                            child: Icon(widget.tab.activeIcon,
-                                size: 22, color: activeColor),
-                          ),
-                          // Notification badge — top-right of icon
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, _) {
+            final labelColor =
+                Color.lerp(inactiveColor, activeColor, _ctrl.value)!;
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon with soft orange pill background when active
+                Transform.scale(
+                  scale: _scale.value,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 42,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: _isActive
+                          ? HuddlColors.primary.withValues(alpha: 0.10)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Inactive icon fades out
+                        Opacity(
+                          opacity:
+                              (1.0 - _iconOpacity.value).clamp(0.0, 1.0),
+                          child: Icon(widget.tab.icon,
+                              size: 22, color: inactiveColor),
+                        ),
+                        // Active icon fades in
+                        Opacity(
+                          opacity: _iconOpacity.value.clamp(0.0, 1.0),
+                          child: Icon(widget.tab.activeIcon,
+                              size: 22, color: activeColor),
+                        ),
+                        // Unread badge — top right of icon
+                        if (widget.hasUnread)
                           Positioned(
                             top: 0,
                             right: 0,
-                            child: AnimatedScale(
-                              scale: widget.hasUnread ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOutBack,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: HuddlColors.error,
-                                  shape: BoxShape.circle,
-                                ),
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: HuddlColors.error,
+                                shape: BoxShape.circle,
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  // Label — fades and slides up on activation
-                  FadeTransition(
-                    opacity: _iconOpacity,
-                    child: SlideTransition(
-                      position: _labelSlide,
-                      child: AnimatedOpacity(
-                        opacity: _isActive ? 1.0 : 0.55,
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          widget.tab.label,
-                          style: HuddlText.label(color: labelColor),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+                ),
+                const SizedBox(height: 2),
+                // Label — colour transitions with animation
+                Text(
+                  widget.tab.label,
+                  style: HuddlText.label(color: labelColor),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

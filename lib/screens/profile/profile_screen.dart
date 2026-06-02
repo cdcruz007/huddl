@@ -1084,7 +1084,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: HuddlText.caption(
                               color: hc.textTertiary)),
                     ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),

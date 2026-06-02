@@ -2265,7 +2265,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       onRefresh: _loadGroups,
       color: HuddlColors.textTertiary,
       child: ListView(
-        padding: const EdgeInsets.only(top: 2, bottom: 100),
+        padding: const EdgeInsets.only(top: 2, bottom: 16),
         children: [
           // ── Error banner (P2: user-visible error) ──────────
           if (_hasLoadError)
@@ -2499,7 +2499,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(top: 4, bottom: 100),
+      padding: const EdgeInsets.only(top: 4, bottom: 16),
       children: [
         // ── Section: Conversations matching by name ──────────────
         if (conversationMatches.isNotEmpty) ...[
@@ -6292,7 +6292,7 @@ class _SavedTabState extends State<_SavedTab> {
           child: filtered.isEmpty
               ? _buildEmptySearch(q)
               : ListView.builder(
-                  padding: const EdgeInsets.only(top: 0, bottom: 100),
+                  padding: const EdgeInsets.only(top: 0, bottom: 16),
                   itemCount: _countListRows(grouped),
                   itemBuilder: (ctx, index) => _buildRow(ctx, index, grouped),
                 ),

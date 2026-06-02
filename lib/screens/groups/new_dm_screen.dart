@@ -251,7 +251,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                           : RefreshIndicator(
                               onRefresh: _loadMembers,
                               child: ListView.separated(
-                                padding: const EdgeInsets.only(bottom: 100),
+                                padding: const EdgeInsets.only(bottom: 16),
                                 itemCount: _filtered.length,
                                 separatorBuilder: (_, __) => Divider(
                                   height: 1,

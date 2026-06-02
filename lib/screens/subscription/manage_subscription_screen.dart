@@ -551,7 +551,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 ),
               ],
 
-              const SizedBox(height: 80),
+              const SizedBox(height: 16),
             ],
           ),
         ),

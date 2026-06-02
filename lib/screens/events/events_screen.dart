@@ -6088,7 +6088,7 @@ class _NearbyTabState extends State<_NearbyTab>
                   onCtaTap: widget.onCreateMeetup,
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 100),
+                  padding: const EdgeInsets.only(top: 8, bottom: 16),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
