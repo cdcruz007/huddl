@@ -546,7 +546,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     final bool hasActiveFilter = _selectedCategory != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
         Column(
@@ -1342,10 +1342,9 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                       onTap: _endorsing ? () {} : _toggleEndorse,
                       label: 'Endorse',
                       joinedLabel: 'Endorsed',
-                      joinedColor: const Color(0xFF1C1C1E),
+                      joinedColor: HuddlColors.teal,
                       unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
-                      // joinedColor uses default nearBlack — explicit for clarity
                     ),
                   ),
                   if (_endorsing)
@@ -1664,6 +1663,14 @@ class _ListingCardState extends State<_ListingCard> {
                   Positioned(
                     top: 12, left: 12,
                     child: _BadgePill(label: 'Parent Added', color: _kBadgeParent),
+                  )
+                else
+                  Positioned(
+                    top: 12, left: 12,
+                    child: _BadgePill(
+                      label: 'AI Found',
+                      color: HuddlColors.accentAmber.withValues(alpha: 0.92),
+                    ),
                   ),
                 // Top-right: Verified / Community Pick
                 if (isVerified || isCommunityPick)

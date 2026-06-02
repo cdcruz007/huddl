@@ -157,7 +157,7 @@ class _SendHeader extends StatelessWidget {
     // case, keeping only the functional secondary tab bar.
     final showTitleRow = showBack; // showBack == false ↔ embedded == true
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1379,7 +1379,7 @@ class _CrisisInterceptSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
@@ -2069,7 +2069,7 @@ class _ChatInputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Colors.white,
         border: Border(
           top: BorderSide(
             color: isDark ? HuddlColors.darkDivider : HuddlColors.divider,

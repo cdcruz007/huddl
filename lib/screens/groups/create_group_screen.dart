@@ -32,12 +32,12 @@ import '../../constants/app_text_styles.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Design tokens (mirrors create_meetup_screen.dart) ───────────────────────
-const _fieldBg      = Color(0xFFF7F7F7);   // #F6F6F6 grey field fill
+const _fieldBg      = Color(0xFFFFF5F0);   // warm peach field fill
 const _fieldLine    = HuddlColors.divider;       // #D5D5D5 bottom underline
 const _sectionText  = HuddlColors.textDark;      // #42464C section headers
 const _hintGray     = HuddlColors.textTertiary;  // #949494 placeholder text
 const _accentOrange = HuddlColors.primary;       // #FF965C orange accent
-const _bannerBg     = Color(0xFFF7F7F7);  // photo banner bg — neutral grey
+const _bannerBg     = Color(0xFFFFF5F0);  // warm peach photo banner bg
 
 const String _userGroupsKey = 'user_created_groups_v1';
 
@@ -337,7 +337,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         color: _bannerBg,
         child: const Center(
           child: Icon(Icons.add_photo_alternate_outlined,
-              size: 48, color: Color(0xFFB0B0B0)),
+              size: 48, color: Color(0xFFFFAD7F)),   // HuddlColors.primaryLight
         ),
       );
 
@@ -1506,7 +1506,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           children: [
             const Icon(
               Icons.add_photo_alternate_outlined,
-              color: Color(0xFFB0B0B0),
+              color: Color(0xFFFFAD7F),   // HuddlColors.primaryLight
               size: 48,
             ),
             const SizedBox(height: 10),

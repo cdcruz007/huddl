@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'huddl_colors.dart';
 
 // =============================================================================
 // HUDDL ANIMATIONS — single source of truth for all motion tokens
@@ -285,7 +286,7 @@ class _HeartPopButtonState extends State<HeartPopButton>
         scale: _scale,
         child: Icon(
           widget.isLiked ? Icons.favorite : Icons.favorite_border,
-          color: widget.isLiked ? const Color(0xFFE53935) : const Color(0xFF999999),
+          color: widget.isLiked ? HuddlColors.primary : const Color(0xFF999999),
           size: widget.size,
         ),
       ),

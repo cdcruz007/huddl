@@ -1369,15 +1369,7 @@ class _HomeScreenState extends State<HomeScreen>
                   label: 'Huddl home',
                   child: _buildAdaptiveLogo(isDark),
                 ),
-                const SizedBox(width: 10),
-                if (_name.isNotEmpty)
-                  Text(
-                    '$_greeting, ${_name.split(' ').first}',
-                    style: HuddlText.caption(
-                      color: HuddlColors.textTertiary,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
+                const SizedBox(width: 8),
                 const Spacer(),
                 // Search — opens unified search across all content types
                 Semantics(
@@ -1437,7 +1429,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
-          // ── "Your Feed" title + subtitle + tune icon ─────────────
+          // ── Greeting title row (replaces separate "Your Feed" label) ─
           _buildFeedFilterHeader(hc, isDark),
         ],
       ),
@@ -1445,27 +1437,24 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Feed filter header ────────────────────────────────────────────────────
-  // Shows the screen title "Your Feed" with the settings gear on the right,
-  // and a horizontally scrollable row of filter chips below it.
+  // Greeting as the title + tune icon on the right. No separate "Your Feed" label.
   Widget _buildFeedFilterHeader(dynamic hc, bool isDark) {
-    // Filter chips removed — all content is shown at once.
     return Container(
       color: hc.surface,
-      padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
+      padding: const EdgeInsets.fromLTRB(0, 2, 0, 10),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 12, 0),
+        padding: const EdgeInsets.fromLTRB(16, 4, 12, 0),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your Feed',
-                    style: HuddlText.display(),
-                  ),
-                ],
+              child: Text(
+                _name.isNotEmpty
+                    ? '$_greeting, ${_name.split(' ').first}'
+                    : _greeting,
+                style: HuddlText.display(),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
             const SizedBox(width: 8),
@@ -3003,14 +2992,17 @@ class _HomeScreenState extends State<HomeScreen>
                         Positioned(
                           top: 8, right: 10,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: HuddlColors.nearBlack,
-                              borderRadius: BorderRadius.circular(7),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                              color: _serviceCategoryColor(s.category.displayName).withValues(alpha: 0.90),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(s.category.displayName,
-                              style: HuddlText.label(color: Colors.white)),
+                            child: Text(
+                              s.category.displayName,
+                              style: HuddlText.label(color: Colors.white),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                       ],
@@ -3041,8 +3033,12 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 5),
                           Expanded(child: Text(
                             s.endorsementCount > 0 ? '${s.endorsementCount} endorsed' : 'Recommended',
-                            style: HuddlText.label(color: hc.textTertiary))),
-                          _buildActionPill('View', HuddlColors.primary, hc),
+                            style: HuddlText.label(color: hc.textTertiary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )),
+                          const SizedBox(width: 4),
+                          _buildActionPill('View', HuddlColors.primary, hc, isActive: true),
                         ]),
                       ],
                     ),
@@ -3244,22 +3240,40 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// UX-06: Rounded pill action button — textDark always, no accent colour.
+  /// Rounded pill action button — filled with accentColor when isActive=true.
   Widget _buildActionPill(String label, Color accentColor, dynamic hc, {bool isActive = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isActive
-            ? HuddlColors.textDark.withValues(alpha: 0.08)
-            : const Color(0xFFF7F7F7),
+        color: isActive ? accentColor : accentColor.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: HuddlColors.divider, width: 0.5),
       ),
       child: Text(
         label,
-        style: HuddlText.caption(),
+        style: HuddlText.caption(
+          color: isActive ? Colors.white : accentColor,
+          weight: FontWeight.w600,
+        ),
       ),
     );
+  }
+
+  /// Maps a service category name to a brand colour for the badge.
+  Color _serviceCategoryColor(String categoryName) {
+    final lower = categoryName.toLowerCase();
+    if (lower.contains('health') || lower.contains('wellbeing') || lower.contains('wellness')) {
+      return HuddlColors.teal;
+    }
+    if (lower.contains('education') || lower.contains('tutor') || lower.contains('learning')) {
+      return HuddlColors.infoBlue;
+    }
+    if (lower.contains('home') || lower.contains('garden') || lower.contains('handyman')) {
+      return HuddlColors.primary;
+    }
+    if (lower.contains('child') || lower.contains('care') || lower.contains('nursery')) {
+      return HuddlColors.accentAmber;
+    }
+    return HuddlColors.primary;
   }
 
   Widget _marketImageFallback(RehomeItem item) {

@@ -5,6 +5,7 @@ import '../../services/rehome_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../widgets/huddl_character.dart';
 import '../../constants/app_text_styles.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -143,13 +144,9 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: HuddlColors.aiGradient,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(Icons.auto_awesome, color: context.hc.surface, size: 22),
+                    const WarmCircleIllustration(
+                      assetPath: 'assets/illustrations/mobile_store_woman.webp',
+                      size: 48,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

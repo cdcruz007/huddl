@@ -4848,7 +4848,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                             },
                             label: isRestricted ? 'Restricted' : _isFull ? 'Full' : 'Join',
                             joinedLabel: 'Joined',
-                            joinedColor: const Color(0xFF1C1C1E),
+                            joinedColor: HuddlColors.teal,
                             unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                             unJoinedTextColor: HuddlColors.primary,
                           ),
@@ -5047,8 +5047,28 @@ class _EventListCardState extends State<_EventListCard> {
                     left: 12,
                     child: Row(
                       children: [
+                        // AI Found badge — all nearby events are AI-discovered
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.accentAmber.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                              const SizedBox(width: 3),
+                              Text(
+                                'AI Found',
+                                style: HuddlText.caption(weight: FontWeight.w700, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
                         // "New" badge — infoBluePale bg with infoBlue text (informational).
-                        if (isNew)
+                        if (isNew) ...[
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
@@ -5062,6 +5082,7 @@ class _EventListCardState extends State<_EventListCard> {
                               style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.infoBlue),
                             ),
                           ),
+                        ],
                         // Type badge: "Online" only — shown for virtual events; in-person needs no label
                         if (isOnline) ...[  
                           if (isNew) const SizedBox(width: 6),
@@ -5214,7 +5235,7 @@ class _EventListCardState extends State<_EventListCard> {
                           eventId, event['title'] as String? ?? 'this event'),
                       label: 'Count me in',
                       joinedLabel: 'Going ✓',
-                      joinedColor: const Color(0xFF1C1C1E),
+                      joinedColor: HuddlColors.teal,
                       unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
                     ),
@@ -6099,13 +6120,13 @@ class _NearbyFilterChip extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon, size: 13,
-                  color: selected ? Colors.white : HuddlColors.nearBlack),
+                  color: selected ? Colors.white : HuddlColors.textSecondary),
               const SizedBox(width: 5),
             ],
             Text(
               label,
               style: HuddlText.caption(
-                color: selected ? Colors.white : HuddlColors.nearBlack,
+                color: selected ? Colors.white : HuddlColors.textSecondary,
                 weight: FontWeight.w600,
               ),
             ),

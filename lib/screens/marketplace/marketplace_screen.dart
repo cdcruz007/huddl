@@ -1544,7 +1544,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     final chipBg       = isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF5F2EE);
     final chipBorder   = isDark ? HuddlColors.darkDivider : const Color(0xFFE5E5E5);
-    final selectedBg   = isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack;
+    final selectedBg   = isDark ? HuddlColors.darkTextPrimary : HuddlColors.primary;
     final selectedText = isDark ? HuddlColors.darkBackground : Colors.white;
 
     return Container(
@@ -4068,8 +4068,8 @@ class _MarketSearchRow extends StatelessWidget {
 
   Color get _conditionColor {
     switch (item.condition.label.toLowerCase()) {
-      case 'new':       return HuddlColors.nearBlack;
-      case 'like new':  return HuddlColors.nearBlack;
+      case 'new':       return HuddlColors.teal;
+      case 'like new':  return HuddlColors.teal;
       case 'good':      return HuddlColors.primary;
       default:          return HuddlColors.textTertiary;
     }
@@ -4507,6 +4507,16 @@ class _MarketPhotoFallback extends StatelessWidget {
   }
 }
 
+// ─── Condition badge colour (grid overlay) ───────────────────────────────────
+Color _conditionBadgeColor(String label) {
+  switch (label.toLowerCase()) {
+    case 'new':       return HuddlColors.teal.withValues(alpha: 0.88);
+    case 'like new':  return HuddlColors.teal.withValues(alpha: 0.80);
+    case 'good':      return HuddlColors.primary.withValues(alpha: 0.88);
+    default:          return Colors.black.withValues(alpha: 0.50);
+  }
+}
+
 // ─── Grid card (kept for reference / future use) ─────────────────────────────
 class _MarketGridCard extends StatefulWidget {
   final RehomeItem item;
@@ -4573,7 +4583,9 @@ class _MarketGridCardState extends State<_MarketGridCard> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.56),
+                          color: widget.isOwn
+                              ? HuddlColors.nearBlack.withValues(alpha: 0.70)
+                              : _conditionBadgeColor(item.condition.label),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(

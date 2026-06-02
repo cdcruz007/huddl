@@ -138,7 +138,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         return true;
       },
       child: Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,11 +737,11 @@ class _WisdomCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top bar — category + flywheel badge
+            // Top bar — AI curated badge + category
             Container(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F7F7),
+                color: HuddlColors.primary.withValues(alpha: 0.07),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -752,12 +752,12 @@ class _WisdomCard extends StatelessWidget {
                   Icon(
                     Icons.auto_awesome,
                     size: 13,
-                    color: HuddlColors.textDark,
+                    color: HuddlColors.primary,
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    'Insights',
-                    style: HuddlText.caption(weight: FontWeight.w600),
+                    'AI curated',
+                    style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.primary),
                   ),
                   const Spacer(),
                   _CategoryBadge(category: article.category),
@@ -787,7 +787,7 @@ class _WisdomCard extends StatelessWidget {
                     },
                     errorBuilder: (_, __, ___) => Container(
                       height: 120,
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.primary.withValues(alpha: 0.06),
                       child: Center(
                         child: Icon(
                           Icons.image_not_supported_outlined,

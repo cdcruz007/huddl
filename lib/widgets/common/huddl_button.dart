@@ -81,7 +81,7 @@ class HuddlButton extends StatelessWidget {
         return ElevatedButton(
           onPressed: onPressed == null ? null : _handleTap,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1C1C1E),
+            backgroundColor: HuddlColors.teal,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
