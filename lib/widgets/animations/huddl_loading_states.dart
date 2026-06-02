@@ -404,7 +404,7 @@ class _PaymentPainter extends CustomPainter {
     final cy = size.height / 2 + 8;
 
     // Terminal body
-    final termPaint = Paint()..color = const Color(0xFF3A3A3A);
+    final termPaint = Paint()..color = HuddlColors.darkDivider;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset(cx, cy), width: 84, height: 62),
@@ -419,7 +419,7 @@ class _PaymentPainter extends CustomPainter {
         Rect.fromCenter(center: Offset(cx, cy - 10), width: 60, height: 28),
         const Radius.circular(4),
       ),
-      Paint()..color = const Color(0xFF199A85), // brand teal
+      Paint()..color = HuddlColors.brandTeal, // brand teal
     );
 
     // Check on screen
@@ -531,8 +531,8 @@ class _HuddlSkeletonProfileState extends State<HuddlSkeletonProfile>
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: isDark
-              ? [const Color(0xFF2A2A2A), const Color(0xFF3E3E3E), const Color(0xFF2A2A2A)]
-              : [const Color(0xFFEEEEEE), const Color(0xFFF8F8F8), const Color(0xFFEEEEEE)],
+              ? [HuddlColors.darkInputBg, HuddlColors.darkSurfaceVariant, HuddlColors.darkInputBg]
+              : [HuddlColors.neutral100, HuddlColors.neutral50, HuddlColors.neutral100],
           stops: [
             (_shimmerCtrl.value - 1).clamp(0.0, 1.0),
             _shimmerCtrl.value.clamp(0.0, 1.0),
@@ -635,14 +635,14 @@ class _HuddlSkeletonCardState extends State<HuddlSkeletonCard>
           end: Alignment.centerRight,
           colors: isDark
               ? [
-                  const Color(0xFF2A2A2A),
-                  const Color(0xFF3E3E3E),
-                  const Color(0xFF2A2A2A),
+                  HuddlColors.darkInputBg,
+                  HuddlColors.darkSurfaceVariant,
+                  HuddlColors.darkInputBg,
                 ]
               : [
-                  const Color(0xFFEEEEEE),
-                  const Color(0xFFF8F8F8),
-                  const Color(0xFFEEEEEE),
+                  HuddlColors.neutral100,
+                  HuddlColors.neutral50,
+                  HuddlColors.neutral100,
                 ],
           stops: [
             (_shimmerCtrl.value - 1).clamp(0.0, 1.0),

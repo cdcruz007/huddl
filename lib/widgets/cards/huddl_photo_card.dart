@@ -659,7 +659,7 @@ class HuddlParallaxPhotoCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0x88000000)],
+                    colors: [Colors.transparent, HuddlColors.overlayHeavy],
                     stops: [0.45, 1.0],
                   ),
                 ),

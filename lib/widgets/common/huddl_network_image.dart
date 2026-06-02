@@ -61,7 +61,7 @@ class HuddlNetworkImage extends StatelessWidget {
       width: width,
       height: height,
       color: fallbackColor
-          ?? (isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF7F7F7)),
+          ?? (isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.neutral50),
       child: Center(
         child: Icon(
           fallbackIcon,
@@ -186,11 +186,11 @@ class _HuddlShimmerState extends State<_HuddlShimmer>
   @override
   Widget build(BuildContext context) {
     final base = widget.isDark
-        ? const Color(0xFF2A2A2A)
-        : const Color(0xFFE8E8E8);
+        ? HuddlColors.darkInputBg
+        : HuddlColors.neutral100;
     final highlight = widget.isDark
-        ? const Color(0xFF3D3D3D)
-        : const Color(0xFFF5F5F5);
+        ? HuddlColors.darkSurfaceVariant
+        : HuddlColors.neutral50;
 
     return AnimatedBuilder(
       animation: _anim,

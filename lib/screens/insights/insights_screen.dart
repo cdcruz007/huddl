@@ -46,12 +46,12 @@ class _TagFilterNotification extends Notification {
 // ── Source brand colours ─────────────────────────────────────────────────────
 Color _sourceColor(String source) {
   final s = source.toLowerCase();
-  if (s.contains('nhs'))      return const Color(0xFF005EB8);
-  if (s.contains('nct'))      return const Color(0xFF7B3F9E);
-  if (s.contains('bounty'))   return const Color(0xFFE84393);
-  if (s.contains('netmums'))  return const Color(0xFF00A896);
-  if (s.contains('dadsnet'))  return const Color(0xFF1A73E8);
-  if (s.contains('gov'))      return const Color(0xFF1D1D1B);
+  if (s.contains('nhs'))      return HuddlColors.partnerNhs;
+  if (s.contains('nct'))      return HuddlColors.partnerNct;
+  if (s.contains('bounty'))   return HuddlColors.partnerBounty;
+  if (s.contains('netmums'))  return HuddlColors.brandTeal;
+  if (s.contains('dadsnet'))  return HuddlColors.infoBlue;
+  if (s.contains('gov'))      return HuddlColors.neutral900;
   return HuddlColors.nearBlack;
 }
 
@@ -1181,7 +1181,7 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F7F7),
+                    color: HuddlColors.neutral50,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1878,9 +1878,9 @@ class _ShimmerBoxState extends State<_ShimmerBox>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final base =
-        isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8);
+        isDark ? HuddlColors.darkInputBg : HuddlColors.neutral100;
     final highlight =
-        isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
+        isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.neutral50;
 
     return AnimatedBuilder(
       animation: _anim,
@@ -2309,7 +2309,7 @@ class _ComposeField extends StatelessWidget {
             hintStyle: HuddlText.body(color: HuddlColors.textTertiary),
             prefixIcon: Icon(icon, size: 18, color: HuddlColors.textTertiary),
             filled: true,
-            fillColor: const Color(0xFFFFF5F0),
+            fillColor: HuddlColors.peachWarm,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

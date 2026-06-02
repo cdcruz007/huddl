@@ -281,7 +281,7 @@ class WarmCircleIllustration extends StatelessWidget {
       width: circleSize,
       height: circleSize,
       decoration: const BoxDecoration(
-        color: Color(0xFFFFF5F0), // huddl warm pale-orange tint
+        color: HuddlColors.peachWarm, // huddl warm pale-orange tint
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -387,7 +387,7 @@ class _CelebrationOverlayWidgetState extends State<_CelebrationOverlayWidget>
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
+                    color: HuddlColors.neutral900,
                   ),
                 ),
               ],

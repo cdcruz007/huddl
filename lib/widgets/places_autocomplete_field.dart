@@ -196,10 +196,10 @@ class _PlacesAutocompleteFieldState extends State<PlacesAutocompleteField> {
           TextField(
             controller: widget.controller,
             focusNode: _focus,
-            style: HuddlText.body(color: const Color(0xFF42464C)),
+            style: HuddlText.body(color: HuddlColors.textDark),
             decoration: InputDecoration(
               hintText: 'Add a location or address',
-              hintStyle: HuddlText.body(color: const Color(0xFFB0B0B0)),
+              hintStyle: HuddlText.body(color: HuddlColors.neutral300),
               isDense: true,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -221,7 +221,7 @@ class _PlacesAutocompleteFieldState extends State<PlacesAutocompleteField> {
                   : widget.controller.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.close, size: 16,
-                              color: Color(0xFFB0B0B0)),
+                              color: HuddlColors.neutral300),
                           onPressed: () {
                             widget.controller.clear();
                             setState(() => _predictions = []);
@@ -271,7 +271,7 @@ class _SuggestionList extends StatelessWidget {
             shrinkWrap: true,
             itemCount: predictions.length,
             separatorBuilder: (_, __) => const Divider(
-                height: 1, thickness: 0.5, color: Color(0xFFEEEEEE)),
+                height: 1, thickness: 0.5, color: HuddlColors.neutral100),
             itemBuilder: (ctx, i) {
               final p = predictions[i];
               return InkWell(
@@ -290,7 +290,7 @@ class _SuggestionList extends StatelessWidget {
                           children: [
                             Text(
                               p.mainText,
-                              style: HuddlText.body(color: const Color(0xFF42464C)),
+                              style: HuddlText.body(color: HuddlColors.textDark),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -298,7 +298,7 @@ class _SuggestionList extends StatelessWidget {
                               const SizedBox(height: 1),
                               Text(
                                 p.secondaryText,
-                                style: HuddlText.caption(color: const Color(0xFF949494)),
+                                style: HuddlText.caption(color: HuddlColors.neutral300),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),

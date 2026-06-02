@@ -57,7 +57,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
 
     return Scaffold(
       backgroundColor:
-          isDark ? HuddlColors.darkBackground : const Color(0xFFF7F7F7),
+          isDark ? HuddlColors.darkBackground : HuddlColors.neutral50,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

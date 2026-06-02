@@ -358,7 +358,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,
@@ -453,7 +453,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F7F7),
+          color: HuddlColors.neutral50,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: HuddlColors.divider,
@@ -571,7 +571,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             height: 28,
             margin: const EdgeInsets.only(right: 8, bottom: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,
@@ -687,7 +687,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             height: 28,
             margin: const EdgeInsets.only(right: 8, bottom: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,

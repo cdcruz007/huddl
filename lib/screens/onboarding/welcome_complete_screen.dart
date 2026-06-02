@@ -221,7 +221,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
                             horizontal: 16,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
+                            color: HuddlColors.neutral50,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: HuddlColors.divider,

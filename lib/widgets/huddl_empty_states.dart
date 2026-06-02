@@ -180,7 +180,7 @@ class CopilotWelcomeState extends StatelessWidget {
             'Hi $firstName! 👋 What\'s on your mind?',
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF1A1A1A),
+              color: HuddlColors.neutral900,
             ),
             textAlign: TextAlign.center,
           ),
@@ -188,7 +188,7 @@ class CopilotWelcomeState extends StatelessWidget {
           Text(
             'I know your family, your area, and what\'s on locally. Ask me anything.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF666666),
+              color: HuddlColors.neutral600,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -224,7 +224,7 @@ class CopilotWelcomeState extends StatelessWidget {
               'Quick actions',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF666666),
+                color: HuddlColors.neutral600,
               ),
             ),
           ),
@@ -237,11 +237,11 @@ class CopilotWelcomeState extends StatelessWidget {
                   (action) => ActionChip(
                     label: Text(action, style: const TextStyle(fontSize: 13)),
                     onPressed: () => onQuickAction(action),
-                    backgroundColor: const Color(0xFFF7F7F7),
+                    backgroundColor: HuddlColors.neutral50,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
                       side: const BorderSide(
-                        color: Color(0xFFE8E8E8),
+                        color: HuddlColors.neutral100,
                         width: 0.5,
                       ),
                     ),

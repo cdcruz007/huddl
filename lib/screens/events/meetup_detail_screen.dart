@@ -305,7 +305,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   leading: Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.share_outlined, color: HuddlColors.textDark, size: 20),
@@ -320,7 +320,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   leading: Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.blueBackground,
+                      color: HuddlColors.peachSurface,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.copy_outlined, color: HuddlColors.nearBlack, size: 20),
@@ -347,7 +347,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     leading: Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7F7F7),
+                        color: HuddlColors.neutral50,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.people_outline, color: HuddlColors.textDark, size: 20),
@@ -363,7 +363,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     leading: Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: HuddlColors.blueBackground,
+                        color: HuddlColors.peachSurface,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.edit_outlined, color: HuddlColors.nearBlack, size: 20),
@@ -485,7 +485,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF7F7F7),
+                                      color: HuddlColors.neutral50,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -1147,7 +1147,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           MemberPhotoService.currentUserAvatarAsset,
           width: size, height: size, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            color: const Color(0xFFF7F7F7),
+            color: HuddlColors.neutral50,
             child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.textDark)),
           ),
         ),
@@ -1227,7 +1227,7 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Sport':
       return const _CatStyleInfo(HuddlColors.nearBlack, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyleInfo(HuddlColors.paleBlue, Icons.directions_walk);
+      return const _CatStyleInfo(HuddlColors.orangePale, Icons.directions_walk);
     case 'Social':
       return const _CatStyleInfo(HuddlColors.primary, Icons.celebration);
     case 'Food':

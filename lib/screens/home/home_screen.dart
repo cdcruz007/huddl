@@ -1654,7 +1654,7 @@ class _HomeScreenState extends State<HomeScreen>
             decoration: BoxDecoration(
               color: isDark
                   ? HuddlColors.primary.withValues(alpha: 0.07)
-                  : const Color(0xFFFFF5F0),
+                  : HuddlColors.peachWarm,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: HuddlColors.primary.withValues(alpha: 0.22),
@@ -2179,7 +2179,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: Container(
                 width: double.infinity,
                 height: 180,
-                color: const Color(0xFFFFF5F0),
+                color: HuddlColors.peachWarm,
                 child: const Center(
                   child: WarmCircleIllustration(
                     assetPath: 'assets/illustrations/calendar.webp',
@@ -2279,7 +2279,7 @@ class _HomeScreenState extends State<HomeScreen>
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0x55000000)],
+                        colors: [Colors.transparent, HuddlColors.overlay],
                         stops: [0.45, 1.0],
                       ),
                     ),
@@ -2323,13 +2323,13 @@ class _HomeScreenState extends State<HomeScreen>
             // ── Going confirmation strip — neutral, not orange-tinted
             Container(
               width: double.infinity,
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Row(
                 children: [
                   const Icon(Icons.check_circle,
                       size: 11,
-                      color: Color(0xFF4CAF50)),
+                      color: HuddlColors.success),
                   const SizedBox(width: 4),
                   Text(
                     "You're going!",
@@ -2572,7 +2572,7 @@ class _HomeScreenState extends State<HomeScreen>
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0x44000000)],
+                        colors: [Colors.transparent, HuddlColors.overlayMedium],
                         stops: [0.5, 1.0],
                       ),
                     ),
@@ -2976,7 +2976,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _eventImageFallback() {
     return Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: Center(
         child: Icon(Icons.event_outlined, size: 32,
             color: HuddlColors.nearBlack.withValues(alpha: 0.3)),
@@ -3097,7 +3097,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _serviceImageFallback(String emoji) {
     return Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: Center(
         child: Text(emoji, style: const TextStyle(fontSize: 32)),
       ),
@@ -3165,7 +3165,7 @@ class _HomeScreenState extends State<HomeScreen>
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Color(0x22000000)],
+                              colors: [Colors.transparent, HuddlColors.overlayLight],
                               stops: [0.55, 1.0],
                             ),
                           ),
@@ -3222,7 +3222,7 @@ class _HomeScreenState extends State<HomeScreen>
                             decoration: BoxDecoration(
                               color: item.isFree
                                   ? HuddlColors.nearBlack.withValues(alpha: 0.10)
-                                  : const Color(0xFFF2F2F2),
+                                  : HuddlColors.neutral50,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(priceStr,
@@ -4851,7 +4851,7 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F7F7),
+                color: HuddlColors.neutral50,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('View',
@@ -5300,7 +5300,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Color _feedIconBg(FeedItemType t) {
     // Design rule: uniform neutral grey — no tinted/coloured icon containers
-    return const Color(0xFFF7F7F7);
+    return HuddlColors.neutral50;
   }
 
   String _feedTypeLabel(FeedItemType t) {
@@ -7720,7 +7720,7 @@ class _ActivityDetailSheet extends StatelessWidget {
 
   Color _bgForType(FeedItemType t) {
     // Design rule: uniform neutral grey — no tinted backgrounds
-    return const Color(0xFFF7F7F7);
+    return HuddlColors.neutral50;
   }
 
   String _typeLabelForType(FeedItemType t) {

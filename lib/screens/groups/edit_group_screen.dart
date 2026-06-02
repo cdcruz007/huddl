@@ -139,7 +139,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
               leading: Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.photo_library_outlined, color: HuddlColors.textDark),
@@ -157,7 +157,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 leading: Container(
                   width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F7F7),
+                    color: HuddlColors.neutral50,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.textDark),
@@ -482,7 +482,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
             ),
             child: _buildPhotoContent(),
           ),

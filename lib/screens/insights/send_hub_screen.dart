@@ -2678,7 +2678,7 @@ class _DirectoryCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: resource.isCharity
                       ? _kSendCrimson.withValues(alpha: 0.10)
-                      : HuddlColors.blueBackground,
+                      : HuddlColors.peachSurface,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(

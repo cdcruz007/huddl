@@ -463,7 +463,7 @@ class _PasswordInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fieldFill = isDark ? HuddlColors.darkInputBg : const Color(0xFFF5F5F5);
+    final fieldFill = isDark ? HuddlColors.darkInputBg : HuddlColors.neutral50;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

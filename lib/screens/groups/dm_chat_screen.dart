@@ -43,8 +43,8 @@ import '../../widgets/upgrade_prompt.dart';
 // My-bubble: solid brand orange (Figma spec #E8724A)
 const Color _kMyBubble    = HuddlColors.primary;
 // Received-bubble: warm parchment #F0EDE8 light / #2E2A26 dark
-const Color _kTheirBubbleLight = Color(0xFFF0EDE8);
-const Color _kTheirBubbleDark  = Color(0xFF2E2A26);
+const Color _kTheirBubbleLight = HuddlColors.receivedBubbleLight;
+const Color _kTheirBubbleDark  = HuddlColors.receivedBubbleDark;
 
 
 /// Maps borough member IDs to realistic profile photo URLs
@@ -642,14 +642,14 @@ class _DMChatScreenState extends State<DMChatScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? HuddlColors.darkBackground
-          : const Color(0xFFFBF9F7),   // warm white — matches group chat
+          : HuddlColors.warmWhite,   // warm white — matches group chat
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -1415,7 +1415,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? HuddlColors.darkInputBg
-                        : const Color(0xFFF5F2EE), // warm grey-beige
+                        : HuddlColors.receivedBubbleLight, // warm grey-beige
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(
@@ -1583,7 +1583,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
@@ -2105,7 +2105,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         Container(
                           width: 72, height: 72,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
+                            color: HuddlColors.neutral50,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.textDark),
@@ -3735,7 +3735,7 @@ class _ImageBubble extends StatelessWidget {
   Widget _brokenImage() => Container(
         width: 200,
         height: 200,
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
         child: Icon(Icons.broken_image, color: HuddlColors.textTertiary, size: 48),
       );
 
@@ -4017,7 +4017,7 @@ class _ContactBubble extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? HuddlColors.darkSurfaceVariant
-                            : const Color(0xFFF7F7F7),
+                            : HuddlColors.neutral50,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.person, color: context.hc.textPrimary, size: 24),

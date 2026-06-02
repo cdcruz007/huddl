@@ -313,7 +313,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: HuddlColors.blueBackground,
+                      color: HuddlColors.peachSurface,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(

@@ -187,7 +187,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     // Phone input row
                     Builder(builder: (context) {
                       final isDark = Theme.of(context).brightness == Brightness.dark;
-                      final containerBg = isDark ? HuddlColors.darkInputBg : const Color(0xFFF5F5F5);
+                      final containerBg = isDark ? HuddlColors.darkInputBg : HuddlColors.neutral50;
                       final dividerColor = isDark ? HuddlColors.darkDivider : HuddlColors.inputBorder;
                       final hintColor = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
                       final labelHintColor = isDark

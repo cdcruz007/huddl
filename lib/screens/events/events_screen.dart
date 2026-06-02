@@ -298,7 +298,7 @@ class EventsScreenState extends State<EventsScreen>
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
+                            color: HuddlColors.neutral50,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.groups,
@@ -1245,14 +1245,14 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
           // ══ DESIGN TOKENS — adaptive for dark mode ════════════
           final Color bgSheet      = isDarkSheet ? HuddlColors.darkSurface : Colors.white;
-          const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          final Color chipIcon     = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
-          final Color textPrimary  = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
-          final Color textSecGray  = isDarkSheet ? HuddlColors.darkTextSecondary : const Color(0xFF949494);
-          final Color chipBg       = isDarkSheet ? HuddlColors.darkSurfaceVariant : const Color(0xFFF6F6F6);
-          final Color dividerColor = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
-          final Color trackInactive= isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
-          final Color toggleOff    = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
+          const Color orange       = HuddlColors.primary;  // Figma: "Dark orange" — primary brand
+          final Color chipIcon     = isDarkSheet ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+          final Color textPrimary  = isDarkSheet ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+          final Color textSecGray  = isDarkSheet ? HuddlColors.darkTextSecondary : HuddlColors.neutral300;
+          final Color chipBg       = isDarkSheet ? HuddlColors.darkSurfaceVariant : HuddlColors.neutral50;
+          final Color dividerColor = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+          final Color trackInactive= isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+          final Color toggleOff    = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
 
           // ── Helper: section heading ──────────────────────────────────
           Widget sectionHeading(String title) => Padding(
@@ -1379,7 +1379,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF42464C),
+                                    color: HuddlColors.textDark,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text('AI',
@@ -1759,11 +1759,11 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('1 km',
-                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: HuddlColors.neutral300)),
                                 Text('25 km',
-                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: HuddlColors.neutral300)),
                                 Text('50 km',
-                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: HuddlColors.neutral300)),
                               ],
                             ),
                           ),
@@ -1781,13 +1781,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF5F5F5),
+                                  color: HuddlColors.neutral50,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                                  border: Border.all(color: HuddlColors.neutral100),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.location_off_rounded, size: 18, color: Color(0xFF9E9E9E)),
+                                    const Icon(Icons.location_off_rounded, size: 18, color: HuddlColors.neutral300),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
@@ -1796,10 +1796,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                             : _locationStatus == LocationStatus.serviceDisabled
                                                 ? 'Enable location services to filter by distance.'
                                                 : 'Tap to enable location and filter by distance.',
-                                        style: HuddlText.caption(color: const Color(0xFF757575)),
+                                        style: HuddlText.caption(color: HuddlColors.neutral600),
                                       ),
                                     ),
-                                    const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFBDBDBD)),
+                                    const Icon(Icons.chevron_right_rounded, size: 18, color: HuddlColors.neutral100),
                                   ],
                                 ),
                               ),
@@ -2038,7 +2038,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }
 
     // ── Figma design tokens ────────────────────────────────────────
-    const Color filterText  = Color(0xFF42464C); // Figma: dark text
+    const Color filterText  = HuddlColors.textDark; // Figma: dark text
 
     return Column(
       children: [
@@ -2265,7 +2265,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         // ── List — light gray scaffold bg ─────────────────────────
         Expanded(
           child: ColoredBox(
-            color: const Color(0xFFF7F7F7),
+            color: HuddlColors.neutral50,
             child: filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
@@ -2725,7 +2725,7 @@ class _GoingAvatar extends StatelessWidget {
       height: 54,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
       ),
       clipBehavior: Clip.antiAlias,
       child: _buildImage(),
@@ -2755,7 +2755,7 @@ class _GoingAvatar extends StatelessWidget {
         fit: BoxFit.cover, width: 54, height: 54,
         errorBuilder: (_, __, ___) => _fallbackIcon(),
         loadingBuilder: (_, child, progress) =>
-          progress == null ? child : Container(color: const Color(0xFFF7F7F7)),
+          progress == null ? child : Container(color: HuddlColors.neutral50),
       );
     }
     if (imageUrl.startsWith('assets/')) {
@@ -2770,7 +2770,7 @@ class _GoingAvatar extends StatelessWidget {
 
   Widget _fallbackIcon() {
     return Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: Center(
         child: Icon(
           isMeetup ? Icons.groups : Icons.event,
@@ -3320,7 +3320,7 @@ class _EventsTabState extends State<_EventsTab> {
         _evDateRange != null ||
         _evDistanceKm != 10.0;
 
-    const Color filterText  = Color(0xFF42464C);
+    const Color filterText  = HuddlColors.textDark;
 
     return Column(
       children: [
@@ -3514,7 +3514,7 @@ class _EventsTabState extends State<_EventsTab> {
         // ── Event list — all events as vertical cards under "Suggested for you" ──
         Expanded(
           child: ColoredBox(
-            color: const Color(0xFFF7F7F7),
+            color: HuddlColors.neutral50,
             child: (!_recommenderReady && events.isEmpty)
                 ? const HuddlSkeletonFeed(cardCount: 3)
                 : events.isEmpty
@@ -3635,14 +3635,14 @@ class _EventsTabState extends State<_EventsTab> {
 
           // ══ DESIGN TOKENS — adaptive for dark mode ════════════
           final Color bgSheet      = isDarkSheet ? HuddlColors.darkSurface : Colors.white;
-          const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
-          final Color chipIcon     = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
-          final Color textPrimary  = isDarkSheet ? HuddlColors.darkTextPrimary : const Color(0xFF42464C);
-          final Color textSecGray  = isDarkSheet ? HuddlColors.darkTextSecondary : const Color(0xFF949494);
-          final Color chipBg       = isDarkSheet ? HuddlColors.darkSurfaceVariant : const Color(0xFFF6F6F6);
-          final Color dividerColor = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
-          final Color trackInactive= isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
-          final Color toggleOff    = isDarkSheet ? HuddlColors.darkDivider : const Color(0xFFD5D5D5);
+          const Color orange       = HuddlColors.primary;  // Figma: "Dark orange" — primary brand
+          final Color chipIcon     = isDarkSheet ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+          final Color textPrimary  = isDarkSheet ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+          final Color textSecGray  = isDarkSheet ? HuddlColors.darkTextSecondary : HuddlColors.neutral300;
+          final Color chipBg       = isDarkSheet ? HuddlColors.darkSurfaceVariant : HuddlColors.neutral50;
+          final Color dividerColor = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+          final Color trackInactive= isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+          final Color toggleOff    = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
 
           // ── Section heading ────────────────────────────────────
           Widget sectionHeading(String title) => Padding(
@@ -3769,7 +3769,7 @@ class _EventsTabState extends State<_EventsTab> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF42464C),
+                                    color: HuddlColors.textDark,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text('AI',
@@ -4128,11 +4128,11 @@ class _EventsTabState extends State<_EventsTab> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('1 km',
-                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: HuddlColors.neutral300)),
                                 Text('25 km',
-                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: HuddlColors.neutral300)),
                                 Text('50 km',
-                                    style: HuddlText.caption(color: const Color(0xFFB0B0B0))),
+                                    style: HuddlText.caption(color: HuddlColors.neutral300)),
                               ],
                             ),
                           ),
@@ -4150,13 +4150,13 @@ class _EventsTabState extends State<_EventsTab> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF5F5F5),
+                                  color: HuddlColors.neutral50,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                                  border: Border.all(color: HuddlColors.neutral100),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.location_off_rounded, size: 18, color: Color(0xFF9E9E9E)),
+                                    const Icon(Icons.location_off_rounded, size: 18, color: HuddlColors.neutral300),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
@@ -4165,10 +4165,10 @@ class _EventsTabState extends State<_EventsTab> {
                                             : _evLocationStatus == LocationStatus.serviceDisabled
                                                 ? 'Enable location services to filter by distance.'
                                                 : 'Tap to enable location and filter by distance.',
-                                        style: HuddlText.caption(color: const Color(0xFF757575)),
+                                        style: HuddlText.caption(color: HuddlColors.neutral600),
                                       ),
                                     ),
-                                    const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFBDBDBD)),
+                                    const Icon(Icons.chevron_right_rounded, size: 18, color: HuddlColors.neutral100),
                                   ],
                                 ),
                               ),
@@ -5621,11 +5621,11 @@ class _ShimmerBoxState extends State<_ShimmerBox>
                 begin: Alignment(_anim.value - 1, 0),
                 end: Alignment(_anim.value + 1, 0),
                 colors: const [
-                  Color(0xFFE8E8E8),
-                  Color(0xFFF5F5F5),
-                  Color(0xFFEEEEEE),
-                  Color(0xFFF5F5F5),
-                  Color(0xFFE8E8E8),
+                  HuddlColors.neutral100,
+                  HuddlColors.neutral50,
+                  HuddlColors.neutral100,
+                  HuddlColors.neutral50,
+                  HuddlColors.neutral100,
                 ],
                 stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
               ),
@@ -5879,8 +5879,8 @@ class _HistogramPainter extends CustomPainter {
       );
       final paint = Paint()
         ..color = i <= activeIndex
-            ? const Color(0xFFFF965C) // HuddlColors.primary
-            : const Color(0xFFD5D5D5) // HuddlColors.divider
+            ? HuddlColors.primary // HuddlColors.primary
+            : HuddlColors.neutral100 // HuddlColors.divider
         ..style = PaintingStyle.fill;
       canvas.drawRRect(
         RRect.fromRectAndRadius(rect, const Radius.circular(2)),
@@ -6138,12 +6138,12 @@ class _NearbyFilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? HuddlColors.nearBlack
-              : const Color(0xFFF5F5F5),
+              : HuddlColors.neutral50,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
                 ? HuddlColors.nearBlack
-                : const Color(0xFFE5E5E5),
+                : HuddlColors.neutral100,
             width: 0.5,
           ),
         ),

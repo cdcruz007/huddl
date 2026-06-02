@@ -89,7 +89,7 @@ class ImageEditorWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(

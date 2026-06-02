@@ -52,15 +52,15 @@ class HuddlButton extends StatelessWidget {
           onPressed: onPressed == null ? null : _handleTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: HuddlColors.primary,
-            disabledBackgroundColor: const Color(0xFFEEEEEE),
+            disabledBackgroundColor: HuddlColors.neutral100,
             foregroundColor: Colors.white,
-            disabledForegroundColor: const Color(0xFF9E9E9E),
+            disabledForegroundColor: HuddlColors.neutral300,
             elevation: 0,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
-          child: _child(Colors.white, const Color(0xFF9E9E9E)),
+          child: _child(Colors.white, HuddlColors.neutral300),
         );
 
       case HuddlButtonVariant.secondary:
@@ -74,7 +74,7 @@ class HuddlButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
-          child: _child(secondaryColor, const Color(0xFF9E9E9E)),
+          child: _child(secondaryColor, HuddlColors.neutral300),
         );
 
       case HuddlButtonVariant.confirmed:
@@ -122,15 +122,15 @@ class HuddlButton extends StatelessWidget {
           onPressed: onPressed == null ? null : _handleTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: HuddlColors.yellow,
-            disabledBackgroundColor: const Color(0xFFEEEEEE),
+            disabledBackgroundColor: HuddlColors.neutral100,
             foregroundColor: HuddlColors.nearBlack,
-            disabledForegroundColor: const Color(0xFF9E9E9E),
+            disabledForegroundColor: HuddlColors.neutral300,
             elevation: 0,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
-          child: _child(HuddlColors.nearBlack, const Color(0xFF9E9E9E)),
+          child: _child(HuddlColors.nearBlack, HuddlColors.neutral300),
         );
     }
   }
@@ -140,7 +140,7 @@ class HuddlButton extends StatelessWidget {
   Color _resolveSecondaryColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? HuddlColors.darkTextPrimary
-        : const Color(0xFF1C1C1E);
+        : HuddlColors.neutral900;
   }
 
   void _handleTap() {

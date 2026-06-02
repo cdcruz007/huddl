@@ -867,7 +867,7 @@ class _ResultBar extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: value,
                 backgroundColor: HuddlColors.divider,
-                color: isHighlighted ? HuddlColors.primary : const Color(0xFF1C1C1E),
+                color: isHighlighted ? HuddlColors.primary : HuddlColors.neutral900,
                 minHeight: 5,
               ),
             ),
@@ -1202,7 +1202,7 @@ class PollResultsScreen extends StatelessWidget {
                       backgroundColor: HuddlColors.divider,
                       color: isMyVote
                           ? HuddlColors.primary
-                          : const Color(0xFF1C1C1E),
+                          : HuddlColors.neutral900,
                       minHeight: 6,
                     ),
                   ),
@@ -1918,7 +1918,7 @@ class PollDetailScreen extends StatelessWidget {
                         backgroundColor: HuddlColors.divider,
                         color: isMyVote
                             ? HuddlColors.primary
-                            : const Color(0xFF1C1C1E),
+                            : HuddlColors.neutral900,
                         minHeight: 6,
                       ),
                     ),

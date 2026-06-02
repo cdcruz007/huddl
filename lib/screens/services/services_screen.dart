@@ -153,7 +153,7 @@ class _StarRatingPickerState extends State<_StarRatingPicker> {
             child: Icon(
               filled ? Icons.star_rounded : Icons.star_outline_rounded,
               size: 32,
-              color: filled ? const Color(0xFFFFC107) : HuddlColors.textTertiary,
+              color: filled ? HuddlColors.amberWarm : HuddlColors.textTertiary,
             ),
           ),
         );
@@ -178,7 +178,7 @@ Widget _buildStarDisplay(double rating, {int count = 0, double size = 13}) {
                   : Icons.star_outline_rounded),
           size: size,
           color: i < fullStars || (i == fullStars && hasHalf)
-              ? const Color(0xFFFFC107)
+              ? HuddlColors.amberWarm
               : HuddlColors.textTertiary,
         ),
       const SizedBox(width: 4),
@@ -757,7 +757,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
           Expanded(
             child: ColoredBox(
-              color: _isSearchActive ? hc.surface : const Color(0xFFF7F7F7),
+              color: _isSearchActive ? hc.surface : HuddlColors.neutral50,
               child: StreamBuilder<List<ServiceListing>>(
                 stream: _service.listingsStream(category: _selectedCategory)
                     .handleError((_) => <ServiceListing>[]),
@@ -1763,7 +1763,7 @@ class _ListingCardState extends State<_ListingCard> {
                       onTap: _endorsing ? () {} : _toggleEndorse,
                       label: 'Endorse',
                       joinedLabel: 'Endorsed',
-                      joinedColor: const Color(0xFF1C1C1E),
+                      joinedColor: HuddlColors.neutral900,
                       unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
                     ),
@@ -2317,18 +2317,18 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
+                      color: HuddlColors.yellowBackground,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFC107)),
+                        const Icon(Icons.star_rounded, size: 14, color: HuddlColors.amberWarm),
                         const SizedBox(width: 4),
                         Text(
                           '${listing.communityRating!.toStringAsFixed(1)} community rating'
                           '${listing.ratingCount > 0 ? " (${listing.ratingCount})" : ""}',
-                          style: HuddlText.caption(weight: FontWeight.w600, color: const Color(0xFF795548))),
+                          style: HuddlText.caption(weight: FontWeight.w600, color: HuddlColors.orangeDeep)),
                       ],
                     ),
                   ),
@@ -2569,7 +2569,7 @@ class _EndorsementTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark
             ? HuddlColors.darkSurfaceVariant
-            : HuddlColors.blueBackground,
+            : HuddlColors.peachSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -2599,17 +2599,17 @@ class _EndorsementTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8E1),
+                    color: HuddlColors.yellowBackground,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFFC107)),
+                      const Icon(Icons.star_rounded, size: 12, color: HuddlColors.amberWarm),
                       const SizedBox(width: 2),
                       Text(
                         '${endorsement.rating}',
-                        style: HuddlText.caption(weight: FontWeight.w700, color: const Color(0xFF795548))),
+                        style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.orangeDeep)),
                     ],
                   ),
                 ),
@@ -3582,9 +3582,9 @@ Color _categoryColor(ServiceCategory cat) => switch (cat) {
       ServiceCategory.education => HuddlColors.nearBlack,
       ServiceCategory.fitness => HuddlColors.categorySport,
       ServiceCategory.firstAid => HuddlColors.error,
-      ServiceCategory.doula => HuddlColors.pinkSoft,
+      ServiceCategory.doula => HuddlColors.primaryLight,
       ServiceCategory.homeServices => HuddlColors.primary,
-      ServiceCategory.photography => HuddlColors.purpleAccent,
+      ServiceCategory.photography => HuddlColors.brandTeal,
       ServiceCategory.food => HuddlColors.primary,
       ServiceCategory.other => HuddlColors.gray400,
     };

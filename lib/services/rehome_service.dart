@@ -190,7 +190,7 @@ extension ItemCategoryExt on ItemCategory {
       case ItemCategory.boysClothes:
         return HuddlColors.nearBlack;
       case ItemCategory.girlsClothes:
-        return HuddlColors.pinkSoft;
+        return HuddlColors.primaryLight;
       case ItemCategory.toysAndGames:
         return HuddlColors.primary;
       case ItemCategory.pushchairsAndPrams:
@@ -198,11 +198,11 @@ extension ItemCategoryExt on ItemCategory {
       case ItemCategory.forTheCar:
         return HuddlColors.textSecondary;
       case ItemCategory.furniture:
-        return HuddlColors.purpleAccent;
+        return HuddlColors.brandTeal;
       case ItemCategory.books:
         return HuddlColors.nearBlack;
       case ItemCategory.maternity:
-        return HuddlColors.pinkSoft;
+        return HuddlColors.primaryLight;
       case ItemCategory.babyCareAndAccessories:
         return HuddlColors.actionGreen;
       case ItemCategory.other:

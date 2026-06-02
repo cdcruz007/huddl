@@ -1757,7 +1757,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
+                            color: HuddlColors.neutral50,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: HuddlColors.divider),
                           ),
@@ -1935,7 +1935,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFF7F7F7),
+            HuddlColors.neutral50,
             HuddlColors.nearBlack.withValues(alpha: 0.05),
           ],
         ),
@@ -1958,7 +1958,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   Container(
                     width: 34, height: 34,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
@@ -2209,7 +2209,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -2218,7 +2218,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           Container(
             width: 34, height: 34,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               borderRadius: BorderRadius.circular(9),
             ),
             child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.textDark),
@@ -2474,7 +2474,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.search_off,
@@ -2635,7 +2635,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7F7F7),
+                          color: HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -3159,7 +3159,7 @@ class _InvitationCard extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -3184,7 +3184,7 @@ class _InvitationCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
+                            color: HuddlColors.neutral50,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -3485,12 +3485,12 @@ class _MessageListItem {
 /// Palette of distinct background colors used for initials-based avatars.
 /// Chosen to be visually distinct from each other and readable against white text.
 const List<Color> _kAvatarPalette = [
-  Color(0xFFFF965C), // primary orange
-  Color(0xFFFFAD7F), // medium orange
-  Color(0xFF43464D), // dark grey
-  Color(0xFF6C6C6C), // mid grey
-  Color(0xFF199A85), // teal (brand secondary)
-  Color(0xFF767676), // neutral grey
+  HuddlColors.primary, // primary orange
+  HuddlColors.primaryLight, // medium orange
+  HuddlColors.textDark, // dark grey
+  HuddlColors.neutral600, // mid grey
+  HuddlColors.brandTeal, // teal (brand secondary)
+  HuddlColors.neutral600, // neutral grey
 ];
 
 /// Pick a deterministic color from the palette using the group id or name.
@@ -3544,7 +3544,7 @@ class _GroupAvatar extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(size * 0.25),
-            color: const Color(0xFFF7F7F7),
+            color: HuddlColors.neutral50,
           ),
           clipBehavior: Clip.antiAlias,
           child: _buildImage(),
@@ -4942,7 +4942,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: isSelected ? null : const Color(0xFFF7F7F7),
+          color: isSelected ? null : HuddlColors.neutral50,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -5083,7 +5083,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         value: (sampleScore / 100).clamp(0.0, 1.0),
                         minHeight: 6,
                         backgroundColor:
-                            const Color(0xFFF7F7F7),
+                            HuddlColors.neutral50,
                         valueColor: const AlwaysStoppedAnimation<Color>(
                             HuddlColors.textDark),
                       ),
@@ -5131,7 +5131,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: HuddlColors.divider,
@@ -5517,7 +5517,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                             _SearchResultPlaceholder(
                                                 name: group.name),
                                         loadingBuilder: (_, child, progress) =>
-                                          progress == null ? child : Container(color: const Color(0xFFF7F7F7)),
+                                          progress == null ? child : Container(color: HuddlColors.neutral50),
                                       )
                                     : _SearchResultPlaceholder(
                                         name: group.name),
@@ -5568,7 +5568,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16, vertical: 7),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF2F2F2),
+                                      color: HuddlColors.neutral50,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -5923,7 +5923,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                           },
                           label: !canAccess ? 'Restricted' : 'Join',
                           joinedLabel: 'Joined',
-                          joinedColor: const Color(0xFF1C1C1E),
+                          joinedColor: HuddlColors.neutral900,
                           unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
                           unJoinedTextColor: HuddlColors.primary,
                         ),
@@ -6627,7 +6627,7 @@ class _SavedMessageCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7F7F7),
+                          color: HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
@@ -7036,7 +7036,7 @@ class _SavedEventCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: savedEvent.isFree
                               ? HuddlColors.nearBlack.withValues(alpha: 0.12)
-                              : const Color(0xFFF7F7F7),
+                              : HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -7122,7 +7122,7 @@ class _SavedEventCard extends StatelessWidget {
 
   Widget _fallbackIcon(BuildContext context) {
     return Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: const Center(
         child: Icon(Icons.event, size: 28, color: HuddlColors.textDark),
       ),
@@ -7351,7 +7351,7 @@ class _SearchSectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -7475,7 +7475,7 @@ class _HighlightedText extends StatelessWidget {
       }
       spans.add(TextSpan(
         text: text.substring(idx, idx + query.length),
-        style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark).copyWith(backgroundColor: const Color(0xFFF7F7F7)),
+        style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.textDark).copyWith(backgroundColor: HuddlColors.neutral50),
       ));
       start = idx + query.length;
     }

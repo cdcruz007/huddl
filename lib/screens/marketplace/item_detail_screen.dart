@@ -1005,7 +1005,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       children: [
         images.isEmpty
             ? Container(
-                color: const Color(0xFFF7F7F7),
+                color: HuddlColors.neutral50,
                 child: Center(
                   child: Icon(item.category.icon,
                       size: 64, color: HuddlColors.textHint),
@@ -1022,7 +1022,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Color(0x33000000)],
+              colors: [Colors.transparent, HuddlColors.overlayMedium],
               stops: [0.6, 1.0],
             ),
           ),
@@ -1064,7 +1064,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildDetailImage(String url) {
     final fallback = Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: Center(
         child: Icon(item.category.icon,
             size: 56, color: HuddlColors.textHint),

@@ -260,7 +260,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                     child: ClipOval(
                       child: _isLoading
                           ? Container(
-                              color: const Color(0xFFF5F5F5),
+                              color: HuddlColors.neutral50,
                               child: const Center(
                                 child: CircularProgressIndicator(
                                   color: HuddlColors.primary,
@@ -385,7 +385,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
       errorBuilder: (_, __, ___) => Container(
         width: 260,
         height: 260,
-        color: const Color(0xFFF5F5F5),
+        color: HuddlColors.neutral50,
         child: const Icon(Icons.person, size: 80, color: HuddlColors.textHint),
       ),
     );

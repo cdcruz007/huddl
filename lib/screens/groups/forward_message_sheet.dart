@@ -730,12 +730,12 @@ class _ForwardSheetState extends State<_ForwardSheet>
   }
 
   Widget _meetupPlaceholder() => Container(
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
         child: const Center(child: Icon(Icons.event, size: 24, color: HuddlColors.textDark)),
       );
 
   Widget _groupPlaceholder() => Container(
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
         child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.textDark)),
       );
 
@@ -1028,7 +1028,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 errorBuilder: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   child: const Icon(Icons.image,
                       size: 24, color: HuddlColors.textDark),
                 ),
@@ -1074,7 +1074,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.blueBackground,
+                color: HuddlColors.peachSurface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.location_on,
@@ -1109,7 +1109,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F7F7),
+                color: HuddlColors.neutral50,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.person,
@@ -1324,12 +1324,8 @@ class _ForwardContactTile extends StatelessWidget {
   /// Unique initials avatar for groups that have no image stored in Firestore.
   /// Uses the same deterministic color + initials logic as the main groups screen.
   Widget _groupInitialsWidget(String id, String name, double size) {
-    const List<Color> palette = [
-      Color(0xFFE57373), Color(0xFFFF8A65), Color(0xFFFFB74D), Color(0xFFFFD54F),
-      Color(0xFFA5D6A7), Color(0xFF4DB6AC), Color(0xFF4FC3F7), Color(0xFF7986CB),
-      Color(0xFFBA68C8), Color(0xFFF06292), Color(0xFF90A4AE), Color(0xFF80CBC4),
-      Color(0xFFCE93D8), Color(0xFF80DEEA), Color(0xFFFFCC02), Color(0xFF66BB6A),
-    ];
+    // Use the canonical avatar palette from the design system token.
+    const List<Color> palette = HuddlColors.avatarPalette;
     final seed = id.isNotEmpty ? id : name;
     int hash = 0;
     for (final c in seed.codeUnits) {

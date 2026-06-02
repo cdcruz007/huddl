@@ -1314,7 +1314,7 @@ class _FeatureComparisonTable extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
         border: const Border(bottom: BorderSide(color: HuddlColors.gray100)),
       ),
       child: Text(title,

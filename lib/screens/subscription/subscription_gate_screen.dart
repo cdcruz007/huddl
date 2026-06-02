@@ -128,8 +128,8 @@ class SubscriptionGateScreen extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFFFF5F0), // warmest peach
-                  Color(0xFFFFEDE0), // soft apricot
+                  HuddlColors.peachWarm, // warmest peach
+                  HuddlColors.peachSurface, // soft apricot
                 ],
               ),
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),

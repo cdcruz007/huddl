@@ -294,7 +294,7 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                 child: Container(
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F2EE),
+                    color: HuddlColors.receivedBubbleLight,
                     borderRadius: BorderRadius.circular(22),
                   ),
                   child: TextField(

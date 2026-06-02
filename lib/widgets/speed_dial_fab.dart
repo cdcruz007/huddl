@@ -232,7 +232,7 @@ class _DialItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x1F000000),
+                    color: HuddlColors.overlayLight,
                     blurRadius: 8,
                     offset: Offset(0, 3),
                   ),

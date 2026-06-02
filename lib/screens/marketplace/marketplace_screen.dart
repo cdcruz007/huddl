@@ -1542,8 +1542,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     if (activeCats.isEmpty) return const SizedBox.shrink();
 
-    final chipBg       = isDark ? HuddlColors.darkSurfaceVariant : const Color(0xFFF5F2EE);
-    final chipBorder   = isDark ? HuddlColors.darkDivider : const Color(0xFFE5E5E5);
+    final chipBg       = isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.receivedBubbleLight;
+    final chipBorder   = isDark ? HuddlColors.darkDivider : HuddlColors.neutral100;
     final selectedBg   = isDark ? HuddlColors.darkTextPrimary : HuddlColors.primary;
     final selectedText = isDark ? HuddlColors.darkBackground : Colors.white;
 
@@ -3293,7 +3293,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
 Widget _buildItemImage(String url, RehomeItem item) {
   final iconFallback = Container(
-    color: const Color(0xFFF7F7F7),
+    color: HuddlColors.neutral50,
     child: Center(
       child: Icon(item.category.icon,
           size: 44, color: item.category.color.withValues(alpha: 0.5)),
@@ -3997,7 +3997,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                                     _avatarUrl(i),
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Container(
-                                      color: const Color(0xFFF7F7F7),
+                                      color: HuddlColors.neutral50,
                                       child: Icon(Icons.person,
                                           size: 14,
                                           color: HuddlColors.textHint),
@@ -4021,7 +4021,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7F7F7),
+                          color: HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -4216,7 +4216,7 @@ class _MarketSearchRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: item.isFree
                         ? HuddlColors.yellowSoft
-                        : const Color(0xFFF7F7F7),
+                        : HuddlColors.neutral50,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -4306,7 +4306,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0x22000000)],
+                        colors: [Colors.transparent, HuddlColors.overlayLight],
                         stops: [0.55, 1.0],
                       ),
                     ),
@@ -4423,7 +4423,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                                       width: 22, height: 22,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
-                                        color: const Color(0xFFF7F7F7),
+                                        color: HuddlColors.neutral50,
                                         child: const Icon(Icons.person, size: 11, color: HuddlColors.textHint),
                                       ),
                                     ),
@@ -4458,7 +4458,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                         decoration: BoxDecoration(
                           color: item.isFree
                               ? HuddlColors.yellowSoft
-                              : const Color(0xFFF7F7F7),
+                              : HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -4489,7 +4489,7 @@ class _MarketPhotoFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -5775,8 +5775,8 @@ class _PriceHistogramPainter extends CustomPainter {
       final isActive = i >= lowIdx && i < highIdx;
       final paint = Paint()
         ..color = isActive
-            ? const Color(0xFFFF965C) // Huddl orange — selected range
-            : const Color(0xFFD5D5D5) // divider — outside range
+            ? HuddlColors.primary // Huddl orange — selected range
+            : HuddlColors.neutral100 // divider — outside range
         ..style = PaintingStyle.fill;
       canvas.drawRRect(
         RRect.fromRectAndRadius(rect, const Radius.circular(2)),

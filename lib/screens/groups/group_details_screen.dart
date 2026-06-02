@@ -614,7 +614,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -801,7 +801,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           height: 48,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F7F7),
+                            color: HuddlColors.neutral50,
                             borderRadius: BorderRadius.circular(24),
                           ),
                           alignment: Alignment.center,
@@ -830,7 +830,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.bookmark_outline,
@@ -868,7 +868,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
+                      color: HuddlColors.neutral50,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.poll_outlined,
@@ -943,7 +943,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   Widget _heroFallback() {
     return Container(
-      color: const Color(0xFFF7F7F7),
+      color: HuddlColors.neutral50,
       child: CustomPaint(
         painter: _TwoPeoplePainter(),
         child: const SizedBox.expand(),
@@ -985,7 +985,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(

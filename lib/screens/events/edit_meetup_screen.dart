@@ -94,7 +94,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
   static const _bannerBlue   = HuddlColors.nearBlack;
   static const _accentOrange = HuddlColors.primary;
   static const _accentBlue   = HuddlColors.primary;
-  static const _fieldBg      = Color(0xFFF7F7F7);
+  static const _fieldBg      = HuddlColors.neutral50;
   static const _fieldLine    = HuddlColors.divider;
   static const _sectionText  = HuddlColors.textDark;
   static const _hintGray     = HuddlColors.textTertiary;
@@ -647,7 +647,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: HuddlColors.divider),
             ),

@@ -245,7 +245,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                             decoration: BoxDecoration(
                               color: _isListening
                                   ? HuddlColors.nearBlack
-                                  : const Color(0xFFF7F7F7),
+                                  : HuddlColors.neutral50,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -365,7 +365,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: HuddlColors.blueBackground,
+                color: HuddlColors.peachSurface,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(

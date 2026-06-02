@@ -423,7 +423,7 @@ class _HuddlCelebrationBurstState extends State<HuddlCelebrationBurst>
       HuddlColors.nearBlack,
       HuddlColors.primary,
       HuddlColors.error,
-      const Color(0xFF5B9CFF),
+      HuddlColors.infoBlueMid,
     ];
     for (int i = 0; i < 16; i++) {
       final angle = (i / 16) * 2 * 3.14159;

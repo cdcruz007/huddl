@@ -215,7 +215,7 @@ class _UnderlineInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fieldFill = isDark ? HuddlColors.darkInputBg : const Color(0xFFF5F5F5);
+    final fieldFill = isDark ? HuddlColors.darkInputBg : HuddlColors.neutral50;
     final hintColor = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
     return TextField(
       controller: controller,

@@ -528,7 +528,7 @@ class AiEventDiscoveryService {
         targetStages: ['newborn'],
         ageRange: const AgeRange(3, 18),
         isFree: false, price: '\u00A312',
-        color: HuddlColors.lightBlue,
+        color: HuddlColors.orangeDeep,
         icon: Icons.pool,
         organiserTemplate: 'Water Babies {borough}',
         imageUrl: 'https://images.pexels.com/photos/6010939/pexels-photo-6010939.jpeg?auto=compress&cs=tinysrgb&w=600',

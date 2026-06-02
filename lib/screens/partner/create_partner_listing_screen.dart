@@ -147,9 +147,9 @@ class _CreatePartnerListingScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: HuddlColors.neutral50,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7F7F7),
+        backgroundColor: HuddlColors.neutral50,
         elevation: 0,
         leading: BackButton(color: HuddlColors.nearBlack),
         title: Text(

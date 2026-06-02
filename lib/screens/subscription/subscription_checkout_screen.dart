@@ -645,7 +645,7 @@ class _PaymentMethodsSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: HuddlColors.blueBackground,
+              color: HuddlColors.peachSurface,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(

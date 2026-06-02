@@ -202,7 +202,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           child: Container(
             height: 200,
             decoration: BoxDecoration(
-              color: HuddlColors.blueBackground,
+              color: HuddlColors.peachSurface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: HuddlColors.aiBlue.withValues(alpha: 0.3),

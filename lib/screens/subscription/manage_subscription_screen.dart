@@ -580,7 +580,7 @@ class _StepRow extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
+              color: HuddlColors.neutral50,
               shape: BoxShape.circle,
             ),
             child: Text(step,
@@ -616,7 +616,7 @@ class _PaymentInfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: HuddlColors.blueBackground,
+              color: HuddlColors.peachSurface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(

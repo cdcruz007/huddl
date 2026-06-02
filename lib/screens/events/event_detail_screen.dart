@@ -617,7 +617,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ],
                       ),
                       backgroundColor:
-                          isNowGoing ? const Color(0xFF27AE60) : HuddlColors.textSecondary,
+                          isNowGoing ? HuddlColors.success : HuddlColors.textSecondary,
                       behavior: SnackBarBehavior.floating,
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                       shape: RoundedRectangleBorder(
@@ -670,9 +670,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3CD),
+                    color: HuddlColors.peachWarm,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.4)),
+                    border: Border.all(color: HuddlColors.amberWarm.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -681,7 +681,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const SizedBox(width: 4),
                       Text(
                         'Discover Something New',
-                        style: HuddlText.label(color: const Color(0xFF856404))),
+                        style: HuddlText.label(color: HuddlColors.warningDark)),
                     ],
                   ),
                 )
@@ -1430,11 +1430,11 @@ class _DetailShimmerBoxState extends State<_DetailShimmerBox>
             begin: Alignment(_anim.value - 1, 0),
             end: Alignment(_anim.value + 1, 0),
             colors: const [
-              Color(0xFFD0D0D0),
-              Color(0xFFE8E8E8),
-              Color(0xFFDDDDDD),
-              Color(0xFFE8E8E8),
-              Color(0xFFD0D0D0),
+              HuddlColors.neutral100,
+              HuddlColors.neutral100,
+              HuddlColors.neutral100,
+              HuddlColors.neutral100,
+              HuddlColors.neutral100,
             ],
             stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
           ),

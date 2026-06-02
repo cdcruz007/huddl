@@ -60,20 +60,20 @@ import 'package:google_fonts/google_fonts.dart';
 // My-bubble: solid brand orange (Figma spec #E8724A)
 const Color _kMyBubble  = HuddlColors.primary;  // #E8724A
 // Received-bubble: warm parchment #F0EDE8 light / #2E2A26 dark (was surfaceAlt grey)
-const Color _kReceivedBubbleLight = Color(0xFFF0EDE8);
-const Color _kReceivedBubbleDark  = Color(0xFF2E2A26);
+const Color _kReceivedBubbleLight = HuddlColors.receivedBubbleLight;
+const Color _kReceivedBubbleDark  = HuddlColors.receivedBubbleDark;
 
 /// Deterministic accent colour for a sender name.
 /// Same name → same colour across the conversation (Telegram-style identity signal).
 /// Palette: warm, on-brand only — no pure red (errors) or yellow (celebration).
 Color _senderColor(String name) {
   const palette = [
-    Color(0xFFFF965C),  // primary orange
-    Color(0xFF199A85),  // teal
-    Color(0xFFE8724A),  // deep orange
-    Color(0xFF5B9CFF),  // info blue — identity signal only
-    Color(0xFF9B72CF),  // warm purple
-    Color(0xFFD4845A),  // terracotta
+    HuddlColors.primary,  // primary orange
+    HuddlColors.brandTeal,  // teal
+    HuddlColors.orangeDeep,  // deep orange
+    HuddlColors.infoBlueMid,  // info blue — identity signal only
+    HuddlColors.chatWarmPurple,  // warm purple — identity signal only
+    HuddlColors.orangeDeep,  // terracotta
   ];
   final index = name.codeUnits.fold(0, (a, b) => a + b) % palette.length;
   return palette[index];
@@ -1874,7 +1874,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.textDark),
@@ -3021,7 +3021,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.lock_outline, size: 32, color: HuddlColors.textDark),
@@ -3238,7 +3238,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
+                  color: HuddlColors.neutral50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.person_off_outlined, size: 32, color: HuddlColors.textDark),
@@ -3293,7 +3293,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? HuddlColors.darkBackground
-          : const Color(0xFFFBF9F7),   // warm white — barely perceptible warmth
+          : HuddlColors.warmWhite,   // warm white — barely perceptible warmth
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
@@ -3671,7 +3671,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFF7F7F7),
+                                          color: HuddlColors.neutral50,
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
@@ -4204,7 +4204,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7F7F7),
+                        color: HuddlColors.neutral50,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -4351,7 +4351,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * 0.3),
-        color: const Color(0xFFF7F7F7),
+        color: HuddlColors.neutral50,
       ),
       clipBehavior: Clip.antiAlias,
       child: url.startsWith('assets/')
@@ -4433,7 +4433,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? HuddlColors.darkInputBg
-                        : const Color(0xFFF5F2EE), // warm grey-beige — matches parchment bubble
+                        : HuddlColors.receivedBubbleLight, // warm grey-beige — matches parchment bubble
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(
@@ -7299,10 +7299,10 @@ class _GroupImageBubble extends StatelessWidget {
       width: 200,
       height: 160,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
+        color: isDark ? HuddlColors.darkInputBg : HuddlColors.neutral50,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD),
+          color: isDark ? HuddlColors.darkDivider : HuddlColors.neutral100,
         ),
       ),
       child: Column(
@@ -7310,14 +7310,14 @@ class _GroupImageBubble extends StatelessWidget {
         children: [
           Icon(
             Icons.image_not_supported_outlined,
-            color: isDark ? const Color(0xFF666666) : const Color(0xFFBDBDBD),
+            color: isDark ? HuddlColors.neutral600 : HuddlColors.neutral100,
             size: 32,
           ),
           const SizedBox(height: 6),
           Text(
             'Image unavailable',
             style: HuddlText.caption(
-              color: isDark ? const Color(0xFF555555) : const Color(0xFFBBBBBB),
+              color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.neutral100,
             ),
           ),
         ],
@@ -7890,9 +7890,9 @@ class _GroupAttachSheet extends StatelessWidget {
                   _gAttachIcon(context, Icons.camera_alt_rounded, 'Camera',
                       HuddlColors.primaryDark, HuddlColors.primary.withValues(alpha: 0.08), 'camera'),
                   _gAttachIcon(context, Icons.photo_library_rounded, 'Gallery',
-                      HuddlColors.nearBlack, HuddlColors.blueBackground, 'gallery'),
+                      HuddlColors.nearBlack, HuddlColors.peachSurface, 'gallery'),
                   _gAttachIcon(context, Icons.insert_drive_file_rounded, 'Document',
-                      HuddlColors.lightBlue, HuddlColors.blueBackground, 'document'),
+                      HuddlColors.orangeDeep, HuddlColors.peachSurface, 'document'),
                 ],
               ),
             ),
@@ -7907,7 +7907,7 @@ class _GroupAttachSheet extends StatelessWidget {
                   _gAttachIcon(context, Icons.person_rounded, 'Contact',
                       HuddlColors.primary, HuddlColors.primary.withValues(alpha: 0.08), 'contact'),
                   _gAttachIcon(context, Icons.poll_rounded, 'Poll',
-                      HuddlColors.paleBlue, HuddlColors.blueBackground, 'poll'),
+                      HuddlColors.orangePale, HuddlColors.peachSurface, 'poll'),
                 ],
               ),
             ),
