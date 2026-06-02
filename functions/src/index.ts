@@ -20,10 +20,28 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as https from "https";
 
-// Gemini API key — same key already used in the Flutter app (GeminiConfig._embeddedKey)
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyBk2hsDAYRFj1eLM8XZD5aQndLJBiXTZp4";
+// Gemini API key — sourced exclusively from Firebase Secret Manager / env config.
+// To set: firebase functions:secrets:set GEMINI_API_KEY
+// The literal fallback has been removed. Rotate any previously exposed key immediately.
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  // Log at startup so a misconfigured deploy is immediately visible in Cloud Logging.
+  // Functions that invoke the Gemini API will receive a 500 with a clear message
+  // rather than silently using a stale or missing key.
+  console.error("[huddl-functions] GEMINI_API_KEY environment variable is not set. " +
+    "Run: firebase functions:secrets:set GEMINI_API_KEY — then redeploy.");
+}
 const GEMINI_MODEL = "gemini-2.0-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+// GEMINI_URL is a function so it always picks up the runtime env value and
+// throws clearly if the key is absent, rather than silently building a bad URL.
+function getGeminiUrl(): string {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    throw new Error("GEMINI_API_KEY is not configured. " +
+      "Set it via Firebase Secret Manager: firebase functions:secrets:set GEMINI_API_KEY");
+  }
+  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+}
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -715,7 +733,7 @@ function callGemini(params: {
       ],
     });
 
-    const url = new URL(GEMINI_URL);
+    const url = new URL(getGeminiUrl());
     const options: https.RequestOptions = {
       hostname: url.hostname,
       path: url.pathname + url.search,

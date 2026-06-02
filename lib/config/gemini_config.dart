@@ -10,15 +10,17 @@ class GeminiConfig {
   GeminiConfig._();
 
   // ── AI Studio key (google.generativeai / Gemini 2.0 Flash) ─────────────
-  // Provided by Conrad. Works with the Generative Language API directly.
-  // Override at build time if needed:
+  // Key is sourced exclusively from the build-time --dart-define flag.
+  // No hardcoded fallback — the key must be supplied at build time:
   //   flutter run    --dart-define=GEMINI_API_KEY=AIza...
   //   flutter build web --dart-define=GEMINI_API_KEY=AIza...
-  static const String _embeddedKey = 'AIzaSyAbqDOrDBgR4o-HyCITHUSndq0TrxXJr5Y';
+  //
+  // SECURITY: Do NOT add a literal key here. Rotate the key via
+  // Google Cloud Console if it was previously exposed in source control.
 
   static const String apiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: _embeddedKey,
+    defaultValue: '',
   );
 
   static const String model = 'gemini-2.0-flash';

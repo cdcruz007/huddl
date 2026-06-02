@@ -5790,11 +5790,8 @@ class _BenefitNudge {
 }
 
 // Brand colour assignments for carousel nudges:
-//   Marketplace  → HuddlColors.primary       (#FF965C  warm orange)
-//   Meetups      → HuddlColors.accentAmber    (#F3C54F  warm yellow)
-//   Services     → HuddlColors.teal           (#199A85  teal)
-//   Groups       → HuddlColors.infoBlue       (#347FEF  info blue)
-//   Community    → HuddlColors.primaryLight   (#FFAD7F  medium orange)
+//   All nudges use the orange family only — primary / primaryLight / peachSurface
+//   No blue, teal, or yellow — brand consistency across the carousel.
 final List<_BenefitNudge> _kBenefitNudges = [
   _BenefitNudge(
     category: 'Marketplace',
@@ -5809,7 +5806,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "You're not alone on this parenting journey. Your neighbours get it — come find your people.",
     cta: 'Find groups',
     assetPath: 'assets/illustrations/community_wave.webp',
-    bgColor: HuddlColors.infoBlue,
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapGroups,
   ),
   _BenefitNudge(
@@ -5825,7 +5822,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Need a hand with something? There are trusted local people nearby who'd love to help.",
     cta: 'Browse services',
     assetPath: 'assets/illustrations/handshake.webp',
-    bgColor: HuddlColors.teal,
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapServices,
   ),
   _BenefitNudge(
@@ -5833,7 +5830,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Sometimes the best thing for a tough week is a friendly face and a cup of tea. There's a meetup near you.",
     cta: "See what's on",
     assetPath: 'assets/illustrations/waving_orange.webp',
-    bgColor: HuddlColors.accentAmber,
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapNearby,
   ),
   _BenefitNudge(
@@ -5857,7 +5854,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "From gardening to childcare — when you hire local, you strengthen the whole neighbourhood.",
     cta: 'Find local help',
     assetPath: 'assets/illustrations/handshake.webp',
-    bgColor: HuddlColors.teal,
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapServices,
   ),
   _BenefitNudge(
@@ -5865,7 +5862,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "There's a group of parents nearby going through exactly what you are. You'd fit right in.",
     cta: 'Explore groups',
     assetPath: 'assets/illustrations/chatting.webp',
-    bgColor: HuddlColors.infoBlue,
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapGroups,
   ),
   _BenefitNudge(
@@ -5873,7 +5870,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Getting out of the house — even for an hour — can change the whole week. There's an event near you.",
     cta: 'Browse events',
     assetPath: 'assets/illustrations/growth_yellow.webp',
-    bgColor: HuddlColors.accentAmber,
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapNearby,
   ),
   _BenefitNudge(
@@ -5897,7 +5894,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "Know someone brilliant at what they do? Help them find customers in the neighbourhood.",
     cta: 'See local services',
     assetPath: 'assets/illustrations/search_found.webp',
-    bgColor: HuddlColors.teal,
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapServices,
   ),
   _BenefitNudge(
@@ -5905,7 +5902,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "The school gate is a starting point. Huddl helps you build the friendships that go beyond it.",
     cta: 'Find meetups',
     assetPath: 'assets/illustrations/community_wave.webp',
-    bgColor: HuddlColors.accentAmber,
+    bgColor: HuddlColors.primary,
     onTap: _nudgeTapNearby,
   ),
   _BenefitNudge(
@@ -5913,7 +5910,7 @@ final List<_BenefitNudge> _kBenefitNudges = [
     nudge: "From SEN support to local sports — there's a group that gets your world. Come find yours.",
     cta: 'Browse groups',
     assetPath: 'assets/illustrations/chatting.webp',
-    bgColor: HuddlColors.infoBlue,
+    bgColor: HuddlColors.primaryLight,
     onTap: _nudgeTapGroups,
   ),
 ];

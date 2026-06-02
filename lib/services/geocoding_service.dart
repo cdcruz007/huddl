@@ -27,8 +27,13 @@ class GeocodingService {
   static final GeocodingService _instance = GeocodingService._internal();
   factory GeocodingService() => _instance;
 
-  // ── Google API key (same key used by PlacesAutocompleteField) ──
-  static const String _apiKey = 'AIzaSyBhAAN0eZUPOslcrjMPDDXiB6RHt11MGNE';
+  // ── Google Places / Geocoding API key ─────────────────────────
+  // Sourced from --dart-define=GOOGLE_PLACES_API_KEY=AIza... at build time.
+  // SECURITY: Rotate the key via Google Cloud Console if previously exposed.
+  static const String _apiKey = String.fromEnvironment(
+    'GOOGLE_PLACES_API_KEY',
+    defaultValue: '',
+  );
 
   // ── In-memory cache: address string → LatLng? ─────────────────
   // null value means "already tried, could not resolve" — don't retry.

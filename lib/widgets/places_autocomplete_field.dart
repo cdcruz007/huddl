@@ -41,8 +41,13 @@ class PlacesAutocompleteField extends StatefulWidget {
 }
 
 class _PlacesAutocompleteFieldState extends State<PlacesAutocompleteField> {
-  // ── Places API key (same key used by AiDirectoryService) ──────────────────
-  static const String _key = 'AIzaSyBhAAN0eZUPOslcrjMPDDXiB6RHt11MGNE';
+  // ── Places API key ─────────────────────────────────────────────────────────
+  // Sourced from --dart-define=GOOGLE_PLACES_API_KEY=AIza... at build time.
+  // SECURITY: Rotate via Google Cloud Console if previously exposed.
+  static const String _key = String.fromEnvironment(
+    'GOOGLE_PLACES_API_KEY',
+    defaultValue: '',
+  );
   static const String _baseUrl =
       'https://maps.googleapis.com/maps/api/place/autocomplete/json';
 

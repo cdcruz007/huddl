@@ -106,7 +106,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       heading: 'Morning Coffee & Chat\nthis Sunday at 10am',
       subheading:
           '14 parents are going. Drop in, no commitment required.',
-      accentColor: HuddlColors.infoBlue,
+      accentColor: HuddlColors.primary,
     ),
 
     // Slide 3 — market (unchanged, static asset)
@@ -118,7 +118,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       heading: 'The neighbourhood\nbuy and sell for parents',
       subheading:
           'Buggy for £40. Baby monitor for free. All from parents nearby.',
-      accentColor: HuddlColors.yellow,
+      accentColor: HuddlColors.primaryLight,
     ),
   ];
   }

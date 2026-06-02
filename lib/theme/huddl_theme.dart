@@ -11,7 +11,7 @@ class HuddlTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: HuddlColors.warmWhite,
+      scaffoldBackgroundColor: HuddlColors.white,
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
         secondary: HuddlColors.nearBlack,

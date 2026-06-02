@@ -45,7 +45,12 @@ class AiDirectoryService {
   static const String _aiCreatorUid = 'huddl_ai';
 
   // Google Places API (New)
-  static const String _placesKey      = 'AIzaSyBhAAN0eZUPOslcrjMPDDXiB6RHt11MGNE';
+  // Key sourced from --dart-define=GOOGLE_PLACES_API_KEY=AIza... at build time.
+  // SECURITY: Rotate via Google Cloud Console if previously exposed.
+  static const String _placesKey = String.fromEnvironment(
+    'GOOGLE_PLACES_API_KEY',
+    defaultValue: '',
+  );
   static const String _searchUrl      = 'https://places.googleapis.com/v1/places:searchText';
   static const String _photoBaseUrl   = 'https://places.googleapis.com/v1/';
   static const String _photoSuffix    = '/media?maxWidthPx=800&skipHttpRedirect=true&key=$_placesKey';
