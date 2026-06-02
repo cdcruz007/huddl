@@ -1668,9 +1668,13 @@ class _ListingCardState extends State<_ListingCard> {
                 else
                   Positioned(
                     top: 12, left: 12,
-                    child: _BadgePill(
-                      label: 'AI Found',
-                      color: HuddlColors.accentAmber.withValues(alpha: 0.92),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(HuddlIcons.ai, size: 12, color: Colors.white),
                     ),
                   ),
                 // Top-right: Verified / Community Pick
