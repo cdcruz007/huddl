@@ -689,7 +689,39 @@ class EventsScreenState extends State<EventsScreen>
               ],
             ),
           ),
-        // _selectedTab == 2 (Services) or 3 (Insights) → no FAB rendered at all
+        // _selectedTab == 3 (Insights) → share insight FAB
+        if (_selectedTab == 3)
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 64 + 12 + 16,
+            right: 20,
+            child: GestureDetector(
+              onTap: () {
+                HuddlAnimations.mediumTap();
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const ParentShareComposeSheet(),
+                );
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: HuddlColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
+              ),
+            ),
+          ),
           ],
         ),
       ),

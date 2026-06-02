@@ -127,16 +127,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  void _showShareSheet() {
-    HuddlAnimations.mediumTap();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _ParentShareComposeSheet(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return NotificationListener<_TagFilterNotification>(
@@ -151,15 +141,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
       },
       child: Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showShareSheet,
-        backgroundColor: HuddlColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        tooltip: 'Share an insight',
-        child: const Icon(Icons.add_rounded, size: 28),
-      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2101,15 +2082,15 @@ class _InsightFeedItem {
 // Submits directly to `community_wisdom` as published (parent-sourced, no AI).
 // =============================================================================
 
-class _ParentShareComposeSheet extends StatefulWidget {
-  const _ParentShareComposeSheet();
+class ParentShareComposeSheet extends StatefulWidget {
+  const ParentShareComposeSheet({super.key});
 
   @override
-  State<_ParentShareComposeSheet> createState() =>
+  State<ParentShareComposeSheet> createState() =>
       _ParentShareComposeSheetState();
 }
 
-class _ParentShareComposeSheetState extends State<_ParentShareComposeSheet> {
+class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
   final _urlCtrl   = TextEditingController();
   final _titleCtrl = TextEditingController();
   final _descCtrl  = TextEditingController();
