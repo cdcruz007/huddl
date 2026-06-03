@@ -110,12 +110,13 @@ class SubscriptionGateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark    = Theme.of(context).brightness == Brightness.dark;
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final topPad    = MediaQuery.of(context).padding.top;
     final illustrationAsset = _illustrationForFeature(featureIcon.codePoint);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? HuddlColors.darkBackground : Colors.white,
       body: Column(
         children: [
 
@@ -123,17 +124,20 @@ class SubscriptionGateScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(24, topPad + 16, 24, 28),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               // Layered warm gradient: lightest peach at top → slightly richer at base
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  HuddlColors.peachWarm, // warmest peach
-                  HuddlColors.peachSurface, // soft apricot
-                ],
-              ),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+              gradient: isDark
+                  ? null
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        HuddlColors.peachWarm, // warmest peach
+                        HuddlColors.peachSurface, // soft apricot
+                      ],
+                    ),
+              color: isDark ? HuddlColors.darkSurface : null,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

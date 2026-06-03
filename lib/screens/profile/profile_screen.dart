@@ -472,6 +472,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildSubscriptionCard() {
+    final isDark    = Theme.of(context).brightness == Brightness.dark;
     final sub = _subscriptionService.subscription;
     final isFree    = sub.isFree;
     final isPartner = sub.isPartner;
@@ -487,11 +488,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: isDark ? null : const LinearGradient(
               colors: [HuddlColors.peachWarm, HuddlColors.peachSurface],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            color: isDark ? HuddlColors.darkSurface : null,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: HuddlColors.primary.withValues(alpha: 0.25),
@@ -1471,16 +1473,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// SEND Navigator banner — brand-orange card visible on the main profile body.
   // ── Invite Friends prominent row (replaces quick actions grid) ─────────────
   Widget _buildInviteFriendsRow(HuddlContextColors hc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: _showInviteFriendSheet,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: isDark ? null : const LinearGradient(
             colors: [HuddlColors.peachWarm, HuddlColors.peachSurface],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
+          color: isDark ? HuddlColors.darkSurface : null,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: HuddlColors.primary.withValues(alpha: 0.22),
@@ -3469,7 +3473,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               errorBuilder: (_, __, ___) => Container(
                                 width: 48,
                                 height: 48,
-                                color: Colors.white,
+                                color: context.hc.surface,
                                 child: Icon(item.category.icon,
                                     size: 24,
                                     color: HuddlColors.primary
@@ -3480,7 +3484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.hc.surface,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(item.category.icon,
@@ -3504,7 +3508,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.hc.surface,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text('Sold',
@@ -4645,7 +4649,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachSurface,
+                      color: Theme.of(context).brightness == Brightness.dark
+                        ? HuddlColors.darkSurfaceVariant
+                        : HuddlColors.peachSurface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -4816,7 +4822,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: HuddlColors.peachSurface,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? HuddlColors.darkSurfaceVariant
+                        : HuddlColors.peachSurface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(

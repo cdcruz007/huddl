@@ -2148,7 +2148,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           padding:
                               const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.hc.surface,
                             borderRadius: BorderRadius.circular(28),
                             boxShadow: [
                               BoxShadow(
@@ -4662,7 +4662,7 @@ class _MeetupCardState extends State<_MeetupCard> {
         child: Container(
           margin: const EdgeInsets.only(bottom: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.hc.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -5058,7 +5058,7 @@ class _EventListCardState extends State<_EventListCard> {
         child: Container(
           margin: const EdgeInsets.only(bottom: 18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.hc.surface,
             borderRadius: const BorderRadius.all(cardRadius),
             boxShadow: [
               BoxShadow(

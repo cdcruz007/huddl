@@ -2314,7 +2314,7 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.hc.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: item.badge == 'Today!'
@@ -2378,7 +2378,7 @@ class _HomeScreenState extends State<HomeScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.hc.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: item.badge == 'Today!'

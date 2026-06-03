@@ -117,6 +117,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DraggableScrollableSheet(
       initialChildSize: 0.90,
       minChildSize: 0.5,
@@ -203,7 +204,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           child: Container(
             height: 200,
             decoration: BoxDecoration(
-              color: HuddlColors.peachSurface,
+              color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.peachSurface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: HuddlColors.aiBlue.withValues(alpha: 0.3),

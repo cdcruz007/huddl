@@ -268,6 +268,7 @@ class _SubscriptionCheckoutScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPartner = _plan.tier == SubscriptionTier.partner;
     final color = isPartner ? HuddlColors.nearBlack : HuddlColors.primary;
 
@@ -646,7 +647,7 @@ class _PaymentMethodsSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: HuddlColors.peachSurface,
+              color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.peachSurface,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(

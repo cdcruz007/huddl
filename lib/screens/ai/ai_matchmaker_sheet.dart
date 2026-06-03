@@ -53,6 +53,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
@@ -314,7 +315,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachSurface,
+                      color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.peachSurface,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(

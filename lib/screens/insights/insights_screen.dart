@@ -2172,9 +2172,9 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
         MediaQuery.of(context).padding.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.hc.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPad + 24),
       child: SingleChildScrollView(

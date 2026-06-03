@@ -366,7 +366,9 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: HuddlColors.peachSurface,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? HuddlColors.darkSurfaceVariant
+                    : HuddlColors.peachSurface,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
