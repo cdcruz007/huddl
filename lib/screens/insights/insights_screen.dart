@@ -1722,9 +1722,8 @@ class _CategoryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // teal=true (category badge on body): nearBlack bg for contrast.
-    // teal=false (category badge on photo overlay / card body): infoBlue accent.
-    final color = teal ? HuddlColors.nearBlack : HuddlColors.infoBlue;
+    // light=true: white text on semi-transparent dark bg — for photo overlays.
+    // default: dark pill (nearBlack 85%) with white text — matches badge standard.
     if (light) {
       // White text on semi-transparent dark bg — for use on photo overlays
       return Container(
@@ -1742,12 +1741,12 @@ class _CategoryBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        color: HuddlColors.nearBlack.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         _label,
-        style: HuddlText.label(),
+        style: HuddlText.label(color: Colors.white),
       ),
     );
   }

@@ -1670,11 +1670,15 @@ class _ListingCardState extends State<_ListingCard> {
                     child: _BadgePill(label: 'Parent Added', color: _kBadgeParent),
                   )
                 else
-                  const Positioned(
+                  Positioned(
                     top: 12, left: 12,
-                    child: Padding(
-                      padding: EdgeInsets.all(4),
-                      child: Icon(HuddlIcons.aiFill, size: 16, color: Colors.white),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.accentAmber.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(HuddlIcons.aiFill, size: 12, color: Colors.white),
                     ),
                   ),
                 // Top-right: Verified / Community Pick

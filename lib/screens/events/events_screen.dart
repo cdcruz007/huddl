@@ -4715,24 +4715,20 @@ class _MeetupCardState extends State<_MeetupCard> {
                     left: 12,
                     child: Row(
                       children: [
-                        // "New" badge — infoBluePale bg with infoBlue text.
-                        // "New" is a trust/discovery signal (informational), not a CTA.
+                        // "New" badge — nearBlack 85% bg, white text.
+                        // "New" is a recency/discovery signal.
                         if (isNew) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.darkBadgeBlue
-                                  : HuddlColors.infoBluePale,
-                              borderRadius: BorderRadius.circular(10),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.85),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               'New',
                               style: HuddlText.caption(
                               weight: FontWeight.w700,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.darkBadgeBlueText
-                                  : HuddlColors.infoBlue,
+                              color: Colors.white,
                             ),
                             ),
                           ),
@@ -4771,18 +4767,18 @@ class _MeetupCardState extends State<_MeetupCard> {
                         // Free badge — yellow celebration treatment (gift/value).
                         // Paid price stays white/nearBlack (neutral).
                         color: isFree
-                            ? (isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft)
+                            ? HuddlColors.primary
                             : (isDark
                                 ? Colors.white.withValues(alpha: 0.12)
                                 : Colors.white.withValues(alpha: 0.92)),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         priceText,
                         style: HuddlText.caption(
                           weight: FontWeight.w700,
                           color: isFree
-                          ? (isDark ? HuddlColors.darkBadgeAmberText : HuddlColors.yellowDark)
+                          ? Colors.white
                           : (isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack),
                         ),
                       ),
@@ -5117,29 +5113,29 @@ class _EventListCardState extends State<_EventListCard> {
                     left: 12,
                     child: Row(
                       children: [
-                        // AI Found — bare sparkle icon, no background
-                        const Padding(
-                          padding: EdgeInsets.all(4),
-                          child: Icon(HuddlIcons.aiFill, size: 16, color: Colors.white),
+                        // AI Found — amber container, spark icon only (no text)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.accentAmber.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(HuddlIcons.aiFill, size: 12, color: Colors.white),
                         ),
-                        // "New" badge — infoBluePale bg with infoBlue text (informational).
+                        // "New" badge — nearBlack 85% bg, white text (informational).
                         if (isNew) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.darkBadgeBlue
-                                  : HuddlColors.infoBluePale,
-                              borderRadius: BorderRadius.circular(10),
+                              color: HuddlColors.nearBlack.withValues(alpha: 0.85),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               'New',
                               style: HuddlText.caption(
                               weight: FontWeight.w700,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.darkBadgeBlueText
-                                  : HuddlColors.infoBlue,
+                              color: Colors.white,
                             ),
                             ),
                           ),
@@ -5171,18 +5167,18 @@ class _EventListCardState extends State<_EventListCard> {
                       decoration: BoxDecoration(
                         // Free badge — yellow celebration treatment (gift/value).
                         color: isFree
-                            ? (isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft)
+                            ? HuddlColors.primary
                             : (isDark
                                 ? Colors.white.withValues(alpha: 0.12)
                                 : Colors.white.withValues(alpha: 0.92)),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         priceLabel,
                         style: HuddlText.caption(
                           weight: FontWeight.w700,
                           color: isFree
-                          ? (isDark ? HuddlColors.darkBadgeAmberText : HuddlColors.yellowDark)
+                          ? Colors.white
                           : (isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack),
                         ),
                       ),

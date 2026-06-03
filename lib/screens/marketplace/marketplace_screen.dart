@@ -3608,9 +3608,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? (Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.darkBadgeAmber
-                                  : HuddlColors.yellowSoft)
+                              ? HuddlColors.primary
                               : Colors.black.withValues(alpha: 0.52),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -3618,9 +3616,7 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                           item.isFree ? 'Free' : item.condition.label,
                           style: HuddlText.caption(
                             color: item.isFree
-                              ? (Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.darkBadgeAmberText
-                                  : HuddlColors.yellowDark)
+                              ? Colors.white
                               : Colors.white,
                             weight: FontWeight.w600,
                           ),
@@ -3856,7 +3852,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           ),
                         ),
                       ),
-                      // Free badge — top-left: yellowSoft bg, yellowDark text (celebration).
+                      // Free badge — top-left: primary orange bg, white text.
                       if (item.isFree)
                         Positioned(
                           top: 12,
@@ -3864,14 +3860,14 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft,
-                              borderRadius: BorderRadius.circular(10),
+                              color: HuddlColors.primary,
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               'Free',
                               style: HuddlText.caption(
                                   weight: FontWeight.w700,
-                                  color: isDark ? HuddlColors.darkBadgeAmberText : HuddlColors.yellowDark),
+                                  color: Colors.white),
                             ),
                           ),
                         ),
@@ -4218,14 +4214,12 @@ class _MarketSearchRow extends StatelessWidget {
                   );
                 }),
                 const SizedBox(height: 6),
-                // Price pill — Free: yellowSoft/yellowDark. Paid: neutral grey.
+                // Price pill — Free: primary orange. Paid: neutral grey.
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: item.isFree
-                        ? (Theme.of(context).brightness == Brightness.dark
-                            ? HuddlColors.darkBadgeAmber
-                            : HuddlColors.yellowSoft)
+                        ? HuddlColors.primary
                         : HuddlColors.neutral50,
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -4233,9 +4227,7 @@ class _MarketSearchRow extends StatelessWidget {
                     priceStr,
                     style: HuddlText.caption(
                       color: item.isFree
-                          ? (Theme.of(context).brightness == Brightness.dark
-                              ? HuddlColors.darkBadgeAmberText
-                              : HuddlColors.yellowDark)
+                          ? Colors.white
                           : priceColor,
                       weight: FontWeight.w700,
                     ),
@@ -4467,12 +4459,12 @@ class _MarketListCardState extends State<_MarketListCard> {
                           ),
                         ),
                       ],
-                      // Price pill — Free: yellowSoft/yellowDark. Paid: neutral grey.
+                      // Price pill — Free: primary orange. Paid: neutral grey.
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? (isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft)
+                              ? HuddlColors.primary
                               : HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -4480,9 +4472,7 @@ class _MarketListCardState extends State<_MarketListCard> {
                           priceStr,
                           style: HuddlText.body(
                             color: item.isFree
-                          ? (Theme.of(context).brightness == Brightness.dark
-                              ? HuddlColors.darkBadgeAmberText
-                              : HuddlColors.yellowDark)
+                          ? Colors.white
                           : priceColor,
                             weight: FontWeight.w700,
                           ),
