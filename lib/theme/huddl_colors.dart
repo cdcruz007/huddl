@@ -161,6 +161,14 @@ class HuddlColors {
   static const Color darkTextTertiary    = Color(0xFF8A8A8A);
   static const Color darkInputBg         = Color(0xFF2A2A2A);
 
+  /// Dark-mode badge backgrounds — adapted from light-mode equivalents.
+  /// Never use yellowSoft, infoBluePale, or peachLight on dark surfaces.
+  static const Color darkBadgeAmber     = Color(0xFF3D2E00); // "Free" badge bg
+  static const Color darkBadgeAmberText = Color(0xFFF3C54F); // "Free" badge text
+  static const Color darkBadgeBlue      = Color(0xFF0D2340); // "New" / info badge bg
+  static const Color darkBadgeBlueText  = Color(0xFF90B8F8); // "New" / info badge text
+  static const Color darkBadgeSurface   = Color(0xFF2C2C2C); // neutral badge bg
+
   // ── Interactive / Disabled ────────────────────────────────────────────
   static const Color disabled      = Color(0xFFEEEEEE);  // = neutral100
   static const Color disabledText  = Color(0xFF9E9E9E);  // ≈ neutral300 (slightly lighter)

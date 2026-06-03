@@ -700,6 +700,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isHuddlCategory = _huddlCategoryLabels.contains(label);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Map 'Market' → 'Marketplace' and 'Services' → 'Local services' for the resolver
     final categoryStr = label == 'Market' ? 'Marketplace'
         : label == 'Services' ? 'Local services'
@@ -731,7 +732,7 @@ class _SectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
-              color: HuddlColors.infoBluePale,
+              color: isDark ? HuddlColors.darkBadgeBlue : HuddlColors.infoBluePale,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -945,7 +946,9 @@ class _MeetupResultRow extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: HuddlColors.infoBluePale,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? HuddlColors.darkBadgeBlue
+            : HuddlColors.infoBluePale,
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Icon(
@@ -980,7 +983,9 @@ class _EventResultRow extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: HuddlColors.infoBluePale,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? HuddlColors.darkBadgeBlue
+            : HuddlColors.infoBluePale,
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Icon(

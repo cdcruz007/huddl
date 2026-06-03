@@ -921,7 +921,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: HuddlColors.infoBluePale,
+          color: Theme.of(context).brightness == Brightness.dark ? HuddlColors.darkBadgeBlue : HuddlColors.infoBluePale,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

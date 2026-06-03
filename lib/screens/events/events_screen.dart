@@ -4618,6 +4618,7 @@ class _MeetupCardState extends State<_MeetupCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final catStyle = _meetupCategoryStyle(meetup.category);
     final isRestricted = !widget.canAccess;
 
@@ -4722,13 +4723,18 @@ class _MeetupCardState extends State<_MeetupCard> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                                  ? HuddlColors.darkBadgeBlue
                                   : HuddlColors.infoBluePale,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               'New',
-                              style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.infoBlue),
+                              style: HuddlText.caption(
+                              weight: FontWeight.w700,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.darkBadgeBlueText
+                                  : HuddlColors.infoBlue,
+                            ),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -4766,15 +4772,19 @@ class _MeetupCardState extends State<_MeetupCard> {
                         // Free badge — yellow celebration treatment (gift/value).
                         // Paid price stays white/nearBlack (neutral).
                         color: isFree
-                            ? HuddlColors.yellowSoft
-                            : Colors.white.withValues(alpha: 0.92),
+                            ? (isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.12)
+                                : Colors.white.withValues(alpha: 0.92)),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         priceText,
                         style: HuddlText.caption(
                           weight: FontWeight.w700,
-                          color: isFree ? HuddlColors.yellowDark : HuddlColors.nearBlack,
+                          color: isFree
+                          ? (isDark ? HuddlColors.darkBadgeAmberText : HuddlColors.yellowDark)
+                          : (isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack),
                         ),
                       ),
                     ),
@@ -4905,7 +4915,9 @@ class _MeetupCardState extends State<_MeetupCard> {
                             label: isRestricted ? 'Restricted' : _isFull ? 'Full' : 'Join',
                             joinedLabel: 'Joined',
                             joinedColor: HuddlColors.teal,
-                            unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                            unJoinedColor: Theme.of(context).brightness == Brightness.dark
+                                        ? HuddlColors.primary.withValues(alpha: 0.22)
+                                        : HuddlColors.primary.withValues(alpha: 0.10),
                             unJoinedTextColor: HuddlColors.primary,
                           ),
                         ),
@@ -5010,6 +5022,7 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // eventTypeBlue: informational colour for Online badge + card fallback icon.
     // Changed from primary orange to infoBlue \u2014 "Online" is a data attribute, not a CTA.
     const Color eventTypeBlue = HuddlColors.infoBlue;
@@ -5115,13 +5128,18 @@ class _EventListCardState extends State<_EventListCard> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: Theme.of(context).brightness == Brightness.dark
-                                  ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                                  ? HuddlColors.darkBadgeBlue
                                   : HuddlColors.infoBluePale,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               'New',
-                              style: HuddlText.caption(weight: FontWeight.w700, color: HuddlColors.infoBlue),
+                              style: HuddlText.caption(
+                              weight: FontWeight.w700,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.darkBadgeBlueText
+                                  : HuddlColors.infoBlue,
+                            ),
                             ),
                           ),
                         ],
@@ -5152,15 +5170,19 @@ class _EventListCardState extends State<_EventListCard> {
                       decoration: BoxDecoration(
                         // Free badge — yellow celebration treatment (gift/value).
                         color: isFree
-                            ? HuddlColors.yellowSoft
-                            : Colors.white.withValues(alpha: 0.92),
+                            ? (isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.12)
+                                : Colors.white.withValues(alpha: 0.92)),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         priceLabel,
                         style: HuddlText.caption(
                           weight: FontWeight.w700,
-                          color: isFree ? HuddlColors.yellowDark : HuddlColors.nearBlack,
+                          color: isFree
+                          ? (isDark ? HuddlColors.darkBadgeAmberText : HuddlColors.yellowDark)
+                          : (isDark ? HuddlColors.darkTextPrimary : HuddlColors.nearBlack),
                         ),
                       ),
                     ),
@@ -5278,7 +5300,9 @@ class _EventListCardState extends State<_EventListCard> {
                       label: 'Count me in',
                       joinedLabel: 'Going ✓',
                       joinedColor: HuddlColors.teal,
-                      unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                      unJoinedColor: Theme.of(context).brightness == Brightness.dark
+                                        ? HuddlColors.primary.withValues(alpha: 0.22)
+                                        : HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
                     ),
                   ],
@@ -5961,7 +5985,7 @@ class _TabLabel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
             color: Theme.of(context).brightness == Brightness.dark
-                ? HuddlColors.infoBlue.withValues(alpha: 0.15)
+                ? HuddlColors.darkBadgeBlue
                 : HuddlColors.infoBluePale,
             borderRadius: BorderRadius.circular(8),
           ),

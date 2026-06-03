@@ -494,7 +494,9 @@ class _SortSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: selected
-                      ? HuddlColors.primary.withValues(alpha: 0.08)
+                      ? (isDark
+                          ? HuddlColors.primary.withValues(alpha: 0.20)
+                          : HuddlColors.primary.withValues(alpha: 0.08))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
@@ -849,7 +851,9 @@ class _WisdomCard extends StatelessWidget {
                       // Contributor avatar fallback — infoBluePale bg (trust/verified).
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: HuddlColors.infoBluePale,
+                        backgroundColor: isDark
+                            ? HuddlColors.darkBadgeBlue
+                            : HuddlColors.infoBluePale,
                         child: Text(
                           article.contributorFirstName.isNotEmpty
                               ? article.contributorFirstName[0].toUpperCase()
@@ -887,12 +891,19 @@ class _WisdomCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: HuddlColors.nearBlack.withValues(alpha: 0.10),
+                          color: isDark
+                              ? HuddlColors.darkSurfaceVariant
+                              : HuddlColors.nearBlack.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           'Read →',
-                          style: HuddlText.caption(weight: FontWeight.w600),
+                          style: HuddlText.caption(
+                            weight: FontWeight.w600,
+                            color: isDark
+                                ? HuddlColors.darkTextPrimary
+                                : HuddlColors.nearBlack,
+                          ),
                         ),
                       ),
                     ],
@@ -1082,14 +1093,19 @@ class _ExpertCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: HuddlColors.infoBluePale,
+                          color: isDark
+                              ? HuddlColors.darkBadgeBlue
+                              : HuddlColors.infoBluePale,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           'Read →',
                           style: HuddlText.caption(
-                              weight: FontWeight.w600,
-                              color: HuddlColors.infoBlue),
+                            weight: FontWeight.w600,
+                            color: isDark
+                                ? HuddlColors.darkBadgeBlueText
+                                : HuddlColors.infoBlue,
+                          ),
                         ),
                       ),
                     ],

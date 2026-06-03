@@ -3608,14 +3608,20 @@ class _MarketGridBuyCardState extends State<_MarketGridBuyCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.yellowSoft
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.darkBadgeAmber
+                                  : HuddlColors.yellowSoft)
                               : Colors.black.withValues(alpha: 0.52),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           item.isFree ? 'Free' : item.condition.label,
                           style: HuddlText.caption(
-                            color: item.isFree ? HuddlColors.yellowDark : Colors.white,
+                            color: item.isFree
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? HuddlColors.darkBadgeAmberText
+                                  : HuddlColors.yellowDark)
+                              : Colors.white,
                             weight: FontWeight.w600,
                           ),
                         ),
@@ -3801,6 +3807,7 @@ class _MarketItemCardState extends State<_MarketItemCard> {
   Widget build(BuildContext context) {
     final item = widget.item;
     final hc = context.hc;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Semantics(
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, '
@@ -3857,14 +3864,14 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.yellowSoft,
+                              color: isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               'Free',
                               style: HuddlText.caption(
                                   weight: FontWeight.w700,
-                                  color: HuddlColors.yellowDark),
+                                  color: isDark ? HuddlColors.darkBadgeAmberText : HuddlColors.yellowDark),
                             ),
                           ),
                         ),
@@ -4216,14 +4223,20 @@ class _MarketSearchRow extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: item.isFree
-                        ? HuddlColors.yellowSoft
+                        ? (Theme.of(context).brightness == Brightness.dark
+                            ? HuddlColors.darkBadgeAmber
+                            : HuddlColors.yellowSoft)
                         : HuddlColors.neutral50,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     priceStr,
                     style: HuddlText.caption(
-                      color: item.isFree ? HuddlColors.yellowDark : priceColor,
+                      color: item.isFree
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? HuddlColors.darkBadgeAmberText
+                              : HuddlColors.yellowDark)
+                          : priceColor,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -4271,6 +4284,7 @@ class _MarketListCardState extends State<_MarketListCard> {
   Widget build(BuildContext context) {
     final item = widget.item;
     final hc = context.hc;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasImage = item.imageUrls.isNotEmpty;
     final priceStr = item.isFree
         ? 'Free'
@@ -4458,14 +4472,18 @@ class _MarketListCardState extends State<_MarketListCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: item.isFree
-                              ? HuddlColors.yellowSoft
+                              ? (isDark ? HuddlColors.darkBadgeAmber : HuddlColors.yellowSoft)
                               : HuddlColors.neutral50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           priceStr,
                           style: HuddlText.body(
-                            color: item.isFree ? HuddlColors.yellowDark : priceColor,
+                            color: item.isFree
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? HuddlColors.darkBadgeAmberText
+                              : HuddlColors.yellowDark)
+                          : priceColor,
                             weight: FontWeight.w700,
                           ),
                         ),

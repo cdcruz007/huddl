@@ -1228,6 +1228,7 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
         ? listing.borough
         : (listing.tagline.isNotEmpty ? listing.tagline : listing.borough);
     final countText = _count > 0 ? '$_count endorsements' : '0 endorsements';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -1344,7 +1345,9 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                       label: 'Endorse',
                       joinedLabel: 'Endorsed',
                       joinedColor: HuddlColors.teal,
-                      unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                      unJoinedColor: isDark
+                          ? HuddlColors.primary.withValues(alpha: 0.22)
+                          : HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
                     ),
                   ),
@@ -1557,6 +1560,7 @@ class _ListingCardState extends State<_ListingCard> {
   Widget build(BuildContext context) {
     final listing = widget.listing;
     final catColor = _categoryColor(listing.category);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Hero image: Google Places photo first, then Unsplash category fallback
     final imageUrl = (listing.imageUrl?.isNotEmpty == true)
@@ -1765,7 +1769,9 @@ class _ListingCardState extends State<_ListingCard> {
                       label: 'Endorse',
                       joinedLabel: 'Endorsed',
                       joinedColor: HuddlColors.neutral900,
-                      unJoinedColor: HuddlColors.primary.withValues(alpha: 0.10),
+                      unJoinedColor: isDark
+                          ? HuddlColors.primary.withValues(alpha: 0.22)
+                          : HuddlColors.primary.withValues(alpha: 0.10),
                       unJoinedTextColor: HuddlColors.primary,
                     ),
                 ],

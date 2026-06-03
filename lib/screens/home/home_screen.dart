@@ -2533,9 +2533,15 @@ class _HomeScreenState extends State<HomeScreen>
     // Design rule: GROUP/MEETUP/EVENT badges are informational category labels
     // → infoBluePale bg with infoBlue text. FOR SALE stays dark (commerce action).
     final (pillLabel, pillBg, pillText) = switch (item.type) {
-      _DiscoverType.group   => ('GROUP',    HuddlColors.infoBluePale, HuddlColors.infoBlue),
-      _DiscoverType.meetup  => ('MEETUP',   HuddlColors.infoBluePale, HuddlColors.infoBlue),
-      _DiscoverType.event   => ('EVENT',    HuddlColors.infoBluePale, HuddlColors.infoBlue),
+      _DiscoverType.group   => ('GROUP',
+                              isDark ? HuddlColors.darkBadgeBlue : HuddlColors.infoBluePale,
+                              isDark ? HuddlColors.darkBadgeBlueText : HuddlColors.infoBlue),
+      _DiscoverType.meetup  => ('MEETUP',
+                              isDark ? HuddlColors.darkBadgeBlue : HuddlColors.infoBluePale,
+                              isDark ? HuddlColors.darkBadgeBlueText : HuddlColors.infoBlue),
+      _DiscoverType.event   => ('EVENT',
+                              isDark ? HuddlColors.darkBadgeBlue : HuddlColors.infoBluePale,
+                              isDark ? HuddlColors.darkBadgeBlueText : HuddlColors.infoBlue),
       _DiscoverType.sale    => ('FOR SALE', HuddlColors.nearBlack,    Colors.white),
     };
 
@@ -3231,7 +3237,9 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: item.isFree
-                                  ? HuddlColors.nearBlack.withValues(alpha: 0.10)
+                                  ? (Theme.of(context).brightness == Brightness.dark
+                                      ? HuddlColors.darkBadgeSurface
+                                      : HuddlColors.nearBlack.withValues(alpha: 0.10))
                                   : HuddlColors.neutral50,
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -3777,7 +3785,9 @@ class _HomeScreenState extends State<HomeScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.08),
+          color: isDark
+              ? HuddlColors.primary.withValues(alpha: 0.18)
+              : HuddlColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: HuddlColors.primary.withValues(alpha: 0.20),
@@ -5131,7 +5141,9 @@ class _HomeScreenState extends State<HomeScreen>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: isActive
-                ? HuddlColors.primary.withValues(alpha: 0.08)
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? HuddlColors.primary.withValues(alpha: 0.20)
+                    : HuddlColors.primary.withValues(alpha: 0.08))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
@@ -5426,7 +5438,9 @@ class _HomeScreenState extends State<HomeScreen>
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? HuddlColors.primary.withValues(alpha: 0.20)
+            : HuddlColors.primary.withValues(alpha: 0.08),
         border: Border.all(
           color: HuddlColors.primary.withValues(alpha: 0.25),
           width: 1.5,
