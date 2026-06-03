@@ -4549,10 +4549,6 @@ class _MeetupCardState extends State<_MeetupCard> {
   Meetup get meetup => widget.meetup;
   final _meetupService = MeetupService();
 
-  // ── Design tokens (Figma-exact) ────────────────────────────────
-  static const _cardText = HuddlColors.textDark;     // primary dark text — Figma #42464C
-  static const _cardMeta = HuddlColors.textTertiary; // secondary gray meta — Figma #949494
-
   bool get _isFull =>
       meetup.maxAttendees != null &&
       meetup.attendeeCount >= meetup.maxAttendees!;
@@ -4619,6 +4615,9 @@ class _MeetupCardState extends State<_MeetupCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Card text colours — adaptive for dark mode
+    final Color _cardText = context.hc.textPrimary;
+    final Color _cardMeta = context.hc.textSecondary;
     final catStyle = _meetupCategoryStyle(meetup.category);
     final isRestricted = !widget.canAccess;
 
@@ -5023,6 +5022,8 @@ class _EventListCardState extends State<_EventListCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Card meta colour — adaptive for dark mode (date row, location row)
+    final Color _cardMeta = context.hc.textSecondary;
     // eventTypeBlue: informational colour for Online badge + card fallback icon.
     // Changed from primary orange to infoBlue \u2014 "Online" is a data attribute, not a CTA.
     const Color eventTypeBlue = HuddlColors.infoBlue;
@@ -5200,11 +5201,11 @@ class _EventListCardState extends State<_EventListCard> {
                     Row(
                       children: [
                         Icon(HuddlIcons.calendar,
-                            size: 13, color: HuddlColors.textTertiary),
+                            size: 13, color: _cardMeta),
                         const SizedBox(width: 5),
                         Text(
                           '${event['date'] as String}  ·  ${event['time'] as String}',
-                          style: HuddlText.caption(),
+                          style: HuddlText.caption(color: _cardMeta),
                         ),
                       ],
                     ),

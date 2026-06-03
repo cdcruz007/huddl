@@ -57,13 +57,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Dark status bar icons — white background needs dark chrome
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor:          Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness:     Brightness.light,
-    ));
-
     // ── Settle controller — 600ms total entrance ──────────────────────────
     _settleCtrl = AnimationController(
       vsync: this,
@@ -162,10 +155,27 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // White background — lets the two-tone lockup read in full brand colour:
-    // orange H mark (#FF975C) + nearBlack "huddl" text (#1C1C1E).
-    // Clean, uncluttered; logo stands alone.
-    const bg = Colors.white;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Light mode: white canvas, nearBlack wordmark — original brand treatment.
+    // Dark mode: dark background, white wordmark — avoids blinding flash.
+    final Color bg = isDark ? HuddlColors.darkBackground : Colors.white;
+    final Color wordmarkColor = isDark ? Colors.white : HuddlColors.nearBlack;
+    final Color taglineColor = isDark
+        ? Colors.white.withValues(alpha: 0.45)
+        : HuddlColors.nearBlack.withValues(alpha: 0.45);
+
+    // Status bar icons: dark on white, light on dark background
+    SystemChrome.setSystemUIOverlayStyle(isDark
+        ? const SystemUiOverlayStyle(
+            statusBarColor:          Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness:     Brightness.dark,
+          )
+        : const SystemUiOverlayStyle(
+            statusBarColor:          Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness:     Brightness.light,
+          ));
 
     return Scaffold(
       backgroundColor: bg,
@@ -200,10 +210,12 @@ class _SplashScreenState extends State<SplashScreen>
                                     const SizedBox(width: 34, height: 48),
                               ),
                               const SizedBox(width: 12),
-                              // "huddl" wordmark — renders native #1C1C1E nearBlack
+                              // "huddl" wordmark — colour-filtered for dark mode
                               SvgPicture.asset(
                                 'assets/icons/huddl_wordmark.svg',
                                 height: 34,
+                                colorFilter: ColorFilter.mode(
+                                    wordmarkColor, BlendMode.srcIn),
                                 placeholderBuilder: (_) =>
                                     const SizedBox(width: 149, height: 34),
                               ),
@@ -226,7 +238,7 @@ class _SplashScreenState extends State<SplashScreen>
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: HuddlColors.nearBlack.withValues(alpha: 0.45),
+                          color: taglineColor,
                           fontWeight: FontWeight.w400,
                           letterSpacing: 0.2,
                         ),

@@ -151,7 +151,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         return true;
       },
       child: Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.hc.scaffold,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -2189,7 +2189,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: Container(
                 width: double.infinity,
                 height: 180,
-                color: HuddlColors.peachWarm,
+                color: isDark ? HuddlColors.darkSurfaceVariant : HuddlColors.peachWarm,
                 child: const Center(
                   child: WarmCircleIllustration(
                     assetPath: 'assets/illustrations/calendar.webp',

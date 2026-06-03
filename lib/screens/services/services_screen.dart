@@ -547,7 +547,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     final bool hasActiveFilter = _selectedCategory != null;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: hc.scaffold,
       body: Stack(
         children: [
         Column(
