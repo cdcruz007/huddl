@@ -163,6 +163,7 @@ class EventsScreenState extends State<EventsScreen>
     _nearbySearchTrigger.dispose();
     _serviceSearchTrigger.dispose();
     _serviceResetTrigger.dispose();
+    _insightsSearchTrigger.dispose();
     super.dispose();
   }
 
@@ -4819,7 +4820,7 @@ class _MeetupCardState extends State<_MeetupCard> {
                     // Location row
                     Row(
                       children: [
-                        const Icon(HuddlIcons.locationPin,
+                        Icon(HuddlIcons.locationPin,
                             size: 14, color: _cardMeta),
                         const SizedBox(width: 4),
                         Expanded(

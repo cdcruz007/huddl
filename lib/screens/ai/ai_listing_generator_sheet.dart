@@ -196,6 +196,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
   }
 
   Widget _buildUploadSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // Photo upload area

@@ -229,6 +229,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
   }
 
   Widget _buildSuggestionCard(SuggestedMeetup suggestion) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pct = (suggestion.confidenceScore * 100).round();
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
