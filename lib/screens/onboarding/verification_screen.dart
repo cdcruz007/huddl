@@ -404,7 +404,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final isWorking = _isVerifying;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [

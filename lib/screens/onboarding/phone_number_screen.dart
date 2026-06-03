@@ -149,7 +149,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     final digits = _normalise(_ctrl.text);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [

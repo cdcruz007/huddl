@@ -78,7 +78,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       // Scaffold automatically resizes when keyboard appears
       body: SafeArea(
         child: Column(

@@ -122,7 +122,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     final strength = _PasswordPolicy.strength(pw);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [

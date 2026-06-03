@@ -82,7 +82,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,

@@ -254,7 +254,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       // Dismiss keyboard when tapping outside input areas
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.white,
         // Allow the scaffold to resize when the keyboard appears
         resizeToAvoidBottomInset: true,
         body: SafeArea(

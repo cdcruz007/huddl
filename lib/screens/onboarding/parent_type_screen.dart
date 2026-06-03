@@ -60,7 +60,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,
