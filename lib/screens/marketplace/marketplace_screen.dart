@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:lottie/lottie.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -529,6 +530,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
 
+  // ── Lottie header animation controller ──────────────────────────────────
+  late AnimationController _lottieCtrl;
+
   // UI state
   bool _isLoadingItems = false;
   bool _isSearchActive = false;
@@ -539,6 +543,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+    _lottieCtrl = AnimationController(vsync: this);
     // Defer service listener registration to avoid setState-during-build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -659,6 +664,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   @override
   void dispose() {
+    _lottieCtrl.dispose();
     _tabController.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
@@ -1351,160 +1357,205 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   // == HEADER ================================================================
-  // Clean header: title + subtle sparkle entry point (progressive disclosure)
-  // No gradient AI button, no prominent branding
+  // Clean header: Lottie storefront animation band + right-side actions + TabBar
+  // The 104px band has a peach (0xFFFFE7DB) background matching the Lottie canvas
+  // so no visible box edge. Actions (grid toggle + search) float over the top-right.
 
   Widget _buildHeader(HuddlContextColors hc) {
     return Container(
       color: hc.surface,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row — Market + borough scope chip (matches Groups/Discover) + search icon
+          // ── Lottie band OR search bar (mutually exclusive) ──────────────
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 200),
             crossFadeState: _isSearchActive
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            firstChild: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Semantics(
-                  header: true,
-                  child: Text('Market', style: HuddlText.display()),
-                ),
-                const SizedBox(width: 8),
-                // Borough scope chip
-                const BoroughScopeChip(feature: HuddlFeature.marketplace),
-                const Spacer(),
-                // Grid/list toggle — immediately left of search icon
-                ScaleOnPress(
-                  scale: 0.88,
-                  onTap: () {
-                    HuddlAnimations.lightTap();
-                    setState(() => _isGridView = !_isGridView);
-                  },
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      _isGridView ? HuddlIcons.viewList : HuddlIcons.gridView,
-                      key: ValueKey(_isGridView),
-                      size: 22,
-                      color: hc.textSecondary,
-                    ),
+            // First child: 104px peach Lottie band with overlaid actions
+            firstChild: SizedBox(
+              height: 104,
+              child: Stack(
+                children: [
+                  // ── Peach background (matches Lottie canvas colour) ─────
+                  Positioned.fill(
+                    child: ColoredBox(color: const Color(0xFFFFE7DB)),
                   ),
-                ),
-                const SizedBox(width: 4),
-                // Search icon — top-right.
-                // Tap → inline market search. Long-press → unified search.
-                Semantics(
-                  label: 'Search market items',
-                  button: true,
-                  child: Tooltip(
-                    message: 'Search · Hold for universal search',
-                    child: GestureDetector(
-                      onTap: () {
-                        HuddlAnimations.lightTap();
-                        setState(() => _isSearchActive = true);
-                        Future.microtask(() => _searchFocus.requestFocus());
-                      },
-                      onLongPress: () {
-                        HuddlAnimations.mediumTap();
-                        Navigator.of(context).push(HuddlSpringPageRoute(
-                          page: const UnifiedSearchScreen(),
-                        ));
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          HuddlIcons.search,
-                          color: hc.textSecondary,
-                          size: 22,
+                  // ── Lottie — left-anchored, fitHeight, clipped ──────────
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Lottie.asset(
+                          'assets/huddl_market_wide.json',
+                          controller: _lottieCtrl,
+                          fit: BoxFit.fitHeight,
+                          onLoaded: (comp) {
+                            _lottieCtrl.duration = comp.duration;
+                            _lottieCtrl.forward(from: 0);
+                          },
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            // Expanded search bar — replaces title row when active
-            secondChild: SizedBox(
-              height: 36,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: hc.inputBg,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          Icon(HuddlIcons.search, size: 16,
-                              color: hc.textTertiary.withValues(alpha: 0.7)),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              focusNode: _searchFocus,
-                              autofocus: false,
-                              onChanged: (val) {
-                                _ai.recordSearch(val);
-                                setState(() => _searchQuery = val);
-                              },
-                              onSubmitted: (_) => _searchFocus.unfocus(),
-                              style: HuddlText.caption(color: hc.textPrimary),
-                              decoration: InputDecoration(
-                                hintText: _ai.smartPlaceholder(),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                                isDense: true,
-                                hintStyle: HuddlText.caption(color: hc.textTertiary),
+                  // ── Borough chip — bottom-left over the animation ───────
+                  Positioned(
+                    bottom: 10,
+                    left: 12,
+                    child: const BoroughScopeChip(feature: HuddlFeature.marketplace),
+                  ),
+                  // ── Actions — top-right: grid toggle + search ───────────
+                  Positioned(
+                    top: 6,
+                    right: 8,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Grid/list toggle
+                        ScaleOnPress(
+                          scale: 0.88,
+                          onTap: () {
+                            HuddlAnimations.lightTap();
+                            setState(() => _isGridView = !_isGridView);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(
+                                _isGridView ? HuddlIcons.viewList : HuddlIcons.gridView,
+                                key: ValueKey(_isGridView),
+                                size: 18,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                          if (_searchQuery.isNotEmpty)
-                            GestureDetector(
+                        ),
+                        const SizedBox(width: 6),
+                        // Search icon
+                        Semantics(
+                          label: 'Search market items',
+                          button: true,
+                          child: Tooltip(
+                            message: 'Search · Hold for universal search',
+                            child: GestureDetector(
                               onTap: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
+                                HuddlAnimations.lightTap();
+                                setState(() => _isSearchActive = true);
+                                Future.microtask(() => _searchFocus.requestFocus());
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Icon(HuddlIcons.close, size: 15,
-                                    color: hc.textTertiary),
+                              onLongPress: () {
+                                HuddlAnimations.mediumTap();
+                                Navigator.of(context).push(HuddlSpringPageRoute(
+                                  page: const UnifiedSearchScreen(),
+                                ));
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(
+                                  HuddlIcons.search,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      setState(() {
-                        _searchQuery = '';
-                        _isSearchActive = false;
-                      });
-                      _searchFocus.unfocus();
-                    },
-                    child: Text(
-                      'Cancel',
-                      style: HuddlText.body(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+            // Second child: inline search bar — shown when _isSearchActive
+            secondChild: Container(
+              color: hc.surface,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: SizedBox(
+                height: 36,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: hc.inputBg,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            Icon(HuddlIcons.search, size: 16,
+                                color: hc.textTertiary.withValues(alpha: 0.7)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _searchFocus,
+                                autofocus: false,
+                                onChanged: (val) {
+                                  _ai.recordSearch(val);
+                                  setState(() => _searchQuery = val);
+                                },
+                                onSubmitted: (_) => _searchFocus.unfocus(),
+                                style: HuddlText.caption(color: hc.textPrimary),
+                                decoration: InputDecoration(
+                                  hintText: _ai.smartPlaceholder(),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                  isDense: true,
+                                  hintStyle: HuddlText.caption(color: hc.textTertiary),
+                                ),
+                              ),
+                            ),
+                            if (_searchQuery.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Icon(HuddlIcons.close, size: 15,
+                                      color: hc.textTertiary),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                          _isSearchActive = false;
+                        });
+                        _searchFocus.unfocus();
+                      },
+                      child: Text(
+                        'Cancel',
+                        style: HuddlText.body(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 10),
-          // ── Standard orange-underline tab bar — matches all other screens ─
+          // ── Standard orange-underline tab bar ───────────────────────────
           TabBar(
             controller: _tabController,
             tabs: const [
@@ -2134,6 +2185,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       color: HuddlColors.textTertiary,
       onRefresh: () async {
         HuddlAnimations.mediumTap();
+        _lottieCtrl.forward(from: 0); // replay storefront animation on refresh
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) setState(() {});
       },

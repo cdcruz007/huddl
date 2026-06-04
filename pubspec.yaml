@@ -112,3 +112,6 @@ flutter:
 
     # ── Illustrations (PNG — kept for any non-migrated assets) ───────
     - assets/illustrations/
+
+    # ── Lottie animations ─────────────────────────────────────────────
+    - assets/huddl_market_wide.json
