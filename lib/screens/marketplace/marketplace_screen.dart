@@ -1373,45 +1373,33 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             crossFadeState: _isSearchActive
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            // First child: 104px peach Lottie band with overlaid actions
-            firstChild: SizedBox(
-              height: 104,
-              child: Stack(
+            // First child: logo row (Lottie 40px + actions) + borough chip row
+            firstChild: Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Peach background (matches Lottie canvas colour) ─────
-                  Positioned.fill(
-                    child: ColoredBox(color: const Color(0xFFFFE7DB)),
-                  ),
-                  // ── Lottie — left-anchored, fitHeight, clipped ──────────
-                  Positioned.fill(
-                    child: ClipRect(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Lottie.asset(
-                          'assets/huddl_market_wide.json',
-                          controller: _lottieCtrl,
-                          fit: BoxFit.fitHeight,
-                          onLoaded: (comp) {
-                            _lottieCtrl.duration = comp.duration;
-                            _lottieCtrl.forward(from: 0);
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  // ── Borough chip — bottom-left over the animation ───────
-                  Positioned(
-                    bottom: 10,
-                    left: 12,
-                    child: const BoroughScopeChip(feature: HuddlFeature.marketplace),
-                  ),
-                  // ── Actions — top-right: grid toggle + search ───────────
-                  Positioned(
-                    top: 6,
-                    right: 8,
+                  // ── Row 1: Lottie logo (left) + action icons (right) ────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // Lottie inline logo — 40px tall, transparent bg
+                        SizedBox(
+                          height: 40,
+                          child: Lottie.asset(
+                            'assets/huddl_logo_transparent.json',
+                            controller: _lottieCtrl,
+                            fit: BoxFit.fitHeight,
+                            onLoaded: (comp) {
+                              _lottieCtrl.duration = comp.duration;
+                              _lottieCtrl.forward(from: 0);
+                            },
+                          ),
+                        ),
+                        const Spacer(),
                         // Grid/list toggle
                         ScaleOnPress(
                           scale: 0.88,
@@ -1422,7 +1410,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.18),
+                              color: hc.surfaceAlt,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: AnimatedSwitcher(
@@ -1431,7 +1419,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                 _isGridView ? HuddlIcons.viewList : HuddlIcons.gridView,
                                 key: ValueKey(_isGridView),
                                 size: 18,
-                                color: Colors.white,
+                                color: hc.textPrimary,
                               ),
                             ),
                           ),
@@ -1458,12 +1446,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.18),
+                                  color: hc.surfaceAlt,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   HuddlIcons.search,
-                                  color: Colors.white,
+                                  color: hc.textPrimary,
                                   size: 18,
                                 ),
                               ),
@@ -1472,6 +1460,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  // ── Row 2: Borough chip on its own line ─────────────────
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: BoroughScopeChip(feature: HuddlFeature.marketplace),
                   ),
                 ],
               ),
