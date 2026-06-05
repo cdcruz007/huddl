@@ -1357,9 +1357,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   // == HEADER ================================================================
-  // Clean header: Lottie storefront animation band + right-side actions + TabBar
-  // The 104px band has a peach (0xFFFFE7DB) background matching the Lottie canvas
-  // so no visible box edge. Actions (grid toggle + search) float over the top-right.
+  // Market header: huddl_pass Lottie logo (44px, transparent) + action icons on
+  // same row; BoroughScopeChip on its own row below. No coloured background.
+  // _lottieCtrl plays once on load; replays on pull-to-refresh.
 
   Widget _buildHeader(HuddlContextColors hc) {
     return Container(
@@ -1386,11 +1386,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Lottie inline logo — 40px tall, transparent bg
+                        // Lottie inline logo — 44px tall, transparent bg
                         SizedBox(
-                          height: 40,
+                          height: 44,
                           child: Lottie.asset(
-                            'assets/huddl_logo_transparent.json',
+                            'assets/huddl_pass.json',
                             controller: _lottieCtrl,
                             fit: BoxFit.fitHeight,
                             onLoaded: (comp) {

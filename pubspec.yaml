@@ -116,3 +116,4 @@ flutter:
     # ── Lottie animations ─────────────────────────────────────────────
     - assets/huddl_market_wide.json
     - assets/huddl_logo_transparent.json
+    - assets/huddl_pass.json
