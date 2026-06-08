@@ -6027,38 +6027,1197 @@ class _NearbyTabState extends State<_NearbyTab>
   @override
   bool get wantKeepAlive => true;
 
-  // 'all' | 'meetups' | 'events'
+  // ── Mode chip: 'all' | 'meetups' | 'events' ──────────────────
   String _filter = 'all';
+
+  // ── Category chips (label → category code mapping) ───────────
+  static const _categoryChips = [
+    {'label': 'All',                  'codes': <String>[]},
+    {'label': 'Hanging out',          'codes': ['Social']},
+    {'label': 'Pregnancy',            'codes': ['Social']},
+    {'label': 'Playdate',             'codes': ['Playdate']},
+    {'label': 'Sports & exercise',    'codes': ['Sport']},
+    {'label': 'Coffee & tea',         'codes': ['Coffee']},
+    {'label': 'Parks & Walks',        'codes': ['Walk']},
+    {'label': 'Food & nutrition',     'codes': ['Food']},
+    {'label': 'Performance & shows',  'codes': ['Social']},
+    {'label': 'Other',                'codes': ['Other']},
+  ];
+
+  // ── Participant filter options ────────────────────────────────
+  static const _audienceLabels = [
+    'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads', 'Kids',
+  ];
+
+  // ── Filter state (sheet) ─────────────────────────────────────
+  Timer? _distanceDebounce;
+  double _distanceKm = 10.0;
+  final Set<String> _sheetCategories   = {};
+  final Set<String> _sheetParticipants = {};
+  bool _showFreeOnly  = false;
+  DateTimeRange? _dateRange;
+  /// 'mostPopular' | 'latest' | 'smartSort'
+  String _sortBy = 'mostPopular';
+  bool _aiSmartSortEnabled = true;
+
+  // ── AI / user-profile ────────────────────────────────────────
+  String? _userParentType;
+  List<String> _userStagesOfLife = [];
+  String? _userBorough;
+  final DiscoverAiService _discoverAiService = DiscoverAiService();
+  final MeetupAiService _aiService = MeetupAiService();
+
+  // ── Distance / GPS ───────────────────────────────────────────
+  Position? _userPosition;
+  LocationStatus? _locationStatus;
+  final LocationService _locationService = LocationService();
+  final GeocodingService _geocodingService = GeocodingService();
+  final Map<String, _LatLng?> _meetupLatLngCache = {};
+
+  // ── True when any applicable filter (for current _filter mode) is set ──
+  bool get _hasActiveFilter {
+    // Distance only counts for meetups/all — Events are UK-wide
+    final distanceActive = _filter != 'events' && _distanceKm != 10.0;
+    return _sheetCategories.isNotEmpty
+        || _sheetParticipants.isNotEmpty
+        || _showFreeOnly
+        || _dateRange != null
+        || _sortBy != 'mostPopular'
+        || distanceActive;
+  }
+
+  /// Short label for the filter pill, mode-aware.
+  String get _filterPillLabel {
+    final distanceActive = _filter != 'events' && _distanceKm != 10.0;
+    final int count = [
+      if (_sheetCategories.isNotEmpty)   true,
+      if (_sheetParticipants.isNotEmpty) true,
+      if (_showFreeOnly)                 true,
+      if (_dateRange != null)            true,
+      if (_sortBy != 'mostPopular')      true,
+      if (distanceActive)                true,
+    ].length;
+    if (count == 1) {
+      if (_sheetCategories.isNotEmpty)   return _sheetCategories.first;
+      if (_sheetParticipants.isNotEmpty) return _sheetParticipants.first;
+      if (_showFreeOnly)                 return 'Free only';
+      if (_sortBy == 'smartSort')        return 'Smart Sort';
+      if (_sortBy != 'mostPopular')      return 'Latest';
+      if (distanceActive)                return '${_distanceKm.toInt()} km';
+    }
+    if (count > 1) return '$count filters';
+    return '';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Restore session-level filter state
+    _distanceKm = FilterStateCache.distanceKm;
+    _sortBy     = FilterStateCache.sortOrder;
+    _dateRange  = FilterStateCache.dateRange;
+    _initAi();
+    _loadUserProfile();
+    _prefetchLocation();
+  }
+
+  @override
+  void dispose() {
+    _distanceDebounce?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initAi() async {
+    await _aiService.initialize();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final onboarding = OnboardingDataService();
+      await onboarding.initialize();
+      if (mounted) {
+        setState(() {
+          _userParentType   = onboarding.parentType;
+          _userStagesOfLife = List<String>.from(onboarding.stagesOfLife);
+          if (onboarding.children.isNotEmpty &&
+              !_userStagesOfLife.contains('has_children')) {
+            _userStagesOfLife = [..._userStagesOfLife, 'has_children'];
+          }
+          _userBorough = PostcodeService()
+              .getBoroughFromPostcode(onboarding.postcode);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _prefetchLocation() async {
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      final result = await _locationService.getUserPosition();
+      if (mounted && result.hasPosition) {
+        setState(() {
+          _userPosition   = result.position;
+          _locationStatus = LocationStatus.success;
+        });
+        unawaited(_geocodingService.prewarm(
+          widget.meetupService.meetups.map((m) => m.location),
+        ));
+      }
+    }
+  }
+
+  Future<void> _requestLocationPermission(VoidCallback onUpdate) async {
+    final result = await _locationService.getUserPosition();
+    if (mounted) {
+      setState(() {
+        _userPosition   = result.position;
+        _locationStatus = result.status;
+      });
+      onUpdate();
+      if (result.hasPosition) {
+        unawaited(_geocodingService.prewarm(
+          widget.meetupService.meetups.map((m) => m.location),
+        ));
+      }
+    }
+  }
+
+  List<String> _buildMeetupScoreFactors() {
+    final factors = <String>[];
+    if (_userBorough != null && _userBorough!.isNotEmpty &&
+        _userBorough != 'Unknown Borough') {
+      factors.add('\u{1F4CD} ${_userBorough!}');
+    }
+    if (_userParentType == 'mum')      factors.add('\u{1F469} Mums');
+    else if (_userParentType == 'dad') factors.add('\u{1F468} Dads');
+    if (_userStagesOfLife.contains('expecting'))    factors.add('\u{1F930} Expecting');
+    if (_userStagesOfLife.contains('new_parent'))   factors.add('\u{1F476} New parent');
+    if (_userStagesOfLife.contains('has_children')) factors.add('\u{1F9D2} Kids');
+    factors.add('\u2B50 Popularity');
+    return factors;
+  }
+
+  /// Apply filters and sort to meetups.
+  List<Meetup> _applyMeetupFilters(List<Meetup> meetups) {
+    var result = meetups;
+
+    // 1. Sheet multi-select categories
+    if (_sheetCategories.isNotEmpty) {
+      final Set<String> allCodes = {};
+      for (final label in _sheetCategories) {
+        final chip = _categoryChips.firstWhere(
+          (c) => c['label'] == label,
+          orElse: () => {'label': label, 'codes': <String>[]},
+        );
+        allCodes.addAll((chip['codes'] as List<String>? ?? []));
+      }
+      if (allCodes.isNotEmpty) {
+        result = result.where((m) => allCodes.contains(m.category)).toList();
+      }
+    }
+
+    // 2. Sheet multi-select participants
+    if (_sheetParticipants.isNotEmpty) {
+      result = result.where((m) {
+        if (m.targetAudience.isEmpty) return true;
+        return m.targetAudience.any((a) => _sheetParticipants.contains(a));
+      }).toList();
+    }
+
+    // 3. Free only
+    if (_showFreeOnly) {
+      result = result
+          .where((m) => m.isFree || (m.price == null || m.price == 0))
+          .toList();
+    }
+
+    // 4. Date range
+    if (_dateRange != null) {
+      final start = DateTime(_dateRange!.start.year,
+          _dateRange!.start.month, _dateRange!.start.day);
+      final end = DateTime(_dateRange!.end.year, _dateRange!.end.month,
+          _dateRange!.end.day, 23, 59, 59);
+      result = result
+          .where((m) =>
+              m.dateTime.isAfter(start.subtract(const Duration(seconds: 1))) &&
+              m.dateTime.isBefore(end.add(const Duration(seconds: 1))))
+          .toList();
+    }
+
+    // 5. Distance — ONLY for meetups (never events)
+    if (_userPosition != null && _distanceKm < 50.0) {
+      result = result.where((m) {
+        final loc = m.location.trim().toLowerCase();
+        if (loc.isEmpty || loc == 'online' ||
+            loc.contains('online event') ||
+            loc == 'tbc' || loc == 'tbd') return true;
+        final cacheKey = m.location.trim().toLowerCase();
+        if (_meetupLatLngCache.containsKey(cacheKey)) {
+          final cached = _meetupLatLngCache[cacheKey];
+          if (cached == null) return true;
+          final km = LocationService.distanceInKm(
+              _userPosition!, cached.lat, cached.lng);
+          return km <= _distanceKm;
+        }
+        _geocodingService.geocode(m.location).then((latLng) {
+          if (!mounted) return;
+          setState(() {
+            _meetupLatLngCache[cacheKey] =
+                latLng != null ? _LatLng(latLng.lat, latLng.lng) : null;
+          });
+        });
+        return true;
+      }).toList();
+    }
+
+    // 6. Sort
+    if (_sortBy == 'latest') {
+      result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    } else {
+      // mostPopular
+      result.sort((a, b) => b.attendeeCount.compareTo(a.attendeeCount));
+    }
+
+    return result;
+  }
+
+  /// Apply filters and sort to events (no distance — Events are UK-wide).
+  List<Event> _applyEventFilters(List<Event> events) {
+    var result = events;
+
+    // 1. Sheet multi-select categories
+    if (_sheetCategories.isNotEmpty) {
+      final Set<String> allCodes = {};
+      for (final label in _sheetCategories) {
+        final chip = _categoryChips.firstWhere(
+          (c) => c['label'] == label,
+          orElse: () => {'label': label, 'codes': <String>[]},
+        );
+        allCodes.addAll((chip['codes'] as List<String>? ?? []));
+      }
+      if (allCodes.isNotEmpty) {
+        result = result.where((e) => allCodes.contains(e.category)).toList();
+      }
+    }
+
+    // 2. Free only
+    if (_showFreeOnly) {
+      result = result.where((e) => e.isFree).toList();
+    }
+
+    // 3. Date range
+    if (_dateRange != null) {
+      final start = DateTime(_dateRange!.start.year,
+          _dateRange!.start.month, _dateRange!.start.day);
+      final end = DateTime(_dateRange!.end.year, _dateRange!.end.month,
+          _dateRange!.end.day, 23, 59, 59);
+      result = result
+          .where((e) =>
+              e.dateTime.isAfter(start.subtract(const Duration(seconds: 1))) &&
+              e.dateTime.isBefore(end.add(const Duration(seconds: 1))))
+          .toList();
+    }
+
+    // 4. Sort (no distance-based sort for events)
+    if (_sortBy == 'latest' || _sortBy == 'smartSort') {
+      result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    } else {
+      // mostPopular
+      result.sort((a, b) => b.attendeeCount.compareTo(a.attendeeCount));
+    }
+
+    return result;
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    HuddlAnimations.selectionClick();
+
+    // Local copies for sheet
+    double         sheetDistanceKm   = _distanceKm;
+    Set<String>    sheetCategories   = Set<String>.from(_sheetCategories);
+    Set<String>    sheetParticipants = Set<String>.from(_sheetParticipants);
+    bool           sheetFreeOnly     = _showFreeOnly;
+    DateTimeRange? sheetDateRange    = _dateRange;
+    String         sheetSortBy       = _sortBy;
+    bool           sheetSmartSort    = _aiSmartSortEnabled;
+
+    // Capture mode at open time so sheet is stable while open
+    final String nearbyMode  = _filter;
+    final bool   showDistance = nearbyMode != 'events';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final isDarkSheet = Theme.of(ctx).brightness == Brightness.dark;
+
+          final Color bgSheet       = isDarkSheet ? HuddlColors.darkSurface : Colors.white;
+          const Color orange        = HuddlColors.primary;
+          final Color chipIcon      = isDarkSheet ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+          final Color textPrimary   = isDarkSheet ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+          final Color textSecGray   = isDarkSheet ? HuddlColors.darkTextSecondary : HuddlColors.neutral300;
+          final Color chipBg        = isDarkSheet ? HuddlColors.darkSurfaceVariant : HuddlColors.neutral50;
+          final Color dividerColor  = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+          final Color trackInactive = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+          final Color toggleOff     = isDarkSheet ? HuddlColors.darkDivider : HuddlColors.neutral100;
+
+          Widget sectionHeading(String title) => Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(title, style: HuddlText.heading()),
+          );
+
+          Widget checkboxRow(String label) {
+            final isChecked = sheetParticipants.contains(label);
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HuddlAnimations.selectionClick();
+                setSheetState(() {
+                  if (isChecked) sheetParticipants.remove(label);
+                  else sheetParticipants.add(label);
+                });
+              },
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 26, height: 26,
+                      decoration: BoxDecoration(
+                        color: isChecked ? orange : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isChecked ? orange : dividerColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: isChecked
+                          ? const Icon(HuddlIcons.check, size: 18, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Text(label, style: HuddlText.body()),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final sampleScore = _discoverAiService.getGroupRecommendationScore(
+            {'id': 'sample', 'category': 'PARENTING', 'memberCount': 500,
+             'creatorBorough': _userBorough, 'targetAudience': <String>[]},
+            userBorough: _userBorough,
+            parentType: _userParentType,
+            stagesOfLife: _userStagesOfLife,
+          );
+          final scoreFactors = _buildMeetupScoreFactors();
+
+          Widget smartSortCard = GestureDetector(
+            onTap: () {
+              HuddlAnimations.selectionClick();
+              setSheetState(() => sheetSortBy = 'smartSort');
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                gradient: sheetSortBy == 'smartSort'
+                    ? LinearGradient(
+                        colors: [
+                          orange.withValues(alpha: 0.12),
+                          chipIcon.withValues(alpha: 0.08),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: sheetSortBy == 'smartSort' ? null : chipBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: sheetSortBy == 'smartSort'
+                      ? orange.withValues(alpha: 0.45)
+                      : dividerColor,
+                  width: sheetSortBy == 'smartSort' ? 1.5 : 1,
+                ),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 34, height: 34,
+                        decoration: BoxDecoration(
+                          color: sheetSortBy == 'smartSort'
+                              ? orange
+                              : orange.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(HuddlIcons.ai, size: 18,
+                            color: sheetSortBy == 'smartSort'
+                                ? Colors.white
+                                : orange),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text('Smart Sort',
+                                    style: HuddlText.body(
+                                        weight: FontWeight.w700)),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: HuddlColors.textDark,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text('AI',
+                                      style: HuddlText.label(
+                                          color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                            Text('Personalised to your profile',
+                                style: HuddlText.caption(
+                                    color: textSecGray)),
+                          ],
+                        ),
+                      ),
+                      if (sheetSortBy == 'smartSort')
+                        Icon(HuddlIcons.checkCircle,
+                            size: 22, color: orange),
+                    ],
+                  ),
+                  if (scoreFactors.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6, runSpacing: 6,
+                      children: scoreFactors
+                          .map((f) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: orange.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color:
+                                          orange.withValues(alpha: 0.18)),
+                                ),
+                                child: Text(f,
+                                    style: HuddlText.caption()),
+                              ))
+                          .toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'Results are ranked by how well they match your profile — '
+                    'parenting stage, interests, and activity.',
+                    style: HuddlText.caption(color: textSecGray)
+                        .copyWith(height: 1.45),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: dividerColor),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(HuddlIcons.psychology,
+                          size: 16,
+                          color: sheetSmartSort ? orange : textSecGray),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          sheetSmartSort
+                              ? 'AI ranking active'
+                              : 'AI ranking off — showing default order',
+                          style: HuddlText.caption(),
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.82,
+                        alignment: Alignment.centerRight,
+                        child: Switch(
+                          value: sheetSmartSort,
+                          activeThumbColor: orange,
+                          activeTrackColor:
+                              orange.withValues(alpha: 0.35),
+                          onChanged: (val) {
+                            HuddlAnimations.selectionClick();
+                            setSheetState(() {
+                              sheetSmartSort = val;
+                              if (val) sheetSortBy = 'smartSort';
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (sheetSmartSort) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text('Match quality',
+                            style: HuddlText.caption(
+                                color: textSecGray)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (sampleScore / 100).clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor:
+                                  orange.withValues(alpha: 0.12),
+                              valueColor:
+                                  const AlwaysStoppedAnimation<Color>(
+                                      orange),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('${sampleScore.round()}%',
+                            style: HuddlText.caption(
+                                weight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+
+          Widget filterChip({
+            required String label,
+            required bool isSelected,
+            required VoidCallback onTap,
+            IconData? icon,
+            Color? iconColor,
+          }) {
+            return GestureDetector(
+              onTap: () {
+                HuddlAnimations.selectionClick();
+                onTap();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: EdgeInsets.symmetric(
+                  horizontal: icon != null ? 12 : 16,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? HuddlColors.textDark : chipBg,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon,
+                          size: 15,
+                          color: isSelected
+                              ? Colors.white
+                              : (iconColor ?? chipIcon)),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(label, style: HuddlText.body()),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          Widget radioRow(String label, String value) {
+            final sel = sheetSortBy == value;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HuddlAnimations.selectionClick();
+                setSheetState(() => sheetSortBy = value);
+              },
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  children: [
+                    Expanded(
+                        child: Text(label, style: HuddlText.body())),
+                    Container(
+                      width: 22, height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: sel ? orange : HuddlColors.divider,
+                          width: sel ? 0 : 1.5,
+                        ),
+                        color: sel ? orange : Colors.transparent,
+                      ),
+                      child: sel
+                          ? const Center(
+                              child: CircleAvatar(
+                                radius: 4,
+                                backgroundColor: Colors.white,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          const Map<String, IconData> catIcons = {
+            'All':                 HuddlIcons.gridView,
+            'Hanging out':         HuddlIcons.chat,
+            'Pregnancy':           HuddlIcons.pregnant,
+            'Playdate':            HuddlIcons.run,
+            'Sports & exercise':   HuddlIcons.fitness,
+            'Coffee & tea':        HuddlIcons.coffee,
+            'Parks & Walks':       HuddlIcons.park,
+            'Food & nutrition':    HuddlIcons.restaurant,
+            'Performance & shows': HuddlIcons.theater,
+            'Other':               HuddlIcons.moreHoriz,
+          };
+
+          // Count active filters — distance only counted when visible
+          int activeCount = 0;
+          if (sheetCategories.isNotEmpty)                     activeCount++;
+          if (sheetParticipants.isNotEmpty)                   activeCount++;
+          if (sheetFreeOnly)                                  activeCount++;
+          if (sheetDateRange != null)                         activeCount++;
+          if (sheetSortBy != 'mostPopular')                   activeCount++;
+          if (showDistance && sheetDistanceKm != 10.0)        activeCount++;
+
+          String dateLabel = 'Date range';
+          final bool dateHasValue = sheetDateRange != null;
+          if (dateHasValue) {
+            final s = sheetDateRange!.start;
+            final e = sheetDateRange!.end;
+            final months = ['Jan','Feb','Mar','Apr','May','Jun',
+                'Jul','Aug','Sep','Oct','Nov','Dec'];
+            dateLabel =
+                '${s.day} ${months[s.month - 1]} ${s.year} – '
+                '${e.day} ${months[e.month - 1]} ${e.year}';
+          }
+
+          return ClipRRect(
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+            child: Container(
+              color: bgSheet,
+              constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.93),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+
+                  // ══ STICKY HEADER ══════════════════════════════
+                  Container(
+                    color: bgSheet,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              top: 12, bottom: 10),
+                          child: Center(
+                            child: Container(
+                              width: 36, height: 4,
+                              decoration: BoxDecoration(
+                                color: HuddlColors.divider,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(ctx),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(HuddlIcons.close,
+                                      size: 20, color: orange),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Filter and sort',
+                                  textAlign: TextAlign.center,
+                                  style: HuddlText.body(
+                                      weight: FontWeight.w600),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              GestureDetector(
+                                onTap: () {
+                                  HuddlAnimations.lightTap();
+                                  setSheetState(() {
+                                    sheetDistanceKm   = 10.0;
+                                    sheetCategories   = {};
+                                    sheetParticipants = {};
+                                    sheetFreeOnly     = false;
+                                    sheetDateRange    = null;
+                                    sheetSortBy       = 'mostPopular';
+                                  });
+                                },
+                                child: Text(
+                                  'RESET',
+                                  style: HuddlText.body(
+                                      weight: FontWeight.w600,
+                                      color: orange),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: dividerColor),
+                      ],
+                    ),
+                  ),
+
+                  // ══ SCROLLABLE CONTENT ═════════════════════════
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding:
+                          const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+                          // ══ DISTANCE — hidden for Events ═══════
+                          if (showDistance) ...[
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Distance',
+                                    style: HuddlText.heading()),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        orange.withValues(alpha: 0.12),
+                                    borderRadius:
+                                        BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    sheetDistanceKm >= 50
+                                        ? 'Up to 50 km'
+                                        : 'Within ${sheetDistanceKm.toInt()} km',
+                                    style: HuddlText.body(
+                                        weight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            _DistanceHistogram(
+                                currentKm: sheetDistanceKm,
+                                maxKm: 50),
+                            const SizedBox(height: 6),
+                            SliderTheme(
+                              data: SliderTheme.of(ctx).copyWith(
+                                activeTrackColor: orange,
+                                inactiveTrackColor: trackInactive,
+                                thumbColor: orange,
+                                overlayColor:
+                                    orange.withValues(alpha: 0.15),
+                                trackHeight: 3,
+                                thumbShape:
+                                    const RoundSliderThumbShape(
+                                        enabledThumbRadius: 9),
+                              ),
+                              child: Slider(
+                                value: sheetDistanceKm.clamp(1.0, 50.0),
+                                min: 1,
+                                max: 50,
+                                divisions: 49,
+                                onChanged: (v) {
+                                  setSheetState(() {
+                                    sheetDistanceKm = v.roundToDouble();
+                                  });
+                                  _distanceDebounce?.cancel();
+                                  _distanceDebounce = Timer(
+                                    const Duration(milliseconds: 400),
+                                    () {
+                                      if (mounted) setState(() {});
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('1 km',
+                                      style: HuddlText.caption(
+                                          color:
+                                              HuddlColors.neutral300)),
+                                  Text('25 km',
+                                      style: HuddlText.caption(
+                                          color:
+                                              HuddlColors.neutral300)),
+                                  Text('50 km',
+                                      style: HuddlText.caption(
+                                          color:
+                                              HuddlColors.neutral300)),
+                                ],
+                              ),
+                            ),
+                            if (_userPosition == null) ...[
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  if (_locationStatus ==
+                                      LocationStatus
+                                          .permissionDeniedForever) {
+                                    _locationService.openSettings();
+                                  } else {
+                                    _requestLocationPermission(
+                                        () => setSheetState(() {}));
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: HuddlColors.neutral50,
+                                    borderRadius:
+                                        BorderRadius.circular(12),
+                                    border: Border.all(
+                                        color: HuddlColors.neutral100),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                          HuddlIcons.locationOff,
+                                          size: 18,
+                                          color:
+                                              HuddlColors.neutral300),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _locationStatus ==
+                                                  LocationStatus
+                                                      .permissionDeniedForever
+                                              ? 'Distance filter needs location. Tap to open Settings.'
+                                              : _locationStatus ==
+                                                      LocationStatus
+                                                          .serviceDisabled
+                                                  ? 'Enable location services to filter by distance.'
+                                                  : 'Tap to enable location and filter by distance.',
+                                          style: HuddlText.caption(
+                                              color: HuddlColors
+                                                  .neutral600),
+                                        ),
+                                      ),
+                                      const Icon(HuddlIcons.caretRight,
+                                          size: 18,
+                                          color:
+                                              HuddlColors.neutral100),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                          ],
+
+                          // ══ PARTICIPANTS ════════════════════════
+                          Text('Show for',
+                              style: HuddlText.body(
+                                  weight: FontWeight.w600)),
+                          const SizedBox(height: 10),
+                          ..._audienceLabels.map(checkboxRow),
+                          const SizedBox(height: 28),
+
+                          // ══ CATEGORY ════════════════════════════
+                          sectionHeading('Category'),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 10,
+                            children: _categoryChips
+                                .where((c) =>
+                                    (c['label'] as String) != 'All')
+                                .map((chip) {
+                              final label = chip['label'] as String;
+                              final icon =
+                                  catIcons[label] ?? HuddlIcons.label;
+                              final sel =
+                                  sheetCategories.contains(label);
+                              return filterChip(
+                                label: label,
+                                isSelected: sel,
+                                icon: icon,
+                                iconColor: chipIcon,
+                                onTap: () {
+                                  setSheetState(() {
+                                    if (sel) {
+                                      sheetCategories.remove(label);
+                                    } else {
+                                      sheetCategories.add(label);
+                                    }
+                                  });
+                                  _aiService.trackCategoryTap(label);
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ FREE ONLY ═══════════════════════════
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Show only free events',
+                                  style: HuddlText.body(
+                                      weight: FontWeight.w700),
+                                ),
+                              ),
+                              Switch(
+                                value: sheetFreeOnly,
+                                onChanged: (v) => setSheetState(
+                                    () => sheetFreeOnly = v),
+                                activeThumbColor: Colors.white,
+                                activeTrackColor: orange,
+                                inactiveThumbColor: Colors.white,
+                                inactiveTrackColor: toggleOff,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ DATE RANGE ══════════════════════════
+                          sectionHeading('Pick a date'),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDateRangePicker(
+                                context: ctx,
+                                firstDate: DateTime.now().subtract(
+                                    const Duration(days: 1)),
+                                lastDate: DateTime.now()
+                                    .add(const Duration(days: 365)),
+                                initialDateRange: sheetDateRange,
+                                builder: (context, child) => Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme:
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .copyWith(
+                                              primary: orange,
+                                              onPrimary: Colors.white,
+                                            ),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (picked != null) {
+                                setSheetState(
+                                    () => sheetDateRange = picked);
+                              }
+                            },
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                      color: HuddlColors.divider,
+                                      width: 1),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: dateHasValue
+                                        ? Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment
+                                                    .start,
+                                            mainAxisSize:
+                                                MainAxisSize.min,
+                                            children: [
+                                              Text('Date range',
+                                                  style:
+                                                      HuddlText.caption(
+                                                          color:
+                                                              textSecGray)),
+                                              const SizedBox(height: 2),
+                                              Text(dateLabel,
+                                                  style: HuddlText.body(
+                                                      color:
+                                                          textPrimary)),
+                                            ],
+                                          )
+                                        : Text('Date range',
+                                            style: HuddlText.body(
+                                                color: textSecGray)),
+                                  ),
+                                  Icon(HuddlIcons.calendar,
+                                      color: orange, size: 22),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ SORT BY ═════════════════════════════
+                          Text('Sort by',
+                              style: HuddlText.body(
+                                  weight: FontWeight.w600)),
+                          const SizedBox(height: 10),
+                          smartSortCard,
+                          const SizedBox(height: 6),
+                          radioRow('Most popular', 'mostPopular'),
+                          Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: dividerColor),
+                          radioRow('Latest', 'latest'),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ══ STICKY BOTTOM CTA ═══════════════════════════
+                  Container(
+                    decoration: BoxDecoration(
+                      color: bgSheet,
+                      border: Border(
+                          top: BorderSide(
+                              color: dividerColor, width: 1)),
+                      boxShadow: [
+                        BoxShadow(
+                            color:
+                                Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 12,
+                            offset: const Offset(0, -4))
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            20, 12, 20, 16),
+                        child: GestureDetector(
+                          onTap: () {
+                            HuddlAnimations.mediumTap();
+                            setState(() {
+                              // Never persist distance for Events
+                              if (showDistance) {
+                                _distanceKm = sheetDistanceKm;
+                              }
+                              _sheetCategories
+                                ..clear()
+                                ..addAll(sheetCategories);
+                              _sheetParticipants
+                                ..clear()
+                                ..addAll(sheetParticipants);
+                              _showFreeOnly       = sheetFreeOnly;
+                              _dateRange          = sheetDateRange;
+                              _sortBy             = sheetSortBy;
+                              _aiSmartSortEnabled = sheetSmartSort;
+                            });
+                            FilterStateCache.distanceKm = _distanceKm;
+                            FilterStateCache.sortOrder  = sheetSortBy;
+                            FilterStateCache.dateRange  = sheetDateRange;
+                            Navigator.pop(ctx);
+                          },
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: orange,
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              activeCount > 0
+                                  ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}'
+                                  : 'Show results',
+                              style: HuddlText.body(
+                                  weight: FontWeight.w600,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final hc = context.hc;
+    const Color filterText = HuddlColors.textDark;
 
-    final List<_NearbyItem> items = [];
     final now = DateTime.now();
 
+    // ── Build filtered meetup and event lists ─────────────────
+    final List<_NearbyItem> items = [];
+
     if (_filter == 'all' || _filter == 'meetups') {
-      for (final m in widget.meetupService.meetups) {
-        if (m.dateTime.isAfter(now)) {
-          items.add(_NearbyItem.meetup(m));
-        }
+      final rawMeetups = widget.meetupService.meetups
+          .where((m) => m.dateTime.isAfter(now))
+          .toList();
+      final filtered = _applyMeetupFilters(rawMeetups);
+      for (final m in filtered) {
+        items.add(_NearbyItem.meetup(m));
       }
     }
 
     if (_filter == 'all' || _filter == 'events') {
-      for (final e in widget.eventService.events) {
-        if (e.dateTime.isAfter(now)) {
-          items.add(_NearbyItem.event(e));
-        }
+      final rawEvents = widget.eventService.events
+          .where((e) => e.dateTime.isAfter(now))
+          .toList();
+      final filtered = _applyEventFilters(rawEvents);
+      for (final e in filtered) {
+        items.add(_NearbyItem.event(e));
       }
     }
 
+    // Interleave chronologically
     items.sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     return Column(
       children: [
-        // ── Filter chips ─────────────────────────────────────────
+        // ── Chip row + Filter trigger ─────────────────────────
         Container(
           color: hc.surface,
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -6084,44 +7243,116 @@ class _NearbyTabState extends State<_NearbyTab>
                 onTap: () => setState(() => _filter = 'events'),
               ),
               const Spacer(),
-              if (items.isNotEmpty)
+              // "{n} near you" count — only when list is non-empty
+              if (items.isNotEmpty) ...[
                 Text(
                   '${items.length} near you',
                   style: HuddlText.caption(color: hc.textTertiary),
                 ),
+                const SizedBox(width: 10),
+              ],
+              // Filter and sort trigger — always visible
+              Semantics(
+                label: _hasActiveFilter
+                    ? 'Filters active. Tap to change.'
+                    : 'Filter and sort',
+                button: true,
+                child: GestureDetector(
+                  onTap: () => _showFilterSheet(context),
+                  child: Container(
+                    height: 34,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: hc.surface,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              HuddlIcons.filter,
+                              size: 16,
+                              color: _hasActiveFilter
+                                  ? HuddlColors.primary
+                                  : filterText,
+                            ),
+                            if (_hasActiveFilter)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                    color: HuddlColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _hasActiveFilter &&
+                                  _filterPillLabel.isNotEmpty
+                              ? _filterPillLabel
+                              : 'Filter',
+                          style: HuddlText.caption(
+                            color: _hasActiveFilter
+                                ? HuddlColors.primary
+                                : filterText,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         Divider(height: 1, color: hc.divider),
 
-        // ── Content ──────────────────────────────────────────────
+        // ── Content ──────────────────────────────────────────
         Expanded(
           child: items.isEmpty
               ? HuddlEmptyState(
                   mood: HuddlMood.curious,
-                  illustrationAsset: 'assets/illustrations/location_community.webp',
+                  illustrationAsset:
+                      'assets/illustrations/location_community.webp',
                   title: _filter == 'meetups'
                       ? 'No meetups nearby yet'
                       : _filter == 'events'
                           ? 'No events nearby yet'
                           : 'Nothing nearby yet',
-                  subtitle: 'Tap + to create the first meetup in your area.',
+                  subtitle:
+                      'Tap + to create the first meetup in your area.',
                   ctaLabel: 'Create a meetup',
                   onCtaTap: widget.onCreateMeetup,
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 16),
+                  padding:
+                      const EdgeInsets.only(top: 8, bottom: 16),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
                     if (item.isMeetup) {
-                      return _MeetupCard(
-                        meetup: item.meetup!,
-                      );
+                      return _MeetupCard(meetup: item.meetup!);
                     } else {
                       return _EventListCard(
-                        event: item.event!.toMap(),
-                      );
+                          event: item.event!.toMap());
                     }
                   },
                 ),
