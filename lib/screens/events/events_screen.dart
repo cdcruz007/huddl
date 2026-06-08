@@ -29,8 +29,6 @@ import '../../services/postcode_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../widgets/borough_badge.dart';
-import '../../services/borough_scope_guard.dart';
 import '../../widgets/huddl_character.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
@@ -42,6 +40,7 @@ import '../../widgets/common/huddl_button.dart';
 import '../search/unified_search_screen.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import 'package:lottie/lottie.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
 const List<String> _kAttendeeAvatars = [
@@ -107,9 +106,13 @@ class EventsScreenState extends State<EventsScreen>
   // Fires true to open inline search in the Insights tab.
   final ValueNotifier<bool> _insightsSearchTrigger = ValueNotifier<bool>(false);
 
+  // Lottie controller for the Discover header compass animation (play once).
+  late AnimationController _discoverLottieCtrl;
+
   @override
   void initState() {
     super.initState();
+    _discoverLottieCtrl = AnimationController(vsync: this);
     _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       // Only update the selected tab when the animation has settled,
@@ -164,6 +167,7 @@ class EventsScreenState extends State<EventsScreen>
     _serviceSearchTrigger.dispose();
     _serviceResetTrigger.dispose();
     _insightsSearchTrigger.dispose();
+    _discoverLottieCtrl.dispose();
     super.dispose();
   }
 
@@ -395,31 +399,26 @@ class EventsScreenState extends State<EventsScreen>
                 // full-width while the title row keeps 16px side insets.
                 ColoredBox(
                   color: context.hc.surface,
+                  child: SizedBox(
+                  height: 64,
                   child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Discover',
-                            style: HuddlText.display(),
-                          ),
-                          const SizedBox(width: 8),
-                          // Borough chip — always nearBlack (scope shown in tab label)
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: BoroughScopeChip(
-                              key: ValueKey('discover_chip_$_selectedTab'),
-                              feature: _selectedTab == 1
-                                  ? HuddlFeature.meetups
-                                  : _selectedTab == 2
-                                      ? HuddlFeature.services
-                                      : HuddlFeature.groups,
-                            ),
-                          ),
-                        ],
+                      // Compass logo — 56px, transparent bg, play once on load
+                      SizedBox(
+                        height: 56,
+                        child: Lottie.asset(
+                          'assets/huddl_discover_compass.json',
+                          controller: _discoverLottieCtrl,
+                          fit: BoxFit.fitHeight,
+                          onLoaded: (comp) {
+                            _discoverLottieCtrl.duration = comp.duration;
+                            _discoverLottieCtrl.forward(from: 0);
+                          },
+                        ),
                       ),
                       Row(
                         children: [
@@ -514,6 +513,7 @@ class EventsScreenState extends State<EventsScreen>
                     ],
                   ),
                   ), // Padding
+                  ), // SizedBox(height:64)
                 ), // ColoredBox title row
                 // ── Header: tab bar (full-width, no side padding) ──
                 // ColoredBox + full-width Row as spacer forces the surface
