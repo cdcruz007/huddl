@@ -43,6 +43,7 @@ import '../../widgets/huddl_empty_states.dart';
 import '../../services/firestore_service.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 import '../search/unified_search_screen.dart';
+import 'package:lottie/lottie.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
@@ -79,8 +80,10 @@ class GroupsScreen extends StatefulWidget {
 }
 
 class _GroupsScreenState extends State<GroupsScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  // Lottie controller for the Connect header animation (play once).
+  late AnimationController _connectLottieCtrl;
 
   /// Shared notifier: increment to tell tabs to reload user-created groups.
   final ValueNotifier<int> _groupsChangedNotifier = ValueNotifier<int>(0);
@@ -95,6 +98,7 @@ class _GroupsScreenState extends State<GroupsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _connectLottieCtrl = AnimationController(vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _clearSearch();       // reset search when switching tabs
@@ -125,6 +129,7 @@ class _GroupsScreenState extends State<GroupsScreen>
     _searchController.dispose();
     _searchFocusNode.dispose();
     _tabController.dispose();
+    _connectLottieCtrl.dispose();
     super.dispose();
   }
 
@@ -148,14 +153,23 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    firstChild: Row(
+                    firstChild: SizedBox(
+                      height: 64,
+                      child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          'Connect',
-                          style: HuddlText.display(color: context.hc.textPrimary),
+                        SizedBox(
+                          height: 56,
+                          child: Lottie.asset(
+                            'assets/huddl_connect.json',
+                            controller: _connectLottieCtrl,
+                            fit: BoxFit.fitHeight,
+                            onLoaded: (comp) {
+                              _connectLottieCtrl.duration = comp.duration;
+                              _connectLottieCtrl.forward(from: 0);
+                            },
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        const BoroughScopeChip(feature: HuddlFeature.chat),
                         const Spacer(),
                         // 🔍 Search trigger icon — top-right, above tabs.
                         // Tap → inline group search. Long-press → unified search.
@@ -184,6 +198,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                           ),
                         ),
                       ],
+                      ),
                     ),
                     // Expanded search bar — replaces title row
                     secondChild: SizedBox(
