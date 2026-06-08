@@ -6076,8 +6076,8 @@ class _NearbyTabState extends State<_NearbyTab>
 
   // ── True when any applicable filter (for current _filter mode) is set ──
   bool get _hasActiveFilter {
-    // Distance only counts for meetups/all — Events are UK-wide
-    final distanceActive = _filter != 'events' && _distanceKm != 10.0;
+    // Distance only counts for Events (UK-wide) — Meetups are borough-scoped
+    final distanceActive = _filter == 'events' && _distanceKm != 10.0;
     return _sheetCategories.isNotEmpty
         || _sheetParticipants.isNotEmpty
         || _showFreeOnly
@@ -6088,7 +6088,7 @@ class _NearbyTabState extends State<_NearbyTab>
 
   /// Short label for the filter pill, mode-aware.
   String get _filterPillLabel {
-    final distanceActive = _filter != 'events' && _distanceKm != 10.0;
+    final distanceActive = _filter == 'events' && _distanceKm != 10.0;
     final int count = [
       if (_sheetCategories.isNotEmpty)   true,
       if (_sheetParticipants.isNotEmpty) true,
@@ -6246,33 +6246,7 @@ class _NearbyTabState extends State<_NearbyTab>
           .toList();
     }
 
-    // 5. Distance — ONLY for meetups (never events)
-    if (_userPosition != null && _distanceKm < 50.0) {
-      result = result.where((m) {
-        final loc = m.location.trim().toLowerCase();
-        if (loc.isEmpty || loc == 'online' ||
-            loc.contains('online event') ||
-            loc == 'tbc' || loc == 'tbd') return true;
-        final cacheKey = m.location.trim().toLowerCase();
-        if (_meetupLatLngCache.containsKey(cacheKey)) {
-          final cached = _meetupLatLngCache[cacheKey];
-          if (cached == null) return true;
-          final km = LocationService.distanceInKm(
-              _userPosition!, cached.lat, cached.lng);
-          return km <= _distanceKm;
-        }
-        _geocodingService.geocode(m.location).then((latLng) {
-          if (!mounted) return;
-          setState(() {
-            _meetupLatLngCache[cacheKey] =
-                latLng != null ? _LatLng(latLng.lat, latLng.lng) : null;
-          });
-        });
-        return true;
-      }).toList();
-    }
-
-    // 6. Sort
+    // 5. Sort — Meetups are borough-scoped; no distance filter applied
     if (_sortBy == 'latest') {
       result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
     } else {
@@ -6283,7 +6257,8 @@ class _NearbyTabState extends State<_NearbyTab>
     return result;
   }
 
-  /// Apply filters and sort to events (no distance — Events are UK-wide).
+  /// Apply filters and sort to events.
+  /// Events are UK-wide — distance filter IS applied here when set.
   List<Event> _applyEventFilters(List<Event> events) {
     var result = events;
 
@@ -6320,7 +6295,34 @@ class _NearbyTabState extends State<_NearbyTab>
           .toList();
     }
 
-    // 4. Sort (no distance-based sort for events)
+    // 4. Distance — Events are UK-wide; user can scope by travel distance.
+    // Uses the same geocoding cache as meetups (shared _meetupLatLngCache).
+    if (_userPosition != null && _distanceKm < 50.0) {
+      result = result.where((e) {
+        final loc = e.location.trim().toLowerCase();
+        if (loc.isEmpty || loc == 'online' ||
+            loc.contains('online event') ||
+            loc == 'tbc' || loc == 'tbd') return true;
+        final cacheKey = e.location.trim().toLowerCase();
+        if (_meetupLatLngCache.containsKey(cacheKey)) {
+          final cached = _meetupLatLngCache[cacheKey];
+          if (cached == null) return true;
+          final km = LocationService.distanceInKm(
+              _userPosition!, cached.lat, cached.lng);
+          return km <= _distanceKm;
+        }
+        _geocodingService.geocode(e.location).then((latLng) {
+          if (!mounted) return;
+          setState(() {
+            _meetupLatLngCache[cacheKey] =
+                latLng != null ? _LatLng(latLng.lat, latLng.lng) : null;
+          });
+        });
+        return true;
+      }).toList();
+    }
+
+    // 5. Sort
     if (_sortBy == 'latest' || _sortBy == 'smartSort') {
       result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
     } else {
@@ -6345,7 +6347,9 @@ class _NearbyTabState extends State<_NearbyTab>
 
     // Capture mode at open time so sheet is stable while open
     final String nearbyMode  = _filter;
-    final bool   showDistance = nearbyMode != 'events';
+    // Distance shown for Events (UK-wide — user needs to scope by travel distance)
+    // Hidden for Meetups and All (Meetups are borough-scoped, distance irrelevant)
+    final bool   showDistance = nearbyMode == 'events';
 
     showModalBottomSheet(
       context: context,
@@ -7243,14 +7247,6 @@ class _NearbyTabState extends State<_NearbyTab>
                 onTap: () => setState(() => _filter = 'events'),
               ),
               const Spacer(),
-              // "{n} near you" count — only when list is non-empty
-              if (items.isNotEmpty) ...[
-                Text(
-                  '${items.length} near you',
-                  style: HuddlText.caption(color: hc.textTertiary),
-                ),
-                const SizedBox(width: 10),
-              ],
               // Filter and sort trigger — always visible
               Semantics(
                 label: _hasActiveFilter
