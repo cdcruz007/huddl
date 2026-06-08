@@ -20,10 +20,8 @@ import '../../services/huddl_notification_service.dart';
 import '../../services/backend_api_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
-import '../../services/borough_scope_guard.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
-import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_character.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
 import '../search/unified_search_screen.dart';
@@ -1358,9 +1356,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // == HEADER ================================================================
   // Market header: single row — huddl_market_bag Lottie logo (56px, transparent)
-  // + Spacer + grid-toggle + search icon. No borough chip in the header row;
-  // a faint BoroughHeader reminder sits below the Buy/Sell/Saved tab bar.
-  // No coloured background. _lottieCtrl plays once on load; replays on pull-to-refresh.
+  // + Spacer + grid-toggle + search icon. No borough chip, no coloured background.
+  // _lottieCtrl plays once on load; replays on pull-to-refresh.
 
   Widget _buildHeader(HuddlContextColors hc) {
     return Container(
@@ -1557,12 +1554,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             labelPadding: const EdgeInsets.symmetric(horizontal: 16),
           ),
           const SizedBox(height: 2),
-          // ── Faint borough reminder below tabs ──────────────────────────
-          BoroughHeader(
-            feature: HuddlFeature.marketplace,
-            customLabel: "Buying & selling in "
-                "${BoroughScopeGuard().currentBorough ?? 'your borough'}",
-          ),
         ],
       ),
     );
