@@ -1357,9 +1357,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   // == HEADER ================================================================
-  // Market header: huddl_market_bag Lottie logo (40px, transparent) + BoroughScopeChip
-  // + action icons all on one row. No coloured background.
-  // _lottieCtrl plays once on load; replays on pull-to-refresh.
+  // Market header: single row — huddl_market_bag Lottie logo (56px, transparent)
+  // + Spacer + grid-toggle + search icon. No borough chip in the header row;
+  // a faint BoroughHeader reminder sits below the Buy/Sell/Saved tab bar.
+  // No coloured background. _lottieCtrl plays once on load; replays on pull-to-refresh.
 
   Widget _buildHeader(HuddlContextColors hc) {
     return Container(
@@ -1373,17 +1374,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             crossFadeState: _isSearchActive
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            // First child: single row — Lottie logo + borough chip + actions
-            firstChild: Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 8),
+            // First child: single row — 56px bag logo + actions (no borough chip)
+            firstChild: SizedBox(
+              height: 64,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                        // Lottie inline logo — 40px tall, transparent bg
+                        // Lottie bag logo — 56px tall, transparent bg
                         SizedBox(
-                          height: 40,
+                          height: 56,
                           child: Lottie.asset(
                             'assets/huddl_market_bag.json',
                             controller: _lottieCtrl,
@@ -1394,9 +1395,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             },
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        // Borough chip — inline, right of logo
-                        const BoroughScopeChip(feature: HuddlFeature.marketplace),
                         const Spacer(),
                         // Grid/list toggle
                         ScaleOnPress(
@@ -1559,6 +1557,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             labelPadding: const EdgeInsets.symmetric(horizontal: 16),
           ),
           const SizedBox(height: 2),
+          // ── Faint borough reminder below tabs ──────────────────────────
+          BoroughHeader(
+            feature: HuddlFeature.marketplace,
+            customLabel: "Buying & selling in "
+                "${BoroughScopeGuard().currentBorough ?? 'your borough'}",
+          ),
         ],
       ),
     );
