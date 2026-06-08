@@ -38,6 +38,11 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
+  /// Notifier fired on every tab switch — screens subscribe to replay their
+  /// logo animations whenever they become the active tab.
+  /// Value is the new tab index (0=Home 1=Connect 2=Discover 3=Market 4=Profile).
+  final ValueNotifier<int> tabNotifier = ValueNotifier<int>(0);
+
   // Track which tabs have been activated at least once.
   // Only activated tabs are built — this prevents ALL screens initialising
   // simultaneously on first launch, which was causing setState-during-build
@@ -319,6 +324,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    tabNotifier.dispose();
     super.dispose();
   }
 
@@ -347,6 +353,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       _activatedTabs.add(index);
       _currentIndex = index;
     });
+    tabNotifier.value = index; // notify logo-animation listeners
   }
 
   Widget _buildScreen(int index) {

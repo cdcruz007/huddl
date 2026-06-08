@@ -44,6 +44,7 @@ import '../../services/firestore_service.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 import '../search/unified_search_screen.dart';
 import 'package:lottie/lottie.dart';
+import '../main_shell.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
@@ -105,6 +106,12 @@ class _GroupsScreenState extends State<GroupsScreen>
         setState(() {});      // rebuild hint text + header icons
       }
     });
+    // Subscribe to shell tab changes so the Connect logo replays on return.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        MainShell.shellKey.currentState?.tabNotifier.addListener(_onShellTabChange);
+      }
+    });
   }
 
   void _clearSearch() {
@@ -124,6 +131,7 @@ class _GroupsScreenState extends State<GroupsScreen>
 
   @override
   void dispose() {
+    MainShell.shellKey.currentState?.tabNotifier.removeListener(_onShellTabChange);
     _groupsChangedNotifier.dispose();
     _searchNotifier.dispose();
     _searchController.dispose();
@@ -131,6 +139,15 @@ class _GroupsScreenState extends State<GroupsScreen>
     _tabController.dispose();
     _connectLottieCtrl.dispose();
     super.dispose();
+  }
+
+  /// Replay the Connect logo whenever the user returns to the Connect tab (1).
+  void _onShellTabChange() {
+    if (!mounted) return;
+    final idx = MainShell.shellKey.currentState?.tabNotifier.value;
+    if (idx == 1 && !_connectLottieCtrl.isAnimating) {
+      _connectLottieCtrl.forward(from: 0);
+    }
   }
 
   @override

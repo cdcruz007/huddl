@@ -38,6 +38,7 @@ import '../insights/send_hub_screen.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
 import '../search/unified_search_screen.dart';
+import '../main_shell.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:lottie/lottie.dart';
@@ -142,6 +143,8 @@ class EventsScreenState extends State<EventsScreen>
         _meetupService.loadFromFirestore();
         // Load group and event counts for tab badges
         _loadTabCounts();
+        // Subscribe to tab changes so the Discover compass replays on return.
+        MainShell.shellKey.currentState?.tabNotifier.addListener(_onShellTabChange);
       }
     });
   }
@@ -157,6 +160,7 @@ class EventsScreenState extends State<EventsScreen>
 
   @override
   void dispose() {
+    MainShell.shellKey.currentState?.tabNotifier.removeListener(_onShellTabChange);
     _tabController.dispose();
 
     _meetupService.removeListener(_refresh);
@@ -169,6 +173,15 @@ class EventsScreenState extends State<EventsScreen>
     _insightsSearchTrigger.dispose();
     _discoverLottieCtrl.dispose();
     super.dispose();
+  }
+
+  /// Replay the Discover compass logo whenever the user returns to Discover (tab 2).
+  void _onShellTabChange() {
+    if (!mounted) return;
+    final idx = MainShell.shellKey.currentState?.tabNotifier.value;
+    if (idx == 2 && !_discoverLottieCtrl.isAnimating) {
+      _discoverLottieCtrl.forward(from: 0);
+    }
   }
 
   void _refresh() {

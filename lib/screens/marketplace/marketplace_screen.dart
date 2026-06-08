@@ -26,6 +26,7 @@ import '../../widgets/huddl_character.dart';
 import '../../widgets/animations/huddl_loading_states.dart';
 import '../search/unified_search_screen.dart';
 import '../ai/ai_listing_generator_sheet.dart';
+import '../main_shell.dart';
 
 
 
@@ -548,6 +549,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       _service.addListener(_onServiceChange);
       // Load real listings from Firestore on first open
       _loadListingsFromFirestore();
+      // Subscribe to tab changes so the logo replays on every return to Market.
+      MainShell.shellKey.currentState?.tabNotifier.addListener(_onShellTabChange);
     });
 
   }
@@ -662,6 +665,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   @override
   void dispose() {
+    MainShell.shellKey.currentState?.tabNotifier.removeListener(_onShellTabChange);
     _lottieCtrl.dispose();
     _tabController.dispose();
     _searchController.dispose();
@@ -669,6 +673,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     _service.removeListener(_onServiceChange);
     _tabController.removeListener(_onTabChanged);
     super.dispose();
+  }
+
+  /// Replay the Market bag logo whenever the user returns to the Market tab (3).
+  void _onShellTabChange() {
+    if (!mounted) return;
+    final idx = MainShell.shellKey.currentState?.tabNotifier.value;
+    if (idx == 3 && !_lottieCtrl.isAnimating) {
+      _lottieCtrl.forward(from: 0);
+    }
   }
 
   void _onTabChanged() {
