@@ -120,3 +120,4 @@ flutter:
     - assets/huddl_market_bag.json
     - assets/huddl_discover_compass.json
     - assets/huddl_connect.json
+    - assets/huddl_profile.json

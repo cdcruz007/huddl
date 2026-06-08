@@ -52,6 +52,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_text_styles.dart';
+import 'package:lottie/lottie.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -60,7 +61,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with TickerProviderStateMixin {
   final OnboardingDataService _onboarding = OnboardingDataService();
   final DefaultGroupService _groupService = DefaultGroupService();
   final PostcodeService _postcodeService = PostcodeService();
@@ -127,9 +129,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // App version — populated dynamically from pubspec.yaml via package_info_plus
   String _appVersion = '1.0.0';
 
+  // Lottie controller for the Profile header identity animation (play once).
+  late AnimationController _profileLottieCtrl;
+
   @override
   void initState() {
     super.initState();
+    _profileLottieCtrl = AnimationController(vsync: this);
     _blockService.initialize();
     _feedbackService.initialize();
     _subscriptionService.initialize();
@@ -141,6 +147,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _subscriptionService.addListener(_onSubChange);
         _loadProfileData();
         _loadSettings();
+        // Subscribe to shell tab changes so the Profile logo replays on return.
+        MainShell.shellKey.currentState?.tabNotifier.addListener(_onShellTabChange);
       }
     });
   }
@@ -151,8 +159,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    MainShell.shellKey.currentState?.tabNotifier.removeListener(_onShellTabChange);
+    _profileLottieCtrl.dispose();
     _subscriptionService.removeListener(_onSubChange);
     super.dispose();
+  }
+
+  /// Replay the Profile logo whenever the user returns to Profile tab (4).
+  void _onShellTabChange() {
+    if (!mounted) return;
+    final idx = MainShell.shellKey.currentState?.tabNotifier.value;
+    if (idx == 4 && !_profileLottieCtrl.isAnimating) {
+      _profileLottieCtrl.forward(from: 0);
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -1106,16 +1125,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('My Profile', style: HuddlText.display()),
-              IconButton(
-                icon: Icon(HuddlIcons.settings,
-                    color: hc.textPrimary),
-                onPressed: _openSettingsSheet,
-              ),
-            ],
+          SizedBox(
+            height: 64,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 56,
+                  child: Lottie.asset(
+                    'assets/huddl_profile.json',
+                    controller: _profileLottieCtrl,
+                    fit: BoxFit.fitHeight,
+                    onLoaded: (comp) {
+                      _profileLottieCtrl.duration = comp.duration;
+                      _profileLottieCtrl.forward(from: 0);
+                    },
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(HuddlIcons.settings,
+                      color: hc.textPrimary),
+                  onPressed: _openSettingsSheet,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           // Avatar + camera badge
