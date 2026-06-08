@@ -1357,8 +1357,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   // == HEADER ================================================================
-  // Market header: huddl_pass Lottie logo (44px, transparent) + action icons on
-  // same row; BoroughScopeChip on its own row below. No coloured background.
+  // Market header: huddl_market_bag Lottie logo (40px, transparent) + BoroughScopeChip
+  // + action icons all on one row. No coloured background.
   // _lottieCtrl plays once on load; replays on pull-to-refresh.
 
   Widget _buildHeader(HuddlContextColors hc) {
@@ -1373,24 +1373,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             crossFadeState: _isSearchActive
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            // First child: logo row (Lottie 40px + actions) + borough chip row
+            // First child: single row — Lottie logo + borough chip + actions
             firstChild: Padding(
               padding: const EdgeInsets.only(top: 6, bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Row 1: Lottie logo (left) + action icons (right) ────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Lottie inline logo — 44px tall, transparent bg
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                        // Lottie inline logo — 40px tall, transparent bg
                         SizedBox(
-                          height: 44,
+                          height: 40,
                           child: Lottie.asset(
-                            'assets/huddl_pass.json',
+                            'assets/huddl_market_bag.json',
                             controller: _lottieCtrl,
                             fit: BoxFit.fitHeight,
                             onLoaded: (comp) {
@@ -1399,6 +1394,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             },
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        // Borough chip — inline, right of logo
+                        const BoroughScopeChip(feature: HuddlFeature.marketplace),
                         const Spacer(),
                         // Grid/list toggle
                         ScaleOnPress(
@@ -1458,16 +1456,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // ── Row 2: Borough chip on its own line ─────────────────
-                  const Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: BoroughScopeChip(feature: HuddlFeature.marketplace),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             // Second child: inline search bar — shown when _isSearchActive
