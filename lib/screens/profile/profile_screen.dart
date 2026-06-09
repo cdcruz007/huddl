@@ -1133,7 +1133,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 SizedBox(
                   height: 56,
                   child: Lottie.asset(
-                    'assets/huddl_profile.json',
+                    'assets/huddl_profile_3d.json',
                     controller: _profileLottieCtrl,
                     fit: BoxFit.fitHeight,
                     onLoaded: (comp) {

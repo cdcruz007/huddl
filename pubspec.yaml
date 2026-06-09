@@ -121,3 +121,7 @@ flutter:
     - assets/huddl_discover_compass.json
     - assets/huddl_connect.json
     - assets/huddl_profile.json
+    - assets/huddl_market_3d.json
+    - assets/huddl_discover_3d.json
+    - assets/huddl_connect_3d.json
+    - assets/huddl_profile_3d.json

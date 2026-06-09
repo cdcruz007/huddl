@@ -178,7 +178,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                         SizedBox(
                           height: 56,
                           child: Lottie.asset(
-                            'assets/huddl_connect.json',
+                            'assets/huddl_connect_3d.json',
                             controller: _connectLottieCtrl,
                             fit: BoxFit.fitHeight,
                             onLoaded: (comp) {

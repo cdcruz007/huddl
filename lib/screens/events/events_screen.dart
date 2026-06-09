@@ -424,7 +424,7 @@ class EventsScreenState extends State<EventsScreen>
                       SizedBox(
                         height: 56,
                         child: Lottie.asset(
-                          'assets/huddl_discover_compass.json',
+                          'assets/huddl_discover_3d.json',
                           controller: _discoverLottieCtrl,
                           fit: BoxFit.fitHeight,
                           onLoaded: (comp) {

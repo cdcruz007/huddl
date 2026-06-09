@@ -1396,7 +1396,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         SizedBox(
                           height: 56,
                           child: Lottie.asset(
-                            'assets/huddl_market_bag.json',
+                            'assets/huddl_market_3d.json',
                             controller: _lottieCtrl,
                             fit: BoxFit.fitHeight,
                             onLoaded: (comp) {
