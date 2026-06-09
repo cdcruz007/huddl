@@ -170,51 +170,58 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
+                    // Full-width Stack header: bubbles travel left→right,
+                    // settle on the right. Search icon pinned top-right.
                     firstChild: SizedBox(
-                      height: 64,
-                      child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 56,
-                          child: Lottie.asset(
-                            'assets/huddl_connect_3d.json',
-                            controller: _connectLottieCtrl,
-                            fit: BoxFit.fitHeight,
-                            onLoaded: (comp) {
-                              _connectLottieCtrl.duration = comp.duration;
-                              _connectLottieCtrl.forward(from: 0);
-                            },
+                      height: 90,                   // matches Market/Discover header height
+                      child: Stack(
+                        children: [
+                          // Background: full-width bubble Lottie
+                          Positioned.fill(
+                            child: Lottie.asset(
+                              'assets/huddl_connect_3d.json',
+                              controller: _connectLottieCtrl,
+                              fit: BoxFit.fitWidth,
+                              alignment: Alignment.centerLeft,
+                              onLoaded: (comp) {
+                                _connectLottieCtrl.duration = comp.duration;
+                                _connectLottieCtrl.forward(from: 0);
+                              },
+                            ),
                           ),
-                        ),
-                        const Spacer(),
-                        // 🔍 Search trigger icon — top-right, above tabs.
-                        // Tap → inline group search. Long-press → unified search.
-                        Tooltip(
-                          message: 'Search · Hold for universal search',
-                          child: GestureDetector(
-                            onTap: () {
-                              HuddlAnimations.lightTap();
-                              setState(() => _isSearchActive = true);
-                              Future.microtask(() => _searchFocusNode.requestFocus());
-                            },
-                            onLongPress: () {
-                              HuddlAnimations.mediumTap();
-                              Navigator.of(context).push(HuddlSpringPageRoute(
-                                page: const UnifiedSearchScreen(),
-                              ));
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Icon(
-                                HuddlIcons.search,
-                                color: context.hc.textSecondary,
-                                size: 22,
+                          // Foreground: search icon pinned top-right, fully tappable
+                          Positioned(
+                            right: 8,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Tooltip(
+                                message: 'Search · Hold for universal search',
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HuddlAnimations.lightTap();
+                                    setState(() => _isSearchActive = true);
+                                    Future.microtask(() => _searchFocusNode.requestFocus());
+                                  },
+                                  onLongPress: () {
+                                    HuddlAnimations.mediumTap();
+                                    Navigator.of(context).push(HuddlSpringPageRoute(
+                                      page: const UnifiedSearchScreen(),
+                                    ));
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(
+                                      HuddlIcons.search,
+                                      color: context.hc.textSecondary,
+                                      size: 22,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
                       ),
                     ),
                     // Expanded search bar — replaces title row
