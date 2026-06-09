@@ -1386,15 +1386,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 : CrossFadeState.showFirst,
             // First child: single row — 56px bag logo + actions (no borough chip)
             firstChild: SizedBox(
-              height: 64,
+              height: 76,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                        // Lottie bag logo — 56px tall, transparent bg
+                        // Lottie bag logo — 72px tall (canvas has transparent padding; matches 56px FAB visually)
                         SizedBox(
-                          height: 56,
+                          height: 72,
                           child: Lottie.asset(
                             'assets/huddl_market_3d.json',
                             controller: _lottieCtrl,
