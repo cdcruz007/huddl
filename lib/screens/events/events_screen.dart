@@ -410,123 +410,129 @@ class EventsScreenState extends State<EventsScreen>
                 // ── Header: title row (padded) ────────────────────
                 // Split into two Containers so the TabBar below can be
                 // full-width while the title row keeps 16px side insets.
+                // ── Header: full-width coin-flip Lottie + search icon ──────────
+                // 1000×260 canvas @ ~360px wide → ~93px tall; rounded to 90.
+                // Compass coin-flips in from right, settles top-left (~56px visual).
+                // Search icon pinned top-right via Positioned, fully tappable.
                 ColoredBox(
                   color: context.hc.surface,
                   child: SizedBox(
-                  height: 64,
-                  child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Compass logo — 56px, transparent bg, play once on load
-                      SizedBox(
-                        height: 56,
-                        child: Lottie.asset(
-                          'assets/huddl_discover_3d.json',
-                          controller: _discoverLottieCtrl,
-                          fit: BoxFit.fitHeight,
-                          onLoaded: (comp) {
-                            _discoverLottieCtrl.duration = comp.duration;
-                            _discoverLottieCtrl.forward(from: 0);
-                          },
+                    height: 90,
+                    child: Stack(
+                      children: [
+                        // Background: full-width Lottie, no horizontal padding
+                        Positioned.fill(
+                          child: Lottie.asset(
+                            'assets/huddl_discover_coin.json',
+                            controller: _discoverLottieCtrl,
+                            fit: BoxFit.fitWidth,
+                            alignment: Alignment.centerLeft,
+                            onLoaded: (comp) {
+                              _discoverLottieCtrl.duration = comp.duration;
+                              _discoverLottieCtrl.forward(from: 0);
+                            },
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          // Search icon on Groups/Meetups/Events/Services tabs.
-                          // Tap → inline tab search. Long-press → unified search.
-                          if (_selectedTab == 0)
-                            Tooltip(
-                              message: 'Search groups · Hold for universal search',
-                              child: GestureDetector(
-                                onTap: () {
-                                  HuddlAnimations.lightTap();
-                                  _groupSearchTrigger.value = true;
-                                },
-                                onLongPress: () {
-                                  HuddlAnimations.mediumTap();
-                                  Navigator.of(context).push(HuddlSpringPageRoute(
-                                    page: const UnifiedSearchScreen(),
-                                  ));
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Icon(HuddlIcons.search,
-                                      color: context.hc.textPrimary, size: 24),
+                        // Foreground: tab-conditional search icon pinned right
+                        Positioned(
+                          right: 8,
+                          top: 0,
+                          bottom: 0,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Search icon on Groups/Meetups/Events/Services tabs.
+                              // Tap → inline tab search. Long-press → unified search.
+                              if (_selectedTab == 0)
+                                Tooltip(
+                                  message: 'Search groups · Hold for universal search',
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HuddlAnimations.lightTap();
+                                      _groupSearchTrigger.value = true;
+                                    },
+                                    onLongPress: () {
+                                      HuddlAnimations.mediumTap();
+                                      Navigator.of(context).push(HuddlSpringPageRoute(
+                                        page: const UnifiedSearchScreen(),
+                                      ));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(HuddlIcons.search,
+                                          color: context.hc.textPrimary, size: 24),
+                                    ),
+                                  ),
+                                )
+                              else if (_selectedTab == 1)
+                                Tooltip(
+                                  message: 'Search nearby · Hold for universal search',
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HuddlAnimations.lightTap();
+                                      _nearbySearchTrigger.value = true;
+                                    },
+                                    onLongPress: () {
+                                      HuddlAnimations.mediumTap();
+                                      Navigator.of(context).push(HuddlSpringPageRoute(
+                                        page: const UnifiedSearchScreen(),
+                                      ));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(HuddlIcons.search,
+                                          color: context.hc.textPrimary, size: 24),
+                                    ),
+                                  ),
+                                )
+                              else if (_selectedTab == 2)
+                                Tooltip(
+                                  message: 'Search services · Hold for universal search',
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HuddlAnimations.lightTap();
+                                      _serviceSearchTrigger.value = true;
+                                    },
+                                    onLongPress: () {
+                                      HuddlAnimations.mediumTap();
+                                      Navigator.of(context).push(HuddlSpringPageRoute(
+                                        page: const UnifiedSearchScreen(),
+                                      ));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(HuddlIcons.search,
+                                          color: context.hc.textPrimary, size: 24),
+                                    ),
+                                  ),
+                                )
+                              else if (_selectedTab == 3)
+                                Tooltip(
+                                  message: 'Search insights · Hold for universal search',
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HuddlAnimations.lightTap();
+                                      _insightsSearchTrigger.value = true;
+                                    },
+                                    onLongPress: () {
+                                      HuddlAnimations.mediumTap();
+                                      Navigator.of(context).push(HuddlSpringPageRoute(
+                                        page: const UnifiedSearchScreen(),
+                                      ));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(HuddlIcons.search,
+                                          color: context.hc.textPrimary, size: 24),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            )
-                          else if (_selectedTab == 1)
-                            Tooltip(
-                              message: 'Search nearby · Hold for universal search',
-                              child: GestureDetector(
-                                onTap: () {
-                                  HuddlAnimations.lightTap();
-                                  _nearbySearchTrigger.value = true;
-                                },
-                                onLongPress: () {
-                                  HuddlAnimations.mediumTap();
-                                  Navigator.of(context).push(HuddlSpringPageRoute(
-                                    page: const UnifiedSearchScreen(),
-                                  ));
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Icon(HuddlIcons.search,
-                                      color: context.hc.textPrimary, size: 24),
-                                ),
-                              ),
-                            )
-                          else if (_selectedTab == 2)
-                            Tooltip(
-                              message: 'Search services · Hold for universal search',
-                              child: GestureDetector(
-                                onTap: () {
-                                  HuddlAnimations.lightTap();
-                                  _serviceSearchTrigger.value = true;
-                                },
-                                onLongPress: () {
-                                  HuddlAnimations.mediumTap();
-                                  Navigator.of(context).push(HuddlSpringPageRoute(
-                                    page: const UnifiedSearchScreen(),
-                                  ));
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Icon(HuddlIcons.search,
-                                      color: context.hc.textPrimary, size: 24),
-                                ),
-                              ),
-                            )
-                          else if (_selectedTab == 3)
-                            Tooltip(
-                              message: 'Search insights · Hold for universal search',
-                              child: GestureDetector(
-                                onTap: () {
-                                  HuddlAnimations.lightTap();
-                                  _insightsSearchTrigger.value = true;
-                                },
-                                onLongPress: () {
-                                  HuddlAnimations.mediumTap();
-                                  Navigator.of(context).push(HuddlSpringPageRoute(
-                                    page: const UnifiedSearchScreen(),
-                                  ));
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Icon(HuddlIcons.search,
-                                      color: context.hc.textPrimary, size: 24),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  ), // Padding
-                  ), // SizedBox(height:64)
                 ), // ColoredBox title row
                 // ── Header: tab bar (full-width, no side padding) ──
                 // ColoredBox + full-width Row as spacer forces the surface
