@@ -170,26 +170,116 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Full-width Stack header: bubbles travel left→right,
-                    // settle on the right. Search icon pinned top-right.
+                    // Walking-bubbles header: Lottie plays once on mount,
+                    // holds final frame. "Hi"/"Hello" text fades in synced
+                    // to each bubble's pulse via AnimatedBuilder.
                     firstChild: SizedBox(
-                      height: 90,                   // matches Market/Discover header height
+                      height: 90,
                       child: Stack(
                         children: [
-                          // Background: full-width bubble Lottie
-                          Positioned.fill(
-                            child: Lottie.asset(
-                              'assets/huddl_connect_3d.json',
-                              controller: _connectLottieCtrl,
-                              fit: BoxFit.fitWidth,
-                              alignment: Alignment.centerLeft,
-                              onLoaded: (comp) {
-                                _connectLottieCtrl.duration = comp.duration;
-                                _connectLottieCtrl.forward(from: 0);
+                          // ── Walking-bubbles Lottie + synced text overlays ─
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            // The canvas is 240×96; rendered at height=90 the
+                            // scale factor is 90/96 ≈ 0.9375. Bubble A rests
+                            // at canvas (46,44) → rendered (43,41). Bubble B
+                            // rests at canvas (94,44) → rendered (88,41).
+                            child: AnimatedBuilder(
+                              animation: _connectLottieCtrl,
+                              builder: (context, child) {
+                                // frame 0–120, total 120 frames
+                                final frame =
+                                    _connectLottieCtrl.value * 120;
+                                final showHi    = frame >= 60.0;
+                                final showHello = frame >= 84.0;
+                                // Scale canvas→render: header height / canvas height
+                                const double scale = 90.0 / 96.0;
+                                // Bubble A rests at canvas x=46, y=44 (centre)
+                                const double aX = 46 * scale;
+                                const double aY = 44 * scale;
+                                // Bubble B rests at canvas x=94, y=44 (centre)
+                                const double bX = 94 * scale;
+                                const double bY = 44 * scale;
+                                // Bubble body width ≈ 44 canvas px → rendered ≈ 41px
+                                const double bubW = 44 * scale;
+                                const double bubH = 37 * scale;
+                                return SizedBox(
+                                  // width matches canvas aspect at render height
+                                  width: 240 * scale,
+                                  height: 90,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      // Lottie animation
+                                      Positioned.fill(
+                                        child: child!,
+                                      ),
+                                      // "Hi" over bubble A
+                                      Positioned(
+                                        left: aX - bubW / 2,
+                                        top:  aY - bubH / 2,
+                                        width: bubW,
+                                        height: bubH,
+                                        child: AnimatedOpacity(
+                                          duration: const Duration(milliseconds: 80),
+                                          opacity: showHi ? 1.0 : 0.0,
+                                          child: Center(
+                                            child: Text(
+                                              'Hi',
+                                              style: HuddlText.caption(
+                                                color: Colors.white,
+                                                weight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      // "Hello" over bubble B
+                                      Positioned(
+                                        left: bX - bubW / 2,
+                                        top:  bY - bubH / 2,
+                                        width: bubW,
+                                        height: bubH,
+                                        child: AnimatedOpacity(
+                                          duration: const Duration(milliseconds: 80),
+                                          opacity: showHello ? 1.0 : 0.0,
+                                          child: Center(
+                                            child: Text(
+                                              'Hello',
+                                              style: HuddlText.caption(
+                                                color: Colors.white,
+                                                weight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               },
+                              // Lottie widget is the child passed into builder
+                              child: Lottie.asset(
+                                'assets/huddl_walking_bubbles.json',
+                                controller: _connectLottieCtrl,
+                                fit: BoxFit.fitHeight,
+                                alignment: Alignment.centerLeft,
+                                onLoaded: (comp) {
+                                  _connectLottieCtrl.duration = comp.duration;
+                                  // Respect reduce-motion: jump to final frame
+                                  if (MediaQuery.of(context)
+                                      .disableAnimations) {
+                                    _connectLottieCtrl.value = 1.0;
+                                  } else {
+                                    _connectLottieCtrl.forward(from: 0);
+                                  }
+                                },
+                              ),
                             ),
                           ),
-                          // Foreground: search icon pinned top-right, fully tappable
+                          // ── Search icon pinned top-right ─────────────────
                           Positioned(
                             right: 8,
                             top: 0,
