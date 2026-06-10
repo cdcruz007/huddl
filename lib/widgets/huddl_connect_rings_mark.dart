@@ -55,11 +55,16 @@ class HuddlConnectRingsMarkState extends State<HuddlConnectRingsMark>
   // The inactive grey tint — matches nav-bar sibling treatment
   static const Color _inactiveColor = Color(0xFF949494); // HuddlColors.textHint
 
+  // Whether onLoaded has fired and set a duration — used to gate replay()
+  bool _loaded = false;
+
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this);
-    // First play fires once onLoaded has set _ctrl.duration
+    // Start at value=1.0 (final frame) so the rings are immediately visible
+    // even before the Lottie asset finishes decoding. Both layers are fully
+    // opaque at frame 61, so this guarantees no blank-icon flash on first render.
+    _ctrl = AnimationController(vsync: this, value: 1.0);
   }
 
   @override
@@ -69,11 +74,12 @@ class HuddlConnectRingsMarkState extends State<HuddlConnectRingsMark>
   }
 
   /// Play the animation once from frame 0.
-  /// Call this when the Connect tab becomes active.
+  /// Called when the Connect tab becomes active (via GlobalKey from main_shell).
   void replay() {
+    if (!_loaded) return; // duration not set yet — skip, icon is already visible
     final reducedMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (reducedMotion) {
-      if (_ctrl.duration != null) _ctrl.value = 1.0;
+      _ctrl.value = 1.0;
       return;
     }
     if (!_ctrl.isAnimating) {
@@ -85,22 +91,35 @@ class HuddlConnectRingsMarkState extends State<HuddlConnectRingsMark>
   Widget build(BuildContext context) {
     final reducedMotion = MediaQuery.of(context).disableAnimations;
 
-    Widget lottie = Lottie.asset(
-      'assets/huddl_connect_rings.json',
-      controller: _ctrl,
-      width: widget.size,
-      height: widget.size,
-      fit: BoxFit.contain,
-      onLoaded: (comp) {
-        if (!mounted) return;
-        _ctrl.duration = comp.duration;
-        if (reducedMotion) {
-          _ctrl.value = 1.0;
-        } else {
-          _ctrl.forward(from: 0);
-        }
-      },
-    );
+    Widget lottie;
+
+    if (!_loaded) {
+      // Duration not yet known — render without a controller so Lottie
+      // plays/holds its own final frame (never shows a blank first frame).
+      lottie = Lottie.asset(
+        'assets/huddl_connect_rings.json',
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+        repeat: false,
+        onLoaded: (comp) {
+          if (!mounted) return;
+          _ctrl.duration = comp.duration;
+          _ctrl.value = 1.0; // snap to final frame before handing over
+          setState(() => _loaded = true);
+          if (!reducedMotion) _ctrl.forward(from: 0);
+        },
+      );
+    } else {
+      // Duration known — hand controller to Lottie for replay() support.
+      lottie = Lottie.asset(
+        'assets/huddl_connect_rings.json',
+        controller: _ctrl,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+      );
+    }
 
     // Inactive: tint to textHint grey (mirrors how Icon siblings look unselected)
     if (!widget.isActive) {
