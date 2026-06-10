@@ -45,6 +45,7 @@ import 'group_chat_screen.dart' show GroupChatScreen;
 import '../search/unified_search_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../main_shell.dart';
+import '../../widgets/huddl_connect_rings_mark.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
@@ -1903,6 +1904,9 @@ class _MessagesTabState extends State<_MessagesTab> {
               }),
             ],
 
+            // ── Your groups (system borough groups) ─────────────────────
+            if (!isSearchActive) _buildSystemGroupsSection(),
+
             // ── Content area ──────────────────────────────────────────
             Expanded(
               child: isSearchActive
@@ -2481,6 +2485,92 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
+  // ── Your groups section ───────────────────────────────────────────────────
+  // Shows all default (system) borough groups the user belongs to as a
+  // visually primary horizontal-scroll section at the top of the Messages tab,
+  // above the conversation list. Hidden entirely if the user has no default
+  // groups (isDefault == true). Never gated — these are permanently free.
+  //
+  // Data source: _allGroups.where((g) => g.isDefault) — already loaded by
+  // _loadGroups(), zero additional service calls.
+  //
+  // Tapping a card navigates into the group chat via the existing /group_chat
+  // route, passing the same argument map used throughout the screen.
+
+  Widget _buildSystemGroupsSection() {
+    final systemGroups = _allGroups.where((g) => g.isDefault).toList();
+    if (systemGroups.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      color: context.hc.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Section header ────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                // Two-ring Lottie mark — plays R→L on mount, holds at rest
+                HuddlConnectRingsMark(size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Your groups',
+                  style: HuddlText.body(
+                    color: context.hc.textPrimary,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // ── Horizontal card strip ─────────────────────────
+          SizedBox(
+            height: 112,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              itemCount: systemGroups.length,
+              itemBuilder: (context, i) {
+                final group = systemGroups[i];
+                return Padding(
+                  padding: EdgeInsets.only(right: i < systemGroups.length - 1 ? 10 : 0),
+                  child: _SystemGroupCard(
+                    group: group,
+                    onTap: () {
+                      HuddlAnimations.lightTap();
+                      Navigator.pushNamed(context, '/group_chat', arguments: {
+                        'groupId': group.id,
+                        'groupName': group.name,
+                        'groupImageUrl': group.imageUrl,
+                        'isDefaultGroup': group.isDefault,
+                        'isPrivate': group.isPrivate,
+                        'creatorId': group.creatorId,
+                        'creatorBorough': group.creatorBorough,
+                        'targetAudience': group.targetAudience,
+                        'groupCategory': group.category,
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          // ── Divider ───────────────────────────────────────
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: context.hc.divider,
+            indent: 16,
+            endIndent: 16,
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
   /// Build search results view with conversation matches + deep message matches.
   Widget _buildSearchResults(
       List<_MessageListItem> conversationMatches, bool hasDeepResults) {
@@ -3000,6 +3090,97 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SYSTEM GROUP CARD — compact branded card for "Your groups" horizontal strip
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Shows group image (top, rounded corners), name (2-line truncated), and member
+// count. Uses peachSurface background + primaryLight border to signal "primary /
+// system" status vs the plain rows below. Width is fixed so the strip scrolls
+// predictably regardless of name length.
+
+class _SystemGroupCard extends StatelessWidget {
+  final _GroupItem group;
+  final VoidCallback onTap;
+
+  const _SystemGroupCard({required this.group, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 88,
+        height: 112,
+        decoration: BoxDecoration(
+          color: HuddlColors.peachSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: HuddlColors.primaryLight.withValues(alpha: 0.55),
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Group image (top half) ────────────────────
+              Expanded(
+                flex: 5,
+                child: group.imageUrl.isNotEmpty
+                    ? HuddlNetworkImage(
+                        url: group.imageUrl,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        color: HuddlColors.primaryPale,
+                        child: const Icon(
+                          HuddlIcons.usersThree,
+                          size: 28,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+              ),
+              // ── Name + member count (bottom half) ─────────
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        group.name,
+                        style: HuddlText.caption(
+                          weight: FontWeight.w600,
+                          color: context.hc.textPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${group.memberCount} members',
+                        style: HuddlText.caption(
+                          color: context.hc.textTertiary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
