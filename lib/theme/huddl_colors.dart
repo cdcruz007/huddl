@@ -74,7 +74,8 @@ class HuddlColors {
   static const Color primary      = Color(0xFFFF965C);  // Figma: "Dark orange"
   static const Color primaryLight = Color(0xFFFFAD7F);  // Figma: "Medium orange"
   static const Color primaryPale  = Color(0xFFFFC7A8);  // Figma: "Light orange"
-  static const Color primaryDark  = Color(0xFFFF965C);  // same as primary
+  static const Color primaryDark      = Color(0xFFFF965C);  // same as primary
+  static const Color connectRingDeep  = Color(0xFFF2743A);  // ring_deep layer tint
 
   /// Peach-tinted surface — backgrounds, cards, hero sections.
   /// Merges: blueBackground(old), peachLight, orangeBg, premiumPurpleLight(old).
