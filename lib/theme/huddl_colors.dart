@@ -76,11 +76,6 @@ class HuddlColors {
   static const Color primaryPale  = Color(0xFFFFC7A8);  // Figma: "Light orange"
   static const Color primaryDark  = Color(0xFFFF965C);  // same as primary
 
-  /// Deeper orange for two-ring Connect mark — Ring B (ring_deep) stroke.
-  /// Role: secondary ring stroke in the Connect section header and nav icon.
-  /// Source: huddl_connect_rings.json layer ring_deep (#F2743A). Decorative only.
-  static const Color connectRingDeep = Color(0xFFF2743A);
-
   /// Peach-tinted surface — backgrounds, cards, hero sections.
   /// Merges: blueBackground(old), peachLight, orangeBg, premiumPurpleLight(old).
   static const Color peachSurface  = Color(0xFFFFF3ED);

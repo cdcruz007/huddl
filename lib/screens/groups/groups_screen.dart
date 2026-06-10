@@ -46,7 +46,6 @@ import '../search/unified_search_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../main_shell.dart';
 
-
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
 
@@ -180,9 +179,9 @@ class _GroupsScreenState extends State<GroupsScreen>
                           // Background: full-width bubble Lottie
                           Positioned.fill(
                             child: Lottie.asset(
-                              'assets/huddl_connect_rings.json',
+                              'assets/huddl_connect_3d.json',
                               controller: _connectLottieCtrl,
-                              fit: BoxFit.contain,
+                              fit: BoxFit.fitWidth,
                               alignment: Alignment.centerLeft,
                               onLoaded: (comp) {
                                 _connectLottieCtrl.duration = comp.duration;
@@ -1904,7 +1903,6 @@ class _MessagesTabState extends State<_MessagesTab> {
               }),
             ],
 
-
             // ── Content area ──────────────────────────────────────────
             Expanded(
               child: isSearchActive
@@ -2483,8 +2481,6 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
-
-
   /// Build search results view with conversation matches + deep message matches.
   Widget _buildSearchResults(
       List<_MessageListItem> conversationMatches, bool hasDeepResults) {
@@ -3005,8 +3001,6 @@ class _MessagesTabState extends State<_MessagesTab> {
   }
 
 }
-
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GROUP MESSAGE ROW — scenic photo avatar, unread badge, online dot, pin icon
