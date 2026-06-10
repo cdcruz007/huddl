@@ -128,4 +128,5 @@ flutter:
     - assets/huddl_connect_3d.json
     - assets/huddl_connect_rings.json
     - assets/huddl_walking_bubbles.json
+    - assets/huddl_marching_bubbles_FINAL.json
     - assets/huddl_profile_3d.json

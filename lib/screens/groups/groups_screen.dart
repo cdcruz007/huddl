@@ -170,53 +170,58 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Walking-bubbles header: Lottie plays once on mount,
+                    // Marching-bubbles header: Lottie plays once on mount,
                     // holds final frame. "Hi"/"Hello" text fades in synced
                     // to each bubble's pulse via AnimatedBuilder.
+                    //
+                    // Canvas: 240×96, 60fps, 136 frames.
+                    // Rendered at SizedBox height=90 (matches Market/Discover):
+                    //   scale = 90/96 = 0.9375
+                    //   bubble_A rests at canvas (44,42) → rendered (41.3, 39.4)
+                    //   bubble_B rests at canvas (92,42) → rendered (86.3, 39.4)
+                    //   body 40×34 canvas → rendered 37.5×31.9
                     firstChild: SizedBox(
                       height: 90,
                       child: Stack(
                         children: [
-                          // ── Walking-bubbles Lottie + synced text overlays ─
+                          // ── Marching-bubbles Lottie + synced text overlays ─
                           Positioned(
                             left: 0,
                             top: 0,
                             bottom: 0,
-                            // The canvas is 240×96; rendered at height=90 the
-                            // scale factor is 90/96 ≈ 0.9375. Bubble A rests
-                            // at canvas (46,44) → rendered (43,41). Bubble B
-                            // rests at canvas (94,44) → rendered (88,41).
                             child: AnimatedBuilder(
                               animation: _connectLottieCtrl,
                               builder: (context, child) {
-                                // frame 0–120, total 120 frames
-                                final frame =
-                                    _connectLottieCtrl.value * 120;
-                                final showHi    = frame >= 60.0;
-                                final showHello = frame >= 84.0;
-                                // Scale canvas→render: header height / canvas height
+                                // 136 total frames
+                                final frame = _connectLottieCtrl.value * 136;
+                                // "Hi"  → bubble_A pulse starts at frame 76
+                                // "Hello" → bubble_B pulse starts at frame 100
+                                final showHi    = frame >= 76.0;
+                                final showHello = frame >= 100.0;
+
+                                // Scale canvas (240×96) → render height 90
                                 const double scale = 90.0 / 96.0;
-                                // Bubble A rests at canvas x=46, y=44 (centre)
-                                const double aX = 46 * scale;
-                                const double aY = 44 * scale;
-                                // Bubble B rests at canvas x=94, y=44 (centre)
-                                const double bX = 94 * scale;
-                                const double bY = 44 * scale;
-                                // Bubble body width ≈ 44 canvas px → rendered ≈ 41px
-                                const double bubW = 44 * scale;
-                                const double bubH = 37 * scale;
+
+                                // bubble_A rest: canvas (44, 42)
+                                const double aX = 44 * scale;
+                                const double aY = 42 * scale;
+                                // bubble_B rest: canvas (92, 42)
+                                const double bX = 92 * scale;
+                                const double bY = 42 * scale;
+                                // body 40×34 canvas px → rendered
+                                const double bubW = 40 * scale;
+                                const double bubH = 34 * scale;
+
                                 return SizedBox(
-                                  // width matches canvas aspect at render height
+                                  // Width from canvas aspect at render height
                                   width: 240 * scale,
                                   height: 90,
                                   child: Stack(
                                     clipBehavior: Clip.none,
                                     children: [
-                                      // Lottie animation
-                                      Positioned.fill(
-                                        child: child!,
-                                      ),
-                                      // "Hi" over bubble A
+                                      Positioned.fill(child: child!),
+
+                                      // "Hi" over bubble_A
                                       Positioned(
                                         left: aX - bubW / 2,
                                         top:  aY - bubH / 2,
@@ -230,13 +235,14 @@ class _GroupsScreenState extends State<GroupsScreen>
                                               'Hi',
                                               style: HuddlText.caption(
                                                 color: Colors.white,
-                                                weight: FontWeight.bold,
+                                                weight: FontWeight.w600,
                                               ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                      // "Hello" over bubble B
+
+                                      // "Hello" over bubble_B
                                       Positioned(
                                         left: bX - bubW / 2,
                                         top:  bY - bubH / 2,
@@ -250,7 +256,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                                               'Hello',
                                               style: HuddlText.caption(
                                                 color: Colors.white,
-                                                weight: FontWeight.bold,
+                                                weight: FontWeight.w600,
                                               ),
                                             ),
                                           ),
@@ -260,17 +266,17 @@ class _GroupsScreenState extends State<GroupsScreen>
                                   ),
                                 );
                               },
-                              // Lottie widget is the child passed into builder
                               child: Lottie.asset(
-                                'assets/huddl_walking_bubbles.json',
+                                'assets/huddl_marching_bubbles_FINAL.json',
                                 controller: _connectLottieCtrl,
+                                // fitHeight: bubble height = 90px (same as
+                                // compass/bag). Width follows 240:96 aspect.
                                 fit: BoxFit.fitHeight,
                                 alignment: Alignment.centerLeft,
                                 onLoaded: (comp) {
                                   _connectLottieCtrl.duration = comp.duration;
-                                  // Respect reduce-motion: jump to final frame
-                                  if (MediaQuery.of(context)
-                                      .disableAnimations) {
+                                  // Reduce-motion: skip to final frame
+                                  if (MediaQuery.of(context).disableAnimations) {
                                     _connectLottieCtrl.value = 1.0;
                                   } else {
                                     _connectLottieCtrl.forward(from: 0);
