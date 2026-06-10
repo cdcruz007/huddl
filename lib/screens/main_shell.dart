@@ -17,7 +17,6 @@ import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 import '../constants/app_text_styles.dart';
-import '../widgets/huddl_connect_rings_mark.dart';
 // huddl_spring_animations used via home_screen.dart (HuddlSpringPageRoute on nav pushes)
 
 class MainShell extends StatefulWidget {
@@ -486,10 +485,6 @@ class _NavItemState extends State<_NavItem>
   late Animation<double> _scale;
   late Animation<double> _iconOpacity;
 
-  // Key for the Connect rings mark so we can call replay() from didUpdateWidget
-  final GlobalKey<HuddlConnectRingsMarkState> _ringsKey =
-      GlobalKey<HuddlConnectRingsMarkState>();
-
   bool get _isActive => widget.index == widget.currentIndex;
 
   @override
@@ -518,11 +513,6 @@ class _NavItemState extends State<_NavItem>
     final isNowActive = widget.index == widget.currentIndex;
     if (!wasActive && isNowActive) {
       _ctrl.forward(from: 0);
-      // Replay the rings animation when Connect tab becomes active
-      if (widget.index == 1) {
-        WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _ringsKey.currentState?.replay());
-      }
     } else if (wasActive && !isNowActive) {
       _ctrl.reverse();
     }
@@ -572,28 +562,19 @@ class _NavItemState extends State<_NavItem>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // ── Connect tab (index 1): two-ring Lottie mark ──
-                        if (widget.index == 1) ...[  
-                          HuddlConnectRingsMark(
-                            key: _ringsKey,
-                            size: 22,
-                            isActive: _isActive,
-                          ),
-                        ] else ...[
-                          // Inactive icon fades out
-                          Opacity(
-                            opacity:
-                                (1.0 - _iconOpacity.value).clamp(0.0, 1.0),
-                            child: Icon(widget.tab.icon,
-                                size: 22, color: inactiveColor),
-                          ),
-                          // Active icon fades in
-                          Opacity(
-                            opacity: _iconOpacity.value.clamp(0.0, 1.0),
-                            child: Icon(widget.tab.activeIcon,
-                                size: 22, color: activeColor),
-                          ),
-                        ],
+                        // Inactive icon fades out
+                        Opacity(
+                          opacity:
+                              (1.0 - _iconOpacity.value).clamp(0.0, 1.0),
+                          child: Icon(widget.tab.icon,
+                              size: 22, color: inactiveColor),
+                        ),
+                        // Active icon fades in
+                        Opacity(
+                          opacity: _iconOpacity.value.clamp(0.0, 1.0),
+                          child: Icon(widget.tab.activeIcon,
+                              size: 22, color: activeColor),
+                        ),
                         // Unread badge — top right of icon
                         if (widget.hasUnread)
                           Positioned(
