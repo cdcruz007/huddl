@@ -170,59 +170,56 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Embrace-bubbles header: Lottie plays once on mount,
-                    // holds final embrace frame. "Hi"/"Hello" text fades in
-                    // synced to the embrace moment via AnimatedBuilder.
+                    // Compact-bubbles header: 48×48 square canvas rendered in a
+                    // fixed 90×90 box (BoxFit.contain). Matches the Discover
+                    // compass icon footprint exactly — same SizedBox(90×90).
                     //
-                    // Canvas: 170×86, 60fps, 120 frames.
-                    // Rendered at SizedBox height=90 (matches Market/Discover):
-                    //   scale = 90/86 ≈ 1.0465
-                    //   char_A rests at canvas (76, 34) → rendered (79.5, 35.6)
-                    //   char_B rests at canvas (92, 34) → rendered (96.3, 35.6)
-                    //   body 30×28.5 canvas → rendered 31.4×29.8
-                    //   canvas width rendered: 170×(90/86) ≈ 177.9px
+                    // Canvas: 48×48, 60fps, 70 frames.
+                    // scale = 90/48 = 1.875
+                    //   bubble_A rest: canvas(16,22) → rendered(30.0, 41.25)
+                    //   bubble_B rest: canvas(32,22) → rendered(60.0, 41.25)
+                    //   body 18×17.1 canvas → rendered 33.75×32.06
                     firstChild: SizedBox(
                       height: 90,
                       child: Stack(
                         children: [
-                          // ── Embrace-bubbles Lottie + synced text overlays ──
+                          // ── Compact bubbles in fixed 90×90 square ────────
                           Positioned(
                             left: 0,
                             top: 0,
                             bottom: 0,
-                            child: AnimatedBuilder(
-                              animation: _connectLottieCtrl,
-                              builder: (context, child) {
-                                // 120 total frames
-                                final frame = _connectLottieCtrl.value * 120;
-                                // "Hi"   → embrace begins ~frame 64
-                                // "Hello" → fully embraced  ~frame 78
-                                final showHi    = frame >= 64.0;
-                                final showHello = frame >= 78.0;
+                            child: SizedBox(
+                              width: 90,
+                              height: 90,
+                              child: AnimatedBuilder(
+                                animation: _connectLottieCtrl,
+                                builder: (context, child) {
+                                  // 70 total frames
+                                  final frame = _connectLottieCtrl.value * 70;
+                                  // "Hi"    → bubble_A bounce peak ~frame 32
+                                  // "Hello" → bubble_B bounce peak ~frame 48
+                                  final showHi    = frame >= 32.0;
+                                  final showHello = frame >= 48.0;
 
-                                // Scale canvas (170×86) → render height 90
-                                const double scale = 90.0 / 86.0;
+                                  // Scale canvas (48×48) → render box 90×90
+                                  const double scale = 90.0 / 48.0;
 
-                                // char_A rest: canvas (76, 34)
-                                const double aX = 76 * scale;
-                                const double aY = 34 * scale;
-                                // char_B rest: canvas (92, 34)
-                                const double bX = 92 * scale;
-                                const double bY = 34 * scale;
-                                // body 30×28.5 canvas px → rendered
-                                const double bubW = 30 * scale;
-                                const double bubH = 28.5 * scale;
+                                  // bubble_A rest: canvas (16, 22)
+                                  const double aX = 16 * scale; // 30.0
+                                  const double aY = 22 * scale; // 41.25
+                                  // bubble_B rest: canvas (32, 22)
+                                  const double bX = 32 * scale; // 60.0
+                                  const double bY = 22 * scale; // 41.25
+                                  // body 18×17.1 canvas px → rendered
+                                  const double bubW = 18 * scale; // 33.75
+                                  const double bubH = 17.1 * scale; // 32.06
 
-                                return SizedBox(
-                                  // Width follows canvas aspect at render height
-                                  width: 170 * scale,
-                                  height: 90,
-                                  child: Stack(
+                                  return Stack(
                                     clipBehavior: Clip.none,
                                     children: [
                                       Positioned.fill(child: child!),
 
-                                      // "Hi" over char_A (left bubble)
+                                      // "Hi" centred on bubble_A (left)
                                       Positioned(
                                         left: aX - bubW / 2,
                                         top:  aY - bubH / 2,
@@ -237,17 +234,18 @@ class _GroupsScreenState extends State<GroupsScreen>
                                               style: HuddlText.caption(
                                                 color: Colors.white,
                                                 weight: FontWeight.w600,
-                                              ),
+                                              ).copyWith(fontSize: 9),
                                             ),
                                           ),
                                         ),
                                       ),
 
-                                      // "Hello" over char_B (right bubble)
+                                      // "Hello" — placed just above bubble_B
+                                      // (aY offset keeps it clear of tail)
                                       Positioned(
-                                        left: bX - bubW / 2,
-                                        top:  bY - bubH / 2,
-                                        width: bubW,
+                                        left: bX - bubW / 2 - 3,
+                                        top:  aY - bubH / 2 - 12,
+                                        width: bubW + 6,
                                         height: bubH,
                                         child: AnimatedOpacity(
                                           duration: const Duration(milliseconds: 80),
@@ -258,35 +256,34 @@ class _GroupsScreenState extends State<GroupsScreen>
                                               style: HuddlText.caption(
                                                 color: Colors.white,
                                                 weight: FontWeight.w600,
-                                              ),
+                                              ).copyWith(fontSize: 8),
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
                                         ),
                                       ),
                                     ],
-                                  ),
-                                );
-                              },
-                              child: Lottie.asset(
-                                'assets/huddl_bubbles_embrace_FINAL.json',
-                                controller: _connectLottieCtrl,
-                                // fitHeight: constrain to 90px height — same as
-                                // compass/bag. Width follows 170:86 aspect ratio.
-                                fit: BoxFit.fitHeight,
-                                alignment: Alignment.centerLeft,
-                                onLoaded: (comp) {
-                                  _connectLottieCtrl.duration = comp.duration;
-                                  // Reduce-motion: jump straight to embrace frame
-                                  if (MediaQuery.of(context).disableAnimations) {
-                                    _connectLottieCtrl.value = 1.0;
-                                  } else {
-                                    _connectLottieCtrl.forward(from: 0);
-                                  }
+                                  );
                                 },
+                                child: Lottie.asset(
+                                  'assets/huddl_bubbles_compact_FINAL.json',
+                                  controller: _connectLottieCtrl,
+                                  // contain: fill the 90×90 box without cropping
+                                  fit: BoxFit.contain,
+                                  onLoaded: (comp) {
+                                    _connectLottieCtrl.duration = comp.duration;
+                                    // Reduce-motion: jump to settled final frame
+                                    if (MediaQuery.of(context).disableAnimations) {
+                                      _connectLottieCtrl.value = 1.0;
+                                    } else {
+                                      _connectLottieCtrl.forward(from: 0);
+                                    }
+                                  },
+                                ),
                               ),
                             ),
                           ),
-                          // ── Search icon pinned top-right ─────────────────
+                          // ── Search icon pinned top-right (UNCHANGED) ─────
                           Positioned(
                             right: 8,
                             top: 0,
