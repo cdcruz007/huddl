@@ -160,7 +160,7 @@ class _GroupsScreenState extends State<GroupsScreen>
             // ── Header: Connect title (or search bar) + tabs ──────────
             Container(
               color: context.hc.surface,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -170,22 +170,21 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Compact-bubbles header: 48×48 canvas rendered at 56×56
-                    // (scale = 56/48 = 1.167). Icon is visually compact —
-                    // same weight as the Discover compass visual in its 90px strip.
-                    // Vertically centred in the 90px SizedBox via Align.
+                    // Rings header: 48×48 canvas rendered at 56×56
+                    // (scale ≈ 1.167), centred vertically in the 90px strip.
+                    // Matches the Discover compass footprint exactly.
                     //
-                    // Canvas: 48×48, 60fps, 70 frames.
-                    // scale = 56/48 ≈ 1.167
-                    //   bubble_A rest: canvas(16,22) → rendered(18.67, 25.67)
-                    //   bubble_B rest: canvas(32,22) → rendered(37.33, 25.67)
-                    //   body 18×17.1 canvas → rendered 21.0×19.95
-                    // Text labels sit ABOVE each bubble (speech tag style).
+                    // Canvas: 48×48, 60fps, 72 frames.
+                    //   0–30:  rings slide in from right, meet at x=15,y=24
+                    //   34:    interlinked
+                    //   36–54: heartbeat (2 beats: 120%→104%→114%→100%)
+                    //   54–72: holds interlinked at rest
+                    // No text overlay — rings icon only.
                     firstChild: SizedBox(
                       height: 90,
                       child: Stack(
                         children: [
-                          // ── Compact bubbles: 56×56, centred vertically ───
+                          // ── Rings icon: 56×56, centred vertically ────────
                           Positioned(
                             left: 0,
                             top: 0,
@@ -195,96 +194,19 @@ class _GroupsScreenState extends State<GroupsScreen>
                               child: SizedBox(
                                 width: 56,
                                 height: 56,
-                                child: AnimatedBuilder(
-                                  animation: _connectLottieCtrl,
-                                  builder: (context, child) {
-                                    // 70 total frames
-                                    final frame = _connectLottieCtrl.value * 70;
-                                    // "Hi"    → bubble_A bounce peak ~frame 32
-                                    // "Hello" → bubble_B bounce peak ~frame 48
-                                    final showHi    = frame >= 32.0;
-                                    final showHello = frame >= 48.0;
-
-                                    // Scale canvas (48×48) → render box 56×56
-                                    const double scale = 56.0 / 48.0;
-
-                                    // bubble_A rest: canvas (16, 22) → rendered
-                                    const double aX = 16 * scale; // 18.67
-                                    const double aY = 22 * scale; // 25.67
-                                    // bubble_B rest: canvas (32, 22) → rendered
-                                    const double bX = 32 * scale; // 37.33
-                                    // body 18×17.1 canvas px → rendered
-                                    const double bubW = 18 * scale; // 21.0
-                                    const double bubH = 17.1 * scale; // 19.95
-
-                                    // Speech-tag label box: sits above bubble
-                                    // tall enough for 9sp text (~13px) + 2px gap
-                                    const double labelH = 15.0;
-                                    const double labelW = 24.0; // fits "Hi"
-                                    const double labelWHello = 34.0; // fits "Hello"
-
-                                    return Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        Positioned.fill(child: child!),
-
-                                        // "Hi" label above bubble_A
-                                        Positioned(
-                                          left: aX - labelW / 2,
-                                          top:  aY - bubH / 2 - labelH - 2,
-                                          width: labelW,
-                                          height: labelH,
-                                          child: AnimatedOpacity(
-                                            duration: const Duration(milliseconds: 80),
-                                            opacity: showHi ? 1.0 : 0.0,
-                                            child: Center(
-                                              child: Text(
-                                                'Hi',
-                                                style: HuddlText.caption(
-                                                  color: Colors.white,
-                                                  weight: FontWeight.w600,
-                                                ).copyWith(fontSize: 9),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-
-                                        // "Hello" label above bubble_B
-                                        Positioned(
-                                          left: bX - labelWHello / 2,
-                                          top:  aY - bubH / 2 - labelH - 2,
-                                          width: labelWHello,
-                                          height: labelH,
-                                          child: AnimatedOpacity(
-                                            duration: const Duration(milliseconds: 80),
-                                            opacity: showHello ? 1.0 : 0.0,
-                                            child: Center(
-                                              child: Text(
-                                                'Hello',
-                                                style: HuddlText.caption(
-                                                  color: Colors.white,
-                                                  weight: FontWeight.w600,
-                                                ).copyWith(fontSize: 8),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    );
+                                child: Lottie.asset(
+                                  'assets/huddl_connect_rings_hb_FINAL.json',
+                                  controller: _connectLottieCtrl,
+                                  fit: BoxFit.contain,
+                                  onLoaded: (comp) {
+                                    _connectLottieCtrl.duration = comp.duration;
+                                    // Reduce-motion: jump to final interlinked frame
+                                    if (MediaQuery.of(context).disableAnimations) {
+                                      _connectLottieCtrl.value = 1.0;
+                                    } else {
+                                      _connectLottieCtrl.forward(from: 0);
+                                    }
                                   },
-                                  child: Lottie.asset(
-                                    'assets/huddl_bubbles_compact_FINAL.json',
-                                    controller: _connectLottieCtrl,
-                                    fit: BoxFit.contain,
-                                    onLoaded: (comp) {
-                                      _connectLottieCtrl.duration = comp.duration;
-                                      if (MediaQuery.of(context).disableAnimations) {
-                                        _connectLottieCtrl.value = 1.0;
-                                      } else {
-                                        _connectLottieCtrl.forward(from: 0);
-                                      }
-                                    },
-                                  ),
                                 ),
                               ),
                             ),
@@ -325,7 +247,9 @@ class _GroupsScreenState extends State<GroupsScreen>
                       ),
                     ),
                     // Expanded search bar — replaces title row
-                    secondChild: SizedBox(
+                    secondChild: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
                       height: 36,
                       child: Row(
                         children: [
@@ -391,6 +315,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ),
                   ),
