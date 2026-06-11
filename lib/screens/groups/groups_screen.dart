@@ -170,44 +170,45 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Rings header: 48×48 canvas rendered at 56×56
-                    // (scale ≈ 1.167), centred vertically in the 90px strip.
-                    // Matches the Discover compass footprint exactly.
+                    // Rings header: 320×56 canvas spans full header width.
+                    // BoxFit.fitHeight at height=56 maps canvas 1:1 vertically;
+                    // the 320px canvas width exactly fills the header strip.
+                    // ring_right rolls in from x=300 (right edge / search icon
+                    // side) → x=32, spinning −1400°. Rings rest at left.
+                    // Search icon stays on top (painted last in Stack).
                     //
-                    // Canvas: 48×48, 60fps, 72 frames.
-                    //   0–30:  rings slide in from right, meet at x=15,y=24
-                    //   34:    interlinked
-                    //   36–54: heartbeat (2 beats: 120%→104%→114%→100%)
-                    //   54–72: holds interlinked at rest
+                    // Canvas: 320×56, 60fps, 84 frames.
+                    //   0–40:  right ring rolls in from right, interlocks
+                    //   46–60: left ring pulses (128% peak at t=51)
+                    //   62–76: right ring pulses (128% peak at t=67)
+                    //   76–84: holds interlinked at rest
                     // No text overlay — rings icon only.
                     firstChild: SizedBox(
                       height: 90,
                       child: Stack(
                         children: [
-                          // ── Rings icon: 56×56, centred vertically ────────
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
+                          // ── Rings: full-width, fitHeight, left-aligned ────
+                          // Positioned.fill gives the Lottie loose constraints
+                          // across the full header width so ring_right can roll
+                          // in from the right edge. fitHeight pins height to 56;
+                          // width expands to fill 320px canvas at 1:1 scale.
+                          Positioned.fill(
                             child: Align(
                               alignment: Alignment.centerLeft,
-                              child: SizedBox(
-                                width: 56,
-                                height: 56,
-                                child: Lottie.asset(
-                                  'assets/huddl_connect_rings_hb_FINAL.json',
-                                  controller: _connectLottieCtrl,
-                                  fit: BoxFit.contain,
-                                  onLoaded: (comp) {
-                                    _connectLottieCtrl.duration = comp.duration;
-                                    // Reduce-motion: jump to final interlinked frame
-                                    if (MediaQuery.of(context).disableAnimations) {
-                                      _connectLottieCtrl.value = 1.0;
-                                    } else {
-                                      _connectLottieCtrl.forward(from: 0);
-                                    }
-                                  },
-                                ),
+                              child: Lottie.asset(
+                                'assets/huddl_connect_rings_hb_FINAL.json',
+                                controller: _connectLottieCtrl,
+                                fit: BoxFit.fitHeight,
+                                alignment: Alignment.centerLeft,
+                                onLoaded: (comp) {
+                                  _connectLottieCtrl.duration = comp.duration;
+                                  // Reduce-motion: jump to final interlinked frame
+                                  if (MediaQuery.of(context).disableAnimations) {
+                                    _connectLottieCtrl.value = 1.0;
+                                  } else {
+                                    _connectLottieCtrl.forward(from: 0);
+                                  }
+                                },
                               ),
                             ),
                           ),
