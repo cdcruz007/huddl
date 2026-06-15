@@ -1,6 +1,13 @@
 {
   "indexes": [
     {
+      "collectionGroup": "blocks",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "targetUid", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "memberActivity",
       "queryScope": "COLLECTION",
       "fields": [
@@ -69,8 +76,8 @@
       "collectionGroup": "conversations",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "updatedAt",      "order": "DESCENDING"     }
+        { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "updatedAt",     "order": "DESCENDING"    }
       ]
     },
     {

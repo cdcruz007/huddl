@@ -755,18 +755,14 @@ class FirebaseAuthService {
         _db.collection('group_messages').where('senderId', isEqualTo: uid),
       );
 
-      // ── 4. Delete direct messages sent or received by this user ───────
-      await _deleteQueryResults(
-        _db.collection('direct_messages').where('senderId', isEqualTo: uid),
-      );
-      await _deleteQueryResults(
-        _db.collection('direct_messages').where('receiverId', isEqualTo: uid),
-      );
+      // ── 4. (removed) direct_messages is dead code — no active write path
+      //       exists. RealtimeDMService writes exclusively to the
+      //       conversations/{id}/messages subcollection. Nothing to delete.
 
-      // ── 5. Delete conversations involving this user ────────────────────
-      await _deleteQueryResults(
-        _db.collection('conversations').where('participantIds', arrayContains: uid),
-      );
+      // ── 5. Delete conversations involving this user + all their messages ─
+      //       Deletes the ENTIRE conversation (both sides) so the other
+      //       participant's messages do not orphan under a deleted convo doc.
+      await _deleteConversationsWithMessages(uid);
 
       // ── 6. Delete notifications addressed to this user ────────────────
       await _deleteQueryResults(
@@ -774,8 +770,13 @@ class FirebaseAuthService {
       );
 
       // ── 7. Delete meetups created by this user ────────────────────────
+      //       Two-pass: primary field 'createdBy' (spec-aligned), then legacy
+      //       alias 'organiserId' for docs written before the rename.
       await _deleteQueryResults(
-        _db.collection('meetups').where('creatorId', isEqualTo: uid),
+        _db.collection('meetups').where('createdBy', isEqualTo: uid),
+      );
+      await _deleteQueryResults(
+        _db.collection('meetups').where('organiserId', isEqualTo: uid),
       );
 
       // ── 8. Delete marketplace listings by this user ───────────────────
@@ -783,31 +784,59 @@ class FirebaseAuthService {
         _db.collection('marketplace').where('sellerId', isEqualTo: uid),
       );
 
-      // ── 9. Delete block records (blocks this user created) ────────────
+      // ── 9. Delete block records ───────────────────────────────────────
+      //       Schema: users/{uid}/blocks/{targetUid} subcollection.
+      //       No top-level 'blocks' collection exists.
+      //       Own block list (people this user blocked):
       await _deleteQueryResults(
-        _db.collection('blocks').where('blockerId', isEqualTo: uid),
+        _db.collection('users').doc(uid).collection('blocks'),
       );
-      // Also delete records where this user was blocked by others
-      await _deleteQueryResults(
-        _db.collection('blocks').where('blockedId', isEqualTo: uid),
-      );
+      //       Reverse: remove this user's entry from every other user who
+      //       blocked them. Uses collectionGroup — requires the
+      //       COLLECTION_GROUP index on blocks.targetUid (firestore.indexes.json).
+      try {
+        const batchSize = 500;
+        QuerySnapshot blockedBySnap;
+        do {
+          blockedBySnap = await _db
+              .collectionGroup('blocks')
+              .where('targetUid', isEqualTo: uid)
+              .limit(batchSize)
+              .get()
+              .timeout(const Duration(seconds: 10));
+          if (blockedBySnap.docs.isEmpty) break;
+          final batch = _db.batch();
+          for (final doc in blockedBySnap.docs) {
+            batch.delete(doc.reference);
+          }
+          await batch.commit();
+        } while (blockedBySnap.docs.length == batchSize);
+      } catch (_) {
+        // Non-fatal — rules prevent a deleted account from being visible.
+      }
 
       // ── 10. Delete saved items ────────────────────────────────────────
+      //        Schema: users/{uid}/saved_items/{listingId} subcollection.
+      //        No top-level 'saved_items' collection exists.
       await _deleteQueryResults(
-        _db.collection('saved_items').where('userId', isEqualTo: uid),
+        _db.collection('users').doc(uid).collection('saved_items'),
       );
 
       // ── 11. Delete endorsements given by this user ────────────────────
+      //        Schema: local_services/{listingId}/endorsements/{uid}
+      //        Doc ID == endorser uid. FieldPath.documentId equality on a
+      //        collectionGroup query does not require a composite index.
       await _deleteQueryResults(
-        _db.collection('endorsements').where('endorserId', isEqualTo: uid),
+        _db.collectionGroup('endorsements')
+            .where(FieldPath.documentId, isEqualTo: uid),
       );
 
       // ── 12. Delete RSVPs by this user ─────────────────────────────────
+      //        Schema: user_rsvps/{uid}/meetups/{meetupId} subcollection.
+      //        Top-level 'rsvps' never existed (ghost). Top-level 'user_rsvps'
+      //        query was wrong path — all docs live in the subcollection.
       await _deleteQueryResults(
-        _db.collection('rsvps').where('userId', isEqualTo: uid),
-      );
-      await _deleteQueryResults(
-        _db.collection('user_rsvps').where('userId', isEqualTo: uid),
+        _db.collection('user_rsvps').doc(uid).collection('meetups'),
       );
 
       // ── 13. Delete EHCP deadlines (sub-collection under users/{uid}) ──
@@ -815,6 +844,13 @@ class FirebaseAuthService {
       // when the parent document is deleted.
       await _deleteQueryResults(
         _db.collection('users').doc(uid).collection('deadlines'),
+      );
+
+      // ── 13b. Delete local_services listings created by this user ────────
+      //        Field 'createdByUid' is set on every user-created listing
+      //        regardless of partner status (ownerUid is only set for partners).
+      await _deleteQueryResults(
+        _db.collection('local_services').where('createdByUid', isEqualTo: uid),
       );
 
       // ── 14. Remove user from group memberIds arrays ────────────────────
@@ -879,6 +915,33 @@ class FirebaseAuthService {
       } while (snapshot.docs.length == batchSize);
     } catch (_) {
       // Non-fatal: collection may not exist or security rules may block it.
+    }
+  }
+
+  /// Deletes every conversation [uid] is a participant of, plus ALL messages
+  /// in each conversation's subcollection — both participants' messages, not
+  /// just the departing user's.  This prevents the other participant's messages
+  /// from orphaning under a deleted conversation document.
+  Future<void> _deleteConversationsWithMessages(String uid) async {
+    try {
+      const batchSize = 500;
+      QuerySnapshot convSnap;
+      do {
+        convSnap = await _db
+            .collection('conversations')
+            .where('participants', arrayContains: uid)
+            .limit(batchSize)
+            .get();
+        if (convSnap.docs.isEmpty) break;
+        for (final convDoc in convSnap.docs) {
+          // Unfiltered subcollection delete — removes ALL messages regardless
+          // of senderId, covering both participants.
+          await _deleteQueryResults(convDoc.reference.collection('messages'));
+          await _safeDelete(() => convDoc.reference.delete());
+        }
+      } while (convSnap.docs.length == batchSize);
+    } catch (_) {
+      // Non-fatal — same swallow policy as _deleteQueryResults.
     }
   }
 
