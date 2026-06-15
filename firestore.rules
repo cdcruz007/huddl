@@ -252,12 +252,15 @@ service cloud.firestore {
     }
 
     // Individual DM messages.
+    // NOTE: direct_messages is not written by any active client path.
+    // The live DM path is conversations/{id}/messages/{id} (RealtimeDMService).
+    // This block is retained for GDPR deletion sweep compatibility only.
+    // participantIds corrected to participants — matches the conversations schema.
     match /direct_messages/{messageId} {
-      // Participants can read messages in their conversations.
       allow read: if isAuth()
         && request.auth.uid in
             get(/databases/$(database)/documents/conversations/$(resource.data.conversationId))
-              .data.participantIds;
+              .data.participants;
 
       // Either participant may send a message; senderId must match their UID.
       allow create: if isAuth()
