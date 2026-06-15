@@ -273,14 +273,17 @@ class RealtimeDMService {
       // Also refresh the sender's avatar in participantAvatars so the
       // recipient always sees the most up-to-date profile photo.
       final myPhotoUrl = me?.photoUrl ?? '';
-      await _db.collection('conversations').doc(conversationId).update({
+      // Use set+merge so this doesn't throw if the conversation doc doesn't
+      // exist yet (handles the first-message race where getOrCreateConversation
+      // hasn't committed before the first sendMessage call).
+      await _db.collection('conversations').doc(conversationId).set({
         'lastMessage': displayText,
         'lastSenderId': uid,
         'lastSenderName': senderName,
         'lastMessageAt': FieldValue.serverTimestamp(),
         'participantAvatars.$uid': myPhotoUrl,
         ...unreadUpdate,
-      });
+      }, SetOptions(merge: true));
 
       // ── Push + in-app notification to the other participant ─────────────
       final recipientId = participants.firstWhere(

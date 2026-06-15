@@ -30,6 +30,23 @@ service cloud.firestore {
           get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
     }
 
+    /// Resolves the signed-in user's borough from their user doc.
+    /// Returns '' if the doc is missing or the field is absent — fail-closed.
+    function writerBorough() {
+      return isAuth()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid))
+            .data.get('borough', '')
+        : '';
+    }
+
+    /// Returns true when the document's borough field matches the writer's borough.
+    /// Case-insensitive. Returns false if either side is empty — fail-closed.
+    function boroughMatches(docBorough) {
+      return writerBorough() != ''
+        && docBorough != ''
+        && docBorough.lower() == writerBorough().lower();
+    }
+
     // =========================================================================
     // USERS
     // =========================================================================
@@ -111,19 +128,25 @@ service cloud.firestore {
       // Any auth user can read group metadata (needed for discover/search).
       allow read: if isAuth();
 
-      // Any auth user can create a group; creatorUid must match their UID.
+      // Borough-scoped create: creator's borough must match the doc's creatorBorough.
       allow create: if isAuth()
-        && request.resource.data.creatorUid == request.auth.uid;
+        && request.resource.data.creatorUid == request.auth.uid
+        && boroughMatches(request.resource.data.get('creatorBorough', ''));
 
       // Members may update non-sensitive group fields (e.g. lastMessage).
-      // The creator/admin may update everything.
+      // The creator/admin may update everything (borough already stamped at create).
       // Any auth user may add themselves to memberIds (join flow for meetup
       // group chats — the group already exists and the user is joining it;
       // they are not yet in memberIds so the normal member-only rule would
       // block them).
+      // Borough-scoped update: full-field updates (creator path) must still match
+      // the doc's existing creatorBorough.
       allow update: if isAuth() && (
-        // Group creator has full update rights.
-        resource.data.creatorUid == request.auth.uid
+        // Group creator has full update rights; borough must match existing doc.
+        (
+          resource.data.creatorUid == request.auth.uid
+          && boroughMatches(resource.data.get('creatorBorough', ''))
+        )
         ||
         // Any existing member may update limited activity fields.
         (
@@ -183,15 +206,15 @@ service cloud.firestore {
     // Conversation metadata document.
     match /conversations/{conversationId} {
       // Only participants in the conversation can read/write it.
-      // participantIds is an array field set at conversation creation time.
+      // Field is 'participants' (array) — matches RealtimeDMService schema.
       allow read: if isAuth()
-        && request.auth.uid in resource.data.participantIds;
+        && request.auth.uid in resource.data.participants;
 
       allow create: if isAuth()
-        && request.auth.uid in request.resource.data.participantIds;
+        && request.auth.uid in request.resource.data.participants;
 
       allow update: if isAuth()
-        && request.auth.uid in resource.data.participantIds;
+        && request.auth.uid in resource.data.participants;
 
       // Conversations are never deleted from the client.
       allow delete: if false;
@@ -199,10 +222,11 @@ service cloud.firestore {
       // ── Messages subcollection ────────────────────────────────────────────
       match /messages/{messageId} {
         // Only participants in the parent conversation can read messages.
+        // Field is 'participants' (array) — matches RealtimeDMService schema.
         allow read: if isAuth()
           && request.auth.uid in
               get(/databases/$(database)/documents/conversations/$(conversationId))
-                .data.participantIds;
+                .data.participants;
 
         // Either participant may send; senderId must match their UID.
         allow create: if isAuth()
@@ -252,6 +276,7 @@ service cloud.firestore {
     // =========================================================================
     // EVENTS / MEETUPS
     // =========================================================================
+    // Events are UK-wide by design — no borough scoping.
     match /events/{eventId} {
       allow read: if isAuth();
       allow create: if isAuth()
@@ -267,13 +292,20 @@ service cloud.firestore {
         && resource.data.creatorUid == request.auth.uid;
     }
 
+    // Borough-scoped: create and full-field updates require borough match.
     match /meetups/{meetupId} {
       allow read: if isAuth();
       allow create: if isAuth()
-        && request.resource.data.creatorUid == request.auth.uid;
+        && request.resource.data.creatorUid == request.auth.uid
+        && boroughMatches(request.resource.data.get('borough', ''));
       allow update: if isAuth() && (
-        resource.data.creatorUid == request.auth.uid
+        // Creator full-update path: borough must match existing doc.
+        (
+          resource.data.creatorUid == request.auth.uid
+          && boroughMatches(resource.data.get('borough', ''))
+        )
         ||
+        // Narrow attendee-count updates require no borough check.
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['attendeeCount', 'going', 'updatedAt'])
       );
@@ -502,14 +534,16 @@ service cloud.firestore {
     // =========================================================================
     // LOCAL SERVICES
     // =========================================================================
+    // Borough-scoped: create and owner-update paths require borough match.
     match /local_services/{listingId} {
       allow read: if isAuth();
 
-      // Only the lister may create their own listing.
+      // Only the lister may create their own listing, in their own borough.
       allow create: if isAuth()
-        && request.resource.data.createdByUid == request.auth.uid;
+        && request.resource.data.createdByUid == request.auth.uid
+        && boroughMatches(request.resource.data.get('borough', ''));
 
-      // The listing owner may update any field.
+      // The listing owner may update any field (borough must still match).
       // Any authenticated user may increment/update the aggregate fields
       // that are written by the endorsement flow (endorsementCount,
       // communityRating, ratingCount, verificationTier, updatedAt).
@@ -517,8 +551,13 @@ service cloud.firestore {
       // non-owners and throws a permission-denied error caught as
       // "Something went wrong".
       allow update: if isAuth() && (
-        resource.data.createdByUid == request.auth.uid
+        // Owner full-update: borough must match existing doc.
+        (
+          resource.data.createdByUid == request.auth.uid
+          && boroughMatches(resource.data.get('borough', ''))
+        )
         ||
+        // Narrow endorsement-aggregate updates require no borough check.
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['endorsementCount', 'communityRating', 'ratingCount',
                     'verificationTier', 'updatedAt'])
@@ -556,49 +595,6 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // MARKET — LISTINGS  (existing — unchanged)
-    // =========================================================================
-    match /listings/{listingId} {
-      allow read: if isAuth();
-      allow create: if isAuth()
-        && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isAuth() && (
-        resource.data.createdBy == request.auth.uid
-        ||
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['viewCount', 'saveCount', 'updatedAt'])
-      );
-      allow delete: if isAuth()
-        && resource.data.createdBy == request.auth.uid;
-
-      match /saves/{userId} {
-        allow read: if isAuth();
-        allow create: if isAuth()
-          && userId == request.auth.uid
-          && request.resource.data.userId == request.auth.uid;
-        allow delete: if isAuth()
-          && userId == request.auth.uid;
-        allow update: if false;
-      }
-
-      match /offers/{offerId} {
-        allow read: if isAuth() && (
-          resource.data.buyerId == request.auth.uid
-          || get(/databases/$(database)/documents/listings/$(listingId)).data.createdBy
-              == request.auth.uid
-        );
-        allow create: if isAuth()
-          && request.resource.data.buyerId == request.auth.uid;
-        allow update: if isAuth()
-          && get(/databases/$(database)/documents/listings/$(listingId)).data.createdBy
-              == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['status', 'updatedAt']);
-        allow delete: if false;
-      }
-    }
-
-    // =========================================================================
     // REPORTS  (existing — unchanged)
     // =========================================================================
     match /reports/{reportId} {
@@ -625,15 +621,23 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // MARKETPLACE  (existing — unchanged)
+    // MARKETPLACE
+    // Borough-scoped: create and seller-update paths require sellerBorough match.
     // =========================================================================
     match /marketplace/{itemId} {
       allow read: if isAuth();
+      // Seller's resolved borough must match the doc's sellerBorough field.
       allow create: if isAuth()
-        && request.resource.data.sellerId == request.auth.uid;
+        && request.resource.data.sellerId == request.auth.uid
+        && boroughMatches(request.resource.data.get('sellerBorough', ''));
       allow update: if isAuth() && (
-        resource.data.sellerId == request.auth.uid
+        // Seller full-update: borough must match existing doc's sellerBorough.
+        (
+          resource.data.sellerId == request.auth.uid
+          && boroughMatches(resource.data.get('sellerBorough', ''))
+        )
         ||
+        // Narrow aggregate-counter updates require no borough check.
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['viewCount', 'offerCount', 'favouriteCount', 'updatedAt'])
       );
@@ -642,16 +646,36 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // BOROUGH FEED — PROMOTED CARDS  (existing — unchanged)
+    // BOROUGH FEED — PROMOTED CARDS
+    // Reads locked to the user's own borough (+ admin cross-borough access).
+    // Writes (create/update/delete) require the path borough to match the writer.
     // =========================================================================
-    match /borough_feed/{borough}/promoted/{promotedId} {
-      allow read: if isAuth();
+    match /borough_feed/{boroughKey}/promoted/{promotedId} {
+      // Users may only read cards in their own borough.
+      // isAdmin() grants cross-borough read for admin/analytics tooling.
+      allow read: if isAuth()
+        && (
+          (
+            boroughKey.lower() == writerBorough().lower()
+            && writerBorough() != ''
+          )
+          || isAdmin()
+        );
+      // Partner may only create cards in their own borough.
       allow create: if isAuth()
-        && request.resource.data.partnerUid == request.auth.uid;
+        && request.resource.data.partnerUid == request.auth.uid
+        && boroughKey.lower() == writerBorough().lower()
+        && writerBorough() != '';
+      // Partner may only update cards in their own borough.
       allow update: if isAuth()
-        && resource.data.partnerUid == request.auth.uid;
+        && resource.data.partnerUid == request.auth.uid
+        && boroughKey.lower() == writerBorough().lower()
+        && writerBorough() != '';
+      // Partner may only delete cards in their own borough.
       allow delete: if isAuth()
-        && resource.data.partnerUid == request.auth.uid;
+        && resource.data.partnerUid == request.auth.uid
+        && boroughKey.lower() == writerBorough().lower()
+        && writerBorough() != '';
     }
 
     // =========================================================================

@@ -208,6 +208,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       }
 
       _conversationId = convId;
+      debugPrint('[DM-LISTEN] conversationId: $convId');
       await _realtimeDMService.markConversationRead(convId);
 
       // Subscribe to real-time message stream
@@ -492,6 +493,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         conversationId: _conversationId!,
         message: text,
       );
+      debugPrint('[DM-SEND] conversationId: $_conversationId');
       // Record message send against subscription limit
       await SubscriptionService().recordMessageSent();
       // Message will appear via the stream subscription — no setState needed
