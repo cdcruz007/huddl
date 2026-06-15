@@ -19,6 +19,10 @@ class GroupInvitation {
   final String targetMemberId; // ID of the person invited (recipient)
   final DateTime sentAt;
   final String status; // 'pending', 'accepted', 'declined'
+  /// Borough of the group at send time. Used to re-validate the acceptor's
+  /// borough in acceptInvitation(). Empty string on pre-migration invitations
+  /// (those are allowed through — fail-open for legacy gap only).
+  final String groupBorough;
 
   GroupInvitation({
     required this.id,
@@ -31,6 +35,7 @@ class GroupInvitation {
     this.targetMemberId = '',
     required this.sentAt,
     this.status = 'pending',
+    this.groupBorough = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -44,6 +49,7 @@ class GroupInvitation {
         'targetMemberId': targetMemberId,
         'sentAt': sentAt.toIso8601String(),
         'status': status,
+        'groupBorough': groupBorough,
       };
 
   factory GroupInvitation.fromJson(Map<String, dynamic> json) {
@@ -58,6 +64,7 @@ class GroupInvitation {
       targetMemberId: json['targetMemberId'] as String? ?? '',
       sentAt: DateTime.parse(json['sentAt'] as String),
       status: json['status'] as String? ?? 'pending',
+      groupBorough: json['groupBorough'] as String? ?? '',
     );
   }
 
@@ -73,6 +80,7 @@ class GroupInvitation {
       targetMemberId: targetMemberId,
       sentAt: sentAt,
       status: status ?? this.status,
+      groupBorough: groupBorough,
     );
   }
 }
@@ -282,7 +290,49 @@ class InvitationService extends ChangeNotifier {
     final db = FirebaseFirestore.instance;
     final inviterId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+    // ── Sender borough gate ────────────────────────────────────────────────
+    // Block the entire send if the sender's borough doesn't match the group's
+    // borough. Consistent with the joinPublicGroup gate. Only enforced when
+    // the group has a stamped borough (fail-open for legacy untagged groups).
+    final groupBorough = group.creatorBorough ?? '';
+    if (groupBorough.isNotEmpty &&
+        !_guard.canInteract(
+          feature: HuddlFeature.groups,
+          targetBorough: group.creatorBorough,
+          targetName: group.name,
+        )) {
+      _log('BLOCKED sendInvitations: sender borough (${_guard.currentBorough}) '
+          'does not match group borough ($groupBorough) '
+          'for group "${group.name}"');
+      return;
+    }
+
     for (final memberId in invitedMemberIds) {
+      // ── Invitee borough gate ───────────────────────────────────────────
+      // Fetch the invitee's borough from Firestore and skip if it doesn't
+      // match the group's borough. Only enforced when groupBorough is set.
+      // On lookup failure we proceed (fail-open) — Firestore rules are the
+      // hard backstop.
+      if (groupBorough.isNotEmpty) {
+        try {
+          final inviteeDoc = await db.collection('users').doc(memberId).get();
+          final inviteeBorough =
+              inviteeDoc.data()?['borough'] as String? ?? '';
+          if (inviteeBorough.isNotEmpty &&
+              inviteeBorough.toLowerCase() != groupBorough.toLowerCase()) {
+            _log('SKIPPED invite for $memberId: invitee borough '
+                '($inviteeBorough) does not match group borough '
+                '($groupBorough)');
+            continue;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[InvitationService] invitee borough lookup error '
+                'for $memberId: $e');
+          }
+          // Proceed — Firestore rules are the hard backstop.
+        }
+      }
       final invId = 'inv_${group.id}_$memberId';
       final inv = GroupInvitation(
         id: invId,
@@ -295,6 +345,7 @@ class InvitationService extends ChangeNotifier {
         targetMemberId: memberId,
         sentAt: DateTime.now(),
         status: 'pending',
+        groupBorough: groupBorough,
       );
 
       // 1. Write to local cache (fast path, offline-safe)
@@ -319,6 +370,7 @@ class InvitationService extends ChangeNotifier {
           'targetMemberId': memberId,
           'sentAt': FieldValue.serverTimestamp(),
           'status': 'pending',
+          'groupBorough': groupBorough,
         });
       } catch (e) {
         if (kDebugMode) {
@@ -353,6 +405,25 @@ class InvitationService extends ChangeNotifier {
     final idx = _invitations.indexWhere((i) => i.id == invitationId);
     if (idx != -1) {
       final inv = _invitations[idx];
+
+      // ── Borough re-validation ────────────────────────────────────────────
+      // Re-check the acceptor's current borough against the group's borough
+      // that was stamped at invite-send time. Blocks cross-borough accepts
+      // (e.g. user moved borough since the invite was sent).
+      // Skipped when groupBorough is empty — pre-migration invitations that
+      // pre-date this field are allowed through (fail-open for legacy gap).
+      if (inv.groupBorough.isNotEmpty &&
+          !_guard.canInteract(
+            feature: HuddlFeature.groups,
+            targetBorough: inv.groupBorough,
+            targetName: inv.groupName,
+          )) {
+        _log('BLOCKED acceptInvitation: user borough '
+            '(${_guard.currentBorough}) does not match group borough '
+            '(${inv.groupBorough}) for group "${inv.groupName}"');
+        return;
+      }
+
       _invitations[idx] = inv.copyWith(status: 'accepted');
       await _saveInvitations();
 

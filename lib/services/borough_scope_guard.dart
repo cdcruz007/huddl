@@ -128,13 +128,23 @@ class BoroughScopeGuard {
 
   // ── Filtering helpers ─────────────────────────────────────────────────
 
-  /// Filters a list of items to only those in the user's borough.
-  /// [boroughExtractor] pulls the borough string from each item.
-  /// Used by services like Marketplace, Meetups, Groups.
+  /// Filters [items] to only those in the user's borough.
+  ///
+  /// [allowUntagged] controls what happens when an item has a null/empty
+  /// borough field:
+  /// - `false` (default) — fail-closed: untagged items are HIDDEN. Use for
+  ///   strictly borough-only features (groups, meetups, marketplace, services).
+  /// - `true` — permissive: untagged items are SHOWN. Use only for
+  ///   borough-aware display surfaces (community feed) where graceful
+  ///   degradation is preferable to an empty list.
+  ///
+  /// If the user's own borough is unresolved, all items are returned
+  /// regardless of [allowUntagged] — we cannot filter without a reference.
   List<T> filterByUserBorough<T>(
     List<T> items,
-    String? Function(T item) boroughExtractor,
-  ) {
+    String? Function(T item) boroughExtractor, {
+    bool allowUntagged = false,
+  }) {
     final userBorough = currentBorough;
     if (userBorough == null || userBorough.isEmpty) return items;
     final lowerBorough = userBorough.toLowerCase();
@@ -142,12 +152,7 @@ class BoroughScopeGuard {
     return items.where((item) {
       final itemBorough = boroughExtractor(item);
       if (itemBorough == null || itemBorough.isEmpty) {
-        // Items without a borough tag are shown rather than hidden — they were
-        // likely loaded from Firestore before the borough field was written, or
-        // created by a user whose postcode lookup hasn't resolved yet.  Hiding
-        // them produces a blank marketplace / empty meetup list on first open,
-        // which is a worse UX than showing a slightly wider set of results.
-        return true;
+        return allowUntagged;
       }
       return itemBorough.toLowerCase() == lowerBorough;
     }).toList();
