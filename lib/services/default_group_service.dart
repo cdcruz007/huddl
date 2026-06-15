@@ -193,8 +193,8 @@ class DefaultGroupService {
   ///
   /// [residentParentGroupId]: the ID of the parent borough group. Required
   /// when creating a ward or region group so the Firestore doc carries the
-  /// explicit hierarchy FK used by the rebalance job. Null for borough-level
-  /// groups (they have no parent).
+  /// parent-group FK (ward→borough / region→borough hierarchy link). Null for
+  /// borough-level groups (they have no parent).
   Group getOrCreateDefaultGroup({
     required String parentCategory,
     required String borough,
@@ -257,8 +257,8 @@ class DefaultGroupService {
       // ward > region > default borough.
       level: ward != null ? 'ward' : (region != null ? 'region' : 'borough'),
       // Hierarchy FK: ward/region groups point at their parent borough group.
-      // Borough groups have no parent (null). Used by the rebalance job to
-      // traverse ward→borough and region→borough in O(1) without a query.
+      // Borough groups have no parent (null). Enables O(1) ward→borough and
+      // region→borough traversal without a Firestore query.
       parentGroupId: residentParentGroupId,
     );
 
@@ -924,10 +924,9 @@ class DefaultGroupService {
           // Additive geo fields — ward, wardCode, districtCode, region.
           // Populated from the in-memory geo cache; no extra network call.
           ...geoFields,
-          // parentRegionName: stable copy of the region string used to derive
-          // the region-level group ID. Written at borough-group creation time
-          // so the rebalance job can find the region group without relying on
-          // naming convention alone.
+          // parentRegionName: stable copy of the region string, written at
+          // borough-group creation time. Provides a durable FK to the region
+          // level that does not depend on naming-convention reconstruction.
           // Only written when region is non-empty; borough docs whose geo was
           // never resolved have no parentRegionName and cannot roll up to a
           // region group until backfill_geo_stack.py + backfill_group_level.py

@@ -18,8 +18,9 @@ single pass over the groups collection:
      but are missing 'parentRegionName' get:
          parentRegionName = <value of region field>
 
-     This gives the rebalance job a stable FK string to derive the region-level
-     group ID from, without relying on naming convention alone.
+     This gives borough docs a stable FK string (parentRegionName) that can be
+     used to locate the region-level group without relying on naming convention
+     alone.
 
 ── RUNBOOK DEPENDENCY ────────────────────────────────────────────────────────
   Run backfill_geo_stack.py FIRST.
