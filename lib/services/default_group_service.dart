@@ -40,18 +40,39 @@ class DefaultGroupService {
   // v11: reset to align with v12 group re-creation (category-aware image offsets)
   static const String _countersKey = 'borough_image_counters_v11';
 
-  /// Generate group name based on criteria
+  /// Generate group name based on criteria.
+  ///
+  /// Borough-level (default): pass only [borough] — output is byte-identical
+  /// to the pre-3a-prereq format, e.g. "2019 Cambridge Parents".
+  ///
+  /// Ward-level: pass [ward] — uses the ward name in place of the borough,
+  /// e.g. "2019 Thornton Heath Parents".
+  ///
+  /// Region-level: pass [region] — uses the region name in place of the
+  /// borough, e.g. "2019 London Parents".
+  ///
+  /// [ward] takes precedence over [region]; both take precedence over
+  /// [borough]. [borough] is always required for linkage purposes even when
+  /// ward or region is supplied.
   String generateGroupName({
     required String parentCategory,
     required String borough,
     String? childYearOfBirth,
+    // Optional geo-level overrides — null = borough-level (existing callers
+    // pass neither, so output is byte-identical to today).
+    String? ward,
+    String? region,
   }) {
+    // Determine which geo token to embed: ward > region > borough.
+    final geoValue = ward ?? region ?? borough;
     if (childYearOfBirth != null) {
-      // Format: "2017 Cambridge Parents"
-      return '$childYearOfBirth $borough $parentCategory';
+      // Format: "2019 Cambridge Parents"  (borough-level, existing)
+      //         "2019 Thornton Heath Parents"  (ward-level)
+      //         "2019 London Parents"  (region-level)
+      return '$childYearOfBirth $geoValue $parentCategory';
     } else {
-      // Format: "Cambridge Expecting Parents" or "Cambridge Aspiring Parents"
-      return '$borough $parentCategory';
+      // Format: "Cambridge Expecting Parents"  (borough-level, existing)
+      return '$geoValue $parentCategory';
     }
   }
 
@@ -165,16 +186,32 @@ class DefaultGroupService {
     }
   }
 
-  /// Get or create a default group
+  /// Get or create a default group.
+  ///
+  /// [ward] / [region]: pass one to create a sub-borough or supra-borough
+  /// group. Null (default) = borough-level — existing callers are unchanged.
+  ///
+  /// [residentParentGroupId]: the ID of the parent borough group. Required
+  /// when creating a ward or region group so the Firestore doc carries the
+  /// explicit hierarchy FK used by the rebalance job. Null for borough-level
+  /// groups (they have no parent).
   Group getOrCreateDefaultGroup({
     required String parentCategory,
     required String borough,
     String? childYearOfBirth,
+    // Geo-level params — null = borough-level (all existing callers).
+    String? ward,
+    String? region,
+    // Hierarchy FK written to Firestore doc. Pass the borough group's ID when
+    // creating a ward or region group.
+    String? residentParentGroupId,
   }) {
     final groupName = generateGroupName(
       parentCategory: parentCategory,
       borough: borough,
       childYearOfBirth: childYearOfBirth,
+      ward: ward,
+      region: region,
     );
     
     final groupId = _generateGroupId(groupName);
@@ -216,6 +253,13 @@ class DefaultGroupService {
       unreadCount: welcomeMsg['unread'] as int,
       groupType: 'resident',
       birthYear: childYearOfBirth != null ? int.tryParse(childYearOfBirth) : null,
+      // Derive level from which geo param was supplied.
+      // ward > region > default borough.
+      level: ward != null ? 'ward' : (region != null ? 'region' : 'borough'),
+      // Hierarchy FK: ward/region groups point at their parent borough group.
+      // Borough groups have no parent (null). Used by the rebalance job to
+      // traverse ward→borough and region→borough in O(1) without a query.
+      parentGroupId: residentParentGroupId,
     );
 
     _defaultGroups[groupId] = newGroup;
@@ -853,10 +897,17 @@ class DefaultGroupService {
           'memberCount': FieldValue.increment(1),
           'isImageLocked': true,
           'groupType': 'resident',
+          // Stamp level on existing docs during the transition window.
+          // group.level is always 'borough' for groups created by current
+          // callers — no existing group has ward or region level yet.
+          if (group.level != null) 'level': group.level!,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
-        // Create the group document in Firestore for the first time
+        // Build geo fields once — used both for the spread and to extract
+        // parentRegionName without calling _buildGeoFields twice.
+        final geoFields = _buildGeoFields(_onboardingService.postcode);
+        // Create the group document in Firestore for the first time.
         tx.set(ref, {
           'id': group.id,
           'name': group.name,
@@ -870,14 +921,30 @@ class DefaultGroupService {
               ? (_postcodeService.getBoroughFromPostcode(_onboardingService.postcode!) ?? '')
               : '',
           'postcode': _onboardingService.postcode ?? '',
-          // Additive geo fields — populated from the in-memory geo cache,
-          // no extra network call.
-          ..._buildGeoFields(_onboardingService.postcode),
+          // Additive geo fields — ward, wardCode, districtCode, region.
+          // Populated from the in-memory geo cache; no extra network call.
+          ...geoFields,
+          // parentRegionName: stable copy of the region string used to derive
+          // the region-level group ID. Written at borough-group creation time
+          // so the rebalance job can find the region group without relying on
+          // naming convention alone.
+          // Only written when region is non-empty; borough docs whose geo was
+          // never resolved have no parentRegionName and cannot roll up to a
+          // region group until backfill_geo_stack.py + backfill_group_level.py
+          // have been run (see runbook).
+          if (geoFields['region'] != null && (geoFields['region'] as String).isNotEmpty)
+            'parentRegionName': geoFields['region'],
           'creatorId': firebaseUid,
           'creatorName': _onboardingService.name ?? '',
           'isImageLocked': true,
           'groupType': 'resident',
           if (group.birthYear != null) 'birthYear': group.birthYear,
+          // level defaults to 'borough' for all groups created by current
+          // callers. Ward/region groups supply a non-null group.level.
+          'level': group.level ?? 'borough',
+          // Hierarchy FK — null for borough-level groups; non-null for
+          // ward/region groups (points at the parent borough group).
+          if (group.parentGroupId != null) 'parentGroupId': group.parentGroupId,
           'invitedMemberIds': [],
           'lastMessage': group.lastMessage ?? 'Welcome to the group!',
           'lastSenderName': group.lastSenderName ?? 'Huddl',

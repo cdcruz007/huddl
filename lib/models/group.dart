@@ -55,6 +55,14 @@ class Group {
   /// un-backfilled resident groups (use the name regex as fallback).
   final int? birthYear;
 
+  /// Geographic level of this resident group.
+  /// 'borough' — keyed on borough name (all existing groups).
+  /// 'ward'    — keyed on ward name (sub-borough split by elastic engine).
+  /// 'region'  — keyed on region name (roll-up above borough by elastic engine).
+  /// Null on un-backfilled docs — callers must treat null as 'borough'
+  /// during the migration window.
+  final String? level;
+
   Group({
     required this.id,
     required this.name,
@@ -79,6 +87,7 @@ class Group {
     this.aiTagline,
     this.groupType,
     this.birthYear,
+    this.level,
   });
   
   // JSON serialization for persistence
@@ -108,6 +117,7 @@ class Group {
       if (aiTagline != null && aiTagline!.isNotEmpty) 'aiTagline': aiTagline,
       if (groupType != null) 'groupType': groupType,
       if (birthYear != null) 'birthYear': birthYear,
+      if (level != null) 'level': level,
     };
   }
   
@@ -139,6 +149,7 @@ class Group {
       aiTagline: json['aiTagline'] as String?,
       groupType: json['groupType'] as String?,
       birthYear: json['birthYear'] as int?,
+      level: json['level'] as String?,
     );
   }
 
@@ -184,6 +195,7 @@ class Group {
     String? aiTagline,
     String? groupType,
     int? birthYear,
+    String? level,
   }) {
     return Group(
       id: id ?? this.id,
@@ -209,6 +221,7 @@ class Group {
       aiTagline: aiTagline ?? this.aiTagline,
       groupType: groupType ?? this.groupType,
       birthYear: birthYear ?? this.birthYear,
+      level: level ?? this.level,
     );
   }
 }
