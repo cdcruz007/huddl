@@ -261,6 +261,7 @@ class DefaultGroupService {
       // Borough groups have no parent (null). Enables O(1) ward→borough and
       // region→borough traversal without a Firestore query.
       parentGroupId: residentParentGroupId,
+      creatorBorough: borough,
     );
 
     _defaultGroups[groupId] = newGroup;
@@ -821,7 +822,12 @@ class DefaultGroupService {
     if (borough == null || borough.isEmpty) return getAllDefaultGroups();
     final lowerBorough = borough.toLowerCase();
     return _defaultGroups.values
-        .where((g) => g.name.toLowerCase().contains(lowerBorough))
+        .where((g) {
+          final cb = g.creatorBorough;
+          return (cb != null && cb.isNotEmpty)
+              ? cb.toLowerCase() == lowerBorough
+              : g.name.toLowerCase().contains(lowerBorough);
+        })
         .toList();
   }
 
@@ -850,7 +856,11 @@ class DefaultGroupService {
     final group = _defaultGroups[groupId]!;
     final userBorough = _guard.currentBorough;
     if (userBorough != null && userBorough.isNotEmpty) {
-      if (!group.name.toLowerCase().contains(userBorough.toLowerCase())) {
+      final cb = group.creatorBorough;
+      final groupMatchesBorough = (cb != null && cb.isNotEmpty)
+          ? cb.toLowerCase() == userBorough.toLowerCase()
+          : group.name.toLowerCase().contains(userBorough.toLowerCase());
+      if (!groupMatchesBorough) {
         _log('BLOCKED: User $userId attempted to join cross-borough group '
             '"${group.name}" (user borough: $userBorough)');
         return;
@@ -1003,7 +1013,12 @@ class DefaultGroupService {
     return groupIds
         .map((id) => _defaultGroups[id])
         .whereType<Group>()
-        .where((g) => g.name.toLowerCase().contains(boroughLower))
+        .where((g) {
+          final cb = g.creatorBorough;
+          return (cb != null && cb.isNotEmpty)
+              ? cb.toLowerCase() == boroughLower
+              : g.name.toLowerCase().contains(boroughLower);
+        })
         .toList();
   }
 
