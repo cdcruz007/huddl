@@ -19,6 +19,8 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as https from "https";
+import { readConfig, isEngineEnabled } from "./rebalance/config";
+import { runRebalancePass }            from "./rebalance/scoring";
 
 // Gemini API key — sourced exclusively from Firebase Secret Manager / env config.
 // To set: firebase functions:secrets:set GEMINI_API_KEY
@@ -1043,3 +1045,53 @@ function _getFirstChildName(ud: Record<string, unknown>): string | null {
   }
   return (ud.childName as string | undefined) ?? null;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUD FUNCTION 7: elasticRebalanceEngine
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Scheduled weekly (Sunday 03:00 UTC) — elastic resident-group rebalance engine.
+ *
+ * Two independent off-switches prevent any live moves at deploy time:
+ *   1. Cloud Scheduler job is paused at deploy (do not unpause until observe
+ *      phase analysis is complete).
+ *   2. config/rebalance.enabled == false in Firestore (isEngineEnabled guard
+ *      below exits immediately even if Scheduler fires).
+ *
+ * observeOnly mode (config/rebalance.observeOnly == true, the default):
+ *   Every group is scored and the result written to rebalance_log — no offers
+ *   are sent and no membership changes occur.  Use this phase to validate
+ *   thresholds (QUIET_SCORE_THRESHOLD, LIVELY_SCORE_THRESHOLD, FLOOR, CEILING)
+ *   by querying the log before enabling live mode.
+ *
+ * Live mode (observeOnly == false):
+ *   Rollup offers and split offers are delegated to sendRollupOffers /
+ *   sendSplitOffers.  Currently wired to stubs (return 0) until Pieces 3 & 4
+ *   land.  Replace the stubs with real imports once those pieces are applied.
+ *
+ * Consent contract: no user is ever moved without accepting an offer.
+ */
+
+export const elasticRebalanceEngine = functions
+  .runWith({ timeoutSeconds: 540, memory: "512MB" })
+  .pubsub.schedule("every sunday 03:00")
+  .timeZone("UTC")
+  .onRun(async () => {
+    functions.logger.info("[rebalance] Scheduled trigger fired.");
+
+    const cfg = await readConfig(db);
+
+    if (!isEngineEnabled(cfg)) {
+      functions.logger.info(
+        "[rebalance] Engine disabled (config/rebalance.enabled=false). Exiting."
+      );
+      return;
+    }
+
+    // Stub offer senders — replaced when Pieces 3 & 4 are applied.
+    const stubRollup = async () => 0;
+    const stubSplit  = async () => 0;
+
+    await runRebalancePass(db, cfg, stubRollup, stubSplit);
+  });
