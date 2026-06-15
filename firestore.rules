@@ -128,12 +128,10 @@ service cloud.firestore {
       // Any auth user can read group metadata (needed for discover/search).
       allow read: if isAuth();
 
-      // Borough-scoped create: check canonical 'borough' field, fall back to
-      // legacy 'creatorBorough' for docs written before the backfill.
+      // Borough-scoped create: backfill complete — read canonical 'borough' only.
       allow create: if isAuth()
         && request.resource.data.creatorUid == request.auth.uid
-        && boroughMatches(request.resource.data.get('borough',
-               request.resource.data.get('creatorBorough', '')));
+        && boroughMatches(request.resource.data.get('borough', ''));
 
       // Members may update non-sensitive group fields (e.g. lastMessage).
       // The creator/admin may update everything (borough already stamped at create).
@@ -142,14 +140,13 @@ service cloud.firestore {
       // they are not yet in memberIds so the normal member-only rule would
       // block them).
       // Borough-scoped update: full-field updates (creator path) must still match
-      // the doc's existing creatorBorough.
+      // the doc's existing borough.
       allow update: if isAuth() && (
         // Group creator has full update rights; borough must match existing doc.
-        // Check canonical 'borough' field, fall back to legacy 'creatorBorough'.
+        // Backfill complete — read canonical 'borough' only.
         (
           resource.data.creatorUid == request.auth.uid
-          && boroughMatches(resource.data.get('borough',
-               resource.data.get('creatorBorough', '')))
+          && boroughMatches(resource.data.get('borough', ''))
         )
         ||
         // Any existing member may update limited activity fields.
@@ -629,23 +626,21 @@ service cloud.firestore {
 
     // =========================================================================
     // MARKETPLACE
-    // Borough-scoped: create and seller-update paths require sellerBorough match.
+    // Borough-scoped: create and seller-update paths require borough match.
     // =========================================================================
     match /marketplace/{itemId} {
       allow read: if isAuth();
       // Seller's resolved borough must match the doc's borough field.
-      // Check canonical 'borough' field, fall back to legacy 'sellerBorough'.
+      // Backfill complete — read canonical 'borough' only.
       allow create: if isAuth()
         && request.resource.data.sellerId == request.auth.uid
-        && boroughMatches(request.resource.data.get('borough',
-               request.resource.data.get('sellerBorough', '')));
+        && boroughMatches(request.resource.data.get('borough', ''));
       allow update: if isAuth() && (
         // Seller full-update: borough must match existing doc's borough field.
-        // Check canonical 'borough' field, fall back to legacy 'sellerBorough'.
+        // Backfill complete — read canonical 'borough' only.
         (
           resource.data.sellerId == request.auth.uid
-          && boroughMatches(resource.data.get('borough',
-               resource.data.get('sellerBorough', '')))
+          && boroughMatches(resource.data.get('borough', ''))
         )
         ||
         // Narrow aggregate-counter updates require no borough check.
