@@ -44,6 +44,17 @@ class Group {
   /// Displayed beneath the group name in Discover cards.
   final String? aiTagline;
 
+  /// Semantic group type: 'resident' for system-created cohort groups
+  /// (borough + birth-year cohorts), 'interest' for user-created groups.
+  /// Null on un-backfilled docs — callers must treat null as unknown, falling
+  /// back to isImageLocked inference during the migration window.
+  final String? groupType;
+
+  /// Birth year of the cohort (resident groups only). Stored as int so it is
+  /// directly sortable without string parsing. Null for interest groups or
+  /// un-backfilled resident groups (use the name regex as fallback).
+  final int? birthYear;
+
   Group({
     required this.id,
     required this.name,
@@ -66,6 +77,8 @@ class Group {
     this.creatorBorough,
     this.invitedMemberIds = const [],
     this.aiTagline,
+    this.groupType,
+    this.birthYear,
   });
   
   // JSON serialization for persistence
@@ -93,6 +106,8 @@ class Group {
       'creatorBorough': creatorBorough,  // legacy dual-write; remove after backfill
       'invitedMemberIds': invitedMemberIds,
       if (aiTagline != null && aiTagline!.isNotEmpty) 'aiTagline': aiTagline,
+      if (groupType != null) 'groupType': groupType,
+      if (birthYear != null) 'birthYear': birthYear,
     };
   }
   
@@ -122,6 +137,8 @@ class Group {
           ?? json['creatorBorough'] as String?,         // legacy fallback
       invitedMemberIds: (json['invitedMemberIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       aiTagline: json['aiTagline'] as String?,
+      groupType: json['groupType'] as String?,
+      birthYear: json['birthYear'] as int?,
     );
   }
 
@@ -165,6 +182,8 @@ class Group {
     String? creatorBorough,
     List<String>? invitedMemberIds,
     String? aiTagline,
+    String? groupType,
+    int? birthYear,
   }) {
     return Group(
       id: id ?? this.id,
@@ -188,6 +207,8 @@ class Group {
       creatorBorough: creatorBorough ?? this.creatorBorough,
       invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
       aiTagline: aiTagline ?? this.aiTagline,
+      groupType: groupType ?? this.groupType,
+      birthYear: birthYear ?? this.birthYear,
     );
   }
 }

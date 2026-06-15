@@ -229,6 +229,15 @@ class HuddlUserService {
     }
     if (postcode.isNotEmpty) {
       profile['postcode'] = postcode;
+      // Additive geo fields — captured from the postcodes.io response that
+      // already ran for the borough lookup above. No extra network call.
+      final geo = _postcodeService.lookupGeoFromCacheSync(postcode);
+      if (geo != null) {
+        if (geo.ward?.isNotEmpty == true)         profile['ward']         = geo.ward!;
+        if (geo.wardCode?.isNotEmpty == true)     profile['wardCode']     = geo.wardCode!;
+        if (geo.districtCode?.isNotEmpty == true) profile['districtCode'] = geo.districtCode!;
+        if (geo.region?.isNotEmpty == true)       profile['region']       = geo.region!;
+      }
     }
     if (borough.isNotEmpty) {
       profile['borough'] = borough;

@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen>
   ///   5. Name contains any onboarding keyword (aspiring / expecting / SEN…)
   ///   6. Privacy is private (these are invite-only chats, not suggestions)
   static bool _isDefaultOnboardingGroup(Group g) {
-    if (g.isImageLocked) return true;
+    if (g.groupType == 'resident' || (g.groupType == null && g.isImageLocked)) return true;
     if (g.id.startsWith('meetup_group_') || g.id.startsWith('event_group_')) return true;
     if (RegExp(r'^\d{4}\s+\S').hasMatch(g.name)) return true;
     if (g.category == 'Default Community') return true;

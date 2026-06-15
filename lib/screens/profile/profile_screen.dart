@@ -388,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         ];
         discovered = firestoreGroups
             .where((g) => !defaultGroupIds.contains(g.id))
-            .where((g) => !g.isImageLocked)
+            .where((g) => !g.isImageLocked && g.groupType != 'resident')
             .where((g) => !yearGroupPattern.hasMatch(g.name))
             .where((g) => g.category != 'Default Community')
             .where((g) {

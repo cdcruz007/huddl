@@ -909,6 +909,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             : 'PARENTING',
         isJoined: true,
         isImageLocked: false,
+        groupType: 'interest',
         targetAudience: selectedAudience,
         privacy: privacy,
         parentGroupId: _privacy == 'group' ? _selectedParentGroupId : null,
@@ -935,6 +936,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'memberCount': newGroup.memberCount,
           'category': newGroup.category,
           'isImageLocked': newGroup.isImageLocked,
+          'groupType': 'interest',
           'targetAudience': newGroup.targetAudience,
           'privacy': newGroup.privacy == GroupPrivacy.private_
               ? 'private'

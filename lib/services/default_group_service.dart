@@ -214,6 +214,8 @@ class DefaultGroupService {
       lastSenderName: welcomeMsg['sender'],
       lastMessageTime: DateTime.now().subtract(Duration(minutes: welcomeMsg['minutesAgo'] as int)),
       unreadCount: welcomeMsg['unread'] as int,
+      groupType: 'resident',
+      birthYear: childYearOfBirth != null ? int.tryParse(childYearOfBirth) : null,
     );
 
     _defaultGroups[groupId] = newGroup;
@@ -809,15 +811,11 @@ class DefaultGroupService {
       
       // Increment member count — preserve all existing fields including isImageLocked
       final group = _defaultGroups[groupId]!;
-      _defaultGroups[groupId] = Group(
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        imageUrl: group.imageUrl,
+      _defaultGroups[groupId] = group.copyWith(
         memberCount: group.memberCount + 1,
-        category: group.category,
         isJoined: true,
-        isImageLocked: true, // Always locked for default borough groups
+        isImageLocked: true,
+        groupType: 'resident',
       );
       
       _log('User $userId joined group: ${group.name}');
@@ -854,6 +852,7 @@ class DefaultGroupService {
           'memberIds': FieldValue.arrayUnion([firebaseUid]),
           'memberCount': FieldValue.increment(1),
           'isImageLocked': true,
+          'groupType': 'resident',
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
@@ -871,9 +870,14 @@ class DefaultGroupService {
               ? (_postcodeService.getBoroughFromPostcode(_onboardingService.postcode!) ?? '')
               : '',
           'postcode': _onboardingService.postcode ?? '',
+          // Additive geo fields — populated from the in-memory geo cache,
+          // no extra network call.
+          ..._buildGeoFields(_onboardingService.postcode),
           'creatorId': firebaseUid,
           'creatorName': _onboardingService.name ?? '',
           'isImageLocked': true,
+          'groupType': 'resident',
+          if (group.birthYear != null) 'birthYear': group.birthYear,
           'invitedMemberIds': [],
           'lastMessage': group.lastMessage ?? 'Welcome to the group!',
           'lastSenderName': group.lastSenderName ?? 'Huddl',
@@ -1011,6 +1015,21 @@ class DefaultGroupService {
         debugPrint('');
       }
     }
+  }
+
+  /// Returns a Map of geo fields to merge into a Firestore document.
+  /// Only includes fields with non-empty values. Returns an empty map if
+  /// postcode is null or the geo cache has no entry.
+  Map<String, dynamic> _buildGeoFields(String? postcode) {
+    if (postcode == null || postcode.isEmpty) return {};
+    final geo = _postcodeService.lookupGeoFromCacheSync(postcode);
+    if (geo == null) return {};
+    return {
+      if (geo.ward?.isNotEmpty == true)         'ward':         geo.ward!,
+      if (geo.wardCode?.isNotEmpty == true)     'wardCode':     geo.wardCode!,
+      if (geo.districtCode?.isNotEmpty == true) 'districtCode': geo.districtCode!,
+      if (geo.region?.isNotEmpty == true)       'region':       geo.region!,
+    };
   }
 
   void _log(String message) {

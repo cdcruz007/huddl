@@ -38,6 +38,34 @@ import 'browser_storage.dart';
 //   huddl_postcode_borough_v1   JSON map  { "CB12AB": "Cambridge", … }
 // =============================================================================
 
+/// Full geographic result from a postcodes.io lookup.
+/// All fields are nullable — the API may not return values for every postcode
+/// (e.g. some Scottish postcodes omit admin_ward).
+class PostcodeGeoResult {
+  /// The local authority / borough name (admin_district). Primary borough field.
+  final String? borough;
+
+  /// Electoral ward name (admin_ward).
+  final String? ward;
+
+  /// GSS code for the local authority (codes.admin_district), e.g. "E07000008".
+  final String? districtCode;
+
+  /// GSS code for the ward (codes.admin_ward), e.g. "E05012879".
+  final String? wardCode;
+
+  /// NUTS region name (result.region), e.g. "East of England".
+  final String? region;
+
+  const PostcodeGeoResult({
+    this.borough,
+    this.ward,
+    this.districtCode,
+    this.wardCode,
+    this.region,
+  });
+}
+
 class PostcodeService {
   static final PostcodeService _instance = PostcodeService._internal();
   factory PostcodeService() => _instance;
@@ -45,9 +73,13 @@ class PostcodeService {
 
   // ── Persistent cache key ──────────────────────────────────────────────────
   static const String _cacheKey = 'huddl_postcode_borough_v1';
+  // Separate geo cache so the legacy borough cache is never disturbed.
+  static const String _geoCacheKey = 'huddl_postcode_geo_v1';
 
   // ── In-memory cache: cleanPostcode (no spaces, uppercase) → borough ───────
   final Map<String, String> _cache = {};
+  // postcode → PostcodeGeoResult (full geo fields from the same API response)
+  final Map<String, PostcodeGeoResult> _geoCache = {};
   bool _cacheLoaded = false;
 
   // ── Cambridge acceptance set (outward codes whose borough == Cambridge) ────
@@ -216,6 +248,18 @@ class PostcodeService {
 
         if (district != null && district.isNotEmpty) {
           await _writeToCache(clean, district);
+          // Also capture the full geo fields from the same response — no
+          // extra API call needed. Store in the geo cache for callers.
+          final codes = result?['codes'] as Map<String, dynamic>?;
+          final geo = PostcodeGeoResult(
+            borough: district,
+            ward: result?['admin_ward'] as String?,
+            districtCode: codes?['admin_district'] as String?,
+            wardCode: codes?['admin_ward'] as String?,
+            region: result?['region'] as String?,
+          );
+          _geoCache[clean] = geo;
+          await _writeGeoToCache(clean, geo);
           _log('API lookup: $clean → $district');
           return district;
         }
@@ -236,6 +280,34 @@ class PostcodeService {
       _log('Fallback map: $clean → $fallback');
     }
     return fallback;
+  }
+
+  /// Returns the full [PostcodeGeoResult] for [postcode], including ward,
+  /// district code, ward code, and region. Calls postcodes.io if not cached.
+  ///
+  /// Returns null if the postcode is invalid, the API is unreachable, and
+  /// no geo cache entry exists. The [borough] field mirrors what
+  /// [lookupBoroughAsync] returns — callers need only call this one method.
+  Future<PostcodeGeoResult?> lookupGeoAsync(String? postcode) async {
+    if (postcode == null || postcode.isEmpty) return null;
+    final clean = _clean(postcode);
+    if (clean.length < 5) return null;
+
+    await _ensureCacheLoaded();
+    if (_geoCache.containsKey(clean)) return _geoCache[clean];
+
+    // lookupBoroughAsync populates _geoCache as a side effect.
+    final borough = await lookupBoroughAsync(postcode);
+    if (borough == null) return null;
+    return _geoCache[clean];
+  }
+
+  /// Synchronous geo lookup from the in-memory cache only.
+  /// Returns null if [postcode] has not yet been resolved via [lookupGeoAsync]
+  /// or [lookupBoroughAsync] (which populates the geo cache as a side effect).
+  PostcodeGeoResult? lookupGeoFromCacheSync(String? postcode) {
+    if (postcode == null || postcode.isEmpty) return null;
+    return _geoCache[_clean(postcode)];
   }
 
   /// Resolves borough from GPS coordinates via postcodes.io reverse geocoding.
@@ -353,6 +425,26 @@ class PostcodeService {
       _log('Cache load error: $e');
     }
     _cacheLoaded = true;
+    // Also load geo cache
+    try {
+      final geoRaw = await BrowserStorage.getString(_geoCacheKey);
+      if (geoRaw != null) {
+        final decoded = json.decode(geoRaw) as Map<String, dynamic>;
+        decoded.forEach((k, v) {
+          if (v is Map<String, dynamic>) {
+            _geoCache[k] = PostcodeGeoResult(
+              borough: v['borough'] as String?,
+              ward: v['ward'] as String?,
+              districtCode: v['districtCode'] as String?,
+              wardCode: v['wardCode'] as String?,
+              region: v['region'] as String?,
+            );
+          }
+        });
+      }
+    } catch (e) {
+      _log('Geo cache load error: $e');
+    }
   }
 
   /// Synchronously seed the in-memory cache with a known postcode→borough
@@ -367,6 +459,24 @@ class PostcodeService {
     final clean = _clean(postcode);
     _cache[clean] = borough;
     _log('Cache seeded: $clean → $borough');
+  }
+
+  Future<void> _writeGeoToCache(String cleanPostcode, PostcodeGeoResult geo) async {
+    try {
+      final raw = await BrowserStorage.getString(_geoCacheKey);
+      final Map<String, dynamic> map =
+          raw != null ? json.decode(raw) as Map<String, dynamic> : {};
+      map[cleanPostcode] = {
+        'borough': geo.borough,
+        'ward': geo.ward,
+        'districtCode': geo.districtCode,
+        'wardCode': geo.wardCode,
+        'region': geo.region,
+      };
+      await BrowserStorage.setString(_geoCacheKey, json.encode(map));
+    } catch (e) {
+      _log('Geo cache write error: $e');
+    }
   }
 
   Future<void> _writeToCache(String cleanPostcode, String borough) async {
