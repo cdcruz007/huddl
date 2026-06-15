@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/group.dart';
 import 'postcode_service.dart';
+import 'place_resolver.dart';
 import 'onboarding_data_service.dart';
 import 'browser_storage.dart';
 import 'borough_scope_guard.dart';
@@ -685,15 +686,23 @@ class DefaultGroupService {
       return assignedGroups;
     }
 
-    final borough = _postcodeService.getBoroughFromPostcode(postcode);
-    if (borough == null) {
+    final geo = _postcodeService.lookupGeoFromCacheSync(postcode);
+    final place = PlaceResolver.resolve(geo);
+    // PlaceResolver returns null only if admin_district is absent/empty.
+    // Fall back to the legacy sync cache so callers whose geo cache was not
+    // yet populated (e.g. resumed session before lookupBoroughAsync ran)
+    // continue to work without an extra network call.
+    final resolvedBorough = place?.borough
+        ?? _postcodeService.getBoroughFromPostcode(postcode);
+    if (resolvedBorough == null) {
       _log('❌ COULD NOT DETERMINE BOROUGH FROM POSTCODE: $postcode');
       _log('═══════════════════════════════════════════════════════');
       return assignedGroups;
     }
+    final placeName = place?.placeName ?? resolvedBorough;
 
     final parentCategory = _determineParentCategory(stagesOfLife);
-    _log('   • Borough:        $borough');
+    _log('   • Borough:        $resolvedBorough');
     _log('   • Parent Category: $parentCategory');
     _log('');
 
@@ -769,12 +778,12 @@ class DefaultGroupService {
     for (final spec in groupSpecs) {
       final group = getOrCreateDefaultGroup(
         parentCategory: spec.category,
-        borough: borough,
+        borough: placeName,
         childYearOfBirth: spec.year,
       );
       assignedGroups.add(group);
       joinGroup(userId, group.id);
-      _log('   ✓ ${group.name}  (year: ${spec.year ?? 'none'}, category: ${spec.category})');
+      _log('   ✓ ${group.name}  (year: ${spec.year ?? 'none'}, category: ${spec.category}, place: $placeName)');
     }
 
     // Return fresh copies with updated member counts
