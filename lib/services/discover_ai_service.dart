@@ -401,7 +401,8 @@ class DiscoverAiService with BoroughAiContext {
     final groupId = group['id'] as String? ?? '';
     final category = group['category'] as String? ?? '';
     final memberCount = group['memberCount'] as int? ?? 0;
-    final borough = group['creatorBorough'] as String?;
+    final borough = group['borough'] as String?      // canonical
+        ?? group['creatorBorough'] as String?;        // legacy fallback
     final audiences = group['targetAudience'] as List<String>? ?? [];
 
     // 1. Liked/disliked category from feedback
@@ -518,7 +519,8 @@ class DiscoverAiService with BoroughAiContext {
     final category = group['category'] as String? ?? '';
     final memberCount = group['memberCount'] as int? ?? 0;
     final audiences = group['targetAudience'] as List<String>? ?? [];
-    final borough = group['creatorBorough'] as String?;
+    final borough = group['borough'] as String?      // canonical
+        ?? group['creatorBorough'] as String?;        // legacy fallback
 
     // One-liner: contextual summary
     String oneLiner;

@@ -944,7 +944,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'parentGroupId': newGroup.parentGroupId,
           'parentGroupName': newGroup.parentGroupName,
           'creatorName': creatorName,
-          'creatorBorough': creatorBorough,
+          'borough': creatorBorough,          // canonical field going forward
+          'creatorBorough': creatorBorough,   // legacy dual-write; remove after backfill
           'invitedMemberIds': newGroup.invitedMemberIds,
           'lastMessage': newGroup.lastMessage ?? '$creatorName created this group',
           'lastSenderName': 'System',

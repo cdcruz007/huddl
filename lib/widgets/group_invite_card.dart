@@ -85,7 +85,8 @@ class GroupInviteCard extends StatelessWidget {
     final imageUrl = groupData['imageUrl'] as String? ?? '';
     final memberCount = (groupData['memberCount'] as num?)?.toInt() ?? 0;
     final creatorName = groupData['creatorName'] as String? ?? '';
-    final borough = groupData['creatorBorough'] as String? ?? '';
+    final borough = groupData['borough'] as String?       // canonical
+        ?? groupData['creatorBorough'] as String? ?? '';  // legacy fallback
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

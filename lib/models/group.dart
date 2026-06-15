@@ -89,7 +89,8 @@ class Group {
       'parentGroupName': parentGroupName,
       'creatorId': creatorId,
       'creatorName': creatorName,
-      'creatorBorough': creatorBorough,
+      'borough': creatorBorough,        // canonical field going forward
+      'creatorBorough': creatorBorough,  // legacy dual-write; remove after backfill
       'invitedMemberIds': invitedMemberIds,
       if (aiTagline != null && aiTagline!.isNotEmpty) 'aiTagline': aiTagline,
     };
@@ -117,7 +118,8 @@ class Group {
       parentGroupName: json['parentGroupName'] as String?,
       creatorId: json['creatorId'] as String?,
       creatorName: json['creatorName'] as String?,
-      creatorBorough: json['creatorBorough'] as String?,
+      creatorBorough: json['borough'] as String?      // canonical
+          ?? json['creatorBorough'] as String?,         // legacy fallback
       invitedMemberIds: (json['invitedMemberIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       aiTagline: json['aiTagline'] as String?,
     );

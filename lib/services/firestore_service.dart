@@ -250,7 +250,8 @@ class FirestoreService {
       parentGroupName: d['parentGroupName'] as String?,
       creatorId: d['creatorId'] as String?,
       creatorName: d['creatorName'] as String?,
-      creatorBorough: d['creatorBorough'] as String?,
+      creatorBorough: d['borough'] as String?      // canonical
+          ?? d['creatorBorough'] as String?,         // legacy fallback
       invitedMemberIds: List<String>.from(d['invitedMemberIds'] ?? []),
     );
   }
@@ -853,7 +854,8 @@ class FirestoreService {
     final profile = await getCurrentUserProfile();
     listingData['sellerId'] = uid;
     listingData['sellerName'] = _resolveDisplayName(profile);
-    listingData['sellerBorough'] = profile?['borough'] ?? '';
+    listingData['borough']       = profile?['borough'] ?? '';  // canonical field going forward
+    listingData['sellerBorough']  = profile?['borough'] ?? '';  // legacy dual-write; remove after backfill
     listingData['status'] = 'active';
     listingData['viewCount'] = 0;
     listingData['favouriteCount'] = 0;

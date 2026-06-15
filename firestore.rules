@@ -128,10 +128,12 @@ service cloud.firestore {
       // Any auth user can read group metadata (needed for discover/search).
       allow read: if isAuth();
 
-      // Borough-scoped create: creator's borough must match the doc's creatorBorough.
+      // Borough-scoped create: check canonical 'borough' field, fall back to
+      // legacy 'creatorBorough' for docs written before the backfill.
       allow create: if isAuth()
         && request.resource.data.creatorUid == request.auth.uid
-        && boroughMatches(request.resource.data.get('creatorBorough', ''));
+        && boroughMatches(request.resource.data.get('borough',
+               request.resource.data.get('creatorBorough', '')));
 
       // Members may update non-sensitive group fields (e.g. lastMessage).
       // The creator/admin may update everything (borough already stamped at create).
@@ -143,9 +145,11 @@ service cloud.firestore {
       // the doc's existing creatorBorough.
       allow update: if isAuth() && (
         // Group creator has full update rights; borough must match existing doc.
+        // Check canonical 'borough' field, fall back to legacy 'creatorBorough'.
         (
           resource.data.creatorUid == request.auth.uid
-          && boroughMatches(resource.data.get('creatorBorough', ''))
+          && boroughMatches(resource.data.get('borough',
+               resource.data.get('creatorBorough', '')))
         )
         ||
         // Any existing member may update limited activity fields.
@@ -626,15 +630,19 @@ service cloud.firestore {
     // =========================================================================
     match /marketplace/{itemId} {
       allow read: if isAuth();
-      // Seller's resolved borough must match the doc's sellerBorough field.
+      // Seller's resolved borough must match the doc's borough field.
+      // Check canonical 'borough' field, fall back to legacy 'sellerBorough'.
       allow create: if isAuth()
         && request.resource.data.sellerId == request.auth.uid
-        && boroughMatches(request.resource.data.get('sellerBorough', ''));
+        && boroughMatches(request.resource.data.get('borough',
+               request.resource.data.get('sellerBorough', '')));
       allow update: if isAuth() && (
-        // Seller full-update: borough must match existing doc's sellerBorough.
+        // Seller full-update: borough must match existing doc's borough field.
+        // Check canonical 'borough' field, fall back to legacy 'sellerBorough'.
         (
           resource.data.sellerId == request.auth.uid
-          && boroughMatches(resource.data.get('sellerBorough', ''))
+          && boroughMatches(resource.data.get('borough',
+               resource.data.get('sellerBorough', '')))
         )
         ||
         // Narrow aggregate-counter updates require no borough check.
