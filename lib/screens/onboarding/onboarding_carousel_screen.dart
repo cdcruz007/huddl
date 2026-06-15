@@ -70,19 +70,22 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 
   // ── Pages getter — reads instance state, so cannot be static const ──────────
   List<_HeroPageData> get _pages {
-    // Resolved borough name, or 'Cambridge' as the launch-city fallback.
+    // Resolved borough name from GPS/photo service.
+    // If the location hasn't resolved yet (loading) or returned the default
+    // fallback, use an empty string — callers omit the badge rather than
+    // showing the wrong city (e.g. 'Cambridge' to a London user).
     final borough = (_locationPhoto?.borough != null &&
             !(_locationPhoto?.isDefault ?? true))
         ? _locationPhoto!.borough!
-        : 'Cambridge';
+        : '';
 
     return [
     // Slide 1 — community: badge + stat update once GPS resolves
     _HeroPageData(
       heroImageAsset: 'assets/images/onboarding_community.webp',
       overlayStatNumber: '847',
-      overlayStatLabel: 'parents in $borough',
-      badge: '📍 $borough',
+      overlayStatLabel: borough.isNotEmpty ? 'parents in $borough' : 'parents near you',
+      badge: borough.isNotEmpty ? '📍 $borough' : '📍 Near you',
       heading: 'Your neighbourhood\nis full of parents like you',
       subheading:
           'Groups, meetups, and conversations — all within walking distance.',
@@ -102,8 +105,8 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
           (_locationPhoto?.isAsset == false) ? _locationPhoto : null,
       overlayStatNumber: '23',
       overlayStatLabel: 'meetups this month',
-      // Dynamic badge: resolved borough, or Cambridge fallback
-      badge: '☕ This Sunday · $borough',
+      // Badge: resolved borough name when available, neutral fallback otherwise
+      badge: borough.isNotEmpty ? '☕ This Sunday · $borough' : '☕ This Sunday · Local',
       heading: 'Morning Coffee & Chat\nthis Sunday at 10am',
       subheading:
           '14 parents are going. Drop in, no commitment required.',

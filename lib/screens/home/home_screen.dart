@@ -3802,7 +3802,7 @@ class _HomeScreenState extends State<HomeScreen>
             Expanded(
               child: Text(
                 '${_newPublicGroups.isNotEmpty ? '${_newPublicGroups.length} groups' : 'Parents'} '
-                'are waiting for you in ${_borough.isNotEmpty ? _borough : 'Cambridge'}',
+                'are waiting for you in ${_borough.isNotEmpty ? _borough : 'your area'}',
                 style: HuddlText.body(
                   color: HuddlColors.primary,
                   weight: FontWeight.w500,

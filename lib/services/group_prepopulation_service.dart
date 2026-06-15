@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import '../models/group.dart';
 import 'ai_knowledge_base_service.dart';
+import 'borough_scope_guard.dart';
 import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
 
 // =============================================================================
 // GROUP PREPOPULATION SERVICE  — PARENT CONCIERGE EDITION (Step 11)
@@ -55,7 +55,6 @@ class GroupPrepopulationService {
 
   final AiKnowledgeBaseService _knowledgeBase = AiKnowledgeBaseService();
   final OnboardingDataService _onboarding = OnboardingDataService();
-  final PostcodeService _postcode = PostcodeService();
 
   bool _isInitialized = false;
   final List<PrepopulatedGroup> _prepopulatedGroups = [];
@@ -70,15 +69,9 @@ class GroupPrepopulationService {
     _isInitialized = true;
   }
 
-  /// Get the user's current borough — 3-tier: persisted API result → sync cache → prefix map.
-  String _getUserBorough() {
-    if (_onboarding.borough?.isNotEmpty == true) return _onboarding.borough!;
-    final pc = _onboarding.postcode;
-    if (pc != null) {
-      return _postcode.getBoroughFromPostcode(pc) ?? '';
-    }
-    return '';
-  }
+  /// Single source of truth — delegates to BoroughScopeGuard.
+  /// Returns '' when borough is unresolved (never a hardcoded fallback).
+  String _getUserBorough() => BoroughScopeGuard().currentBorough ?? '';
 
   /// Generate prepopulated groups for a specific borough using community
   /// templates from the Knowledge Base.

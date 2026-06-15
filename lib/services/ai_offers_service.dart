@@ -3,9 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
 import 'revglue_service.dart';
 import 'borough_ai_context.dart';
+import 'borough_scope_guard.dart';
+
 import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
@@ -86,7 +87,6 @@ class AiOffersService with BoroughAiContext {
 
   // ---- Dependencies ----
   final OnboardingDataService _onboarding = OnboardingDataService();
-  final PostcodeService _postcode = PostcodeService();
   final RevGlueService _revglue = RevGlueService();
   final AiKnowledgeBaseService _knowledgeBase = AiKnowledgeBaseService();
   final AiLearningEngineService _learningEngine = AiLearningEngineService();
@@ -476,15 +476,9 @@ class AiOffersService with BoroughAiContext {
     return parts.join('\n');
   }
 
-  String _getUserBorough() {
-    try {
-      final postcode = _onboarding.postcode;
-      if (postcode != null && postcode.isNotEmpty) {
-        return _postcode.getBoroughFromPostcode(postcode) ?? '';
-      }
-    } catch (_) {}
-    return '';
-  }
+  /// Single source of truth — delegates to BoroughScopeGuard.
+  /// Returns '' when borough is unresolved (never a hardcoded fallback).
+  String _getUserBorough() => BoroughScopeGuard().currentBorough ?? '';
 
   String _computeChildAge(String birthday) {
     try {

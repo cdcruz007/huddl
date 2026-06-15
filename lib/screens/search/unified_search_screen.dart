@@ -10,6 +10,7 @@ import '../../services/default_group_service.dart';
 import '../../services/event_service.dart';
 import '../../services/local_services_service.dart';
 import '../../services/meetup_service.dart';
+import '../../services/borough_scope_guard.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/rehome_service.dart';
 import '../../services/huddl_user_service.dart';
@@ -353,7 +354,9 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
 
   // ── Quick picks — shown before any search ─────────────────────────────────
   Widget _buildQuickPicks() {
-    final borough = _onboarding.borough ?? 'Cambridge';
+    // Use guard so an unresolved borough shows an empty label rather than
+    // the wrong city. Affects the subtitle copy — purely cosmetic.
+    final borough = BoroughScopeGuard().currentBorough ?? '';
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
       child: Column(
@@ -916,7 +919,7 @@ class _GroupResultRow extends StatelessWidget {
       ),
     ),
     title:    group.name,
-    subtitle: '${group.memberCount} members · ${group.creatorBorough ?? 'Cambridge'}',
+    subtitle: '${group.memberCount} members${group.creatorBorough != null && group.creatorBorough!.isNotEmpty ? " · ${group.creatorBorough}" : ""}',
     tag:      'GROUP',
     tagColor: HuddlColors.primary,
     query:    query,
@@ -1062,8 +1065,10 @@ class _MarketResultRow extends StatelessWidget {
     ),
     title:    item.title,
     subtitle: item.isFree
-        ? 'Free · ${item.borough ?? 'Cambridge'}'
-        : '£${item.price.toStringAsFixed(0)} · ${item.borough ?? 'Cambridge'}',
+        ? (item.borough != null && item.borough!.isNotEmpty ? 'Free · ${item.borough}' : 'Free')
+        : (item.borough != null && item.borough!.isNotEmpty
+            ? '£${item.price.toStringAsFixed(0)} · ${item.borough}'
+            : '£${item.price.toStringAsFixed(0)}'),
     tag:      item.isFree ? 'FREE' : 'MARKET',
     tagColor: item.isFree ? HuddlColors.yellowDark : HuddlColors.nearBlack,
     query:    query,

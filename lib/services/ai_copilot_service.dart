@@ -5,8 +5,9 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
+
 import 'borough_ai_context.dart';
+import 'borough_scope_guard.dart';
 
 // =============================================================================
 // AI PARENTING COPILOT SERVICE  — HYPERLOCAL EDITION
@@ -81,7 +82,6 @@ class AiCopilotService with BoroughAiContext {
   AiCopilotService._internal();
 
   final OnboardingDataService _onboarding = OnboardingDataService();
-  final PostcodeService _postcode = PostcodeService();
   final GeminiSystemPromptBuilder _promptBuilder =
       GeminiSystemPromptBuilder();
 
@@ -329,8 +329,7 @@ class AiCopilotService with BoroughAiContext {
   /// Build user context map for the Cloud Function call.
   Map<String, String> _buildUserContextForFunction() {
     final name = _onboarding.name ?? '';
-    final pc = _onboarding.postcode ?? '';
-    final borough = _postcode.getBoroughFromPostcode(pc) ?? _onboarding.borough ?? '';
+    final borough = BoroughScopeGuard().currentBorough ?? '';
     final children = _onboarding.children;
     String childrenSummary;
     if (children.isEmpty) {
@@ -867,13 +866,10 @@ class AiCopilotService with BoroughAiContext {
   }
 
   // -- Helpers --
-  String _getUserBorough() {
-    final pc = _onboarding.postcode;
-    if (pc != null) {
-      return _postcode.getBoroughFromPostcode(pc) ?? 'your area';
-    }
-    return 'your area';
-  }
+  /// Single source of truth — delegates to BoroughScopeGuard.
+  /// Falls back to 'your area' only for Gemini prompt text (never written
+  /// to Firestore, so the neutral string is acceptable here).
+  String _getUserBorough() => BoroughScopeGuard().currentBorough ?? 'your area';
 
   String _getChildAgeContext(List<Map<String, String>> children) {
     if (children.isEmpty) return '';

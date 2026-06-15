@@ -5,11 +5,12 @@ import 'ai_api_helper.dart';
 
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
+
 import 'meetup_service.dart';
 import 'default_group_service.dart';
 import 'community_feed_service.dart';
 import 'borough_ai_context.dart';
+import 'borough_scope_guard.dart';
 import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
@@ -98,7 +99,6 @@ class AiFeedService with BoroughAiContext {
   AiFeedService._internal();
 
   final OnboardingDataService _onboarding = OnboardingDataService();
-  final PostcodeService _postcode = PostcodeService();
   final MeetupService _meetupService = MeetupService();
   final DefaultGroupService _groupService = DefaultGroupService();
   final CommunityFeedService _feedService = CommunityFeedService();
@@ -939,13 +939,7 @@ class AiFeedService with BoroughAiContext {
     return null;
   }
 
-  String _getUserBorough() {
-    // 3-tier: persisted API result → sync cache → prefix map
-    if (_onboarding.borough?.isNotEmpty == true) return _onboarding.borough!;
-    final pc = _onboarding.postcode;
-    if (pc != null) {
-      return _postcode.getBoroughFromPostcode(pc) ?? '';
-    }
-    return '';
-  }
+  /// Single source of truth — delegates to BoroughScopeGuard.
+  /// Returns '' when borough is unresolved (never a hardcoded fallback).
+  String _getUserBorough() => BoroughScopeGuard().currentBorough ?? '';
 }

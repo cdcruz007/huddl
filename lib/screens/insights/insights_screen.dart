@@ -5,6 +5,7 @@ import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/huddl_character.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/borough_scope_guard.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
@@ -2127,6 +2128,26 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
     HuddlAnimations.mediumTap();
     setState(() { _submitting = true; _error = null; });
 
+    // Borough must be resolved — never write a hardcoded value to Firestore.
+    final contributorBorough = BoroughScopeGuard().currentBorough ?? '';
+    if (contributorBorough.isEmpty) {
+      setState(() => _submitting = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Please set your area in your profile before sharing an insight.',
+          ),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     final user = FirebaseAuth.instance.currentUser;
     final firstName = (user?.displayName ?? 'Parent').split(' ').first;
 
@@ -2138,7 +2159,7 @@ class _ParentShareComposeSheetState extends State<ParentShareComposeSheet> {
       externalUrl:          _urlCtrl.text.trim(),
       category:             _category,
       contributorFirstName: firstName,
-      contributorBorough:   'Cambridge',
+      contributorBorough:   contributorBorough,
     );
 
     if (!mounted) return;

@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import 'browser_storage.dart';
+import 'borough_scope_guard.dart';
 import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
 
 // =============================================================================
 // LOCAL SERVICES SERVICE — HUDDL TRUSTED LOCAL DIRECTORY
@@ -478,17 +478,10 @@ class LocalServicesService {
 
   // ── Borough helper ─────────────────────────────────────────────────────────
 
-  String get _userBorough {
-    // Prefer the borough that was directly resolved from the full postcode
-    // via postcodes.io at onboarding / profile-edit time and persisted.
-    final stored = OnboardingDataService().borough;
-    if (stored != null && stored.isNotEmpty) return stored;
-
-    // Fallback: sync cache-read from PostcodeService (populated if
-    // lookupBoroughAsync has run this session) or outward-code prefix map.
-    final postcode = OnboardingDataService().postcode;
-    return PostcodeService().getBoroughFromPostcode(postcode) ?? 'Cambridge';
-  }
+  /// Single source of truth — delegates to BoroughScopeGuard.
+  /// Returns '' when borough is unresolved; callers get empty streams
+  /// rather than wrong-borough results. (Option B UI prompt: separate PR.)
+  String get _userBorough => BoroughScopeGuard().currentBorough ?? '';
 
   String get _firstName {
     final full = OnboardingDataService().name ?? '';

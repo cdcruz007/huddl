@@ -4,8 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'browser_storage.dart';
 import 'local_services_service.dart';
-import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
+import 'borough_scope_guard.dart';
 
 // =============================================================================
 // AI DIRECTORY SERVICE — REAL LOCAL SERVICES via GOOGLE PLACES API (New)
@@ -71,12 +70,10 @@ class AiDirectoryService {
 
   // ── Borough resolution ────────────────────────────────────────────────────
 
-  String get _userBorough {
-    final stored = OnboardingDataService().borough;
-    if (stored != null && stored.isNotEmpty) return stored;
-    final postcode = OnboardingDataService().postcode;
-    return PostcodeService().getBoroughFromPostcode(postcode) ?? 'Cambridge';
-  }
+  /// Single source of truth — delegates to BoroughScopeGuard.
+  /// Returns '' when borough is unresolved; callers get empty results
+  /// rather than wrong-borough results. (Option B UI prompt: separate PR.)
+  String get _userBorough => BoroughScopeGuard().currentBorough ?? '';
 
   // ── Category search queries ───────────────────────────────────────────────
   // Each entry is (category firestoreValue, search query string).
