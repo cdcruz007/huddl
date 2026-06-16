@@ -30,11 +30,14 @@ service cloud.firestore {
           get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
     }
 
-    /// Resolves the signed-in user's borough from their user doc.
+    /// Resolves the signed-in user's borough from the CF-controlled public mirror.
+    /// Reads users_public/{uid}.borough — written only by the setUserBorough CF
+    /// via Admin SDK; the F-09 affectedKeys rule blocks all client writes of borough
+    /// to users/{uid}, so this value cannot be spoofed by the caller.
     /// Returns '' if the doc is missing or the field is absent — fail-closed.
     function writerBorough() {
       return isAuth()
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users_public/$(request.auth.uid))
             .data.get('borough', '')
         : '';
     }
@@ -48,28 +51,53 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // USERS
+    // USERS — PRIVATE DOCUMENT  (F-08 + F-09 hardened)
     // =========================================================================
-    // Public profile fields (name, photoUrl, borough, bio, tier) are readable
-    // by any authenticated user (needed for group member lists, DM headers, etc.).
-    // Sensitive fields (fcmToken, stripeCustomerId, phoneNumber) are read-protected.
+    // users/{uid} holds sensitive fields: phone, email, postcode, children,
+    // fcmToken, stripeCustomerId, roles, tier, isFoundingMember, isPhoneVerified,
+    // borough/ward/wardCode/districtCode/region (geo).
+    //
+    // F-08: read locked to owner + admin — closes cross-user child-data harvest.
+    //       Public display fields (name, photoUrl, borough, isOnline, etc.) are
+    //       served from users_public/{uid} instead (see block below).
+    //
+    // F-09: update has an affectedKeys blocklist that prevents privilege escalation
+    //       (roles.isAdmin self-grant) and borough-spoofing (borough self-write).
+    //       Borough writes are CF-only via setUserBorough + Admin SDK.
+    //
+    // Borough-write-after-lock resolution: setUserBorough callable writes borough
+    //   + geo fields to users/{uid} via Admin SDK (bypasses rules). Client owner
+    //   writes of these fields are blocked by the affectedKeys guard below.
     // =========================================================================
     match /users/{userId} {
-      // Any authenticated user can read profiles (needed for group/DM UI).
-      allow read: if isAuth();
+      // F-08: owner or admin only — no cross-user reads of sensitive data.
+      allow read: if isOwner(userId) || isAdmin();
 
       // A user may only create their own profile document.
       allow create: if isOwner(userId);
 
-      // A user may update their own profile.
-      // Admin users may update any profile (moderation, badge grants).
-      allow update: if isOwner(userId) || isAdmin();
+      // F-09: owner update is blocked if any blocklisted field is touched.
+      //   Blocklist (11 fields): roles, tier, stripeCustomerId, isFoundingMember,
+      //   isPhoneVerified, borough, postcode, ward, wardCode, districtCode, region.
+      //   fcmToken is intentionally NOT in the blocklist — self-writing own token
+      //   is harmless; blocking it would break push registration on every login.
+      //   Admin updates bypass the blocklist (moderation / badge grants).
+      allow update: if
+        isAdmin()
+        ||
+        (
+          isOwner(userId)
+          && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['roles', 'tier', 'stripeCustomerId', 'isFoundingMember',
+                       'isPhoneVerified', 'borough', 'postcode', 'ward',
+                       'wardCode', 'districtCode', 'region'])
+        );
 
       // Accounts are soft-deleted (isDeleted flag) — no hard deletes from client.
       // Actual deletion is via the Admin SDK in the deleteAccount cloud function.
       allow delete: if false;
 
-      // ── Sub-collections ───────────────────────────────────────────────────
+      // ── Sub-collections (ownership unchanged) ────────────────────────────
 
       // Saved listings mirror: fast lookup for the Saved tab.
       match /savedListings/{listingId} {
@@ -104,6 +132,27 @@ service cloud.firestore {
         allow create: if isAuth();
         allow delete: if isOwner(userId);
       }
+    }
+
+    // =========================================================================
+    // USERS — PUBLIC MIRROR  (CF-controlled, F-08 safe read surface)
+    // =========================================================================
+    // users_public/{uid} is a read-only mirror of the 10 public fields from
+    // users/{uid}: name, photoUrl, parentType, borough, isOnline, stagesOfLife,
+    // ward, wardCode, districtCode, region.
+    //
+    // Written exclusively by the syncPublicProfile Cloud Function (Admin SDK).
+    // Client writes are categorically denied — the mirror cannot be poisoned.
+    // borough here is always CF-controlled (set by setUserBorough callable),
+    // so writerBorough() reading from this collection closes the borough-spoof.
+    // =========================================================================
+    match /users_public/{userId} {
+      // Any authenticated user may read the public mirror (group member lists,
+      // DM headers, borough member picker — all the reads F-08 previously blocked).
+      allow read: if isAuth();
+
+      // All client writes denied — Admin SDK / CF only.
+      allow write: if false;
     }
 
     // =========================================================================
@@ -169,30 +218,71 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // GROUP MESSAGES
+    // GROUP MESSAGES  (F-03 + F-04 hardened)
+    // =========================================================================
+    // group_messages is a flat collection; each doc carries a groupId field
+    // that links it to its parent groups/{groupId} document.
+    //
+    // F-03: read was allow read: if isAuth() — any authenticated user could
+    //   query all group messages across ALL groups and harvest media URLs
+    //   (imageUrl, audioUrl, documentUrl) with permanent bypass tokens.
+    //   Fix: read scoped to groups/{groupId}.memberIds via firestore.get().
+    //
+    // F-04: create had no membership check — any authenticated user could
+    //   inject messages into any group, spoofing any senderId.
+    //   Fix: create requires caller is in memberIds AND senderId == caller uid.
+    //
+    // GDPR side-effect (flagged, not blocked): the client-side GDPR delete
+    //   path in firebase_auth_service.dart queries group_messages by senderId
+    //   using the client SDK. After F-03, that query will fail for groups the
+    //   user has already left (membership check blocks the read). The query
+    //   is wrapped in a silent catch and fails non-fatally, but messages in
+    //   left groups will not be deleted by the client path. The correct fix is
+    //   a CF-based Admin SDK deletion sweep — tracked as a follow-on task,
+    //   separate from this security stream.
+    //
+    // groupId field presence: confirmed present on all sendGroupMessage() writes
+    //   (firestore_service.dart line 361). All active write paths go through
+    //   sendGroupMessage(). System-message paths also write groupId (confirmed).
+    //   Any legacy doc lacking groupId fails-closed (read denied) — acceptable
+    //   since the app only displays messages for groups the user is currently
+    //   in (groupMessagesStream always queries .where('groupId', isEqualTo:...)).
     // =========================================================================
     match /group_messages/{messageId} {
-      // Any auth user can read group messages.
-      // Client-side filtering enforces group membership for display.
-      allow read: if isAuth();
+      // F-03: only members of the message's group can read it.
+      // resource.data.groupId is always present on active write paths.
+      // Fail-closed: missing groupId → get() targets groups/null → doc missing
+      // → memberIds absent → in operator → false → denied. Correct posture.
+      allow read: if isAuth()
+        && request.auth.uid in
+            get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+              .data.memberIds;
 
-      // Any auth user can post to a group they belong to.
-      // senderId field must match their UID.
+      // F-04: caller must be a member of the target group AND must not
+      // impersonate another user's senderId.
+      // request.resource.data.groupId is the groupId the client intends to post to.
       allow create: if isAuth()
+        && request.auth.uid in
+            get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+              .data.memberIds
         && request.resource.data.senderId == request.auth.uid;
 
-      // Message author may update their own message (edit text, add reaction).
-      // Any auth user may update reactions/reactionUsers via FieldValue.increment
-      // (the app uses merge:true; we allow if only those fields are touched).
-      // Any auth user may also append thread replies (arrayUnion on 'replies')
-      // and increment replyCount — written by thread_reply_screen._sendReply().
-      allow update: if isAuth() && (
-        resource.data.senderId == request.auth.uid
-        ||
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['reactions', 'reactionUsers', 'updatedAt',
-                    'replies', 'replyCount'])
-      );
+      // Message author may update their own message (edit text, reactions, etc.).
+      // Any GROUP MEMBER may update reactions/reactionUsers/replies/replyCount —
+      // scoped to membership for consistency with the F-03 read lock.
+      // (Previously "any auth user" — tightened here because a non-member who
+      // guesses a doc ID should not be able to react to a private group message.)
+      allow update: if isAuth()
+        && request.auth.uid in
+            get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+              .data.memberIds
+        && (
+          resource.data.senderId == request.auth.uid
+          ||
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['reactions', 'reactionUsers', 'updatedAt',
+                      'replies', 'replyCount'])
+        );
 
       // Only the sender may soft-delete (unsend) their own message.
       // Hard deletes are blocked — use isDeleted flag instead.
