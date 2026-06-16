@@ -2,7 +2,7 @@
 /**
  * Huddl — Cloud Functions
  *
- * Seven functions:
+ * Nine functions:
  *   1. generateEventRecommendations  — Firestore onCreate on events/{eventId}
  *   2. refreshUserRecommendations    — Firestore onUpdate on users/{userId}
  *   3. recordRecommendationFeedback  — HTTP callable (from Flutter app)
@@ -10,6 +10,8 @@
  *   5. huddlCopilotChat              — §2C  Gemini API proxy via HTTP callable
  *   6. generateCopilotSuggestions    — §2D  Personalised chip generation
  *   7. vertexGenerateContent         — §3A  Fine-tuned Vertex AI proxy (server-side SA key)
+ *   8. syncPublicProfile             — Firestore onWrite on users/{userId} → mirrors public fields to users_public/{userId}
+ *   9. setUserBorough               — HTTPS callable; resolves postcode server-side, enforces Cambridge gate, writes geo fields via Admin SDK
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -18,7 +20,7 @@
  *   copilotRateLimits/{userId}          (date + messageCount for 20/day limit)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
@@ -971,5 +973,206 @@ exports.vertexGenerateContent = functions
         req.write(bodyStr);
         req.end();
     });
+});
+// ---------------------------------------------------------------------------
+// 8. syncPublicProfile
+// ---------------------------------------------------------------------------
+// Mirrors the canonical public field set from users/{userId} to
+// users_public/{userId} on every Firestore write (create, update, delete).
+//
+// On delete  → deletes users_public/{userId} for GDPR consistency.
+// On create/update → copies PUBLIC_FIELDS via set({merge:true}).
+//   merge:true: fields absent from this write are never overwritten in
+//   users_public (safe for partial updates, e.g. only isOnline flipping).
+//
+// Borough + geo siblings (ward, wardCode, districtCode, region) are included
+// so boroughMatches() in firestore.rules reads exclusively from users_public,
+// making all borough-gated writes immune to client-side borough injection.
+//
+// Coexists with refreshUserRecommendations (.onUpdate same path) — two
+// independent triggers per write, acceptable at current scale.
+// ---------------------------------------------------------------------------
+exports.syncPublicProfile = functions
+    .region("europe-west2")
+    .runWith({ timeoutSeconds: 60, memory: "256MB" })
+    .firestore.document("users/{userId}")
+    .onWrite(async (change, context) => {
+    const userId = context.params.userId;
+    const publicRef = db.collection("users_public").doc(userId);
+    // ── Delete path ────────────────────────────────────────────────────────
+    if (!change.after.exists) {
+        functions.logger.info(`[syncPublicProfile] User ${userId} deleted — removing public mirror.`);
+        await publicRef.delete();
+        return;
+    }
+    // ── Create / Update path ───────────────────────────────────────────────
+    const data = change.after.data();
+    // Canonical public field set.
+    // borough is written here only by setUserBorough (Admin SDK) or by the
+    // initial _createUserProfile (create rule, no affectedKeys guard).
+    // Client update writes of borough are blocked by the F-09 affectedKeys rule.
+    const PUBLIC_FIELDS = [
+        "name",
+        "photoUrl",
+        "parentType",
+        "borough",
+        "isOnline",
+        "stagesOfLife",
+        "ward",
+        "wardCode",
+        "districtCode",
+        "region",
+    ];
+    const publicData = {};
+    for (const field of PUBLIC_FIELDS) {
+        if (data[field] !== undefined) {
+            publicData[field] = data[field];
+        }
+    }
+    // Guard: a write touching only private fields (e.g. stripeCustomerId)
+    // produces an empty publicData — skip the mirror write to avoid a
+    // no-op Firestore round-trip that only advances the doc's updateTime.
+    if (Object.keys(publicData).length === 0) {
+        functions.logger.info(`[syncPublicProfile] Write to users/${userId} contained no ` +
+            `public fields — skipping mirror.`);
+        return;
+    }
+    functions.logger.info(`[syncPublicProfile] Mirroring ${Object.keys(publicData).length} ` +
+        `field(s) for user ${userId}: ${Object.keys(publicData).join(", ")}`);
+    await publicRef.set(publicData, { merge: true });
+});
+// ---------------------------------------------------------------------------
+// 9. setUserBorough
+// ---------------------------------------------------------------------------
+// HTTPS callable — resolves a UK postcode server-side via postcodes.io,
+// enforces the Cambridge launch-area gate, then writes the resolved borough
+// and geo siblings to users/{uid} via Admin SDK (bypassing Firestore rules).
+//
+// Why Admin SDK? After F-09 lands, the owner update rule blocks client writes
+// of borough/postcode/geo fields via affectedKeys(). Admin SDK ignores rules,
+// so this is the only legitimate post-registration path for borough changes.
+//
+// The syncPublicProfile trigger fires automatically after the Admin SDK write,
+// mirroring the new borough to users_public/{uid}.
+//
+// Cambridge gate (mirrors Dart PostcodeService._isCambridgeBorough exactly):
+//   admin_district.toLowerCase() must be:
+//     == 'cambridge'  OR  includes('cambridgeshire')  OR
+//     == 'fenland'    OR  == 'huntingdonshire'
+// Gate is enforced SERVER-SIDE to prevent direct SDK calls bypassing the UI.
+// If outside the allowed set → HttpsError('failed-precondition', 'OUTSIDE_LAUNCH_AREA').
+//
+// Input:  { postcode: string }
+// Output: { borough, ward, districtCode, wardCode, region }
+// ---------------------------------------------------------------------------
+/** Mirror of Dart PostcodeService._isCambridgeBorough. Update both together. */
+function isAllowedBorough(borough) {
+    const lower = borough.toLowerCase();
+    return (lower === "cambridge" ||
+        lower.includes("cambridgeshire") ||
+        lower === "fenland" ||
+        lower === "huntingdonshire");
+}
+exports.setUserBorough = functions
+    .region("europe-west2")
+    .runWith({ timeoutSeconds: 30, memory: "256MB" })
+    .https.onCall(async (data, context) => {
+    // ── Auth guard ─────────────────────────────────────────────────────────
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Must be signed in to update borough.");
+    }
+    const uid = context.auth.uid;
+    // ── Input validation ───────────────────────────────────────────────────
+    const rawPostcode = data.postcode;
+    if (typeof rawPostcode !== "string" || rawPostcode.trim() === "") {
+        throw new functions.https.HttpsError("invalid-argument", "postcode must be a non-empty string.");
+    }
+    // Normalise: trim, uppercase, collapse internal whitespace to single space
+    const postcode = rawPostcode.trim().toUpperCase().replace(/\s+/g, " ");
+    const geo = await new Promise((resolve, reject) => {
+        const path = `/postcodes/${encodeURIComponent(postcode)}`;
+        const options = {
+            hostname: "api.postcodes.io",
+            path,
+            method: "GET",
+        };
+        const req = https.request(options, (res) => {
+            let raw = "";
+            res.on("data", (chunk) => { raw += chunk.toString(); });
+            res.on("end", () => {
+                var _a, _b, _c, _d, _e, _f, _g;
+                if (res.statusCode === 404) {
+                    functions.logger.warn(`[setUserBorough] postcodes.io 404 for postcode="${postcode}" uid=${uid}`);
+                    reject(new functions.https.HttpsError("not-found", "Postcode not recognised. Please check and try again."));
+                    return;
+                }
+                if (res.statusCode !== 200) {
+                    functions.logger.warn(`[setUserBorough] postcodes.io returned HTTP ${res.statusCode} ` +
+                        `for postcode="${postcode}" uid=${uid}. Body: ${raw.slice(0, 200)}`);
+                    reject(new functions.https.HttpsError("unavailable", "Postcode lookup service is temporarily unavailable. Please try again."));
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(raw);
+                    const result = parsed.result;
+                    const borough = (_a = result === null || result === void 0 ? void 0 : result.admin_district) !== null && _a !== void 0 ? _a : "";
+                    const ward = (_b = result === null || result === void 0 ? void 0 : result.admin_ward) !== null && _b !== void 0 ? _b : "";
+                    const districtCode = (_d = (_c = result === null || result === void 0 ? void 0 : result.codes) === null || _c === void 0 ? void 0 : _c.admin_district) !== null && _d !== void 0 ? _d : "";
+                    const wardCode = (_f = (_e = result === null || result === void 0 ? void 0 : result.codes) === null || _e === void 0 ? void 0 : _e.admin_ward) !== null && _f !== void 0 ? _f : "";
+                    const region = (_g = result === null || result === void 0 ? void 0 : result.region) !== null && _g !== void 0 ? _g : "";
+                    if (!borough) {
+                        functions.logger.warn(`[setUserBorough] postcodes.io returned no admin_district ` +
+                            `for postcode="${postcode}" uid=${uid}`);
+                        reject(new functions.https.HttpsError("not-found", "Could not resolve a borough for this postcode."));
+                        return;
+                    }
+                    resolve({ borough, ward, districtCode, wardCode, region });
+                }
+                catch (parseErr) {
+                    functions.logger.warn(`[setUserBorough] postcodes.io response parse error for ` +
+                        `postcode="${postcode}" uid=${uid}: ${parseErr}`);
+                    reject(new functions.https.HttpsError("unavailable", "Postcode lookup service is temporarily unavailable. Please try again."));
+                }
+            });
+        });
+        req.on("error", (err) => {
+            functions.logger.warn(`[setUserBorough] https.request network error for ` +
+                `postcode="${postcode}" uid=${uid}: ${err.message}`);
+            reject(new functions.https.HttpsError("unavailable", "Postcode lookup service is temporarily unavailable. Please try again."));
+        });
+        req.end();
+    });
+    // ── Cambridge gate ─────────────────────────────────────────────────────
+    // Mirrors Dart PostcodeService._isCambridgeBorough exactly.
+    // Update isAllowedBorough() and the Dart function together if launch
+    // area ever expands.
+    if (!isAllowedBorough(geo.borough)) {
+        functions.logger.info(`[setUserBorough] Gate rejection: uid=${uid} postcode="${postcode}" ` +
+            `resolved district="${geo.borough}" — outside Cambridge launch area.`);
+        throw new functions.https.HttpsError("failed-precondition", "OUTSIDE_LAUNCH_AREA");
+    }
+    // ── Write via Admin SDK ────────────────────────────────────────────────
+    // Admin SDK bypasses Firestore rules — this is intentional. The F-09
+    // affectedKeys rule blocks owner client-writes of borough/geo fields.
+    // This callable is the only post-registration path for legitimate borough
+    // changes. syncPublicProfile fires automatically after this write.
+    await db.collection("users").doc(uid).update({
+        borough: geo.borough,
+        postcode: postcode,
+        ward: geo.ward,
+        wardCode: geo.wardCode,
+        districtCode: geo.districtCode,
+        region: geo.region,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    functions.logger.info(`[setUserBorough] Success: uid=${uid} postcode="${postcode}" ` +
+        `→ borough="${geo.borough}" ward="${geo.ward}"`);
+    return {
+        borough: geo.borough,
+        ward: geo.ward,
+        districtCode: geo.districtCode,
+        wardCode: geo.wardCode,
+        region: geo.region,
+    };
 });
 //# sourceMappingURL=index.js.map
