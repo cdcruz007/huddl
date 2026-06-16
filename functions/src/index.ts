@@ -794,6 +794,7 @@ async function checkAndIncrementRateLimit(userId: string): Promise<boolean> {
 // ── Cloud Function ─────────────────────────────────────────────────────────
 
 export const huddlCopilotChat = functions
+  .region('europe-west2')
   .runWith({ timeoutSeconds: 60, memory: "256MB" })
   .https.onCall(async (data, context) => {
     // Authentication guard
@@ -946,7 +947,9 @@ function _youngestChildAgeMonths(ud: Record<string, unknown>): number {
   return -1;
 }
 
-export const generateCopilotSuggestions = functions.https.onCall(
+export const generateCopilotSuggestions = functions
+  .region('europe-west2')
+  .https.onCall(
   async (_, context) => {
     // Authentication guard
     if (!context.auth) {

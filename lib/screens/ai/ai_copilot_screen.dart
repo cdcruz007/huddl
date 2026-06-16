@@ -102,7 +102,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   Future<List<String>> _fetchOrGenerateChips() async {
     try {
       final callable = FirebaseFunctions
-          .instanceFor(region: 'europe-west1')
+          .instanceFor(region: 'europe-west2')
           .httpsCallable(
         'generateCopilotSuggestions',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),

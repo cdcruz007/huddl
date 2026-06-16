@@ -368,7 +368,7 @@ class AiCopilotService with BoroughAiContext {
   /// take 10-15s before the function responds.
   Future<String> _callCopilotCloudFunction(String userText) async {
     final callable = FirebaseFunctions
-        .instanceFor(region: 'europe-west1')
+        .instanceFor(region: 'europe-west2')
         .httpsCallable(
       'huddlCopilotChat',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
