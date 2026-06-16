@@ -1,13 +1,14 @@
 /**
  * Huddl — Cloud Functions
  *
- * Six functions:
+ * Seven functions:
  *   1. generateEventRecommendations  — Firestore onCreate on events/{eventId}
  *   2. refreshUserRecommendations    — Firestore onUpdate on users/{userId}
  *   3. recordRecommendationFeedback  — HTTP callable (from Flutter app)
  *   4. cleanupExpiredRecommendations — Scheduled daily at 02:00 UTC
- *   5. huddlCopilotChat              — §2C  Claude API proxy via HTTP callable
+ *   5. huddlCopilotChat              — §2C  Gemini API proxy via HTTP callable
  *   6. generateCopilotSuggestions    — §2D  Personalised chip generation
+ *   7. vertexGenerateContent         — §3A  Fine-tuned Vertex AI proxy (server-side SA key)
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -19,6 +20,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as https from "https";
+import { JWT } from "google-auth-library";
 
 // Gemini API key — sourced exclusively from Firebase Secret Manager / env config.
 // To set: firebase functions:secrets:set GEMINI_API_KEY
@@ -42,6 +44,15 @@ function getGeminiUrl(): string {
   }
   return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
 }
+
+// ── Vertex AI fine-tuned model endpoint ────────────────────────────────────
+// Project: huddl-connect (879152141283), Region: europe-west4
+// Model:   huddl-uk-parenting-assistant (627673804901974016@1)
+// Auth:    Service account OAuth 2.0 via VERTEX_AI_SA_KEY Secret Manager secret
+// CF runs in europe-west2; outbound call crosses to europe-west4 on Google backbone.
+const VERTEX_ENDPOINT =
+  "https://europe-west4-aiplatform.googleapis.com/v1/projects/879152141283" +
+  "/locations/europe-west4/models/627673804901974016@1:generateContent";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -1046,4 +1057,152 @@ function _getFirstChildName(ud: Record<string, unknown>): string | null {
   }
   return (ud.childName as string | undefined) ?? null;
 }
+
+// ── 7. vertexGenerateContent ──────────────────────────────────────────────────
+// Proxies generateContent requests to the Vertex AI fine-tuned model.
+// Auth:    Service account OAuth 2.0 via VERTEX_AI_SA_KEY Secret Manager secret.
+// Region:  CF runs in europe-west2; outbound HTTPS call to europe-west4-aiplatform.
+// Fallback: throws HttpsError('unavailable', 'VERTEX_UNAVAILABLE') on any failure;
+//           client catches and drops through to its Gemini AI Studio fallback.
+export const vertexGenerateContent = functions
+  .region("europe-west2")
+  .runWith({
+    timeoutSeconds: 60,
+    memory: "512MB",
+    secrets: ["VERTEX_AI_SA_KEY"],
+  })
+  .https.onCall(async (data, context) => {
+    // ── Auth guard ────────────────────────────────────────────────────────────
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Request must be authenticated."
+      );
+    }
+    const uid = context.auth.uid;
+
+    // ── Parse VERTEX_AI_SA_KEY from Secret Manager ────────────────────────────
+    const saKeyRaw = process.env.VERTEX_AI_SA_KEY;
+    if (!saKeyRaw) {
+      functions.logger.error(
+        "[vertexGenerateContent] VERTEX_AI_SA_KEY secret is not set or empty."
+      );
+      throw new functions.https.HttpsError(
+        "unavailable",
+        "VERTEX_UNAVAILABLE"
+      );
+    }
+
+    let saKey: { client_email: string; private_key: string };
+    try {
+      saKey = JSON.parse(saKeyRaw) as {
+        client_email: string;
+        private_key: string;
+      };
+      if (!saKey.client_email || !saKey.private_key) {
+        throw new Error("Missing client_email or private_key in SA JSON.");
+      }
+    } catch (parseErr) {
+      functions.logger.error(
+        `[vertexGenerateContent] Failed to parse VERTEX_AI_SA_KEY JSON: ${parseErr}`
+      );
+      throw new functions.https.HttpsError(
+        "unavailable",
+        "VERTEX_UNAVAILABLE"
+      );
+    }
+
+    // ── Obtain Bearer token via google-auth-library JWT ───────────────────────
+    let accessToken: string;
+    try {
+      const jwt = new JWT({
+        email: saKey.client_email,
+        key: saKey.private_key,
+        scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+      });
+      const tokenResponse = await jwt.authorize();
+      if (!tokenResponse.access_token) {
+        throw new Error("jwt.authorize() returned no access_token.");
+      }
+      accessToken = tokenResponse.access_token;
+    } catch (tokenErr) {
+      functions.logger.error(
+        `[vertexGenerateContent] Failed to obtain Bearer token for uid=${uid}: ${tokenErr}`
+      );
+      throw new functions.https.HttpsError(
+        "unavailable",
+        "VERTEX_UNAVAILABLE"
+      );
+    }
+
+    // ── POST to Vertex AI endpoint ────────────────────────────────────────────
+    const requestBody = data.requestBody as Record<string, unknown>;
+    if (!requestBody) {
+      functions.logger.error(
+        `[vertexGenerateContent] Missing requestBody in call data from uid=${uid}.`
+      );
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "requestBody is required."
+      );
+    }
+
+    return new Promise<{ data: unknown }>((resolve, reject) => {
+      const bodyStr = JSON.stringify(requestBody);
+      const url = new URL(VERTEX_ENDPOINT);
+
+      const options: import("https").RequestOptions = {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Length": Buffer.byteLength(bodyStr),
+        },
+      };
+
+      const req = https.request(options, (res) => {
+        let raw = "";
+        res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+        res.on("end", () => {
+          if (res.statusCode === 200) {
+            try {
+              const parsed = JSON.parse(raw) as unknown;
+              functions.logger.info(
+                `[vertexGenerateContent] Success for uid=${uid}, status=200.`
+              );
+              resolve({ data: parsed });
+            } catch (jsonErr) {
+              functions.logger.warn(
+                `[vertexGenerateContent] Vertex returned 200 but body not valid JSON for uid=${uid}: ${jsonErr}`
+              );
+              reject(
+                new functions.https.HttpsError("unavailable", "VERTEX_UNAVAILABLE")
+              );
+            }
+          } else {
+            functions.logger.warn(
+              `[vertexGenerateContent] Vertex returned HTTP ${res.statusCode} for uid=${uid}. Body: ${raw.slice(0, 500)}`
+            );
+            reject(
+              new functions.https.HttpsError("unavailable", "VERTEX_UNAVAILABLE")
+            );
+          }
+        });
+      });
+
+      req.on("error", (err: Error) => {
+        functions.logger.warn(
+          `[vertexGenerateContent] https.request network error for uid=${uid}: ${err.message}`
+        );
+        reject(
+          new functions.https.HttpsError("unavailable", "VERTEX_UNAVAILABLE")
+        );
+      });
+
+      req.write(bodyStr);
+      req.end();
+    });
+  });
 
