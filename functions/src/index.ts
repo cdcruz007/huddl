@@ -795,7 +795,7 @@ async function checkAndIncrementRateLimit(userId: string): Promise<boolean> {
 
 export const huddlCopilotChat = functions
   .region('europe-west2')
-  .runWith({ timeoutSeconds: 60, memory: "256MB" })
+  .runWith({ timeoutSeconds: 60, memory: "256MB", secrets: ["GEMINI_API_KEY"] })
   .https.onCall(async (data, context) => {
     // Authentication guard
     if (!context.auth) {
