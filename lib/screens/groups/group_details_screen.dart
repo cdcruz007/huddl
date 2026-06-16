@@ -1425,7 +1425,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     for (int i = 0; i < uids.length; i += 10) {
       final batch = uids.sublist(i, (i + 10).clamp(0, uids.length));
       try {
-        final snap = await db.collection('users').where(FieldPath.documentId, whereIn: batch).get();
+        final snap = await db.collection('users_public').where(FieldPath.documentId, whereIn: batch).get();
         for (final doc in snap.docs) {
           final name = (doc.data()['name'] as String?)?.trim() ?? 'Member';
           result.add({'uid': doc.id, 'name': name, 'messageCount': counts[doc.id] ?? 0});

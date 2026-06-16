@@ -77,25 +77,6 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
       final isAdminFromFirestore = _currentUid != null && adminIds.contains(_currentUid);
       final isCreatorCheck = _currentUid != null && _currentUid == (widget.creatorId ?? data['creatorId']);
 
-      // Bug 3b fix: if both memberIds[] and members[] are empty (e.g. onboarding-
-      // created groups), fall back to querying users.groupIds.
-      if (memberIds.isEmpty) {
-        if (kDebugMode) {
-          debugPrint('[GroupMembersScreen] memberIds+members empty for ${widget.groupId}, '
-              'falling back to groupIds query');
-        }
-        try {
-          final fallbackSnap = await db
-              .collection('users')
-              .where('groupIds', arrayContains: widget.groupId)
-              .get();
-          memberIds = fallbackSnap.docs.map((d) => d.id).toList();
-        } catch (_) {
-          // groupIds field may not exist — leave memberIds empty and show
-          // the empty state rather than crashing.
-        }
-      }
-
       if (memberIds.isEmpty) {
         setState(() { _isLoading = false; _members = []; });
         return;
@@ -105,7 +86,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
       final List<_Member> loaded = [];
       for (int i = 0; i < memberIds.length; i += 10) {
         final batch = memberIds.sublist(i, i + 10 > memberIds.length ? memberIds.length : i + 10);
-        final snap = await db.collection('users')
+        final snap = await db.collection('users_public')
             .where(FieldPath.documentId, whereIn: batch)
             .get();
 

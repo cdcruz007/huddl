@@ -65,7 +65,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
       for (int i = 0; i < allUids.length; i += 10) {
         final batch = allUids.sublist(i, (i + 10).clamp(0, allUids.length));
         try {
-          final snap = await db.collection('users').where(FieldPath.documentId, whereIn: batch).get();
+          final snap = await db.collection('users_public').where(FieldPath.documentId, whereIn: batch).get();
           for (final doc in snap.docs) {
             userData[doc.id] = doc.data();
           }

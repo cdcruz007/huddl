@@ -22,7 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'onboarding_data_service.dart';
-import 'postcode_service.dart';
+
 
 class HuddlUserService {
   // ── Singleton ─────────────────────────────────────────────────────────────
@@ -33,7 +33,6 @@ class HuddlUserService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final OnboardingDataService _onboarding = OnboardingDataService();
-  final PostcodeService _postcodeService = PostcodeService();
 
   String? get _uid => _auth.currentUser?.uid;
 
@@ -180,18 +179,9 @@ class HuddlUserService {
     }
 
     // ── Local data is populated — safe to push ────────────────────────────────
-    final postcode = _onboarding.postcode ?? '';
-    // Prefer the borough already stored from onboarding (set in postcode_screen
-    // via postcodes.io full-postcode lookup); fall back to a fresh API call only
-    // if the stored value is missing (e.g. existing accounts pre-dating this field).
-    final borough = _onboarding.borough?.isNotEmpty == true
-        ? _onboarding.borough!
-        : await _postcodeService.lookupBoroughAsync(postcode) ?? '';
-    // Persist back if we had to do a fresh lookup
-    if (borough.isNotEmpty && (_onboarding.borough == null || _onboarding.borough!.isEmpty)) {
-      _onboarding.setBorough(borough);
-    }
-
+    // borough/postcode/geo fields are now CF-managed (setUserBorough callable).
+    // They are blocked from client owner-writes by the F-09 affectedKeys rule
+    // and must not be included in this payload.
     final name = _onboarding.name ?? '';
     final parts = name.trim().split(' ');
     final firstName = parts.isNotEmpty ? parts.first : '';
@@ -201,7 +191,6 @@ class HuddlUserService {
     // to avoid accidentally overwriting Firestore data with empty strings.
     final Map<String, dynamic> profile = {
       'uid': uid,
-      'isPhoneVerified': true,
       'isOnline': true,
       'lastActiveAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -227,21 +216,6 @@ class HuddlUserService {
     if (_onboarding.stagesOfLife.isNotEmpty) {
       profile['stagesOfLife'] = _onboarding.stagesOfLife;
     }
-    if (postcode.isNotEmpty) {
-      profile['postcode'] = postcode;
-      // Additive geo fields — captured from the postcodes.io response that
-      // already ran for the borough lookup above. No extra network call.
-      final geo = _postcodeService.lookupGeoFromCacheSync(postcode);
-      if (geo != null) {
-        if (geo.ward?.isNotEmpty == true)         profile['ward']         = geo.ward!;
-        if (geo.wardCode?.isNotEmpty == true)     profile['wardCode']     = geo.wardCode!;
-        if (geo.districtCode?.isNotEmpty == true) profile['districtCode'] = geo.districtCode!;
-        if (geo.region?.isNotEmpty == true)       profile['region']       = geo.region!;
-      }
-    }
-    if (borough.isNotEmpty) {
-      profile['borough'] = borough;
-    }
     if (_onboarding.children.isNotEmpty) {
       profile['children'] = _onboarding.children;
     }
@@ -266,7 +240,7 @@ class HuddlUserService {
       // Use set with merge so we don't overwrite fields set elsewhere
       // (e.g. createdAt set on first login, fcmToken set by messaging).
       await _db.collection('users').doc(uid).set(profile, SetOptions(merge: true));
-      _log('Profile synced for uid=$uid name=$name borough=$borough');
+      _log('Profile synced for uid=$uid name=$name');
     } catch (e) {
       _log('ERROR syncing profile: $e');
     }
@@ -320,7 +294,7 @@ class HuddlUserService {
 
     try {
       final snap = await _db
-          .collection('users')
+          .collection('users_public')
           .where('borough', isEqualTo: borough)
           .get();
 
@@ -349,7 +323,7 @@ class HuddlUserService {
     if (borough.isEmpty) return Stream.value([]);
 
     return _db
-        .collection('users')
+        .collection('users_public')
         .where('borough', isEqualTo: borough)
         .snapshots()
         .map((snap) {
@@ -369,23 +343,13 @@ class HuddlUserService {
 
   Future<HuddlUser?> getUser(String userId) async {
     try {
-      final doc = await _db.collection('users').doc(userId).get();
+      final doc = await _db.collection('users_public').doc(userId).get();
       if (!doc.exists) return null;
       return HuddlUser.fromFirestore(doc.data()!, doc.id);
     } catch (e) {
       _log('ERROR getUser($userId): $e');
       return null;
     }
-  }
-
-  // ── Update FCM token (called by notification service) ─────────────────────
-
-  Future<void> updateFcmToken(String token) async {
-    final uid = _uid;
-    if (uid == null) return;
-    try {
-      await _db.collection('users').doc(uid).update({'fcmToken': token});
-    } catch (_) {}
   }
 
   // ── Logging ───────────────────────────────────────────────────────────────

@@ -315,7 +315,7 @@ class InvitationService extends ChangeNotifier {
       // hard backstop.
       if (groupBorough.isNotEmpty) {
         try {
-          final inviteeDoc = await db.collection('users').doc(memberId).get();
+          final inviteeDoc = await db.collection('users_public').doc(memberId).get();
           final inviteeBorough =
               inviteeDoc.data()?['borough'] as String? ?? '';
           if (inviteeBorough.isNotEmpty &&

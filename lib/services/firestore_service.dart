@@ -73,7 +73,7 @@ class FirestoreService {
 
   /// Get a user profile by ID.
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
-    final doc = await _db.collection('users').doc(userId).get();
+    final doc = await _db.collection('users_public').doc(userId).get();
     return doc.exists ? doc.data() : null;
   }
 
