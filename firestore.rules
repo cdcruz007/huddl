@@ -630,13 +630,15 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // DEADLINES  (scheduling / reminders)
+    // DEADLINES  (top-level — dead collection, F-12)
     // =========================================================================
+    // F-12: This top-level collection has no live write or read path.
+    // All real SEND deadline data lives at users/{uid}/deadlines/{docId}
+    // (see subcollection rule in the /users/{userId} block above).
+    // SendDeadline.toJson() does not write a 'uid' field, so the old rule's
+    // uid-scoping would have denied all writes anyway. Locked entirely.
     match /deadlines/{docId} {
-      allow read, write: if isAuth()
-        && resource.data.uid == request.auth.uid;
-      allow create: if isAuth()
-        && request.resource.data.uid == request.auth.uid;
+      allow read, write: if false;
     }
 
     // =========================================================================
