@@ -12,6 +12,7 @@
  *   7. vertexGenerateContent         — §3A  Fine-tuned Vertex AI proxy (server-side SA key)
  *   8. syncPublicProfile             — Firestore onWrite on users/{userId} → mirrors public fields to users_public/{userId}
  *   9. setUserBorough               — HTTPS callable; resolves postcode server-side, enforces Cambridge gate, writes geo fields via Admin SDK
+ *  10. deleteUserData               — GDPR deletion callable; Phase 1: simple query-deletes (9 collections)
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -20,7 +21,7 @@
  *   copilotRateLimits/{userId}          (date + messageCount for 20/day limit)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
@@ -1174,5 +1175,193 @@ exports.setUserBorough = functions
         wardCode: geo.wardCode,
         region: geo.region,
     };
+});
+// ── Hardcoded policy defaults ───────────────────────────────────────────────
+// Applied when _config/gdpr_deletion_policy is absent or a field is missing.
+// "delete" is the conservative default — errs on the side of compliance.
+const DEFAULT_GDPR_POLICY = {
+    authored_content: "delete",
+    reports: "retain",
+    feedback: "delete",
+    dry_run_default: false,
+};
+// ── Paginated-delete helper ────────────────────────────────────────────────
+//
+// Paginates through a query in batches of PAGE_SIZE, deleting each page.
+// Uses orderBy(FieldPath.documentId()).startAfter(cursor) for stable pagination.
+// Returns the total number of documents deleted.
+//
+// Every bulk delete in Phase 1 (and all subsequent phases) calls this helper.
+// Never roll ad-hoc batch loops outside this function.
+const PAGE_SIZE = 400;
+async function paginatedDelete(query, dryRun) {
+    let totalDeleted = 0;
+    let cursor = null;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        // Build paged query: ordered by document ID for stable cursor pagination.
+        // startAfter(cursor) is only applied after the first page.
+        let pagedQuery = query
+            .orderBy(admin.firestore.FieldPath.documentId())
+            .limit(PAGE_SIZE);
+        if (cursor !== null) {
+            pagedQuery = pagedQuery.startAfter(cursor);
+        }
+        const snapshot = await pagedQuery.get();
+        if (snapshot.empty) {
+            break; // no more documents
+        }
+        totalDeleted += snapshot.docs.length;
+        if (!dryRun) {
+            // Batch-delete this page. Firestore batch limit is 500 writes;
+            // PAGE_SIZE=400 keeps us safely below it.
+            const batch = db.batch();
+            for (const doc of snapshot.docs) {
+                batch.delete(doc.ref);
+            }
+            await batch.commit();
+        }
+        if (snapshot.docs.length < PAGE_SIZE) {
+            break; // last page — fewer docs than the page size means we're done
+        }
+        // Advance cursor to the last doc of this page for the next iteration.
+        cursor = snapshot.docs[snapshot.docs.length - 1];
+    }
+    return totalDeleted;
+}
+// ── Config-switch reader ────────────────────────────────────────────────────
+//
+// Reads _config/gdpr_deletion_policy once at CF start via Admin SDK.
+// Merges with DEFAULT_GDPR_POLICY — any missing field falls back to the default.
+// Returns the fully-resolved policy. Never throws; returns defaults on any error.
+async function resolveGdprPolicy() {
+    var _a, _b, _c, _d;
+    try {
+        const configDoc = await db.collection("_config").doc("gdpr_deletion_policy").get();
+        if (!configDoc.exists) {
+            functions.logger.info("[deleteUserData] No _config/gdpr_deletion_policy doc — using defaults.");
+            return Object.assign({}, DEFAULT_GDPR_POLICY);
+        }
+        const remote = configDoc.data();
+        // Merge: remote fields override defaults; missing fields fall back to defaults.
+        return {
+            authored_content: (_a = remote.authored_content) !== null && _a !== void 0 ? _a : DEFAULT_GDPR_POLICY.authored_content,
+            reports: (_b = remote.reports) !== null && _b !== void 0 ? _b : DEFAULT_GDPR_POLICY.reports,
+            feedback: (_c = remote.feedback) !== null && _c !== void 0 ? _c : DEFAULT_GDPR_POLICY.feedback,
+            dry_run_default: (_d = remote.dry_run_default) !== null && _d !== void 0 ? _d : DEFAULT_GDPR_POLICY.dry_run_default,
+        };
+    }
+    catch (err) {
+        functions.logger.error("[deleteUserData] resolveGdprPolicy error — falling back to defaults:", err);
+        return Object.assign({}, DEFAULT_GDPR_POLICY);
+    }
+}
+// ── Cloud Function ─────────────────────────────────────────────────────────
+exports.deleteUserData = functions
+    .region("europe-west2")
+    .runWith({ timeoutSeconds: 540, memory: "1GB" })
+    .https.onCall(async (data, context) => {
+    // ══════════════════════════════════════════════════════════════════
+    // SECURITY INVARIANT — THIS BLOCK IS THE MOST IMPORTANT CODE HERE.
+    //
+    // uid comes from context.auth.uid ONLY.
+    // The payload (data) is NOT a source of uid under any circumstances.
+    // If context.auth is null, we throw immediately and touch nothing.
+    // ══════════════════════════════════════════════════════════════════
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "deleteUserData requires authentication. No uid accepted from payload.");
+    }
+    const uid = context.auth.uid;
+    // Explicitly discard any uid-like field the caller may have put in the payload.
+    // This is belt-and-suspenders: we never reference data.uid or data['uid'].
+    // Only data.dryRun is read, and only as a boolean.
+    const startedAt = new Date().toISOString();
+    const dryRun = typeof data.dryRun === "boolean" ? data.dryRun : false;
+    functions.logger.info(`[deleteUserData] START uid=${uid} dryRun=${dryRun} startedAt=${startedAt}`);
+    // ── Resolve policy config ──────────────────────────────────────────────
+    const policy = await resolveGdprPolicy();
+    functions.logger.info("[deleteUserData] Resolved policy:", policy);
+    // ── Steps accumulator ──────────────────────────────────────────────────
+    // Each step records its own StepResult. On any unhandled error in a step,
+    // the step is marked error but we continue accumulating and return a
+    // partial result with success=false rather than throwing and losing state.
+    const steps = {};
+    // Helper: run one step, catch errors, populate steps[key].
+    async function runStep(key, query, skipReason) {
+        if (query === null || skipReason !== undefined) {
+            steps[key] = { status: "skipped", count: 0, error: skipReason };
+            return;
+        }
+        try {
+            const count = await paginatedDelete(query, dryRun);
+            steps[key] = { status: "ok", count };
+            functions.logger.info(`[deleteUserData] ${key}: deleted ${count} docs (dryRun=${dryRun})`);
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            steps[key] = { status: "error", count: 0, error: msg };
+            functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+        }
+    }
+    // ══════════════════════════════════════════════════════════════════
+    // PHASE 1 — SIMPLE QUERY-DELETES
+    //
+    // Nine top-level collections where a single uid-field equality query
+    // identifies all user-owned docs. No subcollections, no group queries,
+    // no Storage — those are Phases 2–6.
+    //
+    // Field names annotated with source verification (see ledger above).
+    // ══════════════════════════════════════════════════════════════════
+    // 1. subscriptions — field "userId" (firebase_auth_service.dart:750)
+    await runStep("subscriptions", db.collection("subscriptions").where("userId", "==", uid));
+    // 2. notifications — field "userId" (firebase_auth_service.dart:769)
+    await runStep("notifications", db.collection("notifications").where("userId", "==", uid));
+    // 3. local_services — field "createdByUid" (firebase_auth_service.dart:853)
+    //    Note: ownerUid is partner-only; createdByUid is set on ALL user-created listings.
+    await runStep("local_services", db.collection("local_services").where("createdByUid", "==", uid));
+    // 4. borough_feed — field "partnerUid" (community_feed_service.dart — verified)
+    await runStep("borough_feed", db.collection("borough_feed").where("partnerUid", "==", uid));
+    // 5. feedback — field "user_uid" (feedback_service.dart:118)
+    //    Gated by policy.feedback switch. Default = "delete".
+    if (policy.feedback === "delete") {
+        await runStep("feedback", db.collection("feedback").where("user_uid", "==", uid));
+    }
+    else {
+        await runStep("feedback", null, `policy.feedback=${policy.feedback} — not deleting`);
+    }
+    // 6. community_wisdom — field "author_uid" (ai_knowledge_flywheel_service.dart:184)
+    //    Gated by policy.authored_content switch. Default = "delete".
+    if (policy.authored_content === "delete") {
+        await runStep("community_wisdom", db.collection("community_wisdom").where("author_uid", "==", uid));
+    }
+    else {
+        await runStep("community_wisdom", null, `policy.authored_content=${policy.authored_content} — Phase 5 will handle anonymise`);
+    }
+    // 7. group_messages — field "senderId" (firebase_auth_service.dart:755)
+    //    Note: F-03 lock — group_messages is a cross-user collection.
+    //    Phase 1 uses simple query-delete by senderId.
+    //    Phase 3 will review the F-03 Admin SDK requirement for full sweep.
+    await runStep("group_messages", db.collection("group_messages").where("senderId", "==", uid));
+    // 8. meetups — two passes for legacy field alias
+    //    Pass A: field "createdBy" (spec-aligned) (firebase_auth_service.dart:775)
+    await runStep("meetups_createdBy", db.collection("meetups").where("createdBy", "==", uid));
+    //    Pass B: field "organiserId" (legacy alias) (firebase_auth_service.dart:779)
+    await runStep("meetups_organiserId", db.collection("meetups").where("organiserId", "==", uid));
+    // 9. marketplace — field "sellerId" (firebase_auth_service.dart:784)
+    await runStep("marketplace", db.collection("marketplace").where("sellerId", "==", uid));
+    // ══════════════════════════════════════════════════════════════════
+    // RESULT ASSEMBLY
+    // ══════════════════════════════════════════════════════════════════
+    const completedAt = new Date().toISOString();
+    const anyError = Object.values(steps).some((s) => s.status === "error");
+    const result = Object.assign({ success: !anyError, uid,
+        dryRun,
+        startedAt,
+        completedAt,
+        policy,
+        steps }, (anyError ? { error: "One or more steps failed — see steps for details.", retryable: true } : {}));
+    functions.logger.info(`[deleteUserData] COMPLETE uid=${uid} success=${result.success} dryRun=${dryRun} ` +
+        `completedAt=${completedAt}`, { steps });
+    return result;
 });
 //# sourceMappingURL=index.js.map
