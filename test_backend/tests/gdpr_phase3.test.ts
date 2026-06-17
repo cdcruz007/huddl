@@ -10,6 +10,9 @@
  *                                      conversation doc still EXISTS.
  *     T-GDPR3-conv-sole-participant  — alice is only participant; conversation
  *                                      doc DELETED after empty-participants check.
+ *     T-GDPR3-conv-delete-branch-not-over-eager — sole-participant conv deleted AND
+ *                                      two-participant conv kept in the SAME run;
+ *                                      proves delete branch fires only when empty.
  *     T-GDPR3-conv-scoping-carol     — carol's conversation (alice not a
  *                                      participant) entirely untouched.
  *
@@ -30,7 +33,7 @@
  *     T-GDPR3-idempotency            — second run on already-anonymised data
  *                                      produces no error steps, success=true.
  *
- * Total: 8 tests
+ * Total: 9 tests
  *
  * Schema confirmed from source:
  *   conversations/{id}
@@ -314,6 +317,57 @@ describe("Conversations and messages", () => {
 
     // ── Conversation doc DELETED ──
     expect(await docExists(["conversations", CONV_ID])).toBe(false);
+  });
+
+  test("T-GDPR3-conv-delete-branch-not-over-eager: sole-participant conv deleted; two-participant conv kept — same run", async () => {
+    // This is the combined-run proof that the delete branch fires ONLY when
+    // participants is actually empty, not over-eagerly on every conversation.
+    //
+    // alice has TWO conversations in the same run:
+    //   conv_sole_run  → participants = [ALICE_UID]         should be DELETED
+    //   conv_mixed_run → participants = [ALICE_UID, BOB_UID] should be KEPT
+    //
+    // Both enter the same pagination loop. Only conv_sole_run should be deleted.
+
+    const SOLE_CONV  = "conv_sole_run";
+    const MIXED_CONV = "conv_mixed_run";
+
+    // Sole-participant conversation
+    await seedConversation(SOLE_CONV, [ALICE_UID]);
+    await seedMessage(SOLE_CONV, "msg_sole_alice", ALICE_UID, "sole conv message");
+
+    // Two-participant conversation
+    await seedConversation(MIXED_CONV, [ALICE_UID, BOB_UID]);
+    await seedMessage(MIXED_CONV, "msg_mixed_alice", ALICE_UID, "mixed conv alice msg");
+    await seedMessage(MIXED_CONV, "msg_mixed_bob",   BOB_UID,   "mixed conv bob msg");
+
+    // Single CF run — both conversations processed in the same pagination loop
+    const result = await deleteUserDataHandler({}, authCtx(ALICE_UID));
+
+    expect(result.steps.conversations_messages.status).toBe("ok");
+    expect(result.steps.conversations_messages.count).toBe(2); // 1 sole + 1 mixed (alice's only)
+    expect(result.steps.conversations_docs.status).toBe("ok");
+    expect(result.steps.conversations_docs.count).toBe(2); // 1 deleted + 1 updated
+
+    // ── sole-participant conv: DELETED ──
+    expect(await docExists(["conversations", SOLE_CONV])).toBe(false);
+
+    // ── two-participant conv: NOT deleted — kept because bob is still present ──
+    expect(await docExists(["conversations", MIXED_CONV])).toBe(true);
+    const mixedData = await readDoc(["conversations", MIXED_CONV]);
+    const remaining = mixedData?.["participants"] as string[];
+    expect(remaining).not.toContain(ALICE_UID);  // alice removed
+    expect(remaining).toContain(BOB_UID);         // bob still present
+
+    // ── alice's message in the kept conv: scrubbed ──
+    const aliceMsg = await readDoc(["conversations", MIXED_CONV, "messages", "msg_mixed_alice"]);
+    expect(aliceMsg!["senderId"]).toBeNull();
+    expect(aliceMsg!["message"]).toBe(DELETED_CONTENT_SENTINEL);
+
+    // ── bob's message in the kept conv: UNCHANGED ──
+    const bobMsg = await readDoc(["conversations", MIXED_CONV, "messages", "msg_mixed_bob"]);
+    expect(bobMsg!["senderId"]).toBe(BOB_UID);
+    expect(bobMsg!["message"]).toBe("mixed conv bob msg");
   });
 
   test("T-GDPR3-conv-scoping-carol: carol's conversation (alice not a participant) entirely untouched", async () => {
