@@ -62,8 +62,11 @@ import * as admin from "firebase-admin";
 // ── Emulator + project ID ──────────────────────────────────────────────────
 
 const PROJECT_ID = "huddl-gdpr-phase3-test";
-process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8180";
-process.env.GCLOUD_PROJECT = PROJECT_ID;
+process.env.FIRESTORE_EMULATOR_HOST        = "127.0.0.1:8180";
+process.env.GCLOUD_PROJECT                 = PROJECT_ID;
+// Storage emulator: route Phase 4 storage steps to the emulator, not production.
+process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9299";
+process.env.GDPR_STORAGE_BUCKET            = `${PROJECT_ID}.appspot.com`;
 
 // ── Sentinel — must match the constant in index.ts ─────────────────────────
 const DELETED_CONTENT_SENTINEL = "[deleted]";

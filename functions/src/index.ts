@@ -24,6 +24,7 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as https from "https";
 import { JWT } from "google-auth-library";
+import type { Bucket } from "@google-cloud/storage";
 
 // Gemini API key — sourced exclusively from Firebase Secret Manager / env config.
 // To set: firebase functions:secrets:set GEMINI_API_KEY
@@ -59,6 +60,13 @@ const VERTEX_ENDPOINT =
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// ── Storage bucket ────────────────────────────────────────────────────────────
+// Bucket name confirmed from lib/config/firebase_options.dart (all platforms).
+// In the emulator the admin SDK routes to FIREBASE_STORAGE_EMULATOR_HOST when set.
+// GDPR_STORAGE_BUCKET env var allows test overrides (emulator isolation).
+const STORAGE_BUCKET =
+  process.env["GDPR_STORAGE_BUCKET"] ?? "huddl-connect.firebasestorage.app";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -2113,6 +2121,10 @@ export const deleteUserData = functions
       );
     }
 
+    // capturedConvIds: populated during conversations step, reused by Phase 4 Storage
+    // (DM media enumerate-filter). Declared here so Phase 4 block can read it.
+    const capturedConvIds: string[] = [];
+
     // ── groups.memberIds arrayRemove + capture group list ──────────────────
     //
     // This is NOT a delete of the group document.
@@ -2284,6 +2296,7 @@ export const deleteUserData = functions
         let totalConvsUpdated   = 0;
 
         // Page through conversations where uid is a participant
+        // IDs are captured here and reused by Phase 4 Storage (DM media enumeration).
         let convCursor: admin.firestore.DocumentSnapshot | null = null;
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -2298,6 +2311,7 @@ export const deleteUserData = functions
           if (convSnap.empty) break;
 
           for (const convDoc of convSnap.docs) {
+            capturedConvIds.push(convDoc.id);
             // ── Step A: anonymise this user's messages in the subcollection ──
             const msgsAnonymised = await paginatedAnonymise(
               convDoc.ref.collection("messages").where("senderId", "==", uid),
@@ -2362,13 +2376,189 @@ export const deleteUserData = functions
     })();
 
     // ══════════════════════════════════════════════════════════════════
+    // PHASE 4 — STORAGE ENUMERATION + DELETION  (spec B.8)
+    // ══════════════════════════════════════════════════════════════════
+    //
+    // Three sub-steps, each a separate steps[] key:
+    //
+    //   storage_prefix_delete  — uid IS the path prefix; direct deleteFiles().
+    //     profile_photos/{uid}/
+    //     marketplace_images/{uid}/
+    //
+    //   storage_dm_media       — uid is in the FILENAME ({uid}_{ts}.{ext}).
+    //     dm_images/{convId}/         ← conversationId from Phase 3 capture
+    //     dm_documents/{convId}/
+    //     voice_notes/dm/{convId}/
+    //     For each convId: list, filter filename.startsWith(uid + '_'), delete.
+    //     Filter is a precise startsWith on the bare filename segment so that
+    //     another user whose uid happens to contain uid as a substring is
+    //     NEVER matched (contains-match is NOT used).
+    //
+    //   storage_group_media    — same enumerate-filter pattern, group-keyed.
+    //     group_images/{groupId}/     ← groupId from Phase 2 capture
+    //     group_documents/{groupId}/
+    //     voice_notes/group/{groupId}/
+    //     Filter: filename.startsWith(uid + '_') OR filename.startsWith('thread_' + uid + '_')
+    //     (thread-reply files are named thread_{uid}_{ts}).
+    //
+    // dryRun: list + count, never delete.
+    // 404 on individual delete → treat as success (already gone).
+    //
+    // Bucket: STORAGE_BUCKET constant (huddl-connect.firebasestorage.app).
+    //         In emulator: FIREBASE_STORAGE_EMULATOR_HOST routes automatically.
+
+    await (async () => {
+      // ── Helper: delete a single file, treating 404 as success ────────────
+      async function deleteFileIdempotent(
+        bucket: Bucket,
+        filePath: string
+      ): Promise<void> {
+        try {
+          await bucket.file(filePath).delete();
+        } catch (err) {
+          const code = (err as { code?: number | string }).code;
+          if (code === 404 || code === "404") return; // already gone — success
+          throw err;
+        }
+      }
+
+      // ── Helper: list + filter + delete files under a single prefix ────────
+      // Returns the count of files touched (deleted in live run, listed in dryRun).
+      // Filter function receives the bare filename (last path segment only).
+      async function enumerateFilterDelete(
+        bucket: Bucket,
+        prefix: string,
+        filterFn: (filename: string) => boolean,
+        dry: boolean
+      ): Promise<number> {
+        const [files] = await bucket.getFiles({ prefix });
+        const matched = files.filter((f) => {
+          const filename = f.name.split("/").pop() ?? "";
+          return filterFn(filename);
+        });
+        if (!dry) {
+          for (const f of matched) {
+            await deleteFileIdempotent(bucket, f.name);
+          }
+        }
+        return matched.length;
+      }
+
+      const bucket = admin.storage().bucket(STORAGE_BUCKET);
+
+      // ── Sub-step 1: simple prefix-delete ──────────────────────────────────
+      await (async () => {
+        const key = "storage_prefix_delete";
+        try {
+          let count = 0;
+          const prefixes = [
+            `profile_photos/${uid}/`,
+            `marketplace_images/${uid}/`,
+          ];
+          // List-first pattern: gives accurate count in both live and dryRun modes,
+          // and uses the idempotent per-file delete (404-safe) rather than the bulk
+          // deleteFiles() which swallows the count.
+          for (const prefix of prefixes) {
+            const [files] = await bucket.getFiles({ prefix });
+            count += files.length;
+            if (!dryRun) {
+              for (const f of files) {
+                await deleteFileIdempotent(bucket, f.name);
+              }
+            }
+          }
+          steps[key] = { status: "ok", count };
+          functions.logger.info(
+            `[deleteUserData] ${key}: touched ${count} files (dryRun=${dryRun})`
+          );
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          steps[key] = { status: "error", count: 0, error: msg };
+          functions.logger.error(`[deleteUserData] storage_prefix_delete: ERROR — ${msg}`);
+        }
+      })();
+
+      // ── Sub-step 2: DM media enumerate-filter-delete ──────────────────────
+      await (async () => {
+        const key = "storage_dm_media";
+        try {
+          let count = 0;
+          const dmPrefixTemplates = [
+            (cid: string) => `dm_images/${cid}/`,
+            (cid: string) => `dm_documents/${cid}/`,
+            (cid: string) => `voice_notes/dm/${cid}/`,
+          ];
+          // Filename filter: startsWith(uid + '_') — precise segment match.
+          // A uid that is a substring of another uid will NOT match because
+          // the character after uid must be '_', not another uid character.
+          const dmFilter = (filename: string) => filename.startsWith(uid + "_");
+
+          for (const convId of capturedConvIds) {
+            for (const prefixFn of dmPrefixTemplates) {
+              const n = await enumerateFilterDelete(
+                bucket, prefixFn(convId), dmFilter, dryRun
+              );
+              count += n;
+            }
+          }
+          steps[key] = { status: "ok", count };
+          functions.logger.info(
+            `[deleteUserData] ${key}: touched ${count} files across ` +
+            `${capturedConvIds.length} conversations (dryRun=${dryRun})`
+          );
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          steps[key] = { status: "error", count: 0, error: msg };
+          functions.logger.error(`[deleteUserData] storage_dm_media: ERROR — ${msg}`);
+        }
+      })();
+
+      // ── Sub-step 3: group media enumerate-filter-delete ───────────────────
+      await (async () => {
+        const key = "storage_group_media";
+        try {
+          let count = 0;
+          const groupPrefixTemplates = [
+            (gid: string) => `group_images/${gid}/`,
+            (gid: string) => `group_documents/${gid}/`,
+            (gid: string) => `voice_notes/group/${gid}/`,
+          ];
+          // Two filename patterns for group media:
+          //   {uid}_{ts}.{ext}          — direct post/upload
+          //   thread_{uid}_{ts}.{ext}   — thread reply (audit confirmed naming)
+          const groupFilter = (filename: string) =>
+            filename.startsWith(uid + "_") ||
+            filename.startsWith("thread_" + uid + "_");
+
+          for (const groupId of capturedGroupIds) {
+            for (const prefixFn of groupPrefixTemplates) {
+              const n = await enumerateFilterDelete(
+                bucket, prefixFn(groupId), groupFilter, dryRun
+              );
+              count += n;
+            }
+          }
+          steps[key] = { status: "ok", count };
+          functions.logger.info(
+            `[deleteUserData] ${key}: touched ${count} files across ` +
+            `${capturedGroupIds.length} groups (dryRun=${dryRun})`
+          );
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          steps[key] = { status: "error", count: 0, error: msg };
+          functions.logger.error(`[deleteUserData] storage_group_media: ERROR — ${msg}`);
+        }
+      })();
+    })();
+
+    // ══════════════════════════════════════════════════════════════════
     // RESULT ASSEMBLY
     // ══════════════════════════════════════════════════════════════════
 
     const completedAt = new Date().toISOString();
     const anyError = Object.values(steps).some((s) => s.status === "error");
 
-    const result: DeleteUserDataResult & { capturedGroupIds: string[] } = {
+    const result: DeleteUserDataResult & { capturedGroupIds: string[]; capturedConvIds: string[] } = {
       success: !anyError,
       uid,
       dryRun,
@@ -2376,7 +2566,8 @@ export const deleteUserData = functions
       completedAt,
       policy,
       steps,
-      capturedGroupIds,  // Phase 4 (Storage) will need these for group media enumeration
+      capturedGroupIds,  // Phase 4 Storage: group media enumeration
+      capturedConvIds,   // Phase 4 Storage: DM media enumeration
       ...(anyError ? { error: "One or more steps failed — see steps for details.", retryable: true } : {}),
     };
 

@@ -62,6 +62,10 @@ process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8180";
 // paths without needing ADC / GCLOUD credentials.
 // GCLOUD_PROJECT is honoured by both firebase-admin and @google-cloud/firestore.
 process.env.GCLOUD_PROJECT = PROJECT_ID;
+// Storage emulator: route Phase 4 storage steps to the emulator, not production.
+// No storage files are seeded here; steps will return count=0 / status=ok.
+process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9299";
+process.env.GDPR_STORAGE_BUCKET            = `${PROJECT_ID}.appspot.com`;
 
 let adminApp: admin.app.App;
 let db: admin.firestore.Firestore;
