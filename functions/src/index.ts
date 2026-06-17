@@ -11,7 +11,7 @@
  *   7. vertexGenerateContent         — §3A  Fine-tuned Vertex AI proxy (server-side SA key)
  *   8. syncPublicProfile             — Firestore onWrite on users/{userId} → mirrors public fields to users_public/{userId}
  *   9. setUserBorough               — HTTPS callable; resolves postcode server-side, enforces Cambridge gate, writes geo fields via Admin SDK
- *  10. deleteUserData               — GDPR deletion callable; Phase 1: simple query-deletes (9 collections)
+ *  10. deleteUserData               — GDPR deletion callable; Phase 1+2: simple query-deletes + subcollection sweeps + group membership
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -1568,6 +1568,7 @@ interface GdprDeletionPolicy {
   authored_content: "delete" | "anonymise" | "retain";
   reports: "delete" | "anonymise" | "retain";
   feedback: "delete" | "anonymise" | "retain";
+  invitations_sent: "delete" | "retain";  // Phase 2: sent invitations (collectionGroup)
   dry_run_default: boolean;
 }
 
@@ -1590,6 +1591,7 @@ const DEFAULT_GDPR_POLICY: GdprDeletionPolicy = {
   authored_content: "delete",
   reports: "retain",
   feedback: "delete",
+  invitations_sent: "retain",  // default: retain sent invitations (legal hold potential)
   dry_run_default: false,
 };
 
@@ -1666,10 +1668,11 @@ async function resolveGdprPolicy(): Promise<GdprDeletionPolicy> {
     const remote = configDoc.data() as Partial<GdprDeletionPolicy>;
     // Merge: remote fields override defaults; missing fields fall back to defaults.
     return {
-      authored_content: remote.authored_content ?? DEFAULT_GDPR_POLICY.authored_content,
-      reports:          remote.reports          ?? DEFAULT_GDPR_POLICY.reports,
-      feedback:         remote.feedback         ?? DEFAULT_GDPR_POLICY.feedback,
-      dry_run_default:  remote.dry_run_default  ?? DEFAULT_GDPR_POLICY.dry_run_default,
+      authored_content:  remote.authored_content  ?? DEFAULT_GDPR_POLICY.authored_content,
+      reports:           remote.reports           ?? DEFAULT_GDPR_POLICY.reports,
+      feedback:          remote.feedback          ?? DEFAULT_GDPR_POLICY.feedback,
+      invitations_sent:  remote.invitations_sent  ?? DEFAULT_GDPR_POLICY.invitations_sent,
+      dry_run_default:   remote.dry_run_default   ?? DEFAULT_GDPR_POLICY.dry_run_default,
     };
   } catch (err) {
     functions.logger.error("[deleteUserData] resolveGdprPolicy error — falling back to defaults:", err);
@@ -1829,13 +1832,308 @@ export const deleteUserData = functions
     );
 
     // ══════════════════════════════════════════════════════════════════
+    // PHASE 2 — SUBCOLLECTION SWEEPS, GROUP MEMBERSHIP, MEMBER ACTIVITY
+    //
+    // PHASE 2 VERIFICATION LEDGER (read from source — do not change without re-reading):
+    //
+    //  SUBCOLLECTIONS under users/{uid}/:
+    //   saved_messages   → users/{uid}/saved_messages/{auto-id}
+    //                      (saved_message_service.dart lines 119–136, 175–184)
+    //                      NOTE: saved_threads and saved_events have NO Firestore
+    //                      write path — BrowserStorage only. Not swept.
+    //   notifPrefs       → users/{uid}/notifPrefs/settings  (single doc, point-delete)
+    //                      (user_privacy_prefs_service.dart lines 82–87, 147–152)
+    //   deadlines        → users/{uid}/deadlines/{auto-id}  (firebase_auth_service.dart:845)
+    //   saved_items      → users/{uid}/saved_items/{auto-id} (firebase_auth_service.dart:821)
+    //   blocks (forward) → users/{uid}/blocks/{targetUid}   (firebase_auth_service.dart:792)
+    //   invitations (recv)→ users/{uid}/invitations/{invId} (invitation_service.dart:232–238)
+    //
+    //  user_rsvps subcollection:
+    //   user_rsvps/{uid}/meetups/{meetupId}  (firestore_service.dart:1346–1354)
+    //
+    //  collectionGroup sweeps:
+    //   blocks reverse   → collectionGroup('blocks').where('targetUid','==',uid)
+    //                      field 'targetUid' IS a real document field
+    //                      (block_service.dart line 97)
+    //   endorsements     → collectionGroup('endorsements').where(documentId,'==',uid)
+    //                      doc ID IS the endorser uid — not a field named 'documentId'
+    //                      (local_services_service.dart lines 56–57, 604–606)
+    //   invitations sent → collectionGroup('invitations').where('invitedById','==',uid)
+    //                      field 'invitedById' is a real document field
+    //                      (invitation_service.dart line 369: 'invitedById': inviterId)
+    //                      GATED by policy.invitations_sent (default=retain)
+    //
+    //  PHASE 1 CORRECTIONS (found during Phase 2 investigation):
+    //   polls (Firestore) → polls/{auto-id}.createdByUid
+    //                      (firestore_service.dart line 1402: 'createdByUid': uid)
+    //                      MISSED in Phase 1 — added here in Phase 2
+    //   partner_analytics → partner_analytics/{uid}  (doc ID IS the uid — point-delete)
+    //                      (local_services_service.dart line 721: .doc(ownerUid))
+    //                      MISSED in Phase 1 — added here in Phase 2
+    //
+    //  PHANTOMS (Phase 2 scope):
+    //   users/{uid}/saved_threads — BrowserStorage only, zero Firestore writes
+    //   users/{uid}/saved_events  — BrowserStorage only, zero Firestore writes
+    //   users/{uid}/notifPrefs (collection sweep) — only 1 doc ever ('settings')
+    //                              swept as point-delete, not collection scan
+    //
+    //  groups.memberIds arrayRemove:
+    //   Query groups where memberIds arrayContains uid → arrayRemove uid from each.
+    //   This is NOT a delete of the group — only membership removal.
+    //   Captured group IDs are stored for memberActivity sweep and Phase 4 (Storage).
+    //   arrayRemove is idempotent (no-op if uid already absent).
+    //
+    //  memberActivity:
+    //   groups/{gid}/memberActivity/{uid} — point-delete per group captured above
+    //   (invitation_service.dart lines 531–543, group_chat_screen.dart line 5865)
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── Phase 1 corrections: polls + partner_analytics ─────────────────────
+    // (Discovered during Phase 2 source investigation — added here to keep
+    //  the Phase 1 result shape backward-compatible.)
+
+    // polls — field "createdByUid" (firestore_service.dart:1402)
+    await runStep(
+      "polls",
+      db.collection("polls").where("createdByUid", "==", uid)
+    );
+
+    // partner_analytics — doc ID == uid (point-delete, not a query)
+    // Uses a single-doc "query" pattern: get the doc then delete if it exists.
+    // paginatedDelete on a doc-ID equality query won't work cleanly here;
+    // we do an explicit get + delete so the step reports count 0 or 1.
+    await (async () => {
+      const key = "partner_analytics";
+      try {
+        const ref = db.collection("partner_analytics").doc(uid);
+        const snap = await ref.get();
+        if (snap.exists) {
+          if (!dryRun) await ref.delete();
+          steps[key] = { status: "ok", count: 1 };
+          functions.logger.info(`[deleteUserData] ${key}: deleted 1 doc (dryRun=${dryRun})`);
+        } else {
+          steps[key] = { status: "ok", count: 0 };
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
+    // ── Subcollection sweeps (users/{uid}/…) ───────────────────────────────
+
+    // saved_messages (saved_message_service.dart:119–136)
+    await runStep(
+      "users_saved_messages",
+      db.collection("users").doc(uid).collection("saved_messages")
+    );
+
+    // notifPrefs/settings — point-delete (user_privacy_prefs_service.dart:82–87)
+    // Only one document ever written ('settings'). Delete it directly.
+    await (async () => {
+      const key = "users_notifPrefs_settings";
+      try {
+        const ref = db.collection("users").doc(uid).collection("notifPrefs").doc("settings");
+        const snap = await ref.get();
+        if (snap.exists) {
+          if (!dryRun) await ref.delete();
+          steps[key] = { status: "ok", count: 1 };
+          functions.logger.info(`[deleteUserData] ${key}: deleted 1 doc (dryRun=${dryRun})`);
+        } else {
+          steps[key] = { status: "ok", count: 0 };
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
+    // deadlines (firebase_auth_service.dart:845)
+    await runStep(
+      "users_deadlines",
+      db.collection("users").doc(uid).collection("deadlines")
+    );
+
+    // saved_items (firebase_auth_service.dart:821)
+    await runStep(
+      "users_saved_items",
+      db.collection("users").doc(uid).collection("saved_items")
+    );
+
+    // blocks forward: users/{uid}/blocks/{targetUid} (firebase_auth_service.dart:792)
+    await runStep(
+      "users_blocks_forward",
+      db.collection("users").doc(uid).collection("blocks")
+    );
+
+    // invitations received: users/{uid}/invitations/{invId} (invitation_service.dart:232)
+    await runStep(
+      "users_invitations_received",
+      db.collection("users").doc(uid).collection("invitations")
+    );
+
+    // user_rsvps: user_rsvps/{uid}/meetups/{meetupId} (firestore_service.dart:1346)
+    await runStep(
+      "user_rsvps_meetups",
+      db.collection("user_rsvps").doc(uid).collection("meetups")
+    );
+
+    // ── collectionGroup sweeps ─────────────────────────────────────────────
+
+    // blocks reverse: other users who blocked this uid
+    // field 'targetUid' is a real document field (block_service.dart:97)
+    await runStep(
+      "blocks_reverse",
+      db.collectionGroup("blocks").where("targetUid", "==", uid)
+    );
+
+    // endorsements: doc ID is the endorser uid, AND field 'uid' == endorser uid
+    // (local_services_service.dart:180 — field 'uid' is written on every endorsement doc)
+    // NOTE: collectionGroup + FieldPath.documentId() equality requires a FULL document path
+    // (odd-segment bare uid is rejected by the SDK). Use the real 'uid' field instead.
+    await runStep(
+      "endorsements_by_uid",
+      db.collectionGroup("endorsements")
+        .where("uid", "==", uid)
+    );
+
+    // invitations sent: gated by policy.invitations_sent switch (default=retain)
+    // field 'invitedById' is a real document field (invitation_service.dart:369)
+    if (policy.invitations_sent === "delete") {
+      await runStep(
+        "invitations_sent",
+        db.collectionGroup("invitations").where("invitedById", "==", uid)
+      );
+    } else {
+      await runStep(
+        "invitations_sent",
+        null,
+        `policy.invitations_sent=${policy.invitations_sent} — retained by default`
+      );
+    }
+
+    // ── groups.memberIds arrayRemove + capture group list ──────────────────
+    //
+    // This is NOT a delete of the group document.
+    // It removes uid from the memberIds array only.
+    // Captured group IDs are used immediately for memberActivity sweep
+    // and stored in the step result for Phase 4 (group Storage enumeration).
+    // arrayRemove is idempotent — safe to re-run.
+    const capturedGroupIds: string[] = [];
+    await (async () => {
+      const key = "groups_membership_remove";
+      try {
+        // Paginate over groups this user belongs to (arrayContains query).
+        // No cursor pagination needed here — arrayContains queries can't use
+        // startAfter on documentId in the same pass. Instead we use limit
+        // loops with the last doc as cursor on the group id field.
+        // In practice group membership is bounded (< a few hundred groups),
+        // so a single 500-limit fetch is safe. We still loop defensively.
+        let totalUpdated = 0;
+        let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          let q = db.collection("groups")
+            .where("memberIds", "array-contains", uid)
+            .limit(500);
+          if (lastDoc) q = q.startAfter(lastDoc);
+
+          const snap = await q.get();
+          if (snap.empty) break;
+
+          // Collect group IDs for downstream steps
+          for (const doc of snap.docs) {
+            capturedGroupIds.push(doc.id);
+          }
+
+          if (!dryRun) {
+            // Batch arrayRemove
+            const batch = db.batch();
+            for (const doc of snap.docs) {
+              batch.update(doc.ref, {
+                memberIds: admin.firestore.FieldValue.arrayRemove(uid),
+                memberCount: admin.firestore.FieldValue.increment(-1),
+              });
+            }
+            await batch.commit();
+          }
+
+          totalUpdated += snap.docs.length;
+          if (snap.docs.length < 500) break;
+          lastDoc = snap.docs[snap.docs.length - 1];
+        }
+
+        steps[key] = {
+          status: "ok",
+          count: totalUpdated,
+          // Pass the captured group IDs downstream via the error field (repurposed as info)
+          // — they are NOT an error, just additional data. Alternatively stored on result.
+          // We store them separately on the result object below.
+        };
+        functions.logger.info(
+          `[deleteUserData] ${key}: removed from ${totalUpdated} groups, capturedGroupIds=${JSON.stringify(capturedGroupIds)} (dryRun=${dryRun})`
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
+    // ── memberActivity sweep (one point-delete per captured group) ─────────
+    //
+    // groups/{gid}/memberActivity/{uid} — the doc ID is the uid.
+    // (invitation_service.dart:531–543)
+    // One delete per group; batched in groups of 499 for Firestore batch limit.
+    await (async () => {
+      const key = "member_activity";
+      if (capturedGroupIds.length === 0) {
+        steps[key] = { status: "ok", count: 0 };
+        return;
+      }
+      try {
+        let deleted = 0;
+        // Process in batches of 499 (Firestore batch limit)
+        for (let i = 0; i < capturedGroupIds.length; i += 499) {
+          const chunk = capturedGroupIds.slice(i, i + 499);
+          if (dryRun) {
+            // In dryRun mode, check existence to report an accurate count
+            const existenceChecks = await Promise.all(
+              chunk.map(gid =>
+                db.collection("groups").doc(gid).collection("memberActivity").doc(uid).get()
+              )
+            );
+            deleted += existenceChecks.filter(s => s.exists).length;
+          } else {
+            const batch = db.batch();
+            for (const gid of chunk) {
+              const ref = db.collection("groups").doc(gid).collection("memberActivity").doc(uid);
+              batch.delete(ref);
+            }
+            await batch.commit();
+            deleted += chunk.length; // count attempted; idempotent if doc absent
+          }
+        }
+        steps[key] = { status: "ok", count: deleted };
+        functions.logger.info(`[deleteUserData] ${key}: swept ${deleted} memberActivity docs (dryRun=${dryRun})`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
+    // ══════════════════════════════════════════════════════════════════
     // RESULT ASSEMBLY
     // ══════════════════════════════════════════════════════════════════
 
     const completedAt = new Date().toISOString();
     const anyError = Object.values(steps).some((s) => s.status === "error");
 
-    const result: DeleteUserDataResult = {
+    const result: DeleteUserDataResult & { capturedGroupIds: string[] } = {
       success: !anyError,
       uid,
       dryRun,
@@ -1843,6 +2141,7 @@ export const deleteUserData = functions
       completedAt,
       policy,
       steps,
+      capturedGroupIds,  // Phase 4 (Storage) will need these for group media enumeration
       ...(anyError ? { error: "One or more steps failed — see steps for details.", retryable: true } : {}),
     };
 
