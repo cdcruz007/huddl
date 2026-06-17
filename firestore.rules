@@ -480,20 +480,31 @@ service cloud.firestore {
     // NOTIFICATIONS
     // =========================================================================
     match /notifications/{notificationId} {
-      // Users read their own notifications only.
+      // F-01: Recipient reads their own notifications only.
+      // Field is 'userId' (not 'recipientId') — matches _write() schema.
       allow read: if isAuth()
-        && resource.data.recipientId == request.auth.uid;
+        && resource.data.userId == request.auth.uid;
 
-      // Backend writes notifications via Admin SDK (bypasses rules).
-      // App-to-app notification writes (e.g. reaction notifs) must match sender.
+      // F-01: Client cross-user writes are legitimate (A writes notif for B).
+      // Guard: senderId must be the writing user (no identity spoofing).
+      // Schema: keys must be within the known notification schema.
+      // Type allowlist intentionally omitted — senderId + schema constraints
+      // are sufficient; hardcoding types would break silently when new
+      // notification types ship (methods already exist but not yet wired).
       allow create: if isAuth()
-        && request.resource.data.senderId == request.auth.uid;
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+             'userId', 'senderId', 'type', 'title', 'body',
+             'read', 'data', 'senderName', 'senderPhotoUrl',
+             'imageUrl', 'createdAt'
+           ]);
 
-      // Recipients may update their own notifications (mark as read).
+      // F-01: Recipient may mark their own notification read only.
+      // Field is 'read' (not 'isRead'/'readAt') — matches _write() schema.
       allow update: if isAuth()
-        && resource.data.recipientId == request.auth.uid
+        && resource.data.userId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['isRead', 'readAt']);
+            .hasOnly(['read']);
 
       // Notifications are never hard-deleted from client.
       allow delete: if false;

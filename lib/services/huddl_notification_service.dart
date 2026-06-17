@@ -84,6 +84,7 @@ class HuddlNotificationService {
     try {
       await _db.collection('notifications').add({
         'userId': recipientId,
+        'senderId': me,                // F-01: identity anchor — enforced by Firestore rule
         'type': type,
         'title': title,
         'body': body,
