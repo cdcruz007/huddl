@@ -411,9 +411,9 @@ describe("Config switch", () => {
     // Default: feedback=delete, authored_content=anonymise
     expect(result.policy.feedback).toBe("delete");
     expect(result.policy.authored_content).toBe("anonymise");
-    // feedback deleted; community_wisdom skipped (authored_content=anonymise, not delete)
+    // feedback deleted; community_wisdom anonymised (authored_content=anonymise → paginatedAnonymise)
     expect(result.steps.feedback.status).toBe("ok");
-    expect(result.steps.community_wisdom.status).toBe("skipped");
+    expect(result.steps.community_wisdom.status).toBe("ok"); // de-stubbed in Phase 5: anonymise runs
   });
 
   test("T-GDPR1-config-present: _config doc present → overrides applied", async () => {

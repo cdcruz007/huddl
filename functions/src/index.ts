@@ -1573,10 +1573,12 @@ interface StepResult {
 }
 
 interface GdprDeletionPolicy {
-  authored_content: "delete" | "anonymise" | "retain";
-  reports: "delete" | "anonymise" | "retain";
-  feedback: "delete" | "anonymise" | "retain";
-  invitations_sent: "delete" | "retain";  // Phase 2: sent invitations (collectionGroup)
+  authored_content:          "delete" | "anonymise" | "retain";
+  reports:                   "delete" | "retain";              // HARD LOCK: no anonymise
+  feedback:                  "delete" | "retain";              // simplified: retain or delete
+  invitations_sent:          "delete" | "retain";              // Phase 2: sent invitations
+  created_content_meetups:   "delete" | "retain";              // meetups created by uid
+  created_content_marketplace: "delete" | "retain";           // marketplace listings by uid
   dry_run_default: boolean;
 }
 
@@ -1604,11 +1606,13 @@ const DELETED_CONTENT_SENTINEL = "[deleted]";
 // authored_content default = "anonymise" — group messages scrubbed-but-retained;
 // flip to "delete" only on solicitor sign-off.
 const DEFAULT_GDPR_POLICY: GdprDeletionPolicy = {
-  authored_content: "anonymise",
-  reports: "retain",
-  feedback: "delete",
-  invitations_sent: "retain",  // default: retain sent invitations (legal hold potential)
-  dry_run_default: false,
+  authored_content:            "anonymise", // group msgs + community_wisdom + borough_announcements scrubbed-but-retained
+  reports:                     "retain",    // HARD LOCK — reports are legal records; retain unless explicit solicitor instruction
+  feedback:                    "delete",    // platform feedback — delete by default
+  invitations_sent:            "retain",    // legal hold potential — retain by default
+  created_content_meetups:     "delete",    // user-created meetups — deleted by default
+  created_content_marketplace: "delete",    // user-created marketplace listings — deleted by default
+  dry_run_default:             false,
 };
 
 // ── Paginated-delete helper ────────────────────────────────────────────────
@@ -1733,11 +1737,13 @@ async function resolveGdprPolicy(): Promise<GdprDeletionPolicy> {
     const remote = configDoc.data() as Partial<GdprDeletionPolicy>;
     // Merge: remote fields override defaults; missing fields fall back to defaults.
     return {
-      authored_content:  remote.authored_content  ?? DEFAULT_GDPR_POLICY.authored_content,
-      reports:           remote.reports           ?? DEFAULT_GDPR_POLICY.reports,
-      feedback:          remote.feedback          ?? DEFAULT_GDPR_POLICY.feedback,
-      invitations_sent:  remote.invitations_sent  ?? DEFAULT_GDPR_POLICY.invitations_sent,
-      dry_run_default:   remote.dry_run_default   ?? DEFAULT_GDPR_POLICY.dry_run_default,
+      authored_content:            remote.authored_content            ?? DEFAULT_GDPR_POLICY.authored_content,
+      reports:                     remote.reports                     ?? DEFAULT_GDPR_POLICY.reports,
+      feedback:                    remote.feedback                    ?? DEFAULT_GDPR_POLICY.feedback,
+      invitations_sent:            remote.invitations_sent            ?? DEFAULT_GDPR_POLICY.invitations_sent,
+      created_content_meetups:     remote.created_content_meetups     ?? DEFAULT_GDPR_POLICY.created_content_meetups,
+      created_content_marketplace: remote.created_content_marketplace ?? DEFAULT_GDPR_POLICY.created_content_marketplace,
+      dry_run_default:             remote.dry_run_default             ?? DEFAULT_GDPR_POLICY.dry_run_default,
     };
   } catch (err) {
     functions.logger.error("[deleteUserData] resolveGdprPolicy error — falling back to defaults:", err);
@@ -1851,23 +1857,154 @@ export const deleteUserData = functions
         db.collection("feedback").where("user_uid", "==", uid)
       );
     } else {
-      await runStep("feedback", null, `policy.feedback=${policy.feedback} — not deleting`);
+      await runStep("feedback", null, `policy.feedback=${policy.feedback} — retained`);
     }
 
     // 6. community_wisdom — field "author_uid" (ai_knowledge_flywheel_service.dart:184)
     //    Gated by policy.authored_content switch. Default = "anonymise".
-    if (policy.authored_content === "delete") {
-      await runStep(
-        "community_wisdom",
-        db.collection("community_wisdom").where("author_uid", "==", uid)
-      );
-    } else {
-      await runStep(
-        "community_wisdom",
-        null,
-        `policy.authored_content=${policy.authored_content} — Phase 5 will handle anonymise`
-      );
-    }
+    //    Fields confirmed from ai_knowledge_flywheel_service.dart:
+    //      author_uid, author_name, author_avatar → nulled on anonymise
+    //      content_text → DELETED_CONTENT_SENTINEL on anonymise
+    //    (same pattern as group_messages / borough_announcements authored posts)
+    await (async () => {
+      const key = "community_wisdom";
+      try {
+        const query = db.collection("community_wisdom").where("author_uid", "==", uid);
+        if (policy.authored_content === "anonymise") {
+          const count = await paginatedAnonymise(
+            query,
+            {
+              author_uid:    null,
+              author_name:   null,
+              author_avatar: null,
+              content_text:  DELETED_CONTENT_SENTINEL,
+            },
+            dryRun
+          );
+          steps[key] = { status: "ok", count };
+          functions.logger.info(
+            `[deleteUserData] ${key}: anonymised ${count} docs (dryRun=${dryRun})`
+          );
+        } else if (policy.authored_content === "delete") {
+          const count = await paginatedDelete(query, dryRun);
+          steps[key] = { status: "ok", count };
+          functions.logger.info(
+            `[deleteUserData] ${key}: deleted ${count} docs (dryRun=${dryRun})`
+          );
+        } else {
+          // "retain"
+          steps[key] = { status: "skipped", count: 0,
+            error: `policy.authored_content=${policy.authored_content} — retained` };
+          functions.logger.info(`[deleteUserData] ${key}: skipped — policy.authored_content=retain`);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
+    // 6b. borough_announcements — authored posts + comments subcollection
+    //     F-11 migration: comments now live in borough_announcements/{id}/comments.
+    //     Two sub-operations, reported as one step:
+    //       (a) authored announcement docs (authorId == uid) — per authored_content switch
+    //       (b) comment docs collectionGroup('comments').where('authorId', ==, uid)
+    //           + decrement parent commentCount for each deleted comment
+    //     Fields on announcement doc:
+    //       authorId        (string, required, UID of author)
+    //     Fields on comment doc:
+    //       authorId        (string, uid of commenter — F-11)
+    //     commentCount on parent decremented per comment deleted (matching addComment coupling)
+    await (async () => {
+      const key = "borough_announcements";
+      try {
+        let count = 0;
+
+        // ── (a) authored announcement docs ──────────────────────────────────
+        const announcementQuery = db
+          .collection("borough_announcements")
+          .where("authorId", "==", uid);
+
+        if (policy.authored_content === "anonymise") {
+          count += await paginatedAnonymise(
+            announcementQuery,
+            { authorId: null },
+            dryRun
+          );
+        } else if (policy.authored_content === "delete") {
+          count += await paginatedDelete(announcementQuery, dryRun);
+        }
+        // "retain" → touch nothing
+
+        // ── (b) comment docs authored by uid + commentCount decrement ────────
+        //    Must run regardless of authored_content switch — user's comments are
+        //    always deleted on GDPR request (identity in comment doc).
+        //    commentCount on parent announcement is decremented per deleted comment
+        //    to mirror the increment coupling in addComment (announcement_service.dart:693).
+        const commentQuery = db
+          .collectionGroup("comments")
+          .where("authorId", "==", uid);
+
+        if (!dryRun) {
+          // Paginate: fetch, decrement parent, batch-delete
+          let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+          let pageCount = 0;
+          do {
+            const page: admin.firestore.QuerySnapshot = lastDoc
+              ? await commentQuery.startAfter(lastDoc).limit(400).get()
+              : await commentQuery.limit(400).get();
+            if (page.empty) break;
+            pageCount += page.docs.length;
+
+            const batch = db.batch();
+            for (const commentDoc of page.docs) {
+              batch.delete(commentDoc.ref);
+              // Decrement commentCount on parent announcement
+              const parentRef = commentDoc.ref.parent.parent;
+              if (parentRef) {
+                batch.update(parentRef, {
+                  commentCount: admin.firestore.FieldValue.increment(-1),
+                });
+              }
+            }
+            await batch.commit();
+            lastDoc = page.docs[page.docs.length - 1];
+          } while (true);
+          count += pageCount;
+        } else {
+          // dryRun: just count
+          const snap = await commentQuery.get();
+          count += snap.size;
+        }
+
+        steps[key] = { status: "ok", count };
+        functions.logger.info(
+          `[deleteUserData] ${key}: processed ${count} announcement/comment docs ` +
+          `(authored_content=${policy.authored_content}, dryRun=${dryRun})`
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
+    // 6c. reports — field "reportedByUid" (report_service.dart)
+    //     HARD LOCK: reports are legal records. Default = "retain".
+    //     Only deleted on explicit solicitor sign-off (authored_content_policy.reports="delete").
+    await (async () => {
+      const key = "reports";
+      if (policy.reports === "delete") {
+        await runStep(
+          key,
+          db.collection("reports").where("reportedByUid", "==", uid)
+        );
+      } else {
+        steps[key] = { status: "skipped", count: 0,
+          error: `policy.reports=${policy.reports} — legal records retained` };
+        functions.logger.info(`[deleteUserData] ${key}: skipped — hard-lock retain`);
+      }
+    })();
 
     // 7. group_messages — field "senderId" (firestore_service.dart:362)
     //    F-03 lock: this is a cross-user collection; Admin SDK bypasses client rules.
@@ -1921,22 +2058,33 @@ export const deleteUserData = functions
     })();
 
     // 8. meetups — two passes for legacy field alias
+    //    Gated by policy.created_content_meetups (default = "delete").
     //    Pass A: field "createdBy" (spec-aligned) (firebase_auth_service.dart:775)
-    await runStep(
-      "meetups_createdBy",
-      db.collection("meetups").where("createdBy", "==", uid)
-    );
     //    Pass B: field "organiserId" (legacy alias) (firebase_auth_service.dart:779)
-    await runStep(
-      "meetups_organiserId",
-      db.collection("meetups").where("organiserId", "==", uid)
-    );
+    if (policy.created_content_meetups === "delete") {
+      await runStep(
+        "meetups_createdBy",
+        db.collection("meetups").where("createdBy", "==", uid)
+      );
+      await runStep(
+        "meetups_organiserId",
+        db.collection("meetups").where("organiserId", "==", uid)
+      );
+    } else {
+      await runStep("meetups_createdBy",   null, `policy.created_content_meetups=retain`);
+      await runStep("meetups_organiserId", null, `policy.created_content_meetups=retain`);
+    }
 
     // 9. marketplace — field "sellerId" (firebase_auth_service.dart:784)
-    await runStep(
-      "marketplace",
-      db.collection("marketplace").where("sellerId", "==", uid)
-    );
+    //    Gated by policy.created_content_marketplace (default = "delete").
+    if (policy.created_content_marketplace === "delete") {
+      await runStep(
+        "marketplace",
+        db.collection("marketplace").where("sellerId", "==", uid)
+      );
+    } else {
+      await runStep("marketplace", null, `policy.created_content_marketplace=retain`);
+    }
 
     // ══════════════════════════════════════════════════════════════════
     // PHASE 2 — SUBCOLLECTION SWEEPS, GROUP MEMBERSHIP, MEMBER ACTIVITY
