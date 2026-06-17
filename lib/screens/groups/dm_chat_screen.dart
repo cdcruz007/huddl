@@ -1545,15 +1545,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
     if (result == null || result.duration < 1) return; // too short – discard
 
     try {
-      // Upload to Firebase Storage
-      final convId = _conversationId;
+      // S-04: resolve conversationId BEFORE upload. The Storage rule for
+      // voice_notes/dm/{cid}/... requires the conversation doc to exist.
+      final convId = await _ensureConversationId();
+      if (convId == null || !mounted) return;
+
       final audioUrl = await _voiceSvc.uploadVoiceNote(
         result.path,
-        conversationId: convId,
+        pathType: VoiceNotePathType.dm,
+        contextId: convId,
       );
 
       // Send via realtime service if real user
-      if (_isRealUser && convId != null) {
+      if (_isRealUser) {
         await _realtimeDMService.sendMessage(
           conversationId: convId,
           message: '🎤 Voice message',
@@ -2209,11 +2213,14 @@ class _DMChatScreenState extends State<DMChatScreen> {
     required String? filePath,
     required String mimeType,
     required String folder,
+    required String conversationId,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
     final ts  = DateTime.now().millisecondsSinceEpoch;
     final ext = mimeType.contains('/') ? mimeType.split('/').last : 'bin';
-    final ref = FirebaseStorage.instance.ref('$folder/${uid}_$ts.$ext');
+    // S-01/S-02: scoped path — conversationId is a path segment so Storage
+    // rules can do firestore.get(conversations/{cid}).participants check.
+    final ref = FirebaseStorage.instance.ref('$folder/$conversationId/${uid}_$ts.$ext');
     try {
       TaskSnapshot snap;
       if (bytes != null) {
@@ -2230,6 +2237,37 @@ class _DMChatScreenState extends State<DMChatScreen> {
       }
       return null;
     }
+  }
+
+  /// S-01/S-02: Resolve _conversationId BEFORE any media upload.
+  /// The new Storage rules do firestore.get(conversations/{cid}).participants —
+  /// the conversation doc must exist at upload time for the rule to allow the write.
+  /// Returns the resolved conversationId, or null if resolution failed (blocked/error).
+  Future<String?> _ensureConversationId() async {
+    if (_conversationId != null) return _conversationId;
+    if (_isRealUser) {
+      final convId = await _realtimeDMService.getOrCreateConversation(
+        widget.recipientId,
+      );
+      if (convId == null || convId == 'blocked') return null;
+      _conversationId = convId;
+      // Set up message stream if not already subscribed
+      _firestoreMsgSub ??= _realtimeDMService
+          .messagesStream(_conversationId!)
+          .listen((msgs) {
+        if (!mounted) return;
+        setState(() => _messages = msgs.map(_realtimeToDirectMessage).toList());
+        _scrollToBottom(animate: true);
+      });
+    } else {
+      final conv = await _dmService.getOrCreateConversation(
+        recipientId: widget.recipientId,
+        recipientName: widget.recipientName,
+        avatarColor: widget.recipientAvatarColor,
+      );
+      _conversationId = conv.id;
+    }
+    return _conversationId;
   }
 
   Future<void> _handleCameraCapture() async {
@@ -2251,12 +2289,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
     final attachment = await _mediaService.takePhoto();
     if (attachment == null || !mounted) return;
-    // Upload to Firebase Storage so the URL is accessible on all devices
+    // S-01: resolve conversationId BEFORE upload so the Storage rule's
+    // firestore.get(conversations/{cid}).participants can resolve.
+    final cid = await _ensureConversationId();
+    if (cid == null || !mounted) return;
     final downloadUrl = await _uploadMediaToStorage(
       bytes: attachment.bytes,
       filePath: attachment.filePath,
       mimeType: attachment.mimeType ?? 'image/jpeg',
       folder: 'dm_images',
+      conversationId: cid,
     );
     if (!mounted) return;
     if (downloadUrl == null) {
@@ -2281,12 +2323,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
     final attachments = await _mediaService.pickMultipleImages();
     if (attachments.isEmpty || !mounted) return;
+    // S-01: resolve conversationId once before the upload loop.
+    final cid = await _ensureConversationId();
+    if (cid == null || !mounted) return;
     for (final att in attachments) {
       final downloadUrl = await _uploadMediaToStorage(
         bytes: att.bytes,
         filePath: att.filePath,
         mimeType: att.mimeType ?? 'image/jpeg',
         folder: 'dm_images',
+        conversationId: cid,
       );
       if (downloadUrl == null) continue; // skip if upload failed
       if (!mounted) return;
@@ -2297,7 +2343,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Future<void> _handleDocumentPick() async {
     final attachment = await _mediaService.pickDocument();
     if (attachment == null || !mounted) return;
-    // Upload document to Firebase Storage for cross-device access
+    // S-02: resolve conversationId BEFORE upload.
+    final cid = await _ensureConversationId();
+    if (cid == null || !mounted) return;
     String? downloadUrl;
     if (attachment.bytes != null || (attachment.filePath != null && !kIsWeb)) {
       downloadUrl = await _uploadMediaToStorage(
@@ -2305,6 +2353,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         filePath: attachment.filePath,
         mimeType: attachment.mimeType ?? 'application/octet-stream',
         folder: 'dm_documents',
+        conversationId: cid,
       );
     }
     await _sendRichMessage(

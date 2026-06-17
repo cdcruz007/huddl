@@ -8,6 +8,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path_provider/path_provider.dart';
 import 'web_blob_helper_stub.dart' if (dart.library.html) 'web_blob_helper.dart';
 
+/// S-04: Distinguishes DM vs group voice-note upload paths.
+/// DM  → voice_notes/dm/{conversationId}/{uid}_{ts}.{ext}
+/// Group → voice_notes/group/{groupId}/{uid}_{ts}.{ext}
+/// The uid-fallback ('voice_notes/{uid}/...') is eliminated: callers must
+/// always resolve contextId before uploading.
+enum VoiceNotePathType { dm, group }
 
 /// Singleton service that handles voice message recording, uploading, and playback.
 /// Recording uses the `record` package (m4a/aac on device, webm on web).
@@ -229,12 +235,23 @@ class VoiceMessageService {
   ///   DNS lookup failure.  It is also more resilient on Android under poor
   ///   network conditions.  The memory overhead is acceptable for voice notes
   ///   (≤ 25 MB per the storage rules).
-  Future<String> uploadVoiceNote(String localPath, {String? conversationId}) async {
+  /// Upload a recorded voice note to Firebase Storage.
+  ///
+  /// [pathType] — VoiceNotePathType.dm  → voice_notes/dm/{contextId}/...
+  ///              VoiceNotePathType.group → voice_notes/group/{contextId}/...
+  /// [contextId] — conversationId (DM) or groupId (group). Must be non-null;
+  ///               callers are required to resolve this before calling.
+  ///               The uid-fallback path has been eliminated (S-04).
+  Future<String> uploadVoiceNote(
+    String localPath, {
+    required VoiceNotePathType pathType,
+    required String contextId,
+  }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final ext = kIsWeb ? 'webm' : 'm4a';
-    final folder = conversationId != null ? 'voice_notes/$conversationId' : 'voice_notes/$uid';
-    final storagePath = '$folder/${uid}_$timestamp.$ext';
+    final typeSegment = pathType == VoiceNotePathType.dm ? 'dm' : 'group';
+    final storagePath = 'voice_notes/$typeSegment/$contextId/${uid}_$timestamp.$ext';
 
     final ref = FirebaseStorage.instance.ref(storagePath);
 

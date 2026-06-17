@@ -4578,9 +4578,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'local';
+      // S-04: group voice notes go to voice_notes/group/{groupId}/...
       final audioUrl = await _voiceSvc.uploadVoiceNote(
         result.path,
-        conversationId: widget.groupId,
+        pathType: VoiceNotePathType.group,
+        contextId: widget.groupId,
       );
       final me = _onboardingService.name ?? 'You';
       final ts = DateTime.now();

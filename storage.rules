@@ -120,39 +120,85 @@ service firebase.storage {
     // Any participant who can read the message in Firestore gets the URL via
     // getDownloadURL(), so reads are auth-gated.
     // =========================================================================
-    match /voice_notes/{segment}/{fileName} {
-      allow read:   if isAuth();
-      allow write:  if isAuth()
-                    && isAudio()
-                    && maxSize(25);
+    // DM VOICE NOTES
+    // Path: voice_notes/dm/{conversationId}/{uid}_{timestamp}.{ext}
+    // =========================================================================
+    // Written by VoiceMessageService.uploadVoiceNote() with pathType=dm.
+    // S-04 fix: scoped to DM conversation participants via firestore.get().
+    // Previously: voice_notes/{segment}/{file} — any auth user could read or
+    // write any conversation's voice notes without being a participant.
+    // The old flat path voice_notes/{segment}/{file} is REMOVED; any write to
+    // the old structure is denied by the catch-all match /{allPaths=**}.
+    // =========================================================================
+    match /voice_notes/dm/{conversationId}/{fileName} {
+      allow read:  if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants;
+      allow write: if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants
+                   && isAudio()
+                   && maxSize(25);
     }
 
     // =========================================================================
-    // DM ATTACHMENTS (images and files sent in direct messages)
-    // Path: dm_images/{uid}_{timestamp}.{ext}
+    // GROUP VOICE NOTES
+    // Path: voice_notes/group/{groupId}/{uid}_{timestamp}.{ext}
+    // =========================================================================
+    // Written by VoiceMessageService.uploadVoiceNote() with pathType=group.
+    // S-04 fix: scoped to group members via firestore.get() memberIds check.
+    // =========================================================================
+    match /voice_notes/group/{groupId}/{fileName} {
+      allow read:  if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/groups/$(groupId)).data.memberIds;
+      allow write: if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/groups/$(groupId)).data.memberIds
+                   && isAudio()
+                   && maxSize(25);
+    }
+
+    // =========================================================================
+    // DM IMAGE ATTACHMENTS
+    // Path: dm_images/{conversationId}/{uid}_{timestamp}.{ext}
     // =========================================================================
     // Written by dm_chat_screen._uploadMediaToStorage() with folder='dm_images'.
-    // The filename always starts with the sender UID.
+    // S-01 fix: conversationId is now a path segment — rule gates on
+    // conversations/{cid}.participants membership via firestore.get().
+    // Previously: dm_images/{file} — any auth user could read/write any DM
+    // image without being a participant in the conversation.
+    // The old flat path dm_images/{file} is REMOVED; writes to the old
+    // structure are denied by the catch-all match /{allPaths=**}.
     // =========================================================================
-    match /dm_images/{fileName} {
-      allow read:   if isAuth();
-      allow write:  if isAuth()
-                    && (isImage() || isDocument())
-                    && maxSize(20);
+    match /dm_images/{conversationId}/{fileName} {
+      allow read:  if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants;
+      allow write: if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants
+                   && (isImage() || isDocument())
+                   && maxSize(20);
     }
 
     // =========================================================================
     // DM DOCUMENT ATTACHMENTS
-    // Path: dm_documents/{uid}_{timestamp}.{ext}
+    // Path: dm_documents/{conversationId}/{uid}_{timestamp}.{ext}
     // =========================================================================
     // Written by dm_chat_screen._uploadMediaToStorage() with folder='dm_documents'.
-    // Separate from dm_images to allow document-specific MIME type tracking.
+    // S-02 fix: same participant-scoping pattern as dm_images.
+    // The old flat path dm_documents/{file} is REMOVED; denied by catch-all.
     // =========================================================================
-    match /dm_documents/{fileName} {
-      allow read:   if isAuth();
-      allow write:  if isAuth()
-                    && (isImage() || isDocument())
-                    && maxSize(20);
+    match /dm_documents/{conversationId}/{fileName} {
+      allow read:  if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants;
+      allow write: if isAuth()
+                   && request.auth.uid in
+                       firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants
+                   && (isImage() || isDocument())
+                   && maxSize(20);
     }
 
     // =========================================================================
