@@ -12,7 +12,7 @@
  *   7. vertexGenerateContent         — §3A  Fine-tuned Vertex AI proxy (server-side SA key)
  *   8. syncPublicProfile             — Firestore onWrite on users/{userId} → mirrors public fields to users_public/{userId}
  *   9. setUserBorough               — HTTPS callable; resolves postcode server-side, enforces Cambridge gate, writes geo fields via Admin SDK
- *  10. deleteUserData               — GDPR deletion callable; Phase 1+2: simple query-deletes + subcollection sweeps + group membership
+ *  10. deleteUserData               — GDPR deletion callable; Phase 1+2+3: query-deletes, subcollection sweeps, group membership, anonymise (conversations + group_messages)
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -1176,6 +1176,12 @@ exports.setUserBorough = functions
         region: geo.region,
     };
 });
+// ── Sentinel constant ────────────────────────────────────────────────────────
+//
+// Written into the `message` field (and `content` if present) of any message
+// that is anonymised rather than deleted. Single definition here so it is
+// change-/localisation-safe in future.
+const DELETED_CONTENT_SENTINEL = "[deleted]";
 // ── Hardcoded policy defaults ───────────────────────────────────────────────
 // Applied when _config/gdpr_deletion_policy is absent or a field is missing.
 // "delete" is the conservative default — errs on the side of compliance.
@@ -1229,6 +1235,47 @@ async function paginatedDelete(query, dryRun) {
         cursor = snapshot.docs[snapshot.docs.length - 1];
     }
     return totalDeleted;
+}
+// ── Paginated-anonymise helper ─────────────────────────────────────────────
+//
+// Paginates through a query, applying a per-doc field update() to each match.
+// Uses the same cursor pattern as paginatedDelete for stable pagination.
+// The `updateFields` map is applied verbatim to every matched document.
+// In dryRun mode the pages are counted but no writes are issued.
+// Returns the total number of documents touched (or would-touch in dryRun).
+//
+// CONCURRENCY SAFETY: each call is a targeted update() on specific fields of
+// specific document IDs (not a collection-level overwrite). A concurrent write
+// from another client to the same document updates DIFFERENT fields, so there
+// is no clobber risk for the other participant's messages.
+async function paginatedAnonymise(query, updateFields, dryRun) {
+    let totalTouched = 0;
+    let cursor = null;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        let pagedQuery = query
+            .orderBy(admin.firestore.FieldPath.documentId())
+            .limit(PAGE_SIZE);
+        if (cursor !== null)
+            pagedQuery = pagedQuery.startAfter(cursor);
+        const snapshot = await pagedQuery.get();
+        if (snapshot.empty)
+            break;
+        totalTouched += snapshot.docs.length;
+        if (!dryRun) {
+            // Batch-update this page. Each update() touches only the listed fields.
+            // PAGE_SIZE=400 keeps us safely below the Firestore batch limit of 500.
+            const batch = db.batch();
+            for (const doc of snapshot.docs) {
+                batch.update(doc.ref, updateFields);
+            }
+            await batch.commit();
+        }
+        if (snapshot.docs.length < PAGE_SIZE)
+            break;
+        cursor = snapshot.docs[snapshot.docs.length - 1];
+    }
+    return totalTouched;
 }
 // ── Config-switch reader ────────────────────────────────────────────────────
 //
@@ -1339,11 +1386,49 @@ exports.deleteUserData = functions
     else {
         await runStep("community_wisdom", null, `policy.authored_content=${policy.authored_content} — Phase 5 will handle anonymise`);
     }
-    // 7. group_messages — field "senderId" (firebase_auth_service.dart:755)
-    //    Note: F-03 lock — group_messages is a cross-user collection.
-    //    Phase 1 uses simple query-delete by senderId.
-    //    Phase 3 will review the F-03 Admin SDK requirement for full sweep.
-    await runStep("group_messages", db.collection("group_messages").where("senderId", "==", uid));
+    // 7. group_messages — field "senderId" (firestore_service.dart:362)
+    //    F-03 lock: this is a cross-user collection; Admin SDK bypasses client rules.
+    //    Phase 3: gated by policy.authored_content switch (default = "delete").
+    //      "anonymise" → scrub identity fields in-place, preserve doc for group history
+    //      "delete"    → delete the doc entirely (paginated-delete, same as Phase 1)
+    //      "retain"    → skip entirely
+    //    Fields confirmed from firestore_service.dart:362–365:
+    //      senderId, senderName, senderAvatar, message
+    //    NOTE: senderPhotoUrl does NOT exist on group_messages — the field is senderAvatar.
+    await (async () => {
+        const key = "group_messages";
+        try {
+            const query = db.collection("group_messages").where("senderId", "==", uid);
+            if (policy.authored_content === "anonymise") {
+                const count = await paginatedAnonymise(query, {
+                    senderId: null,
+                    senderName: null,
+                    senderAvatar: null,
+                    message: DELETED_CONTENT_SENTINEL,
+                }, dryRun);
+                steps[key] = { status: "ok", count };
+                functions.logger.info(`[deleteUserData] ${key}: anonymised ${count} docs (dryRun=${dryRun})`);
+            }
+            else if (policy.authored_content === "delete") {
+                const count = await paginatedDelete(query, dryRun);
+                steps[key] = { status: "ok", count };
+                functions.logger.info(`[deleteUserData] ${key}: deleted ${count} docs (dryRun=${dryRun})`);
+            }
+            else {
+                // "retain"
+                steps[key] = {
+                    status: "skipped",
+                    count: 0,
+                };
+                functions.logger.info(`[deleteUserData] ${key}: skipped — policy.authored_content=${policy.authored_content}`);
+            }
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            steps[key] = { status: "error", count: 0, error: msg };
+            functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+        }
+    })();
     // 8. meetups — two passes for legacy field alias
     //    Pass A: field "createdBy" (spec-aligned) (firebase_auth_service.dart:775)
     await runStep("meetups_createdBy", db.collection("meetups").where("createdBy", "==", uid));
@@ -1593,6 +1678,133 @@ exports.deleteUserData = functions
             const msg = err instanceof Error ? err.message : String(err);
             steps[key] = { status: "error", count: 0, error: msg };
             functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+        }
+    })();
+    // ══════════════════════════════════════════════════════════════════
+    // PHASE 3 — ANONYMISE OPERATIONS
+    //
+    // PHASE 3 VERIFICATION LEDGER (read from source — do not change without re-reading):
+    //
+    //  conversations/{conversationId}
+    //    participants: string[]          (realtime_dm_service.dart:120)
+    //    participantNames: {uid: name}   (realtime_dm_service.dart:121)
+    //    participantAvatars: {uid: url}  (realtime_dm_service.dart:122)
+    //    → query: where('participants', arrayContains, uid)
+    //    → per-conversation: arrayRemove(uid) from participants
+    //    → if participants becomes empty: delete conversation doc
+    //    → if participants still has members: keep conversation doc
+    //
+    //  conversations/{conversationId}/messages/{messageId}
+    //    senderId: String                (realtime_dm_service.dart:213)
+    //    senderName: String              (realtime_dm_service.dart:214)
+    //    senderAvatar: String            (realtime_dm_service.dart:215)
+    //    message: String                 (realtime_dm_service.dart:216)
+    //    → anonymise only messages where senderId == uid (per-doc update())
+    //    → DO NOT TOUCH messages where senderId != uid
+    //
+    //  group_messages/{id}
+    //    senderId: String                (firestore_service.dart:362)
+    //    senderName: String              (firestore_service.dart:363)
+    //    senderAvatar: String            (firestore_service.dart:364)  ← NOT senderPhotoUrl
+    //    message: String                 (firestore_service.dart:365)
+    //    → handled above in Phase 1/3 group_messages step (switch-gated)
+    //
+    //  PHANTOM NOTE: dm_service.dart is entirely BrowserStorage — not Firestore.
+    //  Only realtime_dm_service.dart writes conversations to Firestore.
+    // ══════════════════════════════════════════════════════════════════
+    // ── Conversations: anonymise leaver's messages + arrayRemove from participants ──
+    //
+    // For each conversation the leaver is in:
+    //   1. Query conversations/{id}/messages where senderId == uid
+    //      → per-doc update(): senderId=null, senderName=null, senderAvatar=null,
+    //        message=DELETED_CONTENT_SENTINEL
+    //   2. arrayRemove(uid) from conversations/{id}.participants
+    //   3. Re-read the doc. If participants is now empty → delete the conversation.
+    //      If one or more participants remain → keep it (other user's history survives).
+    //
+    // The leaver's messages are scrubbed but their identity cannot be inferred from
+    // the remaining doc. The other participant's messages are NOT touched.
+    //
+    // Two sub-steps reported:
+    //   conversations_messages  — count of message docs anonymised
+    //   conversations_docs      — count of conversation docs deleted (empty) or
+    //                             updated (non-empty; counted as 1 per conversation)
+    await (async () => {
+        var _a, _b, _c;
+        const msgKey = "conversations_messages";
+        const convKey = "conversations_docs";
+        try {
+            let totalMsgsAnonymised = 0;
+            let totalConvsDeleted = 0;
+            let totalConvsUpdated = 0;
+            // Page through conversations where uid is a participant
+            let convCursor = null;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                let convQuery = db
+                    .collection("conversations")
+                    .where("participants", "array-contains", uid)
+                    .orderBy(admin.firestore.FieldPath.documentId())
+                    .limit(PAGE_SIZE);
+                if (convCursor !== null)
+                    convQuery = convQuery.startAfter(convCursor);
+                const convSnap = await convQuery.get();
+                if (convSnap.empty)
+                    break;
+                for (const convDoc of convSnap.docs) {
+                    // ── Step A: anonymise this user's messages in the subcollection ──
+                    const msgsAnonymised = await paginatedAnonymise(convDoc.ref.collection("messages").where("senderId", "==", uid), {
+                        senderId: null,
+                        senderName: null,
+                        senderAvatar: null,
+                        message: DELETED_CONTENT_SENTINEL,
+                    }, dryRun);
+                    totalMsgsAnonymised += msgsAnonymised;
+                    // ── Step B: remove uid from participants ──
+                    if (!dryRun) {
+                        await convDoc.ref.update({
+                            participants: admin.firestore.FieldValue.arrayRemove(uid),
+                        });
+                        // Re-read after the update to check remaining participants
+                        const refreshed = await convDoc.ref.get();
+                        const remaining = (_b = (_a = refreshed.data()) === null || _a === void 0 ? void 0 : _a["participants"]) !== null && _b !== void 0 ? _b : [];
+                        if (remaining.length === 0) {
+                            // Nobody left — delete the conversation doc
+                            await convDoc.ref.delete();
+                            totalConvsDeleted++;
+                        }
+                        else {
+                            // One or more participants remain — conversation survives
+                            totalConvsUpdated++;
+                        }
+                    }
+                    else {
+                        // In dryRun mode: check what WOULD happen without writing
+                        const currentParticipants = (_c = convDoc.data()["participants"]) !== null && _c !== void 0 ? _c : [];
+                        const wouldRemain = currentParticipants.filter((p) => p !== uid);
+                        if (wouldRemain.length === 0) {
+                            totalConvsDeleted++;
+                        }
+                        else {
+                            totalConvsUpdated++;
+                        }
+                    }
+                }
+                if (convSnap.docs.length < PAGE_SIZE)
+                    break;
+                convCursor = convSnap.docs[convSnap.docs.length - 1];
+            }
+            steps[msgKey] = { status: "ok", count: totalMsgsAnonymised };
+            steps[convKey] = { status: "ok", count: totalConvsDeleted + totalConvsUpdated };
+            functions.logger.info(`[deleteUserData] conversations: anonymised ${totalMsgsAnonymised} messages, ` +
+                `deleted ${totalConvsDeleted} conv docs (empty), ` +
+                `retained ${totalConvsUpdated} conv docs (dryRun=${dryRun})`);
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            steps[msgKey] = { status: "error", count: 0, error: msg };
+            steps[convKey] = { status: "error", count: 0, error: msg };
+            functions.logger.error(`[deleteUserData] conversations: ERROR — ${msg}`);
         }
     })();
     // ══════════════════════════════════════════════════════════════════
