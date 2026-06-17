@@ -14,61 +14,122 @@ import 'borough_scope_guard.dart';
 
 /// A comment on an announcement.
 class AnnouncementComment {
+  /// Firestore document ID (auto-generated). Empty string until persisted.
   final String id;
+
+  // ── Identity (F-11: authorId added for impersonation fix) ──────────────
+  final String authorId;        // uid of commenter — enforced by Firestore rule
   final String authorName;
   final String? authorPhotoUrl;
+
+  // ── Content ─────────────────────────────────────────────────────────────
   final String content;
   final DateTime createdAt;
+
+  // ── Likes — DEVICE-LOCAL only, not persisted to Firestore ───────────────
   int likes;
   bool isLiked;
 
-  /// When non-null this comment is a reply; value is the author being replied to.
-  final String? replyToName;
+  // ── Reply threading ──────────────────────────────────────────────────────
+  final bool isReply;           // true when this comment is a reply
+  final String? replyToId;      // Firestore doc ID of parent comment
+  final String? replyToName;    // display name of parent comment author
+
+  // ── Subcollection location metadata ─────────────────────────────────────
+  final String boroughId;       // borough of the parent announcement
+  final String announcementId;  // parent announcement doc ID
 
   AnnouncementComment({
     required this.id,
+    required this.authorId,
     required this.authorName,
     this.authorPhotoUrl,
     required this.content,
     required this.createdAt,
     this.likes = 0,
     this.isLiked = false,
+    this.isReply = false,
+    this.replyToId,
     this.replyToName,
+    required this.boroughId,
+    required this.announcementId,
   });
 
+  /// JSON for BrowserStorage cache (device-local; includes device-local fields).
   Map<String, dynamic> toJson() => {
         'id': id,
+        'authorId': authorId,
         'authorName': authorName,
         'authorPhotoUrl': authorPhotoUrl,
         'content': content,
         'createdAt': createdAt.toIso8601String(),
         'likes': likes,
         'isLiked': isLiked,
+        'isReply': isReply,
+        if (replyToId != null) 'replyToId': replyToId,
         if (replyToName != null) 'replyToName': replyToName,
+        'boroughId': boroughId,
+        'announcementId': announcementId,
       };
 
-  /// Firestore map — same as JSON but avoids redundant isLiked (device-local).
+  /// Firestore map written to the subcollection doc on create.
+  /// Omits device-local fields (likes, isLiked).
+  /// createdAt uses FieldValue.serverTimestamp() — handled at call-site.
   Map<String, dynamic> toFirestoreMap() => {
-        'id': id,
+        'authorId': authorId,
         'authorName': authorName,
         'authorPhotoUrl': authorPhotoUrl,
         'content': content,
-        'createdAt': createdAt.toIso8601String(),
-        'likes': likes,
+        // createdAt is FieldValue.serverTimestamp() — added at call-site
+        'isReply': isReply,
+        if (replyToId != null) 'replyToId': replyToId,
         if (replyToName != null) 'replyToName': replyToName,
+        'boroughId': boroughId,
+        'announcementId': announcementId,
       };
 
   factory AnnouncementComment.fromJson(Map<String, dynamic> j) =>
       AnnouncementComment(
-        id: j['id'] as String,
-        authorName: j['authorName'] as String,
+        id: j['id'] as String? ?? '',
+        authorId: j['authorId'] as String? ?? '',
+        authorName: j['authorName'] as String? ?? 'Unknown',
         authorPhotoUrl: j['authorPhotoUrl'] as String?,
-        content: j['content'] as String,
-        createdAt: DateTime.parse(j['createdAt'] as String),
+        content: j['content'] as String? ?? '',
+        createdAt: DateTime.tryParse(j['createdAt'] as String? ?? '') ??
+            DateTime.now(),
         likes: j['likes'] as int? ?? 0,
         isLiked: j['isLiked'] as bool? ?? false,
+        isReply: j['isReply'] as bool? ?? false,
+        replyToId: j['replyToId'] as String?,
         replyToName: j['replyToName'] as String?,
+        boroughId: j['boroughId'] as String? ?? '',
+        announcementId: j['announcementId'] as String? ?? '',
       );
+
+  /// Reconstruct from a Firestore subcollection document snapshot.
+  factory AnnouncementComment.fromFirestore(
+      Map<String, dynamic> data, String docId) {
+    DateTime dt;
+    final raw = data['createdAt'];
+    if (raw is Timestamp) {
+      dt = raw.toDate();
+    } else {
+      dt = DateTime.now();
+    }
+    return AnnouncementComment(
+      id: docId,
+      authorId: data['authorId'] as String? ?? '',
+      authorName: data['authorName'] as String? ?? 'Unknown',
+      authorPhotoUrl: data['authorPhotoUrl'] as String?,
+      content: data['content'] as String? ?? '',
+      createdAt: dt,
+      isReply: data['isReply'] as bool? ?? false,
+      replyToId: data['replyToId'] as String?,
+      replyToName: data['replyToName'] as String?,
+      boroughId: data['boroughId'] as String? ?? '',
+      announcementId: data['announcementId'] as String? ?? '',
+    );
+  }
 
   String get timeAgo {
     final diff = DateTime.now().difference(createdAt);
@@ -96,12 +157,12 @@ class Announcement {
   final DateTime createdAt;
   int likes;
   List<String> likedBy;        // concurrent-safe via arrayUnion/arrayRemove
-  int comments;
+  int commentCount;            // F-11: renamed from 'comments'; driven by subcollection counter
   bool isLiked;                // device-local derived field (not stored in Firestore)
   bool isPinned;
   bool isBookmarked;           // device-local (not synced to Firestore)
   int shares;
-  List<AnnouncementComment> commentsList;
+  // commentsList REMOVED (F-11): comments now live in borough_announcements/{id}/comments subcollection
 
   /// True when posted by a Huddl Partner business account.
   /// Drives the Partner badge display on the post card.
@@ -130,19 +191,17 @@ class Announcement {
     required this.createdAt,
     this.likes = 0,
     List<String>? likedBy,
-    this.comments = 0,
+    this.commentCount = 0,
     this.isLiked = false,
     this.isPinned = false,
     this.isBookmarked = false,
     this.shares = 0,
-    List<AnnouncementComment>? commentsList,
     this.isPartnerPost = false,
     this.businessName,
     this.linkedListingId,
     this.linkedListingName,
   })  : boroughId = boroughId ?? borough,
-        likedBy = likedBy ?? [],
-        commentsList = commentsList ?? [];
+        likedBy = likedBy ?? [];
 
   // ── BrowserStorage serialisation ────────────────────────────────────────
   Map<String, dynamic> toJson() => {
@@ -156,12 +215,11 @@ class Announcement {
         'createdAt': createdAt.toIso8601String(),
         'likes': likes,
         'likedBy': likedBy,
-        'comments': comments,
+        'commentCount': commentCount,
         'isLiked': isLiked,
         'isPinned': isPinned,
         'isBookmarked': isBookmarked,
         'shares': shares,
-        'commentsList': commentsList.map((c) => c.toJson()).toList(),
         'isPartnerPost': isPartnerPost,
         if (businessName != null) 'businessName': businessName,
         if (linkedListingId != null) 'linkedListingId': linkedListingId,
@@ -179,16 +237,11 @@ class Announcement {
         createdAt: DateTime.parse(j['createdAt'] as String),
         likes: j['likes'] as int? ?? 0,
         likedBy: (j['likedBy'] as List<dynamic>?)?.cast<String>() ?? [],
-        comments: j['comments'] as int? ?? 0,
+        commentCount: j['commentCount'] as int? ?? j['comments'] as int? ?? 0,
         isLiked: j['isLiked'] as bool? ?? false,
         isPinned: j['isPinned'] as bool? ?? false,
         isBookmarked: j['isBookmarked'] as bool? ?? false,
         shares: j['shares'] as int? ?? 0,
-        commentsList: (j['commentsList'] as List<dynamic>?)
-                ?.map((e) =>
-                    AnnouncementComment.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [],
         isPartnerPost: j['isPartnerPost'] as bool? ?? false,
         businessName: j['businessName'] as String?,
         linkedListingId: j['linkedListingId'] as String?,
@@ -208,12 +261,10 @@ class Announcement {
         'createdAt': FieldValue.serverTimestamp(),
         'likes': likes,
         'likedBy': likedBy,
-        'comments': comments,
+        'commentCount': commentCount,
         'isPinned': isPinned,
         'isBookmarked': isBookmarked,
         'shares': shares,
-        'commentsList':
-            commentsList.map((c) => c.toFirestoreMap()).toList(),
         'isPartnerPost': isPartnerPost,
         if (businessName != null) 'businessName': businessName,
         if (linkedListingId != null) 'linkedListingId': linkedListingId,
@@ -247,17 +298,14 @@ class Announcement {
       createdAt: dt,
       likes: data['likes'] as int? ?? 0,
       likedBy: likedByList,
-      comments: data['comments'] as int? ?? 0,
+      // F-11: read commentCount (new field); fall back to old 'comments' field for
+      // any announcement docs written before the migration.
+      commentCount: data['commentCount'] as int? ?? data['comments'] as int? ?? 0,
       // isLiked is derived locally from likedBy + currentUid
       isLiked: currentUid != null && likedByList.contains(currentUid),
       isPinned: data['isPinned'] as bool? ?? false,
       isBookmarked: data['isBookmarked'] as bool? ?? false,
       shares: data['shares'] as int? ?? 0,
-      commentsList: (data['commentsList'] as List<dynamic>?)
-              ?.map((e) =>
-                  AnnouncementComment.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
       isPartnerPost: data['isPartnerPost'] as bool? ?? false,
       businessName: data['businessName'] as String?,
       linkedListingId: data['linkedListingId'] as String?,
@@ -296,7 +344,8 @@ class AnnouncementService {
   AnnouncementService._internal();
 
   // ── Storage key — v3 kept for cache compat ─────────────────────────────
-  static const String _storageKey = 'borough_announcements_v3';
+  // F-11: bumped _v3 → _v4 (commentsList removed from cached shape)
+  static const String _storageKey = 'borough_announcements_v4';
 
   // ── Firestore collection name ───────────────────────────────────────────
   static const String _collection = 'borough_announcements';
@@ -589,82 +638,155 @@ class AnnouncementService {
     } catch (_) {}
   }
 
+  /// Stream of comments for a given announcement, ordered by createdAt ascending.
+  /// Consumers: _CommentsSheet (home_screen.dart).
+  Stream<List<AnnouncementComment>> streamComments(String announcementId) {
+    return _firestore
+        .collection(_collection)
+        .doc(announcementId)
+        .collection('comments')
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) =>
+                AnnouncementComment.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
   /// Add a top-level comment to an announcement.
+  /// F-11: writes to borough_announcements/{aid}/comments/ subcollection.
+  /// authorId is taken from FirebaseAuth — not a parameter (prevents impersonation).
   Future<AnnouncementComment> addComment(
       String announcementId, String content) async {
     final idx = _announcements.indexWhere((a) => a.id == announcementId);
     if (idx == -1) throw Exception('Announcement not found');
 
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final borough = _announcements[idx].boroughId;
+
+    // Build the optimistic local comment (id placeholder until Firestore assigns one)
     final comment = AnnouncementComment(
-      id: 'cmt_${DateTime.now().millisecondsSinceEpoch}',
+      id: '',   // will be replaced with Firestore auto-ID after write
+      authorId: uid,
       authorName: _onboarding.name ?? 'You',
       authorPhotoUrl: _onboarding.profilePhotoObjectUrl,
       content: content,
       createdAt: DateTime.now(),
+      boroughId: borough,
+      announcementId: announcementId,
     );
 
-    // Optimistic local update
-    _announcements[idx].commentsList.add(comment);
-    _announcements[idx].comments = _announcements[idx].commentsList.length;
-    _streamController.add(boroughAnnouncements);
-    await _saveToStorageCache();
-
-    // Firestore: arrayUnion the new comment map onto the doc
+    // Firestore: write to subcollection + increment commentCount on parent
     try {
+      final colRef = _firestore
+          .collection(_collection)
+          .doc(announcementId)
+          .collection('comments');
+
+      final docData = comment.toFirestoreMap()
+        ..['createdAt'] = FieldValue.serverTimestamp();
+
+      final docRef = await colRef.add(docData);
+
+      // Increment parent commentCount
       await _firestore.collection(_collection).doc(announcementId).update({
-        'commentsList': FieldValue.arrayUnion([comment.toFirestoreMap()]),
-        'comments': _announcements[idx].comments,
+        'commentCount': FieldValue.increment(1),
       });
+
+      // Return comment with the real Firestore doc ID
+      final persisted = AnnouncementComment(
+        id: docRef.id,
+        authorId: comment.authorId,
+        authorName: comment.authorName,
+        authorPhotoUrl: comment.authorPhotoUrl,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        boroughId: comment.boroughId,
+        announcementId: comment.announcementId,
+      );
+
+      // Update local commentCount optimistically
+      _announcements[idx].commentCount++;
+      _streamController.add(boroughAnnouncements);
+      await _saveToStorageCache();
+
+      return persisted;
     } catch (e) {
       if (kDebugMode) {
-        if (kDebugMode) {
-          debugPrint('AnnouncementService addComment Firestore error: $e');
-        }
+        debugPrint('AnnouncementService addComment error: $e');
       }
+      rethrow;
     }
-
-    return comment;
   }
 
-  /// Add a reply to a comment, tagged with [replyToName].
+  /// Add a reply to a comment.
+  /// F-11: writes to the subcollection with isReply: true and replyToId.
   Future<AnnouncementComment> addReply({
     required String announcementId,
+    required String replyToId,
     required String replyToName,
     required String content,
   }) async {
     final idx = _announcements.indexWhere((a) => a.id == announcementId);
     if (idx == -1) throw Exception('Announcement not found');
 
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final borough = _announcements[idx].boroughId;
+
     final reply = AnnouncementComment(
-      id: 'rpl_${DateTime.now().millisecondsSinceEpoch}',
+      id: '',
+      authorId: uid,
       authorName: _onboarding.name ?? 'You',
       authorPhotoUrl: _onboarding.profilePhotoObjectUrl,
       content: content,
       createdAt: DateTime.now(),
+      isReply: true,
+      replyToId: replyToId,
       replyToName: replyToName,
+      boroughId: borough,
+      announcementId: announcementId,
     );
 
-    // Optimistic local update
-    _announcements[idx].commentsList.add(reply);
-    _announcements[idx].comments = _announcements[idx].commentsList.length;
-    _streamController.add(boroughAnnouncements);
-    await _saveToStorageCache();
-
-    // Firestore: arrayUnion
     try {
+      final colRef = _firestore
+          .collection(_collection)
+          .doc(announcementId)
+          .collection('comments');
+
+      final docData = reply.toFirestoreMap()
+        ..['createdAt'] = FieldValue.serverTimestamp();
+
+      final docRef = await colRef.add(docData);
+
       await _firestore.collection(_collection).doc(announcementId).update({
-        'commentsList': FieldValue.arrayUnion([reply.toFirestoreMap()]),
-        'comments': _announcements[idx].comments,
+        'commentCount': FieldValue.increment(1),
       });
+
+      final persisted = AnnouncementComment(
+        id: docRef.id,
+        authorId: reply.authorId,
+        authorName: reply.authorName,
+        authorPhotoUrl: reply.authorPhotoUrl,
+        content: reply.content,
+        createdAt: reply.createdAt,
+        isReply: true,
+        replyToId: replyToId,
+        replyToName: replyToName,
+        boroughId: reply.boroughId,
+        announcementId: reply.announcementId,
+      );
+
+      _announcements[idx].commentCount++;
+      _streamController.add(boroughAnnouncements);
+      await _saveToStorageCache();
+
+      return persisted;
     } catch (e) {
       if (kDebugMode) {
-        if (kDebugMode) {
-          debugPrint('AnnouncementService addReply Firestore error: $e');
-        }
+        debugPrint('AnnouncementService addReply error: $e');
       }
+      rethrow;
     }
-
-    return reply;
   }
 
   /// Increment share count.

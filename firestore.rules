@@ -609,18 +609,42 @@ service cloud.firestore {
         && request.resource.data.authorId == request.auth.uid;
 
       // The author may update their own post (edits, likes, comments).
-      // Any auth user may update reaction/like counters only.
+      // Any auth user may update reaction/like counters and commentCount only.
+      // F-11: removed 'commentsList' (comments now in subcollection);
+      //        added 'commentCount' so the increment from addComment() is permitted.
       allow update: if isAuth() && (
         resource.data.authorId == request.auth.uid
         ||
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['likedBy', 'likeCount', 'commentsList',
-                    'commentCount', 'updatedAt'])
+          .hasOnly(['likedBy', 'likeCount', 'commentCount', 'updatedAt'])
       );
 
       // Only the author may delete their own post.
       allow delete: if isAuth()
         && resource.data.authorId == request.auth.uid;
+
+      // ── F-11: Comments subcollection ─────────────────────────────────────
+      // Each comment is its own document with authorId enforced at write time.
+      // Impersonation fix: rule requires authorId == request.auth.uid on create.
+      match /comments/{commentId} {
+        // Any authenticated user can read comments.
+        allow read: if isAuth();
+
+        // Create: caller must set authorId to their own uid (kills impersonation).
+        allow create: if isAuth()
+          && request.resource.data.authorId == request.auth.uid;
+
+        // Update: comment author may edit; any auth user may update likes/likedBy only.
+        allow update: if isAuth() && (
+          resource.data.authorId == request.auth.uid
+          || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['likes', 'likedBy'])
+        );
+
+        // Delete: comment author only.
+        allow delete: if isAuth()
+          && resource.data.authorId == request.auth.uid;
+      }
     }
 
     // =========================================================================

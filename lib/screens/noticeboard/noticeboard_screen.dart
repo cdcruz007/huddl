@@ -716,7 +716,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
               _actionBtn(
                 icon: HuddlIcons.chat,
                 color: hc.textTertiary,
-                label: ann.comments > 0 ? ann.comments.toString() : 'Comment',
+                label: ann.commentCount > 0 ? ann.commentCount.toString() : 'Comment',
                 onTap: () {},
               ),
               const SizedBox(width: 16),

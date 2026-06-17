@@ -4796,8 +4796,8 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(width: 12),
                 _compactAction(
                   icon: HuddlIcons.chat,
-                  label: '${a.comments}',
-                  semantics: '${a.comments} comments',
+                  label: '${a.commentCount}',
+                  semantics: '${a.commentCount} comments',
                   onTap: () => _openComments(a),
                 ),
                 const SizedBox(width: 12),
@@ -5625,8 +5625,8 @@ class _NoticeboardRowState extends State<_NoticeboardRow> {
                       _ActionButton(
                         icon: HuddlIcons.chat,
                         color: hc.textTertiary,
-                        label: ann.comments > 0
-                            ? '${ann.comments}'
+                        label: ann.commentCount > 0
+                            ? '${ann.commentCount}'
                             : '',
                         onTap: widget.onComment,
                       ),
@@ -6211,15 +6211,19 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   final TextEditingController _ctrl = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _sending = false;
-  late List<AnnouncementComment> _comments;
 
-  /// When non-null the input bar is in "reply" mode for this author name.
-  String? _replyingTo;
+  // F-11: optimistic-add list for snappiness; stream deduplicates on arrival.
+  final List<AnnouncementComment> _optimistic = [];
+
+  /// When non-null the input bar is in "reply" mode.
+  String? _replyingTo;     // display name of comment being replied to
+  String? _replyingToId;  // Firestore doc ID of comment being replied to
 
   @override
   void initState() {
     super.initState();
-    _comments = List.from(widget.announcement.commentsList);
+    // No pre-load from announcement.commentsList — F-11: comments are
+    // now a live subcollection stream, not an embedded array.
   }
 
   @override
@@ -6229,11 +6233,13 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     super.dispose();
   }
 
-  /// Begin replying to [authorName]: pre-fills @mention and focuses input.
-  void _startReply(String authorName) {
+  /// Begin replying to [authorName] / [commentId].
+  /// F-11: commentId is the Firestore doc ID — stored as replyToId on the reply.
+  void _startReply(String authorName, String commentId) {
     HuddlAnimations.selectionClick();
     setState(() {
       _replyingTo = authorName;
+      _replyingToId = commentId;
       _ctrl.text = '@$authorName ';
       _ctrl.selection =
           TextSelection.collapsed(offset: _ctrl.text.length);
@@ -6244,6 +6250,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   void _cancelReply() {
     setState(() {
       _replyingTo = null;
+      _replyingToId = null;
       _ctrl.clear();
     });
     _focusNode.unfocus();
@@ -6254,31 +6261,49 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     if (text.isEmpty) return;
     setState(() => _sending = true);
 
-    final AnnouncementComment result;
-    if (_replyingTo != null) {
-      // Strip the leading @mention from the persisted content
-      // so we don't double-render it (the UI already shows the @mention pill).
-      final strippedText =
-          text.startsWith('@$_replyingTo ') && text.length > '@$_replyingTo '.length
-              ? text.substring('@$_replyingTo '.length).trim()
-              : text;
-      result = await widget.service.addReply(
-        announcementId: widget.announcement.id,
-        replyToName: _replyingTo!,
-        content: strippedText,
-      );
-    } else {
-      result = await widget.service
-          .addComment(widget.announcement.id, text);
-    }
+    try {
+      final AnnouncementComment result;
+      if (_replyingTo != null && _replyingToId != null) {
+        // Strip the leading @mention from the persisted content
+        // so we don't double-render it (the UI already shows the @mention pill).
+        final strippedText =
+            text.startsWith('@$_replyingTo ') &&
+                    text.length > '@$_replyingTo '.length
+                ? text.substring('@$_replyingTo '.length).trim()
+                : text;
+        result = await widget.service.addReply(
+          announcementId: widget.announcement.id,
+          replyToId: _replyingToId!,
+          replyToName: _replyingTo!,
+          content: strippedText,
+        );
+      } else {
+        result = await widget.service
+            .addComment(widget.announcement.id, text);
+      }
 
-    _ctrl.clear();
-    setState(() {
-      _comments.add(result);
-      _replyingTo = null;
-      _sending = false;
-    });
-    widget.onUpdate();
+      _ctrl.clear();
+      setState(() {
+        // Optimistic add — stream deduplicates when it emits the persisted doc
+        _optimistic.add(result);
+        _replyingTo = null;
+        _replyingToId = null;
+        _sending = false;
+      });
+      widget.onUpdate();
+    } catch (e) {
+      setState(() => _sending = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to post comment. Please try again.',
+                style: HuddlText.body()),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -6309,7 +6334,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '(${_comments.length})',
+                    // F-11: count from the announcement doc (commentCount field)
+                    '(${widget.announcement.commentCount})',
                     style: HuddlText.body(),
                   ),
                 ],
@@ -6317,25 +6343,44 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ),
             const SizedBox(height: 8),
             Divider(height: 1, color: hc.divider),
-            // ── Comment list ────────────────────────────────────────────────
+            // ── Comment list (F-11: live subcollection stream) ─────────────
             Flexible(
-              child: _comments.isEmpty
-                  ? const HuddlEmptyState(
+              child: StreamBuilder<List<AnnouncementComment>>(
+                stream: widget.service
+                    .streamComments(widget.announcement.id),
+                builder: (context, snapshot) {
+                  // Merge live stream with optimistic adds.
+                  // Deduplicate by id: optimistic entries (id=='') never
+                  // match persisted docs, so they show until the stream
+                  // emits the real doc, at which point we drop the stub.
+                  final live = snapshot.data ?? [];
+                  final liveIds = live.map((c) => c.id).toSet();
+                  final merged = [
+                    ...live,
+                    ..._optimistic.where((c) =>
+                        c.id.isEmpty || !liveIds.contains(c.id)),
+                  ];
+
+                  if (merged.isEmpty) {
+                    return const HuddlEmptyState(
                       mood: HuddlMood.waving,
-                      illustrationAsset: 'assets/illustrations/chat_high_five.webp',
+                      illustrationAsset:
+                          'assets/illustrations/chat_high_five.webp',
                       title: 'No comments yet',
                       subtitle: 'Be the first to comment!',
                       characterSize: 100,
-                    )
-                  : ListView.separated(
+                    );
+                  }
+
+                  return ListView.separated(
                       padding: const EdgeInsets.all(16),
                       shrinkWrap: true,
-                      itemCount: _comments.length,
+                      itemCount: merged.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(height: 16),
                       itemBuilder: (_, index) {
-                        final c = _comments[index];
-                        final isReply = c.replyToName != null;
+                        final c = merged[index];
+                        final isReply = c.isReply;
                         return Padding(
                           // Indent replies slightly
                           padding: EdgeInsets.only(left: isReply ? 20.0 : 0.0),
@@ -6359,6 +6404,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                 imageUrl: c.authorPhotoUrl,
                                 size: isReply ? 28 : 36,
                               ),
+
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -6378,7 +6424,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                       ],
                                     ),
                                     // @mention chip for replies
-                                    if (isReply) ...[
+                                    if (isReply && c.replyToName != null) ...[
                                       const SizedBox(height: 2),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -6442,13 +6488,13 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                           ),
                                         ),
                                         const SizedBox(width: 16),
-                                        // Reply — now fully wired
+                                        // Reply — passes commentId for replyToId (F-11)
                                         Semantics(
                                           label: 'Reply to ${c.authorName}',
                                           button: true,
                                           child: GestureDetector(
                                             onTap: () =>
-                                                _startReply(c.authorName),
+                                                _startReply(c.authorName, c.id),
                                             child: SizedBox(
                                               height: 40,
                                               child: Center(
@@ -6469,7 +6515,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           ),
                         );
                       },
-                    ),
+                  );
+                },
+              ),
             ),
             // ── "Replying to @name" banner ──────────────────────────────────
             if (_replyingTo != null)
