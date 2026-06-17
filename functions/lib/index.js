@@ -1861,6 +1861,12 @@ exports.deleteUserData = functions
     // ══════════════════════════════════════════════════════════════════
     // ── Conversations: anonymise leaver's messages + arrayRemove from participants ──
     //
+    // INVARIANT: conversations are NEVER switch-gated. Individual DM messages are
+    // ALWAYS anonymised (senderId/senderName/senderAvatar→null, message→sentinel),
+    // NEVER hard-deleted, regardless of authored_content. A DM is two-party:
+    // hard-deleting one side's messages leaves the OTHER participant a broken,
+    // contextless thread. Do not "fix" this to respect authored_content — it is intentional.
+    //
     // For each conversation the leaver is in:
     //   1. Query conversations/{id}/messages where senderId == uid
     //      → per-doc update(): senderId=null, senderName=null, senderAvatar=null,

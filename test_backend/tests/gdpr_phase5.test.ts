@@ -525,11 +525,12 @@ test(
     // Bystander's announcement: authorId NOT nulled
     const ann2 = await getDocData("borough_announcements", ANN_ID2);
     expect(ann2!["authorId"]).toBe(BYSTANDER_UID);
-    // Bystander's own comment: INTACT
+    // Bystander's own comment: INTACT — field-level proof (text NOT scrubbed)
     const bystCommentSnap = await db.collection("borough_announcements").doc(ANN_ID2)
       .collection("comments").doc("comment_byst").get();
     expect(bystCommentSnap.exists).toBe(true);
     expect(bystCommentSnap.data()!["authorId"]).toBe(BYSTANDER_UID);
+    expect(bystCommentSnap.data()!["text"]).toBe("their comment");  // content untouched
 
     // Bystander's report: untouched
     expect(await docExists("reports", "rep_byst")).toBe(true);
@@ -552,17 +553,22 @@ test(
       .collection("memberActivity").doc(BYSTANDER_UID).get();
     expect(bystMaSnap.exists).toBe(true);
 
-    // Bystander's message in shared conversation: INTACT and unmodified
+    // Bystander's message in shared conversation: INTACT — field-level proof
+    // (invariant: only integration_uid's messages were anonymised; bystander's are untouched)
     const bystMsg = await db.collection("conversations").doc(CONV_ID)
       .collection("messages").doc("msg_byst").get();
     expect(bystMsg.exists).toBe(true);
-    expect(bystMsg.data()!["senderId"]).toBe(BYSTANDER_UID);
-    expect(bystMsg.data()!["message"]).toBe("hey there");
+    expect(bystMsg.data()!["senderId"]).toBe(BYSTANDER_UID);   // identity NOT nulled
+    expect(bystMsg.data()!["senderName"]).toBe("Bob");          // name NOT nulled
+    expect(bystMsg.data()!["senderAvatar"]).toBe("http://b");   // avatar NOT nulled
+    expect(bystMsg.data()!["message"]).toBe("hey there");       // content NOT replaced
 
-    // Bystander's group_messages: untouched
+    // Bystander's group_messages: untouched — field-level proof
     const gmByst = await getDocData("group_messages", "gm_byst");
-    expect(gmByst!["senderId"]).toBe(BYSTANDER_UID);
-    expect(gmByst!["message"]).toBe("group msg bystander");
+    expect(gmByst!["senderId"]).toBe(BYSTANDER_UID);          // identity NOT nulled
+    expect(gmByst!["senderName"]).toBe("Bob");                 // name NOT nulled
+    expect(gmByst!["senderAvatar"]).toBe("http://b");          // avatar NOT nulled
+    expect(gmByst!["message"]).toBe("group msg bystander");   // content NOT replaced
 
     // Storage: bystander's files in SAME prefixes as integration user: INTACT
     expect(await fileExists(`profile_photos/${BYSTANDER_UID}/photo.jpg`)).toBe(true);
