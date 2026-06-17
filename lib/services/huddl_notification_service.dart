@@ -77,9 +77,9 @@ class HuddlNotificationService {
     String? imageUrl,
   }) async {
     if (recipientId.isEmpty) return;
-    // Never notify yourself
     final me = _uid;
-    if (me != null && recipientId == me) return;
+    if (me == null) return;          // unauthenticated callers cannot write notifications (senderId would be null → rule denies)
+    if (me == recipientId) return;   // skip self-notifications
 
     try {
       await _db.collection('notifications').add({
