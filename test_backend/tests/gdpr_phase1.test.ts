@@ -25,7 +25,7 @@
  *     T-GDPR1-pagination      — >400 docs in subscriptions → all deleted across multiple batches
  *
  *   CONFIG:
- *     T-GDPR1-config-absent   — no _config doc → defaults applied (feedback:delete, authored_content:delete)
+ *     T-GDPR1-config-absent   — no _config doc → defaults applied (feedback:delete, authored_content:anonymise)
  *     T-GDPR1-config-present  — _config doc present → overrides applied
  *     T-GDPR1-config-authored-content-retain — policy.authored_content=retain → community_wisdom skipped
  *     T-GDPR1-config-feedback-retain         — policy.feedback=retain → feedback skipped
@@ -270,7 +270,14 @@ describe("Simple query-deletes", () => {
     expect(await countDocs("feedback", "user_uid", ALICE_UID)).toBe(0);
   });
 
-  test("T-GDPR1-community-wisdom: deletes community_wisdom by author_uid (default policy)", async () => {
+  test("T-GDPR1-community-wisdom: deletes community_wisdom by author_uid (explicit delete policy)", async () => {
+    // authored_content default is now "anonymise". Use explicit override to test the delete path.
+    await db.collection("_config").doc("gdpr_deletion_policy").set({
+      authored_content: "delete",
+      reports:          "retain",
+      feedback:         "delete",
+      dry_run_default:  false,
+    });
     await seed("community_wisdom", "author_uid", ALICE_UID, 3);
     const result = await deleteUserDataHandler({}, authCtx(ALICE_UID));
     expect(result.steps.community_wisdom.status).toBe("ok");
@@ -339,6 +346,14 @@ describe("Scoping", () => {
     await seed("meetups", "organiserId", BOB_UID,   1);
 
     // Run deletion for alice only.
+    // Use explicit authored_content=delete so community_wisdom is deleted in this scoping test.
+    // (Default is now "anonymise"; the scoping test is about scoping, not policy defaults.)
+    await db.collection("_config").doc("gdpr_deletion_policy").set({
+      authored_content: "delete",
+      reports:          "retain",
+      feedback:         "delete",
+      dry_run_default:  false,
+    });
     await deleteUserDataHandler({}, authCtx(ALICE_UID));
 
     // Assert: alice's docs gone, bob's docs intact.
@@ -389,12 +404,12 @@ describe("Config switch", () => {
 
     const result = await deleteUserDataHandler({}, authCtx(ALICE_UID));
 
-    // Default: feedback=delete, authored_content=delete
+    // Default: feedback=delete, authored_content=anonymise
     expect(result.policy.feedback).toBe("delete");
-    expect(result.policy.authored_content).toBe("delete");
-    // Both collections should be deleted under defaults
+    expect(result.policy.authored_content).toBe("anonymise");
+    // feedback deleted; community_wisdom skipped (authored_content=anonymise, not delete)
     expect(result.steps.feedback.status).toBe("ok");
-    expect(result.steps.community_wisdom.status).toBe("ok");
+    expect(result.steps.community_wisdom.status).toBe("skipped");
   });
 
   test("T-GDPR1-config-present: _config doc present → overrides applied", async () => {

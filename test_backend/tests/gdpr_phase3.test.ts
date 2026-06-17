@@ -17,11 +17,14 @@
  *                                      participant) entirely untouched.
  *
  *   GROUP_MESSAGES (spec B.4 — behind authored_content switch):
- *     T-GDPR3-gm-anonymise           — default policy (anonymise): alice's group
- *                                      messages scrubbed; docs RETAINED;
+ *     T-GDPR3-gm-default-anonymise   — NO _config doc; default (anonymise) applies;
+ *                                      docs RETAINED, identity scrubbed. Regression
+ *                                      guard for the default-is-anonymise invariant.
+ *     T-GDPR3-gm-anonymise           — explicit anonymise override (_config doc set):
+ *                                      docs RETAINED, identity scrubbed;
  *                                      bob's group messages UNTOUCHED (field-by-field).
- *     T-GDPR3-gm-delete              — policy.authored_content=delete: alice's
- *                                      group messages DELETED; bob's untouched.
+ *     T-GDPR3-gm-delete              — EXPLICIT delete override (_config doc set):
+ *                                      alice's group messages DELETED; bob's untouched.
  *     T-GDPR3-gm-retain              — policy.authored_content=retain: alice's
  *                                      group messages skipped entirely.
  *
@@ -33,7 +36,7 @@
  *     T-GDPR3-idempotency            — second run on already-anonymised data
  *                                      produces no error steps, success=true.
  *
- * Total: 9 tests
+ * Total: 10 tests
  *
  * Schema confirmed from source:
  *   conversations/{id}
@@ -403,10 +406,9 @@ describe("Conversations and messages", () => {
 
 describe("group_messages", () => {
 
-  test("T-GDPR3-gm-anonymise: default policy → alice's messages scrubbed+retained; bob's UNCHANGED", async () => {
-    // Default policy: authored_content = "delete" from DEFAULT_GDPR_POLICY.
-    // Per spec B.4 Phase 3: we want to test "anonymise".
-    // Override via _config/gdpr_deletion_policy.
+  test("T-GDPR3-gm-anonymise: explicit anonymise override → alice's messages scrubbed+retained; bob's UNCHANGED", async () => {
+    // Explicit override via _config doc. Default is also "anonymise", but this
+    // test validates the path end-to-end with the override mechanism in place.
     await db.collection("_config").doc("gdpr_deletion_policy").set({
       authored_content: "anonymise",
       reports: "retain",
@@ -457,9 +459,15 @@ describe("group_messages", () => {
     }
   });
 
-  test("T-GDPR3-gm-delete: policy.authored_content=delete → alice's docs DELETED; bob's untouched", async () => {
-    // authored_content=delete is already the DEFAULT_GDPR_POLICY default.
-    // No _config doc needed — defaults apply.
+  test("T-GDPR3-gm-delete: EXPLICIT delete override → alice's docs DELETED; bob's untouched", async () => {
+    // Default is now "anonymise". Must explicitly set delete via _config override.
+    await db.collection("_config").doc("gdpr_deletion_policy").set({
+      authored_content: "delete",
+      reports:          "retain",
+      feedback:         "delete",
+      invitations_sent: "retain",
+      dry_run_default:  false,
+    });
 
     await seedGroupMessage("gm_del_alice_1", ALICE_UID, "alice delete msg 1");
     await seedGroupMessage("gm_del_alice_2", ALICE_UID, "alice delete msg 2");
@@ -479,6 +487,43 @@ describe("group_messages", () => {
     expect(bobData).not.toBeNull();
     expect(bobData!["senderId"]).toBe(BOB_UID);
     expect(bobData!["message"]).toBe("bob delete msg 1");
+  });
+
+  test("T-GDPR3-gm-default-anonymise: NO _config doc → default anonymise applies; docs retained, identity scrubbed", async () => {
+    // No _config doc written — clearAll() guarantees the collection is empty,
+    // so resolveGdprPolicy() falls back to DEFAULT_GDPR_POLICY.
+    // This is the regression guard: if authored_content default ever reverts to
+    // "delete", this test fails (docs would be missing instead of retained).
+
+    await seedGroupMessage("gm_def_alice_1", ALICE_UID, "default alice msg 1");
+    await seedGroupMessage("gm_def_alice_2", ALICE_UID, "default alice msg 2");
+    await seedGroupMessage("gm_def_bob_1",   BOB_UID,   "default bob msg 1");
+
+    const result = await deleteUserDataHandler({}, authCtx(ALICE_UID));
+
+    expect(result.steps.group_messages.status).toBe("ok");
+    expect(result.steps.group_messages.count).toBe(2); // 2 alice docs touched
+
+    // ── Alice's docs: RETAINED as documents, identity scrubbed ──
+    for (const [msgId, origText] of [
+      ["gm_def_alice_1", "default alice msg 1"],
+      ["gm_def_alice_2", "default alice msg 2"],
+    ]) {
+      const data = await readDoc(["group_messages", msgId]);
+      expect(data).not.toBeNull(); // doc still EXISTS — not deleted
+      expect(data!["senderId"]).toBeNull();
+      expect(data!["senderName"]).toBeNull();
+      expect(data!["senderAvatar"]).toBeNull();
+      expect(data!["message"]).toBe(DELETED_CONTENT_SENTINEL);
+      expect(data!["message"]).not.toBe(origText);
+    }
+
+    // ── Bob's doc: completely untouched ──
+    const bobData = await readDoc(["group_messages", "gm_def_bob_1"]);
+    expect(bobData).not.toBeNull();
+    expect(bobData!["senderId"]).toBe(BOB_UID);
+    expect(bobData!["senderName"]).toBe(`Name_${BOB_UID}`);
+    expect(bobData!["message"]).toBe("default bob msg 1");
   });
 
   test("T-GDPR3-gm-retain: policy.authored_content=retain → group_messages step skipped entirely", async () => {

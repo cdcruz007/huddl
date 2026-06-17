@@ -1184,9 +1184,10 @@ exports.setUserBorough = functions
 const DELETED_CONTENT_SENTINEL = "[deleted]";
 // ── Hardcoded policy defaults ───────────────────────────────────────────────
 // Applied when _config/gdpr_deletion_policy is absent or a field is missing.
-// "delete" is the conservative default — errs on the side of compliance.
+// authored_content default = "anonymise" — group messages scrubbed-but-retained;
+// flip to "delete" only on solicitor sign-off.
 const DEFAULT_GDPR_POLICY = {
-    authored_content: "delete",
+    authored_content: "anonymise",
     reports: "retain",
     feedback: "delete",
     invitations_sent: "retain", // default: retain sent invitations (legal hold potential)
@@ -1379,7 +1380,7 @@ exports.deleteUserData = functions
         await runStep("feedback", null, `policy.feedback=${policy.feedback} — not deleting`);
     }
     // 6. community_wisdom — field "author_uid" (ai_knowledge_flywheel_service.dart:184)
-    //    Gated by policy.authored_content switch. Default = "delete".
+    //    Gated by policy.authored_content switch. Default = "anonymise".
     if (policy.authored_content === "delete") {
         await runStep("community_wisdom", db.collection("community_wisdom").where("author_uid", "==", uid));
     }
@@ -1388,7 +1389,7 @@ exports.deleteUserData = functions
     }
     // 7. group_messages — field "senderId" (firestore_service.dart:362)
     //    F-03 lock: this is a cross-user collection; Admin SDK bypasses client rules.
-    //    Phase 3: gated by policy.authored_content switch (default = "delete").
+    //    Phase 3: gated by policy.authored_content switch (default = "anonymise").
     //      "anonymise" → scrub identity fields in-place, preserve doc for group history
     //      "delete"    → delete the doc entirely (paginated-delete, same as Phase 1)
     //      "retain"    → skip entirely
