@@ -47,11 +47,27 @@ service firebase.storage {
           || request.resource.contentType == 'video/webm';  // webm recorded on web
     }
 
-    /// File is a document (pdf, Word, plain text).
+    /// File is a document.
+    /// Covers exactly the types MediaAttachService._getMimeType() emits for the
+    /// allowed extensions: pdf, doc/docx, xls/xlsx, ppt/pptx, txt, csv, zip, rar.
+    /// S-03 audit: dropped text/.* (too broad — would allow text/html, text/js);
+    /// replaced with explicit text/plain + text/csv only.
+    /// Added spreadsheet, presentation, zip/rar types that were missing.
+    /// application/octet-stream intentionally excluded: unknown extensions are
+    /// denied at the Storage rule level (picker is constrained to known exts).
     function isDocument() {
-      return request.resource.contentType.matches('application/pdf')
-          || request.resource.contentType.matches('application/.*word.*')
-          || request.resource.contentType.matches('text/.*');
+      return request.resource.contentType == 'application/pdf'
+          || request.resource.contentType.matches('application/.*msword.*')
+          || request.resource.contentType.matches('application/vnd[.]openxmlformats.*wordprocessingml.*')
+          || request.resource.contentType.matches('application/vnd[.]ms-excel.*')
+          || request.resource.contentType.matches('application/vnd[.]openxmlformats.*spreadsheetml.*')
+          || request.resource.contentType.matches('application/vnd[.]ms-powerpoint.*')
+          || request.resource.contentType.matches('application/vnd[.]openxmlformats.*presentationml.*')
+          || request.resource.contentType == 'text/plain'
+          || request.resource.contentType == 'text/csv'
+          || request.resource.contentType == 'application/zip'
+          || request.resource.contentType.matches('application/x-zip.*')
+          || request.resource.contentType.matches('application/x-rar.*');
     }
 
     /// Max file size in bytes.
@@ -143,13 +159,19 @@ service firebase.storage {
     // GROUP CHAT IMAGES
     // Path: group_images/{groupId}/{uid}_{timestamp}.jpg
     // =========================================================================
-    // Written by group_chat_screen image attachment upload.
-    // Any authenticated user may read (group membership enforced at Firestore
-    // message level; Storage URL is only distributed to participants).
+    // Written by group_chat_screen._uploadImageAttachment() and
+    // thread_reply_screen image upload.
+    // S-03 fix: scoped to group members via firestore.get() memberIds check.
+    // Previously: allow read/write if isAuth() — any auth user could read or
+    // write any group's images without being a member.
     // =========================================================================
     match /group_images/{groupId}/{fileName} {
-      allow read:   if isAuth();
+      allow read:   if isAuth()
+                    && request.auth.uid in
+                        firestore.get(/databases/(default)/documents/groups/$(groupId)).data.memberIds;
       allow write:  if isAuth()
+                    && request.auth.uid in
+                        firestore.get(/databases/(default)/documents/groups/$(groupId)).data.memberIds
                     && isImage()
                     && maxSize(10);
     }
@@ -158,11 +180,18 @@ service firebase.storage {
     // GROUP CHAT DOCUMENTS
     // Path: group_documents/{groupId}/{uid}_{timestamp}.{ext}
     // =========================================================================
-    // Written by group_chat_screen document attachment upload.
+    // Written by group_chat_screen._uploadDocumentAttachment().
+    // S-03 fix: scoped to group members via firestore.get() memberIds check.
+    // Previously: allow read/write if isAuth() — any auth user could read or
+    // write any group's documents without being a member.
     // =========================================================================
     match /group_documents/{groupId}/{fileName} {
-      allow read:   if isAuth();
+      allow read:   if isAuth()
+                    && request.auth.uid in
+                        firestore.get(/databases/(default)/documents/groups/$(groupId)).data.memberIds;
       allow write:  if isAuth()
+                    && request.auth.uid in
+                        firestore.get(/databases/(default)/documents/groups/$(groupId)).data.memberIds
                     && (isImage() || isDocument())
                     && maxSize(20);
     }
