@@ -224,6 +224,41 @@ service cloud.firestore {
       // Only the creator may delete their group.
       allow delete: if isAuth()
         && resource.data.creatorUid == request.auth.uid;
+
+      // -----------------------------------------------------------------------
+      // MEMBER ACTIVITY subcollection  (F-02 hardened)
+      // -----------------------------------------------------------------------
+      // groups/{groupId}/memberActivity/{memberUid}
+      //
+      // F-02: the previous rule was match /memberActivity/{docId} at top-level
+      //   — a root collection that does not exist. The actual subcollection at
+      //   groups/{groupId}/memberActivity/{uid} had NO rule, meaning all client
+      //   writes were silently denied by Firestore's default-deny.
+      //
+      //   Legitimate write paths (all write-own-doc only):
+      //     • create_group_screen: creator writes own activity doc at group create
+      //     • group_chat_screen._incrementMemberActivity: increments own messageCount
+      //     • invitation_service.joinPublicGroup: writes own joinedAt on first join
+      //
+      //   Legitimate read paths (cross-member reads required):
+      //     • group_details_screen: reads ALL members' activity ordered by messageCount
+      //       to auto-promote the most active member when a sole admin leaves
+      //     • manage_admins_screen: same query for sole-admin demotion flow
+      //
+      // Fix:
+      //   read  — any group member may read any memberActivity doc in their group
+      //   write — caller may only write the doc keyed to their own UID (docId ==
+      //           request.auth.uid) AND must be an existing group member
+      //
+      // isGroupMember() does a get() on groups/{groupId}.memberIds. The group doc
+      // always pre-exists before memberActivity is written (group is created first,
+      // member joins first). Fail-closed on non-member write is correct posture.
+      // -----------------------------------------------------------------------
+      match /memberActivity/{memberUid} {
+        allow read: if isGroupMember(groupId);
+        allow write: if isGroupMember(groupId)
+          && memberUid == request.auth.uid;
+      }
     }
 
     // =========================================================================
@@ -601,14 +636,6 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // MEMBER ACTIVITY (group engagement metrics)
-    // =========================================================================
-    match /memberActivity/{docId} {
-      allow read: if isAuth();
-      allow write: if isAuth(); // fine-grained enforced by groupId membership on client
-    }
-
-    // =========================================================================
     // USER RECOMMENDATIONS  (algorithmic suggestions)
     // =========================================================================
     match /userRecommendations/{userId} {
@@ -784,12 +811,50 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // PARTNER ANALYTICS  (existing — unchanged)
+    // PARTNER ANALYTICS  (F-05 hardened)
     // =========================================================================
-    match /partner_analytics/{uid} {
-      allow read: if isAuth() && request.auth.uid == uid;
-      // Any authenticated user may increment counters (profile/listing views).
-      allow write: if isAuth();
+    // partner_analytics/{partnerUid} — flat doc per partner subscriber.
+    // Fields: totalProfileViews, totalListingViews, totalBookingClicks,
+    //         totalEndorsements, lastUpdated
+    //
+    // F-05: the previous rule allowed any auth user to write any fields to any
+    //   partner's analytics doc — enabling counter zeroing, field injection, or
+    //   corruption of a partner's reach metrics.
+    //
+    // Design: writes are intentionally CROSS-USER (viewer A increments partner B's
+    //   counters). Self-write restriction would allow partners to inflate their own
+    //   metrics. The correct lock is on WHICH FIELDS may be written, not WHO writes.
+    //
+    //   Legitimate write paths:
+    //     • partner_profile_screen: totalProfileViews + lastUpdated (viewer → partner)
+    //     • local_services_service.recordView: totalListingViews + lastUpdated (viewer)
+    //   Fields totalBookingClicks and totalEndorsements have no active client write
+    //   path — reserved for future use, locked to prevent premature client writes.
+    //
+    //   Read path: partner reads own doc only (partner_analytics_screen).
+    //
+    // Fix:
+    //   read  — owner reads their own doc (unchanged)
+    //   write — any auth user may write, BUT only to the two active counter fields
+    //           + lastUpdated. Zeroing, injecting other fields, or overwriting with
+    //           set() is blocked because affectedKeys must be a subset of the allowlist.
+    // =========================================================================
+    match /partner_analytics/{partnerUid} {
+      allow read: if isAuth() && request.auth.uid == partnerUid;
+
+      // Any auth user may increment the active view counters (cross-user by design).
+      // Split create vs update:
+      //   create — doc doesn't exist yet (first view of a new partner's profile).
+      //            request.resource.data keys must be a subset of the allowlist.
+      //   update — doc already exists (most writes). affectedKeys() (the diff)
+      //            must be a subset of the allowlist — prevents field injection,
+      //            counter zeroing, and writes to reserved fields.
+      allow create: if isAuth()
+        && request.resource.data.keys()
+             .hasOnly(['totalProfileViews', 'totalListingViews', 'lastUpdated']);
+      allow update: if isAuth()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['totalProfileViews', 'totalListingViews', 'lastUpdated']);
     }
 
     // =========================================================================
