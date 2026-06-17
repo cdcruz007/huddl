@@ -30,6 +30,17 @@
  *                                    DIFFERENT uid (longer string) → NOT deleted.
  *                                    Proves filter is startsWith(uid+'_'), not contains(uid).
  *
+ *   UID-PREFIX COLLISION (the _ delimiter is load-bearing):
+ *     T-GDPR4-uid-prefix-collision — SHORT_UID="abc123" / LONG_UID="abc123xyz".
+ *                                    LONG_UID.startsWith(SHORT_UID) === true, BUT
+ *                                    "abc123xyz_ts.jpg".startsWith("abc123_") === false
+ *                                    (char after SHORT_UID is 'x', not '_').
+ *                                    DM variant: SHORT file DELETED; LONG file SURVIVES.
+ *                                    Group variant (direct + thread_): SHORT files DELETED;
+ *                                    LONG direct + LONG thread_ files both SURVIVE.
+ *                                    Proves the trailing _ in startsWith(uid+"_") is the
+ *                                    precise boundary that prevents cross-uid deletion.
+ *
  *   IDEMPOTENCY:
  *     T-GDPR4-idempotency          — second run on already-deleted storage → no error
  *                                    steps, success=true (404 on individual delete caught).
@@ -37,7 +48,7 @@
  *   DRY RUN:
  *     T-GDPR4-dryrun               — dryRun=true → counts files but deletes nothing.
  *
- * Total: 13 tests
+ * Total: 14 tests
  *
  * Storage emulator: localhost:9299 (FIREBASE_STORAGE_EMULATOR_HOST)
  * Firestore emulator: 127.0.0.1:8180 (FIRESTORE_EMULATOR_HOST)
@@ -76,6 +87,17 @@ const BOB_UID   = "bob_p4_uid";
 // A uid that STARTS WITH alice's uid but is a different (longer) uid.
 // Used to verify startsWith(uid+'_') is not fooled by substring matches.
 const ALICE_LOOKALIKE_UID = `${ALICE_UID}_extended_other`;
+
+// ── UID-prefix collision personas ─────────────────────────────────────────
+// SHORT_UID is a strict prefix of LONG_UID:  LONG_UID.startsWith(SHORT_UID) === true.
+// The '_' delimiter makes startsWith(SHORT_UID + '_') safe:
+//   "abc123xyz_ts.jpg".startsWith("abc123_")  === false  (char after SHORT is 'x', not '_')
+//   "abc123_ts.jpg".startsWith("abc123_")     === true   (correct match)
+const SHORT_UID       = "abc123";
+const LONG_UID        = "abc123xyz";   // startsWith(SHORT_UID) === true
+const COLLISION_TS    = "1700000001111";
+const COLLISION_CONV  = "conv_p4_collision";
+const COLLISION_GROUP = "group_p4_collision";
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -409,6 +431,74 @@ describe("Filename-filter substring safety", () => {
     // Infix file: NOT deleted (starts with "other_", not alice_uid + "_")
     expect(await fileExists(infixFile)).toBe(true);
   });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// UID-PREFIX COLLISION  — the _ delimiter is load-bearing
+// ══════════════════════════════════════════════════════════════════════════
+
+describe("UID-prefix collision (trailing _ is load-bearing)", () => {
+
+  test(
+    "T-GDPR4-uid-prefix-collision: SHORT_UID file DELETED; " +
+    "LONG_UID file SURVIVES (DM + group + thread variants)",
+    async () => {
+      // ── Setup: seed conversations + groups ──────────────────────────────
+      // SHORT_UID is a participant so capturedConvIds includes COLLISION_CONV.
+      await seedConversation(COLLISION_CONV, [SHORT_UID, LONG_UID]);
+      // SHORT_UID is a member so capturedGroupIds includes COLLISION_GROUP.
+      await seedGroup(COLLISION_GROUP, SHORT_UID);
+
+      // ── Seed DM files ────────────────────────────────────────────────────
+      // SHORT_UID's genuine file — filter: "abc123_1700000001111.jpg".startsWith("abc123_") → true
+      const shortDmFile = `dm_images/${COLLISION_CONV}/${SHORT_UID}_${COLLISION_TS}.jpg`;
+      // LONG_UID's file — filter: "abc123xyz_1700000001111.jpg".startsWith("abc123_")
+      //   → false  (char at position 6 is 'x', not '_')
+      const longDmFile  = `dm_images/${COLLISION_CONV}/${LONG_UID}_${COLLISION_TS}.jpg`;
+
+      await seedFile(shortDmFile);
+      await seedFile(longDmFile);
+
+      // ── Seed group-media files (direct post + thread reply) ──────────────
+      // SHORT_UID direct post
+      const shortGroupFile        = `group_images/${COLLISION_GROUP}/${SHORT_UID}_${COLLISION_TS}.jpg`;
+      // LONG_UID direct post — "abc123xyz_ts.jpg".startsWith("abc123_") → false
+      const longGroupFile         = `group_images/${COLLISION_GROUP}/${LONG_UID}_${COLLISION_TS}.jpg`;
+      // SHORT_UID thread reply  — "thread_abc123_ts.jpg".startsWith("thread_abc123_") → true
+      const shortThreadFile       = `group_images/${COLLISION_GROUP}/thread_${SHORT_UID}_${COLLISION_TS}.jpg`;
+      // LONG_UID thread reply   — "thread_abc123xyz_ts.jpg".startsWith("thread_abc123_") → false
+      const longThreadFile        = `group_images/${COLLISION_GROUP}/thread_${LONG_UID}_${COLLISION_TS}.jpg`;
+
+      await seedFile(shortGroupFile);
+      await seedFile(longGroupFile);
+      await seedFile(shortThreadFile);
+      await seedFile(longThreadFile);
+
+      // ── Run CF as SHORT_UID ──────────────────────────────────────────────
+      const result = await deleteUserDataHandler({}, authCtx(SHORT_UID));
+      expect(result.success).toBe(true);
+      expect(result.steps.storage_dm_media.status).toBe("ok");
+      expect(result.steps.storage_group_media.status).toBe("ok");
+
+      // ── DM assertions ────────────────────────────────────────────────────
+      // SHORT_UID's file: DELETED — startsWith("abc123_") matched
+      expect(await fileExists(shortDmFile)).toBe(false);
+      // LONG_UID's file: SURVIVES — startsWith("abc123_") did NOT match
+      //   "abc123xyz_..." char[6]='x' ≠ '_', so filter returned false
+      expect(await fileExists(longDmFile)).toBe(true);
+
+      // ── Group-media assertions ───────────────────────────────────────────
+      // SHORT_UID direct post: DELETED
+      expect(await fileExists(shortGroupFile)).toBe(false);
+      // LONG_UID direct post: SURVIVES
+      expect(await fileExists(longGroupFile)).toBe(true);
+      // SHORT_UID thread reply: DELETED — startsWith("thread_abc123_") matched
+      expect(await fileExists(shortThreadFile)).toBe(false);
+      // LONG_UID thread reply: SURVIVES — startsWith("thread_abc123_") did NOT match
+      //   "thread_abc123xyz_..." char[13]='x' ≠ '_'
+      expect(await fileExists(longThreadFile)).toBe(true);
+    }
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════
