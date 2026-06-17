@@ -123,6 +123,15 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Saved marketplace items: users/{uid}/saved_items/{listingId}
+      // Written by FirestoreService.toggleSavedItem(). Schema: { listingId, savedAt }.
+      // Ownership is structural (path) — no userId field in the doc.
+      // F-13: subcollection rule was missing; top-level saved_items rule at line ~516
+      // covered the wrong path, leaving every user-facing op default-denied.
+      match /saved_items/{listingId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Group invitations sent TO this user: users/{uid}/invitations/{invId}
       // Written by InvitationService.sendInvitations() on the inviter's device.
       // The invited user can read and update (accept/decline); any auth user
@@ -511,13 +520,15 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // SAVED ITEMS  (cross-collection save/bookmark list)
+    // SAVED ITEMS  (top-level — dead collection, F-13)
     // =========================================================================
+    // F-13: top-level saved_items has no live read/write path — all data lives at
+    // users/{uid}/saved_items/{listingId} (subcollection rule above).
+    // The old rule checked resource.data.userId but the doc schema has no userId
+    // field (only listingId + savedAt), so the read/update arms were always moot.
+    // Locked entirely.
     match /saved_items/{docId} {
-      allow read, write: if isAuth()
-        && resource.data.userId == request.auth.uid;
-      allow create: if isAuth()
-        && request.resource.data.userId == request.auth.uid;
+      allow read, write: if false;
     }
 
     // =========================================================================
