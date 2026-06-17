@@ -184,21 +184,21 @@ service cloud.firestore {
 
       // Members may update non-sensitive group fields (e.g. lastMessage).
       // The creator/admin may update everything (borough already stamped at create).
-      // Any auth user may add themselves to memberIds (join flow for meetup
-      // group chats — the group already exists and the user is joining it;
-      // they are not yet in memberIds so the normal member-only rule would
-      // block them).
+      // F-07: self-join is now scoped to PUBLIC groups only. Private/group-privacy
+      // groups require an invite — the accept path (_handleAccept) writes memberIds
+      // server-side and is covered by branch 1 (creator) or branch 2 (existing member
+      // re-add after leave/rejoin). Direct self-join into private groups is blocked.
       // Borough-scoped update: full-field updates (creator path) must still match
       // the doc's existing borough.
       allow update: if isAuth() && (
-        // Group creator has full update rights; borough must match existing doc.
+        // Branch 1 — Group creator has full update rights; borough must match existing doc.
         // Backfill complete — read canonical 'borough' only.
         (
           resource.data.creatorUid == request.auth.uid
           && boroughMatches(resource.data.get('borough', ''))
         )
         ||
-        // Any existing member may update limited activity fields.
+        // Branch 2 — Any existing member may update limited activity fields.
         (
           request.auth.uid in resource.data.memberIds
           && request.resource.data.diff(resource.data).affectedKeys()
@@ -206,10 +206,19 @@ service cloud.firestore {
                         'memberCount', 'memberIds', 'lastSenderName'])
         )
         ||
-        // Any auth user may add only themselves to memberIds (self-join).
-        // Used by meetup "Count Me In" flow when the group doc already exists.
-        request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['memberIds', 'memberCount', 'updatedAt'])
+        // Branch 3 (F-07) — Self-join: caller adds ONLY their own UID to memberIds.
+        // Requires group privacy == 'public' (default when field absent).
+        // hasAll ensures no existing member is removed.
+        // hasOnly(concat([uid])) ensures the caller's UID is the sole new element —
+        // no other UIDs may be injected, not even alongside the caller's own.
+        (
+          resource.data.get('privacy', 'public') == 'public'
+          && request.resource.data.memberIds.hasAll(resource.data.memberIds)
+          && request.resource.data.memberIds.hasOnly(
+               resource.data.memberIds.concat([request.auth.uid]))
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['memberIds', 'members', 'memberCount', 'updatedAt'])
+        )
       );
 
       // Only the creator may delete their group.
