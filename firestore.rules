@@ -382,31 +382,24 @@ service cloud.firestore {
       }
     }
 
-    // Individual DM messages.
-    // NOTE: direct_messages is not written by any active client path.
-    // The live DM path is conversations/{id}/messages/{id} (RealtimeDMService).
-    // This block is retained for GDPR deletion sweep compatibility only.
-    // participantIds corrected to participants — matches the conversations schema.
+    // F-06: direct_messages is a dead collection.
+    // RealtimeDMService writes exclusively to conversations/{id}/messages.
+    // sendDirectMessage() / dmMessagesStream() in FirestoreService have zero
+    // call sites — orphaned methods, never invoked.
+    // GDPR sweep (deleteAccount step 4) was explicitly removed — no sweep needed.
+    // create/update locked to if false; read + delete retained for legacy data.
     match /direct_messages/{messageId} {
+      // Legacy read: participant in the associated conversation may read.
       allow read: if isAuth()
         && request.auth.uid in
             get(/databases/$(database)/documents/conversations/$(resource.data.conversationId))
               .data.participants;
 
-      // Either participant may send a message; senderId must match their UID.
-      allow create: if isAuth()
-        && request.resource.data.senderId == request.auth.uid;
+      // F-06: No active write path — collection is dead for new writes.
+      allow create: if false;
+      allow update: if false;
 
-      // Sender may update their own message (reactions, unsend flag).
-      // Either participant may add a reaction.
-      allow update: if isAuth() && (
-        resource.data.senderId == request.auth.uid
-        ||
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['reactions', 'reactionUsers', 'updatedAt'])
-      );
-
-      // Sender may delete (unsend) their own message.
+      // Legacy delete: sender may remove their own old messages.
       allow delete: if isAuth()
         && resource.data.senderId == request.auth.uid;
     }
