@@ -841,13 +841,19 @@ service cloud.firestore {
           )
           || isAdmin()
         );
-      // Partner may only create cards in their own borough.
+      // FEED-1: promoted cards require a real Partner entitlement (custom claim
+      // request.auth.token.partner, set ONLY by the Stripe webhook via Admin SDK).
+      // Ownership + borough alone are NOT sufficient — that allowed any user to
+      // self-promote a "Verified Partner" card. Delete is intentionally NOT gated
+      // so a lapsed Partner can still remove their old cards.
       allow create: if isAuth()
+        && request.auth.token.partner == true
         && request.resource.data.partnerUid == request.auth.uid
         && boroughKey.lower() == writerBorough().lower()
         && writerBorough() != '';
       // Partner may only update cards in their own borough.
       allow update: if isAuth()
+        && request.auth.token.partner == true
         && resource.data.partnerUid == request.auth.uid
         && boroughKey.lower() == writerBorough().lower()
         && writerBorough() != '';
