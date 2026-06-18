@@ -712,15 +712,18 @@ service cloud.firestore {
     match /local_services/{listingId} {
       allow read: if isAuth();
 
-      // Only the lister may create their own listing, in their own borough.
+      // LSS-1: a client may create a listing but NEVER a pre-verified one.
+      // isVerified/verificationTier are set ONLY by the verifyBusiness CF (Admin SDK).
       allow create: if isAuth()
         && request.resource.data.createdByUid == request.auth.uid
-        && boroughMatches(request.resource.data.get('borough', ''));
+        && boroughMatches(request.resource.data.get('borough', ''))
+        && request.resource.data.get('verificationTier', 'none') == 'none'
+        && request.resource.data.get('isVerified', false) == false;
 
       // The listing owner may update any field (borough must still match).
       // Any authenticated user may increment/update the aggregate fields
       // that are written by the endorsement flow (endorsementCount,
-      // communityRating, ratingCount, verificationTier, updatedAt).
+      // communityRating, ratingCount, updatedAt).
       // Without this, batch.update() in endorseListing() is rejected for
       // non-owners and throws a permission-denied error caught as
       // "Something went wrong".
@@ -731,10 +734,11 @@ service cloud.firestore {
           && boroughMatches(resource.data.get('borough', ''))
         )
         ||
-        // Narrow endorsement-aggregate updates require no borough check.
+        // Endorsement-aggregate updates by ANY auth user (cross-user endorsement flow).
+        // verificationTier was REMOVED from this allowlist (LSS-1): verification status
+        // must never be writable by a non-owner/endorser. It is CF/Admin-SDK only.
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['endorsementCount', 'communityRating', 'ratingCount',
-                    'verificationTier', 'updatedAt'])
+          .hasOnly(['endorsementCount', 'communityRating', 'ratingCount', 'updatedAt'])
       );
 
       // Only the lister may delete their listing.
