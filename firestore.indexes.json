@@ -1,27 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "blocks",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "targetUid", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "comments",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "authorId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "endorsements",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "uid", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "memberActivity",
       "queryScope": "COLLECTION",
       "fields": [
@@ -111,5 +90,33 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "blocks",
+      "fieldPath": "targetUid",
+      "indexes": [
+        { "queryScope": "COLLECTION",       "order": "ASCENDING"  },
+        { "queryScope": "COLLECTION",       "order": "DESCENDING" },
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING"  }
+      ]
+    },
+    {
+      "collectionGroup": "comments",
+      "fieldPath": "authorId",
+      "indexes": [
+        { "queryScope": "COLLECTION",       "order": "ASCENDING"  },
+        { "queryScope": "COLLECTION",       "order": "DESCENDING" },
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING"  }
+      ]
+    },
+    {
+      "collectionGroup": "endorsements",
+      "fieldPath": "uid",
+      "indexes": [
+        { "queryScope": "COLLECTION",       "order": "ASCENDING"  },
+        { "queryScope": "COLLECTION",       "order": "DESCENDING" },
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING"  }
+      ]
+    }
+  ]
 }
