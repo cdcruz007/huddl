@@ -29,7 +29,7 @@
 'use strict';
 
 const Stripe = require('stripe');
-const { getDb, FieldValue } = require('./firebase-service');
+const { getDb, FieldValue, admin } = require('./firebase-service');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-04-10',
@@ -50,6 +50,29 @@ function tierDisplayName(tier) {
     case 'neighbour':     return 'Plus';
     case 'circle':        return 'Plus';
     default:              return 'Plus';
+  }
+}
+
+// ── Entitlement claim: mirror the Stripe-authoritative tier onto a Firebase
+//    Auth custom claim. Rules check request.auth.token.partner — the client
+//    cannot set this; only the Admin SDK here can. (Audit: SUB-2/3, LSS-1, ANN-1, FEED-1.)
+async function _syncPartnerClaim(userId, tier) {
+  if (!userId) return;
+  try {
+    const isPartner = tier === 'partner';
+    // Read existing claims so we don't clobber other claims (e.g. admin).
+    const user = await admin.auth().getUser(userId);
+    const existing = user.customClaims || {};
+    // No-op if already correct (avoids needless token churn / revocation).
+    if (!!existing.partner === isPartner) return;
+    await admin.auth().setCustomUserClaims(userId, {
+      ...existing,
+      partner: isPartner,
+    });
+    console.log(`[claim] partner=${isPartner} set for ${userId}`);
+  } catch (e) {
+    // Best-effort: claim sync must NEVER break the webhook / subscription write.
+    console.error(`[claim] failed to sync partner claim for ${userId}:`, e.message);
   }
 }
 
@@ -345,6 +368,7 @@ async function _handleCheckoutCompleted(db, session) {
 
   const subRef = db.collection('subscriptions').doc(userId);
   await subRef.set(subData, { merge: true });
+  await _syncPartnerClaim(userId, tierInfo.tier || 'neighbourhood');
 
   await db.collection('users').doc(userId).update({
     stripeCustomerId: customerId,
@@ -441,6 +465,7 @@ async function _handleSubscriptionUpdated(db, subscription) {
     cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
     updatedAt: FieldValue.serverTimestamp(),
   });
+  await _syncPartnerClaim(userId, tierInfo.tier || 'neighbourhood');
 
   console.log(`Subscription updated for user ${userId}: ${subscription.status}`);
 }
@@ -462,6 +487,7 @@ async function _handleSubscriptionDeleted(db, subscription) {
     cancelledAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: false });
+  await _syncPartnerClaim(userId, 'explorer');  // clears the partner claim
 
   await db.collection('users').doc(userId).update({
     subscriptionTier: 'explorer',
