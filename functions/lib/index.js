@@ -13,6 +13,7 @@
  *   8. syncPublicProfile             — Firestore onWrite on users/{userId} → mirrors public fields to users_public/{userId}
  *   9. setUserBorough               — HTTPS callable; resolves postcode server-side, enforces Cambridge gate, writes geo fields via Admin SDK
  *  10. deleteUserData               — GDPR deletion callable; Phase 1+2+3: query-deletes, subcollection sweeps, group membership, anonymise (conversations + group_messages)
+ *  11. verifyBusiness               — HTTPS callable; server-side UK business verification (Companies House / HMRC VAT); writes trust fields via Admin SDK (SUB-3 / ANN-1)
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -22,7 +23,7 @@
  */
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
@@ -2132,5 +2133,132 @@ exports.deleteUserData = functions
     functions.logger.info(`[deleteUserData] COMPLETE uid=${uid} success=${result.success} dryRun=${dryRun} ` +
         `completedAt=${completedAt}`, { steps });
     return result;
+});
+// ===========================================================================
+// CLOUD FUNCTION 11: verifyBusiness
+// ===========================================================================
+// HTTPS callable — server-side UK business verification.
+//
+// Security model (SUB-3 / LSS-1 / ANN-1):
+//   The client sends ONLY the raw identifier (companyNumber OR vatNumber) +
+//   method. ALL trust fields (businessVerified, verifiedBusinessName,
+//   verificationData, verificationMethod) are derived exclusively from the
+//   authoritative API response and written via Admin SDK (bypasses F-09
+//   Firestore rules that block client writes of those fields).
+//   verifiedBusinessName is ALWAYS taken from the API — never from client
+//   input — preventing impersonation of any registered business name.
+//
+// Supported methods:
+//   companies_house — Companies House REST API (HTTP Basic, key from config)
+//   hmrc_vat        — HMRC check-vat-number API (public, no key required)
+//
+// Uses Node 20 global fetch (no extra import needed).
+// Config key: functions.config().companies_house.key
+// Set with: firebase functions:config:set companies_house.key="YOUR_API_KEY"
+// ===========================================================================
+exports.verifyBusiness = functions
+    .region("europe-west2")
+    .https.onCall(async (data, context) => {
+    var _a, _b;
+    // ── 1. Auth required ────────────────────────────────────────────────────
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const uid = context.auth.uid;
+    const method = data === null || data === void 0 ? void 0 : data.method;
+    // ── Companies House path ─────────────────────────────────────────────────
+    if (method === "companies_house") {
+        const rawNum = String((data === null || data === void 0 ? void 0 : data.companyNumber) || "");
+        const companyNumber = rawNum.trim().toUpperCase();
+        // UK company numbers: 8 chars — 8 digits or 2 letters + 6 digits.
+        if (!/^[A-Z0-9]{8}$/.test(companyNumber)) {
+            throw new functions.https.HttpsError("invalid-argument", "Invalid company number format.");
+        }
+        // Companies House REST API: HTTP Basic auth — API key as username, blank password.
+        const chKey = (_a = functions.config().companies_house) === null || _a === void 0 ? void 0 : _a.key;
+        if (!chKey) {
+            throw new functions.https.HttpsError("failed-precondition", "Verification is not configured.");
+        }
+        const basic = Buffer.from(chKey + ":").toString("base64");
+        let chResp;
+        try {
+            chResp = await fetch(`https://api.company-information.service.gov.uk/company/${companyNumber}`, { headers: { Authorization: `Basic ${basic}` } });
+        }
+        catch (_c) {
+            throw new functions.https.HttpsError("unavailable", "Verification service unreachable.");
+        }
+        if (chResp.status === 404) {
+            throw new functions.https.HttpsError("not-found", "Company not found.");
+        }
+        if (chResp.status === 429) {
+            throw new functions.https.HttpsError("resource-exhausted", "Too many attempts. Try again shortly.");
+        }
+        if (!chResp.ok) {
+            throw new functions.https.HttpsError("unavailable", "Verification service unavailable.");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const company = await chResp.json();
+        if (company.company_status !== "active") {
+            throw new functions.https.HttpsError("failed-precondition", "Company is not active.");
+        }
+        // verifiedBusinessName is ALWAYS from the API response — never client input.
+        const verifiedName = company.company_name;
+        await admin.firestore().collection("users").doc(uid).set({
+            businessVerified: true,
+            verificationMethod: "companies_house",
+            verifiedBusinessName: verifiedName,
+            verificationData: {
+                companyNumber,
+                companyStatus: company.company_status,
+                verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+        }, { merge: true });
+        functions.logger.info(`[verifyBusiness] companies_house verified uid=${uid} company=${companyNumber} name="${verifiedName}"`);
+        return { verified: true, businessName: verifiedName };
+    }
+    // ── HMRC VAT path ────────────────────────────────────────────────────────
+    if (method === "hmrc_vat") {
+        const rawVat = String((data === null || data === void 0 ? void 0 : data.vatNumber) || "");
+        // Normalise: strip whitespace and optional GB prefix.
+        const vatNumber = rawVat.replace(/\s/g, "").replace(/^GB/i, "").trim();
+        // UK VAT numbers: 9 digits, or 12 digits (branch traders).
+        if (!/^\d{9}(\d{3})?$/.test(vatNumber)) {
+            throw new functions.https.HttpsError("invalid-argument", "Invalid VAT number format.");
+        }
+        // HMRC check-vat-number API is public — no API key required.
+        let vatResp;
+        try {
+            vatResp = await fetch(`https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/${vatNumber}`, { headers: { Accept: "application/vnd.hmrc.2.0+json" } });
+        }
+        catch (_d) {
+            throw new functions.https.HttpsError("unavailable", "Verification service unreachable.");
+        }
+        if (vatResp.status === 404) {
+            throw new functions.https.HttpsError("not-found", "VAT number not found.");
+        }
+        if (!vatResp.ok) {
+            throw new functions.https.HttpsError("unavailable", "Verification service unavailable.");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const vat = await vatResp.json();
+        // HMRC returns { target: { name, vatNumber, address } } on success.
+        const verifiedName = (_b = vat === null || vat === void 0 ? void 0 : vat.target) === null || _b === void 0 ? void 0 : _b.name;
+        if (!verifiedName) {
+            throw new functions.https.HttpsError("failed-precondition", "VAT record incomplete.");
+        }
+        await admin.firestore().collection("users").doc(uid).set({
+            businessVerified: true,
+            verificationMethod: "hmrc_vat",
+            verifiedBusinessName: verifiedName,
+            verificationData: {
+                vatNumber,
+                verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+        }, { merge: true });
+        functions.logger.info(`[verifyBusiness] hmrc_vat verified uid=${uid} vat=${vatNumber} name="${verifiedName}"`);
+        return { verified: true, businessName: verifiedName };
+    }
+    // ── Unknown method ───────────────────────────────────────────────────────
+    throw new functions.https.HttpsError("invalid-argument", "Unknown verification method.");
 });
 //# sourceMappingURL=index.js.map
