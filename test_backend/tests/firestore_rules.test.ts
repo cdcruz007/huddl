@@ -935,3 +935,137 @@ describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
     await assertSucceeds(deleteDoc(ref));
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLYWHEEL-2 — community_wisdom no self-publish
+//
+// Publishing pipeline: pendingReview → admin approves → published.
+// Authors may create/edit articles but CANNOT touch 'status' or 'consentGranted'.
+// Those fields are moderator-controlled only.
+//
+// isAdmin() works by reading users/{uid}.roles.isAdmin from Firestore (NOT a
+// custom claim). To simulate a moderator, seed users/mod_uid with
+// { roles: { isAdmin: true } }, then use the claimless authedContext("mod_uid").
+// The rules engine will get() that doc and resolve isAdmin() == true.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("FLYWHEEL-2 — community_wisdom no self-publish", () => {
+  const authorUid = "author_uid";
+  const modUid    = "mod_uid";
+  const randoUid  = "rando_uid";
+  const articleId = "article_fw2_001";
+
+  // ── Test 1: DENY — author creates with status:'published' directly ──────────
+
+  test("DENY: author cannot create an article with status 'published'", async () => {
+    // The create rule pins status to 'pendingReview' via .get('status','pendingReview').
+    // Writing status:'published' makes the comparison 'published'=='pendingReview' → false.
+    const ctx = authedContext(authorUid);
+    const ref = doc(ctx.firestore(), "community_wisdom", articleId);
+    await assertFails(
+      setDoc(ref, {
+        authorUid: authorUid,
+        status:    "published",
+        title:     "X",
+      })
+    );
+  });
+
+  // ── Test 2: ALLOW — author creates with status:'pendingReview' ──────────────
+
+  test("ALLOW: author can create an article with status 'pendingReview'", async () => {
+    const ctx = authedContext(authorUid);
+    const ref = doc(ctx.firestore(), "community_wisdom", articleId);
+    await assertSucceeds(
+      setDoc(ref, {
+        authorUid: authorUid,
+        status:    "pendingReview",
+        title:     "X",
+      })
+    );
+  });
+
+  // ── Test 3: DENY — author updates their OWN article's status (self-publish) ─
+
+  test("DENY: author cannot self-publish by updating status to 'published'", async () => {
+    // Seed via admin bypass so the doc exists without triggering create rules.
+    await seedDoc("community_wisdom", articleId, {
+      authorUid: authorUid,
+      status:    "pendingReview",
+      title:     "X",
+    });
+
+    // Branch 2 of the update rule: author's diff must NOT hasAny(['status','consentGranted']).
+    // Touching 'status' makes hasAny() → true → !true → false → branch 2 denied.
+    // Branch 1 (isAdmin) is false. Branch 3 (upvotes only) is false. Overall: denied.
+    const ctx = authedContext(authorUid);
+    const ref = doc(ctx.firestore(), "community_wisdom", articleId);
+    await assertFails(
+      updateDoc(ref, { status: "published" })
+    );
+  });
+
+  // ── Test 4: ALLOW — author edits article body (no status change) ────────────
+
+  test("ALLOW: author can edit their own article body without touching status", async () => {
+    await seedDoc("community_wisdom", articleId, {
+      authorUid: authorUid,
+      status:    "pendingReview",
+      title:     "X",
+      body:      "original",
+    });
+
+    // Branch 2: authorUid matches, diff affects only ['body','updatedAt'] —
+    // hasAny(['status','consentGranted']) is false → !false → true → allowed.
+    const ctx = authedContext(authorUid);
+    const ref = doc(ctx.firestore(), "community_wisdom", articleId);
+    await assertSucceeds(
+      updateDoc(ref, {
+        body:      "revised text",
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  });
+
+  // ── Test 5: ALLOW — admin publishes the article ─────────────────────────────
+
+  test("ALLOW: an admin (mod_uid) can update status to 'published'", async () => {
+    // isAdmin() does a get() on users/{uid}.roles.isAdmin — seed the user doc
+    // via Admin bypass so the rule resolves correctly for this uid.
+    await seedDoc("users", modUid, { roles: { isAdmin: true } });
+    await seedDoc("community_wisdom", articleId, {
+      authorUid: authorUid,
+      status:    "pendingReview",
+      title:     "X",
+    });
+
+    // Branch 1: isAdmin() → true → allowed unconditionally (any field change).
+    const ctx = authedContext(modUid);
+    const ref = doc(ctx.firestore(), "community_wisdom", articleId);
+    await assertSucceeds(
+      updateDoc(ref, { status: "published" })
+    );
+  });
+
+  // ── Test 6: ALLOW — any user upvotes (branch 3 regression) ─────────────────
+
+  test("ALLOW: any authenticated user can upvote (branch 3 regression)", async () => {
+    await seedDoc("community_wisdom", articleId, {
+      authorUid: authorUid,
+      status:    "published",
+      title:     "X",
+      upvotes:   0,
+      updatedAt: "2024-01-01",
+    });
+
+    // Branch 3: affectedKeys == ['upvotes','updatedAt'] ⊆ hasOnly allowlist → allowed.
+    const ctx = authedContext(randoUid);
+    const ref = doc(ctx.firestore(), "community_wisdom", articleId);
+    await assertSucceeds(
+      updateDoc(ref, {
+        upvotes:   5,
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  });
+});
