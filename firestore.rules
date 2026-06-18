@@ -77,8 +77,9 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // F-09: owner update is blocked if any blocklisted field is touched.
-      //   Blocklist (11 fields): roles, tier, stripeCustomerId, isFoundingMember,
-      //   isPhoneVerified, borough, postcode, ward, wardCode, districtCode, region.
+      //   Blocklist (15 fields): roles, tier, stripeCustomerId, isFoundingMember,
+      //   isPhoneVerified, borough, postcode, ward, wardCode, districtCode, region,
+      //   businessVerified, verificationMethod, verifiedBusinessName, verificationData.
       //   fcmToken is intentionally NOT in the blocklist — self-writing own token
       //   is harmless; blocking it would break push registration on every login.
       //   Admin updates bypass the blocklist (moderation / badge grants).
@@ -90,7 +91,9 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['roles', 'tier', 'stripeCustomerId', 'isFoundingMember',
                        'isPhoneVerified', 'borough', 'postcode', 'ward',
-                       'wardCode', 'districtCode', 'region'])
+                       'wardCode', 'districtCode', 'region',
+                       'businessVerified', 'verificationMethod',
+                       'verifiedBusinessName', 'verificationData'])
         );
 
       // Accounts are soft-deleted (isDeleted flag) — no hard deletes from client.

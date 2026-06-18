@@ -229,8 +229,59 @@ describe("F-09 — affectedKeys blocklist on users/{uid} update", () => {
     );
   });
 
-  // T-05e: fcmToken self-write — must succeed (push registration must not break)
-  test("T-05e: alice writes {fcmToken: 'xyz'} to her own users doc → SUCCEEDS", async () => {
+  // ── Business-verification trust fields (newly blocklisted) ─────────────────
+
+  // T-05e: businessVerified self-escalation blocked
+  test("T-05e: alice writes {businessVerified: true} to her own users doc → DENIED", async () => {
+    const ref = doc(alice().firestore(), "users", ALICE_UID);
+    await assertFails(
+      updateDoc(ref, { businessVerified: true })
+    );
+  });
+
+  // T-05f: verificationMethod self-write blocked
+  test("T-05f: alice writes {verificationMethod: 'companies_house'} → DENIED", async () => {
+    const ref = doc(alice().firestore(), "users", ALICE_UID);
+    await assertFails(
+      updateDoc(ref, { verificationMethod: "companies_house" })
+    );
+  });
+
+  // T-05g: verifiedBusinessName self-write blocked
+  test("T-05g: alice writes {verifiedBusinessName: 'Acme Ltd'} → DENIED", async () => {
+    const ref = doc(alice().firestore(), "users", ALICE_UID);
+    await assertFails(
+      updateDoc(ref, { verifiedBusinessName: "Acme Ltd" })
+    );
+  });
+
+  // T-05h: verificationData self-write blocked
+  test("T-05h: alice writes {verificationData: {entityType: 'limited_company'}} → DENIED", async () => {
+    const ref = doc(alice().firestore(), "users", ALICE_UID);
+    await assertFails(
+      updateDoc(ref, { verificationData: { entityType: "limited_company" } })
+    );
+  });
+
+  // T-05i: REGRESSION — non-blocklisted field must not be over-blocked
+  test("T-05i: REGRESSION — alice writes {bio: 'hi'} (non-blocklisted) → ALLOWED", async () => {
+    const ref = doc(alice().firestore(), "users", ALICE_UID);
+    await assertSucceeds(
+      updateDoc(ref, { bio: "hi" })
+    );
+  });
+
+  // T-05j: ADMIN PATH — carol (admin) may write businessVerified to bob's doc
+  // Proves the CF/admin verification write path is preserved through the blocklist.
+  test("T-05j: ADMIN PATH — carol (admin) writes {businessVerified: true} to bob's doc → ALLOWED", async () => {
+    const ref = doc(carol().firestore(), "users", BOB_UID);
+    await assertSucceeds(
+      updateDoc(ref, { businessVerified: true })
+    );
+  });
+
+  // T-05e (original): fcmToken self-write — must succeed (push registration must not break)
+  test("T-05e-fcm: alice writes {fcmToken: 'xyz'} to her own users doc → SUCCEEDS", async () => {
     const ref = doc(alice().firestore(), "users", ALICE_UID);
     await assertSucceeds(
       updateDoc(ref, { fcmToken: "xyz_new_token" })
