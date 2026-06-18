@@ -24,12 +24,18 @@ import 'package:flutter/foundation.dart';
 /// `--dart-define=SEND_ENCRYPTION_SECRET=<hex64>`) and the user's UID,
 /// so data from one user is unreadable by another even if the secret leaks.
 ///
-/// ## Graceful degradation
-/// If `SEND_ENCRYPTION_SECRET` is not injected at build time the service
-/// operates in **passthrough mode**: encrypt returns the plaintext unchanged
-/// (base64-encoded) and decrypt reverses that.  A warning is emitted once.
-/// This prevents silent data loss during development; in production the secret
-/// MUST be provided.
+/// ## Graceful degradation (development only)
+/// If `SEND_ENCRYPTION_SECRET` is not injected at build time, or is shorter
+/// than 64 hex characters (256 bits), the service detects a missing secret.
+///
+/// **Release builds**: [encrypt] / [encryptMap] throw a [StateError] immediately.
+/// Storing unencrypted SEND/EHCP data in a release build is not permitted.
+///
+/// **Debug / profile builds**: passthrough mode is allowed so local development
+/// without the secret still works.  A warning is emitted once via [debugPrint].
+///
+/// [decrypt] / [decryptMap] remain tolerant in all build modes so that any
+/// data written during passthrough development can still be read (and migrated).
 ///
 /// ## Thread safety
 /// The service is a pure-function singleton — all state is derived at call
@@ -48,6 +54,11 @@ class SendEncryptionService {
     'SEND_ENCRYPTION_SECRET',
     defaultValue: '',
   );
+
+  /// True when the secret is absent or too short to be a valid 256-bit key.
+  /// A valid secret is exactly 64 hex characters (32 bytes = 256 bits).
+  static bool get _secretMissing =>
+      _rawSecret.isEmpty || _rawSecret.length < 64;
 
   static const int _ivLength  = 12; // bytes — GCM recommended IV size
   static const int _tagLength = 16; // bytes — GCM default auth tag
@@ -73,7 +84,14 @@ class SendEncryptionService {
   /// Returns a base64-encoded blob: `IV || ciphertext+tag`.
   /// In passthrough mode returns `base64(plaintext)`.
   String encrypt(String plaintext, {required String uid}) {
-    if (_rawSecret.isEmpty) {
+    if (_secretMissing) {
+      if (kReleaseMode) {
+        throw StateError(
+          'SEND_ENCRYPTION_SECRET is not configured. Refusing to write '
+          'unencrypted SEND-sensitive data in a release build. '
+          'Provide --dart-define=SEND_ENCRYPTION_SECRET=<64-hex-chars>.');
+      }
+      // Debug/dev ONLY: passthrough so local development without the secret still works.
       _warnPassthrough();
       return base64Encode(utf8.encode(plaintext));
     }
@@ -99,7 +117,9 @@ class SendEncryptionService {
   /// In passthrough mode decodes base64 directly.
   String? decrypt(String? cipherBlob, {required String uid}) {
     if (cipherBlob == null || cipherBlob.isEmpty) return null;
-    if (_rawSecret.isEmpty) {
+    // Decrypt stays tolerant of legacy plaintext so passthrough-era data remains
+    // readable for migration. Writes are hard-blocked in release; reads are not.
+    if (_secretMissing) {
       _warnPassthrough();
       try {
         return utf8.decode(base64Decode(cipherBlob));
@@ -195,12 +215,13 @@ class SendEncryptionService {
   static void _warnPassthrough() {
     if (_passthroughWarned) return;
     _passthroughWarned = true;
-    if (kDebugMode) {
-      debugPrint(
-        '[SendEncryption] WARNING: SEND_ENCRYPTION_SECRET not set. '
-        'Running in passthrough mode — SEND data is NOT encrypted in Firestore. '
-        'Provide --dart-define=SEND_ENCRYPTION_SECRET=<64-hex-chars> for production.',
-      );
-    }
+    // Emit in debug and profile builds — never reached in release for writes
+    // because the StateError in encrypt() fires first.
+    debugPrint(
+      '[SendEncryption] WARNING: SEND_ENCRYPTION_SECRET is not set or is shorter '
+      'than 64 hex characters. Running in passthrough mode — SEND data is NOT '
+      'encrypted in Firestore. '
+      'Provide --dart-define=SEND_ENCRYPTION_SECRET=<64-hex-chars> for production.',
+    );
   }
 }
