@@ -4,22 +4,44 @@ import 'subscription_service.dart';
 
 enum BusinessEntityType { limitedCompany, vatRegistered, soleTrader }
 
+/// Result returned by all three verification paths.
+///
+/// [success]      — whether the operation completed without error.
+/// [verifiedName] — server-derived business name (CH / HMRC) or declared
+///                  trading name (sole trader).
+/// [error]        — user-facing error message when success == false.
+/// [selfDeclared] — true ONLY for the sole_trader_declaration path.
+///                  The UI MUST render this as a distinct "self-declared"
+///                  badge, NEVER as the verified badge.
 class VerificationResult {
   final bool success;
   final String? verifiedName;
   final String? error;
-  const VerificationResult({required this.success, this.verifiedName, this.error});
+  final bool selfDeclared;
+
+  const VerificationResult({
+    required this.success,
+    this.verifiedName,
+    this.error,
+    this.selfDeclared = false, // CH and HMRC VAT paths leave this false
+  });
 }
 
 /// Singleton service handling UK business verification via the verifyBusiness
 /// Cloud Function (region: europe-west2).
 ///
-/// SECURITY: The client sends ONLY the raw identifier (companyNumber / vatNumber)
-/// + method. All trust fields (businessVerified, verifiedBusinessName,
-/// verificationData, verificationMethod) are written server-side by the CF via
-/// Admin SDK — the F-09 Firestore rule blocks any direct client writes of those
-/// fields. verifiedBusinessName is always API-sourced on the server, preventing
-/// business-name impersonation.
+/// SECURITY: The client sends ONLY the raw identifier (companyNumber /
+/// vatNumber / utrNumber + names) + method. All trust fields
+/// (businessVerified, businessSelfDeclared, verifiedBusinessName,
+/// verificationData, verificationMethod) are written server-side by the CF
+/// via Admin SDK — the F-09 Firestore rule blocks any direct client writes of
+/// those fields. verifiedBusinessName is always API-sourced (CH / HMRC) or
+/// declaration-sourced (sole trader) on the server.
+///
+/// SOLE TRADER NOTE: businessVerified is explicitly written FALSE by the CF
+/// for the sole_trader_declaration path — a self-declaration must never
+/// masquerade as a verified entity. The UI must use VerificationResult
+/// .selfDeclared to choose the correct badge.
 ///
 /// See: functions/src/index.ts  verifyBusiness (CF 11, Audit: SUB-3 / ANN-1)
 class BusinessVerificationService {
@@ -138,33 +160,63 @@ class BusinessVerificationService {
     }
   }
 
-  /// Record a sole trader statutory declaration.
+  /// Record a sole trader statutory declaration via the verifyBusiness CF
+  /// (method: sole_trader_declaration).
   ///
-  /// No external API — legal liability transfers to the declarant.
+  /// IMPORTANT: This path does NOT grant businessVerified. The CF explicitly
+  /// writes businessVerified: false and businessSelfDeclared: true. The
+  /// returned VerificationResult has selfDeclared: true so the UI can render
+  /// the correct "self-declared" badge — NEVER the verified badge.
   ///
-  /// NOTE: The direct Firestore write of trust fields has been removed because
-  /// the F-09 rule blocks client writes of businessVerified / verifiedBusinessName.
-  /// A future `verifySoleTrader` CF (TODO: SUB-3 follow-on) will handle the
-  /// Admin SDK write. For now the declaration is accepted client-side and
-  /// the VerificationResult is returned; the CF write will be wired in when
-  /// the sole-trader CF is deployed.
+  /// The raw [utrNumber] is sent to the CF as-is. The CF validates format
+  /// (10 digits) and stores only a sha256 hash — the client must NOT hash or
+  /// pre-process the UTR before sending.
   Future<VerificationResult> submitSoleTraderDeclaration({
     required String legalName,
     required String tradingName,
     required String utrNumber,
   }) async {
-    // TODO(SUB-3): call a verifySoleTrader CF here so the trust fields
-    // (businessVerified, verifiedBusinessName, verificationData) are written
-    // via Admin SDK. Until that CF exists, the declaration is accepted
-    // client-side only — Firestore trust fields are NOT written (F-09 blocks
-    // any direct client write).
-    if (kDebugMode) {
-      debugPrint(
-        'BusinessVerificationService: sole trader declaration accepted '
-        '(CF write pending — SUB-3 follow-on). '
-        'legalName=$legalName tradingName=$tradingName',
+    try {
+      final result = await _callable.call(<String, dynamic>{
+        'method': 'sole_trader_declaration',
+        'legalName': legalName,
+        'tradingName': tradingName,
+        'utrNumber': utrNumber, // raw — CF hashes it; client must NOT hash
+      });
+
+      final data = result.data as Map<dynamic, dynamic>?;
+      final selfDeclared = data?['selfDeclared'] as bool? ?? false;
+      // businessName here is the declared tradingName, echoed back by the CF.
+      final declaredName = data?['businessName'] as String?;
+
+      if (!selfDeclared) {
+        // CF returned an unexpected shape — treat as failure.
+        return const VerificationResult(
+          success: false,
+          error: 'Declaration could not be recorded. Please try again.',
+        );
+      }
+
+      // No loadBusinessVerificationStatus() here — businessVerified is false
+      // on this path; the subscription service state does not change.
+      return VerificationResult(
+        success: true,
+        verifiedName: declaredName ?? tradingName,
+        selfDeclared: true, // UI must use distinct "self-declared" badge
+      );
+    } on FirebaseFunctionsException catch (e) {
+      if (kDebugMode) {
+        debugPrint('BusinessVerificationService [ST]: ${e.code} — ${e.message}');
+      }
+      return VerificationResult(success: false, error: _mapFunctionsError(e));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('BusinessVerificationService [ST] unexpected: $e');
+      }
+      return const VerificationResult(
+        success: false,
+        error: 'Could not reach the verification service. Check your connection.',
       );
     }
-    return VerificationResult(success: true, verifiedName: tradingName);
   }
 }
