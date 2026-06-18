@@ -14,6 +14,7 @@ import {
   initializeTestEnvironment,
   RulesTestEnvironment,
   RulesTestContext,
+  TokenOptions,
 } from "@firebase/rules-unit-testing";
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc } from "firebase/firestore";
 import * as fs from "fs";
@@ -47,6 +48,10 @@ afterAll(async () => {
 
 function authedContext(uid: string): RulesTestContext {
   return testEnv.authenticatedContext(uid);
+}
+
+function authedContextWithClaims(uid: string, claims: TokenOptions): RulesTestContext {
+  return testEnv.authenticatedContext(uid, claims);
 }
 
 function unauthedContext(): RulesTestContext {
@@ -840,30 +845,24 @@ describe("LSS-1 — local_services verification cannot be forged", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // FEED-1 — borough_feed promoted cards require Partner claim
 //
-// Proves that request.auth.token.partner == true is enforced on create and
-// update, while delete is intentionally NOT claim-gated (lapsed Partners must
-// be able to clean up their own old cards).
+// Proves that request.auth.token.partner == true is enforced on create, while
+// delete is intentionally NOT claim-gated (lapsed Partners must be able to
+// clean up their own old cards).
 //
-// borough_feed create/update also requires boroughKey == writerBorough(), which
-// reads users_public/{uid}.borough via get(). Both uids are seeded beforeEach.
+// borough_feed create also requires boroughKey == writerBorough(), which reads
+// users_public/{uid}.borough via get(). Both uids are seeded in beforeEach.
+//
+// Token minting:
+//   partnerCtx — authedContextWithClaims("partner_uid", { partner: true })
+//   plebCtx    — authedContext("pleb_uid")   ← existing helper, no claim arg
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
-  const partnerUid   = "feed1_partner_uid";
-  const plebUid      = "feed1_pleb_uid";
-  const boroughKey   = "Cambridge";
-  const promotedId   = "promo_feed1_001";
-  const docPath      = `borough_feed/${boroughKey}/promoted`;
-
-  // Mint contexts with and without the partner custom claim.
-  // testEnv.authenticatedContext(uid, customClaims) is called directly here
-  // because the file-level authedContext() helper does not forward claims.
-  function partnerCtx() {
-    return testEnv.authenticatedContext(partnerUid, { partner: true });
-  }
-  function plebCtx() {
-    return testEnv.authenticatedContext(plebUid, {});   // no partner claim
-  }
+  const partnerUid = "partner_uid";
+  const plebUid    = "pleb_uid";
+  const boroughKey = "Cambridge";
+  const promotedId = "promo_feed1_001";
+  const docPath    = `borough_feed/${boroughKey}/promoted`;
 
   beforeEach(async () => {
     // writerBorough() reads users_public/{uid}.borough — seed both uids so
@@ -872,10 +871,13 @@ describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
     await seedDoc("users_public", plebUid,    { borough: boroughKey });
   });
 
-  // ── create ─────────────────────────────────────────────────────────────────
+  // ── Test 1: Partner with claim → ALLOW ────────────────────────────────────
 
   test("ALLOW: a Partner (claim partner:true) creates a promoted card in their own borough", async () => {
-    const ref = doc(partnerCtx().firestore(), docPath, promotedId);
+    // authedContextWithClaims mints a token with { partner: true } — the only
+    // path that satisfies request.auth.token.partner == true in the rules.
+    const partnerCtx = authedContextWithClaims(partnerUid, { partner: true });
+    const ref = doc(partnerCtx.firestore(), docPath, promotedId);
     await assertSucceeds(
       setDoc(ref, {
         partnerUid:  partnerUid,
@@ -885,9 +887,13 @@ describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
     );
   });
 
+  // ── Test 2: non-Partner, no claim → DENY (THE FEED-1 fix) ─────────────────
+
   test("DENY: a non-Partner (no claim) cannot create a promoted card", async () => {
-    // This is the FEED-1 fix: ownership + borough alone no longer pass.
-    const ref = doc(plebCtx().firestore(), docPath, promotedId);
+    // authedContext mints a token with NO custom claims (existing helper).
+    // Ownership + borough alone are no longer sufficient — this is the fix.
+    const plebCtx = authedContext(plebUid);
+    const ref = doc(plebCtx.firestore(), docPath, promotedId);
     await assertFails(
       setDoc(ref, {
         partnerUid:  plebUid,
@@ -897,9 +903,12 @@ describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
     );
   });
 
+  // ── Test 3: Partner but wrong partnerUid → DENY (regression) ──────────────
+
   test("DENY: a Partner cannot create a card with someone else's partnerUid", async () => {
-    // Regression: partnerUid == request.auth.uid still enforced alongside claim.
-    const ref = doc(partnerCtx().firestore(), docPath, promotedId);
+    // Even with the partner claim, partnerUid must equal request.auth.uid.
+    const partnerCtx = authedContextWithClaims(partnerUid, { partner: true });
+    const ref = doc(partnerCtx.firestore(), docPath, promotedId);
     await assertFails(
       setDoc(ref, {
         partnerUid:  plebUid,   // spoofed — not the caller's uid
@@ -909,19 +918,20 @@ describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
     );
   });
 
-  // ── delete ─────────────────────────────────────────────────────────────────
+  // ── Test 4: former Partner, no claim, own card → DELETE allowed ────────────
 
   test("ALLOW: a former Partner (no claim) can still DELETE their own old card", async () => {
-    // Seed the existing card via admin bypass — simulates a card created when
-    // the user was still a Partner (claim since cleared on subscription.deleted).
+    // Card seeded via admin bypass — simulates a card written when the user
+    // held the Partner subscription (claim since cleared on subscription.deleted).
     await seedDoc(docPath, promotedId, {
       partnerUid:  plebUid,
       isActive:    false,
       partnerName: "X",
     });
 
-    // plebCtx has no partner claim — delete must still succeed.
-    const ref = doc(plebCtx().firestore(), docPath, promotedId);
+    // delete rule has NO token.partner guard — intentional (lapsed Partner cleanup).
+    const plebCtx = authedContext(plebUid);
+    const ref = doc(plebCtx.firestore(), docPath, promotedId);
     await assertSucceeds(deleteDoc(ref));
   });
 });
