@@ -836,3 +836,92 @@ describe("LSS-1 — local_services verification cannot be forged", () => {
     );
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEED-1 — borough_feed promoted cards require Partner claim
+//
+// Proves that request.auth.token.partner == true is enforced on create and
+// update, while delete is intentionally NOT claim-gated (lapsed Partners must
+// be able to clean up their own old cards).
+//
+// borough_feed create/update also requires boroughKey == writerBorough(), which
+// reads users_public/{uid}.borough via get(). Both uids are seeded beforeEach.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("FEED-1 — borough_feed promoted cards require Partner claim", () => {
+  const partnerUid   = "feed1_partner_uid";
+  const plebUid      = "feed1_pleb_uid";
+  const boroughKey   = "Cambridge";
+  const promotedId   = "promo_feed1_001";
+  const docPath      = `borough_feed/${boroughKey}/promoted`;
+
+  // Mint contexts with and without the partner custom claim.
+  // testEnv.authenticatedContext(uid, customClaims) is called directly here
+  // because the file-level authedContext() helper does not forward claims.
+  function partnerCtx() {
+    return testEnv.authenticatedContext(partnerUid, { partner: true });
+  }
+  function plebCtx() {
+    return testEnv.authenticatedContext(plebUid, {});   // no partner claim
+  }
+
+  beforeEach(async () => {
+    // writerBorough() reads users_public/{uid}.borough — seed both uids so
+    // boroughMatches() resolves to "Cambridge" for every test in this block.
+    await seedDoc("users_public", partnerUid, { borough: boroughKey });
+    await seedDoc("users_public", plebUid,    { borough: boroughKey });
+  });
+
+  // ── create ─────────────────────────────────────────────────────────────────
+
+  test("ALLOW: a Partner (claim partner:true) creates a promoted card in their own borough", async () => {
+    const ref = doc(partnerCtx().firestore(), docPath, promotedId);
+    await assertSucceeds(
+      setDoc(ref, {
+        partnerUid:  partnerUid,
+        isActive:    true,
+        partnerName: "X",
+      })
+    );
+  });
+
+  test("DENY: a non-Partner (no claim) cannot create a promoted card", async () => {
+    // This is the FEED-1 fix: ownership + borough alone no longer pass.
+    const ref = doc(plebCtx().firestore(), docPath, promotedId);
+    await assertFails(
+      setDoc(ref, {
+        partnerUid:  plebUid,
+        isActive:    true,
+        partnerName: "X",
+      })
+    );
+  });
+
+  test("DENY: a Partner cannot create a card with someone else's partnerUid", async () => {
+    // Regression: partnerUid == request.auth.uid still enforced alongside claim.
+    const ref = doc(partnerCtx().firestore(), docPath, promotedId);
+    await assertFails(
+      setDoc(ref, {
+        partnerUid:  plebUid,   // spoofed — not the caller's uid
+        isActive:    true,
+        partnerName: "X",
+      })
+    );
+  });
+
+  // ── delete ─────────────────────────────────────────────────────────────────
+
+  test("ALLOW: a former Partner (no claim) can still DELETE their own old card", async () => {
+    // Seed the existing card via admin bypass — simulates a card created when
+    // the user was still a Partner (claim since cleared on subscription.deleted).
+    await seedDoc(docPath, promotedId, {
+      partnerUid:  plebUid,
+      isActive:    false,
+      partnerName: "X",
+    });
+
+    // plebCtx has no partner claim — delete must still succeed.
+    const ref = doc(plebCtx().firestore(), docPath, promotedId);
+    await assertSucceeds(deleteDoc(ref));
+  });
+});
