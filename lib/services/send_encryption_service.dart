@@ -119,7 +119,12 @@ class SendEncryptionService {
     if (cipherBlob == null || cipherBlob.isEmpty) return null;
     // Decrypt stays tolerant of legacy plaintext so passthrough-era data remains
     // readable for migration. Writes are hard-blocked in release; reads are not.
-    if (_secretMissing) {
+    //
+    // Read passthrough only when the secret is genuinely ABSENT (dev mode).
+    // A present-but-malformed secret must NOT base64-passthrough — it routes to
+    // the AES path below and fails loudly (null) rather than returning
+    // ciphertext-as-plaintext.
+    if (_rawSecret.isEmpty) {
       _warnPassthrough();
       try {
         return utf8.decode(base64Decode(cipherBlob));
