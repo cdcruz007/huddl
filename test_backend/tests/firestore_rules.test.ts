@@ -714,3 +714,125 @@ describe("Subscription tier — client write blocked", () => {
     );
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LSS-1 — local_services verification cannot be forged
+//
+// Change A: verificationTier removed from the endorsement-aggregate hasOnly
+//           allowlist — a non-owner can no longer write it via that branch.
+// Change B: create rule now rejects any payload where verificationTier != 'none'
+//           or isVerified != false — a client cannot stamp a pre-verified listing.
+//
+// boroughMatches() reads users_public/{uid}.borough via get(), so every
+// create/owner-update test must first seed the writer's public borough doc.
+// Non-owner update tests go through the hasOnly branch (no borough check).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("LSS-1 — local_services verification cannot be forged", () => {
+  const ownerUid    = "lss1_owner";
+  const attackerUid = "lss1_attacker";
+  const endorserUid = "lss1_endorser";
+  const listingId   = "listing_lss1_001";
+
+  // ── Change B tests: create rule ────────────────────────────────────────────
+
+  test("DENY: client cannot create a pre-verified listing (verificationTier huddlVerified)", async () => {
+    // boroughMatches() needs users_public/{owner}.borough
+    await seedDoc("users_public", ownerUid, { borough: "Cambridge" });
+
+    const ctx = authedContext(ownerUid);
+    const ref = doc(ctx.firestore(), "local_services", listingId);
+    await assertFails(
+      setDoc(ref, {
+        createdByUid:     ownerUid,
+        borough:          "Cambridge",
+        verificationTier: "huddlVerified",
+        name:             "X",
+      })
+    );
+  });
+
+  test("DENY: client cannot create a listing with isVerified true", async () => {
+    await seedDoc("users_public", ownerUid, { borough: "Cambridge" });
+
+    const ctx = authedContext(ownerUid);
+    const ref = doc(ctx.firestore(), "local_services", listingId);
+    await assertFails(
+      setDoc(ref, {
+        createdByUid: ownerUid,
+        borough:      "Cambridge",
+        isVerified:   true,
+        name:         "X",
+      })
+    );
+  });
+
+  test("ALLOW: client can create an unverified listing (verificationTier none / isVerified false)", async () => {
+    await seedDoc("users_public", ownerUid, { borough: "Cambridge" });
+
+    const ctx = authedContext(ownerUid);
+    const ref = doc(ctx.firestore(), "local_services", listingId);
+    await assertSucceeds(
+      setDoc(ref, {
+        createdByUid:     ownerUid,
+        borough:          "Cambridge",
+        name:             "X",
+        verificationTier: "none",
+        isVerified:       false,
+      })
+    );
+  });
+
+  // ── Change A tests: update / endorsement-aggregate branch ─────────────────
+
+  test("DENY: a non-owner cannot update another listing's verificationTier via the endorsement allowlist", async () => {
+    // Seed the owner's public borough (needed by seedDoc listing? No — seedDoc bypasses
+    // rules. Only needed when an authed client write triggers boroughMatches().
+    // The attacker goes through the hasOnly branch (no borough check), but we seed
+    // the owner borough anyway for completeness and to keep the listing realistic.
+    await seedDoc("users_public", ownerUid, { borough: "Cambridge" });
+    await seedDoc("local_services", listingId, {
+      createdByUid:     ownerUid,
+      borough:          "Cambridge",
+      name:             "X",
+      verificationTier: "none",
+      isVerified:       false,
+      endorsementCount: 0,
+    });
+
+    const ctx = authedContext(attackerUid);
+    const ref = doc(ctx.firestore(), "local_services", listingId);
+    await assertFails(
+      updateDoc(ref, {
+        verificationTier: "huddlVerified",
+        updatedAt:        new Date().toISOString(),
+      })
+    );
+  });
+
+  test("ALLOW (regression): a non-owner CAN still update endorsement counters", async () => {
+    await seedDoc("users_public", ownerUid, { borough: "Cambridge" });
+    await seedDoc("local_services", listingId, {
+      createdByUid:     ownerUid,
+      borough:          "Cambridge",
+      name:             "X",
+      verificationTier: "none",
+      isVerified:       false,
+      endorsementCount: 0,
+      communityRating:  0,
+      ratingCount:      0,
+      updatedAt:        "2024-01-01",
+    });
+
+    const ctx = authedContext(endorserUid);
+    const ref = doc(ctx.firestore(), "local_services", listingId);
+    await assertSucceeds(
+      updateDoc(ref, {
+        endorsementCount: 1,
+        communityRating:  4.5,
+        ratingCount:      1,
+        updatedAt:        new Date().toISOString(),
+      })
+    );
+  });
+});
