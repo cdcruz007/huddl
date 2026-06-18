@@ -236,27 +236,27 @@ function _decodeJWS(jws) {
  */
 function _mapAppleProductToTier(appleProductId) {
   // CRITICAL: tier values MUST match Flutter's SubscriptionTier enum .name exactly:
-  //   'neighbourhood' = SubscriptionTier.neighbourhood (Huddl Plus)
-  //   'partner'       = SubscriptionTier.partner       (Huddl Partner)
-  //   'explorer'      = SubscriptionTier.explorer      (free)
+  //   'plus'    = SubscriptionTier.plus    (Huddl Plus)   (TIER-KEY-1)
+  //   'partner' = SubscriptionTier.partner (Huddl Partner)
+  //   'welcome' = SubscriptionTier.welcome (free)
   const mapping = {
     // Current product IDs
-    huddl_plus_monthly:    { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_plus_annual:     { tier: 'neighbourhood', billingPeriod: 'annual'  },
-    huddl_partner_monthly: { tier: 'partner',        billingPeriod: 'monthly' },
-    huddl_partner_annual:  { tier: 'partner',        billingPeriod: 'annual'  },
+    huddl_plus_monthly:    { tier: 'plus',    billingPeriod: 'monthly' },
+    huddl_plus_annual:     { tier: 'plus',    billingPeriod: 'annual'  },
+    huddl_partner_monthly: { tier: 'partner', billingPeriod: 'monthly' },
+    huddl_partner_annual:  { tier: 'partner', billingPeriod: 'annual'  },
     // Legacy product IDs — keep so any remaining test receipts resolve correctly
-    huddl_neighbour_monthly:              { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_neighbour_annual:               { tier: 'neighbourhood', billingPeriod: 'annual'  },
-    huddl_circle_monthly:                 { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_circle_annual:                  { tier: 'neighbourhood', billingPeriod: 'annual'  },
-    huddl_neighbourhood_monthly:          { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_neighbourhood_annual:           { tier: 'neighbourhood', billingPeriod: 'annual'  },
-    huddl_neighbourhood_founding_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_inner_circle_monthly:           { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_inner_circle_annual:            { tier: 'neighbourhood', billingPeriod: 'annual'  },
+    huddl_neighbour_monthly:              { tier: 'plus', billingPeriod: 'monthly' },
+    huddl_neighbour_annual:               { tier: 'plus', billingPeriod: 'annual'  },
+    huddl_circle_monthly:                 { tier: 'plus', billingPeriod: 'monthly' },
+    huddl_circle_annual:                  { tier: 'plus', billingPeriod: 'annual'  },
+    huddl_neighbourhood_monthly:          { tier: 'plus', billingPeriod: 'monthly' },
+    huddl_neighbourhood_annual:           { tier: 'plus', billingPeriod: 'annual'  },
+    huddl_neighbourhood_founding_monthly: { tier: 'plus', billingPeriod: 'monthly' },
+    huddl_inner_circle_monthly:           { tier: 'plus', billingPeriod: 'monthly' },
+    huddl_inner_circle_annual:            { tier: 'plus', billingPeriod: 'annual'  },
   };
-  return mapping[appleProductId] || { tier: 'explorer', billingPeriod: 'monthly' };
+  return mapping[appleProductId] || { tier: 'welcome', billingPeriod: 'monthly' };  // TIER-FALLBACK-1
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -505,9 +505,9 @@ async function handleAppleNotification(signedPayload) {
 
     case 'EXPIRED':
     case 'REVOKE': {
-      const prevTier = (subSnap.docs[0].data() || {}).tier || 'neighbourhood';
+      const prevTier = (subSnap.docs[0].data() || {}).tier || 'welcome';  // TIER-FALLBACK-1
       await db.collection('subscriptions').doc(userId).set({
-        tier: 'explorer',
+        tier: 'welcome',
         billingPeriod: 'monthly',
         isActive: true,
         isTrial: false,
@@ -517,7 +517,7 @@ async function handleAppleNotification(signedPayload) {
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: false });
       await db.collection('users').doc(userId).update({
-        subscriptionTier: 'explorer',
+        subscriptionTier: 'welcome',
         updatedAt: FieldValue.serverTimestamp(),
       });
       if (email) {
@@ -611,7 +611,7 @@ async function handleGoogleNotification(message) {
 
   // Fetch user email once for all email triggers
   const { email, firstName } = await _getUserEmailData(db, userId);
-  const prevTier = (subSnap.docs[0].data() || {}).tier || 'neighbourhood';
+  const prevTier = (subSnap.docs[0].data() || {}).tier || 'welcome';  // TIER-FALLBACK-1
 
   // Purchased / Recovered / Restarted → active subscription
   if ([1, 4, 7].includes(notificationType)) {
@@ -652,9 +652,9 @@ async function handleGoogleNotification(message) {
 
   // Handle specific notification types
   if ([3, 12, 13].includes(notificationType)) {
-    // CANCELED, REVOKED, EXPIRED — downgrade to Explorer
+    // CANCELED, REVOKED, EXPIRED — downgrade to Welcome (free)  (TIER-FALLBACK-1)
     await db.collection('subscriptions').doc(userId).set({
-      tier: 'explorer',
+      tier: 'welcome',
       billingPeriod: 'monthly',
       isActive: true,
       isTrial: false,
@@ -665,7 +665,7 @@ async function handleGoogleNotification(message) {
     }, { merge: false });
 
     await db.collection('users').doc(userId).update({
-      subscriptionTier: 'explorer',
+      subscriptionTier: 'welcome',
       updatedAt: FieldValue.serverTimestamp(),
     });
 

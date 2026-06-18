@@ -622,7 +622,7 @@ function _tierDisplay(tier) {
   const t = tier.toLowerCase();
   if (t === 'partner') return 'Partner';
   if (t === 'innercircle' || t === 'circle') return 'Plus'; // legacy — Circle mapped to Plus
-  if (t === 'explorer'    || t === 'welcome') return 'Welcome';
+  if (t === 'welcome') return 'Welcome';  // 'explorer' retired (TIER-KEY-1)
   return 'Plus';
 }
 

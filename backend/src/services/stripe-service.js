@@ -7,9 +7,9 @@
 // processing, and subscription state synchronization with Firestore.
 //
 // TIERS (updated — no founding member):
-//   welcome      — free, explorer enum key in Firestore
-//   neighbourhood (Huddl Plus)    — £4.99/mo | £39.99/yr
-//   partner       (Huddl Partner) — £24.99/mo | £199/yr
+//   welcome  (free)           — no paid subscription
+//   plus     (Huddl Plus)    — £4.99/mo | £39.99/yr
+//   partner  (Huddl Partner) — £24.99/mo | £199/yr
 //
 // PRODUCT ID MAPPING (must match Flutter HuddlProductIds + App/Play Store)
 // ──────────────────
@@ -20,9 +20,9 @@
 //   huddl_partner_annual        → STRIPE_PRICE_PARTNER_ANNUAL
 //
 // TIER KEYS in Firestore (= Flutter SubscriptionTier enum .name values):
-//   'explorer'      → Welcome (free)
-//   'neighbourhood' → Huddl Plus paid tier
-//   'partner'       → Huddl Partner paid tier
+//   'welcome' → Welcome (free)
+//   'plus'    → Huddl Plus paid tier
+//   'partner' → Huddl Partner paid tier
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -37,15 +37,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // ── Helper: get human-readable display name from internal tier key ────────────
 // tier is the Firestore key, which equals Flutter's SubscriptionTier enum .name:
-//   'neighbourhood' → 'Plus'     (SubscriptionTier.neighbourhood)
-//   'partner'       → 'Partner'  (SubscriptionTier.partner)
-//   'explorer'      → 'Free'     (SubscriptionTier.explorer)
+//   'plus'    → 'Plus'    (SubscriptionTier.plus)
+//   'partner' → 'Partner' (SubscriptionTier.partner)
+//   'welcome' → 'Free'    (SubscriptionTier.welcome)
 function tierDisplayName(tier) {
   switch (tier) {
-    case 'neighbourhood': return 'Plus';
+    case 'plus':          return 'Plus';
     case 'partner':       return 'Partner';
-    case 'explorer':      return 'Free';
-    // Legacy aliases — keep for safety
+    case 'welcome':       return 'Free';
+    // Legacy SKU aliases (pre-TIER-KEY-1) — Flutter enum back-compat shim handles client side
     case 'innerCircle':   return 'Plus';
     case 'neighbour':     return 'Plus';
     case 'circle':        return 'Plus';
@@ -97,13 +97,14 @@ const REVERSE_PRICE_MAP = Object.fromEntries(
 
 // App product ID → { tier (Firestore key = Flutter SubscriptionTier enum .name), billingPeriod }
 // CRITICAL: tier values MUST match Flutter's enum .name exactly:
-//   SubscriptionTier.neighbourhood.name == 'neighbourhood'
-//   SubscriptionTier.partner.name       == 'partner'
+//   SubscriptionTier.plus.name    == 'plus'     (TIER-KEY-1)
+//   SubscriptionTier.partner.name == 'partner'
+//   SubscriptionTier.welcome.name == 'welcome'  (free)
 const PRODUCT_TIER_MAP = {
-  huddl_plus_monthly:    { tier: 'neighbourhood', billingPeriod: 'monthly' },
-  huddl_plus_annual:     { tier: 'neighbourhood', billingPeriod: 'annual'  },
-  huddl_partner_monthly: { tier: 'partner',        billingPeriod: 'monthly' },
-  huddl_partner_annual:  { tier: 'partner',        billingPeriod: 'annual'  },
+  huddl_plus_monthly:    { tier: 'plus',    billingPeriod: 'monthly' },
+  huddl_plus_annual:     { tier: 'plus',    billingPeriod: 'annual'  },
+  huddl_partner_monthly: { tier: 'partner', billingPeriod: 'monthly' },
+  huddl_partner_annual:  { tier: 'partner', billingPeriod: 'annual'  },
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -145,14 +146,14 @@ async function createCheckoutSession({ userId, email, productId, successUrl, can
     metadata: {
       userId,
       productId,
-      tier: tierInfo?.tier || 'neighbourhood',
+      tier: tierInfo?.tier || 'welcome',
       billingPeriod: tierInfo?.billingPeriod || 'monthly',
     },
     subscription_data: {
       metadata: {
         userId,
         productId,
-        tier: tierInfo?.tier || 'neighbourhood',
+        tier: tierInfo?.tier || 'welcome',
       },
     },
     automatic_tax: { enabled: true }, // Stripe Tax activated — handles UK VAT automatically
@@ -353,7 +354,7 @@ async function _handleCheckoutCompleted(db, session) {
   }
 
   const subData = {
-    tier: tierInfo.tier || 'neighbourhood',
+    tier: tierInfo.tier || 'welcome',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive: true,
     isTrial: false,
@@ -368,11 +369,11 @@ async function _handleCheckoutCompleted(db, session) {
 
   const subRef = db.collection('subscriptions').doc(userId);
   await subRef.set(subData, { merge: true });
-  await _syncPartnerClaim(userId, tierInfo.tier || 'neighbourhood');
+  await _syncPartnerClaim(userId, tierInfo.tier || 'welcome');
 
   await db.collection('users').doc(userId).update({
     stripeCustomerId: customerId,
-    subscriptionTier: tierInfo.tier || 'neighbourhood',
+    subscriptionTier: tierInfo.tier || 'welcome',
     updatedAt: FieldValue.serverTimestamp(),
   });
 
@@ -456,7 +457,7 @@ async function _handleSubscriptionUpdated(db, subscription) {
   const trialDaysRemaining = 0;
 
   await db.collection('subscriptions').doc(userId).update({
-    tier: tierInfo.tier || 'neighbourhood',
+    tier: tierInfo.tier || 'welcome',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive,
     isTrial,
@@ -465,7 +466,7 @@ async function _handleSubscriptionUpdated(db, subscription) {
     cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
     updatedAt: FieldValue.serverTimestamp(),
   });
-  await _syncPartnerClaim(userId, tierInfo.tier || 'neighbourhood');
+  await _syncPartnerClaim(userId, tierInfo.tier || 'welcome');
 
   console.log(`Subscription updated for user ${userId}: ${subscription.status}`);
 }
@@ -474,9 +475,9 @@ async function _handleSubscriptionDeleted(db, subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 
-  // Downgrade to Welcome (free / explorer) tier
+  // Downgrade to Welcome (free) tier  (TIER-FALLBACK-1)
   await db.collection('subscriptions').doc(userId).set({
-    tier: 'explorer',
+    tier: 'welcome',
     billingPeriod: 'monthly',
     isActive: true,
     isTrial: false,
@@ -487,10 +488,10 @@ async function _handleSubscriptionDeleted(db, subscription) {
     cancelledAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: false });
-  await _syncPartnerClaim(userId, 'explorer');  // clears the partner claim
+  await _syncPartnerClaim(userId, 'welcome');  // clears the partner claim
 
   await db.collection('users').doc(userId).update({
-    subscriptionTier: 'explorer',
+    subscriptionTier: 'welcome',
     updatedAt: FieldValue.serverTimestamp(),
   });
 
@@ -503,7 +504,7 @@ async function _handleSubscriptionDeleted(db, subscription) {
     createdAt: FieldValue.serverTimestamp(),
   });
 
-  console.log(`Subscription cancelled for user ${userId} — downgraded to Welcome (explorer)`);
+  console.log(`Subscription cancelled for user ${userId} — downgraded to Welcome (free)`);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -520,7 +521,7 @@ async function getSubscriptionStatus(userId) {
 
   if (!subDoc.exists) {
     return {
-      tier: 'explorer',
+      tier: 'welcome',
       billingPeriod: 'monthly',
       isActive: true,
       isTrial: false,
