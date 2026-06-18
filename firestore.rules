@@ -548,19 +548,41 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // COMMUNITY WISDOM / CROWDSOURCED TIPS
+    // COMMUNITY WISDOM / CROWDSOURCED TIPS  (FLYWHEEL-2 hardened)
     // =========================================================================
+    // Publishing pipeline: pendingReview → admin approves → published.
+    // Authors can create and edit articles but can NEVER self-publish — the
+    // status field is moderator-controlled only (Admin SDK / isAdmin() branch).
+    // isAdmin() reads users/{uid}.roles.isAdmin (see helper above).
     match /community_wisdom/{docId} {
       allow read: if isAuth();
+
+      // FLYWHEEL-2: authors may create articles but NEVER publish them directly.
+      // A new article must start in review (status 'pendingReview') — publishing
+      // is an admin-only status transition below. isAdmin() reads users/{uid}.roles.isAdmin.
       allow create: if isAuth()
-        && request.resource.data.authorUid == request.auth.uid;
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.get('status', 'pendingReview') == 'pendingReview';
+
       allow update: if isAuth() && (
-        resource.data.authorUid == request.auth.uid
+        // Branch 1 — Admin (moderator) may change anything, incl. status transitions
+        // (approve → 'published', reject → 'rejected') and consentGranted.
+        isAdmin()
         ||
-        // Upvote count increments by any user.
+        // Branch 2 — Author may edit their OWN article's CONTENT, but may NOT touch
+        // status or consentGranted (those are moderator-controlled). The affectedKeys
+        // exclusion is the enforcement: if the diff touches status/consentGranted, deny.
+        (
+          resource.data.authorUid == request.auth.uid
+          && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['status', 'consentGranted'])
+        )
+        ||
+        // Branch 3 — Any authenticated user may upvote (unchanged).
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['upvotes', 'updatedAt'])
       );
+
       allow delete: if isAuth()
         && resource.data.authorUid == request.auth.uid;
     }
