@@ -2920,6 +2920,61 @@ export const verifyBusiness = functions
       return { verified: true, businessName: verifiedName };
     }
 
+    // ── Sole trader self-declaration ──────────────────────────────────────
+    // A UTR cannot be verified against any public registry. This path therefore
+    // does NOT set businessVerified — it records a self-declaration only. The
+    // resulting state must render as a DISTINCT "self-declared" badge in the UI,
+    // never as the verified badge. (Audit: SUB-3 sole-trader path.)
+    if (method === "sole_trader_declaration") {
+      const legalName   = String((data as Record<string, unknown>)?.legalName   || "").trim();
+      const tradingName = String((data as Record<string, unknown>)?.tradingName  || "").trim();
+      const rawUtr      = String((data as Record<string, unknown>)?.utrNumber    || "");
+      const utrNumber   = rawUtr.replace(/\s/g, "").trim();
+
+      if (!legalName || !tradingName) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Legal and trading name are required."
+        );
+      }
+      // UK UTR is 10 digits. Validate format only — we cannot verify it is real.
+      if (!/^\d{10}$/.test(utrNumber)) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Invalid UTR format (expected 10 digits)."
+        );
+      }
+
+      // Hash the UTR server-side with sha256 — NEVER store the raw value,
+      // and do NOT use String.hashCode (non-cryptographic, collidable).
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const crypto = require("crypto") as typeof import("crypto");
+      const utrHash = crypto.createHash("sha256").update(utrNumber).digest("hex");
+
+      // businessVerified is explicitly set false — a sole-trader declaration
+      // must NEVER sit on top of a prior businessVerified: true from another source.
+      await admin.firestore().collection("users").doc(uid).set(
+        {
+          businessVerified:     false,          // explicit downgrade / no-upgrade
+          businessSelfDeclared: true,
+          verificationMethod:   "sole_trader_declaration",
+          verifiedBusinessName: tradingName,    // displayed under the self-declared badge only
+          verificationData: {
+            entityType:            "sole_trader",
+            legalName,
+            utrHash,
+            declarationSignedAt:   admin.firestore.FieldValue.serverTimestamp(),
+          },
+        },
+        { merge: true }
+      );
+
+      functions.logger.info(
+        `[verifyBusiness] sole_trader_declaration recorded uid=${uid} trading="${tradingName}"`
+      );
+      return { verified: false, selfDeclared: true, businessName: tradingName };
+    }
+
     // ── Unknown method ───────────────────────────────────────────────────────
     throw new functions.https.HttpsError(
       "invalid-argument",
