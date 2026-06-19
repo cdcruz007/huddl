@@ -61,3 +61,5 @@ backend/node_modules/
 android/release-key.jks
 android/key.properties
 .env
+*firebase-adminsdk*.json
+*-adminsdk-*.json
