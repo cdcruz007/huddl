@@ -18,7 +18,7 @@
  *   events/{eventId}
  *   users/{userId}
  *   userRecommendations/{userId}/events/{eventId}
- *   copilotRateLimits/{userId}          (date + messageCount for 20/day limit)
+ *   aiRateLimits/{userId}               (date + messageCount, per-tier daily AI budget)
  */
 
 import * as functions from "firebase-functions";
@@ -68,6 +68,30 @@ const db = admin.firestore();
 // GDPR_STORAGE_BUCKET env var allows test overrides (emulator isolation).
 const STORAGE_BUCKET =
   process.env["GDPR_STORAGE_BUCKET"] ?? "huddl-connect.firebasestorage.app";
+
+// ── Unified daily AI-action budget per tier (Audit: SUB-2) ──────────────────
+// Shared across ALL AI CFs (copilot + vertex) via one aiRateLimits counter.
+// 'partner' is a high backstop, not infinity. Start conservative; raise on
+// real usage data.
+const AI_DAILY_LIMITS: Record<string, number> = {
+  welcome: 3,
+  plus: 20,
+  partner: 100,
+};
+const AI_DEFAULT_LIMIT = AI_DAILY_LIMITS.welcome; // fail-closed default
+
+// Reads authoritative subscriptions/{uid}.tier (written ONLY by Stripe webhook
+// via Admin SDK; client writes denied). Fails CLOSED to 'welcome' on missing
+// doc (new user) or read error — ambiguity grants the LOWEST tier, never paid.
+async function resolveDailyAiLimit(userId: string): Promise<number> {
+  try {
+    const snap = await db.collection("subscriptions").doc(userId).get();
+    const tier = (snap.exists ? (snap.data()?.tier as string) : undefined) ?? "welcome";
+    return AI_DAILY_LIMITS[tier] ?? AI_DEFAULT_LIMIT;
+  } catch (e) {
+    return AI_DEFAULT_LIMIT; // read failed → fail closed to free
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -793,16 +817,16 @@ function callGemini(params: {
 }
 
 /** Check and increment rate limit. Returns false when limit exceeded. */
-async function checkAndIncrementRateLimit(userId: string): Promise<boolean> {
+async function checkAndIncrementRateLimit(userId: string, dailyLimit: number): Promise<boolean> {
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-  const ref = db.collection("copilotRateLimits").doc(userId);
+  const ref = db.collection("aiRateLimits").doc(userId);
 
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const data = snap.data() as { date?: string; messageCount?: number } | undefined;
 
     if (data?.date === today) {
-      if ((data.messageCount ?? 0) >= 20) {
+      if ((data.messageCount ?? 0) >= dailyLimit) {
         return false; // limit reached
       }
       tx.update(ref, { messageCount: admin.firestore.FieldValue.increment(1) });
@@ -829,12 +853,13 @@ export const huddlCopilotChat = functions
     }
     const userId = context.auth.uid;
 
-    // Rate limiting — 20 messages per user per day
-    const allowed = await checkAndIncrementRateLimit(userId);
+    // Rate limiting — tier-aware daily budget (Audit: SUB-2)
+    const dailyLimit = await resolveDailyAiLimit(userId);
+    const allowed = await checkAndIncrementRateLimit(userId, dailyLimit);
     if (!allowed) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Daily chat limit reached. Come back tomorrow!"
+        "Daily AI limit reached. Upgrade for more, or come back tomorrow!"
       );
     }
 
@@ -1092,6 +1117,16 @@ export const vertexGenerateContent = functions
       );
     }
     const uid = context.auth.uid;
+
+    // ── Rate limiting — tier-aware daily budget shared with copilot (Audit: SUB-2)
+    const vertexDailyLimit = await resolveDailyAiLimit(uid);
+    const vertexAllowed = await checkAndIncrementRateLimit(uid, vertexDailyLimit);
+    if (!vertexAllowed) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Daily AI limit reached. Upgrade for more, or come back tomorrow!"
+      );
+    }
 
     // ── Parse VERTEX_AI_SA_KEY from Secret Manager ────────────────────────────
     const saKeyRaw = process.env.VERTEX_AI_SA_KEY;
