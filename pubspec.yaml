@@ -67,6 +67,11 @@ dependencies:
   permission_handler: ^11.4.0      # Camera, location, contacts, microphone
   lottie: ^3.3.3
 
+  # ONBOARD-1: secure storage for PII at rest on mobile (Keychain/Keystore).
+  # On web this package is NOT used — web writes NO PII to localStorage at all.
+  # Pinned at 9.2.2 (latest stable compatible with Flutter 3.35.4 / Dart 3.9).
+  flutter_secure_storage: 9.2.2
+
   # SEND field-level encryption (AES-256-GCM, pure Dart — Web + Android compatible)
   encrypt: ^5.0.3
   crypto: ^3.0.6          # HMAC-SHA256 key derivation for SendEncryptionService

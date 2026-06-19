@@ -1,13 +1,35 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'browser_storage.dart';
+import 'secure_pii_storage.dart';
+
+// =============================================================================
+// ONBOARD-1 — Sensitive-field split
+//
+// SENSITIVE fields (written to SecurePiiStorage — Keychain/Keystore on mobile,
+// in-memory only on web):
+//   name, email, phone_number, country_code, postcode, previous_postcode,
+//   children, due_date, bio
+//
+// NON-SENSITIVE fields (written to BrowserStorage = SharedPreferences as before):
+//   borough, previous_borough, stages_of_life, parent_type, is_phone_verified,
+//   profile_photo_path, profile_photo_object_url, assigned_group_count,
+//   assigned_group_names
+//
+// Web behaviour: SecurePiiStorage holds PII in memory only — nothing written
+// to localStorage.  On cold start the sensitive fields are blank until
+// FirebaseAuthService.restoreProfileFromFirestore() re-hydrates from Firestore.
+// =============================================================================
 
 class OnboardingDataService {
   static final OnboardingDataService _instance = OnboardingDataService._internal();
   factory OnboardingDataService() => _instance;
   OnboardingDataService._internal();
   
+  // BrowserStorage key for NON-SENSITIVE fields only (ONBOARD-1)
   static const String _storageKey = 'onboarding_data_v1';
+  // Legacy key written by old code — used during one-shot migration (ONBOARD-1)
+  static const String _legacyStorageKey = 'onboarding_data_v1';
   bool _isInitialized = false;
   Future<void>? _initializationFuture;
 
@@ -270,7 +292,11 @@ class OnboardingDataService {
     _isInitialized = false;
     _initializationFuture = null;
     _log('All onboarding data cleared');
-    await BrowserStorage.remove(_storageKey);
+    // ONBOARD-1: clear BOTH stores
+    await Future.wait([
+      BrowserStorage.remove(_storageKey),
+      SecurePiiStorage.clearPii(),
+    ]);
   }
   
   /// Initialize and load data from persistent storage.
@@ -292,97 +318,161 @@ class OnboardingDataService {
     return _initializationFuture;
   }
   
-  /// Load data from persistent storage
+  /// Load data from persistent storage (ONBOARD-1: merged load from two stores)
   Future<void> _loadFromStorage() async {
     if (_isInitialized) return;
-    
+
     try {
-      final dataJson = await BrowserStorage.getString(_storageKey);
-      
-      if (dataJson != null) {
-        final Map<String, dynamic> data = json.decode(dataJson);
-        
-        _name = data['name'] as String?;
-        _email = data['email'] as String?;
-        _parentType = data['parent_type'] as String?;
-        _stagesOfLife = List<String>.from(data['stages_of_life'] ?? []);
-        _postcode = data['postcode'] as String?;
-        _borough  = data['borough']  as String?;
-        // Sanitize legacy full-date values (e.g. '2027-01-01' → '2027')
-        String? rawDue = data['due_date'] as String?;
-        if (rawDue != null && rawDue.contains('-')) rawDue = rawDue.substring(0, 4);
-        _dueDate = rawDue;
-        _children = List<Map<String, String>>.from(
-          (data['children'] as List? ?? []).map((e) => Map<String, String>.from(e))
-        );
-        _phoneNumber = data['phone_number'] as String?;
-        _countryCode = data['country_code'] as String?;
-        // 'password' is never loaded from storage (it was never saved there).
-        // If a legacy entry exists it is silently ignored.
-        _password = null;
-        _isPhoneVerified = data['is_phone_verified'] as bool? ?? false;
-        _profilePhotoPath = data['profile_photo_path'] as String?;
-        _bio = data['bio'] as String?;
-        _profilePhotoObjectUrl = data['profile_photo_object_url'] as String?;
-        _previousPostcode = data['previous_postcode'] as String?;
-        _previousBorough = data['previous_borough'] as String?;
-        _assignedGroupCount = data['assigned_group_count'] as int? ?? 0;
-        _assignedGroupNames = List<String>.from(data['assigned_group_names'] ?? []);
-        
-        if (kDebugMode) {
-          debugPrint('OnboardingData loaded from storage');
-          debugPrint('   Name: $_name');
-          debugPrint('   Postcode: $_postcode');
-          if (kDebugMode) {
-            debugPrint('   Stages: $_stagesOfLife');
-          }
-          debugPrint('   Phone: $fullPhoneNumber');
-        }
-      }
-      
+      // ── ONBOARD-1 MIGRATION ───────────────────────────────────────────────
+      // On the first run of the new code the old plaintext blob in BrowserStorage
+      // may still contain sensitive fields.  Detect, promote to SecurePiiStorage,
+      // then scrub the sensitive keys from the plaintext blob so the cleartext
+      // copy doesn't linger.  Migration is one-shot: once the sensitive keys are
+      // absent from the blob (or the blob is absent), it never re-runs.
+      await _migrateLegacyPlaintextPii();
+
+      // ── Read non-sensitive fields from BrowserStorage ─────────────────────
+      final nsJson = await BrowserStorage.getString(_storageKey);
+      final Map<String, dynamic> nsData =
+          nsJson != null ? (json.decode(nsJson) as Map<String, dynamic>) : {};
+
+      // ── Read sensitive fields from SecurePiiStorage ───────────────────────
+      final Map<String, dynamic> piiData = await SecurePiiStorage.readPii();
+
+      // ── Merge: PII takes precedence for its own keys ──────────────────────
+      // Non-sensitive fields
+      _parentType   = nsData['parent_type']   as String?;
+      _stagesOfLife = List<String>.from(nsData['stages_of_life'] ?? []);
+      _borough      = nsData['borough']       as String?;
+      _previousBorough     = nsData['previous_borough']      as String?;
+      _isPhoneVerified     = nsData['is_phone_verified']     as bool? ?? false;
+      _profilePhotoPath    = nsData['profile_photo_path']    as String?;
+      _profilePhotoObjectUrl = nsData['profile_photo_object_url'] as String?;
+      _assignedGroupCount  = nsData['assigned_group_count']  as int? ?? 0;
+      _assignedGroupNames  = List<String>.from(nsData['assigned_group_names'] ?? []);
+
+      // Sensitive fields — from SecurePiiStorage (memory on web, Keychain on mobile)
+      _name         = piiData['name']          as String?;
+      _email        = piiData['email']         as String?;
+      _phoneNumber  = piiData['phone_number']  as String?;
+      _countryCode  = piiData['country_code']  as String?;
+      _postcode     = piiData['postcode']      as String?;
+      _previousPostcode = piiData['previous_postcode'] as String?;
+      _bio          = piiData['bio']           as String?;
+      // Sanitize legacy full-date values (e.g. '2027-01-01' → '2027')
+      String? rawDue = piiData['due_date'] as String?;
+      if (rawDue != null && rawDue.contains('-')) rawDue = rawDue.substring(0, 4);
+      _dueDate = rawDue;
+      _children = List<Map<String, String>>.from(
+        (piiData['children'] as List? ?? [])
+            .map((e) => Map<String, String>.from(e as Map)),
+      );
+      // 'password' is never loaded from storage (it was never saved there).
+      _password = null;
+
       _isInitialized = true;
-    } catch (e) {
+
       if (kDebugMode) {
-        if (kDebugMode) {
-          debugPrint('Error loading onboarding data: $e');
-        }
+        debugPrint('OnboardingData loaded (ONBOARD-1: split storage)');
+        debugPrint('   Name present: ${_name != null}');
+        debugPrint('   Postcode present: ${_postcode != null}');
+        debugPrint('   Children count: ${_children.length}');
+        debugPrint('   Stages: $_stagesOfLife');
       }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[OnboardingData] _loadFromStorage error: $e');
+      _isInitialized = true; // don't retry forever on corrupt data
+    }
+  }
+
+  // ── ONBOARD-1 Migration ────────────────────────────────────────────────────
+  // Runs once: moves sensitive fields out of the old plaintext BrowserStorage
+  // blob into SecurePiiStorage, then removes those keys from the plaintext blob.
+  // Safe to call on every cold start — exits immediately if there is nothing to
+  // migrate (no blob, or blob already has sensitive keys removed).
+  static const List<String> _kSensitiveKeys = [
+    'name', 'email', 'phone_number', 'country_code',
+    'postcode', 'previous_postcode', 'children', 'due_date', 'bio',
+  ];
+
+  Future<void> _migrateLegacyPlaintextPii() async {
+    try {
+      final raw = await BrowserStorage.getString(_legacyStorageKey);
+      if (raw == null) return; // nothing to migrate
+      final Map<String, dynamic> blob = json.decode(raw) as Map<String, dynamic>;
+
+      // Check whether any sensitive key is still present in the plaintext blob
+      final hasSensitive = _kSensitiveKeys.any((k) => blob.containsKey(k));
+      if (!hasSensitive) return; // already migrated
+
+      _log('ONBOARD-1 migration: moving PII out of plaintext BrowserStorage');
+
+      // Extract sensitive fields
+      final Map<String, dynamic> pii = {};
+      for (final k in _kSensitiveKeys) {
+        if (blob.containsKey(k)) pii[k] = blob[k];
+      }
+
+      // Promote to SecurePiiStorage (Keychain/Keystore on mobile; memory on web)
+      await SecurePiiStorage.writePii(pii);
+
+      // Scrub sensitive keys from the plaintext blob
+      for (final k in _kSensitiveKeys) {
+        blob.remove(k);
+      }
+
+      // Write the scrubbed blob back so only non-sensitive fields remain
+      await BrowserStorage.setString(_legacyStorageKey, json.encode(blob));
+
+      _log('ONBOARD-1 migration complete — ${pii.keys.length} sensitive keys moved');
+    } catch (e) {
+      if (kDebugMode) debugPrint('[OnboardingData] migration error (non-fatal): $e');
+      // Non-fatal: worst case the old plaintext blob persists until next run
     }
   }
   
-  /// Save data to persistent storage
+  /// Save data to persistent storage (ONBOARD-1: split into two stores)
+  ///
+  /// SENSITIVE PII → SecurePiiStorage (Keychain/Keystore on mobile; memory-only
+  /// on web — nothing touches localStorage for these fields).
+  ///
+  /// NON-SENSITIVE → BrowserStorage (SharedPreferences) as before.
   Future<void> _saveToStorage() async {
     try {
-      final data = {
-        'name': _name,
-        'email': _email,
-        'parent_type': _parentType,
-        'stages_of_life': _stagesOfLife,
-        'postcode': _postcode,
-        'borough':  _borough,
-        'due_date': _dueDate,
-        'children': _children,
-        'phone_number': _phoneNumber,
-        'country_code': _countryCode,
-        // 'password' is intentionally EXCLUDED — never persist passwords to device storage.
-        'is_phone_verified': _isPhoneVerified,
-        'profile_photo_path': _profilePhotoPath,
-        'bio': _bio,
-        'profile_photo_object_url': _profilePhotoObjectUrl,
+      // ── 1. Sensitive PII → SecurePiiStorage ──────────────────────────────
+      // ONBOARD-1: these fields MUST NOT appear in the BrowserStorage blob.
+      final sensitiveData = <String, dynamic>{
+        'name':              _name,
+        'email':             _email,
+        'phone_number':      _phoneNumber,
+        'country_code':      _countryCode,
+        'postcode':          _postcode,
         'previous_postcode': _previousPostcode,
-        'previous_borough': _previousBorough,
-        'assigned_group_count': _assignedGroupCount,
-        'assigned_group_names': _assignedGroupNames,
+        'children':          _children,
+        'due_date':          _dueDate,
+        'bio':               _bio,
+        // 'password' intentionally excluded — never persisted anywhere.
       };
-      
-      await BrowserStorage.setString(_storageKey, json.encode(data));
-      _log('Data saved to storage');
+      await SecurePiiStorage.writePii(sensitiveData);
+
+      // ── 2. Non-sensitive fields → BrowserStorage ──────────────────────────
+      // These carry no PII meaningful enough to require Keychain protection.
+      final nonSensitiveData = <String, dynamic>{
+        'parent_type':              _parentType,
+        'stages_of_life':           _stagesOfLife,
+        'borough':                  _borough,
+        'previous_borough':         _previousBorough,
+        'is_phone_verified':        _isPhoneVerified,
+        'profile_photo_path':       _profilePhotoPath,
+        'profile_photo_object_url': _profilePhotoObjectUrl,
+        'assigned_group_count':     _assignedGroupCount,
+        'assigned_group_names':     _assignedGroupNames,
+      };
+      await BrowserStorage.setString(_storageKey, json.encode(nonSensitiveData));
+
+      _log('Data saved (ONBOARD-1: PII → SecurePiiStorage, meta → BrowserStorage)');
     } catch (e) {
-      if (kDebugMode) {
-        if (kDebugMode) {
-          debugPrint('Error saving onboarding data: $e');
-        }
-      }
+      if (kDebugMode) debugPrint('[OnboardingData] _saveToStorage error: $e');
     }
   }
 
