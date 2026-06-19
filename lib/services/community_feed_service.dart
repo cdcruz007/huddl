@@ -303,7 +303,7 @@ class CommunityFeedService {
             'partnerUid':  data['partnerUid'],
             'externalUrl': data['externalUrl'],
             'ctaLabel':    data['ctaLabel'] ?? 'Find out more',
-            'isVerified':  data['isVerified'] ?? true,
+            'isVerified':  data['isVerified'] ?? false, // FEED-2: absent field → NOT verified (fail-closed)
           },
         );
       }).toList();
