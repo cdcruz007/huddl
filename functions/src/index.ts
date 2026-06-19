@@ -18,6 +18,10 @@
  *  13. onDmMessageCreated            — Firestore onCreate trigger on conversations/{cId}/messages/{mId}.
  *                                      Server-side DM notification dispatch (MSG-SAFETY Stage 2a-ii).
  *                                      Replaces client-side BackendApiService.notifyDmMessage calls.
+ *  14. moderateAndSendGroupMessage   — HTTPS callable; server-side moderated send-gate for GROUP messages
+ *                                      (GROUP-MSG-SAFETY Stage 1). DEPLOY BUT DORMANT — no client calls
+ *                                      it yet. Reuses AI_HARD_BLOCKLIST, _normaliseDmText, and
+ *                                      _geminiClassifyDmText from moderateAndSendDM.
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -3593,4 +3597,240 @@ export const onDmMessageCreated = functions
         `[onDmMessageCreated] unhandled error for messageId=${context.params.messageId}: ${String(err)}`
       );
     }
+  });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 14. moderateAndSendGroupMessage
+//
+// GROUP-MSG-SAFETY Stage 1 — HTTPS callable; server-side moderated send-gate
+// for group messages.
+//
+// DEPLOY BUT DORMANT — nothing calls this function yet. It will be wired to
+// the Flutter group chat screen in a subsequent stage once tested.
+//
+// REUSES (does NOT duplicate) the shared primitives defined above:
+//   • AI_HARD_BLOCKLIST    — wordlist for fail-CLOSED synchronous filter
+//   • _normaliseDmText()   — text normaliser for the wordlist pass
+//   • _geminiClassifyDmText() — Gemini AI nuance classifier (fail-open)
+//
+// FLOW:
+//   1. AUTH        — unauthenticated callers are rejected.
+//   2. MEMBERSHIP  — reads groups/{groupId}.memberIds; rejects non-members.
+//   3. MODERATE    — text-only; wordlist (fail-CLOSED) then Gemini (fail-OPEN-but-FLAG).
+//   4. WRITE       — Admin SDK add-then-stamp-id to group_messages/{auto};
+//                    doc shape mirrors sendGroupMessage exactly (incl. conditional fields).
+//                    Group summary updated (lastMessage/lastSenderName/lastMessageTime).
+//                    Notifications intentionally omitted — handled by a later stage.
+//
+// RETURNS: { status: 'sent'|'blocked'|'flagged', messageId?: string, reason?: string }
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const moderateAndSendGroupMessage = functions
+  .region("europe-west2")
+  .runWith({
+    timeoutSeconds: 30,
+    memory: "256MB",
+    secrets: ["GEMINI_API_KEY"],
+  })
+  .https.onCall(async (data: Record<string, unknown>, context) => {
+
+    // ── STEP 1: AUTH ────────────────────────────────────────────────────────
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication required."
+      );
+    }
+    const uid = context.auth.uid;
+
+    // ── STEP 2: MEMBERSHIP CHECK ────────────────────────────────────────────
+    // Server-side enforcement — closes senderId spoofing + non-member posting.
+    // senderName and senderAvatar are resolved from users/{uid} server-side;
+    // the client-supplied senderId in the payload is never trusted.
+    const groupId = String(data.groupId ?? "").trim();
+    if (!groupId) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "groupId is required."
+      );
+    }
+
+    const groupSnap = await db.collection("groups").doc(groupId).get();
+    if (!groupSnap.exists) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Group not found."
+      );
+    }
+    const groupData = groupSnap.data() ?? {};
+    const memberIds: string[] = Array.isArray(groupData["memberIds"])
+      ? (groupData["memberIds"] as string[])
+      : [];
+    if (!memberIds.includes(uid)) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not a group member."
+      );
+    }
+
+    // ── STEP 3: MODERATE (text only) ────────────────────────────────────────
+    const type         = String(data.type ?? "text");
+    const rawText      = String(data.message ?? "");
+    const isTextMsg    = type === "text";
+    // Hoisted to function scope so the flag-doc path (post-write) can read it.
+    let geminiVerdict: "SAFE" | "UNSAFE" | null = null;
+
+    if (isTextMsg && rawText.trim().length > 0) {
+      // 3a. WORDLIST — fail-CLOSED, synchronous, no network.
+      //     Reuses the SHARED normaliser and blocklist — not duplicated.
+      const normalised = _normaliseDmText(rawText);
+      for (const term of AI_HARD_BLOCKLIST) {
+        if (normalised.includes(term)) {
+          functions.logger.info(
+            `[moderateAndSendGroupMessage] BLOCKED by wordlist uid=${uid} groupId=${groupId} term="${term}"`
+          );
+          return { status: "blocked", reason: "wordlist" };
+        }
+      }
+
+      // 3b. AI NUANCE — fail-OPEN-but-FLAG.
+      //     Reuses the SHARED Gemini classifier — not duplicated.
+      // On UNSAFE: drop silently (return blocked, nothing written).
+      // On null (error/timeout): write message + write moderationReview flag doc.
+      geminiVerdict = await _geminiClassifyDmText(rawText);
+
+      if (geminiVerdict === "UNSAFE") {
+        functions.logger.info(
+          `[moderateAndSendGroupMessage] BLOCKED by AI uid=${uid} groupId=${groupId}`
+        );
+        return { status: "blocked", reason: "ai" };
+      }
+      // geminiVerdict === "SAFE"  → proceed to write, no flag.
+      // geminiVerdict === null    → proceed to write, flag doc written after.
+    }
+    // Non-text types (image, voice_note, document, location, contact, poll, etc.)
+    // pass through without AI moderation (image Vision API is a future seam).
+
+    // ── STEP 4: WRITE (Admin SDK) ────────────────────────────────────────────
+    // Resolve senderName + senderAvatar from users/{uid} server-side.
+    // NEVER trust client-supplied senderId, senderName, or senderAvatar.
+    const userSnap   = await db.collection("users").doc(uid).get();
+    const userData   = userSnap.data() ?? {};
+    const senderName: string = String(userData["name"] ?? "").trim() || "Anonymous";
+    const senderAvatar: string = String(userData["photoUrl"] ?? "");
+
+    // Extract all optional message fields — typed, null-coalesced.
+    const messageText     = String(data.message ?? "");
+    const replyToText     = data.replyToText     != null ? String(data.replyToText)     : null;
+    const replyToSender   = data.replyToSender   != null ? String(data.replyToSender)   : null;
+    const audioUrl        = data.audioUrl        != null ? String(data.audioUrl)        : null;
+    const audioDuration   = data.audioDuration   != null ? Number(data.audioDuration)   : null;
+    const imageUrl        = data.imageUrl        != null ? String(data.imageUrl)        : null;
+    const latitude        = data.latitude        != null ? Number(data.latitude)        : null;
+    const longitude       = data.longitude       != null ? Number(data.longitude)       : null;
+    const locationLabel   = data.locationLabel   != null ? String(data.locationLabel)   : null;
+    const liveUntil       = data.liveUntil       != null ? String(data.liveUntil)       : null;
+    const contactName     = data.contactName     != null ? String(data.contactName)     : null;
+    const contactPhone    = data.contactPhone    != null ? String(data.contactPhone)    : null;
+    const documentUrl     = data.documentUrl     != null ? String(data.documentUrl)     : null;
+    const documentName    = data.documentName    != null ? String(data.documentName)    : null;
+    const documentSize    = data.documentSize    != null ? Number(data.documentSize)    : null;
+    const documentMimeType = data.documentMimeType != null ? String(data.documentMimeType) : null;
+    const pollQuestion    = data.pollQuestion    != null ? String(data.pollQuestion)    : null;
+    const pollOptions     = (Array.isArray(data.pollOptions)) ? (data.pollOptions as string[]) : null;
+    const pollAllowMultiple = data.pollAllowMultiple != null ? Boolean(data.pollAllowMultiple) : null;
+    const pollExpiresAt   = data.pollExpiresAt   != null ? String(data.pollExpiresAt)   : null;
+    const pollIsCalendarMode = data.pollIsCalendarMode != null ? Boolean(data.pollIsCalendarMode) : null;
+    const pollFirestoreId = data.pollFirestoreId != null ? String(data.pollFirestoreId) : null;
+    const clientTempId    = data.clientTempId    != null ? String(data.clientTempId)    : null;
+
+    // Build message payload — mirrors sendGroupMessage field list exactly.
+    // senderId FORCED from context.auth.uid — client value is ignored.
+    // Always-present fields match sendGroupMessage's unconditional assignments.
+    // Conditional fields use the same `if (x != null)` omit-when-null pattern.
+    const msgData: Record<string, unknown> = {
+      groupId,
+      senderId:     uid,           // FORCED from auth — never from data
+      senderName,                  // resolved from users/{uid} server-side
+      senderAvatar,                // resolved from users/{uid} server-side
+      message:      messageText,
+      timestamp:    admin.firestore.FieldValue.serverTimestamp(),
+      reactions:    {},
+      pinned:       false,
+      isSystem:     false,
+      isMeetupCard: false,
+      attachments:  [],
+      replyToText,
+      replyToSender,
+      meetupData:   null,
+      type,
+      audioUrl,
+      audioDuration,
+      liveExpired:  false,
+      clientTempId,
+      // Conditional fields — omitted (not set to null) when not provided,
+      // matching the `if (x != null)` pattern in sendGroupMessage exactly.
+      ...(imageUrl        != null && { imageUrl }),
+      ...(latitude        != null && { latitude }),
+      ...(longitude       != null && { longitude }),
+      ...(locationLabel   != null && { locationLabel }),
+      ...(liveUntil       != null && { liveUntil }),
+      ...(contactName     != null && { contactName }),
+      ...(contactPhone    != null && { contactPhone }),
+      ...(documentUrl     != null && { documentUrl }),
+      ...(documentName    != null && { documentName }),
+      ...(documentSize    != null && { documentSize }),
+      ...(documentMimeType != null && { documentMimeType }),
+      ...(pollQuestion    != null && { pollQuestion }),
+      ...(pollOptions     != null && { pollOptions }),
+      ...(pollAllowMultiple != null && { pollAllowMultiple }),
+      ...(pollExpiresAt   != null && { pollExpiresAt }),
+      ...(pollIsCalendarMode != null && { pollIsCalendarMode }),
+      ...(pollFirestoreId != null && { pollFirestoreId }),
+    };
+
+    // add-then-stamp-id — mirrors the sendGroupMessage pattern exactly.
+    const ref = await db.collection("group_messages").add(msgData);
+    await ref.update({ id: ref.id });
+    const messageId = ref.id;
+
+    // Update group summary — mirrors sendGroupMessage exactly.
+    await db.collection("groups").doc(groupId).update({
+      lastMessage:     messageText,
+      lastSenderName:  senderName,
+      lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Notifications intentionally omitted at Stage 1 (handled by a later stage).
+
+    functions.logger.info(
+      `[moderateAndSendGroupMessage] sent groupId=${groupId} messageId=${messageId} uid=${uid} type=${type}`
+    );
+
+    // If the AI layer returned null (error/timeout), write a flag doc for
+    // human review AFTER the message has been committed successfully.
+    // Done post-write so a flag-doc failure never blocks delivery.
+    if (isTextMsg && rawText.trim().length > 0 && geminiVerdict === null) {
+      try {
+        await db.collection("moderationReview").add({
+          groupId,
+          senderId:  uid,
+          messageId,
+          text:      rawText,
+          reason:    "ai_unavailable",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        functions.logger.info(
+          `[moderateAndSendGroupMessage] flagged messageId=${messageId} uid=${uid} reason=ai_unavailable`
+        );
+      } catch (flagErr) {
+        // Non-fatal: message is already written. Log and continue.
+        functions.logger.error(
+          `[moderateAndSendGroupMessage] flag doc write failed: ${String(flagErr)}`
+        );
+      }
+      return { status: "flagged", messageId };
+    }
+
+    return { status: "sent", messageId };
   });
