@@ -189,33 +189,85 @@ router.post('/notify-group', authMiddleware, async (req, res, next) => {
 // POST /api/messages/notify-dm
 // ─────────────────────────────────────────────────────────────────────────────
 // Push to the other participant in a 1-to-1 conversation.
-// Body: { conversationId, recipientId, senderName, messagePreview }
-router.post('/notify-dm', authMiddleware, async (req, res, next) => {
+// Body: { conversationId, recipientId, messagePreview }
+//       senderName is DERIVED server-side from users/{senderId}.name (NOTIFY-SPOOF-1).
+//
+// Auth: serviceOrAuthMiddleware — accepts either:
+//   (a) X-Service-Auth header (future Stage 2a-ii trigger) — trusts body fully.
+//   (b) Firebase ID token (current client path) — validates participants + derives senderName.
+router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
   try {
-    const senderId = req.userId;
-    const { conversationId, recipientId, senderName, messagePreview } = req.body;
+    const { conversationId, recipientId, messagePreview } = req.body;
 
-    if (!recipientId || !senderName) {
-      return res.status(400).json({ error: 'recipientId and senderName are required' });
+    // ── Service path: body is trusted (trigger already server-derived everything) ──
+    if (req.isService) {
+      const { senderName: serviceSenderName } = req.body;
+      if (!recipientId || !serviceSenderName) {
+        return res.status(400).json({ error: 'recipientId and senderName are required' });
+      }
+      const db        = getDb();
+      const messaging = getMessaging();
+      const preview   = (messagePreview || '').substring(0, 100);
+      const data      = {
+        type:           'new_dm',
+        conversationId: conversationId || '',
+        route:          `/dm/${conversationId || ''}`,
+      };
+      await _sendToRecipient(db, messaging, recipientId, serviceSenderName, preview, data);
+      return res.json({ success: true });
     }
 
-    if (recipientId === senderId) {
-      return res.json({ success: true, skipped: 'self-message' });
+    // ── User-token path: validate + derive senderName server-side ───────────
+    const senderId = req.userId;
+
+    // conversationId is required for participant validation
+    if (!conversationId) {
+      return res.status(400).json({ error: 'conversationId is required' });
+    }
+    if (!recipientId) {
+      return res.status(400).json({ error: 'recipientId is required' });
     }
 
     const db        = getDb();
     const messaging = getMessaging();
 
+    // ── Participant check: sender must be in the conversation ────────────────
+    const convSnap = await db.collection('conversations').doc(conversationId).get();
+    if (!convSnap.exists) {
+      return res.status(403).json({ error: 'Not a participant' });
+    }
+    const participants = convSnap.data().participants || [];
+    if (!participants.includes(senderId)) {
+      return res.status(403).json({ error: 'Not a participant' });
+    }
+
+    // ── Recipient check: recipientId must also be a participant ──────────────
+    // Prevents notifying arbitrary users outside the conversation.
+    if (!participants.includes(recipientId)) {
+      return res.status(403).json({ error: 'Recipient is not a participant' });
+    }
+
+    // Self-skip (same guard as before)
+    if (recipientId === senderId) {
+      return res.json({ success: true, skipped: 'self-message' });
+    }
+
+    // ── Derive senderName server-side — NEVER trust body.senderName ─────────
+    // Kills impersonation: a user cannot claim to be someone else by
+    // supplying a fake senderName in the request body (NOTIFY-SPOOF-1).
+    const senderSnap = await db.collection('users').doc(senderId).get();
+    const senderName = (senderSnap.exists && senderSnap.data().name)
+      ? senderSnap.data().name
+      : 'Someone';
+
     const preview = (messagePreview || '').substring(0, 100);
-    const title   = senderName;
-    const body    = preview;
     const data    = {
       type:           'new_dm',
-      conversationId: conversationId || '',
-      route:          `/dm/${conversationId || ''}`,
+      conversationId,
+      route:          `/dm/${conversationId}`,
     };
 
-    await _sendToRecipient(db, messaging, recipientId, title, body, data);
+    await _sendToRecipient(db, messaging, recipientId, senderName, preview, data);
 
     res.json({ success: true });
   } catch (err) {
