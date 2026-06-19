@@ -1045,6 +1045,26 @@ class FirebaseAuthService {
         }
       }
 
+      // ONBOARD-1-COLDSTART: due date — re-hydrate from Firestore if in-memory value is absent.
+      // previous_postcode is intentionally NOT persisted here — it is a transient
+      // "recently moved" signal and is session-lived by design.
+      final firestoreDueDate = data['dueDate'];
+      if (firestoreDueDate is String &&
+          firestoreDueDate.isNotEmpty &&
+          (onboarding.dueDate == null || onboarding.dueDate!.isEmpty)) {
+        onboarding.setDueDate(firestoreDueDate);
+      }
+
+      // ONBOARD-1-COLDSTART: email — re-hydrate from FirebaseAuth if in-memory value is absent.
+      // email is also written to Firestore (profile map above) but Firebase Auth is
+      // the canonical source on cold start and is always available without an extra read.
+      final fbEmail = FirebaseAuth.instance.currentUser?.email;
+      if (fbEmail != null &&
+          fbEmail.isNotEmpty &&
+          (onboarding.email == null || onboarding.email!.isEmpty)) {
+        onboarding.setEmail(fbEmail);
+      }
+
       // Bio
       final firestoreBio = (data['bio'] as String?) ?? '';
       if (firestoreBio.isNotEmpty && (onboarding.bio == null || onboarding.bio!.isEmpty)) {
@@ -1168,6 +1188,7 @@ class FirebaseAuthService {
       'postcode': postcode,
       'borough': borough,
       'children': onboarding.children,
+      'dueDate': onboarding.dueDate ?? '',   // ONBOARD-1-COLDSTART: empty string when not expecting
       'bio': onboarding.bio ?? '',
       'photoUrl': '',
       'tier': 'welcome',
