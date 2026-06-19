@@ -220,7 +220,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
         final converted = firestoreMsgs
             .map((m) => _realtimeToDirectMessage(m))
             .toList();
-        setState(() => _messages = converted);
+        // De-dup: remove optimistic copies whose clientTempId is now confirmed
+        setState(() => _messages = _reconcileOptimistic(converted));
         _scrollToBottom(animate: _messages.isNotEmpty);
       });
 
@@ -329,7 +330,44 @@ class _DMChatScreenState extends State<DMChatScreen> {
       itemData: m.itemData,
       eventData: m.eventData,
       senderAvatar: m.senderAvatar,
+      clientTempId: m.clientTempId,
     );
+  }
+
+  /// De-dup optimistic messages: given a freshly-converted list from Firestore,
+  /// remove any local 'msg_'-prefixed optimistic entry whose clientTempId
+  /// matches a clientTempId present in [incoming].
+  ///
+  /// Called on every stream update so reconciliation is race-proof — it runs
+  /// independently of the CF callable return, handling both fast-write and
+  /// slow-network scenarios.
+  List<DirectMessage> _reconcileOptimistic(List<DirectMessage> incoming) {
+    // Collect the set of clientTempIds confirmed by the server.
+    final confirmedIds = <String>{};
+    for (final m in incoming) {
+      if (m.clientTempId != null) confirmedIds.add(m.clientTempId!);
+    }
+    if (confirmedIds.isEmpty) return incoming;
+
+    // Remove local optimistic copies that the server has now acknowledged.
+    final retained = _messages
+        .where((m) =>
+            !(m.id.startsWith('msg_') &&
+              m.clientTempId != null &&
+              confirmedIds.contains(m.clientTempId)))
+        .toList();
+
+    // Merge: keep the retained optimistics (still in-flight) + all server msgs.
+    // The incoming list from Firestore is the authoritative ordered list; we
+    // prepend any still-pending optimistics so they remain visible at the tail.
+    final pendingOptimistics = retained
+        .where((m) => m.id.startsWith('msg_'))
+        .toList();
+    final serverMsgs = incoming;
+
+    // Remove duplicates: server msgs already contain confirmed ones.
+    // Result: all server messages + any remaining un-confirmed optimistics.
+    return [...serverMsgs, ...pendingOptimistics];
   }
 
   Future<void> _refreshMessages() async {
@@ -485,11 +523,28 @@ class _DMChatScreenState extends State<DMChatScreen> {
             .messagesStream(_conversationId!)
             .listen((msgs) {
           if (!mounted) return;
-          setState(() => _messages = msgs.map(_realtimeToDirectMessage).toList());
+          final converted = msgs.map(_realtimeToDirectMessage).toList();
+          // De-dup: remove optimistic copies whose clientTempId is now confirmed
+          setState(() => _messages = _reconcileOptimistic(converted));
           _scrollToBottom(animate: true);
         });
       }
       final clientTempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+
+      // ── Optimistic insert ──────────────────────────────────────────────
+      final optimisticMsg = DirectMessage(
+        id: clientTempId,
+        senderId: FirebaseAuth.instance.currentUser?.uid ?? '',
+        senderName: _userName,
+        message: text,
+        timestamp: DateTime.now(),
+        isMe: true,
+        status: MessageStatus.sending,
+        clientTempId: clientTempId,
+      );
+      setState(() => _messages.add(optimisticMsg));
+      _scrollToBottom(animate: true);
+
       final dmResult = await _realtimeDMService.sendMessageModerated(
         conversationId: _conversationId!,
         message: text,
@@ -497,6 +552,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       );
       debugPrint('[DM-SEND] conversationId: $_conversationId result: $dmResult');
       if (dmResult == SendDmResult.blocked) {
+        setState(() => _messages.removeWhere((m) => m.id == clientTempId));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -513,16 +569,18 @@ class _DMChatScreenState extends State<DMChatScreen> {
         return;
       }
       if (dmResult == SendDmResult.error) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Couldn\'t send — please try again.')),
-          );
-        }
+        // Mark optimistic message as failed so tap-to-resend works
+        setState(() {
+          final idx = _messages.indexWhere((m) => m.id == clientTempId);
+          if (idx != -1) {
+            _messages[idx] = _messages[idx].copyWith(status: MessageStatus.error);
+          }
+        });
         return;
       }
       // Record message send against subscription limit
       await SubscriptionService().recordMessageSent();
-      // Message will appear via the stream subscription — no setState needed
+      // Message will appear via the stream subscription — de-dup removes optimistic copy
     } else {
       // ── Demo mode: local DMService ─────────────────────────────────────
       if (_conversationId == null) {
@@ -2284,7 +2342,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
           .messagesStream(_conversationId!)
           .listen((msgs) {
         if (!mounted) return;
-        setState(() => _messages = msgs.map(_realtimeToDirectMessage).toList());
+        final converted = msgs.map(_realtimeToDirectMessage).toList();
+        // De-dup: remove optimistic copies whose clientTempId is now confirmed
+        setState(() => _messages = _reconcileOptimistic(converted));
         _scrollToBottom(animate: true);
       });
     } else {

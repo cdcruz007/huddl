@@ -69,6 +69,11 @@ class DirectMessage {
   /// lookup in every bubble widget.  May be null for legacy messages.
   final String? senderAvatar;
 
+  /// Client-generated temp ID used to reconcile optimistic messages with
+  /// authoritative Firestore documents.  Format: `msg_<millisecondsSinceEpoch>`.
+  /// Null for messages received from other participants or legacy messages.
+  final String? clientTempId;
+
   DirectMessage({
     required this.id,
     required this.senderId,
@@ -96,6 +101,7 @@ class DirectMessage {
     this.itemData,
     this.eventData,
     this.senderAvatar,
+    this.clientTempId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -125,6 +131,7 @@ class DirectMessage {
         'itemData': itemData,
         'eventData': eventData,
         'senderAvatar': senderAvatar,
+        'clientTempId': clientTempId,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
@@ -172,6 +179,7 @@ class DirectMessage {
       itemData:   _safeMap(json['itemData']),
       eventData:  _safeMap(json['eventData']),
       senderAvatar: json['senderAvatar'] as String?,
+      clientTempId: json['clientTempId'] as String?,
     );
   }
 
@@ -179,6 +187,7 @@ class DirectMessage {
     MessageStatus? status,
     Map<String, int>? reactions,
     String? message,
+    String? clientTempId,
   }) {
     return DirectMessage(
       id: id,
@@ -207,6 +216,7 @@ class DirectMessage {
       itemData: itemData,
       eventData: eventData,
       senderAvatar: senderAvatar,
+      clientTempId: clientTempId ?? this.clientTempId,
     );
   }
 }

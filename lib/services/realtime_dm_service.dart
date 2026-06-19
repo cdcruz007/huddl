@@ -517,6 +517,12 @@ class RealtimeDMMessage {
   /// Sender's profile photo URL snapshotted at send time.
   final String? senderAvatar;
 
+  /// Client-generated temp ID written into the Firestore doc by the CF.
+  /// Used to reconcile optimistic local messages with authoritative
+  /// Firestore documents in the stream listener.  Null for messages
+  /// created by other participants or before Stage 2b.
+  final String? clientTempId;
+
   const RealtimeDMMessage({
     required this.id,
     required this.senderId,
@@ -544,6 +550,7 @@ class RealtimeDMMessage {
     this.itemData,
     this.eventData,
     this.senderAvatar,
+    this.clientTempId,
   });
 
   factory RealtimeDMMessage.fromFirestore(
@@ -591,6 +598,7 @@ class RealtimeDMMessage {
           ? Map<String, dynamic>.from(data['eventData'])
           : null,
       senderAvatar: data['senderAvatar'] as String?,
+      clientTempId: data['clientTempId'] as String?,
     );
   }
 }
