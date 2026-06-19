@@ -15,6 +15,9 @@
  *  11. verifyBusiness               — HTTPS callable; server-side UK business verification (Companies House / HMRC VAT); writes trust fields via Admin SDK (SUB-3 / ANN-1)
  *  12. moderateAndSendDM             — HTTPS callable; server-side moderated send-gate for DMs (MSG-SAFETY-1/4).
  *                                      DEPLOY BUT DORMANT — no client calls it yet (Stage 1 of staged rollout).
+ *  13. onDmMessageCreated            — Firestore onCreate trigger on conversations/{cId}/messages/{mId}.
+ *                                      Server-side DM notification dispatch (MSG-SAFETY Stage 2a-ii).
+ *                                      Replaces client-side BackendApiService.notifyDmMessage calls.
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -3377,4 +3380,215 @@ export const moderateAndSendDM = functions
     }
 
     return { status: "sent", messageId };
+  });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 13. onDmMessageCreated
+//
+// MSG-SAFETY Stage 2a-ii — Firestore onCreate trigger.
+//
+// Fires whenever a new message document is created under
+//   conversations/{conversationId}/messages/{messageId}
+//
+// PURPOSE: dispatch DM push notifications server-side, off the authoritative
+// message write, so the notification cannot be spoofed or suppressed by the
+// client. Replaces the client-side BackendApiService.notifyDmMessage() call
+// removed from RealtimeDMService.sendMessage in Stage 2a-ii.
+//
+// FLOW:
+//   1. Extract senderId from message doc.
+//   2. Read conversations/{conversationId} to find the recipient.
+//   3. Server-derive senderName from users/{senderId}.
+//   4. Build messagePreview using the same displayText branch logic as
+//      moderateAndSendDM / RealtimeDMService (must stay in sync).
+//   5. POST to Railway /api/messages/notify-dm with X-Service-Auth header.
+//      The Railway endpoint's isService path trusts the body because senderName
+//      and recipientId are derived from authoritative Firestore data here, not
+//      from a client payload.
+//
+// RELIABILITY: everything is wrapped in try/catch; errors are logged but never
+// thrown. A failed notification must NOT cause the trigger to crash-retry —
+// that would spam Cloud Logging and potentially duplicate notifications on
+// retry if the notify call eventually succeeds.
+//
+// TIMEOUT: 6-second deadline on the Railway call. On timeout/error: log and
+// return gracefully (fail-soft).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** POST to the Railway notify-dm endpoint using the https module (no fetch in Node 18 CF runtime). */
+function _postRailwayNotifyDm(payload: {
+  conversationId: string;
+  recipientId: string;
+  senderName: string;
+  messagePreview: string;
+  secret: string;
+}): Promise<void> {
+  return new Promise((resolve) => {
+    const body = JSON.stringify({
+      conversationId:  payload.conversationId,
+      recipientId:     payload.recipientId,
+      senderName:      payload.senderName,
+      messagePreview:  payload.messagePreview,
+    });
+
+    const options: import("https").RequestOptions = {
+      hostname: "api.huddlapp.co.uk",
+      path:     "/api/messages/notify-dm",
+      method:   "POST",
+      headers:  {
+        "Content-Type":    "application/json",
+        "Content-Length":  Buffer.byteLength(body),
+        "X-Service-Auth":  payload.secret,
+      },
+    };
+
+    const timeout = setTimeout(() => {
+      functions.logger.warn("[onDmMessageCreated] Railway notify-dm timeout — skipping notification");
+      req.destroy();
+      resolve();
+    }, 6000);
+
+    const req = https.request(options, (res) => {
+      // Drain the response so the socket is released; we don't need the body.
+      res.resume();
+      res.on("end", () => {
+        clearTimeout(timeout);
+        if (res.statusCode && res.statusCode >= 400) {
+          functions.logger.warn(
+            `[onDmMessageCreated] Railway notify-dm returned HTTP ${res.statusCode}`
+          );
+        }
+        resolve();
+      });
+    });
+
+    req.on("error", (err: Error) => {
+      clearTimeout(timeout);
+      functions.logger.warn(`[onDmMessageCreated] Railway notify-dm request error: ${err.message}`);
+      resolve(); // fail-soft
+    });
+
+    req.write(body);
+    req.end();
+  });
+}
+
+export const onDmMessageCreated = functions
+  .region("europe-west2")
+  .runWith({
+    timeoutSeconds: 30,
+    memory: "256MB",
+    secrets: ["INTERNAL_SERVICE_SECRET"],
+  })
+  .firestore.document("conversations/{conversationId}/messages/{messageId}")
+  .onCreate(async (snap, context) => {
+    try {
+      const msg             = snap.data();
+      const conversationId  = context.params.conversationId;
+      const messageId       = context.params.messageId;
+
+      // ── 1. Sender ──────────────────────────────────────────────────────────
+      const senderId = String(msg.senderId ?? "").trim();
+      if (!senderId) {
+        functions.logger.warn(
+          `[onDmMessageCreated] messageId=${messageId} has no senderId — skipping`
+        );
+        return;
+      }
+
+      // ── 2. Participants ────────────────────────────────────────────────────
+      const convSnap = await db.collection("conversations").doc(conversationId).get();
+      if (!convSnap.exists) {
+        functions.logger.warn(
+          `[onDmMessageCreated] conversation ${conversationId} not found — skipping`
+        );
+        return;
+      }
+      const participants: string[] = Array.isArray(convSnap.data()?.["participants"])
+        ? (convSnap.data()!["participants"] as string[])
+        : [];
+      if (participants.length === 0) {
+        functions.logger.warn(
+          `[onDmMessageCreated] conversation ${conversationId} has no participants — skipping`
+        );
+        return;
+      }
+
+      // ── 3. Recipient ───────────────────────────────────────────────────────
+      const recipientId = participants.find((p) => p !== senderId);
+      if (!recipientId) {
+        functions.logger.info(
+          `[onDmMessageCreated] no recipient found for senderId=${senderId} — skipping (self-conversation?)`
+        );
+        return;
+      }
+
+      // ── 4. Derive senderName server-side ───────────────────────────────────
+      const senderSnap = await db.collection("users").doc(senderId).get();
+      const senderName: string = (senderSnap.exists && senderSnap.data()?.["name"])
+        ? String(senderSnap.data()!["name"])
+        : "Someone";
+
+      // ── 5. Build messagePreview (same displayText logic as moderateAndSendDM) ──
+      const type         = String(msg.type ?? "text");
+      const rawMessage   = String(msg.message ?? "");
+      const documentName = msg.documentName != null ? String(msg.documentName) : null;
+      const groupData    = (msg.groupData   != null && typeof msg.groupData  === "object")
+        ? (msg.groupData  as Record<string, unknown>) : null;
+      const itemData     = (msg.itemData    != null && typeof msg.itemData   === "object")
+        ? (msg.itemData   as Record<string, unknown>) : null;
+      const meetupData   = (msg.meetupData  != null && typeof msg.meetupData === "object")
+        ? (msg.meetupData as Record<string, unknown>) : null;
+      const eventData    = (msg.eventData   != null && typeof msg.eventData  === "object")
+        ? (msg.eventData  as Record<string, unknown>) : null;
+
+      let messagePreview: string;
+      if (groupData != null) {
+        messagePreview = `\u{1F465} Group: ${String(groupData["name"] ?? "Group")}`;
+      } else if (itemData != null) {
+        messagePreview = `\u{1F4E6} Item: ${String(itemData["title"] ?? "Item")}`;
+      } else if (meetupData != null) {
+        messagePreview = `\u{1F4C5} Meetup: ${String(meetupData["title"] ?? "Meetup")}`;
+      } else if (eventData != null) {
+        messagePreview = `\u{1F4C5} Event: ${String(eventData["title"] ?? "Event")}`;
+      } else if (type === "image") {
+        messagePreview = "\u{1F4F7} Photo";
+      } else if (type === "voice_note") {
+        messagePreview = "\u{1F3A4} Voice message";
+      } else if (type === "document") {
+        messagePreview = `\u{1F4C4} ${documentName ?? "Document"}`;
+      } else if (type === "location") {
+        messagePreview = "\u{1F4CD} Location";
+      } else {
+        messagePreview = rawMessage;
+      }
+      messagePreview = messagePreview.substring(0, 100);
+
+      // ── 6. POST to Railway ─────────────────────────────────────────────────
+      const secret = process.env.INTERNAL_SERVICE_SECRET;
+      if (!secret) {
+        functions.logger.warn(
+          "[onDmMessageCreated] INTERNAL_SERVICE_SECRET not set — notification skipped"
+        );
+        return;
+      }
+
+      await _postRailwayNotifyDm({
+        conversationId,
+        recipientId,
+        senderName,
+        messagePreview,
+        secret,
+      });
+
+      functions.logger.info(
+        `[onDmMessageCreated] notified recipientId=${recipientId} for messageId=${messageId} type=${type}`
+      );
+
+    } catch (err) {
+      // Never throw from a Firestore trigger — retries could spam notifications.
+      functions.logger.error(
+        `[onDmMessageCreated] unhandled error for messageId=${context.params.messageId}: ${String(err)}`
+      );
+    }
   });

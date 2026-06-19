@@ -48,8 +48,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
-import 'backend_api_service.dart';
-import 'huddl_notification_service.dart';
+// backend_api_service.dart and huddl_notification_service.dart removed:
+// MSG-SAFETY Stage 2a-ii — DM notifications now dispatched by the
+// onDmMessageCreated Firestore trigger, not the client.
 
 class RealtimeDMService {
   // ── Singleton ─────────────────────────────────────────────────────────────
@@ -285,46 +286,8 @@ class RealtimeDMService {
         ...unreadUpdate,
       }, SetOptions(merge: true));
 
-      // ── Push + in-app notification to the other participant ─────────────
-      final recipientId = participants.firstWhere(
-        (p) => p != uid,
-        orElse: () => '',
-      );
-      if (recipientId.isNotEmpty) {
-        // Backend push notification
-        unawaited(
-          BackendApiService().notifyDmMessage(
-            conversationId: conversationId,
-            recipientId: recipientId,
-            senderName: senderName,
-            messagePreview: displayText,
-          ),
-        );
-        // In-app Firestore notification
-        final isVoice = type == 'voice_note' ||
-            (msgData['audioUrl'] != null &&
-                (msgData['audioUrl'] as String).isNotEmpty);
-        if (isVoice) {
-          unawaited(
-            HuddlNotificationService().voiceMessageDm(
-              recipientId: recipientId,
-              senderName: senderName,
-              conversationId: conversationId,
-              senderPhotoUrl: myPhotoUrl.isNotEmpty ? myPhotoUrl : null,
-            ),
-          );
-        } else {
-          unawaited(
-            HuddlNotificationService().newDm(
-              recipientId: recipientId,
-              senderName: senderName,
-              messagePreview: displayText,
-              conversationId: conversationId,
-              senderPhotoUrl: myPhotoUrl.isNotEmpty ? myPhotoUrl : null,
-            ),
-          );
-        }
-      }
+      // Notifications are dispatched server-side by the onDmMessageCreated
+      // Firestore trigger (MSG-SAFETY Stage 2a-ii). No client call needed.
 
       _log('sendMessage: sent in $conversationId');
       return true;
