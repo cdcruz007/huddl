@@ -280,6 +280,16 @@ describe("F-09 — affectedKeys blocklist on users/{uid} update", () => {
     );
   });
 
+  // T-05k: businessSelfDeclared self-grant blocked (SUB-3 / ANN-1)
+  // verifyBusiness CF writes this field via Admin SDK (sole_trader_declaration path).
+  // A modified client must not be able to self-grant the self-declared badge.
+  test("T-05k: alice writes {businessSelfDeclared: true} to her own users doc → DENIED", async () => {
+    const ref = doc(alice().firestore(), "users", ALICE_UID);
+    await assertFails(
+      updateDoc(ref, { businessSelfDeclared: true })
+    );
+  });
+
   // T-05e (original): fcmToken self-write — must succeed (push registration must not break)
   test("T-05e-fcm: alice writes {fcmToken: 'xyz'} to her own users doc → SUCCEEDS", async () => {
     const ref = doc(alice().firestore(), "users", ALICE_UID);
