@@ -13,6 +13,8 @@
  *   9. setUserBorough               — HTTPS callable; resolves postcode server-side, enforces Cambridge gate, writes geo fields via Admin SDK
  *  10. deleteUserData               — GDPR deletion callable; Phase 1+2+3: query-deletes, subcollection sweeps, group membership, anonymise (conversations + group_messages)
  *  11. verifyBusiness               — HTTPS callable; server-side UK business verification (Companies House / HMRC VAT); writes trust fields via Admin SDK (SUB-3 / ANN-1)
+ *  12. moderateAndSendDM             — HTTPS callable; server-side moderated send-gate for DMs (MSG-SAFETY-1/4).
+ *                                      DEPLOY BUT DORMANT — no client calls it yet (Stage 1 of staged rollout).
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -3015,4 +3017,364 @@ export const verifyBusiness = functions
       "invalid-argument",
       "Unknown verification method."
     );
+  });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 12. moderateAndSendDM
+//
+// MSG-SAFETY-1 / MSG-SAFETY-4  —  Stage 1: DEPLOY BUT DORMANT.
+// No existing function, client code, or firestore.rules is modified.
+// The client continues to write DMs directly via RealtimeDMService until
+// Stage 2 routes calls here.
+//
+// PURPOSE: replicate RealtimeDMService.sendMessage's full write behaviour
+// server-side, with TEXT moderation BEFORE the write, so a blocked message
+// is never persisted to Firestore.
+//
+// TEXT MODERATION (two layers, defence-in-depth):
+//   Layer 1 — WORDLIST (fail-CLOSED, no network dependency)
+//             Synchronous; if hit, message is dropped immediately.
+//   Layer 2 — AI NUANCE via Gemini flash (fail-OPEN-but-FLAG)
+//             If Gemini is unavailable, message is written AND flagged
+//             in moderationReview/{auto-id} for human review.
+//
+// IMAGE MODERATION: intentional future seam. All non-text types pass through
+// to the write step without AI moderation. A future Stage adds
+// Vision API classification on imageUrl before the write.
+//
+// WRITE: Admin SDK only — senderId is FORCED from context.auth.uid,
+// senderName/Avatar resolved server-side from users/{uid}.
+// participantAvatars use dot-notation field paths (set+merge) matching the
+// client implementation exactly.
+//
+// RETURNS:
+//   { status: 'sent',    messageId }  — message written
+//   { status: 'flagged', messageId }  — written but queued for review
+//   { status: 'blocked', reason: 'wordlist'|'ai' }  — not written
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Module-level constant: hard-blocked terms (fail-CLOSED wordlist) ────────
+// Match the client _normalise function: lowercase + strip * @ ! 0 $ chars.
+// Terms are checked as substrings of the normalised message.
+// Ordered from most-specific to avoid partial false-positives where possible.
+const AI_HARD_BLOCKLIST: string[] = [
+  "cunt", "pussy", "dick", "cock", "twat", "wank",
+  "motherfucker", "motherfucking",
+  "nigger", "nigga", "faggot", "fag", "chink", "spic", "kike", "wetback", "tranny",
+  "retard", "paedo", "pedo", "groomer", "nonce",
+  "kill yourself", "kys", "kill urself",
+  "i will kill", "i will hurt", "i know where you live",
+];
+
+/** Normalise a message string to match the client _normalise function. */
+function _normaliseDmText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[*@!0$]/g, "");
+}
+
+/**
+ * Call Gemini flash with a safety-classification system prompt.
+ * Returns 'SAFE', 'UNSAFE', or null on error/timeout.
+ */
+async function _geminiClassifyDmText(text: string): Promise<"SAFE" | "UNSAFE" | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    functions.logger.warn("[moderateAndSendDM] GEMINI_API_KEY missing — skipping AI layer");
+    return null;
+  }
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
+    `:generateContent?key=${apiKey}`;
+
+  const body = JSON.stringify({
+    systemInstruction: {
+      parts: [{
+        text:
+          "You are a content safety classifier for a UK parenting community app. " +
+          "Classify the following user message as SAFE or UNSAFE. " +
+          "UNSAFE means the message contains ANY of: threats of violence or self-harm " +
+          "directed at a specific person; child sexual abuse material (CSAM) or grooming language; " +
+          "severe, targeted harassment or hate speech targeting a person's identity; " +
+          "explicit sexual content. " +
+          "SAFE means everything else, including strong opinions, mild rudeness, complaints, " +
+          "or adult discussion. " +
+          "Respond with ONLY the single word SAFE or UNSAFE.",
+      }],
+    },
+    contents: [{ role: "user", parts: [{ text }] }],
+    generationConfig: { temperature: 0, maxOutputTokens: 8 },
+  });
+
+  return new Promise<"SAFE" | "UNSAFE" | null>((resolve) => {
+    const timeout = setTimeout(() => {
+      functions.logger.warn("[moderateAndSendDM] Gemini classify timeout — fail-open");
+      resolve(null);
+    }, 6000);
+
+    const req = https.request(
+      url,
+      { method: "POST", headers: { "Content-Type": "application/json" } },
+      (res) => {
+        let raw = "";
+        res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+        res.on("end", () => {
+          clearTimeout(timeout);
+          try {
+            const parsed = JSON.parse(raw) as {
+              candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+            };
+            const verdict = (
+              parsed?.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+            ).trim().toUpperCase();
+            if (verdict === "UNSAFE") { resolve("UNSAFE"); }
+            else if (verdict === "SAFE") { resolve("SAFE"); }
+            else {
+              functions.logger.warn(
+                `[moderateAndSendDM] Gemini returned unexpected verdict: "${verdict}" — fail-open`
+              );
+              resolve(null);
+            }
+          } catch {
+            functions.logger.warn("[moderateAndSendDM] Gemini parse error — fail-open");
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on("error", (err: Error) => {
+      clearTimeout(timeout);
+      functions.logger.warn(`[moderateAndSendDM] Gemini request error: ${err.message} — fail-open`);
+      resolve(null);
+    });
+    req.write(body);
+    req.end();
+  });
+}
+
+export const moderateAndSendDM = functions
+  .region("europe-west2")
+  .runWith({
+    timeoutSeconds: 30,
+    memory: "256MB",
+    secrets: ["GEMINI_API_KEY"],
+  })
+  .https.onCall(async (data: Record<string, unknown>, context) => {
+
+    // ── STEP 1: AUTH ────────────────────────────────────────────────────────
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication required."
+      );
+    }
+    const uid = context.auth.uid;
+
+    // ── STEP 2: PARTICIPANT CHECK ────────────────────────────────────────────
+    // Server-side enforcement — closes senderId spoofing that is possible when
+    // the client writes directly. The CF resolves senderName/Avatar from
+    // users/{uid} and forces senderId = uid (never from client payload).
+    const conversationId = String(data.conversationId ?? "").trim();
+    if (!conversationId) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "conversationId is required."
+      );
+    }
+
+    const convSnap = await db.collection("conversations").doc(conversationId).get();
+    if (!convSnap.exists) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not a participant."
+      );
+    }
+    const convData = convSnap.data() ?? {};
+    const participants: string[] = Array.isArray(convData["participants"])
+      ? (convData["participants"] as string[])
+      : [];
+    if (!participants.includes(uid)) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not a participant."
+      );
+    }
+
+    // ── STEP 3: MODERATE (text only) ────────────────────────────────────────
+    const type = String(data.type ?? "text");
+    const rawText = String(data.message ?? "");
+    const isTextMessage = type === "text";
+    // Hoisted to function scope so the flag-doc path (after the write) can
+    // read it without needing to re-enter the moderation block.
+    let geminiVerdict: "SAFE" | "UNSAFE" | null = null;
+
+    if (isTextMessage && rawText.trim().length > 0) {
+      // 3a. WORDLIST — fail-CLOSED, synchronous, no network.
+      const normalised = _normaliseDmText(rawText);
+      for (const term of AI_HARD_BLOCKLIST) {
+        if (normalised.includes(term)) {
+          functions.logger.info(
+            `[moderateAndSendDM] BLOCKED by wordlist uid=${uid} term="${term}"`
+          );
+          return { status: "blocked", reason: "wordlist" };
+        }
+      }
+
+      // 3b. AI NUANCE — fail-OPEN-but-FLAG.
+      // On UNSAFE: drop silently (return blocked, nothing written).
+      // On null (error/timeout): write message + write moderationReview flag doc.
+      geminiVerdict = await _geminiClassifyDmText(rawText);
+
+      if (geminiVerdict === "UNSAFE") {
+        functions.logger.info(
+          `[moderateAndSendDM] BLOCKED by AI uid=${uid}`
+        );
+        return { status: "blocked", reason: "ai" };
+      }
+      // geminiVerdict === "SAFE"  → proceed to write, no flag.
+      // geminiVerdict === null    → proceed to write, flag doc written after.
+    }
+    // Non-text types (image, voice_note, document, location, contact,
+    // meetupInvite, etc.) pass through to the write step without AI moderation.
+    // Image moderation via Vision API is a documented future seam (Stage N).
+
+    // ── STEP 4: WRITE (Admin SDK) ────────────────────────────────────────────
+    // Resolve senderName + senderAvatar from users/{uid} — never from client.
+    const userSnap = await db.collection("users").doc(uid).get();
+    const userData = userSnap.data() ?? {};
+    const senderName: string = String(userData["name"] ?? "Unknown");
+    const senderAvatar: string = String(userData["photoUrl"] ?? "");
+
+    // Typed message fields — all optional, undefined if not supplied by caller.
+    const messageText   = String(data.message ?? "");
+    const replyToText   = data.replyToText   != null ? String(data.replyToText)   : null;
+    const replyToSender = data.replyToSender != null ? String(data.replyToSender) : null;
+    const imageUrl      = data.imageUrl      != null ? String(data.imageUrl)      : null;
+    const audioUrl      = data.audioUrl      != null ? String(data.audioUrl)      : null;
+    const audioDuration = data.audioDuration != null ? Number(data.audioDuration) : null;
+    const documentName  = data.documentName  != null ? String(data.documentName)  : null;
+    const documentSize  = data.documentSize  != null ? Number(data.documentSize)  : null;
+    const latitude      = data.latitude      != null ? Number(data.latitude)      : null;
+    const longitude     = data.longitude     != null ? Number(data.longitude)     : null;
+    const locationLabel = data.locationLabel != null ? String(data.locationLabel) : null;
+    const contactName   = data.contactName   != null ? String(data.contactName)   : null;
+    const contactPhone  = data.contactPhone  != null ? String(data.contactPhone)  : null;
+    const meetupData    = (data.meetupData   != null && typeof data.meetupData  === "object") ? (data.meetupData  as Record<string, unknown>) : null;
+    const groupData     = (data.groupData    != null && typeof data.groupData   === "object") ? (data.groupData   as Record<string, unknown>) : null;
+    const itemData      = (data.itemData     != null && typeof data.itemData    === "object") ? (data.itemData    as Record<string, unknown>) : null;
+    const eventData     = (data.eventData    != null && typeof data.eventData   === "object") ? (data.eventData   as Record<string, unknown>) : null;
+
+    // Create message document reference (auto-id).
+    const msgRef = db
+      .collection("conversations")
+      .doc(conversationId)
+      .collection("messages")
+      .doc();
+    const messageId = msgRef.id;
+
+    // Build message payload — matches RealtimeDMService.sendMessage field list exactly.
+    // senderId is FORCED from context.auth.uid — client-supplied value is ignored.
+    const msgPayload: Record<string, unknown> = {
+      id:            messageId,
+      senderId:      uid,            // FORCED from auth — never from data
+      senderName,                    // resolved from users/{uid} server-side
+      senderAvatar,                  // resolved from users/{uid} server-side
+      message:       messageText,
+      timestamp:     admin.firestore.FieldValue.serverTimestamp(),
+      type,
+      status:        "sent",
+      reactions:     {},
+      replyToText,
+      replyToSender,
+      imageUrl,
+      audioUrl,
+      audioDuration,
+      documentName,
+      documentSize,
+      latitude,
+      longitude,
+      locationLabel,
+      contactName,
+      contactPhone,
+      meetupData,
+      groupData,
+      itemData,
+      eventData,
+    };
+
+    await msgRef.set(msgPayload);
+
+    // Build displayText for conversation summary — mirrors RealtimeDMService exactly.
+    let displayText = messageText;
+    if (groupData != null) {
+      displayText = `\u{1F465} Group: ${String(groupData["name"] ?? "Group")}`;
+    } else if (itemData != null) {
+      displayText = `\u{1F4E6} Item: ${String(itemData["title"] ?? "Item")}`;
+    } else if (meetupData != null) {
+      displayText = `\u{1F4C5} Meetup: ${String(meetupData["title"] ?? "Meetup")}`;
+    } else if (eventData != null) {
+      displayText = `\u{1F4C5} Event: ${String(eventData["title"] ?? "Event")}`;
+    } else if (type === "image") {
+      displayText = "\u{1F4F7} Photo";
+    } else if (type === "voice_note") {
+      displayText = "\u{1F3A4} Voice message";
+    } else if (type === "document") {
+      displayText = `\u{1F4C4} ${documentName ?? "Document"}`;
+    } else if (type === "location") {
+      displayText = "\u{1F4CD} Location";
+    }
+
+    // Build unread increment — every participant except the sender gets +1.
+    const summaryUpdate: Record<string, unknown> = {
+      lastMessage:    displayText,
+      lastSenderId:   uid,
+      lastSenderName: senderName,
+      lastMessageAt:  admin.firestore.FieldValue.serverTimestamp(),
+      // Dot-notation field path so set+merge doesn't clobber other participants.
+      [`participantAvatars.${uid}`]: senderAvatar,
+    };
+    for (const p of participants) {
+      if (p !== uid) {
+        summaryUpdate[`unreadCount.${p}`] = admin.firestore.FieldValue.increment(1);
+      }
+    }
+
+    // set+merge so this doesn't throw if the conversation doc was deleted
+    // between the participant check and here (edge case race).
+    await db.collection("conversations").doc(conversationId).set(
+      summaryUpdate,
+      { merge: true }
+    );
+
+    functions.logger.info(
+      `[moderateAndSendDM] sent conversationId=${conversationId} messageId=${messageId} uid=${uid} type=${type}`
+    );
+
+    // If the AI layer returned null (error/timeout), write a flag doc for
+    // human review AFTER the message has been committed successfully.
+    // Done post-write so a flag-doc failure never blocks delivery.
+    if (isTextMessage && rawText.trim().length > 0 && geminiVerdict === null) {
+      try {
+        await db.collection("moderationReview").add({
+          conversationId,
+          senderId:  uid,
+          messageId,
+          text:      rawText,
+          reason:    "ai_unavailable",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        functions.logger.info(
+          `[moderateAndSendDM] flagged messageId=${messageId} uid=${uid} reason=ai_unavailable`
+        );
+      } catch (flagErr) {
+        // Non-fatal: message is already written. Log and continue.
+        functions.logger.error(
+          `[moderateAndSendDM] flag doc write failed: ${String(flagErr)}`
+        );
+      }
+      return { status: "flagged", messageId };
+    }
+
+    return { status: "sent", messageId };
   });
