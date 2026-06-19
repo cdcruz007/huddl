@@ -13,6 +13,7 @@ import '../../services/ai_directory_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/common/underlined_text_field.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/business_verification_badge.dart';
 
 import '../../theme/huddl_colors.dart';
 import '../../theme/huddl_animations.dart';
@@ -1878,6 +1879,11 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
   late int _endorseCount;
   bool _endorsing = false;
 
+  // ANN-1: owner business-verification status (fetched when ownerUid present)
+  // Defaults fail-closed (FEED-2 pattern: absent field → NOT verified/declared)
+  bool _ownerVerified = false;
+  bool _ownerSelfDeclared = false;
+
   @override
   void initState() {
     super.initState();
@@ -1885,6 +1891,33 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
     _endorseCount = widget.listing.endorsementCount;
     _load();
     _checkEndorsed();
+    // Only fetch owner verification for Partner listings with a known ownerUid.
+    // Local_services documents do NOT carry businessVerified/businessSelfDeclared
+    // (those fields live on users/{uid}) — so we fetch from users/ here.
+    if (widget.listing.isPartnerListing &&
+        widget.listing.ownerUid != null &&
+        widget.listing.ownerUid!.isNotEmpty) {
+      _loadOwnerVerification(widget.listing.ownerUid!);
+    }
+  }
+
+  // Fetches businessVerified + businessSelfDeclared from users/{ownerUid}.
+  // Fail-closed: any error or missing doc leaves both false.
+  Future<void> _loadOwnerVerification(String ownerUid) async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerUid)
+          .get();
+      if (!mounted) return;
+      final data = snap.data() ?? {};
+      setState(() {
+        _ownerVerified      = (data['businessVerified']     as bool?) ?? false;
+        _ownerSelfDeclared  = (data['businessSelfDeclared'] as bool?) ?? false;
+      });
+    } catch (_) {
+      // Non-fatal — badge stays hidden on error (fail-closed)
+    }
   }
 
   Future<void> _checkEndorsed() async {
@@ -2167,6 +2200,19 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                             style: HuddlText.caption(color: HuddlColors.primary),
                           ),
                         ),
+                      // ANN-1: business verification badge — only on Partner
+                      // listings where owner verification was resolved above.
+                      // local_services docs do NOT carry businessVerified /
+                      // businessSelfDeclared; they are fetched from users/{uid}
+                      // by _loadOwnerVerification() in initState.
+                      if (listing.isPartnerListing &&
+                          (_ownerVerified || _ownerSelfDeclared)) ...[
+                        const SizedBox(height: 4),
+                        BusinessVerificationBadge(
+                          businessVerified:     _ownerVerified,
+                          businessSelfDeclared: _ownerSelfDeclared,
+                        ),
+                      ],
                     ],
                   ),
                 ),

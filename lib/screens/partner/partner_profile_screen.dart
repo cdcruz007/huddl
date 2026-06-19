@@ -7,6 +7,7 @@ import '../../services/local_services_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/huddl_button.dart';
+import '../../widgets/business_verification_badge.dart';
 
 // =============================================================================
 // PARTNER BUSINESS PROFILE SCREEN
@@ -32,6 +33,8 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
   // User doc fields
   String _businessName = '';
   bool _businessVerified = false;
+  // ANN-1: sole-trader self-declaration — MUST default false (FEED-2 pattern)
+  bool _businessSelfDeclared = false;
 
   // Listings + endorsements
   List<ServiceListing> _listings = [];
@@ -97,6 +100,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
         _businessName = (userData['verifiedBusinessName'] as String?) ??
             (userData['displayName'] as String?) ?? '';
         _businessVerified = (userData['businessVerified'] as bool?) ?? false;
+        _businessSelfDeclared = (userData['businessSelfDeclared'] as bool?) ?? false; // ANN-1
         _listings = listings;
         _recentEndorsements = recent;
         _loading = false;
@@ -248,33 +252,22 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                           ),
                         ),
                       const SizedBox(height: 8),
-                      // HMRC-verified badge + borough
+                      // Business verification badge + borough  (ANN-1)
+                      // BusinessVerificationBadge handles all three states:
+                      //   verified → filled teal "Verified"
+                      //   self-declared → outlined grey "Self-declared"
+                      //   neither → SizedBox.shrink()
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (_businessVerified) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(HuddlIcons.verifiedFill,
-                                      size: 12, color: HuddlColors.primary),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'HMRC Verified',
-                                    style: HuddlText.caption(weight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          BusinessVerificationBadge(
+                            businessVerified:     _businessVerified,
+                            businessSelfDeclared: _businessSelfDeclared,
+                            businessName:         _businessName,
+                          ),
+                          if ((_businessVerified || _businessSelfDeclared) &&
+                              _boroughLabel.isNotEmpty)
                             const SizedBox(width: 8),
-                          ],
                           if (_boroughLabel.isNotEmpty)
                             Row(
                               mainAxisSize: MainAxisSize.min,
