@@ -11,12 +11,14 @@
 //             (which is what shared_preferences uses under the hood).
 //             Manual export also available for user peace-of-mind.
 //
-// MANUAL BACKUP FORMAT: encrypted JSON file containing every SharedPreferences
-// key-value pair + metadata, downloadable by the user and re-importable
-// from the Settings → Backup & Restore screen.
+// MANUAL BACKUP FORMAT: PLAINTEXT JSON file (NOT encrypted).
+//   The exported file contains non-sensitive app settings and is intentionally
+//   limited to data safe to store unencrypted. The file is human-readable.
+//   If sensitive PII is ever added to a future backup format it MUST be
+//   encrypted with real authenticated encryption (e.g. AES-256-GCM) before
+//   writing — a label alone does not constitute encryption.
 //
-// WHAT IS BACKED UP (all device-local data):
-//   • Profile / onboarding data        (onboarding_data_v1)
+// WHAT THIS BACKUP INTENTIONALLY CONTAINS (non-sensitive settings only):
 //   • Group messages & reactions        (gc_user_texts_*, gc_user_media_*, gc_reactions_*)
 //   • Thread replies                    (thread_replies_*)
 //   • Hidden / deleted messages         (hidden_msgs_*, deleted_everyone_*)
@@ -37,7 +39,12 @@
 //   • Feed preferences                  (feed_preferences_v1)
 //   • User-created groups               (user_created_groups_v1)
 //
-// WHAT IS EXCLUDED (intentionally):
+// WHAT IS EXCLUDED (intentionally — defense-in-depth):
+//   • Sensitive PII (name, email, phone, postcode, children's data, due date,
+//     bio) — ONBOARD-1 moved these to SecurePiiStorage (Keychain/Keystore on
+//     mobile; in-memory only on web). They no longer exist in SharedPreferences
+//     so exportBackup() cannot capture them. The 'flutter.onboarding_data_v1'
+//     key is also explicitly excluded below as a defense-in-depth measure.
 //   • Passwords (never stored — see onboarding_data_service.dart)
 //   • Firebase auth tokens (managed by Firebase SDK, not SharedPreferences)
 //   • Temporary caches (ai_discovery_last_run, last_login_timestamp)
@@ -87,8 +94,16 @@ class BackupMetadata {
 // ── Keys to exclude from backup ──────────────────────────────────────────────
 
 /// Keys that should NEVER be included in a backup — transient, device-specific,
-/// or potentially sensitive data that would be invalid on a new device.
+/// or sensitive data that must not appear in a plaintext export.
+///
+/// BACKUP-1 defense-in-depth: onboarding_data_v1 is explicitly excluded here
+/// even though ONBOARD-1 already stripped sensitive PII from it. If sensitive
+/// data ever re-lands in that blob it will not enter a plaintext backup file.
 const Set<String> _excludedKeys = {
+  // ONBOARD-1 / BACKUP-1: onboarding blob — may contain PII if migration has
+  // not yet run on this device. Excluded unconditionally from plaintext backup.
+  'flutter.onboarding_data_v1',
+  // Transient / device-specific keys
   'flutter.ai_discovery_last_run',
   'flutter.last_login_timestamp',
   'flutter.data_reset_v2',
