@@ -90,20 +90,6 @@ class SubscriptionService extends ChangeNotifier {
     }
   }
 
-  /// Mark the user as business-verified in Firestore + local state.
-  Future<void> setBusinessVerified({required bool verified}) async {
-    _businessVerified = verified;
-    notifyListeners();
-    try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) return;
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set({'businessVerified': verified}, SetOptions(merge: true));
-    } catch (_) {}
-  }
-
   // ---- Scheduled change / cancellation getters ----
   bool get hasScheduledChange => _subscription.hasScheduledChange;
   bool get isPendingCancellation => _subscription.isPendingCancellation;
