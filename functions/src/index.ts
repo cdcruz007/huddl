@@ -3267,6 +3267,7 @@ export const moderateAndSendDM = functions
     const groupData     = (data.groupData    != null && typeof data.groupData   === "object") ? (data.groupData   as Record<string, unknown>) : null;
     const itemData      = (data.itemData     != null && typeof data.itemData    === "object") ? (data.itemData    as Record<string, unknown>) : null;
     const eventData     = (data.eventData    != null && typeof data.eventData   === "object") ? (data.eventData   as Record<string, unknown>) : null;
+    const clientTempId  = data.clientTempId != null ? String(data.clientTempId) : null;
 
     // Create message document reference (auto-id).
     const msgRef = db
@@ -3304,6 +3305,7 @@ export const moderateAndSendDM = functions
       groupData,
       itemData,
       eventData,
+      clientTempId,
     };
 
     await msgRef.set(msgPayload);

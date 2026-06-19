@@ -472,7 +472,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     });
 
     if (_isRealUser) {
-      // ── Real user: send via Firestore ──────────────────────────────────
+      // ── Real user: send via moderateAndSendDM CF ───────────────────────
       if (_conversationId == null) {
         final convId = await _realtimeDMService.getOrCreateConversation(
           widget.recipientId,
@@ -489,11 +489,37 @@ class _DMChatScreenState extends State<DMChatScreen> {
           _scrollToBottom(animate: true);
         });
       }
-      await _realtimeDMService.sendMessage(
+      final clientTempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+      final dmResult = await _realtimeDMService.sendMessageModerated(
         conversationId: _conversationId!,
         message: text,
+        clientTempId: clientTempId,
       );
-      debugPrint('[DM-SEND] conversationId: $_conversationId');
+      debugPrint('[DM-SEND] conversationId: $_conversationId result: $dmResult');
+      if (dmResult == SendDmResult.blocked) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Your message could not be sent — it may violate our community guidelines.',
+              ),
+              backgroundColor: HuddlColors.error,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+        return;
+      }
+      if (dmResult == SendDmResult.error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Couldn\'t send — please try again.')),
+          );
+        }
+        return;
+      }
       // Record message send against subscription limit
       await SubscriptionService().recordMessageSent();
       // Message will appear via the stream subscription — no setState needed
@@ -1556,14 +1582,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
         contextId: convId,
       );
 
-      // Send via realtime service if real user
+      // Send via moderated CF if real user
       if (_isRealUser) {
-        await _realtimeDMService.sendMessage(
+        final voiceTempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+        await _realtimeDMService.sendMessageModerated(
           conversationId: convId,
           message: '🎤 Voice message',
           type: 'voice_note',
           audioUrl: audioUrl,
           audioDuration: result.duration,
+          clientTempId: voiceTempId,
         );
       }
     } catch (e) {
@@ -2751,7 +2779,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
         if (convId == null || convId == 'blocked') return;
         _conversationId = convId;
       }
-      await _realtimeDMService.sendMessage(
+      final mediaTempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+      await _realtimeDMService.sendMessageModerated(
         conversationId: _conversationId!,
         message: displayMsg,
         type: typeStr,
@@ -2763,6 +2792,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         locationLabel: locationLabel,
         contactName: contactName,
         contactPhone: contactPhone,
+        clientTempId: mediaTempId,
       );
       // Stream subscription will update _messages automatically
     } else {

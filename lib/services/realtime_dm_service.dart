@@ -45,12 +45,28 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
 // backend_api_service.dart and huddl_notification_service.dart removed:
 // MSG-SAFETY Stage 2a-ii — DM notifications now dispatched by the
 // onDmMessageCreated Firestore trigger, not the client.
+
+/// Result of a moderated DM send via the moderateAndSendDM Cloud Function.
+enum SendDmResult {
+  /// Message was accepted and written by the CF.
+  sent,
+
+  /// Message was hard-blocked (wordlist or AI UNSAFE).
+  blocked,
+
+  /// Message was written but flagged for human review.
+  flagged,
+
+  /// Network error, CF exception, or unexpected response.
+  error,
+}
 
 class RealtimeDMService {
   // ── Singleton ─────────────────────────────────────────────────────────────
@@ -294,6 +310,79 @@ class RealtimeDMService {
     } catch (e) {
       _log('ERROR sendMessage: $e');
       return false;
+    }
+  }
+
+  /// Send a message via the moderateAndSendDM Cloud Function.
+  ///
+  /// The CF validates the caller, moderates text content, and writes the
+  /// message doc server-side — client cannot forge senderId or bypass
+  /// moderation.  Returns [SendDmResult] so the UI can react appropriately.
+  Future<SendDmResult> sendMessageModerated({
+    required String conversationId,
+    required String message,
+    String type = 'text',
+    String? clientTempId,
+    String? replyToText,
+    String? replyToSender,
+    String? imageUrl,
+    String? audioUrl,
+    int? audioDuration,
+    String? documentName,
+    int? documentSize,
+    double? latitude,
+    double? longitude,
+    String? locationLabel,
+    String? contactName,
+    String? contactPhone,
+    Map<String, dynamic>? meetupData,
+    Map<String, dynamic>? groupData,
+    Map<String, dynamic>? itemData,
+    Map<String, dynamic>? eventData,
+  }) async {
+    try {
+      final callable = FirebaseFunctions.instanceFor(region: 'europe-west2')
+          .httpsCallable('moderateAndSendDM');
+      final result = await callable.call(<String, dynamic>{
+        'conversationId': conversationId,
+        'message': message,
+        'type': type,
+        if (clientTempId != null) 'clientTempId': clientTempId,
+        if (replyToText != null) 'replyToText': replyToText,
+        if (replyToSender != null) 'replyToSender': replyToSender,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+        if (audioUrl != null) 'audioUrl': audioUrl,
+        if (audioDuration != null) 'audioDuration': audioDuration,
+        if (documentName != null) 'documentName': documentName,
+        if (documentSize != null) 'documentSize': documentSize,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+        if (locationLabel != null) 'locationLabel': locationLabel,
+        if (contactName != null) 'contactName': contactName,
+        if (contactPhone != null) 'contactPhone': contactPhone,
+        if (meetupData != null) 'meetupData': meetupData,
+        if (groupData != null) 'groupData': groupData,
+        if (itemData != null) 'itemData': itemData,
+        if (eventData != null) 'eventData': eventData,
+      });
+      final status = result.data['status'] as String? ?? 'error';
+      switch (status) {
+        case 'sent':
+          _log('sendMessageModerated: sent in $conversationId');
+          return SendDmResult.sent;
+        case 'blocked':
+          _log('sendMessageModerated: BLOCKED in $conversationId');
+          return SendDmResult.blocked;
+        case 'flagged':
+          _log('sendMessageModerated: flagged in $conversationId');
+          return SendDmResult.flagged;
+        default:
+          _log('sendMessageModerated: unexpected status=$status');
+          return SendDmResult.error;
+      }
+    } catch (e) {
+      _log('ERROR sendMessageModerated: $e');
+      return SendDmResult.error;
     }
   }
 

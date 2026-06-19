@@ -2543,6 +2543,7 @@ exports.moderateAndSendDM = functions
     const groupData = (data.groupData != null && typeof data.groupData === "object") ? data.groupData : null;
     const itemData = (data.itemData != null && typeof data.itemData === "object") ? data.itemData : null;
     const eventData = (data.eventData != null && typeof data.eventData === "object") ? data.eventData : null;
+    const clientTempId = data.clientTempId != null ? String(data.clientTempId) : null;
     // Create message document reference (auto-id).
     const msgRef = db
         .collection("conversations")
@@ -2578,6 +2579,7 @@ exports.moderateAndSendDM = functions
         groupData,
         itemData,
         eventData,
+        clientTempId,
     };
     await msgRef.set(msgPayload);
     // Build displayText for conversation summary — mirrors RealtimeDMService exactly.
