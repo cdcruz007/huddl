@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import '../../widgets/huddl_character.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/borough_scope_guard.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/ai_knowledge_base_service.dart';
@@ -70,9 +70,11 @@ Color _sourceColor(String source) {
 //   Search bar
 //   Article cards with contributor credit
 //
-// Moderator view (debug builds or isAdmin):
+// Moderator view (isAdmin only — FLYWHEEL-UI-1):
 //   Floating "Review Queue" badge showing pending article count
 //   Tapping opens the inline pending-review panel
+//   Gate is isAdmin, resolved from Firestore users/{uid}.roles.isAdmin.
+//   kDebugMode disjunct removed: debug/TestFlight builds must NOT show mod UI.
 // =============================================================================
 
 class InsightsScreen extends StatefulWidget {
@@ -303,7 +305,7 @@ class _Header extends StatelessWidget {
                 style: HuddlText.display(),
               ),
               const Spacer(),
-              if (kDebugMode) _PendingReviewBadge(),
+              _PendingReviewBadge(),
             ],
           ),
           // ── Inline search field (animated) ─────────────────────
@@ -1509,13 +1511,45 @@ class _ExpertArticleScreen extends StatelessWidget {
   }
 }
 
-// ─── Pending review badge (moderator / debug) ─────────────────────────────────
+// ─── Pending review badge (admin-only — FLYWHEEL-UI-1) ──────────────────────
+// Resolves isAdmin from Firestore users/{uid}.roles.isAdmin (same pattern as
+// admin_dashboard_screen.dart). Renders nothing until the check completes and
+// renders nothing if the user is not an admin. kDebugMode gate removed.
 
-class _PendingReviewBadge extends StatelessWidget {
+class _PendingReviewBadge extends StatefulWidget {
   const _PendingReviewBadge();
 
   @override
+  State<_PendingReviewBadge> createState() => _PendingReviewBadgeState();
+}
+
+class _PendingReviewBadgeState extends State<_PendingReviewBadge> {
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveAdmin();
+  }
+
+  Future<void> _resolveAdmin() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final roles = doc.data()?['roles'] as Map<String, dynamic>?;
+      if (mounted) setState(() => _isAdmin = roles?['isAdmin'] == true);
+    } catch (_) {
+      // fail closed — non-admin on error
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isAdmin) return const SizedBox.shrink();
     return StreamBuilder<List<CommunityWisdomArticle>>(
       stream: AiKnowledgeFlywheelService().pendingReviewStream(),
       builder: (context, snap) {
