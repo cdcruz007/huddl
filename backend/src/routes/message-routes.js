@@ -76,7 +76,19 @@ function _buildFcmMessage(token, title, body, data, lockScreenAlerts) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: send a push to one user and log the result
 // ─────────────────────────────────────────────────────────────────────────────
-async function _sendToRecipient(db, messaging, userId, title, body, data) {
+async function _sendToRecipient(db, messaging, userId, title, body, data, senderId = null) {
+  if (senderId) {
+    try {
+      const blk = await db.collection('users').doc(userId).collection('blocks').doc(senderId).get();
+      if (blk.exists) {
+        console.log(`[_sendToRecipient] recipient ${userId} has blocked sender ${senderId} — skipping push`);
+        return;
+      }
+    } catch (e) {
+      console.error('[_sendToRecipient] block-check failed, proceeding with send:', e);
+    }
+  }
+
   try {
     const userSnap = await db.collection('users').doc(userId).get();
     if (!userSnap.exists) return;
@@ -267,7 +279,7 @@ router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
       route:          `/dm/${conversationId}`,
     };
 
-    await _sendToRecipient(db, messaging, recipientId, senderName, preview, data);
+    await _sendToRecipient(db, messaging, recipientId, senderName, preview, data, senderId);
 
     res.json({ success: true });
   } catch (err) {
@@ -340,7 +352,7 @@ router.post('/notify-offer', authMiddleware, async (req, res, next) => {
       tab:       'sell',
     };
 
-    await _sendToRecipient(db, messaging, sellerId, `New offer on "${itemTitle}"`, body, data);
+    await _sendToRecipient(db, messaging, sellerId, `New offer on "${itemTitle}"`, body, data, callerId);
     res.json({ success: true });
   } catch (err) {
     next(err);
@@ -417,7 +429,7 @@ router.post('/notify-offer-response', authMiddleware, async (req, res, next) => 
       action:     accepted ? 'open_seller_chat' : '',
     };
 
-    await _sendToRecipient(db, messaging, buyerId, title, body, data);
+    await _sendToRecipient(db, messaging, buyerId, title, body, data, callerId);
     res.json({ success: true });
   } catch (err) {
     next(err);
@@ -481,7 +493,8 @@ router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
         await _sendToRecipient(db, messaging, uid,
           'Item no longer available',
           `"${itemTitle}" you offered on has been sold`,
-          { type: 'saved_item_sold', itemId, itemTitle, route: '/marketplace', tab: 'buy' }
+          { type: 'saved_item_sold', itemId, itemTitle, route: '/marketplace', tab: 'buy' },
+          callerId
         );
       }
     }
