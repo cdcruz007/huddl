@@ -16,13 +16,18 @@ import 'package:flutter/foundation.dart';
 /// The base64 blob is safe to store in a Firestore `String` field.
 ///
 /// ## Key derivation
-/// The 256-bit AES key is derived with a single-round HMAC-SHA256:
+/// The 256-bit AES key is derived with HKDF-SHA256 (RFC 5869):
 ///
-///   key = HMAC-SHA256( secret=SEND_ENCRYPTION_SECRET, data=uid )
+///   PRK = HKDF-Extract(salt='huddl-send-v1', IKM=secretBytes)
+///   OKM = HKDF-Expand (PRK, info=`send-key:<uid>`, length=32)
 ///
-/// This binds the key to both the build-time secret (supplied via
-/// `--dart-define=SEND_ENCRYPTION_SECRET=<hex64>`) and the user's UID,
-/// so data from one user is unreadable by another even if the secret leaks.
+/// The fixed salt `huddl-send-v1` is non-secret and domain-separates this
+/// derivation from any other use of the master secret.  The info string
+/// binds the key to the user's UID so data from one user is unreadable by
+/// another even if the master secret leaks.  The input secret is a
+/// high-entropy 256-bit value supplied via
+/// `--dart-define=SEND_ENCRYPTION_SECRET=<hex64>`, so a single T(1)
+/// expand block (32 bytes) is sufficient.
 ///
 /// ## Graceful degradation (development only)
 /// If `SEND_ENCRYPTION_SECRET` is not injected at build time, or is shorter
@@ -68,13 +73,42 @@ class SendEncryptionService {
 
   // ── Key derivation ────────────────────────────────────────────────────────
 
-  /// Derives a 32-byte AES key for [uid] using HMAC-SHA256 of the build-time
-  /// secret.  The raw secret is decoded from hex before use.
+  /// Fixed, non-secret HKDF salt — domain-separates SEND key derivation from
+  /// any other use of the master secret.  Must never change after launch.
+  static final Uint8List _hkdfSalt = Uint8List.fromList(utf8.encode('huddl-send-v1'));
+
+  /// Derives a 32-byte AES key for [uid] using HKDF-SHA256 (RFC 5869).
+  ///
+  /// Extract: PRK = HMAC-SHA256(salt=_hkdfSalt, IKM=secretBytes)
+  /// Expand:  OKM = HMAC-SHA256(PRK, info || 0x01), first 32 bytes.
+  /// info = `send-key:<uid>` — binds the subkey to this user's UID.
   Uint8List _deriveKey(String uid) {
-    final secretBytes = _hexToBytes(_rawSecret);
-    final hmac = Hmac(sha256, secretBytes);
-    final digest = hmac.convert(utf8.encode(uid));
-    return Uint8List.fromList(digest.bytes);
+    final ikm  = _hexToBytes(_rawSecret);
+    final info = Uint8List.fromList(utf8.encode('send-key:$uid'));
+    return _hkdfSha256(ikm: ikm, salt: _hkdfSalt, info: info, length: 32);
+  }
+
+  /// HKDF-SHA256 (RFC 5869) — extract + single expand block (T(1)).
+  ///
+  /// Sufficient for [length] ≤ 32 bytes (one SHA-256 output block).
+  static Uint8List _hkdfSha256({
+    required Uint8List ikm,
+    required Uint8List salt,
+    required Uint8List info,
+    required int length,
+  }) {
+    assert(length <= 32, 'HKDF single-block expand supports at most 32 bytes');
+    // Extract: PRK = HMAC-SHA256(salt, IKM)
+    final prk = Uint8List.fromList(
+      Hmac(sha256, salt).convert(ikm).bytes,
+    );
+    // Expand T(1): HMAC-SHA256(PRK, info || 0x01)
+    final t1Input = Uint8List(info.length + 1)
+      ..setRange(0, info.length, info)
+      ..[info.length] = 0x01;
+    return Uint8List.fromList(
+      Hmac(sha256, prk).convert(t1Input).bytes,
+    ).sublist(0, length);
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
