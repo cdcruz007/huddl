@@ -139,11 +139,28 @@ service cloud.firestore {
 
       // Group invitations sent TO this user: users/{uid}/invitations/{invId}
       // Written by InvitationService.sendInvitations() on the inviter's device.
-      // The invited user can read and update (accept/decline); any auth user
-      // can create (the invite flow writes to the recipient's sub-collection).
+      // The invited user can read and update (accept/decline); only the
+      // recipient may delete their own invite.
+      //
+      // INVITE-RULE-1: create is hardened — was open isAuth() (any user could
+      // forge an invite with a spoofed invitedByName/invitedById). Now requires:
+      //   (a) invitedById == auth.uid — stamps the REAL sender uid; kills
+      //       impersonation of a trusted name. InvitationService.sendInvitations
+      //       already writes invitedById = inviterId (the caller's uid), so all
+      //       legitimate invites comply with no client change needed.
+      //   (b) inviter in groups/{groupId}.memberIds — you can only invite to a
+      //       group you are actually a member of (mirrors M3 /notify-group gate).
+      //       invite doc carries groupId at top level (confirmed: GroupInvitation
+      //       model writes 'groupId': groupId and 'invitedById': invitedById).
+      //       Fail-closed: missing/malformed groupId → get() returns a doc with
+      //       no memberIds → 'in' expression → false → denied.
       match /invitations/{invitationId} {
         allow read, update: if isOwner(userId);
-        allow create: if isAuth();
+        allow create: if isAuth()
+          && request.resource.data.invitedById == request.auth.uid
+          && request.auth.uid in
+               get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                 .data.memberIds;
         allow delete: if isOwner(userId);
       }
     }
