@@ -3529,7 +3529,14 @@ export const onDmMessageCreated = functions
         return;
       }
 
-      // ── 4. Derive senderName server-side ───────────────────────────────────
+      // ── 4. Block check — suppress push if recipient has blocked the sender ──
+      const blockSnap = await db.collection("users").doc(recipientId).collection("blocks").doc(senderId).get();
+      if (blockSnap.exists) {
+        console.log(`[onDmMessageCreated] recipient ${recipientId} has blocked sender ${senderId} — skipping notification`);
+        return; // message remains written; no push fired
+      }
+
+      // ── 5. Derive senderName server-side ───────────────────────────────────
       const senderSnap = await db.collection("users").doc(senderId).get();
       const senderName: string = (senderSnap.exists && senderSnap.data()?.["name"])
         ? String(senderSnap.data()!["name"])

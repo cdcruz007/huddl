@@ -2768,7 +2768,13 @@ exports.onDmMessageCreated = functions
             functions.logger.info(`[onDmMessageCreated] no recipient found for senderId=${senderId} — skipping (self-conversation?)`);
             return;
         }
-        // ── 4. Derive senderName server-side ───────────────────────────────────
+        // ── 4. Block check — suppress push if recipient has blocked the sender ──
+        const blockSnap = await db.collection("users").doc(recipientId).collection("blocks").doc(senderId).get();
+        if (blockSnap.exists) {
+            console.log(`[onDmMessageCreated] recipient ${recipientId} has blocked sender ${senderId} — skipping notification`);
+            return; // message remains written; no push fired
+        }
+        // ── 5. Derive senderName server-side ───────────────────────────────────
         const senderSnap = await db.collection("users").doc(senderId).get();
         const senderName = (senderSnap.exists && ((_c = senderSnap.data()) === null || _c === void 0 ? void 0 : _c["name"]))
             ? String(senderSnap.data()["name"])
