@@ -21,6 +21,7 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const { SignedDataVerifier, Environment } = require('@apple/app-store-server-library');
 const { getDb, FieldValue } = require('./firebase-service');
 const {
   sendSubscriptionConfirmation,
@@ -212,6 +213,58 @@ function _generateAppleJWT() {
       keyid: process.env.APPLE_KEY_ID,
     }
   );
+}
+
+/**
+ * Build and return a SignedDataVerifier using the Apple Root CA certs bundled
+ * at backend/config/. Called once per webhook invocation (cheap — no network).
+ *
+ * Root certs are loaded from backend/config/AppleRootCA-G3.cer and
+ * AppleRootCA-G2.cer (DER-encoded, downloaded from https://www.apple.com/certificateauthority/).
+ * The library requires them as an array of Buffers.
+ *
+ * Environment is determined by the APPLE_ENVIRONMENT env var
+ * ("Production" or "Sandbox"); falls back to NODE_ENV-based detection.
+ * enableOnlineChecks is disabled at build/test time (NODE_ENV !== 'production')
+ * to avoid outbound OCSP calls during local development, and enabled in prod.
+ */
+function _buildAppleVerifier() {
+  const configDir = path.join(__dirname, '../../config');
+  const rootCerts = [
+    fs.readFileSync(path.join(configDir, 'AppleRootCA-G3.cer')),
+    fs.readFileSync(path.join(configDir, 'AppleRootCA-G2.cer')),
+  ];
+
+  const envVar = (process.env.APPLE_ENVIRONMENT || '').toLowerCase();
+  const isProd = envVar === 'production' || process.env.NODE_ENV === 'production';
+  const environment = isProd ? Environment.PRODUCTION : Environment.SANDBOX;
+
+  const enableOnlineChecks = isProd; // OCSP/CRL checks — on in prod, off in dev/test
+  const bundleId = process.env.APPLE_BUNDLE_ID || 'com.huddlconnect.huddlConnect';
+  // appAppleId is required in Production; optional in Sandbox.
+  // Set APPLE_APP_ID in Railway env (numeric App Store ID, e.g. 1234567890).
+  const appAppleId = process.env.APPLE_APP_ID
+    ? parseInt(process.env.APPLE_APP_ID, 10)
+    : undefined;
+
+  return new SignedDataVerifier(rootCerts, enableOnlineChecks, environment, bundleId, appAppleId);
+}
+
+/**
+ * Verify and decode an Apple App Store Server Notification JWS payload.
+ * Throws if the signature is invalid, the cert chain fails, or the bundle ID
+ * does not match — ensuring the webhook only acts on genuine Apple payloads.
+ *
+ * ONLY used in the webhook path (handleAppleNotification).
+ * verifyAppleReceipt uses _decodeJWS for inner signed fields because that
+ * data arrived authenticated from Apple's API over mutually-verified TLS —
+ * the outer envelope has already been authenticated by the API call itself.
+ */
+async function _verifyAppleSignedPayload(signedPayload) {
+  const verifier = _buildAppleVerifier();
+  // verifyAndDecodeNotification throws on any signature / cert / bundle-id failure.
+  // The decoded payload mirrors the raw JWS payload structure.
+  return verifier.verifyAndDecodeNotification(signedPayload);
 }
 
 /**
@@ -411,9 +464,18 @@ async function verifyGoogleReceipt({ userId, purchaseToken, productId }) {
  *   EXPIRED, REFUND, REVOKE, SUBSCRIBED, etc.
  */
 async function handleAppleNotification(signedPayload) {
-  const payload = _decodeJWS(signedPayload);
+  // SECURITY: verify the JWS signature against Apple's Root CA chain BEFORE
+  // acting on any field. An attacker could POST a crafted payload to this
+  // webhook to flip subscription state; _verifyAppleSignedPayload throws on
+  // any cert/signature/bundle-id mismatch so only genuine Apple notifications
+  // proceed past this point.
+  // NOTE: _decodeJWS is still used below for the INNER signedTransactionInfo /
+  // signedRenewalInfo fields. This is acceptable: those fields arrived inside
+  // an Apple-signed outer envelope that we have just verified — they cannot
+  // have been substituted by an attacker who forged the outer JWS.
+  const payload = await _verifyAppleSignedPayload(signedPayload);
   if (!payload) {
-    throw new Error('Invalid Apple notification: cannot decode JWS');
+    throw new Error('Invalid Apple notification: verification returned empty payload');
   }
 
   const notificationType = payload.notificationType;
