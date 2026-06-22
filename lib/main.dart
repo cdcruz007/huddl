@@ -16,6 +16,12 @@ import 'services/browser_storage.dart';
 import 'services/huddl_user_service.dart';
 import 'services/user_privacy_prefs_service.dart';
 
+/// True only when the app is built with --dart-define=QA_BUILD=true.
+/// Use this for QA / TestFlight builds that need Firebase Console test phone
+/// numbers. Public App Store / Play Store builds must NOT pass this flag —
+/// it defaults to false so real users get full phone-number verification.
+const bool kQaBuild = bool.fromEnvironment('QA_BUILD', defaultValue: false);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -27,25 +33,26 @@ void main() async {
     ).timeout(const Duration(seconds: 10));
 
     // ── Firebase test number bypass ─────────────────────────────────────────
-    // appVerificationDisabledForTesting = true is required for Firebase Console
-    // test phone numbers (e.g. +44 7575 888453 / code 123456) to work.
+    // appVerificationDisabledForTesting disables real APNs/SMS verification and
+    // allows Firebase Console test phone numbers to work. It must be FALSE for
+    // public store builds (real users) and TRUE only for QA / TestFlight builds.
     //
-    // WITHOUT this flag Firebase ignores its own test number list entirely and
-    // attempts a real APNs silent-push + SMS flow — test codes are rejected
-    // with "unknown" error regardless of what number or code is entered.
+    // WHY NOT !kReleaseMode: TestFlight is compiled in release mode, so a
+    // !kReleaseMode guard would silently leave the flag off on TestFlight and
+    // break test-number sign-in there. A build-time flag is the correct gate.
     //
-    // This flag is ALWAYS enabled here because:
-    //  1. TestFlight builds are compiled in RELEASE mode (kReleaseMode = true)
-    //     so a !kReleaseMode guard would silently skip the flag on TestFlight.
-    //  2. The flag does NOT weaken real-user security: it only affects numbers
-    //     explicitly listed in Firebase Console → Authentication → Phone →
-    //     Test phone numbers. Real numbers always go through the normal flow.
-    //  3. Firebase itself recommends always-on for test numbers in Console.
+    // HOW TO USE:
+    //  - QA / TestFlight build: pass --dart-define=QA_BUILD=true at build time.
+    //    This sets kQaBuild=true → appVerificationDisabledForTesting=true →
+    //    Firebase Console test numbers (e.g. +44 7575 888453 / 123456) work.
+    //  - Public App Store / Play Store build: omit --dart-define=QA_BUILD
+    //    (or pass QA_BUILD=false). kQaBuild defaults to false → full phone
+    //    verification is active → real users are not affected.
     //
-    // To remove test number support for a production App Store release:
-    //  - Delete the test numbers from Firebase Console instead of removing this flag.
+    // NOTE: enabling this flag also disables Firebase anti-abuse checks, so it
+    // MUST NOT ship to production. The defaultValue: false ensures it does not.
     await FirebaseAuth.instance.setSettings(
-      appVerificationDisabledForTesting: true,
+      appVerificationDisabledForTesting: kQaBuild,
     );
   } catch (e) {
     if (kDebugMode) {
