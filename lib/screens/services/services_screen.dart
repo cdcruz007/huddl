@@ -1284,11 +1284,21 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    listing.name,
-                    style: HuddlText.body(weight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          listing.name,
+                          style: HuddlText.body(weight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (listing.verificationTier.showsBadge) ...[
+                        const SizedBox(width: 6),
+                        _VerifiedBadge(tier: listing.verificationTier),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
