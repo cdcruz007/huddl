@@ -11,7 +11,7 @@
 // visibility / iOS foregroundPresentationOptions).
 //
 // Body for notify-group:
-//   { groupId, groupName, senderName, messagePreview }
+//   { groupId, groupName, messagePreview }   (senderName derived server-side)
 //
 // Body for notify-dm:
 //   { conversationId, recipientId, senderName, messagePreview }
@@ -155,27 +155,50 @@ async function _sendToRecipient(db, messaging, userId, title, body, data, sender
 // POST /api/messages/notify-group
 // ─────────────────────────────────────────────────────────────────────────────
 // Fan-out a push to every group member except the sender.
-// Body: { groupId, groupName, senderName, messagePreview }
+// Body: { groupId, groupName, messagePreview }
+//   (senderName is DERIVED server-side — body.senderName is ignored, M3+NOTIFY-SPOOF-1)
+//
+// M3 membership gate: caller (req.userId) must be in groups/{groupId}.memberIds.
+//   Returns 403 if not a member — prevents any authenticated user blasting
+//   arbitrary-text notifications to groups they don't belong to.
+//
+// Spoofing hardening: senderName derived from users/{senderId}.name, not from
+//   req.body. A legitimate member cannot impersonate another user's display name.
 router.post('/notify-group', authMiddleware, async (req, res, next) => {
   try {
     const senderId = req.userId;
-    const { groupId, groupName, senderName, messagePreview } = req.body;
+    const { groupId, groupName, messagePreview } = req.body;
 
-    if (!groupId || !groupName || !senderName) {
-      return res.status(400).json({ error: 'groupId, groupName and senderName are required' });
+    if (!groupId || !groupName) {
+      return res.status(400).json({ error: 'groupId and groupName are required' });
     }
 
     const db        = getDb();
     const messaging = getMessaging();
 
-    // Load group members from Firestore
+    // Load group from Firestore
     const groupSnap = await db.collection('groups').doc(groupId).get();
     if (!groupSnap.exists) {
       return res.status(404).json({ error: 'Group not found' });
     }
 
-    const memberIds = (groupSnap.data().memberIds || [])
-      .filter(uid => uid !== senderId);
+    // ── M3: membership gate — caller must be a member ────────────────────────
+    // Prevents any authenticated non-member from blasting the group.
+    const allMemberIds = groupSnap.data().memberIds || [];
+    if (!allMemberIds.includes(senderId)) {
+      return res.status(403).json({ error: 'Caller is not a member of this group' });
+    }
+
+    // Exclude the sender from recipients
+    const memberIds = allMemberIds.filter(uid => uid !== senderId);
+
+    // ── Derive senderName server-side — NEVER trust body.senderName ──────────
+    // Kills impersonation: a member cannot claim another user's display name
+    // by supplying a fake senderName in the request body (NOTIFY-SPOOF-1).
+    const senderSnap = await db.collection('users').doc(senderId).get();
+    const senderName = (senderSnap.exists && senderSnap.data().name)
+      ? senderSnap.data().name
+      : 'Someone';
 
     const preview = (messagePreview || '').substring(0, 100);
     const title   = groupName;
@@ -186,7 +209,7 @@ router.post('/notify-group', authMiddleware, async (req, res, next) => {
       route:          `/groups/${groupId}`,
     };
 
-    // Fan-out in parallel (fire-and-forget each, results collected for logging)
+    // Fan-out in parallel — block-check (BLOCK-1) wired via senderId arg
     await Promise.all(
       memberIds.map(uid => _sendToRecipient(db, messaging, uid, title, body, data, senderId))
     );
