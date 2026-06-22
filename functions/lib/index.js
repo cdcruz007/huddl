@@ -254,6 +254,7 @@ function _stageFriendlyLabel(suitKey) {
  * fan out using a Pub/Sub topic.
  */
 exports.generateEventRecommendations = functions
+    .region('europe-west2') // REGION-RESIDENCY-1
     .runWith({ timeoutSeconds: 540, memory: "512MB" })
     .firestore.document("events/{eventId}")
     .onCreate(async (snap, context) => {
@@ -326,6 +327,7 @@ exports.generateEventRecommendations = functions
  * Deletes stale records for events that now score below 40.
  */
 exports.refreshUserRecommendations = functions
+    .region('europe-west2') // REGION-RESIDENCY-1
     .runWith({ timeoutSeconds: 300, memory: "512MB" })
     .firestore.document("users/{userId}")
     .onUpdate(async (change, context) => {
@@ -434,7 +436,9 @@ exports.refreshUserRecommendations = functions
  *   - Writes feedbackGiven + feedbackAt to userRecommendations/{userId}/events/{eventId}
  *   - Updates likedCategories / dislikedCategories arrays on user profile
  */
-exports.recordRecommendationFeedback = functions.https.onCall(async (data, context) => {
+exports.recordRecommendationFeedback = functions
+    .region('europe-west2') // REGION-RESIDENCY-1
+    .https.onCall(async (data, context) => {
     var _a;
     // Validate authentication
     if (!context.auth) {
@@ -502,6 +506,7 @@ exports.recordRecommendationFeedback = functions.https.onCall(async (data, conte
  * Uses batched deletes (max 500 writes per Firestore batch).
  */
 exports.cleanupExpiredRecommendations = functions
+    .region('europe-west2') // REGION-RESIDENCY-1
     .runWith({ timeoutSeconds: 540, memory: "256MB" })
     .pubsub.schedule("0 2 * * *") // 02:00 UTC every day
     .timeZone("UTC")
