@@ -1259,12 +1259,25 @@ class FirestoreService {
   // ═════════════════════════════════════════════════════════════════════════
 
   /// Build a community feed from recent groups, meetups, marketplace items.
+  ///
+  /// BOROUGH-READ-1 addendum: all three reads are borough-filtered so the feed
+  /// only contains the caller's borough. Fails closed — returns [] if borough
+  /// is unresolved. This also prevents PERMISSION_DENIED once Part 2 rules deploy
+  /// (rules require boroughMatches on groups/meetups/marketplace).
   Future<List<Map<String, dynamic>>> getCommunityFeed() async {
+    final profile = await getCurrentUserProfile();
+    final borough = profile?['borough'] as String? ?? '';
+    if (borough.isEmpty) {
+      debugPrint('[FirestoreService] getCommunityFeed: borough unresolved — returning empty (BOROUGH-READ-1)');
+      return [];
+    }
+
     final feed = <Map<String, dynamic>>[];
 
-    // Recent groups (last 10)
+    // Recent groups — borough-filtered (single-field index, auto-created)
     final groups = await _db
         .collection('groups')
+        .where('borough', isEqualTo: borough)
         .get();
     for (final doc in groups.docs.take(5)) {
       final d = doc.data();
@@ -1278,9 +1291,10 @@ class FirestoreService {
       });
     }
 
-    // Upcoming meetups
+    // Upcoming meetups — borough-filtered (single-field index, auto-created)
     final meetups = await _db
         .collection('meetups')
+        .where('borough', isEqualTo: borough)
         .get();
     for (final doc in meetups.docs.take(5)) {
       final d = doc.data();
@@ -1294,10 +1308,12 @@ class FirestoreService {
       });
     }
 
-    // Recent marketplace items
+    // Recent marketplace items — borough-filtered (same status+borough composite
+    // already required by getMarketplaceListings — no new index needed)
     final items = await _db
         .collection('marketplace')
         .where('status', isEqualTo: 'active')
+        .where('borough', isEqualTo: borough)
         .get();
     for (final doc in items.docs.take(5)) {
       final d = doc.data();
