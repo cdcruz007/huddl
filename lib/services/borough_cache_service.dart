@@ -37,6 +37,22 @@ class BoroughCacheService {
   static const String _keyDirectory = 'huddl_borough_directory';
   static const String _keyDirTimestamp = 'huddl_borough_dir_ts';
 
+  /// All BrowserStorage keys owned by this service.
+  ///
+  /// GDPR-LOCAL-1: consumed by GdprBoroughDataService._findBoroughScopedKeys
+  /// to guarantee exhaustive erasure (Art. 17). Add any new key here the
+  /// moment it is declared above — the erasure path is then automatically
+  /// complete without further changes to the GDPR service.
+  static const List<String> boroughStorageKeys = [
+    _keyBorough,
+    _keyPostcode,
+    _keyTimestamp,
+    _keyPrevBorough,
+    _keyMemberCount,
+    _keyDirectory,
+    _keyDirTimestamp,
+  ];
+
   final PostcodeService _postcodeService = PostcodeService();
   final OnboardingDataService _onboarding = OnboardingDataService();
 

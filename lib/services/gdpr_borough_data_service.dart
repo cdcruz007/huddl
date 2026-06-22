@@ -273,31 +273,31 @@ class GdprBoroughDataService {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  /// Find all BrowserStorage keys that are borough-scoped.
+  /// Returns every BrowserStorage key that is currently populated and owned
+  /// by a borough-scoped service.
+  ///
+  /// GDPR-LOCAL-1: Uses the DECLARED key lists from each service rather than
+  /// prefix × suffix guessing, so erasure is exhaustive and self-maintaining.
+  /// Any new key added to a service's boroughStorageKeys list is automatically
+  /// covered here with no further changes required.
+  ///
+  /// Dead-guess removal: the old implementation also probed
+  /// 'huddl_learning_borough_*' and 'huddl_migration_*' prefixes. A full
+  /// codebase sweep found ZERO writers for either prefix outside this file —
+  /// they were never real keys. Both prefixes are dropped.
   Future<List<String>> _findBoroughScopedKeys() async {
-    // These are the known borough-scoped storage key prefixes
-    const boroughPrefixes = [
-      'huddl_borough_',
-      'huddl_learning_borough_',
-      'huddl_migration_',
-    ];
+    // Union of all declared borough-scoped storage keys.
+    final declared = <String>{
+      ...BoroughCacheService.boroughStorageKeys,
+      ...BoroughAnalyticsService.boroughStorageKeys,
+    };
 
-    // We can't enumerate SharedPreferences keys directly in all platforms,
-    // so we check known keys.
-    final knownKeys = <String>[];
-    for (final prefix in boroughPrefixes) {
-      // Check common suffixes
-      for (final suffix in [
-        'cached', 'postcode', 'ts', 'prev', 'members',
-        'directory', 'dir_ts', 'analytics', 'counters',
-      ]) {
-        final key = '$prefix$suffix';
-        final value = await BrowserStorage.getString(key);
-        if (value != null) knownKeys.add(key);
-      }
+    // Return only keys that actually have a stored value (present on device).
+    final present = <String>[];
+    for (final key in declared) {
+      if (await BrowserStorage.getString(key) != null) present.add(key);
     }
-
-    return knownKeys;
+    return present;
   }
 
   /// Returns the first 8 hex characters of the SHA-256 digest of [value].

@@ -68,6 +68,16 @@ class BoroughAnalyticsService {
   static const String _countersKey = 'huddl_borough_counters';
   static const int _maxEvents = 200;
 
+  /// All BrowserStorage keys owned by this service.
+  ///
+  /// GDPR-LOCAL-1: consumed by GdprBoroughDataService._findBoroughScopedKeys
+  /// to guarantee exhaustive erasure (Art. 17). Add any new key here the
+  /// moment it is declared above.
+  static const List<String> boroughStorageKeys = [
+    _eventsKey,
+    _countersKey,
+  ];
+
   final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   List<BoroughAnalyticsEvent> _events = [];
