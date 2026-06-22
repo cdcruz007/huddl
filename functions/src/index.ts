@@ -1810,7 +1810,13 @@ async function resolveGdprPolicy(): Promise<GdprDeletionPolicy> {
 
 export const deleteUserData = functions
   .region("europe-west2")
-  .runWith({ timeoutSeconds: 540, memory: "1GB" })
+  .runWith({
+    timeoutSeconds: 540,
+    memory: "1GB",
+    // GDPR-STRIPE-1: INTERNAL_SERVICE_SECRET needed to call Railway
+    // /api/gdpr/anonymize-stripe service-to-service.
+    secrets: ["INTERNAL_SERVICE_SECRET"],
+  })
   .https.onCall(async (data: { dryRun?: boolean }, context): Promise<DeleteUserDataResult> => {
 
     // ══════════════════════════════════════════════════════════════════
@@ -1868,6 +1874,116 @@ export const deleteUserData = functions
         functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
       }
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // PHASE 0 — STRIPE PII ANONYMIZATION  (GDPR-STRIPE-1)
+    //
+    // CRITICAL ORDERING: stripeCustomerId lives on users/{uid}.
+    // This phase runs BEFORE Phase 1 (which deletes subscriptions/{uid},
+    // also containing stripeSubscriptionId) and before any users/{uid}
+    // write, so the Railway service can read both fields from Firestore.
+    //
+    // The Railway endpoint calls anonymizeStripeCustomer(userId) which:
+    //   • Scrubs name/email/phone/address/metadata on the Stripe Customer
+    //   • Retains the Customer + all Invoices/Charges/PaymentIntents
+    //   • Cancels any active subscription at-period-end
+    //   • Returns { anonymized, customerId, subscriptionCancelled }
+    //
+    // dryRun: skip the POST, record as "skipped (dryRun)".
+    // Fail-soft: if the POST errors/times out, record the error in steps[]
+    //   and continue — Stripe failure must not block Firestore erasure.
+    // ══════════════════════════════════════════════════════════════════
+
+    await (async () => {
+      const key = "stripe_anonymize";
+
+      if (dryRun) {
+        steps[key] = { status: "skipped", count: 0, error: "dryRun — would POST /api/gdpr/anonymize-stripe" };
+        functions.logger.info(`[deleteUserData] ${key}: skipped (dryRun)`);
+        return;
+      }
+
+      const secret = process.env.INTERNAL_SERVICE_SECRET;
+      if (!secret) {
+        // INTERNAL_SERVICE_SECRET not injected — log and skip rather than
+        // hard-fail.  Operator must add the secret to deleteUserData runWith.
+        steps[key] = { status: "error", count: 0, error: "INTERNAL_SERVICE_SECRET not set in functions runtime" };
+        functions.logger.error(`[deleteUserData] ${key}: INTERNAL_SERVICE_SECRET not set — Stripe anonymization skipped`);
+        return;
+      }
+
+      // Helper: POST to Railway /api/gdpr/anonymize-stripe with a 10 s timeout.
+      // Returns { ok: true, body } or { ok: false, error }.
+      const railwayStripeAnonymize = (): Promise<{ ok: boolean; body?: unknown; error?: string }> =>
+        new Promise((resolve) => {
+          const bodyStr = JSON.stringify({ userId: uid });
+
+          const options: import("https").RequestOptions = {
+            hostname: "api.huddlapp.co.uk",
+            path:     "/api/gdpr/anonymize-stripe",
+            method:   "POST",
+            headers:  {
+              "Content-Type":   "application/json",
+              "Content-Length": Buffer.byteLength(bodyStr),
+              "X-Service-Auth": secret,
+            },
+          };
+
+          const timer = setTimeout(() => {
+            req.destroy();
+            resolve({ ok: false, error: "timeout after 10 s" });
+          }, 10_000);
+
+          const req = https.request(options, (res) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (c: Buffer) => chunks.push(c));
+            res.on("end", () => {
+              clearTimeout(timer);
+              const raw = Buffer.concat(chunks).toString("utf8");
+              if (res.statusCode && res.statusCode >= 400) {
+                resolve({ ok: false, error: `HTTP ${res.statusCode}: ${raw.substring(0, 200)}` });
+              } else {
+                try {
+                  resolve({ ok: true, body: JSON.parse(raw) });
+                } catch {
+                  resolve({ ok: true, body: raw });
+                }
+              }
+            });
+          });
+
+          req.on("error", (err: Error) => {
+            clearTimeout(timer);
+            resolve({ ok: false, error: err.message });
+          });
+
+          req.write(bodyStr);
+          req.end();
+        });
+
+      try {
+        const resp = await railwayStripeAnonymize();
+        if (resp.ok) {
+          const body = resp.body as Record<string, unknown> | undefined;
+          const anonymized = body && body["anonymized"];
+          const reason     = body && body["reason"];
+          functions.logger.info(
+            `[deleteUserData] ${key}: ok — anonymized=${anonymized} reason=${reason ?? "n/a"}`
+          );
+          steps[key] = { status: "ok", count: anonymized ? 1 : 0 };
+        } else {
+          // Fail-soft: record as error but do not abort.
+          functions.logger.error(
+            `[deleteUserData] ${key}: Railway error — ${resp.error} — continuing with Firestore deletion`
+          );
+          steps[key] = { status: "error", count: 0, error: resp.error };
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        functions.logger.error(`[deleteUserData] ${key}: unexpected error — ${msg}`);
+        steps[key] = { status: "error", count: 0, error: msg };
+      }
+    })();
 
     // ══════════════════════════════════════════════════════════════════
     // PHASE 1 — SIMPLE QUERY-DELETES

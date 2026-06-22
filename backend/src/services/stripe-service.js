@@ -29,6 +29,7 @@
 'use strict';
 
 const Stripe = require('stripe');
+const crypto = require('crypto');
 const { getDb, FieldValue, admin } = require('./firebase-service');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -580,6 +581,133 @@ async function cancelSubscription(userId, { reason, pauseMonths } = {}) {
   return { status: 'cancelling', cancelAtPeriodEnd: true };
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// GDPR-STRIPE-1 — Anonymize Stripe customer PII on account deletion.
+//
+// RETAIN strategy: the Stripe Customer object and all its attached
+// Invoices / Charges / PaymentIntents are kept intact for legal-basis
+// financial-record retention.  Only the personally-identifiable fields
+// (name, email, phone, address, free-form metadata) are scrubbed.
+//
+// NEVER calls stripe.customers.del() — deletion would destroy transaction
+// history which must be retained under financial-record obligations.
+//
+// Any active subscription is cancelled at-period-end so the deleted account
+// cannot continue receiving paid service.  Matches the cancel_at_period_end
+// pattern already used by cancelSubscription().
+//
+// Fail-soft: Stripe errors are caught and returned as
+//   { anonymized: false, error: <message> }
+// so that the calling GDPR erasure pipeline can log the failure and continue
+// with Firestore deletion rather than hard-aborting on a Stripe hiccup.
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Scrub PII from a Stripe customer while retaining transaction records.
+ *
+ * @param {string} userId  Firebase UID of the user being erased.
+ * @returns {Promise<{anonymized:boolean, customerId?:string, subscriptionCancelled?:boolean, reason?:string, error?:string}>}
+ */
+async function anonymizeStripeCustomer(userId) {
+  const db = getDb();
+
+  // ── 1. Read stripeCustomerId from users/{userId} ────────────────────────
+  let userData;
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+    userData = userDoc.data() || {};
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[anonymizeStripeCustomer] Firestore read error for uid=${userId}: ${msg}`);
+    return { anonymized: false, error: `firestore_read: ${msg}` };
+  }
+
+  const stripeCustomerId = userData.stripeCustomerId;
+  if (!stripeCustomerId) {
+    // Not an error — user never completed a Stripe checkout.
+    console.log(`[anonymizeStripeCustomer] uid=${userId} has no stripeCustomerId — skipping.`);
+    return { anonymized: false, reason: 'no_customer' };
+  }
+
+  // ── 2. Non-reversible UID hash for audit correlation ────────────────────
+  // 12 hex chars = 48 bits.  Correlatable across audit systems but not
+  // reversible to the original UID.  Satisfies G2 solicitor requirement:
+  // "retain an audit token; do not retain the raw UID".
+  const uidHash12 = crypto
+    .createHash('sha256')
+    .update(userId)
+    .digest('hex')
+    .substring(0, 12);
+
+  const anonymizedAt = new Date().toISOString();
+
+  // ── 3. Scrub PII fields on the Stripe Customer ──────────────────────────
+  // name / email / phone / address → cleared.
+  // metadata → replaced with anonymization audit record only.
+  // Invoices, Charges, PaymentIntents are NOT touched — retained for legal basis.
+  //
+  // Stripe requires email to be a non-null string; use a well-formed
+  // invalid domain address so it cannot receive mail but passes validation.
+  try {
+    await stripe.customers.update(stripeCustomerId, {
+      name:    'DELETED',
+      email:   `deleted+${uidHash12}@huddl.invalid`,
+      phone:   '',           // empty string clears it (Stripe accepts '')
+      address: null,
+      metadata: {
+        anonymized:        'true',
+        anonymized_at:     anonymizedAt,
+        original_uid_hash: uidHash12,
+        // Preserve non-PII fields that the Stripe dashboard may need:
+        // (any prior metadata PII is overwritten by this full replacement)
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[anonymizeStripeCustomer] stripe.customers.update error for uid=${userId}: ${msg}`);
+    return { anonymized: false, error: `customers_update: ${msg}` };
+  }
+
+  // ── 4. Cancel any still-active subscription ─────────────────────────────
+  // Read stripeSubscriptionId from subscriptions/{userId} (same collection
+  // used by cancelSubscription).  Use cancel_at_period_end so the user gets
+  // the service they paid for through the current period but the subscription
+  // does not auto-renew against a deleted account.
+  let subscriptionCancelled = false;
+  try {
+    const subDoc = await db.collection('subscriptions').doc(userId).get();
+    const subData = subDoc.data();
+    const subId = subData && subData.stripeSubscriptionId;
+
+    if (subId) {
+      // Only cancel if currently active; avoid redundant Stripe calls.
+      const sub = await stripe.subscriptions.retrieve(subId);
+      if (sub.status === 'active' || sub.status === 'trialing') {
+        await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
+        subscriptionCancelled = true;
+        console.log(
+          `[anonymizeStripeCustomer] subscription ${subId} set to cancel_at_period_end` +
+          ` for uid=${userId}`
+        );
+      }
+    }
+  } catch (err) {
+    // Subscription cancellation failure is non-fatal for the anonymization
+    // result — customer PII is already scrubbed.  Log for manual follow-up.
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[anonymizeStripeCustomer] subscription cancel error for uid=${userId}: ${msg} — ` +
+      `customer PII was already anonymized; subscription may need manual review.`
+    );
+  }
+
+  console.log(
+    `[anonymizeStripeCustomer] DONE uid=${userId} customerId=${stripeCustomerId}` +
+    ` subscriptionCancelled=${subscriptionCancelled} anonymizedAt=${anonymizedAt}`
+  );
+  return { anonymized: true, customerId: stripeCustomerId, subscriptionCancelled };
+}
+
 module.exports = {
   stripe,
   PRICE_MAP,
@@ -592,4 +720,5 @@ module.exports = {
   handleWebhookEvent,
   getSubscriptionStatus,
   cancelSubscription,
+  anonymizeStripeCustomer,
 };
