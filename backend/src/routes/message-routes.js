@@ -390,32 +390,4 @@ router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
     next(err);
   }
 });
-
-// ═════════════════════════════════════════════════════════════════════════════
-// POST /api/messages/notify-group-event
-// ─────────────────────────────────────────────────────────────────────────────
-// Generic social event notifications (invitation, join, reaction, RSVP, poll).
-// Body: { recipientIds[], type, title, body, data }
-router.post('/notify-group-event', authMiddleware, async (req, res, next) => {
-  try {
-    const { recipientIds, type, title, body, data } = req.body;
-    if (!Array.isArray(recipientIds) || !type || !title) {
-      return res.status(400).json({ error: 'recipientIds, type and title are required' });
-    }
-
-    const db        = getDb();
-    const messaging = getMessaging();
-
-    const notifData = { type, ...(data || {}) };
-
-    for (const uid of recipientIds) {
-      await _sendToRecipient(db, messaging, uid, title, body || '', notifData);
-    }
-
-    res.json({ success: true, recipientCount: recipientIds.length });
-  } catch (err) {
-    next(err);
-  }
-});
-
 module.exports = router;

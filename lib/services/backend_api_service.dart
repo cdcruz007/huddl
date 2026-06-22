@@ -483,37 +483,6 @@ class BackendApiService {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // SOCIAL / GROUP EVENT NOTIFICATIONS
-  // ═════════════════════════════════════════════════════════════════════════
-
-  /// Generic fan-out for social events: group join, invitation, RSVP, reaction, poll.
-  Future<void> notifyGroupEvent({
-    required List<String> recipientIds,
-    required String type,
-    required String title,
-    required String body,
-    Map<String, dynamic>? data,
-  }) async {
-    if (recipientIds.isEmpty) return;
-    try {
-      final headers = await _authHeaders();
-      await http.post(
-        Uri.parse('$baseUrl/api/messages/notify-group-event'),
-        headers: headers,
-        body: jsonEncode({
-          'recipientIds': recipientIds,
-          'type': type,
-          'title': title,
-          'body': body,
-          if (data != null) 'data': data,
-        }),
-      ).timeout(const Duration(seconds: 10));
-    } catch (e) {
-      if (kDebugMode) debugPrint('[BackendApiService] notifyGroupEvent error: $e');
-    }
-  }
-
-  // ═════════════════════════════════════════════════════════════════════════
   // RESPONSE HANDLING
   // ═════════════════════════════════════════════════════════════════════════
 
