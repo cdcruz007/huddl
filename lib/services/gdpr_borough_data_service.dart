@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import 'borough_scope_guard.dart';
@@ -208,10 +209,20 @@ class GdprBoroughDataService {
 
   /// Delete all borough-scoped data from the device.
   /// Called during account deletion or explicit GDPR erasure request.
+  ///
+  /// GDPR-LOCAL-2: audit entry records a non-reversible boroughHash (first
+  /// 8 hex chars of SHA-256) instead of the plaintext borough value, so the
+  /// audit trail proves erasure occurred and is internally correlatable
+  /// without retaining the identifying borough name post-deletion.
   Future<void> deleteAllBoroughData() async {
-    // Log the deletion for audit
+    // Collect keys BEFORE deletion so the count is accurate in the audit entry.
+    final boroughKeys = await _findBoroughScopedKeys();
+
+    // Audit BEFORE wiping — records proof of erasure without plaintext borough.
+    // boroughHash: SHA-256(borough)[0..7] — correlatable, not reversible.
     await _recordAudit('borough_data_deletion', {
-      'borough': _guard.currentBorough,
+      'boroughHash': _shortHash(_guard.currentBorough),
+      'keysRemoved': boroughKeys.length,
       'timestamp': DateTime.now().toIso8601String(),
     });
 
@@ -222,7 +233,6 @@ class GdprBoroughDataService {
     await _analytics.clearAll();
 
     // Clear borough-scoped BrowserStorage keys
-    final boroughKeys = await _findBoroughScopedKeys();
     for (final key in boroughKeys) {
       await BrowserStorage.remove(key);
     }
@@ -288,6 +298,18 @@ class GdprBoroughDataService {
     }
 
     return knownKeys;
+  }
+
+  /// Returns the first 8 hex characters of the SHA-256 digest of [value].
+  ///
+  /// Used by the erasure audit log (GDPR-LOCAL-2) to record a correlatable
+  /// but non-reversible token in place of the plaintext borough name.
+  /// 8 hex chars = 32 bits — sufficient for internal correlation across audit
+  /// entries; not sufficient to reverse the original value.
+  static String _shortHash(String? value) {
+    if (value == null || value.isEmpty) return 'unknown';
+    final digest = sha256.convert(utf8.encode(value));
+    return digest.toString().substring(0, 8);
   }
 
   void _log(String message) {
