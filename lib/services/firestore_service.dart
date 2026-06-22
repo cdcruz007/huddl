@@ -122,11 +122,23 @@ class FirestoreService {
         .map((snap) => snap.docs.map((d) => _groupFromFirestore(d)).toList());
   }
 
-  /// Get all public groups (for Discover tab).
+  /// Get all public groups in the current user's borough (for Discover tab).
+  ///
+  /// BOROUGH-READ-1: borough-filtered so only the caller's borough is returned.
+  /// Fails closed — returns [] if the user's borough is unresolved.
+  /// Composite index required: groups — privacy ASC + borough ASC
+  ///   (Firestore will log a console link to create it on first run if missing).
   Future<List<Group>> getDiscoverGroups() async {
+    final profile = await getCurrentUserProfile();
+    final borough = profile?['borough'] as String? ?? '';
+    if (borough.isEmpty) {
+      debugPrint('[FirestoreService] getDiscoverGroups: borough unresolved — returning empty (BOROUGH-READ-1)');
+      return [];
+    }
     final snap = await _db
         .collection('groups')
         .where('privacy', isEqualTo: 'public')
+        .where('borough', isEqualTo: borough)
         .get();
     return snap.docs.map((d) => _groupFromFirestore(d)).toList()
       ..sort((a, b) => b.memberCount.compareTo(a.memberCount));
@@ -663,9 +675,22 @@ class FirestoreService {
   // MEETUPS
   // ═════════════════════════════════════════════════════════════════════════
 
-  /// Get all upcoming meetups.
+  /// Get upcoming meetups in the current user's borough.
+  ///
+  /// BOROUGH-READ-1: borough-filtered so only the caller's borough is returned.
+  /// Fails closed — returns [] if the user's borough is unresolved.
+  /// Single-field index on meetups.borough is sufficient (no composite needed).
   Future<List<Map<String, dynamic>>> getMeetups() async {
-    final snap = await _db.collection('meetups').get();
+    final profile = await getCurrentUserProfile();
+    final borough = profile?['borough'] as String? ?? '';
+    if (borough.isEmpty) {
+      debugPrint('[FirestoreService] getMeetups: borough unresolved — returning empty (BOROUGH-READ-1)');
+      return [];
+    }
+    final snap = await _db
+        .collection('meetups')
+        .where('borough', isEqualTo: borough)
+        .get();
 
     final list = snap.docs.map((d) {
       final data = d.data();
@@ -800,11 +825,23 @@ class FirestoreService {
   // MARKETPLACE
   // ═════════════════════════════════════════════════════════════════════════
 
-  /// Get all active marketplace listings.
+  /// Get active marketplace listings in the current user's borough.
+  ///
+  /// BOROUGH-READ-1: borough-filtered so only the caller's borough is returned.
+  /// Fails closed — returns [] if the user's borough is unresolved.
+  /// Composite index required: marketplace — status ASC + borough ASC
+  ///   (Firestore will log a console link to create it on first run if missing).
   Future<List<Map<String, dynamic>>> getMarketplaceListings() async {
+    final profile = await getCurrentUserProfile();
+    final borough = profile?['borough'] as String? ?? '';
+    if (borough.isEmpty) {
+      debugPrint('[FirestoreService] getMarketplaceListings: borough unresolved — returning empty (BOROUGH-READ-1)');
+      return [];
+    }
     final snap = await _db
         .collection('marketplace')
         .where('status', isEqualTo: 'active')
+        .where('borough', isEqualTo: borough)
         .get();
 
     final list = snap.docs.map((d) {
