@@ -131,8 +131,19 @@ class SubscriptionService extends ChangeNotifier {
       }
     }
 
-    // ── Cross-device sync: read from Firestore ────────────────────────────
-    // Only upgrades local state — never downgrades (trust local paid state).
+    // ── Cross-device sync: read from Firestore (authoritative) ───────────
+    // The server doc is written by Stripe/receipt webhooks and is the source
+    // of truth for tier, active state, and renewalDate.  We adopt the remote
+    // in BOTH directions (upgrade AND downgrade/lapse) so a cancelled user
+    // cannot retain paid features via a stale local cache.
+    //
+    // DOWNGRADE GUARD — race with purchase():
+    //   purchase() writes local optimistically (startDate = now) then calls
+    //   _syncToFirestore().  If remote-sync runs before the webhook echo lands,
+    //   the remote doc still shows the old (lower) tier.  Guard: if local
+    //   startDate is within the last 5 minutes AND local tier > remote
+    //   effective tier, the remote read is stale — skip the downgrade.
+    //   5 minutes is generous; the Stripe/Apple webhook typically lands in < 30s.
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
@@ -143,44 +154,94 @@ class SubscriptionService extends ChangeNotifier {
             .timeout(const Duration(seconds: 5));
         if (doc.exists) {
           final data = doc.data()!;
-          final tierStr = data['tier'] as String? ?? 'welcome';
-          final periodStr = data['billingPeriod'] as String? ?? 'monthly';
-          final renewalMs = data['renewalDate'] as int?;
-          final isActive = data['isActive'] as bool? ?? false;
-          final schedTierStr = data['scheduledTier'] as String?;
+          final tierStr    = data['tier']          as String? ?? 'welcome';
+          final periodStr  = data['billingPeriod'] as String? ?? 'monthly';
+          final isActive   = data['isActive']      as bool?   ?? false;
+          final cancelAtEnd =
+              data['cancelledAtPeriodEnd'] as bool? ?? false;
+          final schedTierStr   = data['scheduledTier']   as String?;
           final schedPeriodStr = data['scheduledPeriod'] as String?;
+
+          // ── renewalDate: accept both int-millis (old client writes) and
+          //    ISO-8601 string (receipt webhook writes via toISOString()).
+          DateTime? parsedRenewal;
+          final rawRenewal = data['renewalDate'];
+          if (rawRenewal is int) {
+            parsedRenewal =
+                DateTime.fromMillisecondsSinceEpoch(rawRenewal);
+          } else if (rawRenewal is String && rawRenewal.isNotEmpty) {
+            parsedRenewal = DateTime.tryParse(rawRenewal);
+          }
 
           final remoteTier = SubscriptionTier.values.firstWhere(
             (t) => t.name == tierStr,
             orElse: () => SubscriptionTier.welcome,
           );
-          // Only upgrade: if remote tier is higher than local, adopt remote
-          if (_subscription.isFree && remoteTier != SubscriptionTier.welcome) {
-            final remotePeriod = BillingPeriod.values.firstWhere(
-              (p) => p.name == periodStr,
-              orElse: () => BillingPeriod.monthly,
-            );
-            _subscription = UserSubscription(
-              tier: remoteTier,
-              billingPeriod: remotePeriod,
-              startDate: _subscription.startDate,
-              renewalDate: renewalMs != null
-                  ? DateTime.fromMillisecondsSinceEpoch(renewalMs)
-                  : null,
-              isActive: isActive,
-              cancelledAtPeriodEnd:
-                  data['cancelledAtPeriodEnd'] as bool? ?? false,
-              scheduledTier: schedTierStr == null
-                  ? null
-                  : SubscriptionTier.values.firstWhere(
-                      (t) => t.name == schedTierStr,
-                      orElse: () => SubscriptionTier.welcome),
-              scheduledPeriod: schedPeriodStr == null
-                  ? null
-                  : BillingPeriod.values.firstWhere(
-                      (p) => p.name == schedPeriodStr,
-                      orElse: () => BillingPeriod.monthly),
-            );
+          final remotePeriod = BillingPeriod.values.firstWhere(
+            (p) => p.name == periodStr,
+            orElse: () => BillingPeriod.monthly,
+          );
+
+          // ── Effective remote tier ────────────────────────────────────────
+          // If isActive == false AND the subscription is NOT in a grace period
+          // (cancelledAtPeriodEnd still within renewalDate), treat the remote
+          // entitlement as welcome (lapsed).  This mirrors the existing
+          // isPendingCancellation semantics.
+          final now = DateTime.now();
+          final withinRenewalWindow = parsedRenewal != null &&
+              parsedRenewal.isAfter(now);
+          final effectiveTier =
+              (!isActive && !(cancelAtEnd && withinRenewalWindow))
+                  ? SubscriptionTier.welcome
+                  : remoteTier;
+          final effectiveActive =
+              isActive || (cancelAtEnd && withinRenewalWindow);
+
+          // ── Downgrade guard ──────────────────────────────────────────────
+          // Skip adopting a remote downgrade if the local subscription was
+          // upgraded very recently (within 5 minutes), which indicates the
+          // remote doc is stale from before the purchase webhook arrived.
+          final localTierIndex   = _subscription.tier.index;
+          final effectiveTierIdx = effectiveTier.index;
+          final isRemoteDowngrade = effectiveTierIdx < localTierIndex;
+          final localIsRecent =
+              now.difference(_subscription.startDate) <
+                  const Duration(minutes: 5);
+          if (isRemoteDowngrade && localIsRecent) {
+            // Local purchase is very fresh — remote is likely stale.
+            // Skip sync this startup; next cold-start will see the real doc.
+            if (kDebugMode) {
+              debugPrint('[SubscriptionService] remote-sync: skipping stale '
+                  'downgrade (local upgraded ${now.difference(_subscription.startDate).inSeconds}s ago)');
+            }
+          } else {
+            // ── Adopt remote if it differs from local ────────────────────
+            final localDiffers = _subscription.tier != effectiveTier ||
+                _subscription.isActive != effectiveActive;
+            if (localDiffers) {
+              _subscription = UserSubscription(
+                tier: effectiveTier,
+                billingPeriod: remotePeriod,
+                startDate: _subscription.startDate,
+                renewalDate: parsedRenewal,
+                isActive: effectiveActive,
+                cancelledAtPeriodEnd: cancelAtEnd,
+                scheduledTier: schedTierStr == null
+                    ? null
+                    : SubscriptionTier.values.firstWhere(
+                        (t) => t.name == schedTierStr,
+                        orElse: () => SubscriptionTier.welcome),
+                scheduledPeriod: schedPeriodStr == null
+                    ? null
+                    : BillingPeriod.values.firstWhere(
+                        (p) => p.name == schedPeriodStr,
+                        orElse: () => BillingPeriod.monthly),
+              );
+              if (kDebugMode) {
+                debugPrint('[SubscriptionService] remote-sync adopted: '
+                    'tier=${effectiveTier.name} active=$effectiveActive');
+              }
+            }
           }
         }
       }
