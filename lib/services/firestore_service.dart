@@ -740,10 +740,12 @@ class FirestoreService {
     final name = _resolveDisplayName(profile);
 
     if (going) {
+      // EVENT-COUNT-1: attendeeCount increment removed — count is now derived
+      // from attendeeIds.length. The rules RSVP branch only permits
+      // attendeeIds/attendeeNames/updatedAt changes (own-uid-only gate).
       await _db.collection('meetups').doc(meetupId).update({
         'attendeeIds': FieldValue.arrayUnion([uid]),
         'attendeeNames': FieldValue.arrayUnion([name]),
-        'attendeeCount': FieldValue.increment(1),
       });
 
       // ── Notify organiser of new RSVP (fire-and-forget) ────────────────
@@ -768,10 +770,10 @@ class FirestoreService {
         }
       }
     } else {
+      // EVENT-COUNT-1: attendeeCount decrement removed — same as above.
       await _db.collection('meetups').doc(meetupId).update({
         'attendeeIds': FieldValue.arrayRemove([uid]),
         'attendeeNames': FieldValue.arrayRemove([name]),
-        'attendeeCount': FieldValue.increment(-1),
       });
     }
   }

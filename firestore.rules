@@ -452,9 +452,16 @@ service cloud.firestore {
       allow update: if isAuth() && (
         resource.data.creatorUid == request.auth.uid
         ||
-        // RSVP count updates by any auth user.
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['attendeeCount', 'rsvpCount', 'updatedAt'])
+        // EVENT-COUNT-1: narrow RSVP branch.
+        // Events do NOT use an attendeeIds array — RSVP state is tracked in
+        // user_rsvps/{uid}/meetups/{eventId} (owner-only writes, separate rule).
+        // EventService.toggleGoing() calls saveRsvp() which writes to user_rsvps
+        // only — it does NOT update the events doc at all. The old
+        // hasOnly(['attendeeCount','rsvpCount','updatedAt']) branch was therefore
+        // a dead write path: no client ever triggered it.
+        // Locked to false to close the forged-count surface.
+        // attendeeCount on events docs is set at create-time only (read-only after).
+        false
       );
       allow delete: if isAuth()
         && resource.data.creatorUid == request.auth.uid;
@@ -476,9 +483,41 @@ service cloud.firestore {
           && boroughMatches(resource.data.get('borough', ''))
         )
         ||
-        // Narrow attendee-count updates require no borough check.
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['attendeeCount', 'going', 'updatedAt'])
+        // EVENT-COUNT-1: own-uid-only RSVP branch.
+        // Replaces the open hasOnly(['attendeeCount','going']) branch which allowed
+        // any auth user to forge any count. attendeeCount is no longer client-written
+        // (removed from rsvpMeetup() in firestore_service.dart); count is derived
+        // from attendeeIds.length at read time.
+        //
+        // Constraints: only attendeeIds/attendeeNames/updatedAt may change, AND
+        // the attendeeIds change must be exactly ±1 entry equal to the caller's
+        // own uid (no injecting other uids, no bulk changes).
+        //
+        // Add path: uid not in old list, uid in new list, new list has all old
+        //   entries + exactly uid → size increases by 1.
+        // Remove path: uid in old list, uid not in new list, old list has all
+        //   new entries + exactly uid → size decreases by 1.
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['attendeeIds', 'attendeeNames', 'updatedAt'])
+          && (
+            // Add: caller adds only their own uid
+            (
+              !resource.data.attendeeIds.hasAll([request.auth.uid])
+              && request.resource.data.attendeeIds.hasAll([request.auth.uid])
+              && request.resource.data.attendeeIds.hasAll(resource.data.attendeeIds)
+              && resource.data.attendeeIds.size() + 1 == request.resource.data.attendeeIds.size()
+            )
+            ||
+            // Remove: caller removes only their own uid
+            (
+              resource.data.attendeeIds.hasAll([request.auth.uid])
+              && !request.resource.data.attendeeIds.hasAll([request.auth.uid])
+              && resource.data.attendeeIds.hasAll(request.resource.data.attendeeIds)
+              && resource.data.attendeeIds.size() - 1 == request.resource.data.attendeeIds.size()
+            )
+          )
+        )
       );
       allow delete: if isAuth()
         && resource.data.creatorUid == request.auth.uid;
