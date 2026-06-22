@@ -307,7 +307,46 @@ class InvitationService extends ChangeNotifier {
       return;
     }
 
-    for (final memberId in invitedMemberIds) {
+    // ── BATCH CAP ─────────────────────────────────────────────────────────
+    // Clamp to kMaxInvitesPerCall to prevent accidental mass-notification.
+    const int kMaxInvitesPerCall = 50;
+    final targets = invitedMemberIds.take(kMaxInvitesPerCall).toList();
+    if (invitedMemberIds.length > kMaxInvitesPerCall) {
+      _log('TRUNCATED invite list from ${invitedMemberIds.length} '
+          'to $kMaxInvitesPerCall (kMaxInvitesPerCall)');
+    }
+
+    // ── EXISTING MEMBER LIST ───────────────────────────────────────────────
+    // Group model carries invitedMemberIds (pending invitees) but NOT a live
+    // memberIds list — that lives in Firestore groups/{id}.memberIds.
+    // Fetch once here to support the already-member skip below.
+    Set<String> currentMemberIds = {};
+    try {
+      final groupDoc = await db.collection('groups').doc(group.id).get();
+      final rawIds = groupDoc.data()?['memberIds'] as List<dynamic>? ?? [];
+      currentMemberIds = rawIds.map((e) => e as String).toSet();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[InvitationService] memberIds fetch error for ${group.id}: $e');
+      }
+      // Proceed — self-skip below still prevents the most common duplicate.
+    }
+
+    for (final memberId in targets) {
+      // ── SELF SKIP ────────────────────────────────────────────────────────
+      if (memberId == inviterId) {
+        _log('SKIPPED self-invite for $memberId');
+        continue;
+      }
+
+      // ── EXISTING-MEMBER SKIP ─────────────────────────────────────────────
+      // NOTE: Group model has no memberIds field; currentMemberIds fetched
+      // from Firestore groups/{id}.memberIds once before this loop.
+      if (currentMemberIds.contains(memberId)) {
+        _log('SKIPPED already-member $memberId');
+        continue;
+      }
+
       // ── Invitee borough gate ───────────────────────────────────────────
       // Fetch the invitee's borough from Firestore and skip if it doesn't
       // match the group's borough. Only enforced when groupBorough is set.
@@ -333,7 +372,52 @@ class InvitationService extends ChangeNotifier {
           // Proceed — Firestore rules are the hard backstop.
         }
       }
+
       final invId = 'inv_${group.id}_$memberId';
+
+      // ── RE-NOTIFY THROTTLE ────────────────────────────────────────────────
+      // Read the existing invite doc before writing/notifying to prevent push
+      // spam when the sender re-invites someone who already has a pending invite.
+      final existingRef = db
+          .collection('users')
+          .doc(memberId)
+          .collection('invitations')
+          .doc(invId);
+      bool shouldNotify = true;
+      try {
+        final existing = await existingRef.get();
+        if (existing.exists) {
+          final data = existing.data() ?? {};
+          final status = data['status'] as String? ?? '';
+          final sentTs = data['sentAt'];
+          DateTime? sentAt;
+          if (sentTs is Timestamp) sentAt = sentTs.toDate();
+          final isRecent = sentAt != null &&
+              DateTime.now().difference(sentAt) < const Duration(hours: 24);
+
+          if (status == 'accepted' || status == 'declined') {
+            // Already responded — do not re-invite or spam.
+            _log('SKIPPED $memberId: invite already $status');
+            continue;
+          }
+          if (status == 'pending' && isRecent) {
+            // Recent pending invite exists — skip overwrite AND push (anti-spam).
+            _log('SKIPPED re-notify for $memberId: recent pending invite exists');
+            continue;
+          }
+          if (status == 'pending' && !isRecent) {
+            // Stale pending invite — allow refresh write + one reminder push.
+            shouldNotify = true;
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[InvitationService] existing invite check error '
+              'for $memberId: $e');
+        }
+        // Proceed on error — fail-open.
+      }
+
       final inv = GroupInvitation(
         id: invId,
         groupId: group.id,
@@ -374,29 +458,31 @@ class InvitationService extends ChangeNotifier {
         });
       } catch (e) {
         if (kDebugMode) {
-          if (kDebugMode) debugPrint('[InvitationService] Firestore invite write error: $e');
+          debugPrint('[InvitationService] Firestore invite write error: $e');
         }
       }
 
-      // 3. Send FCM push notification to the invited member
-      try {
-        await HuddlNotificationService().groupInvitation(
-          recipientId: memberId,
-          invitedByName: creatorName,
-          groupName: group.name,
-          groupId: group.id,
-          groupImageUrl: group.imageUrl.isNotEmpty ? group.imageUrl : null,
-        );
-      } catch (e) {
-        if (kDebugMode) {
-          if (kDebugMode) debugPrint('[InvitationService] FCM invitation push error: $e');
+      // 3. Send FCM push notification — gated on shouldNotify (anti-spam)
+      if (shouldNotify) {
+        try {
+          await HuddlNotificationService().groupInvitation(
+            recipientId: memberId,
+            invitedByName: creatorName,
+            groupName: group.name,
+            groupId: group.id,
+            groupImageUrl: group.imageUrl.isNotEmpty ? group.imageUrl : null,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[InvitationService] FCM invitation push error: $e');
+          }
         }
       }
     }
 
     await _saveInvitations();
     notifyListeners();
-    _log('Sent ${invitedMemberIds.length} invitation(s) for group "${group.name}"');
+    _log('Sent ${targets.length} invitation(s) for group "${group.name}"');
   }
 
   /// Accept an invitation — the group will now appear in Messages tab
