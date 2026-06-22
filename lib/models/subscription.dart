@@ -493,22 +493,14 @@ class UserSubscription {
       };
 
   factory UserSubscription.fromJson(Map<String, dynamic> json) {
-    // ── Normalise legacy Firestore tier strings → canonical 3-tier values ──────
-    String tierName = json['tier'] as String? ?? 'welcome';
-    // All legacy free names → welcome
-    const _toWelcome = ['free', 'explorer'];
-    if (_toWelcome.contains(tierName)) tierName = 'welcome';
-    // All legacy Plus names → plus
-    const _toPlus = ['neighbourhood', 'village', 'neighbour'];
-    if (_toPlus.contains(tierName)) tierName = 'plus';
-    // All legacy paid names → plus (innerCircle was a Plus-equivalent)
-    const _toLegacyPlus = ['pro', 'circle', 'innerCircle'];
-    if (_toLegacyPlus.contains(tierName)) tierName = 'plus';
-    // Canonical names pass through unchanged: 'welcome', 'plus', 'partner'
+    // ── Resolve tier: canonical values only (welcome / plus / partner) ──────────
+    // Unknown or legacy names → welcome (fail-safe). No alias mapping.
+    final String tierName = json['tier'] as String? ?? 'welcome';
 
     SubscriptionTier? schedTier;
     final schedTierName = json['scheduledTier'] as String?;
     if (schedTierName != null) {
+      // Unknown or legacy scheduledTier names → welcome (fail-safe).
       schedTier = SubscriptionTier.values.firstWhere(
         (t) => t.name == schedTierName,
         orElse: () => SubscriptionTier.welcome,

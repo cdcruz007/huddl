@@ -298,16 +298,6 @@ function _mapAppleProductToTier(appleProductId) {
     huddl_plus_annual:     { tier: 'plus',    billingPeriod: 'annual'  },
     huddl_partner_monthly: { tier: 'partner', billingPeriod: 'monthly' },
     huddl_partner_annual:  { tier: 'partner', billingPeriod: 'annual'  },
-    // Legacy product IDs — keep so any remaining test receipts resolve correctly
-    huddl_neighbour_monthly:              { tier: 'plus', billingPeriod: 'monthly' },
-    huddl_neighbour_annual:               { tier: 'plus', billingPeriod: 'annual'  },
-    huddl_circle_monthly:                 { tier: 'plus', billingPeriod: 'monthly' },
-    huddl_circle_annual:                  { tier: 'plus', billingPeriod: 'annual'  },
-    huddl_neighbourhood_monthly:          { tier: 'plus', billingPeriod: 'monthly' },
-    huddl_neighbourhood_annual:           { tier: 'plus', billingPeriod: 'annual'  },
-    huddl_neighbourhood_founding_monthly: { tier: 'plus', billingPeriod: 'monthly' },
-    huddl_inner_circle_monthly:           { tier: 'plus', billingPeriod: 'monthly' },
-    huddl_inner_circle_annual:            { tier: 'plus', billingPeriod: 'annual'  },
   };
   return mapping[appleProductId] || { tier: 'welcome', billingPeriod: 'monthly' };  // TIER-FALLBACK-1
 }
