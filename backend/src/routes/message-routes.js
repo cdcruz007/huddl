@@ -188,7 +188,7 @@ router.post('/notify-group', authMiddleware, async (req, res, next) => {
 
     // Fan-out in parallel (fire-and-forget each, results collected for logging)
     await Promise.all(
-      memberIds.map(uid => _sendToRecipient(db, messaging, uid, title, body, data))
+      memberIds.map(uid => _sendToRecipient(db, messaging, uid, title, body, data, senderId))
     );
 
     res.json({ success: true, recipientCount: memberIds.length });
