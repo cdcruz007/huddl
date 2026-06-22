@@ -279,26 +279,63 @@ router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
 // POST /api/messages/notify-offer
 // ─────────────────────────────────────────────────────────────────────────────
 // Notify the seller when a buyer makes an offer on their listing.
-// Body: { sellerId, buyerName, itemTitle, itemId, offerId, offerAmount, notePreview?, itemImageUrl? }
+// Body: { itemId, offerId, offerAmount, notePreview?, itemImageUrl? }
+//
+// NOTIFY-SPOOF-1b: Caller (req.userId) MUST be the offer's buyerId.
+//   - Reads marketplace/{itemId}/offers/{offerId} → verifies offer.buyerId === req.userId.
+//   - Reads marketplace/{itemId} → derives sellerId (recipient) server-side.
+//   - Derives buyerName from users/{req.userId}.name — body.buyerName is ignored.
+//   - 403 on any role/doc mismatch; 404 if item or offer missing.
 router.post('/notify-offer', authMiddleware, async (req, res, next) => {
   try {
-    const { sellerId, buyerName, itemTitle, itemId, offerId, offerAmount, notePreview, itemImageUrl } = req.body;
-    if (!sellerId || !buyerName || !itemTitle) {
-      return res.status(400).json({ error: 'sellerId, buyerName and itemTitle are required' });
+    const callerId = req.userId;
+    const { itemId, offerId, offerAmount, notePreview, itemImageUrl } = req.body;
+
+    if (!itemId || !offerId) {
+      return res.status(400).json({ error: 'itemId and offerId are required' });
     }
 
     const db        = getDb();
     const messaging = getMessaging();
 
+    // ── Verify caller is the actual buyer ────────────────────────────────────
+    const offerSnap = await db.collection('marketplace').doc(itemId)
+                              .collection('offers').doc(offerId).get();
+    if (!offerSnap.exists) {
+      return res.status(404).json({ error: 'Offer not found' });
+    }
+    const offerData = offerSnap.data();
+    if (offerData.buyerId !== callerId) {
+      return res.status(403).json({ error: 'Caller is not the buyer for this offer' });
+    }
+
+    // ── Verify item exists and derive seller (recipient) server-side ─────────
+    const itemSnap = await db.collection('marketplace').doc(itemId).get();
+    if (!itemSnap.exists) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    const itemData  = itemSnap.data();
+    const sellerId  = itemData.sellerId;
+    const itemTitle = itemData.title || offerData.itemTitle || '';
+    if (!sellerId) {
+      return res.status(403).json({ error: 'Item has no seller' });
+    }
+
+    // ── Derive buyerName server-side — NEVER trust body.buyerName ────────────
+    const buyerSnap = await db.collection('users').doc(callerId).get();
+    const buyerName = (buyerSnap.exists && buyerSnap.data().name)
+      ? buyerSnap.data().name
+      : 'A buyer';
+
     const body = notePreview
-      ? `${buyerName} offered ${offerAmount} · "${notePreview.substring(0, 60)}"`
-      : `${buyerName} offered ${offerAmount} for your ${itemTitle}`;
+      ? `${buyerName} offered ${offerAmount || ''} · "${notePreview.substring(0, 60)}"`
+      : `${buyerName} offered ${offerAmount || ''} for your ${itemTitle}`;
 
     const data = {
       type:      'offer_received',
-      itemId:    itemId    || '',
+      itemId,
       itemTitle,
-      offerId:   offerId   || '',
+      offerId,
       route:     '/marketplace',
       tab:       'sell',
     };
@@ -314,16 +351,52 @@ router.post('/notify-offer', authMiddleware, async (req, res, next) => {
 // POST /api/messages/notify-offer-response
 // ─────────────────────────────────────────────────────────────────────────────
 // Notify the buyer when the seller accepts or declines their offer.
-// Body: { buyerId, sellerName, itemTitle, itemId, accepted, responseMessage?, itemImageUrl? }
+// Body: { itemId, offerId, accepted, responseMessage?, itemImageUrl? }
+//
+// NOTIFY-SPOOF-1b: Caller (req.userId) MUST be the item's sellerId.
+//   - Reads marketplace/{itemId} → verifies item.sellerId === req.userId.
+//   - Reads marketplace/{itemId}/offers/{offerId} → derives buyerId (recipient).
+//   - Derives sellerName from users/{req.userId}.name — body.sellerName is ignored.
+//   - 403 on any role/doc mismatch; 404 if item or offer missing.
 router.post('/notify-offer-response', authMiddleware, async (req, res, next) => {
   try {
-    const { buyerId, sellerName, itemTitle, itemId, accepted, responseMessage, sellerId } = req.body;
-    if (!buyerId || !sellerName || !itemTitle) {
-      return res.status(400).json({ error: 'buyerId, sellerName and itemTitle are required' });
+    const callerId = req.userId;
+    const { itemId, offerId, accepted, responseMessage, itemImageUrl } = req.body;
+
+    if (!itemId || !offerId) {
+      return res.status(400).json({ error: 'itemId and offerId are required' });
     }
 
     const db        = getDb();
     const messaging = getMessaging();
+
+    // ── Verify caller is the item's seller ───────────────────────────────────
+    const itemSnap = await db.collection('marketplace').doc(itemId).get();
+    if (!itemSnap.exists) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    const itemData  = itemSnap.data();
+    const itemTitle = itemData.title || '';
+    if (itemData.sellerId !== callerId) {
+      return res.status(403).json({ error: 'Caller is not the seller of this item' });
+    }
+
+    // ── Derive buyerId (recipient) from the offer doc ────────────────────────
+    const offerSnap = await db.collection('marketplace').doc(itemId)
+                              .collection('offers').doc(offerId).get();
+    if (!offerSnap.exists) {
+      return res.status(404).json({ error: 'Offer not found' });
+    }
+    const buyerId = offerSnap.data().buyerId;
+    if (!buyerId) {
+      return res.status(403).json({ error: 'Offer has no buyerId' });
+    }
+
+    // ── Derive sellerName server-side — NEVER trust body.sellerName ──────────
+    const sellerSnap = await db.collection('users').doc(callerId).get();
+    const sellerName = (sellerSnap.exists && sellerSnap.data().name)
+      ? sellerSnap.data().name
+      : 'The seller';
 
     const type  = accepted ? 'offer_accepted' : 'offer_declined';
     const title = accepted ? 'Offer accepted! 🤝' : 'Offer not accepted';
@@ -335,12 +408,12 @@ router.post('/notify-offer-response', authMiddleware, async (req, res, next) => 
 
     const data = {
       type,
-      itemId:     itemId   || '',
+      itemId,
       itemTitle,
-      sellerId:   sellerId || '',
+      sellerId:   callerId,
       sellerName,
-      route:      accepted ? '/marketplace' : '/marketplace',
-      tab:        accepted ? 'buy'          : 'buy',
+      route:      '/marketplace',
+      tab:        'buy',
       action:     accepted ? 'open_seller_chat' : '',
     };
 
@@ -354,33 +427,61 @@ router.post('/notify-offer-response', authMiddleware, async (req, res, next) => 
 // ═════════════════════════════════════════════════════════════════════════════
 // POST /api/messages/notify-item-sold
 // ─────────────────────────────────────────────────────────────────────────────
-// Notify the seller when their item is marked as sold.
-// Also notifies other pending buyers that the item is gone.
-// Body: { sellerId, buyerName, itemTitle, itemId, otherBuyerIds?, itemImageUrl? }
+// Notify other pending buyers when an item is marked as sold.
+// Body: { itemId, otherBuyerIds?, itemImageUrl? }
+//
+// NOTIFY-SPOOF-1b: Caller (req.userId) MUST be the item's sellerId.
+//   - Reads marketplace/{itemId} → verifies item.sellerId === req.userId.
+//   - Filters otherBuyerIds to ONLY uids with a real offer doc under
+//     marketplace/{itemId}/offers/{uid} — drops arbitrary injected ids.
+//   - Derives any display names server-side.
+//   - 403 on role mismatch; 404 if item missing.
 router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
   try {
-    const { sellerId, buyerName, itemTitle, itemId, otherBuyerIds } = req.body;
-    if (!sellerId || !itemTitle) {
-      return res.status(400).json({ error: 'sellerId and itemTitle are required' });
+    const callerId = req.userId;
+    const { itemId, otherBuyerIds, itemImageUrl } = req.body;
+
+    if (!itemId) {
+      return res.status(400).json({ error: 'itemId is required' });
     }
 
     const db        = getDb();
     const messaging = getMessaging();
 
-    // Notify seller
-    await _sendToRecipient(db, messaging, sellerId,
-      `"${itemTitle}" sold 🎉`,
-      `Great sale to ${buyerName || 'a buyer'}! Your listing has been closed.`,
-      { type: 'item_sold', itemId: itemId || '', itemTitle, route: '/marketplace', tab: 'sell' }
-    );
+    // ── Verify caller is the item's seller ───────────────────────────────────
+    const itemSnap = await db.collection('marketplace').doc(itemId).get();
+    if (!itemSnap.exists) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    const itemData  = itemSnap.data();
+    const itemTitle = itemData.title || '';
+    if (itemData.sellerId !== callerId) {
+      return res.status(403).json({ error: 'Caller is not the seller of this item' });
+    }
 
-    // Notify other interested buyers
-    if (Array.isArray(otherBuyerIds)) {
+    // ── Notify other interested buyers (offer-verified only) ─────────────────
+    // For each uid in otherBuyerIds, verify an offer doc exists before notifying.
+    // This prevents a seller from pushing arbitrary notifications to any uid.
+    if (Array.isArray(otherBuyerIds) && otherBuyerIds.length > 0) {
+      // Fetch all offer docs for this item in one query, then filter in-memory.
+      const offersSnap = await db.collection('marketplace').doc(itemId)
+                                 .collection('offers').get();
+      const verifiedBuyerIds = new Set(
+        offersSnap.docs
+          .map(d => d.data().buyerId)
+          .filter(Boolean)
+      );
+
       for (const uid of otherBuyerIds) {
+        // Only notify uids that actually have an offer on this item.
+        if (!verifiedBuyerIds.has(uid)) {
+          console.log(`[msg-notify] notify-item-sold: skipping ${uid} — no offer doc for item ${itemId}`);
+          continue;
+        }
         await _sendToRecipient(db, messaging, uid,
           'Item no longer available',
           `"${itemTitle}" you offered on has been sold`,
-          { type: 'saved_item_sold', itemId: itemId || '', itemTitle, route: '/marketplace', tab: 'buy' }
+          { type: 'saved_item_sold', itemId, itemTitle, route: '/marketplace', tab: 'buy' }
         );
       }
     }
