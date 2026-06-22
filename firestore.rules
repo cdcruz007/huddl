@@ -619,13 +619,49 @@ service cloud.firestore {
       allow create: if isAuth()
         && request.resource.data.createdByUid == request.auth.uid;
 
-      // Any auth user may update vote counts and voter records (voting flow).
-      // The creator may additionally soft-delete (deleted: true) their poll.
+      // POLL-VOTE-1: hardened vote-integrity update rule.
+      //
+      // Branch 1 — creator retains full update rights (close poll, edit, soft-delete).
+      //
+      // Branch 2 — voter path, three integrity constraints:
+      //   (a) group-membership gate: caller must be a member of the poll's group.
+      //       Uses get() on groups/{groupId}.memberIds — groupId is a top-level
+      //       field on the poll doc (confirmed: createPoll writes 'groupId' at root).
+      //   (b) field-scope: only options/voters/updatedAt may change (same as before).
+      //   (c) voters-own-key-only: the voters MAP diff may only touch the caller's
+      //       own UID key — prevents one member overwriting another's vote entry.
+      //       voters is a map keyed by UID → List<optionId> (confirmed from
+      //       submitPollVote schema); .diff().affectedKeys() operates on map keys,
+      //       so hasOnly([request.auth.uid]) is the correct form for a map.
+      //   (d) no-vote-after-close: if closesAt is set and is in the past, deny.
+      //       closesAt is a Timestamp or null at the top level of the poll doc.
+      //
+      // Accepted residual (POLL-VOTE-1-R1): options vote-count exactness is NOT
+      // fully enforced. Branch 2 guarantees only a group member votes and only
+      // their own voters entry changes; a member could still mis-increment option
+      // tallies for their own vote. Full enforcement requires deriving counts from
+      // the voters map server-side (Cloud Function on poll write) — tracked as an
+      // optional follow-up, NOT built here.
       allow update: if isAuth() && (
+        // Branch 1 — creator full rights
         resource.data.createdByUid == request.auth.uid
         ||
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['options', 'voters', 'updatedAt'])
+        // Branch 2 — constrained voter path
+        (
+          // (a) caller must be a member of the poll's group
+          request.auth.uid in
+            get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+              .data.memberIds
+          // (b) only options/voters/updatedAt may change
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['options', 'voters', 'updatedAt'])
+          // (c) voters map diff touches only the caller's own UID key
+          && request.resource.data.voters.diff(resource.data.voters)
+               .affectedKeys().hasOnly([request.auth.uid])
+          // (d) no voting after closesAt (if set)
+          && (resource.data.get('closesAt', null) == null
+              || request.time < resource.data.closesAt)
+        )
       );
 
       // Only the creator may delete their poll.
