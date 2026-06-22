@@ -834,6 +834,121 @@ class _HuddlThreeDotsLoaderState extends State<HuddlThreeDotsLoader>
 //   );
 // =============================================================================
 
+// =============================================================================
+// HUDDL ERROR STATE — reusable error-with-retry widget  (FETCH-SILENT-1)
+// =============================================================================
+//
+// Replaces silent fall-through to empty state when a primary data fetch fails.
+// Renders an icon, a short human-friendly message, and a "Try again" button.
+// Stateless — all retry logic lives in the calling screen.
+//
+// Usage:
+//   HuddlErrorState(onRetry: _loadListingsFromFirestore)
+//   HuddlErrorState(
+//     message: 'Couldn\u2019t load your groups. Check your connection.',
+//     onRetry: _loadGroups,
+//     icon: Icons.group_off_outlined,
+//   )
+//
+// Placement in build():
+//   if (_isLoading)   → loading skeleton / HuddlLoadingScreen
+//   else if (_loadError) → HuddlErrorState(onRetry: <primaryLoadMethod>)
+//   else if (items.isEmpty) → empty state widget
+//   else             → list / grid
+// =============================================================================
+
+class HuddlErrorState extends StatelessWidget {
+  /// Human-readable message shown below the icon.
+  /// Defaults to a neutral, non-technical fallback.
+  final String message;
+
+  /// Called when the user taps "Try again".
+  final VoidCallback onRetry;
+
+  /// Icon drawn above the message.
+  /// Defaults to [Icons.cloud_off_outlined] — generic "no connection" signal.
+  final IconData? icon;
+
+  const HuddlErrorState({
+    super.key,
+    this.message = 'Couldn\u2019t load. Check your connection and try again.',
+    required this.onRetry,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+    final textSecondary =
+        isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
+    final iconColor = isDark
+        ? HuddlColors.darkTextSecondary
+        : HuddlColors.neutral300;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Icon ───────────────────────────────────────────────────────
+            Icon(
+              icon ?? Icons.cloud_off_outlined,
+              size: 52,
+              color: iconColor,
+            ),
+            const SizedBox(height: 20),
+
+            // ── Message ────────────────────────────────────────────────────
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: HuddlText.body(color: textSecondary),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Retry button ───────────────────────────────────────────────
+            // Styled to match the ghost / outline pattern already used by
+            // HuddlButton.secondary in the app — no new dependency needed.
+            Semantics(
+              button: true,
+              label: 'Try again',
+              child: GestureDetector(
+                onTap: onRetry,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: isDark
+                          ? HuddlColors.darkDivider
+                          : HuddlColors.neutral300,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Try again',
+                      style: HuddlText.body(
+                        color: textPrimary,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class HuddlProcessLoadingOverlay extends StatelessWidget {
   final String message;
   final String? submessage;

@@ -534,6 +534,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // UI state
   bool _isLoadingItems = false;
+  bool _loadError = false;        // FETCH-SILENT-1: true when primary fetch fails
   bool _isSearchActive = false;
   bool _isGridView = true; // grid is the default — Pinterest/Vinted/Depop standard
 
@@ -565,7 +566,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       final uid = FirebaseAuth.instance.currentUser?.uid;
 
       // ── 1a. All active listings (Buy tab) ─────────────────────────────────
+      // FETCH-SILENT-1: this is the PRIMARY fetch — failure sets _loadError=true.
       final docs = await FirestoreService().getMarketplaceListings();
+      // Primary fetch succeeded — clear any prior error.
+      if (mounted) setState(() => _loadError = false);
       for (final d in docs) {
         final item = RehomeItem.fromFirestore(d);
         if (item.id.isEmpty) continue;
@@ -653,7 +657,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         }
       }
     } catch (e) {
+      // FETCH-SILENT-1: primary fetch failure — show error state, not empty state.
       if (kDebugMode) debugPrint('[Marketplace] loadFromFirestore error: $e');
+      if (mounted) setState(() => _loadError = true);
     } finally {
       if (mounted) setState(() => _isLoadingItems = false);
     }
@@ -1948,8 +1954,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         Divider(height: 1, thickness: 0.5, color: hc.divider),
 
         // ── Main content area ─────────────────────────────────────────
+        // FETCH-SILENT-1 priority: loading → error → (filtered-)empty → list
         Expanded(
-          child: items.isEmpty
+          child: _loadError
+              ? HuddlErrorState(
+                  onRetry: _loadListingsFromFirestore,
+                  message: 'Couldn\u2019t load listings. Check your connection and try again.',
+                )
+              : items.isEmpty
               ? (_hasActiveFilters || _searchQuery.isNotEmpty || _selectedCategory != null
                   ? HuddlEmptyState(
                       mood: HuddlMood.curious,

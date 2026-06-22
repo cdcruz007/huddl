@@ -2320,6 +2320,16 @@ class _MessagesTabState extends State<_MessagesTab> {
   }
 
   Widget _buildConversationList(List<_MessageListItem> unified) {
+    // FETCH-SILENT-1: primary fetch failure — full-screen error state blocks
+    // the empty state so the user knows WHY there are no items.
+    if (_hasLoadError && unified.isEmpty && _pendingInvitations.isEmpty) {
+      return HuddlErrorState(
+        onRetry: _loadGroups,
+        message: 'Couldn\u2019t load your groups. Check your connection and try again.',
+        icon: Icons.group_off_outlined,
+      );
+    }
+
     if (unified.isEmpty && _pendingInvitations.isEmpty) {
       return _EmptyMessagesState(onSearch: () {
         // Search is driven by the parent GroupsScreen shared bar — nothing to do here
@@ -2332,34 +2342,6 @@ class _MessagesTabState extends State<_MessagesTab> {
       child: ListView(
         padding: const EdgeInsets.only(top: 2, bottom: 16),
         children: [
-          // ── Error banner (P2: user-visible error) ──────────
-          if (_hasLoadError)
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: HuddlColors.warningBg,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: HuddlColors.warning.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(HuddlIcons.info, size: 16, color: HuddlColors.warningDark),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(_errorMessage, style: HuddlText.caption()),
-                  ),
-                  Semantics(
-                    label: 'Retry loading groups',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: _loadGroups,
-                      child: Text('Retry', style: HuddlText.caption(weight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           // ── AI Catch-Up (compact) ─────────────────────────
           _buildAiCatchUpCard(),
           // ── Pending invitation cards (compact) ──────────────

@@ -597,9 +597,13 @@ class MeetupService extends ChangeNotifier {
     } catch (_) {}
   }
 
+  // FETCH-SILENT-1: exposed so _MeetupsTabState can render HuddlErrorState.
+  bool loadFailed = false;
+
   /// Loads meetups from Firestore and merges them into the local list.
   /// Safe to call multiple times — deduplicates by ID.
   Future<void> loadFromFirestore() async {
+    loadFailed = false;
     try {
       final raw = await FirestoreService().getMeetups();
       bool changed = false;
@@ -628,7 +632,8 @@ class MeetupService extends ChangeNotifier {
       }
     } catch (e) {
       if (kDebugMode) debugPrint('[MeetupService] loadFromFirestore error: $e');
-      // Firestore unavailable — show empty state gracefully (no demo data)
+      loadFailed = true; // FETCH-SILENT-1
+      // Firestore unavailable — notify so UI can render error state.
       Future.delayed(Duration.zero, () {
         if (hasListeners) notifyListeners();
       });

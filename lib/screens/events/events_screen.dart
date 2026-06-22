@@ -3024,6 +3024,7 @@ class _EventsTabState extends State<_EventsTab> {
   // ── Recommender state ──────────────────────────────────────
   bool _recommenderReady = false;
   bool _isDiscovering = false;
+  bool _loadError = false;  // FETCH-SILENT-1: true when _initServices() fails
   Map<String, ScoredEvent> _scoredEventMap = {};
 
   // ── Inline search state (mirrors Meetups tab) ───────────────
@@ -3162,28 +3163,40 @@ class _EventsTabState extends State<_EventsTab> {
   }
 
   Future<void> _initServices() async {
-    setState(() => _isDiscovering = true);
-    final count = await _discovery.runDailyDiscovery();
-    if (mounted) setState(() => _isDiscovering = false);
+    // FETCH-SILENT-1: clear any prior error before retrying.
+    if (mounted) setState(() => _loadError = false);
+    try {
+      setState(() => _isDiscovering = true);
+      final count = await _discovery.runDailyDiscovery();
+      if (mounted) setState(() => _isDiscovering = false);
 
-    await _recommender.initialize();
-    await _invisibleAi.initialize();
-    _refreshRecommendations();
-    if (mounted) {
-      setState(() => _recommenderReady = true);
-      if (count > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Found $count new events near you',
-              style: HuddlText.body(),
+      await _recommender.initialize();
+      await _invisibleAi.initialize();
+      _refreshRecommendations();
+      if (mounted) {
+        setState(() => _recommenderReady = true);
+        if (count > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Found $count new events near you',
+                style: HuddlText.body(),
+              ),
+              backgroundColor: HuddlColors.textDark,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 2),
             ),
-            backgroundColor: HuddlColors.textDark,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+          );
+        }
+      }
+    } catch (e) {
+      // FETCH-SILENT-1: primary fetch failure — show error state, not empty state.
+      if (mounted) {
+        setState(() {
+          _isDiscovering = false;
+          _loadError = true;
+        });
       }
     }
   }
@@ -3556,10 +3569,17 @@ class _EventsTabState extends State<_EventsTab> {
           ),
 
         // ── Event list — all events as vertical cards under "Suggested for you" ──
+        // FETCH-SILENT-1 priority: loading → error → empty → list
         Expanded(
           child: ColoredBox(
             color: HuddlColors.neutral50,
-            child: (!_recommenderReady && events.isEmpty)
+            child: _loadError
+                ? HuddlErrorState(
+                    onRetry: _initServices,
+                    message: 'Couldn\u2019t load events. Check your connection and try again.',
+                    icon: Icons.event_busy_outlined,
+                  )
+                : (!_recommenderReady && events.isEmpty)
                 ? const HuddlSkeletonFeed(cardCount: 3)
                 : events.isEmpty
                 ? _EmptyState(

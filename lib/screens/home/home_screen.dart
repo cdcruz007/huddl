@@ -90,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen>
   final RehomeService _rehomeService = RehomeService();
 
   bool _isLoading = true;
+  bool _loadError = false;   // FETCH-SILENT-1: true when _loadData() primary fetch fails
   bool _isFirstRun = false;
 
   // ── User state ────────────────────────────────────────────────────────────
@@ -420,6 +421,7 @@ class _HomeScreenState extends State<HomeScreen>
         _boroughMembers = boroughMembers;
         _featuredServices = featuredServices;
         _isLoading = false;
+        _loadError = false;  // FETCH-SILENT-1: primary fetch succeeded
       });
 
       _buildSmartFeed();
@@ -427,7 +429,11 @@ class _HomeScreenState extends State<HomeScreen>
 
       _greetingAnimCtrl.forward();
     } catch (e) {
-      setState(() => _isLoading = false);
+      // FETCH-SILENT-1: primary fetch failure — show error state, not empty feed.
+      setState(() {
+        _isLoading = false;
+        _loadError = true;
+      });
     }
   }
 
@@ -1130,6 +1136,20 @@ class _HomeScreenState extends State<HomeScreen>
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: HuddlSkeletonFeed(cardCount: 4),
+          ),
+        ),
+      );
+    }
+
+    // FETCH-SILENT-1: primary fetch failure — full-screen error + retry.
+    // Priority: loading → error → content (with empty states inline where needed).
+    if (_loadError) {
+      return Scaffold(
+        backgroundColor: hc.scaffold,
+        body: SafeArea(
+          child: HuddlErrorState(
+            onRetry: _loadData,
+            message: 'Couldn\u2019t load your feed. Check your connection and try again.',
           ),
         ),
       );
