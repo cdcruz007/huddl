@@ -188,8 +188,14 @@ service cloud.firestore {
     // GROUPS
     // =========================================================================
     match /groups/{groupId} {
-      // Any auth user can read group metadata (needed for discover/search).
-      allow read: if isAuth();
+      // BOROUGH-READ-1: read locked to caller's own borough + admin escape.
+      // boroughMatches checks resource.data.borough against users_public/{uid}.borough
+      // (CF-controlled, cannot be spoofed by the client).
+      // Single-doc gets (getGroup, groupStream) are also borough-gated — a crafted
+      // client cannot read another borough's group by doc ID.
+      // Composite index required: groups — privacy ASC + borough ASC
+      //   (needed by getDiscoverGroups Part 1 query; Firestore logs console link if missing).
+      allow read: if isAuth() && (boroughMatches(resource.data.get('borough', '')) || isAdmin());
 
       // Borough-scoped create: backfill complete — read canonical 'borough' only.
       allow create: if isAuth()
@@ -439,7 +445,10 @@ service cloud.firestore {
 
     // Borough-scoped: create and full-field updates require borough match.
     match /meetups/{meetupId} {
-      allow read: if isAuth();
+      // BOROUGH-READ-1: read locked to caller's own borough + admin escape.
+      // getMeetups (Part 1) already sends .where('borough', isEqualTo: borough)
+      // so list queries satisfy this rule automatically.
+      allow read: if isAuth() && (boroughMatches(resource.data.get('borough', '')) || isAdmin());
       allow create: if isAuth()
         && request.resource.data.creatorUid == request.auth.uid
         && boroughMatches(request.resource.data.get('borough', ''));
@@ -628,8 +637,12 @@ service cloud.firestore {
     // BOROUGH ANNOUNCEMENTS  (noticeboard posts)
     // =========================================================================
     match /borough_announcements/{announcementId} {
-      // Any auth user can read announcements in any borough.
-      allow read: if isAuth();
+      // BOROUGH-READ-1: read locked to caller's own borough + admin escape.
+      // NOTE: the Firestore field is 'boroughId' (not 'borough') — confirmed from
+      // Announcement.toFirestore() which writes 'boroughId': boroughId.
+      // The existing .where('boroughId', isEqualTo: borough) query in
+      // AnnouncementService already constrains list reads correctly.
+      allow read: if isAuth() && (boroughMatches(resource.data.get('boroughId', '')) || isAdmin());
 
       // Any auth user may post; authorId must match their UID.
       allow create: if isAuth()
@@ -734,7 +747,8 @@ service cloud.firestore {
     // =========================================================================
     // Borough-scoped: create and owner-update paths require borough match.
     match /local_services/{listingId} {
-      allow read: if isAuth();
+      // BOROUGH-READ-1: read locked to caller's own borough + admin escape.
+      allow read: if isAuth() && (boroughMatches(resource.data.get('borough', '')) || isAdmin());
 
       // LSS-1: a client may create a listing but NEVER a pre-verified one.
       // isVerified/verificationTier are set ONLY by the verifyBusiness CF (Admin SDK).
@@ -827,7 +841,10 @@ service cloud.firestore {
     // Borough-scoped: create and seller-update paths require borough match.
     // =========================================================================
     match /marketplace/{itemId} {
-      allow read: if isAuth();
+      // BOROUGH-READ-1: read locked to caller's own borough + admin escape.
+      // Composite index required: marketplace — status ASC + borough ASC
+      //   (needed by getMarketplaceListings Part 1 query; Firestore logs console link if missing).
+      allow read: if isAuth() && (boroughMatches(resource.data.get('borough', '')) || isAdmin());
       // Seller's resolved borough must match the doc's borough field.
       // Backfill complete — read canonical 'borough' only.
       allow create: if isAuth()
