@@ -641,6 +641,40 @@ async function anonymizeStripeCustomer(userId) {
 
   const anonymizedAt = new Date().toISOString();
 
+  // ── 2b. Idempotency guard — short-circuit if already anonymized ────────────
+  // Retrieve the customer before attempting any mutation.  This makes every
+  // retry safe and free: the reconciler can call anonymizeStripeCustomer()
+  // repeatedly without risk of double-billing or spurious Stripe events.
+  //
+  // Short-circuit conditions:
+  //   • existing.deleted       — customer already hard-deleted by Stripe
+  //                              (rare; shouldn't happen in our flow but handle it)
+  //   • metadata.anonymized === 'true'  — we already ran the scrub
+  //
+  // Any retrieve error → treat as a hard failure (return error) because we
+  // cannot safely proceed without knowing the customer state.
+  try {
+    const existing = await stripe.customers.retrieve(stripeCustomerId);
+    if (existing.deleted) {
+      console.log(
+        `[anonymizeStripeCustomer] uid=${userId} customer=${stripeCustomerId} already deleted in Stripe — short-circuit.`
+      );
+      return { anonymized: true, alreadyDone: true, customerId: stripeCustomerId };
+    }
+    if (existing.metadata && existing.metadata.anonymized === 'true') {
+      console.log(
+        `[anonymizeStripeCustomer] uid=${userId} customer=${stripeCustomerId} metadata.anonymized=true — short-circuit.`
+      );
+      return { anonymized: true, alreadyDone: true, customerId: stripeCustomerId };
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[anonymizeStripeCustomer] stripe.customers.retrieve error for uid=${userId}: ${msg}`
+    );
+    return { anonymized: false, error: `customers_retrieve: ${msg}` };
+  }
+
   // ── 3. Scrub PII fields on the Stripe Customer ──────────────────────────
   // name / email / phone / address → cleared.
   // metadata → replaced with anonymization audit record only.

@@ -32,7 +32,7 @@
  */
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moderateAndSendGroupMessage = exports.onDmMessageCreated = exports.moderateAndSendDM = exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.reconcileGdprErasures = exports.moderateAndSendGroupMessage = exports.onDmMessageCreated = exports.moderateAndSendDM = exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
@@ -1378,6 +1378,7 @@ exports.deleteUserData = functions
     secrets: ["INTERNAL_SERVICE_SECRET"],
 })
     .https.onCall(async (data, context) => {
+    var _a, _b;
     // ══════════════════════════════════════════════════════════════════
     // SECURITY INVARIANT — THIS BLOCK IS THE MOST IMPORTANT CODE HERE.
     //
@@ -1398,6 +1399,59 @@ exports.deleteUserData = functions
     // ── Resolve policy config ──────────────────────────────────────────────
     const policy = await resolveGdprPolicy();
     functions.logger.info("[deleteUserData] Resolved policy:", policy);
+    // ══════════════════════════════════════════════════════════════════
+    // PIECE 1a — GDPR ERASURE JOB RECORD (GDPR-STRIPE-1-R1)
+    //
+    // Write a durable audit record BEFORE any deletion phase.
+    // This record MUST outlive the user doc wipe — it lives in
+    // gdpr_erasure_jobs/{uid}, which is intentionally excluded from
+    // every deleteUserData phase below (audit trail must never be swept).
+    //
+    // stripeCustomerId is read HERE while users/{uid} still exists.
+    // It is captured into the job record so the reconciler can retry
+    // the Stripe step without needing the user doc.
+    //
+    // dryRun: skip the Firestore write but log "would write" so that
+    // dry-run test runs don't pollute the audit collection.
+    // ══════════════════════════════════════════════════════════════════
+    // Read stripeCustomerId while users/{uid} still exists.
+    let erasureStripeCustomerId = null;
+    try {
+        const userSnap = await db.collection("users").doc(uid).get();
+        erasureStripeCustomerId = userSnap.exists
+            ? ((_b = (_a = userSnap.data()) === null || _a === void 0 ? void 0 : _a.stripeCustomerId) !== null && _b !== void 0 ? _b : null)
+            : null;
+    }
+    catch (err) {
+        // Non-fatal: log and continue.  Job record will have stripeCustomerId=null.
+        functions.logger.warn(`[deleteUserData] PIECE-1a: could not read stripeCustomerId for uid=${uid}: ${String(err)}`);
+    }
+    // Write (or update) the durable erasure job record.
+    const jobRef = db.collection("gdpr_erasure_jobs").doc(uid);
+    if (!dryRun) {
+        try {
+            await jobRef.set({
+                uid,
+                stripeCustomerId: erasureStripeCustomerId,
+                status: "pending",
+                dryRun,
+                requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+                startedAt,
+                steps: {},
+                retryCount: 0,
+                lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            functions.logger.info(`[deleteUserData] PIECE-1a: erasure job written gdpr_erasure_jobs/${uid} stripeCustomerId=${erasureStripeCustomerId}`);
+        }
+        catch (err) {
+            // Non-fatal: the job record is for audit/reconciliation only.
+            // A failure here must not abort the erasure pipeline.
+            functions.logger.error(`[deleteUserData] PIECE-1a: failed to write erasure job for uid=${uid}: ${String(err)}`);
+        }
+    }
+    else {
+        functions.logger.info(`[deleteUserData] PIECE-1a: dryRun — would write gdpr_erasure_jobs/${uid} with stripeCustomerId=${erasureStripeCustomerId}`);
+    }
     // ── Steps accumulator ──────────────────────────────────────────────────
     // Each step records its own StepResult. On any unhandled error in a step,
     // the step is marked error but we continue accumulating and return a
@@ -2286,6 +2340,39 @@ exports.deleteUserData = functions
         capturedConvIds }, (anyError ? { error: "One or more steps failed — see steps for details.", retryable: true } : {}));
     functions.logger.info(`[deleteUserData] COMPLETE uid=${uid} success=${result.success} dryRun=${dryRun} ` +
         `completedAt=${completedAt}`, { steps });
+    // ══════════════════════════════════════════════════════════════════
+    // PIECE 1b — FINALIZE GDPR ERASURE JOB RECORD (GDPR-STRIPE-1-R1)
+    //
+    // Derive final status:
+    //   • any step status === 'error'  → 'partial'  (reconciler can retry)
+    //   • all steps ok / skipped       → 'complete'
+    //
+    // Writing the entire steps object once at the end is correct — the
+    // steps accumulator holds the final state of all phases at this point.
+    //
+    // dryRun: skip the write (matching Piece 1a behaviour).
+    // Fail-soft: a finalize failure must not mask the primary result.
+    // ══════════════════════════════════════════════════════════════════
+    const erasureJobStatus = anyError ? "partial" : "complete";
+    if (!dryRun) {
+        try {
+            await jobRef.set({
+                status: erasureJobStatus,
+                steps,
+                completedAt: admin.firestore.FieldValue.serverTimestamp(),
+                lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                success: result.success,
+            }, { merge: true });
+            functions.logger.info(`[deleteUserData] PIECE-1b: erasure job finalized gdpr_erasure_jobs/${uid} status=${erasureJobStatus}`);
+        }
+        catch (err) {
+            // Non-fatal: erasure has completed; only the audit record update failed.
+            functions.logger.error(`[deleteUserData] PIECE-1b: failed to finalize erasure job for uid=${uid}: ${String(err)}`);
+        }
+    }
+    else {
+        functions.logger.info(`[deleteUserData] PIECE-1b: dryRun — would finalize gdpr_erasure_jobs/${uid} status=${erasureJobStatus}`);
+    }
     return result;
 });
 // ===========================================================================
@@ -3115,5 +3202,237 @@ exports.moderateAndSendGroupMessage = functions
         return { status: "flagged", messageId };
     }
     return { status: "sent", messageId };
+});
+// ===========================================================================
+// CLOUD FUNCTION 20: reconcileGdprErasures  (GDPR-STRIPE-1-R1)
+// ===========================================================================
+// Scheduled daily at 03:00 UTC, europe-west2 (REGION-RESIDENCY-1 consistent).
+//
+// Purpose: retry failed Stripe anonymization steps from GDPR erasure runs that
+// completed with status='pending' or 'partial'.  The Firestore sweep phases
+// are idempotent (paginatedDelete on already-deleted docs = 0 rows) but
+// re-running them is unnecessary; the ONLY externally-dependent step that
+// meaningfully benefits from a retry is Stripe anonymization.
+//
+// Flow:
+//   1. Query gdpr_erasure_jobs for status='pending' OR status='partial',
+//      requestedAt older than 1 hour (give in-flight runs breathing room).
+//      Two separate snapshot queries are merged in memory (avoids any
+//      Firestore 'in' array-size constraints and is cheaper on index reads).
+//   2. For each job: check steps.stripe_anonymize — if missing or 'error',
+//      POST to Railway /api/gdpr/anonymize-stripe (idempotent via Piece 2).
+//   3. On success: update steps.stripe_anonymize='done', recompute status.
+//      On failure: increment retryCount, leave status 'partial'.
+//   4. retryCount >= 10 → mark status='failed_permanent', log loudly for
+//      manual review.  Never retry a failed_permanent job.
+//
+// Idempotency: jobs already at 'complete' or 'failed_permanent' are excluded
+// by the WHERE clause.  The Stripe anonymize endpoint is idempotent via
+// Piece 2 (customers.retrieve guard).  Multiple reconciler runs are safe.
+// ===========================================================================
+exports.reconcileGdprErasures = functions
+    .region("europe-west2")
+    .runWith({
+    timeoutSeconds: 540,
+    memory: "512MB",
+    secrets: ["INTERNAL_SERVICE_SECRET"],
+})
+    .pubsub.schedule("0 3 * * *")
+    .timeZone("UTC")
+    .onRun(async () => {
+    var _a;
+    functions.logger.info("[reconcileGdprErasures] START");
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    if (!secret) {
+        functions.logger.error("[reconcileGdprErasures] INTERNAL_SERVICE_SECRET not set — aborting reconciler");
+        return;
+    }
+    // ── 1. Collect jobs that need reconciliation ──────────────────────────
+    // Age gate: requestedAt < now - 1 hour.  Gives in-flight deleteUserData
+    // calls time to complete before we treat them as stale.
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    let jobs = [];
+    try {
+        const [pendingSnap, partialSnap] = await Promise.all([
+            db
+                .collection("gdpr_erasure_jobs")
+                .where("status", "==", "pending")
+                .where("requestedAt", "<", oneHourAgo)
+                .get(),
+            db
+                .collection("gdpr_erasure_jobs")
+                .where("status", "==", "partial")
+                .where("requestedAt", "<", oneHourAgo)
+                .get(),
+        ]);
+        jobs = [...pendingSnap.docs, ...partialSnap.docs];
+    }
+    catch (err) {
+        functions.logger.error(`[reconcileGdprErasures] Firestore query failed: ${String(err)}`);
+        return;
+    }
+    functions.logger.info(`[reconcileGdprErasures] found ${jobs.length} job(s) to reconcile`);
+    if (jobs.length === 0)
+        return;
+    // ── 2. Helper: POST to Railway anonymize-stripe endpoint ──────────────
+    // Mirrors railwayStripeAnonymize in deleteUserData.
+    // Uses the Node built-in https module (no new dependencies).
+    const postAnonymizeStripe = (userId) => new Promise((resolve) => {
+        const bodyStr = JSON.stringify({ userId });
+        const options = {
+            hostname: "api.huddlapp.co.uk",
+            path: "/api/gdpr/anonymize-stripe",
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Content-Length": Buffer.byteLength(bodyStr),
+                "X-Service-Auth": secret,
+            },
+        };
+        const timer = setTimeout(() => {
+            req.destroy();
+            resolve({ ok: false, error: "timeout after 15 s" });
+        }, 15000);
+        const req = https.request(options, (res) => {
+            const chunks = [];
+            res.on("data", (c) => chunks.push(c));
+            res.on("end", () => {
+                clearTimeout(timer);
+                const raw = Buffer.concat(chunks).toString("utf8");
+                if (res.statusCode && res.statusCode >= 400) {
+                    resolve({ ok: false, error: `HTTP ${res.statusCode}: ${raw.substring(0, 200)}` });
+                }
+                else {
+                    try {
+                        resolve({ ok: true, body: JSON.parse(raw) });
+                    }
+                    catch (_a) {
+                        resolve({ ok: true, body: raw });
+                    }
+                }
+            });
+        });
+        req.on("error", (err) => {
+            clearTimeout(timer);
+            resolve({ ok: false, error: err.message });
+        });
+        req.write(bodyStr);
+        req.end();
+    });
+    // ── 3. Process each job ────────────────────────────────────────────────
+    for (const doc of jobs) {
+        const jobData = doc.data();
+        const { uid: jobUid, stripeCustomerId, steps } = jobData;
+        const retryCount = typeof jobData.retryCount === "number" ? jobData.retryCount : 0;
+        functions.logger.info(`[reconcileGdprErasures] processing uid=${jobUid} status=${jobData.status} retryCount=${retryCount}`);
+        // ── 3a. Retry cap ───────────────────────────────────────────────────
+        if (retryCount >= 10) {
+            functions.logger.error(`[reconcileGdprErasures] uid=${jobUid} retryCount=${retryCount} >= 10 — ` +
+                `marking failed_permanent. MANUAL REVIEW REQUIRED.`);
+            try {
+                await doc.ref.set({
+                    status: "failed_permanent",
+                    lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
+            catch (err) {
+                functions.logger.error(`[reconcileGdprErasures] failed to mark failed_permanent for uid=${jobUid}: ${String(err)}`);
+            }
+            continue;
+        }
+        // ── 3b. Determine if Stripe step needs retrying ─────────────────────
+        const stripeStep = steps && steps["stripe_anonymize"];
+        const stripeNeedsRetry = !stripeStep || stripeStep.status === "error";
+        if (!stripeNeedsRetry) {
+            // Stripe step is already ok/skipped.  Recompute overall status and
+            // close out the job if it's now clean.
+            const anyError = Object.values(steps || {}).some((s) => typeof s === "object" &&
+                s !== null &&
+                s.status === "error");
+            const newStatus = anyError ? "partial" : "complete";
+            if (newStatus !== jobData.status) {
+                try {
+                    await doc.ref.set({
+                        status: newStatus,
+                        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    functions.logger.info(`[reconcileGdprErasures] uid=${jobUid} status recomputed → ${newStatus} (no Stripe retry needed)`);
+                }
+                catch (err) {
+                    functions.logger.error(`[reconcileGdprErasures] failed to recompute status for uid=${jobUid}: ${String(err)}`);
+                }
+            }
+            continue;
+        }
+        // ── 3c. No stripeCustomerId — nothing to retry; close as complete ───
+        if (!stripeCustomerId) {
+            functions.logger.info(`[reconcileGdprErasures] uid=${jobUid} has no stripeCustomerId — marking complete.`);
+            try {
+                await doc.ref.set({
+                    status: "complete",
+                    lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    "steps.stripe_anonymize": {
+                        status: "skipped",
+                        count: 0,
+                        error: "no_customer",
+                    },
+                }, { merge: true });
+            }
+            catch (err) {
+                functions.logger.error(`[reconcileGdprErasures] failed to close no-stripe job for uid=${jobUid}: ${String(err)}`);
+            }
+            continue;
+        }
+        // ── 3d. POST to Railway — retry the Stripe anonymize step ──────────
+        let resp;
+        try {
+            resp = await postAnonymizeStripe(jobUid);
+        }
+        catch (err) {
+            resp = { ok: false, error: String(err) };
+        }
+        if (resp.ok) {
+            // Stripe retry succeeded.  Recompute overall job status.
+            const updatedSteps = Object.assign(Object.assign({}, (steps || {})), { stripe_anonymize: { status: "ok", count: 1 } });
+            const anyRemainingError = Object.values(updatedSteps).some((s) => typeof s === "object" &&
+                s !== null &&
+                s.status === "error");
+            const newStatus = anyRemainingError ? "partial" : "complete";
+            functions.logger.info(`[reconcileGdprErasures] uid=${jobUid} Stripe retry succeeded — new status=${newStatus}`);
+            try {
+                await doc.ref.set({
+                    status: newStatus,
+                    steps: updatedSteps,
+                    retryCount: retryCount + 1,
+                    lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
+            catch (err) {
+                functions.logger.error(`[reconcileGdprErasures] failed to persist success for uid=${jobUid}: ${String(err)}`);
+            }
+        }
+        else {
+            // Stripe retry failed again.  Increment retryCount, leave 'partial'.
+            functions.logger.warn(`[reconcileGdprErasures] uid=${jobUid} Stripe retry failed ` +
+                `(attempt ${retryCount + 1}): ${resp.error}`);
+            try {
+                await doc.ref.set({
+                    status: "partial",
+                    retryCount: retryCount + 1,
+                    lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    "steps.stripe_anonymize": {
+                        status: "error",
+                        count: 0,
+                        error: (_a = resp.error) !== null && _a !== void 0 ? _a : "unknown",
+                        lastAttempt: new Date().toISOString(),
+                    },
+                }, { merge: true });
+            }
+            catch (err) {
+                functions.logger.error(`[reconcileGdprErasures] failed to persist failure for uid=${jobUid}: ${String(err)}`);
+            }
+        }
+    } // end for (jobs)
+    functions.logger.info(`[reconcileGdprErasures] DONE — processed ${jobs.length} job(s)`);
 });
 //# sourceMappingURL=index.js.map

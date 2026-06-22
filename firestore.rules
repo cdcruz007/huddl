@@ -1103,6 +1103,26 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // GDPR ERASURE AUDIT LOG  (GDPR-STRIPE-1-R1)
+    //
+    // Written exclusively by Admin SDK (deleteUserData CF + reconcileGdprErasures CF).
+    // Admin SDK bypasses these rules, so the write:false rule is enforced for
+    // client SDKs only — intentional.
+    //
+    // Security invariants:
+    //   • NO client read — a user must NEVER read their own erasure audit record
+    //     (it may contain stripeCustomerId and step-level error details).
+    //   • NO client write — all mutations are Admin-SDK-only.
+    //   • isAdmin() grants read for admin/analytics tooling only.
+    //   • These records MUST outlive the user doc wipe — intentionally excluded
+    //     from every deleteUserData phase.
+    // =========================================================================
+    match /gdpr_erasure_jobs/{uid} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // =========================================================================
     // CATCH-ALL: deny everything not explicitly listed above.
     // Uncomment only for debugging in a dev environment — never in production.
     // =========================================================================
