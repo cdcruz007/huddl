@@ -739,7 +739,7 @@ function buildSystemPrompt(ctx: {
   const children = ctx.childrenSummary || "not specified";
   const stage = ctx.parentingStage || "not specified";
 
-  return `You are the Huddl parenting assistant — a warm, knowledgeable, and locally-aware AI for parents in the UK. You know the user's name, their children's ages and names, their location (borough), and their parenting stage.
+  return `You are the Huddl parenting assistant — a warm, knowledgeable, and locally-aware AI for parents in the UK. You know the user's name, their children's ages, their location (borough), and their parenting stage.
 
 Your role is to:
 - Answer parenting questions with warmth, accuracy, and practicality
@@ -943,28 +943,33 @@ export const huddlCopilotChat = functions
  * Response: { suggestions: string[] }
  */
 
-/** Build a human-readable children summary from the user Firestore doc. */
+/**
+ * Build a human-readable children summary from the user Firestore doc.
+ *
+ * AI-PII-1: emits AGES ONLY — children's names are never included so they
+ * are not forwarded to the Gemini API (third-party LLM). Ages drive
+ * developmental guidance; names are not functionally required.
+ */
 function _buildChildrenSummary(ud: Record<string, unknown>): string {
-  const children = ud.children as Array<{ name?: string; birthday?: string }> | undefined;
+  const children = ud.children as Array<{ birthday?: string }> | undefined;
   if (!children || children.length === 0) {
-    // Try legacy fields
-    const childName = ud.childName as string | undefined;
+    // Try legacy single-child fields (childName dropped — age only)
     const childBirthday = ud.childBirthday as string | undefined;
-    if (childName && childBirthday) {
+    if (childBirthday) {
       const ageMonths = _ageMonthsFromBirthday(childBirthday);
-      const ageLabel = ageMonths < 12 ? `${ageMonths} months` : `${Math.floor(ageMonths / 12)} years`;
-      return `${childName} (${ageLabel})`;
+      const ageLabel = ageMonths < 12 ? `${ageMonths} months old` : `${Math.floor(ageMonths / 12)} years old`;
+      return ageLabel;
     }
     return "not specified";
   }
-  return children
-    .map((c) => {
-      if (!c.name) return "child";
-      const ageMonths = _ageMonthsFromBirthday(c.birthday ?? "");
-      const ageLabel = ageMonths < 12 ? `${ageMonths} months` : `${Math.floor(ageMonths / 12)} years`;
-      return `${c.name} (${ageLabel})`;
-    })
-    .join(", ");
+  const ageLabels = children.map((c) => {
+    const ageMonths = _ageMonthsFromBirthday(c.birthday ?? "");
+    return ageMonths < 12 ? `${ageMonths} months` : `${Math.floor(ageMonths / 12)} years`;
+  });
+  if (ageLabels.length === 1) return `a ${ageLabels[0]}-old`;
+  const last = ageLabels[ageLabels.length - 1];
+  const rest = ageLabels.slice(0, -1);
+  return `ages ${rest.join(", ")} and ${last}`;
 }
 
 /** Build a human-readable parenting stage label. */
