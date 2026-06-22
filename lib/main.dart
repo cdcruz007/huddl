@@ -3,6 +3,7 @@ import './theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint, kDebugMode;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,6 +55,24 @@ void main() async {
     await FirebaseAuth.instance.setSettings(
       appVerificationDisabledForTesting: kQaBuild,
     );
+
+    // ── Firebase App Check (APPCHECK-1) ────────────────────────────────────
+    // Non-punitive until enforcement is turned ON in Firebase console.
+    // Debug provider is used in debug builds (emits a debug token to console);
+    // production builds use Play Integrity (Android) and App Attest with
+    // DeviceCheck fallback (iOS). No webProvider — app is mobile-only.
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kDebugMode
+            ? AndroidProvider.debug
+            : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode
+            ? AppleProvider.debug
+            : AppleProvider.appAttestWithDeviceCheckFallback,
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[AppCheck] activate failed: $e');
+    }
   } catch (e) {
     if (kDebugMode) {
       if (kDebugMode) debugPrint('Firebase init error: $e');
