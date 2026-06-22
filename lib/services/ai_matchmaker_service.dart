@@ -729,7 +729,7 @@ Please suggest 5 diverse meetups: 1) playdate, 2) coffee morning, 3) outdoor act
       location: suggestion.suggestedLocation,
       organiserName: _onboarding.name ?? 'You',
       organiserId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
-      attendeeCount: 1,
+      attendeeIds: [FirebaseAuth.instance.currentUser?.uid ?? 'current_user'],
       isGoing: true,
       attendeeNames: [_onboarding.name ?? 'You'],
       isFree: true,

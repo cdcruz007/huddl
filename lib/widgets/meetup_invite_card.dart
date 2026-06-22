@@ -53,7 +53,12 @@ class MeetupInviteCard extends StatelessWidget {
     // for fields that were stored as Dart int, causing 'as int?' to throw.
     final isFree = (meetupData['isFree'] as bool?) ?? true;
     final price = meetupData['price'];
-    final attendeeCount = (meetupData['attendeeCount'] as num?)?.toInt() ?? 1;
+    // EVENT-COUNT-1: derive count from attendeeIds array; fall back to legacy
+    // stored attendeeCount for docs written before the migration.
+    final rawIds = meetupData['attendeeIds'];
+    final attendeeCount = rawIds != null
+        ? (rawIds as List).length
+        : (meetupData['attendeeCount'] as num?)?.toInt() ?? 1;
     final maxAttendees = (meetupData['maxAttendees'] as num?)?.toInt();
     // privacy can be stored as int (index) OR as String (e.g. 'MeetupPrivacy.public')
     final privacyRaw = meetupData['privacy'];

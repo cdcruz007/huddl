@@ -358,7 +358,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
       location: _isOnline ? 'Online' : _locationCtrl.text.trim(),
       organiserName: widget.meetup.organiserName,
       organiserId: widget.meetup.organiserId,
-      attendeeCount: widget.meetup.attendeeCount,
+      attendeeIds: widget.meetup.attendeeIds,
       maxAttendees: _maxAttendees,
       isGoing: widget.meetup.isGoing,
       isFree: _isFree,

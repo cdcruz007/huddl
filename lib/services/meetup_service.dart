@@ -55,7 +55,11 @@ class Meetup {
   final String location;
   final String organiserName;
   final String organiserId;
-  final int attendeeCount;
+  // EVENT-COUNT-1 follow-up: attendeeIds is the authoritative source of truth.
+  // attendeeCount is derived from attendeeIds.length and is no longer stored
+  // as an independent field. This eliminates the forgeable denormalized mirror.
+  final List<String> attendeeIds;
+  int get attendeeCount => attendeeIds.length;
   final int? maxAttendees;
   final bool isGoing;
   final List<String> attendeeNames;
@@ -89,7 +93,7 @@ class Meetup {
     required this.location,
     required this.organiserName,
     this.organiserId = '',  // set at call-site via FirebaseAuth.instance.currentUser?.uid
-    this.attendeeCount = 1,
+    this.attendeeIds = const [],
     this.maxAttendees,
     this.isGoing = false,
     this.isFree = true,
@@ -112,7 +116,7 @@ class Meetup {
   }) : createdAt = createdAt ?? DateTime.now();
 
   Meetup copyWith({
-    int? attendeeCount,
+    List<String>? attendeeIds,
     bool? isGoing,
     bool? isFree,
     double? price,
@@ -133,7 +137,7 @@ class Meetup {
       location: location,
       organiserName: organiserName,
       organiserId: organiserId,
-      attendeeCount: attendeeCount ?? this.attendeeCount,
+      attendeeIds: attendeeIds ?? this.attendeeIds,
       maxAttendees: maxAttendees,
       isGoing: isGoing ?? this.isGoing,
       isFree: isFree ?? this.isFree,
@@ -203,7 +207,10 @@ class Meetup {
     'endTime': timeDisplay.split(' - ').last,       // spec: endTime
     'location': location.isEmpty && isOnline ? null : location, // spec: nullable for online
     'organiserName': organiserName,
-    'attendeeCount': attendeeCount,
+    // EVENT-COUNT-1: attendeeCount is derived from attendeeIds.length;
+    // do not write a separate attendeeCount field — Firestore rules
+    // no longer permit clients to write it via the RSVP branch.
+    'attendeeIds': attendeeIds,
     'maxAttendees': maxAttendees,
     'isGoing': isGoing,
     'attendeeNames': attendeeNames,
@@ -235,7 +242,15 @@ class Meetup {
     location: (j['location'] as String?) ?? '',
     organiserName: j['organiserName'] ?? '',
     organiserId: (j['createdBy'] ?? j['organiserId'] ?? '') as String,
-    attendeeCount: (j['attendeeCount'] as num?)?.toInt() ?? 1,
+    // EVENT-COUNT-1: derive attendeeIds from Firestore; fall back to 1-element
+    // list with organiserId so that organiser-only meetups show count=1.
+    attendeeIds: j['attendeeIds'] != null
+        ? List<String>.from(j['attendeeIds'] as List)
+        : (j['attendeeCount'] != null
+            ? List.generate(
+                ((j['attendeeCount'] as num?)?.toInt() ?? 1).clamp(0, 999),
+                (i) => 'legacy_$i')
+            : const []),
     maxAttendees: (j['maxAttendees'] as num?)?.toInt(),
     isGoing: j['isGoing'] ?? false,
     attendeeNames: List<String>.from(j['attendeeNames'] ?? []),
@@ -324,7 +339,7 @@ class MeetupService extends ChangeNotifier {
             location: meetup.location,
             organiserName: meetup.organiserName,
             organiserId: meetup.organiserId,
-            attendeeCount: meetup.attendeeCount,
+            attendeeIds: meetup.attendeeIds,
             maxAttendees: meetup.maxAttendees,
             isGoing: meetup.isGoing,
             isFree: meetup.isFree,
@@ -359,9 +374,15 @@ class MeetupService extends ChangeNotifier {
     if (index < 0) return;
     final m = _meetups[index];
     final wasGoing = m.isGoing;
+    // EVENT-COUNT-1 follow-up: derive count from attendeeIds list, not arithmetic.
+    // Use the real Firebase UID where available so the list is authoritative.
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    final updatedIds = wasGoing
+        ? (List<String>.from(m.attendeeIds)..remove(myUid))
+        : ([...m.attendeeIds, if (!m.attendeeIds.contains(myUid)) myUid]);
     _meetups[index] = m.copyWith(
       isGoing: !wasGoing,
-      attendeeCount: wasGoing ? m.attendeeCount - 1 : m.attendeeCount + 1,
+      attendeeIds: updatedIds,
       // attendeeNames is no longer used for fake/pre-filled names —
       // the real list comes from Firestore rsvpMeetup() writes.
       attendeeNames: const [],
@@ -491,7 +512,7 @@ class MeetupService extends ChangeNotifier {
             category: m.category, dateDisplay: m.dateDisplay,
             timeDisplay: m.timeDisplay, dateTime: m.dateTime,
             location: m.location, organiserName: m.organiserName,
-            organiserId: m.organiserId, attendeeCount: m.attendeeCount,
+            organiserId: m.organiserId, attendeeIds: m.attendeeIds,
             maxAttendees: m.maxAttendees, isGoing: m.isGoing,
             isFree: m.isFree, price: m.price,
             attendeeNames: m.attendeeNames, imageUrl: stored,
@@ -546,7 +567,7 @@ class MeetupService extends ChangeNotifier {
                 category: meetup.category, dateDisplay: meetup.dateDisplay,
                 timeDisplay: meetup.timeDisplay, dateTime: meetup.dateTime,
                 location: meetup.location, organiserName: meetup.organiserName,
-                organiserId: meetup.organiserId, attendeeCount: meetup.attendeeCount,
+                organiserId: meetup.organiserId, attendeeIds: meetup.attendeeIds,
                 maxAttendees: meetup.maxAttendees, isGoing: meetup.isGoing,
                 isFree: meetup.isFree, price: meetup.price,
                 attendeeNames: meetup.attendeeNames, imageUrl: storedImage,

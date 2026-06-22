@@ -117,7 +117,7 @@ class MeetupPrepopulationService {
         location: '$venue, $targetBorough',
         organiserName: _sourceOrgName(template.source),
         organiserId: 'system_${template.source}',
-        attendeeCount: 0,
+        attendeeIds: const [],
         isGoing: false,
         attendeeNames: const [],
         isFree: template.isFree,

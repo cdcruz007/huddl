@@ -439,7 +439,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       location: _locationCtrl.text.trim(),
       organiserName: organiserName,
       organiserId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
-      attendeeCount: 1,
+      // EVENT-COUNT-1: organiser is the first attendee.
+      attendeeIds: [FirebaseAuth.instance.currentUser?.uid ?? 'current_user'],
       maxAttendees: _maxAttendees,
       isGoing: true,
       isFree: _isFree,
