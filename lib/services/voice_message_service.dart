@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -283,8 +284,20 @@ class VoiceMessageService {
       );
     }
 
-    final snapshot = await task;
-    final url = await snapshot.ref.getDownloadURL();
+    final TaskSnapshot snapshot;
+    final String url;
+    try {
+      snapshot = await task;
+      url = await snapshot.ref.getDownloadURL();
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[VoiceMessageService] uploadVoiceNote failed: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'VoiceMessageService.uploadVoiceNote',
+        fatal: false,
+      );
+      rethrow;
+    }
 
     // Clean up temp file after successful upload
     if (!kIsWeb) {
@@ -388,14 +401,17 @@ class VoiceMessageService {
 
       _isPlaying = true;
       _playingUrlController.add(url);
-    } catch (e) {
+    } catch (e, st) {
       // Reset state so the bubble doesn't get stuck on a broken play icon
       _isPlaying = false;
       _playingUrl = null;
       _playingUrlController.add(null);
-      if (kDebugMode) {
-        if (kDebugMode) debugPrint('[VoiceMessageService] playback error for $url: $e');
-      }
+      if (kDebugMode) debugPrint('[VoiceMessageService] playback error for $url: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'VoiceMessageService.togglePlayback',
+        fatal: false,
+      );
       // Re-throw so the UI can show a snackbar
       rethrow;
     }

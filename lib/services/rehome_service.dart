@@ -3,6 +3,7 @@ import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../theme/huddl_colors.dart';
 import 'borough_scope_guard.dart';
 import 'clearable_user_state.dart';
@@ -633,8 +634,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
       _myListings[myIdx].isSold = true;
     }
     // ── Persist to Firestore (fire-and-forget) ──────────────────────────
-    FirestoreService().markListingSold(id).catchError((e) {
+    FirestoreService().markListingSold(id).catchError((Object e, StackTrace st) {
       if (kDebugMode) debugPrint('[RehomeService] markSold FS error: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'RehomeService.markSold',
+        fatal: false,
+      );
     });
 
     // ── Notify seller + saved users (fire-and-forget) ─────────────────────
@@ -786,8 +792,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
     if (newExpiry != null) {
       updateData['expiresAt'] = Timestamp.fromDate(newExpiry);
     }
-    FirestoreService().updateListing(id, updateData).catchError((e) {
+    FirestoreService().updateListing(id, updateData).catchError((Object e, StackTrace st) {
       if (kDebugMode) debugPrint('[RehomeService] relistItem FS error: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'RehomeService.relistItem',
+        fatal: false,
+      );
     });
 
     // ── Notify saved users this item is available again (fire-and-forget) ──
@@ -823,8 +834,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
     _myListings.removeWhere((i) => i.id == id);
     notifyListeners();
     // ── Persist to Firestore (fire-and-forget) ──────────────────────────
-    FirestoreService().deleteListing(id).catchError((e) {
+    FirestoreService().deleteListing(id).catchError((Object e, StackTrace st) {
       if (kDebugMode) debugPrint('[RehomeService] deleteListing FS error: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'RehomeService.deleteListing',
+        fatal: false,
+      );
     });
   }
 
@@ -874,8 +890,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
       'category': updated.category.label,
       'condition': updated.condition.label,
       'imageUrls': updated.imageUrls,
-    }).catchError((e) {
+    }).catchError((Object e, StackTrace st) {
       if (kDebugMode) debugPrint('[RehomeService] updateListing FS error: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'RehomeService.updateListing',
+        fatal: false,
+      );
     });
   }
 
@@ -899,8 +920,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
       buyerName: offer.buyerName,
       amount: offer.amount,
       note: offer.responseMessage,
-    ).catchError((e) {
+    ).catchError((Object e, StackTrace st) {
       if (kDebugMode) debugPrint('[RehomeService] addOffer FS error: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'RehomeService.addOffer',
+        fatal: false,
+      );
     });
 
     // ── Notify seller of new offer (fire-and-forget) ─────────────────────
@@ -940,8 +966,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
         offerId,
         status: 'accepted',
         responseMessage: message,
-      ).catchError((Object e) {
+      ).catchError((Object e, StackTrace st) {
         if (kDebugMode) debugPrint('[RehomeService] acceptOffer FS error: $e');
+        FirebaseCrashlytics.instance.recordError(
+          e, st,
+          reason: 'RehomeService.acceptOffer',
+          fatal: false,
+        );
         return;
       });
       final item = getItemById(offer.itemId);
@@ -994,8 +1025,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
         offerId,
         status: 'declined',
         responseMessage: message,
-      ).catchError((Object e) {
+      ).catchError((Object e, StackTrace st) {
         if (kDebugMode) debugPrint('[RehomeService] declineOffer FS error: $e');
+        FirebaseCrashlytics.instance.recordError(
+          e, st,
+          reason: 'RehomeService.declineOffer',
+          fatal: false,
+        );
         return;
       });
       final item = getItemById(offer.itemId);
@@ -1027,8 +1063,13 @@ class RehomeService extends ChangeNotifier implements ClearableUserState {
         offer.itemId,
         offerId,
         status: 'pending',
-      ).catchError((Object e) {
+      ).catchError((Object e, StackTrace st) {
         if (kDebugMode) debugPrint('[RehomeService] restoreOffer FS error: $e');
+        FirebaseCrashlytics.instance.recordError(
+          e, st,
+          reason: 'RehomeService.restoreOfferToPending',
+          fatal: false,
+        );
         return;
       });
     }
