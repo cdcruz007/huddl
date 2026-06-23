@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'clearable_user_state.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
@@ -103,11 +104,13 @@ class SuggestedMeetup {
   });
 }
 
-class AiMatchmakerService with BoroughAiContext {
+class AiMatchmakerService with BoroughAiContext implements ClearableUserState {
   static final AiMatchmakerService _instance =
       AiMatchmakerService._internal();
   factory AiMatchmakerService() => _instance;
-  AiMatchmakerService._internal();
+  AiMatchmakerService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final MeetupService _meetupService = MeetupService();
@@ -121,6 +124,13 @@ class AiMatchmakerService with BoroughAiContext {
   List<SuggestedMeetup> _suggestions = [];
   List<MatchableParent> _nearbyParents = [];
   bool _isInitialized = false;
+
+  @override
+  Future<void> clearUserState() async {
+    _suggestions.clear();
+    _nearbyParents.clear();
+    _isInitialized = false;
+  }
 
   List<SuggestedMeetup> get suggestions => List.unmodifiable(_suggestions);
 

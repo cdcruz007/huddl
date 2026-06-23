@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'clearable_user_state.dart';
 import 'ai_api_helper.dart';
 
 import 'gemini_system_prompt_builder.dart';
@@ -93,10 +94,12 @@ class RankedFeedItem {
   });
 }
 
-class AiFeedService with BoroughAiContext {
+class AiFeedService with BoroughAiContext implements ClearableUserState {
   static final AiFeedService _instance = AiFeedService._internal();
   factory AiFeedService() => _instance;
-  AiFeedService._internal();
+  AiFeedService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final MeetupService _meetupService = MeetupService();
@@ -107,6 +110,12 @@ class AiFeedService with BoroughAiContext {
 
   final List<NudgeCard> _nudges = [];
   bool _isInitialized = false;
+
+  @override
+  Future<void> clearUserState() async {
+    _nudges.clear();
+    _isInitialized = false;
+  }
 
   List<NudgeCard> get activeNudges =>
       _nudges.where((n) => !n.isDismissed).toList()

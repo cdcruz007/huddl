@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'event_service.dart';
 import 'onboarding_data_service.dart';
 import 'ai_event_recommender_service.dart';
@@ -139,10 +140,12 @@ class _UserBehaviourProfile {
   }
 }
 
-class InvisibleAiService with BoroughAiContext {
+class InvisibleAiService with BoroughAiContext implements ClearableUserState {
   static final InvisibleAiService _instance = InvisibleAiService._internal();
   factory InvisibleAiService() => _instance;
-  InvisibleAiService._internal();
+  InvisibleAiService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final EventService _eventService = EventService();
@@ -630,6 +633,19 @@ class InvisibleAiService with BoroughAiContext {
     }
 
     return base;
+  }
+
+  // ── ClearableUserState ───────────────────────────────────────────────────
+
+  @override
+  Future<void> clearUserState() async {
+    _feedbackHistory.clear();
+    _dislikedCategories.clear();
+    _likedCategories.clear();
+    _behaviour = _UserBehaviourProfile(); // reset all click/view counters + sets
+    _isInitialised = false;
+    await BrowserStorage.remove('ai_behaviour_v1');
+    await BrowserStorage.remove('ai_feedback_v1');
   }
 
   // ── Context line for AI transparency ──────────────────────────────────────

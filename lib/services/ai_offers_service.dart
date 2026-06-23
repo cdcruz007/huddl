@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'clearable_user_state.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
@@ -79,11 +80,13 @@ class AiSeasonalSpotlight {
   });
 }
 
-class AiOffersService with BoroughAiContext {
+class AiOffersService with BoroughAiContext implements ClearableUserState {
   // ---- Singleton ----
   static final AiOffersService _instance = AiOffersService._internal();
   factory AiOffersService() => _instance;
-  AiOffersService._internal();
+  AiOffersService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   // ---- Dependencies ----
   final OnboardingDataService _onboarding = OnboardingDataService();
@@ -102,6 +105,20 @@ class AiOffersService with BoroughAiContext {
   static const _cacheDuration = Duration(hours: 2);
 
   bool _initialized = false;
+
+  // ===========================================================================
+  // ClearableUserState
+  // ===========================================================================
+
+  @override
+  Future<void> clearUserState() async {
+    _cachedSmartPicks = null;
+    _cachedSpotlight = null;
+    _couponInsightCache.clear();
+    _smartPicksCacheTime = null;
+    _spotlightCacheTime = null;
+    _initialized = false;
+  }
 
   // ===========================================================================
   // INITIALIZATION
