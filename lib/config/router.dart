@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/onboarding/splash_screen.dart';
 import '../screens/onboarding/not_available_screen.dart';
+import '../screens/onboarding/age_restricted_screen.dart';
 import '../screens/onboarding/onboarding_carousel_screen.dart';
 import '../screens/onboarding/name_input_screen.dart';
 import '../screens/onboarding/data_consent_screen.dart';
@@ -66,6 +67,9 @@ class AppRouter {
 
       case '/not_available':
         return FadePageRoute(page: const NotAvailableScreen());
+
+      case '/age_restricted':
+        return FadePageRoute(page: const AgeRestrictedScreen());
 
       case '/onboarding':
         return FadePageRoute(page: const OnboardingCarouselScreen());

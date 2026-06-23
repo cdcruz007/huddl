@@ -1202,6 +1202,11 @@ class FirebaseAuthService {
       'assignedGroupNames': [],
       'fcmToken': '',
       'notificationsEnabled': true,
+      // AGE-1: birthYear (int) is the server-enforceable age field.
+      // Firestore rules verify (request.time.year - birthYear >= 18) on create.
+      // dateOfBirth (ISO-8601 string) is stored for audit / future assurance levels.
+      'birthYear': onboarding.birthYear,          // e.g. 1990
+      'dateOfBirth': onboarding.dateOfBirth ?? '', // e.g. '1990-06-15'
     };
 
     await _db

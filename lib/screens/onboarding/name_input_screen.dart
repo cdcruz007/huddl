@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_logo.dart';
 import '../../services/onboarding_data_service.dart';
@@ -19,6 +20,16 @@ class _NameInputScreenState extends State<NameInputScreen> {
   // Track email validity separately for inline error hint
   bool _emailTouched = false;
 
+  // AGE-1 — DOB picker state
+  // Defaults to 25 years ago so the wheel opens in an adult range.
+  // The user must actively scroll to their real DOB — no trivial bypass.
+  DateTime _selectedDob = DateTime(
+    DateTime.now().year - 25,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
+  bool _dobPicked = false; // true once the user dismisses the picker sheet
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -28,23 +39,125 @@ class _NameInputScreenState extends State<NameInputScreen> {
 
   bool get _nameOk  => _nameCtrl.text.trim().isNotEmpty;
   bool get _emailOk => _isValidEmail(_emailCtrl.text.trim());
-  bool get _canContinue => _nameOk && _emailOk;
+  // AGE-1: require explicit DOB pick before Continue is enabled.
+  bool get _canContinue => _nameOk && _emailOk && _dobPicked;
 
   bool _isValidEmail(String v) {
-    // Standard RFC-5322 simplified regex — good enough for UX gating
     return RegExp(
       r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
     ).hasMatch(v);
   }
 
+  // AGE-1: compute completed years between dob and today.
+  int _ageFromDob(DateTime dob) {
+    final today = DateTime.now();
+    int age = today.year - dob.year;
+    if (today.month < dob.month ||
+        (today.month == dob.month && today.day < dob.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  // AGE-1: open the DOB picker sheet.
+  Future<void> _pickDob() async {
+    DateTime tempDob = _selectedDob;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.neutral300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Date of birth',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: _selectedDob,
+                  maximumDate: DateTime.now(),
+                  minimumDate: DateTime(1900),
+                  onDateTimeChanged: (d) => tempDob = d,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(ctx).pop(),
+                  child: Container(
+                    width: double.infinity,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.onboardingOrange,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Confirm',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+
+    setState(() {
+      _selectedDob = tempDob;
+      _dobPicked = true;
+    });
+  }
+
   void _continue() {
     final name  = _nameCtrl.text.trim();
     final email = _emailCtrl.text.trim().toLowerCase();
-    if (name.isEmpty || !_isValidEmail(email)) return;
+    if (name.isEmpty || !_isValidEmail(email) || !_dobPicked) return;
+
+    // AGE-1 client gate — server enforces independently via Firestore rules.
+    final age = _ageFromDob(_selectedDob);
+    if (age < 18) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/age_restricted',
+        (route) => route.settings.name == '/splash',
+      );
+      return;
+    }
 
     final svc = OnboardingDataService();
     svc.setName(name);
     svc.setEmail(email);
+    svc.setDateOfBirth(_selectedDob); // AGE-1
 
     Navigator.pushNamed(context, '/consent');
   }
@@ -99,7 +212,16 @@ class _NameInputScreenState extends State<NameInputScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+
+                    // ── Date of birth picker — AGE-1 ────────────────────
+                    _DobPickerRow(
+                      dob: _selectedDob,
+                      picked: _dobPicked,
+                      onTap: _pickDob,
+                    ),
+
+                    const SizedBox(height: 20),
 
                     // ── First name field ────────────────────────────────
                     _UnderlineInput(
@@ -224,6 +346,75 @@ class _OrangeButton extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: enabled ? Colors.white : disabledFg,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── AGE-1: DOB picker row ──────────────────────────────────────────────────────
+/// Tappable row that opens the date-of-birth picker sheet.
+/// Shows a placeholder until the user confirms a DOB, then shows the
+/// formatted date.  Uses the same filled-box style as _UnderlineInput.
+class _DobPickerRow extends StatelessWidget {
+  final DateTime dob;
+  final bool picked;
+  final VoidCallback onTap;
+
+  const _DobPickerRow({
+    required this.dob,
+    required this.picked,
+    required this.onTap,
+  });
+
+  String _formatted(DateTime d) {
+    final day   = d.day.toString().padLeft(2, '0');
+    final month = d.month.toString().padLeft(2, '0');
+    return '$day/$month/${d.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark   = Theme.of(context).brightness == Brightness.dark;
+    final fieldFill = isDark ? HuddlColors.darkInputBg : HuddlColors.neutral50;
+    final hintColor = isDark ? HuddlColors.darkTextTertiary : HuddlColors.disabledText;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: fieldFill,
+          borderRadius: BorderRadius.circular(12),
+          border: isDark
+              ? Border.all(color: HuddlColors.darkDivider, width: 1)
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.cake_outlined,
+              size: 20,
+              color: picked ? HuddlColors.primary : hintColor,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                picked ? _formatted(dob) : 'Date of birth',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: picked ? textColor : hintColor,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: hintColor,
+            ),
+          ],
         ),
       ),
     );

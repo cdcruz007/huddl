@@ -74,7 +74,15 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
 
       // A user may only create their own profile document.
-      allow create: if isOwner(userId);
+      // AGE-1 (server enforcement — bypass-proof):
+      //   The request MUST include a birthYear int field, and that year must
+      //   indicate the user is at least 18 years old at the time of the write.
+      //   request.time.year is the Firestore server year \u2014 cannot be spoofed
+      //   by a modified client.  A modified client that omits birthYear or
+      //   supplies a value that computes to < 18 will be hard-rejected here.
+      allow create: if isOwner(userId)
+        && request.resource.data.get('birthYear', null) != null
+        && (request.time.year - request.resource.data.birthYear) >= 18;
 
       // F-09: owner update is blocked if any blocklisted field is touched.
       //   Blocklist (16 fields): roles, tier, stripeCustomerId, isFoundingMember,
