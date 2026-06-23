@@ -46,6 +46,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'clearable_user_state.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
@@ -151,8 +152,9 @@ class RealtimeDMService implements ClearableUserState {
 
       _log('Created conversation $conversationId ($myBorough)');
       return conversationId;
-    } catch (e) {
+    } catch (e, st) {
       _log('ERROR getOrCreateConversation: $e');
+      FirebaseCrashlytics.instance.recordError(e, st, reason: 'RealtimeDMService.getOrCreateConversation', fatal: false);
       return null;
     }
   }
@@ -310,8 +312,9 @@ class RealtimeDMService implements ClearableUserState {
 
       _log('sendMessage: sent in $conversationId');
       return true;
-    } catch (e) {
+    } catch (e, st) {
       _log('ERROR sendMessage: $e');
+      FirebaseCrashlytics.instance.recordError(e, st, reason: 'RealtimeDMService.sendMessage', fatal: false);
       return false;
     }
   }
@@ -383,8 +386,9 @@ class RealtimeDMService implements ClearableUserState {
           _log('sendMessageModerated: unexpected status=$status');
           return SendDmResult.error;
       }
-    } catch (e) {
+    } catch (e, st) {
       _log('ERROR sendMessageModerated: $e');
+      FirebaseCrashlytics.instance.recordError(e, st, reason: 'RealtimeDMService.sendMessageModerated', fatal: false);
       return SendDmResult.error;
     }
   }

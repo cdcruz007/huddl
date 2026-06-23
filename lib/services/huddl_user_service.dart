@@ -21,6 +21,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 
@@ -244,8 +245,9 @@ class HuddlUserService implements ClearableUserState {
       // (e.g. createdAt set on first login, fcmToken set by messaging).
       await _db.collection('users').doc(uid).set(profile, SetOptions(merge: true));
       _log('Profile synced for uid=$uid name=$name');
-    } catch (e) {
+    } catch (e, st) {
       _log('ERROR syncing profile: $e');
+      FirebaseCrashlytics.instance.recordError(e, st, reason: 'HuddlUserService.syncCurrentUserProfile', fatal: false);
     }
   }
 
