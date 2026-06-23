@@ -21,14 +21,17 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 
 
-class HuddlUserService {
+class HuddlUserService implements ClearableUserState {
   // ── Singleton ─────────────────────────────────────────────────────────────
   static final HuddlUserService _instance = HuddlUserService._internal();
   factory HuddlUserService() => _instance;
-  HuddlUserService._internal();
+  HuddlUserService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -357,6 +360,11 @@ class HuddlUserService {
   void _log(String msg) {
     if (kDebugMode) debugPrint('[HuddlUserService] $msg');
   }
+
+  /// [ClearableUserState] — Firestore-backed; no in-memory caches or
+  /// BrowserStorage keys. No-op.
+  @override
+  Future<void> clearUserState() async {}
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

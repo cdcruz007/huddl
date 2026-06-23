@@ -3,6 +3,7 @@ import 'dart:ui' show Color;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'borough_scope_guard.dart';
 import 'firestore_service.dart';
 
@@ -289,10 +290,11 @@ class Meetup {
 /// HYPERLOCAL RULE: Meetups are borough-only.
 /// Only meetups tagged with the current user's borough are visible.
 /// Users cannot create meetups outside their home borough.
-class MeetupService extends ChangeNotifier {
+class MeetupService extends ChangeNotifier implements ClearableUserState {
   static final MeetupService _instance = MeetupService._internal();
   factory MeetupService() => _instance;
   MeetupService._internal() {
+    UserStateRegistry.register(this);
     _loadPersistedMeetups();
   }
 
@@ -638,6 +640,19 @@ class MeetupService extends ChangeNotifier {
         if (hasListeners) notifyListeners();
       });
     }
+  }
+
+  /// [ClearableUserState] — wipes meetup list + image cache on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    // Snapshot IDs before clearing so we can remove per-meetup image keys.
+    final ids = _meetups.map((m) => m.id).toList();
+    _meetups.clear();
+    await BrowserStorage.remove(_storageKey);
+    for (final id in ids) {
+      await BrowserStorage.remove('meetup_image_$id');
+    }
+    notifyListeners();
   }
 
 }

@@ -41,6 +41,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'clearable_user_state.dart';
 import 'package:flutter/foundation.dart';
 import '../models/group.dart';
 import '../models/subscription.dart';
@@ -49,11 +50,13 @@ import 'default_group_service.dart';
 import 'huddl_notification_service.dart';
 import 'subscription_service.dart';
 
-class FirestoreService {
+class FirestoreService implements ClearableUserState {
   // ── Singleton ──────────────────────────────────────────────────────────
   static final FirestoreService _instance = FirestoreService._();
   factory FirestoreService() => _instance;
-  FirestoreService._();
+  FirestoreService._() {
+    UserStateRegistry.register(this);
+  }
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -1574,4 +1577,9 @@ class FirestoreService {
       return {};
     }
   }
+  /// [ClearableUserState] — Firestore-backed delegate; no in-memory caches
+  /// or BrowserStorage keys. No-op.
+  @override
+  Future<void> clearUserState() async {}
+
 }

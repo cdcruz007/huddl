@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/huddl_colors.dart';
 import 'borough_scope_guard.dart';
+import 'clearable_user_state.dart';
 import 'firestore_service.dart';
 import 'huddl_notification_service.dart';
 
@@ -458,11 +459,12 @@ class RehomeOffer {
 /// HYPERLOCAL RULE: Marketplace is borough-only.
 /// Listings are only visible to parents in the same borough as the seller.
 /// Users cannot browse or buy from outside their home borough.
-class RehomeService extends ChangeNotifier {
+class RehomeService extends ChangeNotifier implements ClearableUserState {
   static final RehomeService _instance = RehomeService._internal();
   factory RehomeService() => _instance;
   RehomeService._internal() {
     // Demo sample items removed — app is production-only.
+    UserStateRegistry.register(this);
   }
 
   final List<RehomeItem> _items = [];
@@ -1063,5 +1065,15 @@ class RehomeService extends ChangeNotifier {
     });
   }
 
+  /// [ClearableUserState] — Firestore-backed; clears in-memory caches on sign-out.
+  /// No BrowserStorage keys to remove.
+  @override
+  Future<void> clearUserState() async {
+    _items.clear();
+    _myListings.clear();
+    _offers.clear();
+    _savedByCache.clear();
+    notifyListeners();
+  }
 
 }

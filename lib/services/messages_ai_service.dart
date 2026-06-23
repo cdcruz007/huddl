@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'borough_ai_context.dart';
 
 // =============================================================================
@@ -163,10 +164,12 @@ class _UsageBehaviour {
   }
 }
 
-class MessagesAiService with BoroughAiContext {
+class MessagesAiService with BoroughAiContext implements ClearableUserState {
   static final MessagesAiService _instance = MessagesAiService._internal();
   factory MessagesAiService() => _instance;
-  MessagesAiService._internal();
+  MessagesAiService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _behaviourKey = 'huddl_msg_ai_behaviour';
   static const String _feedbackKey = 'huddl_msg_ai_feedback';
@@ -561,4 +564,13 @@ class MessagesAiService with BoroughAiContext {
     // Default contextual replies
     return ['Sounds good!', 'Thanks for sharing', 'Got it!'];
   }
+  /// [ClearableUserState] — wipes AI behaviour + feedback on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _behaviour = _UsageBehaviour();
+    _feedbackHistory.clear();
+    await BrowserStorage.remove(_behaviourKey);
+    await BrowserStorage.remove(_feedbackKey);
+  }
+
 }

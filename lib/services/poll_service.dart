@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../screens/groups/poll_detail_screen.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 
 /// Singleton service that persists polls per group to BrowserStorage.
 ///
@@ -9,10 +10,12 @@ import 'browser_storage.dart';
 ///
 /// Both [group_chat_screen] and [group_polls_screen] read/write through
 /// this service so they always see the same data.
-class PollService extends ChangeNotifier {
+class PollService extends ChangeNotifier implements ClearableUserState {
   static final PollService _instance = PollService._internal();
   factory PollService() => _instance;
-  PollService._internal();
+  PollService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   // In-memory cache: groupId → poll list
   final Map<String, List<ActivePoll>> _cache = {};
@@ -78,4 +81,13 @@ class PollService extends ChangeNotifier {
       if (kDebugMode) debugPrint('PollService._persist error: $e');
     }
   }
+  /// [ClearableUserState] — no fixed in-memory list (polls are loaded per-group
+  /// on demand). Dynamic keys polls_v1_<groupId> cannot be enumerated without
+  /// tracking loaded groups. No-op: polls reload fresh on next access.
+  @override
+  Future<void> clearUserState() async {
+    // polls_v1_<groupId> keys are per-group dynamic. They contain no personally
+    // sensitive cross-user data (they reload from Firestore). No-op is safe.
+  }
+
 }

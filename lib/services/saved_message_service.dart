@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/saved_message.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 
 const String _savedMessagesKey = 'saved_messages_v2'; // v2 — per-item unique IDs
 const String _savedThreadsKey  = 'saved_threads_v2';  // v2 — no merge logic
@@ -36,11 +37,13 @@ const String _savedEventsKey   = 'saved_events_v1';
 /// ```
 /// The [id] field on every document is the Firestore auto-ID (locally we
 /// generate a timestamp-based surrogate that is equally unique per device).
-class SavedMessageService extends ChangeNotifier {
+class SavedMessageService extends ChangeNotifier implements ClearableUserState {
   // Singleton
   static final SavedMessageService _instance = SavedMessageService._internal();
   factory SavedMessageService() => _instance;
-  SavedMessageService._internal();
+  SavedMessageService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   List<SavedMessage> _savedMessages = [];
   List<SavedThread>  _savedThreads  = [];
@@ -399,6 +402,18 @@ class SavedMessageService extends ChangeNotifier {
   Future<void> unsaveEvent(String eventId) async {
     _savedEvents.removeWhere((e) => e.eventId == eventId);
     await _persistEvents();
+    notifyListeners();
+  }
+
+  /// [ClearableUserState] — wipes all saved-item state on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _savedMessages.clear();
+    _savedThreads.clear();
+    _savedEvents.clear();
+    await BrowserStorage.remove(_savedMessagesKey);
+    await BrowserStorage.remove(_savedThreadsKey);
+    await BrowserStorage.remove(_savedEventsKey);
     notifyListeners();
   }
 }

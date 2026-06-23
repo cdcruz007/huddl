@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'default_group_service.dart';
@@ -105,11 +106,13 @@ class UpcomingEvent {
 /// The feed is seeded with realistic sample data on first run and
 /// persisted via BrowserStorage. It reads from DefaultGroupService and
 /// OnboardingDataService to reflect the user's actual borough context.
-class CommunityFeedService {
+class CommunityFeedService implements ClearableUserState {
   static final CommunityFeedService _instance =
       CommunityFeedService._internal();
   factory CommunityFeedService() => _instance;
-  CommunityFeedService._internal();
+  CommunityFeedService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   // v3: bumped to purge any cached dummy/seed data from previous versions.
   static const String _storageKey = 'community_feed_v3';
@@ -310,5 +313,13 @@ class CommunityFeedService {
     } catch (_) {
       return [];
     }
+  }
+
+  /// [ClearableUserState] — wipes feed state on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _feedItems.clear();
+    await BrowserStorage.remove(_storageKey);
+    await BrowserStorage.remove(_lastLoginKey);
   }
 }

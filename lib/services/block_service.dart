@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 
 const String _blockedUsersKey = 'blocked_users_v1';
 
@@ -24,10 +25,12 @@ const String _blockedUsersKey = 'blocked_users_v1';
 ///   match /users/{uid}/blocks/{targetUid} {
 ///     allow read, write: if request.auth != null && request.auth.uid == uid;
 ///   }
-class BlockService extends ChangeNotifier {
+class BlockService extends ChangeNotifier implements ClearableUserState {
   static final BlockService _instance = BlockService._internal();
   factory BlockService() => _instance;
-  BlockService._internal();
+  BlockService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -183,5 +186,13 @@ class BlockService extends ChangeNotifier {
         await _deleteFromFirestore(id);
       }
     }
+  }
+
+  /// [ClearableUserState] — wipes block list on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _blockedUserIds.clear();
+    await BrowserStorage.remove(_blockedUsersKey);
+    notifyListeners();
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
@@ -24,10 +25,12 @@ import 'postcode_service.dart';
 //   - TTL: 24 hours for borough directory, indefinite for resolved name
 // =============================================================================
 
-class BoroughCacheService {
+class BoroughCacheService implements ClearableUserState {
   static final BoroughCacheService _instance = BoroughCacheService._internal();
   factory BoroughCacheService() => _instance;
-  BoroughCacheService._internal();
+  BoroughCacheService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _keyBorough = 'huddl_borough_cached';
   static const String _keyPostcode = 'huddl_borough_postcode';
@@ -232,4 +235,19 @@ class BoroughCacheService {
       debugPrint('BoroughCacheService: $message');
     }
   }
+  /// [ClearableUserState] — clears resolved-borough user keys on sign-out.
+  /// PRESERVES _keyDirectory + _keyDirTimestamp (geographic data, not user data).
+  @override
+  Future<void> clearUserState() async {
+    _cachedBorough = null;
+    _cachedPostcode = null;
+    _previousBorough = null;
+    await BrowserStorage.remove(_keyBorough);
+    await BrowserStorage.remove(_keyPostcode);
+    await BrowserStorage.remove(_keyTimestamp);
+    await BrowserStorage.remove(_keyPrevBorough);
+    await BrowserStorage.remove(_keyMemberCount);
+    // _keyDirectory + _keyDirTimestamp intentionally preserved.
+  }
+
 }

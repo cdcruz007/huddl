@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import '../models/direct_message.dart';
 import 'borough_scope_guard.dart';
 import 'user_privacy_prefs_service.dart';
@@ -15,10 +16,12 @@ import 'user_privacy_prefs_service.dart';
 ///
 /// In production these would live in Firestore with real-time listeners.
 /// Here we use BrowserStorage + simulated replies so the demo is end-to-end.
-class DMService {
+class DMService implements ClearableUserState {
   static final DMService _instance = DMService._internal();
   factory DMService() => _instance;
-  DMService._internal();
+  DMService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _conversationsKey = 'dm_conversations_v2';
   static const String _messagesKeyPrefix = 'dm_messages_'; // + conversationId
@@ -580,6 +583,39 @@ class DMService {
     }
     _conversations.clear();
     await BrowserStorage.remove(_conversationsKey);
+    _notify();
+  }
+
+  /// [ClearableUserState] — wipes all user-bound DM state on sign-out.
+  ///
+  /// Order:
+  ///   1. Cancel + clear both timer maps (typing + reply).
+  ///   2. Snapshot conversation IDs BEFORE clearing _conversations so we can
+  ///      remove each `dm_messages_<id>` key from BrowserStorage.
+  ///   3. Remove static conversations key.
+  ///   4. NOTE: _listeners is NOT cleared — external UI widgets hold references
+  ///      there; clearing would silently break their subscription.
+  @override
+  Future<void> clearUserState() async {
+    // 1. Cancel timers.
+    for (final t in _typingTimers.values) {
+      t?.cancel();
+    }
+    for (final t in _replyTimers.values) {
+      t?.cancel();
+    }
+    _typingTimers.clear();
+    _replyTimers.clear();
+
+    // 2. Remove dynamic per-conversation message keys before clearing list.
+    for (final conv in _conversations) {
+      await BrowserStorage.remove('$_messagesKeyPrefix${conv.id}');
+    }
+    _conversations.clear();
+
+    // 3. Remove static conversations index.
+    await BrowserStorage.remove(_conversationsKey);
+
     _notify();
   }
 

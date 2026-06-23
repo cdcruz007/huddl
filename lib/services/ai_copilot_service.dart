@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
+import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 
 import 'borough_ai_context.dart';
@@ -76,10 +77,12 @@ class CopilotQuickAction {
   });
 }
 
-class AiCopilotService with BoroughAiContext {
+class AiCopilotService with BoroughAiContext implements ClearableUserState {
   static final AiCopilotService _instance = AiCopilotService._internal();
   factory AiCopilotService() => _instance;
-  AiCopilotService._internal();
+  AiCopilotService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final GeminiSystemPromptBuilder _promptBuilder =
@@ -894,4 +897,11 @@ class AiCopilotService with BoroughAiContext {
     } catch (_) {}
     return 12;
   }
+  /// [ClearableUserState] — clears in-memory conversation on sign-out.
+  /// No BrowserStorage keys owned by this service.
+  @override
+  Future<void> clearUserState() async {
+    _messages.clear();
+  }
+
 }

@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
@@ -541,6 +542,9 @@ class FirebaseAuthService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_loggedOutKey, true);
     } catch (_) {}
+    // Wipe all per-user in-memory + BrowserStorage state before signing out.
+    // One service failing must not prevent sign-out from completing.
+    await UserStateRegistry.clearAll();
     await _auth.signOut();
     _verificationId = null;
     _resendToken = null;

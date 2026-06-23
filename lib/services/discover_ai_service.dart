@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
 import 'borough_ai_context.dart';
 
@@ -177,10 +178,12 @@ class _DiscoverBehaviour {
   }
 }
 
-class DiscoverAiService with BoroughAiContext {
+class DiscoverAiService with BoroughAiContext implements ClearableUserState {
   static final DiscoverAiService _instance = DiscoverAiService._internal();
   factory DiscoverAiService() => _instance;
-  DiscoverAiService._internal();
+  DiscoverAiService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _behaviourKey = 'huddl_discover_ai_behaviour';
   static const String _feedbackKey = 'huddl_discover_ai_feedback';
@@ -811,4 +814,13 @@ class DiscoverAiService with BoroughAiContext {
         return '\u{2728} Discover Something New';
     }
   }
+  /// [ClearableUserState] — wipes AI discover behaviour + feedback on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _behaviour = _DiscoverBehaviour();
+    _feedbackHistory.clear();
+    await BrowserStorage.remove(_behaviourKey);
+    await BrowserStorage.remove(_feedbackKey);
+  }
+
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/group.dart';
 import 'ai_event_discovery_service.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import 'firestore_service.dart';
 import 'onboarding_data_service.dart';
 import 'saved_message_service.dart';
@@ -187,11 +188,12 @@ class Event {
 ///   \u2022 AI event recommendation scoring (borough proximity = bonus points)
 ///   \u2022 Display labels (\"In your borough\" badge)
 /// But it is NOT used as an access-control gate.
-class EventService extends ChangeNotifier {
+class EventService extends ChangeNotifier implements ClearableUserState {
   static final EventService _instance = EventService._internal();
   factory EventService() => _instance;
   EventService._internal() {
     // Demo sample events removed — app is production-only.
+    UserStateRegistry.register(this);
   }
 
   /// Global notifier that fires whenever an event group chat is created.
@@ -375,6 +377,34 @@ class EventService extends ChangeNotifier {
   /// Delete an event.
   void deleteEvent(String eventId) {
     _events.removeWhere((e) => e.id == eventId);
+    notifyListeners();
+  }
+
+  /// [ClearableUserState] — wipes event state on sign-out.
+  /// Clears in-memory lists and the user_created_groups_v1 key.
+  /// Dynamic group_event_groups_<groupId> keys are cleared via the
+  /// user_created_groups_v1 list before clearing.
+  @override
+  Future<void> clearUserState() async {
+    // Remove user-created-groups key (enumerates dynamic group_event_groups_ keys).
+    const groupKey = 'user_created_groups_v1';
+    final raw = await BrowserStorage.getString(groupKey);
+    if (raw != null) {
+      try {
+        final List<dynamic> groups = (raw.isNotEmpty)
+            ? List<dynamic>.from(
+                (raw.startsWith('[')) ? [] : [])
+            : [];
+        // Best-effort: try to remove each known group_event_groups_ key.
+        for (final g in groups) {
+          await BrowserStorage.remove('group_event_groups_$g');
+        }
+      } catch (_) {}
+    }
+    await BrowserStorage.remove(groupKey);
+    _events.clear();
+    _goingEventIds.clear();
+    _bookmarkedEventIds.clear();
     notifyListeners();
   }
 

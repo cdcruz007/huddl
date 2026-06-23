@@ -46,6 +46,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'clearable_user_state.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
@@ -68,11 +69,13 @@ enum SendDmResult {
   error,
 }
 
-class RealtimeDMService {
+class RealtimeDMService implements ClearableUserState {
   // ── Singleton ─────────────────────────────────────────────────────────────
   static final RealtimeDMService _instance = RealtimeDMService._internal();
   factory RealtimeDMService() => _instance;
-  RealtimeDMService._internal();
+  RealtimeDMService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -481,6 +484,14 @@ class RealtimeDMService {
 
   void _log(String msg) {
     if (kDebugMode) debugPrint('[RealtimeDMService] $msg');
+  }
+
+  /// [ClearableUserState] — Firestore-backed; no BrowserStorage keys.
+  /// Clears no in-memory caches (all reads go directly to Firestore streams).
+  @override
+  Future<void> clearUserState() async {
+    // All state is derived on-demand from Firestore. No in-memory cache or
+    // BrowserStorage keys to wipe. Method is intentionally a no-op.
   }
 }
 

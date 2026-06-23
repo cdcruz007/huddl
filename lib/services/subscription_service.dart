@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/subscription.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 
 /// Singleton service managing the user's subscription state, feature-gating,
 /// usage tracking, and purchase flow. Persists state via BrowserStorage.
@@ -13,11 +14,13 @@ import 'browser_storage.dart';
 /// - Plus unlocks full AI suite with generous daily caps
 /// - Partner gets unlimited AI plus exclusive business features
 /// - AI limits reset daily/weekly/monthly depending on the feature
-class SubscriptionService extends ChangeNotifier {
+class SubscriptionService extends ChangeNotifier implements ClearableUserState {
   // ---- Singleton ----
   static final SubscriptionService _instance = SubscriptionService._();
   factory SubscriptionService() => _instance;
-  SubscriptionService._();
+  SubscriptionService._() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _subKey = 'user_subscription_v2';
   static const String _usageKey = 'subscription_usage_v2';
@@ -1028,4 +1031,22 @@ class SubscriptionService extends ChangeNotifier {
         return 'This feature requires a higher plan. Upgrade to unlock it!';
     }
   }
+  /// [ClearableUserState] — wipes subscription state on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _subscription = UserSubscription.welcome();
+    _usageCounts.clear();
+    await BrowserStorage.remove(_subKey);
+    await BrowserStorage.remove(_usageKey);
+    await BrowserStorage.remove(_listingsCreatedKey);
+    await BrowserStorage.remove(_buyerContactsKey);
+    await BrowserStorage.remove(_userGroupsCreatedKey);
+    await BrowserStorage.remove(_freeMeetupsCreatedKey);
+    await BrowserStorage.remove(_pollsCreatedKey);
+    await BrowserStorage.remove(_questionsPostedKey);
+    await BrowserStorage.remove(_savedItemsKey);
+    await BrowserStorage.remove(_aiSavedSummariesKey);
+    notifyListeners();
+  }
+
 }

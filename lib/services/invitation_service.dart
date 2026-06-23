@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 import '../models/group.dart';
 import 'borough_scope_guard.dart';
 import 'huddl_notification_service.dart';
@@ -155,10 +156,12 @@ class GroupSystemMessage {
 ///
 /// In a real app these would be in Firestore / a backend.
 /// Here we simulate with local storage so the demo flows end-to-end.
-class InvitationService extends ChangeNotifier {
+class InvitationService extends ChangeNotifier implements ClearableUserState {
   static final InvitationService _instance = InvitationService._internal();
   factory InvitationService() => _instance;
-  InvitationService._internal();
+  InvitationService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _invitationsKey = 'group_invitations_v1';
   static const String _joinedGroupsKey = 'joined_groups_v2';
@@ -766,4 +769,17 @@ class InvitationService extends ChangeNotifier {
     await BrowserStorage.remove(_joinedGroupsKey);
     await BrowserStorage.remove(_systemMessagesKey);
   }
+  /// [ClearableUserState] — wipes invitation state on sign-out.
+  /// Delegates storage removal to the existing clearAll() method.
+  @override
+  Future<void> clearUserState() async {
+    _invitations.clear();
+    _joinedGroups.clear();
+    _systemMessages.clear();
+    await BrowserStorage.remove(_invitationsKey);
+    await BrowserStorage.remove(_joinedGroupsKey);
+    await BrowserStorage.remove(_systemMessagesKey);
+    notifyListeners();
+  }
+
 }
