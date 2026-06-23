@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../models/saved_message.dart';
 import 'browser_storage.dart';
 import 'clearable_user_state.dart';
@@ -148,7 +149,16 @@ class SavedMessageService extends ChangeNotifier implements ClearableUserState {
         _savedMessagesKey,
         json.encode(_savedMessages.map((m) => m.toJson()).toList()),
       );
-    } catch (_) {}
+    } catch (e, st) {
+      // SAVE-PERSIST-1: failed write = bookmark vanishes on reload.
+      // Swallow preserved (Firestore sync is backup path); just make it visible.
+      if (kDebugMode) debugPrint('[SavedMsg] _persistMessages failed: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'SavedMessageService._persistMessages',
+        fatal: false,
+      );
+    }
   }
 
   Future<void> _persistThreads() async {
@@ -157,7 +167,15 @@ class SavedMessageService extends ChangeNotifier implements ClearableUserState {
         _savedThreadsKey,
         json.encode(_savedThreads.map((t) => t.toJson()).toList()),
       );
-    } catch (_) {}
+    } catch (e, st) {
+      // SAVE-PERSIST-1: failed write = saved thread vanishes on reload.
+      if (kDebugMode) debugPrint('[SavedMsg] _persistThreads failed: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'SavedMessageService._persistThreads',
+        fatal: false,
+      );
+    }
   }
 
   Future<void> _persistEvents() async {
@@ -166,7 +184,15 @@ class SavedMessageService extends ChangeNotifier implements ClearableUserState {
         _savedEventsKey,
         json.encode(_savedEvents.map((e) => e.toJson()).toList()),
       );
-    } catch (_) {}
+    } catch (e, st) {
+      // SAVE-PERSIST-1: failed write = saved event vanishes on reload.
+      if (kDebugMode) debugPrint('[SavedMsg] _persistEvents failed: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'SavedMessageService._persistEvents',
+        fatal: false,
+      );
+    }
   }
 
   // ── Firestore sync helpers ─────────────────────────────────────────────────

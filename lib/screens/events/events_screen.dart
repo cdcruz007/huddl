@@ -2310,7 +2310,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         Expanded(
           child: ColoredBox(
             color: HuddlColors.neutral50,
-            child: filtered.isEmpty
+            // FETCH-SILENT-1: show retry on load failure instead of a silently-empty list.
+            // Only triggers when the Firestore load failed AND no cached meetups are present.
+            child: widget.meetupService.loadFailed && widget.meetupService.meetups.isEmpty
+                ? HuddlErrorState(
+                    onRetry: () => widget.meetupService.loadFromFirestore(),
+                  )
+                : filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? HuddlIcons.filterOff : HuddlIcons.usersThree,
                     illustrationAsset: _hasActiveFilter

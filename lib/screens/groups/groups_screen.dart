@@ -3,6 +3,7 @@ import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
@@ -3830,8 +3831,15 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           _allDiscoverGroups.add(_GroupItem.fromGroup(g, isDefault: false));
         }
       }
-    } catch (_) {
-      // Silently ignore storage read failures
+    } catch (e, st) {
+      // DISCOVER-SILENT-1: secondary enrichment — primary discover list still renders;
+      // user's created groups are just absent this load. Non-fatal, but visible.
+      if (kDebugMode) debugPrint('[GroupsScreen] _loadUserCreatedGroups failed: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, st,
+        reason: 'GroupsScreen._loadUserCreatedGroups',
+        fatal: false,
+      );
     }
   }
 
