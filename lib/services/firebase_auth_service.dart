@@ -1202,10 +1202,12 @@ class FirebaseAuthService {
       'assignedGroupNames': [],
       'fcmToken': '',
       'notificationsEnabled': true,
-      // AGE-1: birthYear (int) is the server-enforceable age field.
-      // Firestore rules verify (request.time.year - birthYear >= 18) on create.
-      // dateOfBirth (ISO-8601 string) is stored for audit / future assurance levels.
-      'birthYear': onboarding.birthYear,          // e.g. 1990
+      // AGE-1 / AGE-1-R1: full DOB components written to user doc.
+      // Firestore rules enforce precise 18+ via year/month/day at create time.
+      // dateOfBirth (ISO-8601 string) retained for audit / future assurance levels.
+      'birthYear':  onboarding.birthYear,          // e.g. 1990  (int)
+      'birthMonth': onboarding.birthMonth,         // e.g. 6     (int) — AGE-1-R1
+      'birthDay':   onboarding.birthDay,           // e.g. 15    (int) — AGE-1-R1
       'dateOfBirth': onboarding.dateOfBirth ?? '', // e.g. '1990-06-15'
     };
 

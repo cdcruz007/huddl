@@ -74,15 +74,25 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
 
       // A user may only create their own profile document.
-      // AGE-1 (server enforcement — bypass-proof):
-      //   The request MUST include a birthYear int field, and that year must
-      //   indicate the user is at least 18 years old at the time of the write.
-      //   request.time.year is the Firestore server year \u2014 cannot be spoofed
-      //   by a modified client.  A modified client that omits birthYear or
-      //   supplies a value that computes to < 18 will be hard-rejected here.
+      // AGE-1-R1 (server enforcement — bypass-proof, fail-closed, full DOB):
+      //   All three fields must be present as ints (missing any field → rejected).
+      //   Age is computed precisely, mirroring client _ageFromDob():
+      //     year diff > 18              → always old enough
+      //     year diff == 18, month/day  → birthday must have already occurred today
+      //     year diff < 18              → always too young
+      //   request.time.{year,month,day} are Firestore server values — unspoofable.
+      //   Replaces AGE-1 year-only rule which was permissive by up to ~11 months.
       allow create: if isOwner(userId)
-        && request.resource.data.get('birthYear', null) != null
-        && (request.time.year - request.resource.data.birthYear) >= 18;
+        && request.resource.data.birthYear  is int
+        && request.resource.data.birthMonth is int
+        && request.resource.data.birthDay   is int
+        && (
+             (request.time.year - request.resource.data.birthYear > 18)
+             || (request.time.year - request.resource.data.birthYear == 18
+                 && (request.time.month > request.resource.data.birthMonth
+                     || (request.time.month == request.resource.data.birthMonth
+                         && request.time.day >= request.resource.data.birthDay)))
+           );
 
       // F-09: owner update is blocked if any blocklisted field is touched.
       //   Blocklist (16 fields): roles, tier, stripeCustomerId, isFoundingMember,

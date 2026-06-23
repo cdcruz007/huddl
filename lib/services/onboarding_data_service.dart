@@ -53,11 +53,14 @@ class OnboardingDataService {
   String? _previousBorough; // Previous borough (derived from previous postcode)
   int _assignedGroupCount = 0; // Number of groups assigned during onboarding
   List<String> _assignedGroupNames = []; // Names of groups assigned during onboarding
-  // AGE-1: DOB captured at name_input step — stored as ISO-8601 date string
-  // (sensitive PII → SecurePiiStorage). birthYear (int) derived and also stored
-  // as non-sensitive for Firestore write + rules enforcement.
+  // AGE-1 / AGE-1-R1: DOB captured at name_input step.
+  // dateOfBirth ISO string → SecurePiiStorage (sensitive PII).
+  // birthYear / birthMonth / birthDay (all int) → BrowserStorage non-sensitive;
+  // all three are required by the Firestore rules create-time age check.
   String? _dateOfBirth;   // ISO-8601 e.g. '1990-06-15' (sensitive)
-  int? _birthYear;        // Derived birth year int (non-sensitive)
+  int? _birthYear;        // Derived birth year  (non-sensitive)
+  int? _birthMonth;       // Derived birth month (non-sensitive) — AGE-1-R1
+  int? _birthDay;         // Derived birth day   (non-sensitive) — AGE-1-R1
 
 
   // Getters
@@ -88,9 +91,11 @@ class OnboardingDataService {
   String? get previousBorough => _previousBorough;
   int get assignedGroupCount => _assignedGroupCount;
   List<String> get assignedGroupNames => _assignedGroupNames;
-  // AGE-1
+  // AGE-1 / AGE-1-R1
   String? get dateOfBirth => _dateOfBirth;
-  int? get birthYear => _birthYear;
+  int? get birthYear  => _birthYear;
+  int? get birthMonth => _birthMonth; // AGE-1-R1
+  int? get birthDay   => _birthDay;   // AGE-1-R1
 
   /// Whether the user has changed their postcode (moved to a different borough)
   bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
@@ -218,13 +223,16 @@ class OnboardingDataService {
     _saveToStorage();
   }
 
-  // AGE-1: persist DOB as ISO-8601 string + derived birthYear int.
-  // dateOfBirth is PII → SecurePiiStorage.
-  // birthYear is non-sensitive → BrowserStorage (also written to user doc).
+  // AGE-1 / AGE-1-R1: persist full DOB.
+  // dateOfBirth (ISO string) → SecurePiiStorage (sensitive PII).
+  // birthYear / birthMonth / birthDay (ints) → BrowserStorage non-sensitive;
+  // the rules create-time check uses all three for precise boundary enforcement.
   void setDateOfBirth(DateTime dob) {
     _dateOfBirth = '${dob.year}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}';
-    _birthYear = dob.year;
-    _log('DOB set: $_dateOfBirth (birthYear: $_birthYear)');
+    _birthYear  = dob.year;
+    _birthMonth = dob.month; // AGE-1-R1
+    _birthDay   = dob.day;   // AGE-1-R1
+    _log('DOB set: $_dateOfBirth (y=$_birthYear m=$_birthMonth d=$_birthDay)');
     _saveToStorage();
   }
 
@@ -305,8 +313,10 @@ class OnboardingDataService {
     _previousBorough = null;
     _assignedGroupCount = 0;
     _assignedGroupNames = [];
-    _dateOfBirth = null; // AGE-1
-    _birthYear = null;   // AGE-1
+    _dateOfBirth = null;  // AGE-1
+    _birthYear  = null;   // AGE-1
+    _birthMonth = null;   // AGE-1-R1
+    _birthDay   = null;   // AGE-1-R1
     // Reset initialization guards so a subsequent initialize() call will
     // re-read storage instead of returning the (now stale) cached future.
     _isInitialized = false;
@@ -370,7 +380,9 @@ class OnboardingDataService {
       _profilePhotoObjectUrl = nsData['profile_photo_object_url'] as String?;
       _assignedGroupCount  = nsData['assigned_group_count']  as int? ?? 0;
       _assignedGroupNames  = List<String>.from(nsData['assigned_group_names'] ?? []);
-      _birthYear = nsData['birth_year'] as int?; // AGE-1 (non-sensitive)
+      _birthYear  = nsData['birth_year']  as int?; // AGE-1   (non-sensitive)
+      _birthMonth = nsData['birth_month'] as int?; // AGE-1-R1 (non-sensitive)
+      _birthDay   = nsData['birth_day']   as int?; // AGE-1-R1 (non-sensitive)
 
       // Sensitive fields — from SecurePiiStorage (memory on web, Keychain on mobile)
       _name         = piiData['name']          as String?;
@@ -491,7 +503,9 @@ class OnboardingDataService {
         'profile_photo_object_url': _profilePhotoObjectUrl,
         'assigned_group_count':     _assignedGroupCount,
         'assigned_group_names':     _assignedGroupNames,
-        'birth_year':               _birthYear, // AGE-1 (non-sensitive int)
+        'birth_year':  _birthYear,  // AGE-1   (non-sensitive int)
+        'birth_month': _birthMonth, // AGE-1-R1 (non-sensitive int)
+        'birth_day':   _birthDay,   // AGE-1-R1 (non-sensitive int)
       };
       await BrowserStorage.setString(_storageKey, json.encode(nonSensitiveData));
 
