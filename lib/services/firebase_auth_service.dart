@@ -857,8 +857,7 @@ class FirebaseAuthService {
       final data = doc.data()!;
       // ONLY explicit false means complete — absent/true = still in onboarding.
       // Do NOT use ?? false here: that collapses absent→false→"complete", wrong.
-      final onboardingComplete = (data['isOnboarding'] == false);
-      if (!onboardingComplete) return false;
+      if (data['isOnboarding'] != false) return false;
       // Borough must be non-empty — null/empty = broken account, recover via onboarding.
       final borough = (data['borough'] as String?) ?? '';
       if (borough.isEmpty) return false;
