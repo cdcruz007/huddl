@@ -795,6 +795,10 @@ class FirebaseAuthService {
 
       // ── 2. CF confirmed success: delete the Auth account ──────────────────
       await user.delete();
+      // ACCT-LEAK-1 parity: clear in-memory singletons on account deletion,
+      // same as signOut(). Prevents stale state if the user immediately
+      // re-registers on the same device session.
+      await UserStateRegistry.clearAll();
       _verificationId = null;
       _resendToken = null;
       _webConfirmationResult = null;

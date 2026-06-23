@@ -1929,6 +1929,27 @@ exports.deleteUserData = functions
     else {
         await runStep("invitations_sent", null, `policy.invitations_sent=${policy.invitations_sent} — retained by default`);
     }
+    // ERASURE-GAP-1 — residual collections not covered in Phase 1/2
+    //
+    // offers (buyer): marketplace/{listingId}/offers — field 'buyerId'
+    //   (firestore_service.dart:1012–1030 — buyerId written on every offer)
+    await runStep("offers_buyer", db.collectionGroup("offers").where("buyerId", "==", uid));
+    // offers (seller): same sub-collection — field 'sellerId'
+    //   (firestore_service.dart:1112 — sellerId queried, field confirmed real)
+    await runStep("offers_seller", db.collectionGroup("offers").where("sellerId", "==", uid));
+    // upvotes: community_wisdom/{articleId}/upvotes/{uid}
+    //   field 'uid' added (ERASURE-GAP-1); doc ID == uid but bare-uid equality
+    //   queries are unreliable on subcollection collectionGroups in the Admin SDK.
+    //   Historical upvotes (pre-ERASURE-GAP-1) without the 'uid' field will
+    //   be missed — known gap, documented as accepted cost.
+    //   (ai_knowledge_flywheel_service.dart:643–665)
+    await runStep("upvotes_by_uid", db.collectionGroup("upvotes").where("uid", "==", uid));
+    // gdpr_exports: top-level audit log of data-export requests
+    //   field 'userId' (profile_screen.dart:4669)
+    //   NOTE: gdpr_erasure_jobs is the erasure audit log — that MUST NOT be
+    //   deleted (preserved above). gdpr_exports is the user-triggered export
+    //   log; legitimate to purge on account deletion.
+    await runStep("gdpr_exports", db.collection("gdpr_exports").where("userId", "==", uid));
     // capturedConvIds: populated during conversations step, reused by Phase 4 Storage
     // (DM media enumerate-filter). Declared here so Phase 4 block can read it.
     const capturedConvIds = [];
@@ -2399,8 +2420,9 @@ exports.deleteUserData = functions
 // ===========================================================================
 exports.verifyBusiness = functions
     .region("europe-west2")
+    .runWith({ secrets: ["COMPANIES_HOUSE_API_KEY"] })
     .https.onCall(async (data, context) => {
-    var _a, _b;
+    var _a;
     // ── 1. Auth required ────────────────────────────────────────────────────
     if (!context.auth) {
         throw new functions.https.HttpsError("unauthenticated", "Sign in required.");
@@ -2416,7 +2438,7 @@ exports.verifyBusiness = functions
             throw new functions.https.HttpsError("invalid-argument", "Invalid company number format.");
         }
         // Companies House REST API: HTTP Basic auth — API key as username, blank password.
-        const chKey = (_a = functions.config().companies_house) === null || _a === void 0 ? void 0 : _a.key;
+        const chKey = process.env.COMPANIES_HOUSE_API_KEY;
         if (!chKey) {
             throw new functions.https.HttpsError("failed-precondition", "Verification is not configured.");
         }
@@ -2425,7 +2447,7 @@ exports.verifyBusiness = functions
         try {
             chResp = await fetch(`https://api.company-information.service.gov.uk/company/${companyNumber}`, { headers: { Authorization: `Basic ${basic}` } });
         }
-        catch (_c) {
+        catch (_b) {
             throw new functions.https.HttpsError("unavailable", "Verification service unreachable.");
         }
         if (chResp.status === 404) {
@@ -2471,7 +2493,7 @@ exports.verifyBusiness = functions
         try {
             vatResp = await fetch(`https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/${vatNumber}`, { headers: { Accept: "application/vnd.hmrc.2.0+json" } });
         }
-        catch (_d) {
+        catch (_c) {
             throw new functions.https.HttpsError("unavailable", "Verification service unreachable.");
         }
         if (vatResp.status === 404) {
@@ -2483,7 +2505,7 @@ exports.verifyBusiness = functions
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const vat = await vatResp.json();
         // HMRC returns { target: { name, vatNumber, address } } on success.
-        const verifiedName = (_b = vat === null || vat === void 0 ? void 0 : vat.target) === null || _b === void 0 ? void 0 : _b.name;
+        const verifiedName = (_a = vat === null || vat === void 0 ? void 0 : vat.target) === null || _a === void 0 ? void 0 : _a.name;
         if (!verifiedName) {
             throw new functions.https.HttpsError("failed-precondition", "VAT record incomplete.");
         }

@@ -616,7 +616,8 @@ class MeetupService extends ChangeNotifier implements ClearableUserState {
   Future<void> loadFromFirestore() async {
     loadFailed = false;
     try {
-      final raw = await FirestoreService().getMeetups();
+      final raw = await FirestoreService().getMeetups()
+          .timeout(const Duration(seconds: 15)); // TIMEOUT-1
       bool changed = false;
       for (final map in raw) {
         // Normalise Firestore Timestamp fields that weren't converted

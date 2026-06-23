@@ -2504,6 +2504,43 @@ export const deleteUserData = functions
       );
     }
 
+    // ERASURE-GAP-1 — residual collections not covered in Phase 1/2
+    //
+    // offers (buyer): marketplace/{listingId}/offers — field 'buyerId'
+    //   (firestore_service.dart:1012–1030 — buyerId written on every offer)
+    await runStep(
+      "offers_buyer",
+      db.collectionGroup("offers").where("buyerId", "==", uid)
+    );
+
+    // offers (seller): same sub-collection — field 'sellerId'
+    //   (firestore_service.dart:1112 — sellerId queried, field confirmed real)
+    await runStep(
+      "offers_seller",
+      db.collectionGroup("offers").where("sellerId", "==", uid)
+    );
+
+    // upvotes: community_wisdom/{articleId}/upvotes/{uid}
+    //   field 'uid' added (ERASURE-GAP-1); doc ID == uid but bare-uid equality
+    //   queries are unreliable on subcollection collectionGroups in the Admin SDK.
+    //   Historical upvotes (pre-ERASURE-GAP-1) without the 'uid' field will
+    //   be missed — known gap, documented as accepted cost.
+    //   (ai_knowledge_flywheel_service.dart:643–665)
+    await runStep(
+      "upvotes_by_uid",
+      db.collectionGroup("upvotes").where("uid", "==", uid)
+    );
+
+    // gdpr_exports: top-level audit log of data-export requests
+    //   field 'userId' (profile_screen.dart:4669)
+    //   NOTE: gdpr_erasure_jobs is the erasure audit log — that MUST NOT be
+    //   deleted (preserved above). gdpr_exports is the user-triggered export
+    //   log; legitimate to purge on account deletion.
+    await runStep(
+      "gdpr_exports",
+      db.collection("gdpr_exports").where("userId", "==", uid)
+    );
+
     // capturedConvIds: populated during conversations step, reused by Phase 4 Storage
     // (DM media enumerate-filter). Declared here so Phase 4 block can read it.
     const capturedConvIds: string[] = [];

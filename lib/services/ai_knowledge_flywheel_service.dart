@@ -653,7 +653,10 @@ Rules:
       if (existing.exists) return; // already upvoted
 
       final batch = _firestore.batch();
-      batch.set(voteRef, {'voted_at': FieldValue.serverTimestamp()});
+      batch.set(voteRef, {
+        'voted_at': FieldValue.serverTimestamp(),
+        'uid': uid, // ERASURE-GAP-1: field needed for collectionGroup delete sweep
+      });
       batch.update(_wisdomCol.doc(articleId), {
         'upvotes': FieldValue.increment(1),
       });

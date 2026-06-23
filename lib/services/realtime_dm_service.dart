@@ -148,7 +148,7 @@ class RealtimeDMService implements ClearableUserState {
         'createdAt': FieldValue.serverTimestamp(),
         'borough': myBorough,
         'unreadCount': <String, int>{uid: 0, otherUserId: 0},
-      });
+      }).timeout(const Duration(seconds: 15)); // TIMEOUT-1
 
       _log('Created conversation $conversationId ($myBorough)');
       return conversationId;
@@ -169,7 +169,8 @@ class RealtimeDMService implements ClearableUserState {
       String uid, String otherUserId) async {
     // Use the deterministic ID first (fast path)
     final deterministic = _conversationId(uid, otherUserId);
-    final doc = await _db.collection('conversations').doc(deterministic).get();
+    final doc = await _db.collection('conversations').doc(deterministic)
+        .get().timeout(const Duration(seconds: 15)); // TIMEOUT-1
     if (doc.exists) return deterministic;
 
     // Fallback: query (handles legacy conversations)
@@ -259,7 +260,8 @@ class RealtimeDMService implements ClearableUserState {
       };
 
       // Write message in subcollection
-      await msgRef.set(msgData);
+      await msgRef.set(msgData)
+          .timeout(const Duration(seconds: 15)); // TIMEOUT-1
 
       // Build display text for conversation summary
       String displayText = message;
@@ -282,7 +284,8 @@ class RealtimeDMService implements ClearableUserState {
       }
 
       // Update conversation summary (with unread increment for the OTHER participant)
-      final convSnap = await _db.collection('conversations').doc(conversationId).get();
+      final convSnap = await _db.collection('conversations').doc(conversationId)
+          .get().timeout(const Duration(seconds: 15)); // TIMEOUT-1
       final participants = List<String>.from(convSnap.data()?['participants'] ?? []);
 
       Map<String, dynamic> unreadUpdate = {};
@@ -305,7 +308,8 @@ class RealtimeDMService implements ClearableUserState {
         'lastMessageAt': FieldValue.serverTimestamp(),
         'participantAvatars.$uid': myPhotoUrl,
         ...unreadUpdate,
-      }, SetOptions(merge: true));
+      }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 15)); // TIMEOUT-1
 
       // Notifications are dispatched server-side by the onDmMessageCreated
       // Firestore trigger (MSG-SAFETY Stage 2a-ii). No client call needed.

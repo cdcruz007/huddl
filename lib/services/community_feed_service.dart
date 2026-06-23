@@ -293,7 +293,7 @@ class CommunityFeedService implements ClearableUserState {
           .where('isActive', isEqualTo: true)
           .orderBy('promotedAt', descending: true)
           .limit(3)
-          .get();
+          .get().timeout(const Duration(seconds: 15)); // TIMEOUT-1
       return snap.docs.map((d) {
         final data = d.data();
         return FeedItem(

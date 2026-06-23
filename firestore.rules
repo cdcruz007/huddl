@@ -798,13 +798,6 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // BLOCKS  (block list: blocks/{blockerId}/blocked/{blockedId})
-    // =========================================================================
-    match /blocks/{blockerId}/{type}/{blockedId} {
-      allow read, write: if isOwner(blockerId);
-    }
-
-    // =========================================================================
     // FEEDBACK  (in-app feedback submissions)
     // =========================================================================
     match /feedback/{docId} {

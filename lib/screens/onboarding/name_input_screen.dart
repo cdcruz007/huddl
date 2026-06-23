@@ -133,6 +133,9 @@ class _NameInputScreenState extends State<NameInputScreen> {
       },
     );
 
+    // SETSTATE-1: guard against setState-after-dispose if user navigated
+    // away while the DOB picker bottom sheet was still closing.
+    if (!mounted) return;
     setState(() {
       _selectedDob = tempDob;
       _dobPicked = true;

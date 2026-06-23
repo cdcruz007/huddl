@@ -34,7 +34,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
         .sendWelcomeNotification(
           email: email,
           firstName: onboarding.name,
-          borough: onboarding.postcode,
+          borough: onboarding.borough ?? onboarding.postcode,
         )
         .catchError((Object e) {
       if (kDebugMode) debugPrint('[WelcomeComplete] welcome email error: $e');
