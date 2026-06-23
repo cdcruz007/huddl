@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import 'clearable_user_state.dart';
+import '../utils/safe_parse.dart';
 import '../models/direct_message.dart';
 import 'borough_scope_guard.dart';
 import 'user_privacy_prefs_service.dart';
@@ -67,18 +68,18 @@ class DMService implements ClearableUserState {
       final raw = await BrowserStorage.getString(_conversationsKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _conversations = decoded
-            .map((j) => DMConversation.fromJson(j as Map<String, dynamic>))
-            .toList();
+        _conversations = safeParseList<DMConversation>(
+            decoded, DMConversation.fromJson,
+            context: 'DMService.conversations');
       }
       // Migrate from old key if empty
       if (_conversations.isEmpty) {
         final oldRaw = await BrowserStorage.getString('dm_conversations_v1');
         if (oldRaw != null) {
           final List<dynamic> decoded = json.decode(oldRaw);
-          _conversations = decoded
-              .map((j) => DMConversation.fromJson(j as Map<String, dynamic>))
-              .toList();
+          _conversations = safeParseList<DMConversation>(
+              decoded, DMConversation.fromJson,
+              context: 'DMService.conversations.v1migration');
           await _saveConversations();
         }
       }

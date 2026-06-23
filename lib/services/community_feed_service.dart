@@ -7,6 +7,7 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'default_group_service.dart';
 import 'borough_scope_guard.dart';
+import '../utils/safe_parse.dart';
 
 /// Feed item types for the home screen.
 enum FeedItemType {
@@ -242,8 +243,9 @@ class CommunityFeedService implements ClearableUserState {
       final raw = await BrowserStorage.getString(_storageKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _feedItems =
-            decoded.map((e) => FeedItem.fromJson(e as Map<String, dynamic>)).toList();
+        _feedItems = safeParseList<FeedItem>(
+            decoded, FeedItem.fromJson,
+            context: 'CommunityFeedService.feedItems');
       }
     } catch (e) {
       if (kDebugMode) debugPrint('CommunityFeedService load error: $e');

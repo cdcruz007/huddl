@@ -6,6 +6,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../models/saved_message.dart';
 import 'browser_storage.dart';
 import 'clearable_user_state.dart';
+import '../utils/safe_parse.dart';
 
 const String _savedMessagesKey = 'saved_messages_v2'; // v2 — per-item unique IDs
 const String _savedThreadsKey  = 'saved_threads_v2';  // v2 — no merge logic
@@ -74,9 +75,9 @@ class SavedMessageService extends ChangeNotifier implements ClearableUserState {
       raw ??= await BrowserStorage.getString('saved_messages_v1');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _savedMessages = decoded
-            .map((j) => SavedMessage.fromJson(j as Map<String, dynamic>))
-            .toList();
+        _savedMessages = safeParseList<SavedMessage>(
+            decoded, SavedMessage.fromJson,
+            context: 'SavedMessageService.messages');
         _savedMessages.sort((a, b) => b.savedAt.compareTo(a.savedAt));
       }
     } catch (_) {
@@ -92,9 +93,9 @@ class SavedMessageService extends ChangeNotifier implements ClearableUserState {
       raw ??= await BrowserStorage.getString('saved_threads_v1');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _savedThreads = decoded
-            .map((j) => SavedThread.fromJson(j as Map<String, dynamic>))
-            .toList();
+        _savedThreads = safeParseList<SavedThread>(
+            decoded, SavedThread.fromJson,
+            context: 'SavedMessageService.threads');
         _savedThreads.sort((a, b) => b.savedAt.compareTo(a.savedAt));
       }
     } catch (_) {
@@ -106,9 +107,9 @@ class SavedMessageService extends ChangeNotifier implements ClearableUserState {
       final raw = await BrowserStorage.getString(_savedEventsKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _savedEvents = decoded
-            .map((j) => SavedEvent.fromJson(j as Map<String, dynamic>))
-            .toList();
+        _savedEvents = safeParseList<SavedEvent>(
+            decoded, SavedEvent.fromJson,
+            context: 'SavedMessageService.events');
         _savedEvents.sort((a, b) => b.savedAt.compareTo(a.savedAt));
       }
     } catch (_) {

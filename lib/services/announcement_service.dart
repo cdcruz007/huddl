@@ -7,6 +7,7 @@ import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'borough_scope_guard.dart';
+import '../utils/safe_parse.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AnnouncementComment
@@ -415,9 +416,9 @@ class AnnouncementService {
       final raw = await BrowserStorage.getString(_storageKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _announcements = decoded
-            .map((e) => Announcement.fromJson(e as Map<String, dynamic>))
-            .toList();
+        _announcements = safeParseList<Announcement>(
+            decoded, Announcement.fromJson,
+            context: 'AnnouncementService.cache');
         // Push cached snapshot so any early StreamBuilders render immediately
         _streamController.add(boroughAnnouncements);
       }

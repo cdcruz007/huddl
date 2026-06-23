@@ -6,6 +6,7 @@ import 'browser_storage.dart';
 import 'clearable_user_state.dart';
 import 'borough_scope_guard.dart';
 import 'firestore_service.dart';
+import '../utils/safe_parse.dart';
 
 /// Privacy level for a meetup
 enum MeetupPrivacy { public, group, private_ }
@@ -557,9 +558,17 @@ class MeetupService extends ChangeNotifier implements ClearableUserState {
       final raw = await BrowserStorage.getString(_storageKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        for (final j in decoded) {
-          final map = j as Map<String, dynamic>;
-          var meetup = Meetup.fromJson(map);
+        // LAYER-5-PARSE-1: parse per-item so a single malformed record is
+        // skipped instead of aborting the whole list.
+        final parsedMeetups = safeParseList<Meetup>(
+            decoded, Meetup.fromJson,
+            context: 'MeetupService.persisted');
+        for (var meetup in parsedMeetups) {
+          // Rebuild original map to check hasCustomImage flag.
+          // Safe: the item passed safeParseList so it was a valid Map.
+          final map = decoded.firstWhere(
+              (j) => j is Map<String, dynamic> && j['id'] == meetup.id,
+              orElse: () => <String, dynamic>{}) as Map<String, dynamic>;
           // Restore base64 image from separate storage if flagged
           if (map['hasCustomImage'] == true) {
             final storedImage = await BrowserStorage.getString('meetup_image_${meetup.id}');

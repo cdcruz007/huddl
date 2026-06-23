@@ -7,6 +7,7 @@ import 'clearable_user_state.dart';
 import '../models/group.dart';
 import 'borough_scope_guard.dart';
 import 'huddl_notification_service.dart';
+import '../utils/safe_parse.dart';
 
 /// Represents a group invitation sent to a user
 class GroupInvitation {
@@ -203,24 +204,27 @@ class InvitationService extends ChangeNotifier implements ClearableUserState {
       final raw = await BrowserStorage.getString(_invitationsKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _invitations =
-            decoded.map((j) => GroupInvitation.fromJson(j as Map<String, dynamic>)).toList();
+        _invitations = safeParseList<GroupInvitation>(
+            decoded, GroupInvitation.fromJson,
+            context: 'InvitationService.invitations');
       }
 
       // Load joined groups
       final joinedRaw = await BrowserStorage.getString(_joinedGroupsKey);
       if (joinedRaw != null) {
         final List<dynamic> decoded = json.decode(joinedRaw);
-        _joinedGroups =
-            decoded.map((j) => Group.fromJson(j as Map<String, dynamic>)).toList();
+        _joinedGroups = safeParseList<Group>(
+            decoded, Group.fromJson,
+            context: 'InvitationService.joinedGroups');
       }
 
       // Load system messages
       final sysRaw = await BrowserStorage.getString(_systemMessagesKey);
       if (sysRaw != null) {
         final List<dynamic> decoded = json.decode(sysRaw);
-        _systemMessages =
-            decoded.map((j) => GroupSystemMessage.fromJson(j as Map<String, dynamic>)).toList();
+        _systemMessages = safeParseList<GroupSystemMessage>(
+            decoded, GroupSystemMessage.fromJson,
+            context: 'InvitationService.systemMessages');
       }
 
       _isInitialized = true;
