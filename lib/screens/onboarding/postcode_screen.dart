@@ -65,13 +65,30 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
       Navigator.pushNamed(context, '/not_available');
       return;
     }
+
+    // ONBOARD-BOROUGH-1: block advance if borough resolution failed.
+    // A null borough here means the postcodes.io lookup timed out or returned
+    // no admin_district. Proceeding would create a permanently broken account
+    // with an empty borough, excluded from all borough-scoped queries.
+    // The user stays on this screen and retries — network/transient fix resolves it.
+    if (borough == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'We couldn\'t confirm your area. Check your connection and try again.',
+            ),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+      return; // stay on postcode screen; _isChecking already reset above
+    }
     // ──────────────────────────────────────────────────────────────────
 
     final service = OnboardingDataService();
     service.setPostcode(postcode);
-    // Persist the API-resolved borough so all downstream services (directory,
-    // groups, events) use the correct admin district without further API calls.
-    if (borough != null) service.setBorough(borough);
+    service.setBorough(borough); // ONBOARD-BOROUGH-1: unconditional — guaranteed non-null
     if (mounted) Navigator.pushNamed(context, '/phone_number');
   }
 

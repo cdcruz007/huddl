@@ -131,9 +131,26 @@ class _SplashScreenState extends State<SplashScreen>
       if (explicitlyLoggedOut) {
         destination = '/login';
       } else if (auth.isSignedIn) {
-        final biometric = BiometricAuthService();
-        final biometricEnabled = await biometric.isEnabled;
-        destination = biometricEnabled ? '/biometric_lock' : '/home';
+        // ONBOARD-RESUME-1 + ONBOARD-COMPLETE-SIGNAL:
+        // Only route to /home when the profile is POSITIVELY complete.
+        // hasCompletedOnboarding() requires isOnboarding==false (explicit, not absent)
+        // AND a non-empty borough. Half-created, mid-flow-quit, or no-borough
+        // accounts all return false → /onboarding for recovery.
+        // 5s timeout fails safe to /onboarding (not /home).
+        final complete = await auth
+            .hasCompletedOnboarding()
+            .timeout(
+              const Duration(seconds: 5),
+              onTimeout: () => false,
+            );
+        if (!mounted) return;
+        if (complete) {
+          final biometric = BiometricAuthService();
+          final biometricEnabled = await biometric.isEnabled;
+          destination = biometricEnabled ? '/biometric_lock' : '/home';
+        } else {
+          destination = '/onboarding'; // half-account / mid-flow-quit / no-borough → recover
+        }
       } else {
         destination = '/onboarding';
       }

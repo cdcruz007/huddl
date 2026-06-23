@@ -424,13 +424,18 @@ class FirebaseAuthService {
         }
         // Clear the explicit logout flag — user has successfully authenticated
         await clearLoggedOutFlag();
-        // Check if this account still needs onboarding (isOnboarding=true in Firestore)
-        bool needsOnboarding = false;
+        // Check if this account still needs onboarding.
+        // AUTH-ONBOARD-1 / ONBOARD-RESUME-1: use != false semantics.
+        // absent (null) OR true  → needsOnboarding = true  (still in flow)
+        // explicit false         → needsOnboarding = false (positively complete)
+        // Do NOT use ?? false: that collapses absent→false→"complete", wrong.
+        bool needsOnboarding = true; // default: needs onboarding unless positively complete
         try {
           final doc = await _db.collection('users').doc(userCred.user!.uid).get()
               .timeout(const Duration(seconds: 3));
-          needsOnboarding = (doc.data()?['isOnboarding'] as bool?) ?? false;
-        } catch (_) {}
+          final v = doc.data()?['isOnboarding'];
+          needsOnboarding = (v != false); // only explicit false = done
+        } catch (_) {} // leave needsOnboarding=true on error (fail safe)
         return AuthResult.success(userCred.user, requiresOnboarding: needsOnboarding);
       }
 
@@ -495,13 +500,18 @@ class FirebaseAuthService {
       _log('verifySmsCode: success, uid=${userCred.user?.uid}');
       // Clear the explicit logout flag — user has successfully authenticated
       await clearLoggedOutFlag();
-      // Check if this account still needs onboarding (isOnboarding=true in Firestore)
-      bool needsOnboarding = false;
+      // Check if this account still needs onboarding.
+      // AUTH-ONBOARD-1 / ONBOARD-RESUME-1: use != false semantics.
+      // absent (null) OR true  → needsOnboarding = true  (still in flow)
+      // explicit false         → needsOnboarding = false (positively complete)
+      // Do NOT use ?? false: that collapses absent→false→"complete", wrong.
+      bool needsOnboarding = true; // default: needs onboarding unless positively complete
       try {
         final doc = await _db.collection('users').doc(userCred.user!.uid).get()
             .timeout(const Duration(seconds: 3));
-        needsOnboarding = (doc.data()?['isOnboarding'] as bool?) ?? false;
-      } catch (_) {}
+        final v = doc.data()?['isOnboarding'];
+        needsOnboarding = (v != false); // only explicit false = done
+      } catch (_) {} // leave needsOnboarding=true on error (fail safe)
       return AuthResult.success(userCred.user, requiresOnboarding: needsOnboarding);
     } on FirebaseAuthException catch (e) {
       _log('verifySmsCode FirebaseAuthException: ${e.code}');
@@ -814,6 +824,48 @@ class FirebaseAuthService {
     if (uid == null) return false;
     final doc = await _db.collection('users').doc(uid).get();
     return doc.exists;
+  }
+
+  /// ONBOARD-RESUME-1 + ONBOARD-COMPLETE-SIGNAL
+  ///
+  /// True ONLY when the user has a COMPLETE, usable profile.
+  ///
+  /// Completion semantics (CRITICAL — absence ≠ false):
+  ///   - syncCurrentUserProfile() writes isOnboarding:false ONLY when a real
+  ///     name is present. A profile created at phone-verification but abandoned
+  ///     before about_you has the field ABSENT (not false).
+  ///   - We treat ONLY an EXPLICIT `false` value as complete.
+  ///   - Absent / true / null → NOT complete → route to /onboarding.
+  ///
+  /// Additional guard:
+  ///   - borough must be non-empty (ONBOARD-BOROUGH-1: null-borough accounts
+  ///     are broken and must re-complete onboarding to get a valid borough).
+  ///
+  /// Failure semantics — fail SAFE:
+  ///   - !doc.exists  → false  (Auth entry but no Firestore doc — half-created)
+  ///   - catch        → false  (network error — route to /onboarding, not /home)
+  Future<bool> hasCompletedOnboarding() async {
+    final u = uid;
+    if (u == null) return false;
+    try {
+      final doc = await _db
+          .collection('users')
+          .doc(u)
+          .get()
+          .timeout(const Duration(seconds: 5));
+      if (!doc.exists) return false; // half-created account (Auth yes, profile no)
+      final data = doc.data()!;
+      // ONLY explicit false means complete — absent/true = still in onboarding.
+      // Do NOT use ?? false here: that collapses absent→false→"complete", wrong.
+      final onboardingComplete = (data['isOnboarding'] == false);
+      if (!onboardingComplete) return false;
+      // Borough must be non-empty — null/empty = broken account, recover via onboarding.
+      final borough = (data['borough'] as String?) ?? '';
+      if (borough.isEmpty) return false;
+      return true;
+    } catch (_) {
+      return false; // fail safe → /onboarding (matches existing catch→/onboarding pattern)
+    }
   }
 
   /// Pre-checks whether a phone number has a registered Huddl account in
