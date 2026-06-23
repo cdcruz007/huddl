@@ -3036,6 +3036,7 @@ export const deleteUserData = functions
 
 export const verifyBusiness = functions
   .region("europe-west2")
+  .runWith({ secrets: ["COMPANIES_HOUSE_API_KEY"] })
   .https.onCall(async (data, context) => {
     // ── 1. Auth required ────────────────────────────────────────────────────
     if (!context.auth) {
@@ -3058,7 +3059,7 @@ export const verifyBusiness = functions
       }
 
       // Companies House REST API: HTTP Basic auth — API key as username, blank password.
-      const chKey = functions.config().companies_house?.key;
+      const chKey = process.env.COMPANIES_HOUSE_API_KEY;
       if (!chKey) {
         throw new functions.https.HttpsError(
           "failed-precondition",
