@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'browser_storage.dart';
 
 const String _blockedUsersKey = 'blocked_users_v1';
@@ -84,9 +85,9 @@ class BlockService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> _writeToFirestore(String targetUid) async {
+  Future<bool> _writeToFirestore(String targetUid) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) return false; // not signed in → cannot persist
     try {
       await _db
           .collection('users')
@@ -97,8 +98,12 @@ class BlockService extends ChangeNotifier {
         'targetUid': targetUid,
         'blockedAt': FieldValue.serverTimestamp(),
       });
+      return true;
     } catch (e) {
       if (kDebugMode) debugPrint('[BlockService] Firestore block write failed: $e');
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: 'BlockService._writeToFirestore', fatal: false); // OBSERV-1
+      return false;
     }
   }
 
@@ -122,12 +127,21 @@ class BlockService extends ChangeNotifier {
   /// Check if a user is blocked.
   bool isUserBlocked(String userId) => _blockedUserIds.contains(userId);
 
-  /// Block a user — writes to BrowserStorage + Firestore.
-  Future<void> blockUser(String userId) async {
-    _blockedUserIds.add(userId);
+  /// Block a user. Optimistically updates UI, then confirms the authoritative
+  /// Firestore write. Returns true if the block persisted; false if it failed
+  /// (in which case the optimistic state is rolled back).
+  Future<bool> blockUser(String userId) async {
+    _blockedUserIds.add(userId); // optimistic
     notifyListeners();
     await _saveLocal();
-    await _writeToFirestore(userId);
+    final ok = await _writeToFirestore(userId);
+    if (!ok) {
+      // Authoritative write failed — do NOT claim a block that won't be enforced.
+      _blockedUserIds.remove(userId);
+      await _saveLocal();
+      notifyListeners();
+    }
+    return ok;
   }
 
   /// Unblock a user — removes from BrowserStorage + Firestore.
@@ -138,14 +152,18 @@ class BlockService extends ChangeNotifier {
     await _deleteFromFirestore(userId);
   }
 
-  /// Toggle block state. Returns `true` if the user is now blocked.
+  /// Toggle block state.
+  /// Returns true  if the user is now BLOCKED (and the write succeeded).
+  /// Returns false if the user is now UNBLOCKED, OR if a block write failed
+  /// (caller must distinguish — check isUserBlocked() after the call, or
+  ///  treat false-after-block as a failure requiring user feedback).
   Future<bool> toggleBlock(String userId) async {
     if (_blockedUserIds.contains(userId)) {
       await unblockUser(userId);
       return false;
     } else {
-      await blockUser(userId);
-      return true;
+      final ok = await blockUser(userId);
+      return ok; // true only if the block actually persisted
     }
   }
 

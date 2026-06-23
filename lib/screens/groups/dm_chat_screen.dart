@@ -1888,20 +1888,37 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       onPressed: () async {
                         Navigator.pop(c);
                         final wasBlocked = _isBlocked;
-                        await _blockService.toggleBlock(widget.recipientId);
+                        // BLOCK-SILENT-1: capture real result; false-after-block
+                        // means the write failed and the optimistic state was
+                        // rolled back — show error instead of success.
+                        final result = await _blockService.toggleBlock(widget.recipientId);
                         setState(() {});
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(wasBlocked
-                                  ? '${widget.recipientName} has been unblocked'
-                                  : '${widget.recipientName} has been blocked'),
-                              backgroundColor: HuddlColors.primary,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
+                          // Blocking failed: write rolled back, user is not blocked.
+                          if (!wasBlocked && !result) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Could not block ${widget.recipientName}. Check your connection and try again.'),
+                                backgroundColor: HuddlColors.error,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(wasBlocked
+                                    ? '${widget.recipientName} has been unblocked'
+                                    : '${widget.recipientName} has been blocked'),
+                                backgroundColor: HuddlColors.primary,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          }
                         }
                       },
                     ),
