@@ -45,6 +45,23 @@ async function _getUserEmailData(db, userId) {
   }
 }
 
+/**
+ * Guards against IAP receipt reuse across accounts. Returns the conflicting
+ * userId if this receipt identifier is already bound to a DIFFERENT user,
+ * else null. (Same identifier on the SAME user = renewal/re-verify = allowed.)
+ */
+async function _findConflictingOwner(db, field, value, requestingUserId) {
+  if (!value) return null;
+  const snap = await db.collection('subscriptions')
+    .where(field, '==', value)
+    .limit(5)
+    .get();
+  for (const doc of snap.docs) {
+    if (doc.id !== requestingUserId) return doc.id; // bound to someone else
+  }
+  return null;
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // APPLE APP STORE VERIFICATION
 // ═════════════════════════════════════════════════════════════════════════════
@@ -133,6 +150,21 @@ async function verifyAppleReceipt({ userId, receiptData, productId, transactionI
 
     // ── Step 5: Update Firestore subscription ─────────────────────────
     const db = getDb();
+
+    // LAYER-8-IAP-BINDING-1: reject if this Apple transaction is already
+    // claimed by a different account (receipt-reuse / revenue bypass).
+    const appleConflict = await _findConflictingOwner(
+      db, 'appleTransactionId', transactionId, userId);
+    if (appleConflict) {
+      console.warn(
+        `[verifyAppleReceipt] REJECTED: transaction ${transactionId} already ` +
+        `bound to user ${appleConflict}, requested by ${userId}`);
+      return {
+        valid: false,
+        error: 'This purchase is already associated with another account.',
+      };
+    }
+
     const subData = {
       tier: tierMapping.tier,
       billingPeriod: tierMapping.billingPeriod,
@@ -390,6 +422,21 @@ async function verifyGoogleReceipt({ userId, purchaseToken, productId }) {
 
     // ── Step 5: Update Firestore ──────────────────────────────────────
     const db = getDb();
+
+    // LAYER-8-IAP-BINDING-1: reject if this Google purchase token is already
+    // claimed by a different account.
+    const googleConflict = await _findConflictingOwner(
+      db, 'googlePurchaseToken', purchaseToken, userId);
+    if (googleConflict) {
+      console.warn(
+        `[verifyGoogleReceipt] REJECTED: purchaseToken already bound to ` +
+        `user ${googleConflict}, requested by ${userId}`);
+      return {
+        valid: false,
+        error: 'This purchase is already associated with another account.',
+      };
+    }
+
     const subData = {
       tier: tierMapping.tier,
       billingPeriod: tierMapping.billingPeriod,
