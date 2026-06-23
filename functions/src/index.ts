@@ -3440,6 +3440,21 @@ export const moderateAndSendDM = functions
       );
     }
 
+    // ── STEP 2b: BLOCK CHECK (BLOCK-ENFORCE-1) ──────────────────────────────
+    // If the recipient has blocked the sender, do NOT write the message at all.
+    // (The post-write onDmMessageCreated trigger only suppressed the push; the
+    //  message still landed. This stops it server-side, before the write.)
+    const recipientId = participants.find((p) => p !== uid);
+    if (recipientId) {
+      const blockedSnap = await db
+        .collection("users").doc(recipientId)
+        .collection("blocks").doc(uid).get();
+      if (blockedSnap.exists) {
+        functions.logger.info(`[moderateAndSendDM] BLOCKED by recipient-block uid=${uid} recipient=${recipientId}`);
+        return { status: "blocked", reason: "blocked_by_recipient" };
+      }
+    }
+
     // ── STEP 3: MODERATE (text only) ────────────────────────────────────────
     const type = String(data.type ?? "text");
     const rawText = String(data.message ?? "");

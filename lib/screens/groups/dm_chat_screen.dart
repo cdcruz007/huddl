@@ -613,13 +613,23 @@ class _DMChatScreenState extends State<DMChatScreen> {
       _messages.removeWhere((m) => m.id == failedMsg.id);
     });
 
-    // Re-send with the same text
+    // Re-send with the same text — route through moderated gate so block
+    // enforcement and content moderation apply on retry (MODERATION-COVERAGE-1).
     if (_isRealUser) {
       if (_conversationId != null) {
-        await _realtimeDMService.sendMessage(
+        final r = await _realtimeDMService.sendMessageModerated(
           conversationId: _conversationId!,
           message: failedMsg.message,
         );
+        if (r == SendDmResult.blocked && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+              'Your message could not be sent — it may violate our community guidelines.',
+            ),
+          ));
+          // do NOT re-add the message; it was blocked
+          return;
+        }
       }
     } else {
       final msg = await _dmService.sendMessage(

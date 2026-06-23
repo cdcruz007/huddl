@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/invitation_service.dart';
 import '../../services/dm_service.dart';
+import '../../services/realtime_dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/browser_storage.dart';
-import '../../models/direct_message.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import '../../constants/app_text_styles.dart';
 
@@ -397,41 +397,54 @@ class _ForwardSheetState extends State<_ForwardSheet>
       return;
     }
 
-    // Forward to DM
-    final conv = await _dmService.getOrCreateConversation(
-      recipientId: target.id,
-      recipientName: target.name,
-      avatarColor: target.avatarColor,
-    );
+    // Forward to DM — route through the moderated gate (MODERATION-COVERAGE-1).
+    // RealtimeDMService.getOrCreateConversation creates/finds the Firestore
+    // conversation doc and returns the conversation ID (or null on error).
+    final realtimeDM = RealtimeDMService();
+    final convId = await realtimeDM.getOrCreateConversation(target.id);
+    if (convId == null || convId == 'blocked') {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              convId == 'blocked'
+                  ? 'You cannot send messages to this person.'
+                  : 'Could not start conversation. Please try again.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
 
+    // Determine type string and message text matching existing conventions.
+    // Type strings mirror MessageType.name values used by RealtimeDMMessage.fromFirestore.
+    final SendDmResult result;
     if (widget.imageUrl != null) {
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: widget.messageText.isNotEmpty ? widget.messageText : 'Photo',
-        senderName: userName,
-        type: MessageType.image,
+        type: 'image',
         imageUrl: widget.imageUrl,
         meetupData: widget.meetupData,
         groupData: widget.groupData,
         itemData: widget.itemData,
       );
     } else if (widget.documentName != null) {
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: widget.documentName!,
-        senderName: userName,
-        type: MessageType.document,
+        type: 'document',
         documentName: widget.documentName,
         meetupData: widget.meetupData,
         groupData: widget.groupData,
         itemData: widget.itemData,
       );
     } else if (widget.latitude != null) {
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: widget.locationLabel ?? 'Location',
-        senderName: userName,
-        type: MessageType.location,
+        type: 'location',
         latitude: widget.latitude,
         longitude: widget.longitude,
         locationLabel: widget.locationLabel,
@@ -440,11 +453,10 @@ class _ForwardSheetState extends State<_ForwardSheet>
         itemData: widget.itemData,
       );
     } else if (widget.contactName != null) {
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: widget.contactName!,
-        senderName: userName,
-        type: MessageType.contact,
+        type: 'contact',
         contactName: widget.contactName,
         contactPhone: widget.contactPhone,
         meetupData: widget.meetupData,
@@ -452,60 +464,70 @@ class _ForwardSheetState extends State<_ForwardSheet>
         itemData: widget.itemData,
       );
     } else if (widget.isMeetupCard && widget.meetupData != null) {
-      // Meetup card message
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: widget.messageText,
-        senderName: userName,
-        type: MessageType.meetupInvite,
+        type: 'meetupInvite',
         meetupData: widget.meetupData,
       );
     } else if (widget.isGroupCard && widget.groupData != null) {
-      // Group card message  
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: 'Shared a group',
-        senderName: userName,
+        type: 'text',
         groupData: widget.groupData,
       );
     } else if (widget.isItemCard && widget.itemData != null) {
-      // Item card message
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: 'Shared an item for sale',
-        senderName: userName,
+        type: 'text',
         itemData: widget.itemData,
       );
     } else if (widget.isEventCard && widget.eventData != null) {
-      // Event card message
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: 'Shared an event',
-        senderName: userName,
+        type: 'text',
         eventData: widget.eventData,
       );
     } else {
-      // Regular text message
-      await _dmService.sendMessage(
-        conversationId: conv.id,
+      result = await realtimeDM.sendMessageModerated(
+        conversationId: convId,
         message: widget.messageText,
-        senderName: userName,
+        type: 'text',
       );
     }
-      
-    // Show confirmation toast for DM sends
+
+    // Per-target blocked handling: if this target blocked the sender, note it
+    // but do NOT abort — caller continues with remaining targets.
     if (!target.isGroup && context.mounted) {
-      final cardType = widget.isGroupCard && widget.groupData != null ? 'GROUP CARD' :
-                      widget.isItemCard && widget.itemData != null ? 'ITEM CARD' :
-                      widget.isEventCard && widget.eventData != null ? 'EVENT CARD' :
-                      widget.isMeetupCard && widget.meetupData != null ? 'MEETUP CARD' : 'TEXT';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Sent $cardType to ${target.name}'),
-          duration: const Duration(seconds: 3),
-          backgroundColor: HuddlColors.success,
-        ),
-      );
+      if (result == SendDmResult.blocked) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Message to ${target.name} could not be sent — it may violate our community guidelines.',
+            ),
+          ),
+        );
+      } else {
+        final cardType = widget.isGroupCard && widget.groupData != null
+            ? 'GROUP CARD'
+            : widget.isItemCard && widget.itemData != null
+                ? 'ITEM CARD'
+                : widget.isEventCard && widget.eventData != null
+                    ? 'EVENT CARD'
+                    : widget.isMeetupCard && widget.meetupData != null
+                        ? 'MEETUP CARD'
+                        : 'TEXT';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Sent $cardType to ${target.name}'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: HuddlColors.success,
+          ),
+        );
+      }
     }
   }
 
