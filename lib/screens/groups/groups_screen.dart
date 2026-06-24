@@ -185,31 +185,18 @@ class _GroupsScreenState extends State<GroupsScreen>
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          // ── Rings: native-scale 320×56 canvas, left-aligned ──
-                          // BoxFit.none = no scaling → 1:1 pixel rendering.
-                          // Canvas is 320px wide; ring_right starts at x=300.
-                          // AnimatedCrossFade wraps in ClipRect — BUT the
-                          // firstChild SizedBox is the full screen width, so
-                          // 320px canvas fits within it and ring at x=300 is
-                          // within the clipped bounds. fitHeight was WRONG:
-                          // scale=90/56=1.6 pushed ring to x=480 (off-screen).
                           Positioned.fill(
-                            child: Align(
+                            child: Lottie.asset(
+                              'assets/huddl_connect_rings.json',
+                              controller: _connectLottieCtrl,
+                              fit: BoxFit.fitWidth,
                               alignment: Alignment.centerLeft,
-                              child: Lottie.asset(
-                                'assets/huddl_connect_rings.json',
-                                controller: _connectLottieCtrl,
-                                width: 320,
-                                height: 56,
-                                fit: BoxFit.none,
-                                alignment: Alignment.centerLeft,
-                                onLoaded: (comp) {
-                                  _connectLottieCtrl.duration = comp.duration;
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) _connectLottieCtrl.forward(from: 0);
-                                  });
-                                },
-                              ),
+                              onLoaded: (comp) {
+                                _connectLottieCtrl.duration = comp.duration;
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) _connectLottieCtrl.forward(from: 0);
+                                });
+                              },
                             ),
                           ),
                           // ── Search icon pinned top-right (UNCHANGED) ─────
@@ -320,7 +307,6 @@ class _GroupsScreenState extends State<GroupsScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
                   // Tabs — always visible, no search bar below them
                   TabBar(
                     controller: _tabController,
