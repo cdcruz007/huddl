@@ -256,7 +256,19 @@ class FirebaseAuthService {
             // ─────────────────────────────────────────────────────────────
 
             if (userCred.additionalUserInfo?.isNewUser ?? false) {
-              await _createUserProfile(userCred.user!.uid);
+              final profileCreated = await _createUserProfile(userCred.user!.uid);
+              if (!profileCreated) {
+                // PROFILE-COMMIT-1: Auth created but profile write failed.
+                if (!completer.isCompleted) {
+                  completer.complete(PhoneAuthResult(
+                    status: PhoneAuthStatus.error,
+                    errorMessage: 'We created your account but couldn\'t finish '
+                        'setting up your profile. Please check your connection '
+                        'and try again.',
+                  ));
+                }
+                return;
+              }
             } else {
               // Auto-retrieved returning user — check Firestore profile exists.
               final profileExists = await hasUserProfile();
@@ -407,8 +419,15 @@ class FirebaseAuthService {
         if (isNewUser || (isOnboarding && !(await hasUserProfile()))) {
           // Create a fresh profile for new users OR for re-registering users
           // whose Auth entry persisted after Firestore deletion.
-          await _createUserProfile(userCred.user!.uid);
+          final profileCreated = await _createUserProfile(userCred.user!.uid);
           _log('verifySmsCode(web): profile created (isNewUser=$isNewUser, isOnboarding=$isOnboarding)');
+          if (!profileCreated) {
+            // PROFILE-COMMIT-1: Auth created but profile write failed.
+            return AuthResult.failure(
+              'We created your account but couldn\'t finish setting up '
+              'your profile. Please check your connection and try again.',
+            );
+          }
         } else {
           // Returning user on web — verify their Firestore profile still exists.
           final profileExists = await hasUserProfile();
@@ -470,8 +489,15 @@ class FirebaseAuthService {
 
       if (isNewUser) {
         // Genuinely new Firebase Auth user — create profile
-        await _createUserProfile(userCred.user!.uid);
+        final profileCreated = await _createUserProfile(userCred.user!.uid);
         _log('verifySmsCode: new user — profile created');
+        if (!profileCreated) {
+          // PROFILE-COMMIT-1: Auth created but profile write failed.
+          return AuthResult.failure(
+            'We created your account but couldn\'t finish setting up '
+            'your profile. Please check your connection and try again.',
+          );
+        }
       } else {
         // Firebase Auth already knows this phone number.
         final profileExists = await hasUserProfile();
@@ -480,9 +506,16 @@ class FirebaseAuthService {
           // Stale Auth entry from a previously deleted account, but the user
           // is going through onboarding again → create a fresh Firestore
           // profile so they can complete registration normally.
-          await _createUserProfile(userCred.user!.uid);
+          final profileCreated483 = await _createUserProfile(userCred.user!.uid);
           _log('verifySmsCode: stale Auth entry re-used during onboarding — '
               'created fresh profile for uid=${userCred.user?.uid}');
+          if (!profileCreated483) {
+            // PROFILE-COMMIT-1: Auth exists but profile write failed.
+            return AuthResult.failure(
+              'We created your account but couldn\'t finish setting up '
+              'your profile. Please check your connection and try again.',
+            );
+          }
         } else if (!profileExists) {
           // Login flow: missing profile means the account was deleted.
           // Sign out the stale auth session and tell the user to sign up.
@@ -1210,7 +1243,7 @@ class FirebaseAuthService {
   // USER PROFILE
   // ═════════════════════════════════════════════════════════════════════════
 
-  Future<void> _createUserProfile(String userId) async {
+  Future<bool> _createUserProfile(String userId) async {
     final onboarding = OnboardingDataService();
     await onboarding.initialize(forceReload: true);
 
@@ -1270,31 +1303,50 @@ class FirebaseAuthService {
       'dateOfBirth': onboarding.dateOfBirth ?? '', // e.g. '1990-06-15'
     };
 
-    await _db
-        .collection('users')
-        .doc(userId)
-        .set(profile, SetOptions(merge: true));
+    // PROFILE-COMMIT-1 + SUBSCRIPTION-DUP-1: atomic batch for the two critical
+    // writes. users + subscriptions commit together or not at all.
+    // subscriptions uses doc(userId).set(merge) — idempotent on retry,
+    // aligned with the Stripe-webhook write shape, and keyed by uid
+    // (the read path's primary lookup at firestore_service doc(uid)).
+    try {
+      final batch = _db.batch();
+      batch.set(
+        _db.collection('users').doc(userId),
+        profile,
+        SetOptions(merge: true),
+      );
+      batch.set(
+        _db.collection('subscriptions').doc(userId),
+        {
+          'userId': userId,
+          'tier': 'welcome',
+          'billingPeriod': 'monthly',
+          'status': 'active',
+          'platform': kIsWeb
+              ? 'web'
+              : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android'),
+          'startDate': DateTime.now().toIso8601String(),
+          'renewalDate': null,
+          'isActive': true,
+          'isTrial': false,         // Welcome is free forever — NOT a trial
+          'trialDaysRemaining': 0,  // No time limit on Welcome tier
+          'isFoundingMember': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+      await batch.commit();
+    } catch (e, st) {
+      _logError(e, st, '_createUserProfile: critical profile write failed');
+      return false; // PROFILE-COMMIT-1: signal failure to caller for targeted retry
+    }
 
-    await _db.collection('subscriptions').add({
-      'userId': userId,
-      'tier': 'welcome',
-      'billingPeriod': 'monthly',
-      'status': 'active',
-      'platform': kIsWeb
-          ? 'web'
-          : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android'),
-      'startDate': DateTime.now().toIso8601String(),
-      'renewalDate': null,
-      'isActive': true,
-      'isTrial': false,         // Welcome is free forever — NOT a trial
-      'trialDaysRemaining': 0,  // No time limit on Welcome tier
-      'isFoundingMember': false,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-
-    // Trigger a full profile sync so all fields are set correctly
-    await HuddlUserService().syncCurrentUserProfile();
+    // Post-commit best-effort: sync + welcome notification.
+    // Profile is already committed; these failures must NOT fail profile-create.
+    try {
+      await HuddlUserService().syncCurrentUserProfile();
+    } catch (_) {}
 
     // Send welcome push notification + email via backend.
     // Email address is captured at onboarding step 1 — available immediately.
@@ -1309,6 +1361,7 @@ class FirebaseAuthService {
     if (kDebugMode) {
       debugPrint('FirebaseAuthService: profile created for $userId, borough=$borough');
     }
+    return true; // PROFILE-COMMIT-1: critical writes committed successfully
   }
 
   Future<void> updateLastActive() async {
