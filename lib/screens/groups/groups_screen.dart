@@ -160,7 +160,7 @@ class _GroupsScreenState extends State<GroupsScreen>
             // ── Header: Connect title (or search bar) + tabs ──────────
             Container(
               color: context.hc.surface,
-              padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
+              padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -170,26 +170,49 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Full-width Stack header: bubbles travel left→right,
-                    // settle on the right. Search icon pinned top-right.
+                    // Rings header: 320×56 canvas spans full header width.
+                    // BoxFit.fitHeight at height=56 maps canvas 1:1 vertically;
+                    // the 320px canvas width exactly fills the header strip.
+                    // ring_right rolls in from x=300 (right edge / search icon
+                    // side) → x=32, spinning −1400°. Rings rest at left.
+                    // Search icon stays on top (painted last in Stack).
+                    //
+                    // Canvas: 320×56, 60fps, 84 frames.
+                    //   0–40:  right ring rolls in from right, interlocks
+                    //   46–60: left ring pulses (128% peak at t=51)
+                    //   62–76: right ring pulses (128% peak at t=67)
+                    //   76–84: holds interlinked at rest
+                    // No text overlay — rings icon only.
                     firstChild: SizedBox(
-                      height: 90,                   // matches Market/Discover header height
+                      height: 90,
                       child: Stack(
                         children: [
-                          // Background: full-width bubble Lottie
+                          // ── Rings: full-width, fitHeight, left-aligned ────
+                          // Positioned.fill gives the Lottie loose constraints
+                          // across the full header width so ring_right can roll
+                          // in from the right edge. fitHeight pins height to 56;
+                          // width expands to fill 320px canvas at 1:1 scale.
                           Positioned.fill(
-                            child: Lottie.asset(
-                              'assets/huddl_connect_3d.json',
-                              controller: _connectLottieCtrl,
-                              fit: BoxFit.fitWidth,
+                            child: Align(
                               alignment: Alignment.centerLeft,
-                              onLoaded: (comp) {
-                                _connectLottieCtrl.duration = comp.duration;
-                                _connectLottieCtrl.forward(from: 0);
-                              },
+                              child: Lottie.asset(
+                                'assets/huddl_connect_rings_hb_FINAL.json',
+                                controller: _connectLottieCtrl,
+                                fit: BoxFit.fitHeight,
+                                alignment: Alignment.centerLeft,
+                                onLoaded: (comp) {
+                                  _connectLottieCtrl.duration = comp.duration;
+                                  // Reduce-motion: jump to final interlinked frame
+                                  if (MediaQuery.of(context).disableAnimations) {
+                                    _connectLottieCtrl.value = 1.0;
+                                  } else {
+                                    _connectLottieCtrl.forward(from: 0);
+                                  }
+                                },
+                              ),
                             ),
                           ),
-                          // Foreground: search icon pinned top-right, fully tappable
+                          // ── Search icon pinned top-right (UNCHANGED) ─────
                           Positioned(
                             right: 8,
                             top: 0,
@@ -225,7 +248,9 @@ class _GroupsScreenState extends State<GroupsScreen>
                       ),
                     ),
                     // Expanded search bar — replaces title row
-                    secondChild: SizedBox(
+                    secondChild: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
                       height: 36,
                       child: Row(
                         children: [
@@ -291,6 +316,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ),
                   ),

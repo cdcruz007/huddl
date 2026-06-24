@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:lottie/lottie.dart';
 import '../../theme/huddl_icons.dart';
 import '../../widgets/huddl_category_icon.dart';
 import 'dart:math';
@@ -145,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen>
   String _aiPostHint = '';
 
   // ── Animations ────────────────────────────────────────────────────────────
+  late AnimationController _logoLottieCtrl;
   late AnimationController _greetingAnimCtrl;
   late Animation<double> _greetingFade;
   late Animation<Offset> _greetingSlide;
@@ -188,6 +190,7 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() => _heroScrollOffset = offset.clamp(0.0, 300.0));
       }
     });
+    _logoLottieCtrl = AnimationController(vsync: this);
     _greetingAnimCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -219,6 +222,7 @@ class _HomeScreenState extends State<HomeScreen>
     _benefitAutoScrollTimer?.cancel();
     _benefitPageCtrl.dispose();
     _heroScrollCtrl.dispose();
+    _logoLottieCtrl.dispose();
     _greetingAnimCtrl.dispose();
     _postController.dispose();
     super.dispose();
@@ -1362,7 +1366,20 @@ class _HomeScreenState extends State<HomeScreen>
   /// Both assets have white background removed at build time.
   /// RichText fallback is used if either asset is missing.
   Widget _buildAdaptiveLogo(bool isDark) {
-    return const HuddlAppBarLogo(height: 28);
+    // 182×49 wide-canvas Lottie — plays once on load, fitHeight pins to 28px
+    return SizedBox(
+      height: 28,
+      child: Lottie.asset(
+        'assets/icons/logo_animation.json',
+        controller: _logoLottieCtrl,
+        fit: BoxFit.fitHeight,
+        alignment: Alignment.centerLeft,
+        onLoaded: (comp) {
+          _logoLottieCtrl.duration = comp.duration;
+          _logoLottieCtrl.forward(from: 0);
+        },
+      ),
+    );
   }
 
 
