@@ -689,9 +689,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text('\u221e',
-                        // WCAG AA: label=12px/w700 below 14pt bold → textPrimary ✔
                         style: HuddlText.label(
-                            color: HuddlColors.textPrimary).copyWith(
+                            color: HuddlColors.teal).copyWith(
                                 fontWeight: FontWeight.w700)),
                   )
                 else
@@ -739,8 +738,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 const Spacer(),
                 Text(
                   ss.subscription.isPartner ? 'Partner plan' : 'Huddl Plus',
-                  // WCAG AA: caption=13px/w600 below 14pt bold → textPrimary ✔
-                  style: HuddlText.caption(color: HuddlColors.textPrimary,
+                  style: HuddlText.caption(color: HuddlColors.teal,
                       weight: FontWeight.w600),
                 ),
               ],
@@ -4752,8 +4750,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Expanded(
                           child: Text(
                             'Under GDPR Article 15, you have the right to access all personal data we hold about you. Data is fetched live from our servers.',
-                            // WCAG AA: caption=13px → textPrimary ✔
-                            style: HuddlText.caption(color: HuddlColors.textPrimary).copyWith(height: 1.4),
+                            style: HuddlText.caption(color: HuddlColors.brandTeal).copyWith(height: 1.4),
                           ),
                         ),
                       ],

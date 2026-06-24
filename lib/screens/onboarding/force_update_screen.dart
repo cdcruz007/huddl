@@ -163,7 +163,7 @@ class ForceUpdateScreen extends StatelessWidget {
                       onPressed: () => _openStore(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HuddlColors.primary,
-                        foregroundColor: HuddlColors.textPrimary, // WCAG AA: 6.67:1 ✔
+                        foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

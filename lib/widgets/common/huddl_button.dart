@@ -6,7 +6,7 @@ import '../../theme/huddl_colors.dart';
 /// Huddl Design Language System — canonical button component.
 ///
 /// Variants:
-///   primary     — orange fill, dark text (#262A35 = 6.67:1 WCAG AA). Main CTA.
+///   primary     — orange fill, white text. Main CTA.
 ///   secondary   — white fill, nearBlack 1.5px border. Optional action.
 ///   confirmed   — nearBlack fill, white text. Done / completion state.
 ///   destructive — text-only, error red. Destructive actions.
@@ -53,15 +53,14 @@ class HuddlButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: HuddlColors.primary,
             disabledBackgroundColor: HuddlColors.neutral100,
-            // WCAG AA fix: textPrimary (#262A35) on orange (#FF965C) = 6.67:1 ✔
-            foregroundColor: HuddlColors.textPrimary,
+            foregroundColor: Colors.white,
             disabledForegroundColor: HuddlColors.neutral300,
             elevation: 0,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
-          child: _child(HuddlColors.textPrimary, HuddlColors.neutral300),
+          child: _child(Colors.white, HuddlColors.neutral300),
         );
 
       case HuddlButtonVariant.secondary:
@@ -83,14 +82,13 @@ class HuddlButton extends StatelessWidget {
           onPressed: onPressed == null ? null : _handleTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: HuddlColors.teal,
-            // WCAG AA fix: neutral900 (#1A1A1A) on teal (#199A85) = 4.97:1 ✔
-            foregroundColor: HuddlColors.neutral900,
+            foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24),
           ),
-          child: _child(HuddlColors.neutral900, HuddlColors.neutral900),
+          child: _child(Colors.white, Colors.white),
         );
 
       case HuddlButtonVariant.destructive:

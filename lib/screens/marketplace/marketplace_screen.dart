@@ -2342,7 +2342,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   onPressed: () => _relistExpiredItem(item),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.primary,
-                    foregroundColor: HuddlColors.textPrimary, // WCAG AA: 6.67:1 ✔
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -5315,8 +5315,7 @@ class _SmartOfferTile extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Accept',
-              // WCAG AA: caption=13px fails at 3.50:1 → textPrimary=14.07:1 ✔
-              style: HuddlText.caption(color: HuddlColors.textPrimary, weight: FontWeight.w600),
+              style: HuddlText.caption(color: HuddlColors.success, weight: FontWeight.w600),
             ),
           ],
         ),
@@ -5470,8 +5469,7 @@ class _SmartOfferTile extends StatelessWidget {
                         ),
                         child: Text(
                           'Accept',
-                          // WCAG AA: caption=13px → textPrimary ✔
-                          style: HuddlText.caption(color: HuddlColors.textPrimary, weight: FontWeight.w600),
+                          style: HuddlText.caption(color: HuddlColors.success, weight: FontWeight.w600),
                         ),
                       ),
                     ),
