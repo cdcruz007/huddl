@@ -53,24 +53,12 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
     // another API call.
     final borough = await postcodeService.lookupBoroughAsync(postcode);
     if (!mounted) return;
-
-    // Cambridge-only launch gate
-    final isCambridge = borough != null
-        ? PostcodeService.isCambridgeBoroughStatic(borough)
-        : await postcodeService.isCambridgePostcodeAsync(postcode);
-    if (!mounted) return;
     setState(() => _isChecking = false);
 
-    if (!isCambridge) {
-      Navigator.pushNamed(context, '/not_available');
-      return;
-    }
-
-    // ONBOARD-BOROUGH-1: block advance if borough resolution failed.
-    // A null borough here means the postcodes.io lookup timed out or returned
-    // no admin_district. Proceeding would create a permanently broken account
-    // with an empty borough, excluded from all borough-scoped queries.
-    // The user stays on this screen and retries — network/transient fix resolves it.
+    // ONBOARD-BOROUGH-1 + LAYER-4-POSTCODE-ORDER-1: check borough resolution
+    // FIRST. A null borough means the postcodes.io lookup timed out / returned
+    // no admin_district — a transient failure. The user must retry, NOT be
+    // wrongly routed to /not_available (they may actually be in Cambridge).
     if (borough == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +70,15 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
           ),
         );
       }
-      return; // stay on postcode screen; _isChecking already reset above
+      return; // stay on postcode screen; retry on transient fix
+    }
+
+    // Cambridge-only launch gate — only reached with a resolved (non-null) borough.
+    // Borough is guaranteed non-null here; no async string-pattern fallback needed.
+    final isCambridge = PostcodeService.isCambridgeBoroughStatic(borough);
+    if (!isCambridge) {
+      Navigator.pushNamed(context, '/not_available');
+      return;
     }
     // ──────────────────────────────────────────────────────────────────
 
