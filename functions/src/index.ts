@@ -2605,6 +2605,17 @@ export const deleteUserData = functions
       db.collection("gdpr_exports").where("userId", "==", uid)
     );
 
+    // ── user_consents — INTENTIONAL RETENTION (LAYER-15-CONSENT-AUDIT-1) ──
+    // user_consents/{uid} is NOT swept here.  It is the durable proof that
+    // the user gave lawful basis for data processing (GDPR Art. 6(a)).
+    // Deleting it would destroy the evidence that processing was consented to —
+    // a compliance risk larger than the residual privacy risk of retaining it.
+    // The record contains only consent metadata (dataProcessing bool, marketing
+    // bool, policyVersion string, timestamps) — no PII beyond the uid link.
+    // This is consistent with the gdpr_erasure_jobs HARD-LOCK posture (Layer 3).
+    // If re-anonymisation is ever required (e.g. legal advice changes posture),
+    // scrub userId from the doc rather than deleting the event fact + timestamps.
+
     // capturedConvIds: populated during conversations step, reused by Phase 4 Storage
     // (DM media enumerate-filter). Declared here so Phase 4 block can read it.
     const capturedConvIds: string[] = [];

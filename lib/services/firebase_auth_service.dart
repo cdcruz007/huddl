@@ -1336,6 +1336,24 @@ class FirebaseAuthService {
         },
         SetOptions(merge: true),
       );
+      // LAYER-15: write consent record atomically with the account.
+      // user_consents/{uid} is keyed by uid (one record per onboarding).
+      // Firestore rules lock this doc immutable after creation (update/delete=false)
+      // and it is intentionally excluded from the deleteUserData erasure sweep —
+      // it is the lawful-basis proof that data processing was consented to.
+      batch.set(
+        _db.collection('user_consents').doc(userId),
+        {
+          'userId': userId,
+          'dataProcessing': onboarding.consentDataProcessing ?? true,
+          'marketing': onboarding.consentMarketing ?? false,
+          'policyVersion': onboarding.consentPolicyVersion ?? 'v1',
+          'consentedAt': onboarding.consentedAt != null
+              ? Timestamp.fromDate(onboarding.consentedAt!)
+              : FieldValue.serverTimestamp(),
+          'recordedAt': FieldValue.serverTimestamp(),
+        },
+      );
       await batch.commit();
     } catch (e, st) {
       _logError(e, st, '_createUserProfile: critical profile write failed');

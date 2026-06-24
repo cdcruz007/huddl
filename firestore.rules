@@ -981,6 +981,40 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // USER CONSENTS  (LAYER-15-CONSENT-AUDIT-1)
+    //
+    // Durable consent record written atomically with the user account at
+    // onboarding completion (_createUserProfile atomic batch, firebase_auth_service.dart).
+    //
+    // Schema: { userId, dataProcessing (bool), marketing (bool),
+    //           policyVersion (string), consentedAt (Timestamp),
+    //           recordedAt (Timestamp) }
+    //
+    // Immutability: consent records are an AUDIT TRAIL — update and delete are
+    // categorically denied for client writes.  Re-consent (e.g. policy bump)
+    // is handled server-side; a new version record is appended rather than
+    // overwriting this one.
+    //
+    // Erasure posture: intentionally EXCLUDED from deleteUserData sweep.
+    // Deleting the record would destroy the proof of lawful basis (GDPR Art. 6(a)).
+    // The record contains only consent metadata (no sensitive PII beyond the uid
+    // link) — retaining it is consistent with the gdpr_erasure_jobs HARD-LOCK
+    // pattern established in Layer 3.
+    // =========================================================================
+    match /user_consents/{userId} {
+      // Owner may read their own consent record (e.g. settings screen "what data").
+      allow read: if isOwner(userId);
+
+      // Owner creates their own consent record at onboarding.
+      // userId field in the doc must match the authenticated uid (anti-spoof).
+      allow create: if isOwner(userId)
+        && request.resource.data.userId == request.auth.uid;
+
+      // Consent records are immutable — no client update or delete.
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
     // MARKETPLACE
     // Borough-scoped: create and seller-update paths require borough match.
     // =========================================================================

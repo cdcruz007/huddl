@@ -62,6 +62,16 @@ class OnboardingDataService {
   int? _birthMonth;       // Derived birth month (non-sensitive) — AGE-1-R1
   int? _birthDay;         // Derived birth day   (non-sensitive) — AGE-1-R1
 
+  // LAYER-15 — consent capture (in-memory only; committed to Firestore in
+  // _createUserProfile via the atomic batch so the record is durable and
+  // uid-keyed from the moment the account is created).
+  // These fields are intentionally NOT persisted to BrowserStorage or
+  // SecurePiiStorage — the canonical record lives in user_consents/{uid}.
+  bool? _consentDataProcessing;
+  bool? _consentMarketing;
+  String? _consentPolicyVersion;
+  DateTime? _consentedAt;
+
 
   // Getters
   String? get name => _name;
@@ -96,6 +106,12 @@ class OnboardingDataService {
   int? get birthYear  => _birthYear;
   int? get birthMonth => _birthMonth; // AGE-1-R1
   int? get birthDay   => _birthDay;   // AGE-1-R1
+
+  // LAYER-15 — consent getters (read by _createUserProfile)
+  bool? get consentDataProcessing  => _consentDataProcessing;
+  bool? get consentMarketing        => _consentMarketing;
+  String? get consentPolicyVersion  => _consentPolicyVersion;
+  DateTime? get consentedAt         => _consentedAt;
 
   /// Whether the user has changed their postcode (moved to a different borough)
   bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
@@ -223,6 +239,24 @@ class OnboardingDataService {
     _saveToStorage();
   }
 
+  // LAYER-15: capture consent values at the data_consent_screen step.
+  // Called before the uid exists; _createUserProfile reads these getters and
+  // writes a durable user_consents/{uid} record atomically with the account.
+  void setConsent({
+    required bool dataProcessing,
+    required bool marketing,
+    required String policyVersion,
+    required DateTime consentedAt,
+  }) {
+    _consentDataProcessing = dataProcessing;
+    _consentMarketing      = marketing;
+    _consentPolicyVersion  = policyVersion;
+    _consentedAt           = consentedAt;
+    _log('Consent captured: dataProcessing=$dataProcessing marketing=$marketing policy=$policyVersion');
+    // intentionally NOT calling _saveToStorage() — consent fields are in-memory
+    // only until committed to Firestore by _createUserProfile.
+  }
+
   // AGE-1 / AGE-1-R1: persist full DOB.
   // dateOfBirth (ISO string) → SecurePiiStorage (sensitive PII).
   // birthYear / birthMonth / birthDay (ints) → BrowserStorage non-sensitive;
@@ -317,6 +351,11 @@ class OnboardingDataService {
     _birthYear  = null;   // AGE-1
     _birthMonth = null;   // AGE-1-R1
     _birthDay   = null;   // AGE-1-R1
+    // LAYER-15: consent fields — in-memory only, no storage to clear
+    _consentDataProcessing = null;
+    _consentMarketing      = null;
+    _consentPolicyVersion  = null;
+    _consentedAt           = null;
     // Reset initialization guards so a subsequent initialize() call will
     // re-read storage instead of returning the (now stale) cached future.
     _isInitialized = false;

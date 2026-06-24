@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/browser_storage.dart';
+import '../../services/onboarding_data_service.dart';
 
 // =============================================================================
 // DATA CONSENT SCREEN — GDPR / COPPA
@@ -39,10 +40,20 @@ class _DataConsentScreenState extends State<DataConsentScreen> {
   Future<void> _continue() async {
     if (!_canContinue) return;
 
-    // Persist consent so the screen is never shown again
+    // Persist consent so the screen is never shown again (gates re-show on resume)
     await BrowserStorage.setString('data_consent_v1', 'granted');
     await BrowserStorage.setString(
         'data_consent_marketing_v1', _marketingAccepted ? 'true' : 'false');
+
+    // LAYER-15: capture consent into OnboardingDataService so _createUserProfile
+    // can write a durable user_consents/{uid} record atomically with the account.
+    // Called AFTER BrowserStorage writes so the gate is set before we proceed.
+    OnboardingDataService().setConsent(
+      dataProcessing: true,               // mandatory — _canContinue enforces it
+      marketing: _marketingAccepted,
+      policyVersion: 'v1',                // BUMP when privacy policy text changes
+      consentedAt: DateTime.now().toUtc(),
+    );
 
     if (mounted) {
       Navigator.pushNamed(context, '/parent_type');
