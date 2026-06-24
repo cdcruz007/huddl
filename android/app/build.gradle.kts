@@ -50,8 +50,12 @@ android {
         // submitted after August 2024.  Do NOT rely on flutter.targetSdkVersion
         // which may resolve to an older value depending on the Flutter SDK version.
         targetSdk = 35
-        versionCode = 109
-        versionName = "1.1.49"
+        // VERSION-SKEW-1: read from pubspec.yaml via the Flutter gradle plugin.
+        // dev.flutter.flutter-gradle-plugin (applied above) exposes these from
+        // pubspec `version: x.y.z+build` → versionName=x.y.z, versionCode=build.
+        // pubspec is now the SINGLE source of truth for version across iOS+Android.
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
         // Multidex: required when the app exceeds 64K method references.
         // Without this, secondary DEX classes (e.g. UCropFileProvider from
         // image_cropper) are not found at runtime → ClassNotFoundException crash.
