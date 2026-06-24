@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path_provider/path_provider.dart';
 import 'web_blob_helper_stub.dart' if (dart.library.html) 'web_blob_helper.dart';
+import '../utils/upload_limits.dart';
 
 /// S-04: Distinguishes DM vs group voice-note upload paths.
 /// DM  → voice_notes/dm/{conversationId}/{uid}_{ts}.{ext}
@@ -262,6 +263,9 @@ class VoiceMessageService {
       // XHR then upload via putData so the audio is stored in Firebase Storage
       // and playable by all users (a blob: URL is local to one browser tab).
       final bytes = await fetchBlobAsBytes(localPath);
+      // LAYER-11-NO-SIZE-PRECHECK-1: reject before hitting Storage rule
+      final webSizeErr = UploadLimits.checkSize(bytes.length, UploadLimits.voiceMb, kind: 'voice note');
+      if (webSizeErr != null) throw Exception(webSizeErr);
       task = ref.putData(
         bytes,
         SettableMetadata(contentType: 'audio/webm'),
@@ -278,6 +282,9 @@ class VoiceMessageService {
       }
       // Read into memory — avoids the iOS putFile hostname-resolution bug.
       final bytes = await file.readAsBytes();
+      // LAYER-11-NO-SIZE-PRECHECK-1: reject before hitting Storage rule
+      final mobileSizeErr = UploadLimits.checkSize(bytes.length, UploadLimits.voiceMb, kind: 'voice note');
+      if (mobileSizeErr != null) throw Exception(mobileSizeErr);
       task = ref.putData(
         bytes,
         SettableMetadata(contentType: 'audio/mp4'),

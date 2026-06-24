@@ -56,6 +56,7 @@ import '../../theme/huddl_animations.dart';
 import '../../services/ai_chat_summariser_service.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../utils/upload_limits.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -5129,6 +5130,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     // Upload to Firebase Storage and write to Firestore so other devices see the photo
     try {
+      // LAYER-11-NO-SIZE-PRECHECK-1: reject before hitting Storage rule
+      if (att.bytes != null) {
+        final sizeErr = UploadLimits.checkSize(att.bytes!.length, UploadLimits.imageMb, kind: 'photo');
+        if (sizeErr != null) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(sizeErr)));
+          return;
+        }
+      }
       final storageRef = FirebaseStorage.instance
           .ref('group_images/${widget.groupId}/${currentUid}_$ts.jpg');
 
@@ -5228,6 +5237,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     // ── Upload to Firebase Storage ───────────────────────────────────────
     try {
+      // LAYER-11-NO-SIZE-PRECHECK-1: reject before hitting Storage rule
+      if (attachment.bytes != null) {
+        final sizeErr = UploadLimits.checkSize(attachment.bytes!.length, UploadLimits.mediaMb, kind: 'document');
+        if (sizeErr != null) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(sizeErr)));
+          return;
+        }
+      }
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
       final epoch = ts.millisecondsSinceEpoch;
       final ext = docName.contains('.') ? docName.split('.').last : 'bin';

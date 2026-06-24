@@ -36,6 +36,7 @@ import '../../widgets/event_invite_card.dart';
 import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
 import '../../services/firestore_service.dart';
+import '../../utils/upload_limits.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
@@ -2337,6 +2338,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
     try {
       TaskSnapshot snap;
       if (bytes != null) {
+        // LAYER-11-NO-SIZE-PRECHECK-1: reject before hitting Storage rule
+        final sizeErr = UploadLimits.checkSize(bytes.length, UploadLimits.mediaMb, kind: 'file');
+        if (sizeErr != null) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(sizeErr)));
+          return null;
+        }
         snap = await ref.putData(bytes, SettableMetadata(contentType: mimeType));
       } else if (filePath != null && !kIsWeb) {
         snap = await ref.putFile(File(filePath));

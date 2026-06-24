@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import '../utils/upload_limits.dart';
 
 class PhotoUploadService {
   // ── Singleton ─────────────────────────────────────────────────────────────
@@ -78,12 +79,19 @@ class PhotoUploadService {
       if (kIsWeb) {
         // Web: must use bytes (no dart:io File)
         final bytes = await file.readAsBytes();
+        // LAYER-11-NO-SIZE-PRECHECK-1: reject before hitting Storage rule
+        final sizeErr = UploadLimits.checkSize(bytes.length, UploadLimits.imageMb, kind: 'photo');
+        if (sizeErr != null) { _log('❌ $sizeErr'); return null; }
         snapshot = await runTask(ref.putData(bytes, metadata));
       } else {
         // Mobile: try putFile first (efficient streaming from disk).
         // Falls back to putData (bytes in memory) if putFile fails —
         // e.g. when the XFile path is in a sandboxed iOS temp directory
         // that Firebase Storage cannot access directly.
+        // LAYER-11-NO-SIZE-PRECHECK-1: check size before any upload attempt
+        final fileSize = await File(file.path).length();
+        final sizeErr = UploadLimits.checkSize(fileSize, UploadLimits.imageMb, kind: 'photo');
+        if (sizeErr != null) { _log('❌ $sizeErr'); return null; }
         try {
           snapshot = await runTask(ref.putFile(File(file.path), metadata));
         } catch (e) {
@@ -134,6 +142,11 @@ class PhotoUploadService {
       );
 
       TaskSnapshot snapshot;
+
+      // LAYER-11-NO-SIZE-PRECHECK-1: check file size before any upload attempt
+      final fileSize = await file.length();
+      final sizeErr = UploadLimits.checkSize(fileSize, UploadLimits.imageMb, kind: 'photo');
+      if (sizeErr != null) { _log('❌ $sizeErr'); return null; }
 
       // Try putFile first — efficient streaming from disk
       try {
