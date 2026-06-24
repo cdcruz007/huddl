@@ -2065,6 +2065,32 @@ export const deleteUserData = functions
       db.collection("subscriptions").where("userId", "==", uid)
     );
 
+    // 1b. stripe_sessions — field "userId" (stripe-service.js:176)
+    //     LAYER-3-STRIPE-SESSIONS-1: stripe_sessions carries userId (backend-written
+    //     checkout records). Anonymise (not delete) to match the Stripe-customer
+    //     anonymise posture — retain financial record, remove linkable identity.
+    //     Fields verified from stripe-service.js:175 write:
+    //       userId       → null (identity field, must be scrubbed)
+    //       productId    → retained (financial metadata, non-identifying)
+    //       tier         → retained (financial metadata)
+    //       billingPeriod → retained (financial metadata)
+    //       status / createdAt → retained (operational)
+    await (async () => {
+      const key = "stripe_sessions";
+      try {
+        const query = db.collection("stripe_sessions").where("userId", "==", uid);
+        const count = await paginatedAnonymise(query, { userId: null }, dryRun);
+        steps[key] = { status: "ok", count };
+        functions.logger.info(
+          `[deleteUserData] ${key}: anonymised ${count} docs (dryRun=${dryRun})`
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
+
     // 2. notifications — field "userId" (firebase_auth_service.dart:769)
     await runStep(
       "notifications",
@@ -2320,6 +2346,44 @@ export const deleteUserData = functions
     } else {
       await runStep("marketplace", null, `policy.created_content_marketplace=retain`);
     }
+
+    // 10. events — field "creatorId" (event_service.dart — user-created events)
+    //     LAYER-3-EVENTS-RETAIN-1: events collection had NO erasure step.
+    //     Field verified: event_service.dart createEvent() path + EventDoc type.
+    //     NOTE: the top-level events collection is currently written by the AI
+    //     ingestion pipeline (admin SDK); EventDoc interface has no creatorId field.
+    //     This step is a defensive sweep — returns 0 rows if no user-created events
+    //     exist in Firestore, which is safe. If a direct client write path is added
+    //     in future, this step will catch it automatically.
+    //     Community content posture: retain doc, anonymise creator identity.
+    //     Mirrors authored_content anonymise pattern.
+    await (async () => {
+      const key = "events";
+      try {
+        const query = db.collection("events").where("creatorId", "==", uid);
+        if (policy.authored_content === "delete") {
+          const count = await paginatedDelete(query, dryRun);
+          steps[key] = { status: "ok", count };
+        } else {
+          // anonymise (default) or retain → scrub creator identity either way
+          // Fields: creatorId confirmed from event_service.dart; no creatorName/
+          // creatorAvatar on EventDoc (AI-ingested events have no creator identity).
+          const count = await paginatedAnonymise(
+            query,
+            { creatorId: null, creatorName: null },
+            dryRun
+          );
+          steps[key] = { status: "ok", count };
+        }
+        functions.logger.info(
+          `[deleteUserData] ${key}: processed ${steps[key].count} docs (dryRun=${dryRun})`
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        steps[key] = { status: "error", count: 0, error: msg };
+        functions.logger.error(`[deleteUserData] ${key}: ERROR — ${msg}`);
+      }
+    })();
 
     // ══════════════════════════════════════════════════════════════════
     // PHASE 2 — SUBCOLLECTION SWEEPS, GROUP MEMBERSHIP, MEMBER ACTIVITY
