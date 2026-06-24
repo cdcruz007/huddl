@@ -161,7 +161,7 @@ class _GroupsScreenState extends State<GroupsScreen>
             // ── Header: Connect title (or search bar) + tabs ──────────
             Container(
               color: context.hc.surface,
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -171,75 +171,46 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Rings header: 320×56 canvas spans full header width.
-                    // BoxFit.fitHeight at height=56 maps canvas 1:1 vertically;
-                    // the 320px canvas width exactly fills the header strip.
-                    // ring_right rolls in from x=300 (right edge / search icon
-                    // side) → x=32, spinning −1400°. Rings rest at left.
-                    // Search icon stays on top (painted last in Stack).
-                    //
-                    // Canvas: 320×56, 60fps, 84 frames.
-                    //   0–40:  right ring rolls in from right, interlocks
-                    //   46–60: left ring pulses (128% peak at t=51)
-                    //   62–76: right ring pulses (128% peak at t=67)
-                    //   76–84: holds interlinked at rest
-                    // No text overlay — rings icon only.
                     firstChild: SizedBox(
-                      height: 90,
-                      child: Stack(
+                      height: 64,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // ── Rings: full-width, fitHeight, left-aligned ────
-                          // Positioned.fill gives the Lottie loose constraints
-                          // across the full header width so ring_right can roll
-                          // in from the right edge. fitHeight pins height to 56;
-                          // width expands to fill 320px canvas at 1:1 scale.
-                          Positioned.fill(
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Lottie.asset(
-                                'assets/huddl_connect.json',
-                                controller: _connectLottieCtrl,
-                                fit: BoxFit.fitHeight,
-                                onLoaded: (comp) {
-                                  _connectLottieCtrl.duration = comp.duration;
-                                  // Reduce-motion: jump to final interlinked frame
-                                  if (MediaQuery.of(context).disableAnimations) {
-                                    _connectLottieCtrl.value = 1.0;
-                                  } else {
-                                    _connectLottieCtrl.forward(from: 0);
-                                  }
-                                },
-                              ),
+                          SizedBox(
+                            height: 56,
+                            child: Lottie.asset(
+                              'assets/huddl_connect.json',
+                              controller: _connectLottieCtrl,
+                              fit: BoxFit.fitHeight,
+                              onLoaded: (comp) {
+                                _connectLottieCtrl.duration = comp.duration;
+                                _connectLottieCtrl.forward(from: 0);
+                              },
                             ),
                           ),
-                          // ── Search icon pinned top-right (UNCHANGED) ─────
-                          Positioned(
-                            right: 8,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Tooltip(
-                                message: 'Search · Hold for universal search',
-                                child: GestureDetector(
-                                  onTap: () {
-                                    HuddlAnimations.lightTap();
-                                    setState(() => _isSearchActive = true);
-                                    Future.microtask(() => _searchFocusNode.requestFocus());
-                                  },
-                                  onLongPress: () {
-                                    HuddlAnimations.mediumTap();
-                                    Navigator.of(context).push(HuddlSpringPageRoute(
-                                      page: const UnifiedSearchScreen(),
-                                    ));
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Icon(
-                                      HuddlIcons.search,
-                                      color: context.hc.textSecondary,
-                                      size: 22,
-                                    ),
-                                  ),
+                          const Spacer(),
+                          // 🔍 Search trigger icon — top-right, above tabs.
+                          // Tap → inline group search. Long-press → unified search.
+                          Tooltip(
+                            message: 'Search · Hold for universal search',
+                            child: GestureDetector(
+                              onTap: () {
+                                HuddlAnimations.lightTap();
+                                setState(() => _isSearchActive = true);
+                                Future.microtask(() => _searchFocusNode.requestFocus());
+                              },
+                              onLongPress: () {
+                                HuddlAnimations.mediumTap();
+                                Navigator.of(context).push(HuddlSpringPageRoute(
+                                  page: const UnifiedSearchScreen(),
+                                ));
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  HuddlIcons.search,
+                                  color: context.hc.textSecondary,
+                                  size: 22,
                                 ),
                               ),
                             ),

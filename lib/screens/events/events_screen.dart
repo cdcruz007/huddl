@@ -417,28 +417,27 @@ class EventsScreenState extends State<EventsScreen>
                 ColoredBox(
                   color: context.hc.surface,
                   child: SizedBox(
-                    height: 90,
-                    child: Stack(
-                      children: [
-                        // Background: full-width Lottie, no horizontal padding
-                        Positioned.fill(
-                          child: Lottie.asset(
-                            'assets/huddl_discover_compass.json',
-                            controller: _discoverLottieCtrl,
-                            fit: BoxFit.fitHeight,
-                            onLoaded: (comp) {
-                              _discoverLottieCtrl.duration = comp.duration;
-                              _discoverLottieCtrl.forward(from: 0);
-                            },
+                    height: 64,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Compass logo — 56px, transparent bg, play once on load
+                          SizedBox(
+                            height: 56,
+                            child: Lottie.asset(
+                              'assets/huddl_discover_compass.json',
+                              controller: _discoverLottieCtrl,
+                              fit: BoxFit.fitHeight,
+                              onLoaded: (comp) {
+                                _discoverLottieCtrl.duration = comp.duration;
+                                _discoverLottieCtrl.forward(from: 0);
+                              },
+                            ),
                           ),
-                        ),
-                        // Foreground: tab-conditional search icon pinned right
-                        Positioned(
-                          right: 8,
-                          top: 0,
-                          bottom: 0,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                          Row(
                             children: [
                               // Search icon on Groups/Meetups/Events/Services tabs.
                               // Tap → inline tab search. Long-press → unified search.
@@ -528,8 +527,8 @@ class EventsScreenState extends State<EventsScreen>
                                 ),
                             ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ), // ColoredBox title row

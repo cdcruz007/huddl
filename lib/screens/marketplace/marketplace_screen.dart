@@ -1390,32 +1390,28 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             crossFadeState: _isSearchActive
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            // First child: full-width Stack header — wide heart Lottie as background,
-            // bag anchored left, heart sweeps right→left; icons pinned top-right.
+            // First child: single row — 56px bag logo + actions (no borough chip)
             firstChild: SizedBox(
-              height: 90,                         // 1000×260 canvas @ ~360px → ~93px; rounded to 90
-              child: Stack(
-                children: [
-                  // Background: full-width Lottie, no horizontal padding
-                  Positioned.fill(
-                    child: Lottie.asset(
-                      'assets/huddl_market_bag.json',
-                      controller: _lottieCtrl,
-                      fit: BoxFit.fitHeight,
-                      onLoaded: (comp) {
-                        _lottieCtrl.duration = comp.duration;
-                        _lottieCtrl.forward(from: 0);
-                      },
-                    ),
-                  ),
-                  // Foreground: grid-toggle + search pinned to top-right, fully tappable
-                  Positioned(
-                    right: 8,
-                    top: 0,
-                    bottom: 0,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
+              height: 64,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                        // Lottie bag logo — 56px tall, transparent bg
+                        SizedBox(
+                          height: 56,
+                          child: Lottie.asset(
+                            'assets/huddl_market_bag.json',
+                            controller: _lottieCtrl,
+                            fit: BoxFit.fitHeight,
+                            onLoaded: (comp) {
+                              _lottieCtrl.duration = comp.duration;
+                              _lottieCtrl.forward(from: 0);
+                            },
+                          ),
+                        ),
+                        const Spacer(),
                         // Grid/list toggle
                         ScaleOnPress(
                           scale: 0.88,
@@ -1474,10 +1470,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             // Second child: inline search bar — shown when _isSearchActive
