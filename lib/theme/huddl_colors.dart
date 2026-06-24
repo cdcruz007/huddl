@@ -143,8 +143,8 @@ class HuddlColors {
   static const Color nearBlack     = Color(0xFF1C1C1E);  // nav active, logo wordmark
   static const Color textSecondary = Color(0xFF6C6C6C);  // = neutral600
   static const Color textHint      = Color(0xFF949494);  // decorative hint only (2.9:1)
-  static const Color textTertiary  = Color(0xFF767676);  // 4.6:1 — interactive hints
-  static const Color textLight     = Color(0xFFB0B0B0);  // = neutral300 — deselected
+  static const Color textTertiary  = Color(0xFF707070);  // 4.62:1 on #F7F7F7 bg — interactive hints (WCAG AA)
+  static const Color textLight     = Color(0xFF707070);  // darkened: real text in subscription screens (WCAG AA 4.62:1)
 
   // ── Surfaces ──────────────────────────────────────────────────────────
   static const Color white        = Color(0xFFFFFFFF);

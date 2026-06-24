@@ -149,7 +149,8 @@ class HuddlTheme {
     labelSmall:     HuddlText.label(color: HuddlColors.textTertiary),
 
     // Button text — handled by HuddlButton, kept for legacy Material widgets
-    labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+    // WCAG AA fix: dark label on orange background (6.67:1 ✔)
+    labelLarge:     GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary),
     labelMedium:    HuddlText.caption(color: HuddlColors.textSecondary, weight: FontWeight.w500),
   );
 
@@ -199,7 +200,9 @@ class HuddlTheme {
     return ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: HuddlColors.primary,
-        foregroundColor: HuddlColors.white,
+        // WCAG AA fix: textPrimary (#262A35) on orange (#FF965C) = 6.67:1 ✔
+        // (was Colors.white = 2.15:1 FAIL)
+        foregroundColor: HuddlColors.textPrimary,
         disabledBackgroundColor: HuddlColors.disabled,
         disabledForegroundColor: HuddlColors.disabledText,
         minimumSize: const Size(double.infinity, 52),

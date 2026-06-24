@@ -379,7 +379,7 @@ class _NoticeboardScreenState extends State<NoticeboardScreen> {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HuddlColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: HuddlColors.textPrimary, // WCAG AA: 6.67:1 ✔
                           disabledBackgroundColor:
                               HuddlColors.primary.withValues(alpha: 0.4),
                           shape: RoundedRectangleBorder(

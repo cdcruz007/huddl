@@ -294,7 +294,7 @@ class SubscriptionGateScreen extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: HuddlColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: HuddlColors.textPrimary, // WCAG AA: 6.67:1 ✔
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),

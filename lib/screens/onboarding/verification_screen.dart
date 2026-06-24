@@ -492,7 +492,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         _infoMessage!,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: HuddlColors.success,
+                          // WCAG AA: 13px fails at teal 3.50:1 → textPrimary 14.07:1 ✔
+                          color: HuddlColors.textPrimary,
                         ),
                         textAlign: TextAlign.center,
                       ),

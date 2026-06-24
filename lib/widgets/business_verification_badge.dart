@@ -98,9 +98,10 @@ class _VerifiedBadge extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             'Verified',
+            // WCAG AA: caption=13px/w700 below 14pt bold threshold → textPrimary ✔
             style: HuddlText.caption(
               weight: FontWeight.w700,
-              color: HuddlColors.brandTeal,
+              color: HuddlColors.textPrimary,
             ),
           ),
         ],

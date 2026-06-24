@@ -138,7 +138,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
           child: FloatingActionButton(
             onPressed:       _toggle,
             backgroundColor: HuddlColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: HuddlColors.textPrimary, // WCAG AA: 6.67:1 ✔
             elevation:       4,
             tooltip:         _open ? 'Close menu' : 'Quick actions',
             shape: RoundedRectangleBorder(
