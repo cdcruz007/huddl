@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
@@ -3775,12 +3776,13 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
       ),
       clipBehavior: Clip.antiAlias,
       child: resolvedPhoto != null
-          ? Image.network(
-              resolvedPhoto,
+          ? CachedNetworkImage(
+              imageUrl: resolvedPhoto,
               fit: BoxFit.cover,
               width: widget.size,
               height: widget.size,
-              errorBuilder: (_, __, ___) => _buildFallback(),
+              memCacheWidth: 300,
+              errorWidget: (_, __, ___) => _buildFallback(),
             )
           : _buildFallback(),
     );
@@ -3891,10 +3893,11 @@ class _ImageBubble extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Image.network(
-                            imageUrl,
+                    child: CachedNetworkImage(
+                            imageUrl: imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _brokenImage(),
+                            memCacheWidth: 800,
+                            errorWidget: (_, __, ___) => _brokenImage(),
                           ),
                   ),
                 ),
@@ -4070,8 +4073,8 @@ class _LocationBubble extends StatelessWidget {
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                       child: Stack(
                         children: [
-                          Image.network(
-                            () {
+                          CachedNetworkImage(
+                            imageUrl: () {
                               final lat = latitude ?? 52.2053;
                               final lng = longitude ?? 0.1218;
                               return 'https://staticmap.openstreetmap.de/staticmap.php'
@@ -4080,20 +4083,18 @@ class _LocationBubble extends StatelessWidget {
                             height: 130,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            loadingBuilder: (ctx, child, progress) {
-                              if (progress == null) return child;
-                              return Container(
-                                height: 130,
-                                color: HuddlColors.successBg,
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: HuddlColors.primaryDark,
-                                  ),
+                            memCacheWidth: 800,
+                            placeholder: (ctx, __) => Container(
+                              height: 130,
+                              color: HuddlColors.successBg,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: HuddlColors.primaryDark,
                                 ),
-                              );
-                            },
-                            errorBuilder: (_, __, ___) => Container(
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => Container(
                               height: 130,
                               color: HuddlColors.successBg,
                               child: const Icon(HuddlIcons.map, size: 40, color: HuddlColors.primaryDark),

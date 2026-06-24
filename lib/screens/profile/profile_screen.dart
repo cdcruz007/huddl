@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_button.dart';
@@ -3342,12 +3343,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                     height: size,
                     errorBuilder: (_, __, ___) => _avatarFallback(size),
                   )
-                : Image.network(
-                    imageUrl,
+                : CachedNetworkImage(
+                    imageUrl: imageUrl,
                     fit: BoxFit.cover,
                     width: size,
                     height: size,
-                    errorBuilder: (_, __, ___) => _avatarFallback(size),
+                    memCacheWidth: 300,
+                    errorWidget: (_, __, ___) => _avatarFallback(size),
                   ))
             : _avatarFallback(size),
       ),
@@ -3395,8 +3397,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: isAsset
               ? Image.asset(imageUrl, fit: BoxFit.cover, width: size, height: size,
                   errorBuilder: (_, __, ___) => _meetupIconFallback(category, size))
-              : Image.network(imageUrl, fit: BoxFit.cover, width: size, height: size,
-                  errorBuilder: (_, __, ___) => _meetupIconFallback(category, size)),
+              : CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  width: size,
+                  height: size,
+                  memCacheWidth: 300,
+                  errorWidget: (_, __, ___) => _meetupIconFallback(category, size),
+                ),
         ),
       );
     }
@@ -3544,12 +3552,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: item.imageUrls.isNotEmpty
-                          ? Image.network(
-                              item.imageUrls.first,
+                          ? CachedNetworkImage(
+                              imageUrl: item.imageUrls.first,
                               width: 48,
                               height: 48,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              memCacheWidth: 300,
+                              errorWidget: (_, __, ___) => Container(
                                 width: 48,
                                 height: 48,
                                 color: context.hc.surface,
@@ -6351,11 +6360,13 @@ class _ProfileScreenState extends State<ProfileScreen>
       } catch (_) {}
       return _fallbackAvatar();
     }
-    return Image.network(_photoUrl!,
+    return CachedNetworkImage(
+        imageUrl: _photoUrl!,
         width: 84,
         height: 84,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _fallbackAvatar());
+        memCacheWidth: 300,
+        errorWidget: (_, __, ___) => _fallbackAvatar());
   }
 
   Widget _fallbackAvatar() {
@@ -6800,9 +6811,11 @@ class _GroupCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _imageFallback())
                   : group.imageUrl.startsWith('http')
-                      ? Image.network(group.imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: group.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _imageFallback())
+                          memCacheWidth: 300,
+                          errorWidget: (_, __, ___) => _imageFallback())
                       : _imageFallback(),
             ),
           ),

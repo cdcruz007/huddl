@@ -3802,10 +3802,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   child: ClipOval(
                     child: photoUrl.isNotEmpty
                         ? ExcludeSemantics(
-                            child: Image.network(
-                              photoUrl,
+                            child: CachedNetworkImage(
+                              imageUrl: photoUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              memCacheWidth: 300,
+                              errorWidget: (_, __, ___) => Container(
                                 color: HuddlColors.primaryPale,
                                 child: const Icon(HuddlIcons.user,
                                     size: 10, color: HuddlColors.primary),
@@ -4402,12 +4403,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   size: size * 0.5, color: HuddlColors.textDark),
             )
           : url.startsWith('http')
-              ? Image.network(
-                  url,
-                  semanticLabel: 'Group photo',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(HuddlIcons.usersThree,
-                      size: size * 0.5, color: HuddlColors.textDark),
+              ? Semantics(
+                  label: 'Group photo',
+                  image: true,
+                  child: CachedNetworkImage(
+                    imageUrl: url,
+                    fit: BoxFit.cover,
+                    memCacheWidth: 300,
+                    errorWidget: (_, __, ___) => Icon(HuddlIcons.usersThree,
+                        size: size * 0.5, color: HuddlColors.textDark),
+                  ),
                 )
               : url.startsWith('data:')
                   ? _buildDataImage(size)
@@ -6991,12 +6996,13 @@ class _SenderAvatarState extends State<_SenderAvatar> {
           clipBehavior: Clip.antiAlias,
           child: resolvedPhoto != null
               ? ExcludeSemantics(
-                  child: Image.network(
-                    resolvedPhoto,
+                  child: CachedNetworkImage(
+                    imageUrl: resolvedPhoto,
                     fit: BoxFit.cover,
                     width: 32,
                     height: 32,
-                    errorBuilder: (_, __, ___) => _buildFallback(),
+                    memCacheWidth: 300,
+                    errorWidget: (_, __, ___) => _buildFallback(),
                   ),
                 )
               : _buildFallback(),
@@ -7625,34 +7631,34 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                           child: Stack(
                             children: [
                               // Key forces rebuild when coords change
-                              Image.network(
-                                _mapThumbnailUrl(),
-                                semanticLabel: 'Location map',
+                              Semantics(
+                                label: 'Location map',
+                                image: true,
+                                child: CachedNetworkImage(
+                                imageUrl: _mapThumbnailUrl(),
                                 key: ValueKey('${widget.latitude}_${widget.longitude}'),
                                 height: 130,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
-                                loadingBuilder: (ctx, child, progress) {
-                                  if (progress == null) return child;
-                                  return Container(
-                                    height: 130,
-                                    color: HuddlColors.successBg,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: HuddlColors.primaryDark,
-                                      ),
+                                memCacheWidth: 800,
+                                placeholder: (ctx, __) => Container(
+                                  height: 130,
+                                  color: HuddlColors.successBg,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: HuddlColors.primaryDark,
                                     ),
-                                  );
-                                },
-                                errorBuilder: (_, __, ___) => Container(
+                                  ),
+                                ),
+                                errorWidget: (_, __, ___) => Container(
                                   height: 130,
                                   color: HuddlColors.successBg,
                                   child: const Icon(HuddlIcons.map,
                                       size: 40,
                                       color: HuddlColors.primaryDark),
                                 ),
-                              ),
+                              ),),
                               // Red pin overlay
                               Positioned.fill(
                                 child: Align(

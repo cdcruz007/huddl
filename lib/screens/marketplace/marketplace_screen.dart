@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1782,16 +1783,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           fit: StackFit.expand,
                           children: [
                             hasImage
-                                ? Image.network(
-                                    item.imageUrls.first,
-                                    semanticLabel: 'Listing photo for ${item.title}',
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (_, child, progress) =>
-                                      progress == null
-                                          ? child
-                                          : Container(color: hc.inputBg),
-                                    errorBuilder: (_, __, ___) =>
-                                      _MarketPhotoFallback(item: item),
+                                ? Semantics(
+                                    label: 'Listing photo for ${item.title}',
+                                    image: true,
+                                    child: CachedNetworkImage(
+                                      imageUrl: item.imageUrls.first,
+                                      fit: BoxFit.cover,
+                                      memCacheWidth: 400,
+                                      placeholder: (_, __) => Container(color: hc.inputBg),
+                                      errorWidget: (_, __, ___) =>
+                                        _MarketPhotoFallback(item: item),
+                                    ),
                                   )
                                 : _MarketPhotoFallback(item: item),
                             // "NEW" badge
@@ -3362,16 +3364,15 @@ Widget _buildItemImage(String url, RehomeItem item) {
   // Always shows a contextual category image rather than a bare icon.
   Widget stockPhotoFallback() {
     final stockUrl = _MarketGridCardState._categoryStockPhoto(item.category, item.title);
-    return Image.network(
-      stockUrl,
+    return CachedNetworkImage(
+      imageUrl: stockUrl,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, __, ___) => iconFallback,
-      loadingBuilder: (_, child, progress) {
-        if (progress == null) return child;
-        return const HuddlShimmer(width: double.infinity, height: double.infinity);
-      },
+      memCacheWidth: 400,
+      errorWidget: (_, __, ___) => iconFallback,
+      placeholder: (_, __) =>
+          const HuddlShimmer(width: double.infinity, height: double.infinity),
     );
   }
 
@@ -3393,18 +3394,17 @@ Widget _buildItemImage(String url, RehomeItem item) {
   }
 
   if (url.startsWith('http')) {
-    return Image.network(
-      url,
+    return CachedNetworkImage(
+      imageUrl: url,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
+      memCacheWidth: 1000,
       // Broken/expired URL (404, 403, network error) → stock photo fallback,
       // NOT bare icon. This handles stale Firebase Storage download tokens.
-      errorBuilder: (_, __, ___) => stockPhotoFallback(),
-      loadingBuilder: (_, child, progress) {
-        if (progress == null) return child;
-        return const HuddlShimmer(width: double.infinity, height: double.infinity);
-      },
+      errorWidget: (_, __, ___) => stockPhotoFallback(),
+      placeholder: (_, __) =>
+          const HuddlShimmer(width: double.infinity, height: double.infinity),
     );
   }
 
@@ -4053,10 +4053,11 @@ class _MarketItemCardState extends State<_MarketItemCard> {
                                       color: hc.surface, width: 1.5),
                                 ),
                                 child: ClipOval(
-                                  child: Image.network(
-                                    _avatarUrl(i),
+                                  child: CachedNetworkImage(
+                                    imageUrl: _avatarUrl(i),
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
+                                    memCacheWidth: 300,
+                                    errorWidget: (_, __, ___) => Container(
                                       color: HuddlColors.neutral50,
                                       child: Icon(HuddlIcons.user,
                                           size: 14,
@@ -4480,12 +4481,13 @@ class _MarketListCardState extends State<_MarketListCard> {
                                     border: Border.all(color: hc.surface, width: 1.5),
                                   ),
                                   child: ClipOval(
-                                    child: Image.network(
-                                      _kMarketAvatarPool[
+                                    child: CachedNetworkImage(
+                                      imageUrl: _kMarketAvatarPool[
                                           (item.id.hashCode + i) % _kMarketAvatarPool.length],
                                       width: 22, height: 22,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
+                                      memCacheWidth: 300,
+                                      errorWidget: (_, __, ___) => Container(
                                         color: HuddlColors.neutral50,
                                         child: const Icon(HuddlIcons.user, size: 11, color: HuddlColors.textHint),
                                       ),
