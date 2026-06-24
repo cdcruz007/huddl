@@ -170,40 +170,45 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
-                    // Rings header: 48×48 canvas rendered at 56×56 (scale ≈ 1.167).
-                    // Canvas: 48×48, 60fps, 72 frames.
-                    //   0–30:  rings slide in from right, meet and interlink
-                    //   34:    interlinked
-                    //   36–54: heartbeat (2 beats: 120%→104%→114%→100%)
-                    //   54–72: holds interlinked at rest
+                    // clipBehavior: Clip.none is REQUIRED so the 320×56 Lottie
+                    // canvas is not clipped by AnimatedCrossFade's internal Stack.
+                    // ring_right starts at x=300 and must be visible rolling in.
+                    // Rings header: 320×56 wide-canvas, 60fps, 84 frames.
+                    //   0–40:  ring_right rolls in from x=300 with −1400° rotation
+                    //   40:    both rings interlinked
+                    //   46–60: left ring heartbeat pulse
+                    //   62–76: right ring heartbeat pulse
+                    //   76–84: holds interlinked at rest
                     // No text overlay — rings icon only.
                     firstChild: SizedBox(
                       height: 90,
                       child: Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          // ── Rings icon: 56×56, left-aligned, vertically centred ──
-                          // 48×48 canvas rendered at 56×56 (BoxFit.contain).
-                          // ring slides from right, interlocks, heartbeat pulse.
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
+                          // ── Rings: native-scale 320×56 canvas, left-aligned ──
+                          // BoxFit.none = no scaling → 1:1 pixel rendering.
+                          // Canvas is 320px wide; ring_right starts at x=300.
+                          // AnimatedCrossFade wraps in ClipRect — BUT the
+                          // firstChild SizedBox is the full screen width, so
+                          // 320px canvas fits within it and ring at x=300 is
+                          // within the clipped bounds. fitHeight was WRONG:
+                          // scale=90/56=1.6 pushed ring to x=480 (off-screen).
+                          Positioned.fill(
                             child: Align(
                               alignment: Alignment.centerLeft,
-                              child: SizedBox(
-                                width: 56,
+                              child: Lottie.asset(
+                                'assets/huddl_connect_rings_hb_FINAL.json',
+                                controller: _connectLottieCtrl,
+                                width: 320,
                                 height: 56,
-                                child: Lottie.asset(
-                                  'assets/huddl_connect_rings_hb_FINAL.json',
-                                  controller: _connectLottieCtrl,
-                                  fit: BoxFit.contain,
-                                  onLoaded: (comp) {
-                                    _connectLottieCtrl.duration = comp.duration;
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (mounted) _connectLottieCtrl.forward(from: 0);
-                                    });
-                                  },
-                                ),
+                                fit: BoxFit.none,
+                                alignment: Alignment.centerLeft,
+                                onLoaded: (comp) {
+                                  _connectLottieCtrl.duration = comp.duration;
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) _connectLottieCtrl.forward(from: 0);
+                                  });
+                                },
                               ),
                             ),
                           ),
