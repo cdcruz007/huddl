@@ -209,6 +209,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
                   Align(
                     alignment: Alignment.centerLeft,
                     child: IconButton(
+                      tooltip: 'Back',
                       onPressed: () => Navigator.maybePop(context),
                       icon: const Icon(HuddlIcons.arrowBack,
                           size: 18, color: HuddlColors.nearBlack),

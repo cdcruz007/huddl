@@ -413,6 +413,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Row(children: [
                 IconButton(
+                    tooltip: 'Back',
                     icon: const Icon(HuddlIcons.caretLeft, size: 30, color: kOrange),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero),

@@ -1519,15 +1519,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               ),
                             ),
                             if (_searchQuery.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Icon(HuddlIcons.close, size: 15,
-                                      color: hc.textTertiary),
+                              Semantics(
+                                label: 'Clear search',
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    child: Icon(HuddlIcons.close, size: 15,
+                                        color: hc.textTertiary),
+                                  ),
                                 ),
                               ),
                           ],
@@ -1780,6 +1784,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             hasImage
                                 ? Image.network(
                                     item.imageUrls.first,
+                                    semanticLabel: 'Listing photo for ${item.title}',
                                     fit: BoxFit.cover,
                                     loadingBuilder: (_, child, progress) =>
                                       progress == null

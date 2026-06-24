@@ -103,6 +103,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
+                  tooltip: 'Back',
                   icon: const Icon(
                     HuddlIcons.arrowBack,
                     size: 18,

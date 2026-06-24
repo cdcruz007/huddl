@@ -1145,6 +1145,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: 'Settings',
                   icon: Icon(HuddlIcons.settings,
                       color: hc.textPrimary),
                   onPressed: _openSettingsSheet,
@@ -3079,6 +3080,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       prefixIcon: const Icon(HuddlIcons.lockReset,
                           size: 20),
                       suffixIcon: IconButton(
+                        tooltip: 'Show or hide new password',
                         icon: Icon(
                           newPwVisible
                               ? HuddlIcons.visibilityOff
@@ -3121,6 +3123,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       labelStyle: HuddlText.caption(),
                       prefixIcon: const Icon(HuddlIcons.lock, size: 20),
                       suffixIcon: IconButton(
+                        tooltip: 'Show or hide confirm password',
                         icon: Icon(
                           confirmPwVisible
                               ? HuddlIcons.visibilityOff
@@ -6985,6 +6988,7 @@ class _SettingsScreen extends StatelessWidget {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(HuddlIcons.arrowBack,
               size: 18, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),

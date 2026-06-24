@@ -1684,6 +1684,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             ),
                             // Delete
                             IconButton(
+                              tooltip: 'Remove saved thread',
                               icon: Icon(HuddlIcons.delete, size: 18, color: context.hc.textTertiary),
                               onPressed: () async {
                                 await _savedMessageService.unsaveThread(thread.id);
@@ -2146,6 +2147,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         // Suffix clear button
                         suffixIcon: topicController.text.isNotEmpty
                             ? IconButton(
+                                tooltip: 'Clear topic',
                                 icon: const Icon(HuddlIcons.close, size: 16),
                                 onPressed: () {
                                   topicController.clear();
@@ -3343,12 +3345,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const Spacer(),
                   if (_searchMatches.isNotEmpty) ...[
                     IconButton(
+                      tooltip: 'Previous match',
                       icon: const Icon(HuddlIcons.caretUp, size: 20),
                       onPressed: _prevMatch,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                     IconButton(
+                      tooltip: 'Next match',
                       icon: const Icon(HuddlIcons.caretDown, size: 20),
                       onPressed: _nextMatch,
                       padding: EdgeInsets.zero,
@@ -3797,13 +3801,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   ),
                   child: ClipOval(
                     child: photoUrl.isNotEmpty
-                        ? Image.network(
-                            photoUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: HuddlColors.primaryPale,
-                              child: const Icon(HuddlIcons.user,
-                                  size: 10, color: HuddlColors.primary),
+                        ? ExcludeSemantics(
+                            child: Image.network(
+                              photoUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: HuddlColors.primaryPale,
+                                child: const Icon(HuddlIcons.user,
+                                    size: 10, color: HuddlColors.primary),
+                              ),
                             ),
                           )
                         : Container(
@@ -3836,6 +3842,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       elevation: 0,
       surfaceTintColor: HuddlColors.white,
       leading: IconButton(
+        tooltip: 'Exit search',
         icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () {
           setState(() {
@@ -3992,6 +3999,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       elevation: 0,
       surfaceTintColor: HuddlColors.white,
       leading: IconButton(
+        tooltip: 'Back',
         icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () => Navigator.pop(context),
       ),
@@ -4143,11 +4151,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           );
         }),
         IconButton(
+          tooltip: 'Search messages',
           icon: Icon(HuddlIcons.search, color: context.hc.textPrimary),
           onPressed: () => setState(() => _isSearching = true),
         ),
         // 3-dot popup menu
         PopupMenuButton<String>(
+          tooltip: 'More options',
           icon: Icon(HuddlIcons.moreVert, color: context.hc.textPrimary),
           offset: const Offset(0, 46),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -4394,6 +4404,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           : url.startsWith('http')
               ? Image.network(
                   url,
+                  semanticLabel: 'Group photo',
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Icon(HuddlIcons.usersThree,
                       size: size * 0.5, color: HuddlColors.textDark),
@@ -4450,6 +4461,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           child: Row(
             children: [
               IconButton(
+                tooltip: 'Attach file',
                 icon: const Icon(
                   HuddlIcons.addCircle,
                   color: HuddlColors.primary,  // orange — action button
@@ -4499,26 +4511,33 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 builder: (context, value, _) {
                   final hasText = value.text.trim().isNotEmpty;
                   if (hasText) {
-                    return GestureDetector(
-                      // SEND-NO-GUARD-1: disable tap while send in-flight
-                      onTap: _isSending ? null : _sendMessage,
-                      child: AnimatedScale(
-                        scale: _sendPulse ? 1.25 : 1.0,
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: HuddlColors.primary,
-                            shape: BoxShape.circle,
+                    return Semantics(
+                      label: 'Send message',
+                      button: true,
+                      child: GestureDetector(
+                        // SEND-NO-GUARD-1: disable tap while send in-flight
+                        onTap: _isSending ? null : _sendMessage,
+                        child: AnimatedScale(
+                          scale: _sendPulse ? 1.25 : 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          curve: Curves.easeOut,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
                           ),
-                          child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
                         ),
                       ),
                     );
                   }
-                  return GestureDetector(
+                  return Semantics(
+                    label: 'Record voice message',
+                    button: true,
+                    child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onLongPressStart: (_) async {
                       // Dismiss keyboard FIRST so iOS doesn't swallow the gesture
@@ -4577,6 +4596,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         ),
                       ),
                     ),
+                  ),
                   );
                 },
               ),
@@ -6970,12 +6990,14 @@ class _SenderAvatarState extends State<_SenderAvatar> {
           ),
           clipBehavior: Clip.antiAlias,
           child: resolvedPhoto != null
-              ? Image.network(
-                  resolvedPhoto,
-                  fit: BoxFit.cover,
-                  width: 32,
-                  height: 32,
-                  errorBuilder: (_, __, ___) => _buildFallback(),
+              ? ExcludeSemantics(
+                  child: Image.network(
+                    resolvedPhoto,
+                    fit: BoxFit.cover,
+                    width: 32,
+                    height: 32,
+                    errorBuilder: (_, __, ___) => _buildFallback(),
+                  ),
                 )
               : _buildFallback(),
         ),
@@ -7269,6 +7291,7 @@ class _GroupImageBubble extends StatelessWidget {
                                 ? (kIsWeb
                                     ? Image.network(
                                         imageUrl,
+                                        semanticLabel: 'Attached image',
                                         fit: BoxFit.cover,
                                         width: 240,
                                         height: 240,
@@ -7285,20 +7308,24 @@ class _GroupImageBubble extends StatelessWidget {
                                                   ),
                                         errorBuilder: (ctx, __, ___) => _brokenImage(ctx),
                                       )
-                                    : CachedNetworkImage(
-                                        imageUrl: imageUrl,
-                                        fit: BoxFit.cover,
-                                        width: 240,
-                                        height: 240,
-                                        placeholder: (_, __) => Container(
+                                    : Semantics(
+                                        label: 'Attached image',
+                                        image: true,
+                                        child: CachedNetworkImage(
+                                          imageUrl: imageUrl,
+                                          fit: BoxFit.cover,
                                           width: 240,
                                           height: 240,
-                                          color: HuddlColors.gray200,
-                                          child: const Center(
-                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          placeholder: (_, __) => Container(
+                                            width: 240,
+                                            height: 240,
+                                            color: HuddlColors.gray200,
+                                            child: const Center(
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            ),
                                           ),
+                                          errorWidget: (ctx, __, ___) => _brokenImage(ctx),
                                         ),
-                                        errorWidget: (ctx, __, ___) => _brokenImage(ctx),
                                       ))
                                 : Builder(builder: (ctx) => _brokenImage(ctx)),
                       ),
@@ -7600,6 +7627,7 @@ class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
                               // Key forces rebuild when coords change
                               Image.network(
                                 _mapThumbnailUrl(),
+                                semanticLabel: 'Location map',
                                 key: ValueKey('${widget.latitude}_${widget.longitude}'),
                                 height: 130,
                                 width: double.infinity,
@@ -8072,6 +8100,7 @@ class _AiSummarySheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Close',
                     icon: const Icon(HuddlIcons.close),
                     onPressed: () => Navigator.pop(context),
                     iconSize: 20,

@@ -770,12 +770,14 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   const Spacer(),
                   if (_searchMatches.isNotEmpty) ...[
                     IconButton(
+                      tooltip: 'Previous match',
                       icon: const Icon(HuddlIcons.caretUp, size: 20),
                       onPressed: _prevMatch,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                     IconButton(
+                      tooltip: 'Next match',
                       icon: const Icon(HuddlIcons.caretDown, size: 20),
                       onPressed: _nextMatch,
                       padding: EdgeInsets.zero,
@@ -1076,6 +1078,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
+        tooltip: 'Back',
         icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () => Navigator.pop(context),
       ),
@@ -1110,10 +1113,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
       ),
       actions: [
         IconButton(
+          tooltip: 'Search messages',
           icon: Icon(HuddlIcons.search, color: context.hc.textPrimary),
           onPressed: () => setState(() => _isSearching = true),
         ),
         PopupMenuButton<String>(
+          tooltip: 'More options',
           icon: Icon(HuddlIcons.moreVert, color: context.hc.textPrimary),
           offset: const Offset(0, 46),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1234,6 +1239,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
+        tooltip: 'Exit search',
         icon: Icon(HuddlIcons.arrowBack, color: Theme.of(context).colorScheme.onSurface),
         onPressed: () {
           setState(() {
@@ -1510,6 +1516,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           child: Row(
             children: [
               IconButton(
+                tooltip: 'Attach file',
                 icon: const Icon(
                   HuddlIcons.addCircle,
                   color: HuddlColors.primary,  // orange — action button
@@ -1554,30 +1561,37 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 builder: (context, value, _) {
                   final hasText = value.text.trim().isNotEmpty;
                   if (hasText) {
-                    return GestureDetector(
-                      // SEND-NO-GUARD-1: disable tap while send in-flight
-                      onTap: _isSending ? null : () {
-                        HapticFeedback.lightImpact();
-                        _sendMessage();
-                      },
-                      child: AnimatedScale(
-                        scale: _sendPulse ? 1.25 : 1.0,
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: HuddlColors.primary,
-                            shape: BoxShape.circle,
+                    return Semantics(
+                      label: 'Send message',
+                      button: true,
+                      child: GestureDetector(
+                        // SEND-NO-GUARD-1: disable tap while send in-flight
+                        onTap: _isSending ? null : () {
+                          HapticFeedback.lightImpact();
+                          _sendMessage();
+                        },
+                        child: AnimatedScale(
+                          scale: _sendPulse ? 1.25 : 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          curve: Curves.easeOut,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
                           ),
-                          child: const Icon(HuddlIcons.send, size: 18, color: HuddlColors.white),
                         ),
                       ),
                     );
                   }
                   // Mic button – hold to record
-                  return GestureDetector(
+                  return Semantics(
+                    label: 'Record voice message',
+                    button: true,
+                    child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onLongPressStart: (_) async {
                       // Dismiss keyboard FIRST so iOS doesn't swallow the gesture
@@ -1634,6 +1648,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         ),
                       ),
                     ),
+                  ),
                   );
                 },
               ),
@@ -2281,6 +2296,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                           style: HuddlText.caption(color: context.hc.textTertiary),
                         ),
                         trailing: IconButton(
+                          tooltip: 'Remove saved message',
                           icon: Icon(HuddlIcons.delete, size: 18, color: context.hc.textTertiary),
                           onPressed: () {
                             _savedMessageService.unsaveMessage(msg.id);

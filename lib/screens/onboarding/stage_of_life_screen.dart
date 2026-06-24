@@ -347,6 +347,7 @@ class _OnboardingAppBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: IconButton(
+          tooltip: 'Back',
           icon: const Icon(
             HuddlIcons.arrowBack,
             size: 18,

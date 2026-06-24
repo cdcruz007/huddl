@@ -499,6 +499,7 @@ class _PasswordInput extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16, vertical: 16),
             suffixIcon: IconButton(
+              tooltip: 'Show or hide password',
               icon: Icon(
                 obscure
                     ? HuddlIcons.visibilityOff
@@ -527,6 +528,7 @@ class _OnboardingAppBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: IconButton(
+          tooltip: 'Back',
           icon: const Icon(
             HuddlIcons.arrowBack,
             size: 18,
