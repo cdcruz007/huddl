@@ -1213,6 +1213,33 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // APP CONFIG  (LAYER-19-NO-VERSION-GATE-1)
+    //
+    // Version-gate configuration and other operator-managed app settings.
+    // Read must be PUBLIC (if true) because the gate runs at splash BEFORE the
+    // user has authenticated — requiring isAuth() here would mean unauthenticated
+    // or newly-installing users can never be gated.
+    //
+    // The collection contains NO PII — only version numbers and store URLs.
+    // Client writes are categorically denied: all mutations go via the Firebase
+    // console or Admin SDK.
+    //
+    // Key doc: app_config/version_gate
+    //   minSupportedBuild   : number   (e.g. 109)
+    //   minSupportedVersion : string   (e.g. "1.1.49")  — display only
+    //   updateUrlIos        : string   (App Store URL)
+    //   updateUrlAndroid    : string   (Play Store URL)
+    //   message             : string   (shown on ForceUpdateScreen)
+    // =========================================================================
+    match /app_config/{docId} {
+      // Pre-auth read: gate runs at splash before login.
+      allow read: if true;
+
+      // Console / Admin SDK only — no client writes.
+      allow write: if false;
+    }
+
+    // =========================================================================
     // CATCH-ALL: deny everything not explicitly listed above.
     // Uncomment only for debugging in a dev environment — never in production.
     // =========================================================================

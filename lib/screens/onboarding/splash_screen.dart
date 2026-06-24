@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/biometric_auth_service.dart';
+import '../../services/version_gate_service.dart';
+import 'force_update_screen.dart';
 
 // =============================================================================
 // HUDDL SPLASH SCREEN — white background, natural brand colours
@@ -119,7 +121,26 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateNext() async {
     if (!mounted) return;
 
-    // Resolve destination before fading so the exit feels intentional.
+    // ── LAYER-19: version gate — checked BEFORE any routing decision ────────
+    // FAIL OPEN: VersionGateService catches all errors internally and returns
+    // updateRequired=false on any failure, so a network blip never blocks users.
+    final gate = await VersionGateService.check();
+    if (!mounted) return;
+
+    if (gate.updateRequired) {
+      // Fade out, then push the blocking ForceUpdateScreen (no back-nav).
+      await _exitCtrl.forward();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => ForceUpdateScreen(gate: gate),
+        ),
+      );
+      return;
+    }
+
+    // ── Normal routing: resolve destination before fading ────────────────
     // Explicit logout flag takes priority over cached Firebase token.
     String destination = '/onboarding';
     try {
