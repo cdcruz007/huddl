@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../theme/huddl_icons.dart';
 import '../../widgets/common/huddl_logo.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/funnel_analytics.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -161,6 +162,9 @@ class _NameInputScreenState extends State<NameInputScreen> {
     svc.setName(name);
     svc.setEmail(email);
     svc.setDateOfBirth(_selectedDob); // AGE-1
+
+    // LAYER-16-NO-FUNNEL-1: funnel step 2 — age ≥18 verified, proceeding to consent.
+    FunnelAnalytics.log('onboarding_age_verified');
 
     Navigator.pushNamed(context, '/consent');
   }

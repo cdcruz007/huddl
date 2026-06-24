@@ -3,6 +3,7 @@ import '../../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/funnel_analytics.dart';
 import '../../services/postcode_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -85,6 +86,9 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
     final service = OnboardingDataService();
     service.setPostcode(postcode);
     service.setBorough(borough); // ONBOARD-BOROUGH-1: unconditional — guaranteed non-null
+    // LAYER-16-NO-FUNNEL-1: funnel step 3 — Cambridge postcode accepted (success branch only).
+    // NOT fired on null-borough retry or /not_available redirect.
+    FunnelAnalytics.log('onboarding_postcode_accepted');
     if (mounted) Navigator.pushNamed(context, '/phone_number');
   }
 

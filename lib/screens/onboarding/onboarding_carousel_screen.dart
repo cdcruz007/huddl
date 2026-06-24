@@ -3,6 +3,7 @@ import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_photo_service.dart';
+import '../../services/funnel_analytics.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
 
@@ -52,6 +53,8 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   void initState() {
     super.initState();
     _detectLocationPhoto();
+    // LAYER-16-NO-FUNNEL-1: funnel step 1 — user opened the onboarding carousel.
+    FunnelAnalytics.log('onboarding_start');
   }
 
   Future<void> _detectLocationPhoto() async {

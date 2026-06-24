@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
+import 'funnel_analytics.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'subscription_service.dart';
@@ -1355,6 +1356,9 @@ class FirebaseAuthService {
         },
       );
       await batch.commit();
+      // LAYER-16-NO-FUNNEL-1: funnel step 5 — atomic batch committed successfully.
+      // Fires inside the try so it only runs when the write actually landed.
+      unawaited(FunnelAnalytics.log('onboarding_profile_created'));
     } catch (e, st) {
       _logError(e, st, '_createUserProfile: critical profile write failed');
       return false; // PROFILE-COMMIT-1: signal failure to caller for targeted retry
@@ -1379,6 +1383,8 @@ class FirebaseAuthService {
     if (kDebugMode) {
       debugPrint('FirebaseAuthService: profile created for $userId, borough=$borough');
     }
+    // LAYER-16-NO-FUNNEL-1: funnel step 4 — verification + profile creation both complete.
+    unawaited(FunnelAnalytics.log('onboarding_verification_complete'));
     return true; // PROFILE-COMMIT-1: critical writes committed successfully
   }
 
