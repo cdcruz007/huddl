@@ -197,7 +197,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Lottie.asset(
-                                'assets/huddl_connect_rings_hb_FINAL.json',
+                                'assets/huddl_connect_rings.json',
                                 controller: _connectLottieCtrl,
                                 width: 320,
                                 height: 56,
