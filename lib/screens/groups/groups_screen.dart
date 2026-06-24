@@ -3,7 +3,6 @@ import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_button.dart';
@@ -171,46 +170,53 @@ class _GroupsScreenState extends State<GroupsScreen>
                     crossFadeState: _isSearchActive
                         ? CrossFadeState.showSecond
                         : CrossFadeState.showFirst,
+                    // Full-width Stack header: bubbles travel left→right,
+                    // settle on the right. Search icon pinned top-right.
                     firstChild: SizedBox(
-                      height: 64,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                      height: 90,                   // matches Market/Discover header height
+                      child: Stack(
                         children: [
-                          SizedBox(
-                            height: 56,
+                          // Background: full-width bubble Lottie
+                          Positioned.fill(
                             child: Lottie.asset(
-                              'assets/huddl_connect.json',
+                              'assets/huddl_connect_3d.json',
                               controller: _connectLottieCtrl,
-                              fit: BoxFit.fitHeight,
+                              fit: BoxFit.fitWidth,
+                              alignment: Alignment.centerLeft,
                               onLoaded: (comp) {
                                 _connectLottieCtrl.duration = comp.duration;
                                 _connectLottieCtrl.forward(from: 0);
                               },
                             ),
                           ),
-                          const Spacer(),
-                          // 🔍 Search trigger icon — top-right, above tabs.
-                          // Tap → inline group search. Long-press → unified search.
-                          Tooltip(
-                            message: 'Search · Hold for universal search',
-                            child: GestureDetector(
-                              onTap: () {
-                                HuddlAnimations.lightTap();
-                                setState(() => _isSearchActive = true);
-                                Future.microtask(() => _searchFocusNode.requestFocus());
-                              },
-                              onLongPress: () {
-                                HuddlAnimations.mediumTap();
-                                Navigator.of(context).push(HuddlSpringPageRoute(
-                                  page: const UnifiedSearchScreen(),
-                                ));
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  HuddlIcons.search,
-                                  color: context.hc.textSecondary,
-                                  size: 22,
+                          // Foreground: search icon pinned top-right, fully tappable
+                          Positioned(
+                            right: 8,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Tooltip(
+                                message: 'Search · Hold for universal search',
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HuddlAnimations.lightTap();
+                                    setState(() => _isSearchActive = true);
+                                    Future.microtask(() => _searchFocusNode.requestFocus());
+                                  },
+                                  onLongPress: () {
+                                    HuddlAnimations.mediumTap();
+                                    Navigator.of(context).push(HuddlSpringPageRoute(
+                                      page: const UnifiedSearchScreen(),
+                                    ));
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(
+                                      HuddlIcons.search,
+                                      color: context.hc.textSecondary,
+                                      size: 22,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -219,9 +225,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                       ),
                     ),
                     // Expanded search bar — replaces title row
-                    secondChild: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SizedBox(
+                    secondChild: SizedBox(
                       height: 36,
                       child: Row(
                         children: [
@@ -287,7 +291,6 @@ class _GroupsScreenState extends State<GroupsScreen>
                             ),
                           ),
                         ],
-                      ),
                       ),
                     ),
                   ),
@@ -2291,16 +2294,6 @@ class _MessagesTabState extends State<_MessagesTab> {
   }
 
   Widget _buildConversationList(List<_MessageListItem> unified) {
-    // FETCH-SILENT-1: primary fetch failure — full-screen error state blocks
-    // the empty state so the user knows WHY there are no items.
-    if (_hasLoadError && unified.isEmpty && _pendingInvitations.isEmpty) {
-      return HuddlErrorState(
-        onRetry: _loadGroups,
-        message: 'Couldn\u2019t load your groups. Check your connection and try again.',
-        icon: Icons.group_off_outlined,
-      );
-    }
-
     if (unified.isEmpty && _pendingInvitations.isEmpty) {
       return _EmptyMessagesState(onSearch: () {
         // Search is driven by the parent GroupsScreen shared bar — nothing to do here
@@ -2313,6 +2306,34 @@ class _MessagesTabState extends State<_MessagesTab> {
       child: ListView(
         padding: const EdgeInsets.only(top: 2, bottom: 16),
         children: [
+          // ── Error banner (P2: user-visible error) ──────────
+          if (_hasLoadError)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: HuddlColors.warningBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: HuddlColors.warning.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(HuddlIcons.info, size: 16, color: HuddlColors.warningDark),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(_errorMessage, style: HuddlText.caption()),
+                  ),
+                  Semantics(
+                    label: 'Retry loading groups',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: _loadGroups,
+                      child: Text('Retry', style: HuddlText.caption(weight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // ── AI Catch-Up (compact) ─────────────────────────
           _buildAiCatchUpCard(),
           // ── Pending invitation cards (compact) ──────────────
@@ -3801,15 +3822,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           _allDiscoverGroups.add(_GroupItem.fromGroup(g, isDefault: false));
         }
       }
-    } catch (e, st) {
-      // DISCOVER-SILENT-1: secondary enrichment — primary discover list still renders;
-      // user's created groups are just absent this load. Non-fatal, but visible.
-      if (kDebugMode) debugPrint('[GroupsScreen] _loadUserCreatedGroups failed: $e');
-      FirebaseCrashlytics.instance.recordError(
-        e, st,
-        reason: 'GroupsScreen._loadUserCreatedGroups',
-        fatal: false,
-      );
+    } catch (_) {
+      // Silently ignore storage read failures
     }
   }
 

@@ -34,7 +34,6 @@ import '../../utils/borough_migration_service.dart';
 import '../../services/gdpr_borough_data_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/huddl_user_service.dart';
@@ -389,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         ];
         discovered = firestoreGroups
             .where((g) => !defaultGroupIds.contains(g.id))
-            .where((g) => !g.isImageLocked && g.groupType != 'resident')
+            .where((g) => !g.isImageLocked)
             .where((g) => !yearGroupPattern.hasMatch(g.name))
             .where((g) => g.category != 'Default Community')
             .where((g) {
@@ -1134,7 +1133,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 SizedBox(
                   height: 56,
                   child: Lottie.asset(
-                    'assets/huddl_profile.json',
+                    'assets/huddl_profile_3d.json',
                     controller: _profileLottieCtrl,
                     fit: BoxFit.fitHeight,
                     onLoaded: (comp) {
@@ -2396,65 +2395,24 @@ class _ProfileScreenState extends State<ProfileScreen>
                   return;
                 }
 
-                // Resolve borough server-side via setUserBorough callable.
-                // This enforces the Cambridge gate server-side, writes borough
-                // + geo siblings to users/{uid} via Admin SDK (bypassing the
-                // F-09 affectedKeys rule), and triggers syncPublicProfile.
-                // The Cambridge gate was already checked above by
-                // isCambridgePostcodeAsync — the callable enforces it again
-                // server-side to prevent direct SDK calls bypassing the UI.
-                final callable = FirebaseFunctions
-                    .instanceFor(region: 'europe-west2')
-                    .httpsCallable(
-                  'setUserBorough',
-                  options: HttpsCallableOptions(
-                      timeout: const Duration(seconds: 15)),
-                );
+                // Borough was already resolved and cached by isCambridgePostcodeAsync above;
+                // retrieve it from cache first to avoid a duplicate API call, then persist
+                // it to OnboardingDataService so all downstream services use the exact
+                // admin_district from postcodes.io rather than an outward-code prefix guess.
+                final newBorough =
+                    _postcodeService.getBoroughFromPostcode(newPc) ?? await _postcodeService.lookupBoroughAsync(newPc) ?? 'Unknown';
 
-                String newBorough;
-                try {
-                  final result =
-                      await callable.call({'postcode': newPc});
-                  newBorough =
-                      (result.data as Map<dynamic, dynamic>?)?['borough']
-                          as String? ??
-                      'Unknown';
-                } on FirebaseFunctionsException catch (e) {
-                  if (e.code == 'failed-precondition' &&
-                      e.message == 'OUTSIDE_LAUNCH_AREA') {
-                    // Server-side gate rejection — show existing "not in your
-                    // area" message. (UI gate already ran; this is the
-                    // belt-and-suspenders server check.)
-                    if (!ctx.mounted) return;
-                    _snack('Huddl is currently only available in the Cambridge area.');
-                  } else if (e.code == 'not-found') {
-                    if (!ctx.mounted) return;
-                    _snack('Postcode not recognised. Please check and try again.');
-                  } else {
-                    if (!ctx.mounted) return;
-                    _snack('Could not update location. Please try again.');
-                  }
-                  return;
-                } catch (_) {
-                  if (!ctx.mounted) return;
-                  _snack('Could not update location. Please try again.');
-                  return;
-                }
-
-                // Capture current borough BEFORE updating local state
+                // Capture current borough BEFORE updating
                 final previousBorough = _borough;
 
-                // Update local OnboardingDataService state for UI and
-                // downstream services (BoroughMigrationService reads from here).
+                // Store current as previous for hasChangedBorough
                 if (_postcode != null && _postcode != newPc) {
                   _onboarding.setPreviousBorough(_borough);
                 }
                 _onboarding.setPostcode(newPc);
                 if (newBorough != 'Unknown') _onboarding.setBorough(newBorough);
 
-                // Cascade borough update through local services
-                // (BoroughMigrationService updates local storage only — no
-                // direct Firestore writes; the CF has already done that).
+                // Cascade borough update through all services
                 await BoroughMigrationService().migrate(
                   newPostcode: newPc,
                   previousBoroughName: previousBorough,

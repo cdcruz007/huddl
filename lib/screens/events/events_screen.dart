@@ -417,27 +417,29 @@ class EventsScreenState extends State<EventsScreen>
                 ColoredBox(
                   color: context.hc.surface,
                   child: SizedBox(
-                    height: 64,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Compass logo — 56px, transparent bg, play once on load
-                          SizedBox(
-                            height: 56,
-                            child: Lottie.asset(
-                              'assets/huddl_discover_compass.json',
-                              controller: _discoverLottieCtrl,
-                              fit: BoxFit.fitHeight,
-                              onLoaded: (comp) {
-                                _discoverLottieCtrl.duration = comp.duration;
-                                _discoverLottieCtrl.forward(from: 0);
-                              },
-                            ),
+                    height: 90,
+                    child: Stack(
+                      children: [
+                        // Background: full-width Lottie, no horizontal padding
+                        Positioned.fill(
+                          child: Lottie.asset(
+                            'assets/huddl_discover_coin.json',
+                            controller: _discoverLottieCtrl,
+                            fit: BoxFit.fitWidth,
+                            alignment: Alignment.centerLeft,
+                            onLoaded: (comp) {
+                              _discoverLottieCtrl.duration = comp.duration;
+                              _discoverLottieCtrl.forward(from: 0);
+                            },
                           ),
-                          Row(
+                        ),
+                        // Foreground: tab-conditional search icon pinned right
+                        Positioned(
+                          right: 8,
+                          top: 0,
+                          bottom: 0,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               // Search icon on Groups/Meetups/Events/Services tabs.
                               // Tap → inline tab search. Long-press → unified search.
@@ -527,8 +529,8 @@ class EventsScreenState extends State<EventsScreen>
                                 ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ), // ColoredBox title row
@@ -2308,13 +2310,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         Expanded(
           child: ColoredBox(
             color: HuddlColors.neutral50,
-            // FETCH-SILENT-1: show retry on load failure instead of a silently-empty list.
-            // Only triggers when the Firestore load failed AND no cached meetups are present.
-            child: widget.meetupService.loadFailed && widget.meetupService.meetups.isEmpty
-                ? HuddlErrorState(
-                    onRetry: () => widget.meetupService.loadFromFirestore(),
-                  )
-                : filtered.isEmpty
+            child: filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? HuddlIcons.filterOff : HuddlIcons.usersThree,
                     illustrationAsset: _hasActiveFilter
@@ -3028,7 +3024,6 @@ class _EventsTabState extends State<_EventsTab> {
   // ── Recommender state ──────────────────────────────────────
   bool _recommenderReady = false;
   bool _isDiscovering = false;
-  bool _loadError = false;  // FETCH-SILENT-1: true when _initServices() fails
   Map<String, ScoredEvent> _scoredEventMap = {};
 
   // ── Inline search state (mirrors Meetups tab) ───────────────
@@ -3167,40 +3162,28 @@ class _EventsTabState extends State<_EventsTab> {
   }
 
   Future<void> _initServices() async {
-    // FETCH-SILENT-1: clear any prior error before retrying.
-    if (mounted) setState(() => _loadError = false);
-    try {
-      setState(() => _isDiscovering = true);
-      final count = await _discovery.runDailyDiscovery();
-      if (mounted) setState(() => _isDiscovering = false);
+    setState(() => _isDiscovering = true);
+    final count = await _discovery.runDailyDiscovery();
+    if (mounted) setState(() => _isDiscovering = false);
 
-      await _recommender.initialize();
-      await _invisibleAi.initialize();
-      _refreshRecommendations();
-      if (mounted) {
-        setState(() => _recommenderReady = true);
-        if (count > 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Found $count new events near you',
-                style: HuddlText.body(),
-              ),
-              backgroundColor: HuddlColors.textDark,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              duration: const Duration(seconds: 2),
+    await _recommender.initialize();
+    await _invisibleAi.initialize();
+    _refreshRecommendations();
+    if (mounted) {
+      setState(() => _recommenderReady = true);
+      if (count > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Found $count new events near you',
+              style: HuddlText.body(),
             ),
-          );
-        }
-      }
-    } catch (e) {
-      // FETCH-SILENT-1: primary fetch failure — show error state, not empty state.
-      if (mounted) {
-        setState(() {
-          _isDiscovering = false;
-          _loadError = true;
-        });
+            backgroundColor: HuddlColors.textDark,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     }
   }
@@ -3573,17 +3556,10 @@ class _EventsTabState extends State<_EventsTab> {
           ),
 
         // ── Event list — all events as vertical cards under "Suggested for you" ──
-        // FETCH-SILENT-1 priority: loading → error → empty → list
         Expanded(
           child: ColoredBox(
             color: HuddlColors.neutral50,
-            child: _loadError
-                ? HuddlErrorState(
-                    onRetry: _initServices,
-                    message: 'Couldn\u2019t load events. Check your connection and try again.',
-                    icon: Icons.event_busy_outlined,
-                  )
-                : (!_recommenderReady && events.isEmpty)
+            child: (!_recommenderReady && events.isEmpty)
                 ? const HuddlSkeletonFeed(cardCount: 3)
                 : events.isEmpty
                 ? _EmptyState(

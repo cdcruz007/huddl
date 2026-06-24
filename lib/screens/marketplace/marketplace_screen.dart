@@ -534,7 +534,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // UI state
   bool _isLoadingItems = false;
-  bool _loadError = false;        // FETCH-SILENT-1: true when primary fetch fails
   bool _isSearchActive = false;
   bool _isGridView = true; // grid is the default — Pinterest/Vinted/Depop standard
 
@@ -566,10 +565,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       final uid = FirebaseAuth.instance.currentUser?.uid;
 
       // ── 1a. All active listings (Buy tab) ─────────────────────────────────
-      // FETCH-SILENT-1: this is the PRIMARY fetch — failure sets _loadError=true.
       final docs = await FirestoreService().getMarketplaceListings();
-      // Primary fetch succeeded — clear any prior error.
-      if (mounted) setState(() => _loadError = false);
       for (final d in docs) {
         final item = RehomeItem.fromFirestore(d);
         if (item.id.isEmpty) continue;
@@ -657,9 +653,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         }
       }
     } catch (e) {
-      // FETCH-SILENT-1: primary fetch failure — show error state, not empty state.
       if (kDebugMode) debugPrint('[Marketplace] loadFromFirestore error: $e');
-      if (mounted) setState(() => _loadError = true);
     } finally {
       if (mounted) setState(() => _isLoadingItems = false);
     }
@@ -1390,28 +1384,33 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             crossFadeState: _isSearchActive
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            // First child: single row — 56px bag logo + actions (no borough chip)
+            // First child: full-width Stack header — wide heart Lottie as background,
+            // bag anchored left, heart sweeps right→left; icons pinned top-right.
             firstChild: SizedBox(
-              height: 64,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                        // Lottie bag logo — 56px tall, transparent bg
-                        SizedBox(
-                          height: 56,
-                          child: Lottie.asset(
-                            'assets/huddl_market_bag.json',
-                            controller: _lottieCtrl,
-                            fit: BoxFit.fitHeight,
-                            onLoaded: (comp) {
-                              _lottieCtrl.duration = comp.duration;
-                              _lottieCtrl.forward(from: 0);
-                            },
-                          ),
-                        ),
-                        const Spacer(),
+              height: 90,                         // 1000×260 canvas @ ~360px → ~93px; rounded to 90
+              child: Stack(
+                children: [
+                  // Background: full-width Lottie, no horizontal padding
+                  Positioned.fill(
+                    child: Lottie.asset(
+                      'assets/huddl_market_wide_heart.json',
+                      controller: _lottieCtrl,
+                      fit: BoxFit.fitWidth,
+                      alignment: Alignment.centerLeft,
+                      onLoaded: (comp) {
+                        _lottieCtrl.duration = comp.duration;
+                        _lottieCtrl.forward(from: 0);
+                      },
+                    ),
+                  ),
+                  // Foreground: grid-toggle + search pinned to top-right, fully tappable
+                  Positioned(
+                    right: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
                         // Grid/list toggle
                         ScaleOnPress(
                           scale: 0.88,
@@ -1470,8 +1469,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             ),
                           ),
                         ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             // Second child: inline search bar — shown when _isSearchActive
@@ -1947,14 +1948,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         Divider(height: 1, thickness: 0.5, color: hc.divider),
 
         // ── Main content area ─────────────────────────────────────────
-        // FETCH-SILENT-1 priority: loading → error → (filtered-)empty → list
         Expanded(
-          child: _loadError
-              ? HuddlErrorState(
-                  onRetry: _loadListingsFromFirestore,
-                  message: 'Couldn\u2019t load listings. Check your connection and try again.',
-                )
-              : items.isEmpty
+          child: items.isEmpty
               ? (_hasActiveFilters || _searchQuery.isNotEmpty || _selectedCategory != null
                   ? HuddlEmptyState(
                       mood: HuddlMood.curious,
