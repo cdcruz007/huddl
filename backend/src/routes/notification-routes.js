@@ -266,7 +266,9 @@ router.get('/check-verified', authMiddleware, async (req, res, next) => {
 router.post('/test-email', async (req, res, next) => {
   try {
     const cronSecret = req.headers['x-cron-secret'];
-    if (process.env.NODE_ENV === 'production' && cronSecret !== process.env.CRON_SECRET) {
+    // LAYER-2-NODEENV-GATE-1: secret required UNCONDITIONALLY (was NODE_ENV-gated → fail-open on misconfig).
+    // !CRON_SECRET clause: deny if secret is unset server-side (prevents undefined===undefined pass).
+    if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -293,7 +295,9 @@ router.post('/test-email', async (req, res, next) => {
 // Diagnostic: Resend + SMTP connectivity check.
 router.get('/smtp-check', async (req, res) => {
   const cronSecret = req.headers['x-cron-secret'];
-  if (process.env.NODE_ENV === 'production' && cronSecret !== process.env.CRON_SECRET) {
+  // LAYER-2-NODEENV-GATE-1: secret required UNCONDITIONALLY.
+  // !CRON_SECRET clause: deny if secret is unset server-side (prevents undefined===undefined pass).
+  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
