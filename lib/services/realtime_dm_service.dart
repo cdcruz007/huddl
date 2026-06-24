@@ -169,9 +169,17 @@ class RealtimeDMService implements ClearableUserState {
       String uid, String otherUserId) async {
     // Use the deterministic ID first (fast path)
     final deterministic = _conversationId(uid, otherUserId);
-    final doc = await _db.collection('conversations').doc(deterministic)
-        .get().timeout(const Duration(seconds: 15)); // TIMEOUT-1
-    if (doc.exists) return deterministic;
+    try {
+      final doc = await _db
+          .collection('conversations')
+          .doc(deterministic)
+          .get()
+          .timeout(const Duration(seconds: 15)); // TIMEOUT-1
+      if (doc.exists) return deterministic;
+    } catch (_) {
+      // DM-GET-TIMEOUT-1: fast-path lookup timed out or errored — fall through
+      // to the query fallback below rather than hanging the send flow.
+    }
 
     // Fallback: query (handles legacy conversations)
     try {
