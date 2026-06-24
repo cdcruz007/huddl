@@ -75,7 +75,7 @@ class BackendApiService {
         if (successUrl != null) 'successUrl': successUrl,
         if (cancelUrl != null) 'cancelUrl': cancelUrl,
       }),
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     return _handleResponse(response);
   }
 
@@ -87,7 +87,7 @@ class BackendApiService {
     final response = await http.post(
       Uri.parse('$baseUrl/api/stripe/customer-portal'),
       headers: headers,
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     return _handleResponse(response);
   }
 
@@ -112,7 +112,7 @@ class BackendApiService {
         'productId': productId,
         if (transactionId != null) 'transactionId': transactionId,
       }),
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     return _handleResponse(response);
   }
 
@@ -131,7 +131,7 @@ class BackendApiService {
         'purchaseToken': purchaseToken,
         'productId': productId,
       }),
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     return _handleResponse(response);
   }
 
@@ -145,7 +145,7 @@ class BackendApiService {
     final response = await http.get(
       Uri.parse('$baseUrl/api/subscription/$userId'),
       headers: headers,
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     return _handleResponse(response);
   }
 
@@ -162,7 +162,7 @@ class BackendApiService {
         if (reason != null) 'reason': reason,
         if (pauseMonths != null) 'pauseMonths': pauseMonths,
       }),
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     return _handleResponse(response);
   }
 
@@ -183,7 +183,7 @@ class BackendApiService {
         'token': token,
         'platform': platform,
       }),
-    );
+    ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
   }
 
   /// Send welcome email and push notification to a newly registered user.
@@ -203,7 +203,7 @@ class BackendApiService {
           'firstName': firstName ?? '',
           'borough': borough ?? '',
         }),
-      );
+      ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     } catch (e) {
       // Non-fatal — log but don't block user flow
       if (kDebugMode) debugPrint('[BackendApiService] sendWelcomeNotification error: $e');
@@ -219,7 +219,7 @@ class BackendApiService {
         Uri.parse('$baseUrl/api/notifications/email-added'),
         headers: headers,
         body: jsonEncode({'email': email}),
-      );
+      ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
     } catch (e) {
       if (kDebugMode) debugPrint('[BackendApiService] notifyEmailAdded error: $e');
     }
