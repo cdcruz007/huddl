@@ -202,12 +202,11 @@ class _GroupsScreenState extends State<GroupsScreen>
                                 alignment: Alignment.centerLeft,
                                 onLoaded: (comp) {
                                   _connectLottieCtrl.duration = comp.duration;
-                                  // Reduce-motion: jump to final interlinked frame
-                                  if (MediaQuery.of(context).disableAnimations) {
-                                    _connectLottieCtrl.value = 1.0;
-                                  } else {
-                                    _connectLottieCtrl.forward(from: 0);
-                                  }
+                                  // Always play — never skip to final frame.
+                                  // Defer one frame so the ticker is active on web.
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) _connectLottieCtrl.forward(from: 0);
+                                  });
                                 },
                               ),
                             ),
