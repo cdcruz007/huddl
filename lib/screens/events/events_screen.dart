@@ -423,10 +423,9 @@ class EventsScreenState extends State<EventsScreen>
                         // Background: full-width Lottie, no horizontal padding
                         Positioned.fill(
                           child: Lottie.asset(
-                            'assets/huddl_discover_coin.json',
+                            'assets/huddl_discover_compass.json',
                             controller: _discoverLottieCtrl,
-                            fit: BoxFit.fitWidth,
-                            alignment: Alignment.centerLeft,
+                            fit: BoxFit.fitHeight,
                             onLoaded: (comp) {
                               _discoverLottieCtrl.duration = comp.duration;
                               _discoverLottieCtrl.forward(from: 0);

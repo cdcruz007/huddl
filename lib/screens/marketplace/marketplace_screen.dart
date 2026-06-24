@@ -1399,10 +1399,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   // Background: full-width Lottie, no horizontal padding
                   Positioned.fill(
                     child: Lottie.asset(
-                      'assets/huddl_market_wide_heart.json',
+                      'assets/huddl_market_bag.json',
                       controller: _lottieCtrl,
-                      fit: BoxFit.fitWidth,
-                      alignment: Alignment.centerLeft,
+                      fit: BoxFit.fitHeight,
                       onLoaded: (comp) {
                         _lottieCtrl.duration = comp.duration;
                         _lottieCtrl.forward(from: 0);

@@ -197,10 +197,9 @@ class _GroupsScreenState extends State<GroupsScreen>
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Lottie.asset(
-                                'assets/huddl_connect_rings_hb_FINAL.json',
+                                'assets/huddl_connect.json',
                                 controller: _connectLottieCtrl,
                                 fit: BoxFit.fitHeight,
-                                alignment: Alignment.centerLeft,
                                 onLoaded: (comp) {
                                   _connectLottieCtrl.duration = comp.duration;
                                   // Reduce-motion: jump to final interlinked frame
