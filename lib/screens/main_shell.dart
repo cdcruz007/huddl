@@ -15,6 +15,7 @@ import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
+import '../services/connectivity_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 import '../constants/app_text_styles.dart';
 // huddl_spring_animations used via home_screen.dart (HuddlSpringPageRoute on nav pushes)
@@ -375,19 +376,62 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: List.generate(5, (index) {
-          return Offstage(
-            offstage: _currentIndex != index,
-            child: _buildScreen(index),
-          );
-        }),
-      ),
-      bottomNavigationBar: _HuddlNavBar(
-        currentIndex: _currentIndex,
-        onTap: _switchTab,
-      ),
+    return ListenableBuilder(
+      listenable: ConnectivityService(),
+      builder: (context, _) {
+        final isOnline = ConnectivityService().isOnline;
+        return Scaffold(
+          body: Stack(
+            children: [
+              ...List.generate(5, (index) {
+                return Offstage(
+                  offstage: _currentIndex != index,
+                  child: _buildScreen(index),
+                );
+              }),
+              // NO-OFFLINE-INDICATOR-1: subtle offline banner at the top of every screen.
+              // AnimatedSlide so it glides in/out rather than popping.
+              AnimatedSlide(
+                offset: isOnline ? const Offset(0, -1) : Offset.zero,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+                        color: const Color(0xFF616161), // Grey-700 — neutral, not alarming
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.wifi_off, size: 14, color: Colors.white),
+                            SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'You\u2019re offline \u2014 messages will send when you reconnect.',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: _HuddlNavBar(
+            currentIndex: _currentIndex,
+            onTap: _switchTab,
+          ),
+        );
+      },
     );
   }
 }

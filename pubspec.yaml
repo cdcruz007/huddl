@@ -76,6 +76,7 @@ dependencies:
   # SEND field-level encryption (AES-256-GCM, pure Dart — Web + Android compatible)
   encrypt: ^5.0.3
   crypto: ^3.0.6          # HMAC-SHA256 key derivation for SendEncryptionService
+  connectivity_plus: ^7.1.1
 
   # dependency_overrides: force web sub-packages to versions that accept
   # firebase_core 3.1.0. These are the platform-web implementations bundled

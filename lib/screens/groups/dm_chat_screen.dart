@@ -108,6 +108,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final VoiceMessageService _voiceSvc = VoiceMessageService.instance;
   bool _isVoiceRecording = false;
   bool _sendPulse = false;
+  bool _isSending = false; // SEND-NO-GUARD-1: in-flight send guard
 
   List<DirectMessage> _messages = [];
   bool _isLoading = true;
@@ -479,7 +480,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
     // ── End subscription gate ────────────────────────────────────────────────
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+    // SEND-NO-GUARD-1: block double-tap / re-tap during in-flight send.
+    // Guard set BEFORE the first await so the async gap is closed.
+    if (_isSending) return;
+    setState(() => _isSending = true);
 
+    try {
     // ── Safety pre-filter: Layer 1 (local blocklist) + Layer 2 (AI) ────────
     final safetyResult = await MessageSafetyService().classify(text);
     if (safetyResult != MessageSafetyResult.safe) {
@@ -601,6 +607,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
         _messages.add(msg);
       });
       _scrollToBottom(animate: true);
+    }
+    } finally {
+      // SEND-NO-GUARD-1: always reset — covers normal exit, safety-block, error
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -1545,7 +1555,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   final hasText = value.text.trim().isNotEmpty;
                   if (hasText) {
                     return GestureDetector(
-                      onTap: () {
+                      // SEND-NO-GUARD-1: disable tap while send in-flight
+                      onTap: _isSending ? null : () {
                         HapticFeedback.lightImpact();
                         _sendMessage();
                       },

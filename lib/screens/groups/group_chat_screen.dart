@@ -137,6 +137,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final VoiceMessageService _voiceSvc = VoiceMessageService.instance;
   bool _isVoiceRecording = false;
   bool _sendPulse = false;
+  bool _isSending = false; // SEND-NO-GUARD-1: in-flight send guard
 
   /// Whether the user has changed borough and this is an old-borough default group
   bool _canLeaveGroup = false;
@@ -1174,7 +1175,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // ── End subscription gate ────────────────────────────────────────────────
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+    // SEND-NO-GUARD-1: block double-tap / re-tap during in-flight send.
+    // Guard set BEFORE the first await so the async gap (and optimistic insert) is closed.
+    if (_isSending) return;
+    setState(() => _isSending = true);
 
+    try {
     final optimisticId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
 
@@ -1304,6 +1310,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         );
       }
     });
+    } finally {
+      // SEND-NO-GUARD-1: always reset — covers normal exit, safety-block, error
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   // ── Search logic ────────────────────────────────────────────────────────
@@ -4490,7 +4500,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   final hasText = value.text.trim().isNotEmpty;
                   if (hasText) {
                     return GestureDetector(
-                      onTap: _sendMessage,
+                      // SEND-NO-GUARD-1: disable tap while send in-flight
+                      onTap: _isSending ? null : _sendMessage,
                       child: AnimatedScale(
                         scale: _sendPulse ? 1.25 : 1.0,
                         duration: const Duration(milliseconds: 150),
