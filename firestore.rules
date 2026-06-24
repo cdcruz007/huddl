@@ -257,8 +257,10 @@ service cloud.firestore {
         (
           request.auth.uid in resource.data.memberIds
           && request.resource.data.diff(resource.data).affectedKeys()
+              // GROUPS-MEMBERIDS-1: removed 'memberIds' — membership changes
+              // must go through Branch 3 (self-join) or Branch 1 (creator) only.
               .hasOnly(['lastMessage', 'lastMessageTime', 'lastActiveAt',
-                        'memberCount', 'memberIds', 'lastSenderName'])
+                        'memberCount', 'lastSenderName'])
         )
         ||
         // Branch 3 (F-07) — Self-join: caller adds ONLY their own UID to memberIds.
@@ -403,8 +405,15 @@ service cloud.firestore {
       allow create: if isAuth()
         && request.auth.uid in request.resource.data.participants;
 
+      // DM-PARTICIPANTS-1: a participant may update conversation metadata but
+      // may NOT rewrite the participants array (would let them evict the other
+      // party or inject a third). Membership is fixed at create.
+      // Verified safe: realtime_dm_service conversation update paths write only
+      // lastMessage/lastSenderId/lastSenderName/lastMessageAt/participantAvatars/unreadCount.
       allow update: if isAuth()
-        && request.auth.uid in resource.data.participants;
+        && request.auth.uid in resource.data.participants
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['participants']);
 
       // Conversations are never deleted from the client.
       allow delete: if false;
@@ -418,9 +427,14 @@ service cloud.firestore {
               get(/databases/$(database)/documents/conversations/$(conversationId))
                 .data.participants;
 
-        // Either participant may send; senderId must match their UID.
+        // Either participant may send; senderId must match their UID AND
+        // the sender must be a participant in the parent conversation.
+        // (DM-INJECT-1: previously any auth user could inject into any conversation by ID.)
         allow create: if isAuth()
-          && request.resource.data.senderId == request.auth.uid;
+          && request.resource.data.senderId == request.auth.uid
+          && request.auth.uid in
+              get(/databases/$(database)/documents/conversations/$(conversationId))
+                .data.participants;
 
         // Sender may update their own message (reactions, status, unsend flag).
         // Either participant may update reactions.
@@ -663,9 +677,14 @@ service cloud.firestore {
               .hasAny(['status', 'consentGranted'])
         )
         ||
-        // Branch 3 — Any authenticated user may upvote (unchanged).
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['upvotes', 'updatedAt'])
+        // Branch 3 — Any authenticated user may upvote, but only ±1 (no forged counts).
+        // (WISDOM-UPVOTE-1)
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['upvotes', 'updatedAt'])
+          && (request.resource.data.upvotes == resource.data.get('upvotes', 0) + 1
+              || request.resource.data.upvotes == resource.data.get('upvotes', 0) - 1)
+        )
       );
 
       allow delete: if isAuth()
@@ -765,8 +784,30 @@ service cloud.firestore {
       allow update: if isAuth() && (
         resource.data.authorId == request.auth.uid
         ||
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['likedBy', 'likeCount', 'commentCount', 'updatedAt'])
+        // ANNOUNCE-COUNTER-1: likeCount may only move ±1-or-unchanged;
+        // likedBy may only add or remove the caller's own uid (self-only diff);
+        // commentCount ±1 for addComment() increment.
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['likedBy', 'likeCount', 'commentCount', 'updatedAt'])
+          && (request.resource.data.get('likeCount', 0) == resource.data.get('likeCount', 0) + 1
+              || request.resource.data.get('likeCount', 0) == resource.data.get('likeCount', 0) - 1
+              || request.resource.data.get('likeCount', 0) == resource.data.get('likeCount', 0))
+          && (
+               // likedBy: caller adds only their own uid
+               (request.resource.data.get('likedBy', []).hasAll(resource.data.get('likedBy', []))
+                && request.resource.data.get('likedBy', []).hasOnly(
+                     resource.data.get('likedBy', []).concat([request.auth.uid])))
+               ||
+               // likedBy: caller removes only their own uid
+               (resource.data.get('likedBy', []).hasAll(request.resource.data.get('likedBy', []))
+                && resource.data.get('likedBy', []).hasOnly(
+                     request.resource.data.get('likedBy', []).concat([request.auth.uid])))
+               ||
+               // likedBy unchanged (commentCount-only update)
+               request.resource.data.get('likedBy', []) == resource.data.get('likedBy', [])
+             )
+        )
       );
 
       // Only the author may delete their own post.
@@ -962,6 +1003,10 @@ service cloud.firestore {
         )
         ||
         // Narrow aggregate-counter updates require no borough check.
+        // MARKET-COUNTER-1 (accepted LOW): viewCount/offerCount/favouriteCount are
+        // cross-user vanity counters, field-locked (cannot inject other fields or
+        // touch borough/price/seller). Exact tally integrity is a server-derive task
+        // (CF), tracked separately — consistent with partner_analytics F-05 posture.
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['viewCount', 'offerCount', 'favouriteCount', 'updatedAt'])
       );
