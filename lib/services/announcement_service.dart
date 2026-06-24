@@ -8,6 +8,7 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'borough_scope_guard.dart';
 import '../utils/safe_parse.dart';
+import 'clearable_user_state.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AnnouncementComment
@@ -339,10 +340,12 @@ class Announcement {
 ///
 /// HYPERLOCAL RULE: Announcements are borough-only.
 /// Parents can only see and post announcements within their home borough.
-class AnnouncementService {
+class AnnouncementService implements ClearableUserState {
   static final AnnouncementService _instance = AnnouncementService._internal();
   factory AnnouncementService() => _instance;
-  AnnouncementService._internal();
+  AnnouncementService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   // ── Storage key — v3 kept for cache compat ─────────────────────────────
   // F-11: bumped _v3 → _v4 (commentsList removed from cached shape)
@@ -873,6 +876,15 @@ class AnnouncementService {
     _subscription?.cancel();
     _subscription = null;
     _announcements.clear();
+    await BrowserStorage.remove(_storageKey);
+  }
+
+  /// [ClearableUserState] — wipes announcement cache on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _announcements = [];
+    _isInitialized = false;
+    _userBorough = null;
     await BrowserStorage.remove(_storageKey);
   }
 }

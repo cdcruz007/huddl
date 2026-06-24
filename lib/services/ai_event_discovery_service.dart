@@ -10,6 +10,7 @@ import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'browser_storage.dart';
+import 'clearable_user_state.dart';
 
 // =============================================================================
 // AI EVENT DISCOVERY SERVICE  — HYPERLOCAL EDITION
@@ -77,11 +78,13 @@ class _EventTemplate {
   });
 }
 
-class AiEventDiscoveryService {
+class AiEventDiscoveryService implements ClearableUserState {
   static final AiEventDiscoveryService _instance =
       AiEventDiscoveryService._internal();
   factory AiEventDiscoveryService() => _instance;
-  AiEventDiscoveryService._internal();
+  AiEventDiscoveryService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcodeService = PostcodeService();
@@ -889,5 +892,14 @@ class AiEventDiscoveryService {
         descriptionHint: 'Free child safety workshop by Barnardo\u2019s. Practical advice on preventing home accidents, staying safe outdoors, online safety, addressing bullying and cyber-bullying. Interactive sessions with take-home resource pack.',
       ),
     ];
+  }
+
+  /// [ClearableUserState] — wipes discovery state on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _isInitialised = false;
+    _hasRunToday = false;
+    _lastDiscoveryRun = null;
+    _userBorough = '';
   }
 }

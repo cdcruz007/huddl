@@ -7,6 +7,7 @@ import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'send_encryption_service.dart';
+import 'clearable_user_state.dart';
 
 // ─── Typed AI error ───────────────────────────────────────────────────────────
 
@@ -268,11 +269,13 @@ class AnonMessage {
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
-class SendNavigatorService {
+class SendNavigatorService implements ClearableUserState {
   static final SendNavigatorService _instance =
       SendNavigatorService._internal();
   factory SendNavigatorService() => _instance;
-  SendNavigatorService._internal();
+  SendNavigatorService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   static const String _stageKey     = 'send_ehcp_stage_v1';
   static const String _deadlinesKey = 'send_deadlines_v1';
@@ -1215,4 +1218,12 @@ class SendNavigatorService {
       needType: SendNeedType.mentalHealth,
     ),
   ];
+
+  /// [ClearableUserState] — wipes SEND child data on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _cachedStage = null;
+    _deadlines = [];
+    _deadlinesLoaded = false;
+  }
 }

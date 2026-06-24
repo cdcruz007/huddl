@@ -2,6 +2,7 @@ import 'event_service.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'borough_ai_context.dart';
+import 'clearable_user_state.dart';
 
 // =============================================================================
 // AI EVENT RECOMMENDER & SMART DISCOVERY ENGINE
@@ -48,11 +49,13 @@ class MatchReason {
   });
 }
 
-class AiEventRecommenderService with BoroughAiContext {
+class AiEventRecommenderService with BoroughAiContext implements ClearableUserState {
   static final AiEventRecommenderService _instance =
       AiEventRecommenderService._internal();
   factory AiEventRecommenderService() => _instance;
-  AiEventRecommenderService._internal();
+  AiEventRecommenderService._internal() {
+    UserStateRegistry.register(this);
+  }
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcodeService = PostcodeService();
@@ -368,6 +371,15 @@ class AiEventRecommenderService with BoroughAiContext {
       default:
         return 'Matches your stage';
     }
+  }
+
+  /// [ClearableUserState] — wipes child age + stage data on sign-out.
+  @override
+  Future<void> clearUserState() async {
+    _isInitialised = false;
+    _userBorough = '';
+    _childAgesMonths = [];
+    _userStages = [];
   }
 }
 
