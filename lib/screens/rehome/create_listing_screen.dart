@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1152,12 +1153,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       } catch (_) {}
     }
     if (url.startsWith('http')) {
-      return Image.network(
-        url,
+      return CachedNetworkImage(
+        imageUrl: url,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+        errorWidget: (_, __, ___) => _imagePlaceholder(),
       );
     }
     return _imagePlaceholder();

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
@@ -350,16 +351,13 @@ class EventInviteCard extends StatelessWidget {
     }
 
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return placeholder();
-        },
-        errorBuilder: (_, __, ___) => fallback(),
+        placeholder: (_, __) => placeholder(),
+        errorWidget: (_, __, ___) => fallback(),
       );
     }
 

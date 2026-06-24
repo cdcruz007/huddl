@@ -1,5 +1,6 @@
 import 'dart:convert';
 import '../../theme/huddl_icons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
 
@@ -106,16 +107,16 @@ class HuddlNetworkImage extends StatelessWidget {
       );
     }
 
-    // HTTP/HTTPS network image — shimmer while loading
+    // HTTP/HTTPS network image — disk-cached, shimmer while loading
     if (url.startsWith('http')) {
-      return Image.network(
-        url,
+      return CachedNetworkImage(
+        imageUrl: url,
         width: width,
         height: height,
         fit: fit,
-        loadingBuilder: (_, child, progress) =>
-          progress == null ? child : _shimmer(context),
-        errorBuilder: (_, __, ___) => _fallback(context),
+        memCacheWidth: width?.toInt(),
+        placeholder: (_, __) => _shimmer(context),
+        errorWidget: (_, __, ___) => _fallback(context),
       );
     }
 

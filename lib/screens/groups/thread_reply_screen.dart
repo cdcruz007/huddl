@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
@@ -497,11 +498,12 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                         reply.message.contains('firebasestorage'))
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          reply.message,
+                        child: CachedNetworkImage(
+                          imageUrl: reply.message,
                           width: MediaQuery.of(context).size.width * 0.60,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          memCacheWidth: 480,
+                          errorWidget: (_, __, ___) =>
                               const Icon(HuddlIcons.brokenImage),
                         ),
                       )

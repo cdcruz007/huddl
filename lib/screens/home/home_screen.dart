@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
 import '../../theme/huddl_icons.dart';
 import '../../widgets/huddl_category_icon.dart';
@@ -3322,10 +3323,11 @@ class _HomeScreenState extends State<HomeScreen>
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
                 child: ClipOval(
-                  child: Image.network(
-                    avatars[(seed + i) % avatars.length],
+                  child: CachedNetworkImage(
+                    imageUrl: avatars[(seed + i) % avatars.length],
                     width: 22, height: 22, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    memCacheWidth: 44,
+                    errorWidget: (_, __, ___) => Container(
                       color: HuddlColors.gray100,
                       child: const Icon(HuddlIcons.user, size: 11, color: HuddlColors.textHint),
                     ),
@@ -5247,11 +5249,12 @@ class _HomeScreenState extends State<HomeScreen>
         } catch (_) {}
       }
       if (imgUrl.startsWith('http')) {
-        return Image.network(imgUrl,
+        return CachedNetworkImage(imageUrl: imgUrl,
             fit: BoxFit.cover,
             width: 42,
             height: 42,
-            errorBuilder: (_, __, ___) =>
+            memCacheWidth: 84,
+            errorWidget: (_, __, ___) =>
                 Center(child: Icon(_feedIcon(item.type),
                     color: _feedIconColor(item.type), size: 20)));
       }
@@ -5365,10 +5368,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _meetupIconFallback([String category = '']) {
     final fallbackUrl = _meetupCategoryImage(category);
-    return Image.network(
-      fallbackUrl,
+    return CachedNetworkImage(
+      imageUrl: fallbackUrl,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorWidget: (_, __, ___) => Container(
         color: HuddlColors.gray100,
         child: const Center(
           child: Icon(HuddlIcons.usersThree, size: 22, color: HuddlColors.textHint),
@@ -5428,12 +5431,13 @@ class _HomeScreenState extends State<HomeScreen>
         } catch (_) {}
       }
       return ClipOval(
-        child: Image.network(
-          _photoUrl!,
+        child: CachedNetworkImage(
+          imageUrl: _photoUrl!,
           width: 30,
           height: 30,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _avatarFallback(30),
+          memCacheWidth: 60,
+          errorWidget: (_, __, ___) => _avatarFallback(30),
         ),
       );
     }
@@ -5455,12 +5459,13 @@ class _HomeScreenState extends State<HomeScreen>
         } catch (_) {}
       }
       return ClipOval(
-        child: Image.network(
-          _photoUrl!,
+        child: CachedNetworkImage(
+          imageUrl: _photoUrl!,
           width: 34,
           height: 34,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _avatarFallback(34),
+          memCacheWidth: 68,
+          errorWidget: (_, __, ___) => _avatarFallback(34),
         ),
       );
     }
@@ -7237,11 +7242,12 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
 
   Widget _buildPhoto(String url, Color fallbackBg) {
     if (url.startsWith('http')) {
-      return Image.network(url,
+      return CachedNetworkImage(imageUrl: url,
           width: 48,
           height: 48,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
+          memCacheWidth: 96,
+          errorWidget: (_, __, ___) =>
               Container(width: 48, height: 48, color: fallbackBg));
     }
     if (url.startsWith('assets/')) {
@@ -7556,9 +7562,10 @@ class _SharePostSheetState extends State<_SharePostSheet>
           errorBuilder: (_, __, ___) => _shareFallback());
     }
     if (imageUrl.startsWith('http')) {
-      return Image.network(imageUrl,
+      return CachedNetworkImage(imageUrl: imageUrl,
           width: 44, height: 44, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _shareFallback());
+          memCacheWidth: 88,
+          errorWidget: (_, __, ___) => _shareFallback());
     }
     if (imageUrl.startsWith('data:')) {
       try {

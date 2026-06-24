@@ -3646,14 +3646,14 @@ class _GroupAvatar extends StatelessWidget {
         errorBuilder: (_, __, ___) => _initialsAvatar(),
       );
     } else if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: size,
         height: size,
-        errorBuilder: (_, __, ___) => _initialsAvatar(),
-        loadingBuilder: (_, child, progress) =>
-          progress == null ? child : _initialsAvatar(),
+        memCacheWidth: (size * 2).toInt(),
+        errorWidget: (_, __, ___) => _initialsAvatar(),
+        placeholder: (_, __) => _initialsAvatar(),
       );
     } else if (imageUrl.startsWith('data:')) {
       try {
@@ -5574,16 +5574,16 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: group.imageUrl.isNotEmpty
-                                    ? Image.network(
-                                        group.imageUrl,
+                                    ? CachedNetworkImage(
+                                        imageUrl: group.imageUrl,
                                         width: 56,
                                         height: 56,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
+                                        memCacheWidth: 112,
+                                        errorWidget: (_, __, ___) =>
                                             _SearchResultPlaceholder(
                                                 name: group.name),
-                                        loadingBuilder: (_, child, progress) =>
-                                          progress == null ? child : Container(color: HuddlColors.neutral50),
+                                        placeholder: (_, __) => Container(color: HuddlColors.neutral50),
                                       )
                                     : _SearchResultPlaceholder(
                                         name: group.name),
@@ -5948,14 +5948,15 @@ class _DiscoverGroupCard extends StatelessWidget {
                                         color: Colors.white, width: 1.5),
                                   ),
                                   child: ClipOval(
-                                    child: Image.network(
-                                      _kMemberAvatars[
+                                    child: CachedNetworkImage(
+                                      imageUrl: _kMemberAvatars[
                                           (group.id.hashCode + i) %
                                               _kMemberAvatars.length],
                                       width: 24,
                                       height: 24,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
+                                      memCacheWidth: 48,
+                                      errorWidget: (_, __, ___) =>
                                           Container(
                                         color: catColor
                                             .withValues(alpha: 0.25),

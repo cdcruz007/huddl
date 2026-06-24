@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -1881,8 +1882,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                         width: 40, height: 40,
                                         decoration: const BoxDecoration(shape: BoxShape.circle),
                                         clipBehavior: Clip.antiAlias,
-                                        child: Image.network(photoUrl, fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => MemberAvatar(name: member.name, size: 40, parentType: member.parentType)))
+                                        child: CachedNetworkImage(imageUrl: photoUrl, fit: BoxFit.cover,
+                                          width: 40, height: 40, memCacheWidth: 80,
+                                          errorWidget: (_, __, ___) => MemberAvatar(name: member.name, size: 40, parentType: member.parentType)))
                                     : MemberAvatar(name: member.name, size: 40, parentType: member.parentType),
                                 title: Text(member.name,
                                     style: HuddlText.body(color: context.hc.textPrimary)),

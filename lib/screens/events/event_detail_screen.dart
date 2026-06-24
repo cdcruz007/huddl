@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1484,19 +1485,15 @@ Widget _buildEventDetailCover({
     return gradientFallback();
   }
 
-  // http(s) URL — shimmer during load, gradient fallback on error
+  // http(s) URL — disk-cached, shimmer during load, gradient fallback on error
   if (imageUrl.startsWith('http')) {
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        // Show skeleton shimmer while the hero image is downloading
-        return const _DetailShimmerBox();
-      },
-      errorBuilder: (_, __, ___) => gradientFallback(),
+      placeholder: (_, __) => const _DetailShimmerBox(),
+      errorWidget: (_, __, ___) => gradientFallback(),
     );
   }
 

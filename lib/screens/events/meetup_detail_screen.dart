@@ -13,6 +13,7 @@ import '../../services/member_photo_service.dart';
 import '../../services/browser_storage.dart';
 import '../../constants/app_text_styles.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../widgets/common/huddl_network_image.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
@@ -1107,8 +1108,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
             border: Border.all(color: HuddlColors.divider, width: 1.5),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
-            errorBuilder: (_, __, ___) => _localAvatarFallback(size)),
+          child: CachedNetworkImage(imageUrl: photoUrl, fit: BoxFit.cover,
+            width: size, height: size, memCacheWidth: (size * 2).toInt(),
+            errorWidget: (_, __, ___) => _localAvatarFallback(size)),
         );
       }
       // No profile photo set — use local asset avatar
@@ -1123,12 +1125,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         height: size,
         decoration: const BoxDecoration(shape: BoxShape.circle),
         clipBehavior: Clip.antiAlias,
-        child: Image.network(
-          photoUrl,
+        child: CachedNetworkImage(
+          imageUrl: photoUrl,
           fit: BoxFit.cover,
           width: size,
           height: size,
-          errorBuilder: (_, __, ___) => MemberAvatar(name: name, size: size),
+          memCacheWidth: (size * 2).toInt(),
+          errorWidget: (_, __, ___) => MemberAvatar(name: name, size: size),
         ),
       );
     }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../theme/huddl_icons.dart';
 import '../../theme/huddl_colors.dart';
@@ -122,10 +123,11 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(
-                  _kGalleryPhotos[index],
+                CachedNetworkImage(
+                  imageUrl: _kGalleryPhotos[index],
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  memCacheWidth: 320,
+                  errorWidget: (_, __, ___) => Container(
                     color: context.hc.scaffold,
                     child: Icon(HuddlIcons.brokenImage,
                         color: context.hc.textTertiary),

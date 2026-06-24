@@ -6,6 +6,7 @@
 
 import 'dart:convert';
 import '../../theme/huddl_icons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -558,12 +559,12 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           }
         } catch (_) {}
       } else {
-        return Image.network(
-          widget.groupImageUrl,
+        return CachedNetworkImage(
+          imageUrl: widget.groupImageUrl,
           fit: BoxFit.cover,
           width: double.infinity,
           height: 160,
-          errorBuilder: (_, __, ___) => _photoPlaceholder(),
+          errorWidget: (_, __, ___) => _photoPlaceholder(),
         );
       }
     }

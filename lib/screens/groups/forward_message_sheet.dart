@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -793,8 +794,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 width: 56,
                 height: 56,
                 child: imageUrl.startsWith('http')
-                    ? Image.network(imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _meetupPlaceholder())
+                    ? CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover,
+                        width: 56, height: 56, memCacheWidth: 112,
+                        errorWidget: (_, __, ___) => _meetupPlaceholder())
                     : imageUrl.startsWith('assets/')
                         ? Image.asset(imageUrl, fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _meetupPlaceholder())
@@ -880,8 +882,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 width: 56,
                 height: 56,
                 child: imageUrl.startsWith('http')
-                    ? Image.network(imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _groupPlaceholder())
+                    ? CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover,
+                        width: 56, height: 56, memCacheWidth: 112,
+                        errorWidget: (_, __, ___) => _groupPlaceholder())
                     : imageUrl.startsWith('assets/')
                         ? Image.asset(imageUrl, fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _groupPlaceholder())
@@ -955,8 +958,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 width: 56,
                 height: 56,
                 child: imageUrl.startsWith('http')
-                    ? Image.network(imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _eventPlaceholder())
+                    ? CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover,
+                        width: 56, height: 56, memCacheWidth: 112,
+                        errorWidget: (_, __, ___) => _eventPlaceholder())
                     : imageUrl.startsWith('assets/')
                         ? Image.asset(imageUrl, fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _eventPlaceholder())
@@ -1043,12 +1047,13 @@ class _ForwardSheetState extends State<_ForwardSheet>
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                widget.imageUrl!,
+              child: CachedNetworkImage(
+                imageUrl: widget.imageUrl!,
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                memCacheWidth: 112,
+                errorWidget: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
                   color: HuddlColors.neutral50,
@@ -1282,12 +1287,13 @@ class _ForwardContactTile extends StatelessWidget {
       final gUrl = target.groupImageUrl ?? '';
       Widget groupImage;
       if (gUrl.startsWith('http')) {
-        groupImage = Image.network(
-          gUrl,
+        groupImage = CachedNetworkImage(
+          imageUrl: gUrl,
           fit: BoxFit.cover,
           width: size,
           height: size,
-          errorBuilder: (_, __, ___) => _groupInitialsWidget(target.id, target.name, size),
+          memCacheWidth: (size * 2).toInt(),
+          errorWidget: (_, __, ___) => _groupInitialsWidget(target.id, target.name, size),
         );
       } else if (gUrl.startsWith('assets/')) {
         groupImage = Image.asset(
@@ -1323,12 +1329,13 @@ class _ForwardContactTile extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: target.avatarUrl != null
-          ? Image.network(
-              target.avatarUrl!,
+          ? CachedNetworkImage(
+              imageUrl: target.avatarUrl!,
               fit: BoxFit.cover,
               width: size,
               height: size,
-              errorBuilder: (_, __, ___) => Center(
+              memCacheWidth: (size * 2).toInt(),
+              errorWidget: (_, __, ___) => Center(
                 child: Text(
                   target.name.isNotEmpty ? target.name[0].toUpperCase() : '?',
                   style: HuddlText.heading(),

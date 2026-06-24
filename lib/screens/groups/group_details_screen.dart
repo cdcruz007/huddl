@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
@@ -917,11 +918,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         errorBuilder: (_, __, ___) => _heroFallback(),
       );
     } else if (widget.groupImageUrl.startsWith('http')) {
-      return Image.network(
-        widget.groupImageUrl,
+      return CachedNetworkImage(
+        imageUrl: widget.groupImageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
-        errorBuilder: (_, __, ___) => _heroFallback(),
+        errorWidget: (_, __, ___) => _heroFallback(),
       );
     } else if (widget.groupImageUrl.startsWith('data:')) {
       try {

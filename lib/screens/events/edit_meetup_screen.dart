@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -301,8 +302,9 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
       } catch (_) {}
     }
     if (_pickedImageUrl != null && _pickedImageUrl!.isNotEmpty) {
-      return Image.network(_pickedImageUrl!, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _photoPlaceholder());
+      return CachedNetworkImage(imageUrl: _pickedImageUrl!, fit: BoxFit.cover,
+          width: double.infinity,
+          errorWidget: (_, __, ___) => _photoPlaceholder());
     }
     return _photoPlaceholder();
   }

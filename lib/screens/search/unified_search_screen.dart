@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import '../../widgets/huddl_category_icon.dart';
 
@@ -585,10 +586,11 @@ class _UnifiedSearchScreenState extends State<UnifiedSearchScreen>
                           width: 44,
                           height: 44,
                           child: member.photoUrl.isNotEmpty
-                              ? Image.network(
-                                  member.photoUrl,
+                              ? CachedNetworkImage(
+                                  imageUrl: member.photoUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
+                                  width: 44, height: 44, memCacheWidth: 88,
+                                  errorWidget: (_, __, ___) =>
                                       _MemberAvatar(
                                           initial: initial,
                                           color: member.avatarColor),
@@ -910,10 +912,11 @@ class _GroupResultRow extends StatelessWidget {
         width: 44,
         height: 44,
         child: group.imageUrl.isNotEmpty
-            ? Image.network(
-                group.imageUrl,
+            ? CachedNetworkImage(
+                imageUrl: group.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallback(),
+                width: 44, height: 44, memCacheWidth: 88,
+                errorWidget: (_, __, ___) => _fallback(),
               )
             : _fallback(),
       ),
@@ -1055,10 +1058,11 @@ class _MarketResultRow extends StatelessWidget {
         width: 44,
         height: 44,
         child: item.imageUrls.isNotEmpty
-            ? Image.network(
-                item.imageUrls.first,
+            ? CachedNetworkImage(
+                imageUrl: item.imageUrls.first,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallback(),
+                width: 44, height: 44, memCacheWidth: 88,
+                errorWidget: (_, __, ___) => _fallback(),
               )
             : _fallback(),
       ),

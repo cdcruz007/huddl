@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1246,16 +1247,14 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
             // ── Square thumbnail 56×56 ────────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded || frame != null) return child;
-                  return _buildImageShimmer(height: 56, color: catColor);
-                },
-                errorBuilder: (_, __, ___) => Container(
+                memCacheWidth: 112,
+                placeholder: (_, __) => _buildImageShimmer(height: 56, color: catColor),
+                errorWidget: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
@@ -1616,16 +1615,13 @@ class _ListingCardState extends State<_ListingCard> {
                 SizedBox(
                   height: 190,
                   width: double.infinity,
-                  child: Image.network(
-                    imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: 190,
-                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                      if (wasSynchronouslyLoaded || frame != null) return child;
-                      return _buildImageShimmer(height: 190, color: catColor);
-                    },
-                    errorBuilder: (_, __, ___) => Container(
+                    placeholder: (_, __) => _buildImageShimmer(height: 190, color: catColor),
+                    errorWidget: (_, __, ___) => Container(
                       height: 190,
                       color: catColor.withValues(alpha: 0.14),
                       child: Center(

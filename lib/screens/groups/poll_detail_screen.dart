@@ -3,6 +3,7 @@ import '../../theme/huddl_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/firestore_service.dart';
@@ -1301,11 +1302,12 @@ class _VoterRowState extends State<_VoterRow> {
           ),
           clipBehavior: Clip.antiAlias,
           child: photo != null
-              ? Image.network(photo,
+              ? CachedNetworkImage(imageUrl: photo,
                   fit: BoxFit.cover,
                   width: 28,
                   height: 28,
-                  errorBuilder: (_, __, ___) => _initials(name))
+                  memCacheWidth: 56,
+                  errorWidget: (_, __, ___) => _initials(name))
               : _initials(name),
         ),
         const SizedBox(width: 8),

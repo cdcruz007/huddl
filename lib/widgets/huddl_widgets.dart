@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
@@ -362,10 +363,13 @@ class HuddlAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: imageUrl != null
-            ? Image.network(
-                imageUrl!,
+            ? CachedNetworkImage(
+                imageUrl: imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _defaultAvatar(),
+                width: size,
+                height: size,
+                memCacheWidth: (size * 2).toInt(),
+                errorWidget: (_, __, ___) => _defaultAvatar(),
               )
             : _defaultAvatar(),
       ),
@@ -673,9 +677,20 @@ class MemberAvatar extends StatelessWidget {
         } catch (_) {
           avatar = _fallback(color, initial);
         }
-      } else if (resolvedUrl.startsWith('http') ||
-          resolvedUrl.startsWith('blob:')) {
-        // Network or blob URL
+      } else if (resolvedUrl.startsWith('http')) {
+        // Network URL — disk-cached
+        avatar = ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: resolvedUrl,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            memCacheWidth: (size * 2).toInt(),
+            errorWidget: (_, __, ___) => _fallback(color, initial),
+          ),
+        );
+      } else if (resolvedUrl.startsWith('blob:')) {
+        // Web blob URL — use Image.network (blob: not supported by CachedNetworkImage)
         avatar = ClipOval(
           child: Image.network(
             resolvedUrl,

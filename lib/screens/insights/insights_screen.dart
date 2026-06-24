@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/animations/huddl_spring_animations.dart';
@@ -789,18 +790,17 @@ class _WisdomCard extends StatelessWidget {
                 child: SizedBox(
                   height: 120,
                   width: double.infinity,
-                  child: Image.network(
-                    article.heroImageUrl!,
+                  child: CachedNetworkImage(
+                    imageUrl: article.heroImageUrl!,
                     fit: BoxFit.cover,
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) return child;
-                      return _ShimmerBox(
-                        width: double.infinity,
-                        height: 120,
-                        borderRadius: 0,
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => Container(
+                    width: double.infinity,
+                    height: 120,
+                    placeholder: (_, __) => _ShimmerBox(
+                      width: double.infinity,
+                      height: 120,
+                      borderRadius: 0,
+                    ),
+                    errorWidget: (_, __, ___) => Container(
                       height: 120,
                       color: HuddlColors.primary.withValues(alpha: 0.06),
                       child: Center(
@@ -981,18 +981,17 @@ class _ExpertCard extends StatelessWidget {
                 children: [
                   // Photo — with shimmer placeholder while loading
                   heroUrl != null
-                      ? Image.network(
-                          heroUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: heroUrl,
                           fit: BoxFit.cover,
-                          loadingBuilder: (_, child, progress) {
-                            if (progress == null) return child;
-                            return _ShimmerBox(
-                              width: double.infinity,
-                              height: 160,
-                              borderRadius: 0,
-                            );
-                          },
-                          errorBuilder: (_, __, ___) => _PhotoFallback(color: srcColor),
+                          width: double.infinity,
+                          height: 160,
+                          placeholder: (_, __) => _ShimmerBox(
+                            width: double.infinity,
+                            height: 160,
+                            borderRadius: 0,
+                          ),
+                          errorWidget: (_, __, ___) => _PhotoFallback(color: srcColor),
                         )
                       : _PhotoFallback(color: srcColor),
                   // Gradient overlay for readability

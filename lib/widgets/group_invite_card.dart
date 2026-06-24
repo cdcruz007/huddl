@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_icons.dart';
 import '../theme/huddl_colors.dart';
@@ -45,21 +46,18 @@ class GroupInviteCard extends StatelessWidget {
     }
 
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        loadingBuilder: (_, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: hc.surfaceAlt,
-            child: Center(
-              child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
-            ),
-          );
-        },
-        errorBuilder: (_, __, ___) => Container(
+        placeholder: (_, __) => Container(
+          color: hc.surfaceAlt,
+          child: Center(
+            child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),
+          ),
+        ),
+        errorWidget: (_, __, ___) => Container(
           color: hc.surfaceAlt,
           child: Center(
             child: Icon(HuddlIcons.usersThree, size: 48, color: hc.textTertiary),

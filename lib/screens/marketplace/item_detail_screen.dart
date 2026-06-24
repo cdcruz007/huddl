@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -1091,18 +1092,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         imageWidget = fallback;
       }
     } else if (url.startsWith('http')) {
-      imageWidget = Image.network(
-        url,
+      imageWidget = CachedNetworkImage(
+        imageUrl: url,
         fit: BoxFit.cover,
         width: double.infinity,
-        errorBuilder: (_, __, ___) => fallback,
-        loadingBuilder: (_, child, progress) {
-          if (progress == null) return child;
-          return const HuddlShimmer(
-            width: double.infinity,
-            height: double.infinity,
-          );
-        },
+        errorWidget: (_, __, ___) => fallback,
+        placeholder: (_, __) => const HuddlShimmer(
+          width: double.infinity,
+          height: double.infinity,
+        ),
       );
     } else {
       imageWidget = fallback;
