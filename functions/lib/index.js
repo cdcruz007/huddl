@@ -23,6 +23,11 @@
  *                                      (GROUP-MSG-SAFETY Stage 1). DEPLOY BUT DORMANT — no client calls
  *                                      it yet. Reuses AI_HARD_BLOCKLIST, _normaliseDmText, and
  *                                      _geminiClassifyDmText from moderateAndSendDM.
+ *  15. seedWelcomeSubscription       — Firestore onCreate on users/{userId}; seeds a welcome-tier
+ *                                      subscriptions/{userId} doc via Admin SDK (bypasses if-false rule).
+ *                                      Idempotent: skips write if the doc already exists (never downgrades
+ *                                      a paid tier). Replaces the incorrect client-side batch write that
+ *                                      triggered PERMISSION_DENIED (entitlements are server-authoritative).
  *
  * Firestore schema used:
  *   events/{eventId}
@@ -32,7 +37,7 @@
  */
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reconcileGdprErasures = exports.moderateAndSendGroupMessage = exports.onDmMessageCreated = exports.moderateAndSendDM = exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.seedWelcomeSubscription = exports.reconcileGdprErasures = exports.moderateAndSendGroupMessage = exports.onDmMessageCreated = exports.moderateAndSendDM = exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
@@ -2007,6 +2012,16 @@ exports.deleteUserData = functions
     //   deleted (preserved above). gdpr_exports is the user-triggered export
     //   log; legitimate to purge on account deletion.
     await runStep("gdpr_exports", db.collection("gdpr_exports").where("userId", "==", uid));
+    // ── user_consents — INTENTIONAL RETENTION (LAYER-15-CONSENT-AUDIT-1) ──
+    // user_consents/{uid} is NOT swept here.  It is the durable proof that
+    // the user gave lawful basis for data processing (GDPR Art. 6(a)).
+    // Deleting it would destroy the evidence that processing was consented to —
+    // a compliance risk larger than the residual privacy risk of retaining it.
+    // The record contains only consent metadata (dataProcessing bool, marketing
+    // bool, policyVersion string, timestamps) — no PII beyond the uid link.
+    // This is consistent with the gdpr_erasure_jobs HARD-LOCK posture (Layer 3).
+    // If re-anonymisation is ever required (e.g. legal advice changes posture),
+    // scrub userId from the doc rather than deleting the event fact + timestamps.
     // capturedConvIds: populated during conversations step, reused by Phase 4 Storage
     // (DM media enumerate-filter). Declared here so Phase 4 block can read it.
     const capturedConvIds = [];
@@ -3527,5 +3542,99 @@ exports.reconcileGdprErasures = functions
         }
     } // end for (jobs)
     functions.logger.info(`[reconcileGdprErasures] DONE — processed ${jobs.length} job(s)`);
+});
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUD FUNCTION 15: seedWelcomeSubscription
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS EXISTS
+// ───────────────
+// The Firestore rule for subscriptions/{userId} is `allow write: if false` —
+// entitlements are SERVER-AUTHORITATIVE and must never be written by a client
+// SDK.  Previously the onboarding batch in firebase_auth_service.dart wrote
+// this doc directly, which triggered PERMISSION_DENIED and broke onboarding.
+//
+// This CF fires via a Firestore onCreate trigger on users/{userId} (the doc
+// written by the onboarding batch), runs as Admin SDK, and seeds the welcome-
+// tier subscription doc.  Admin SDK bypasses Firestore security rules entirely.
+//
+// IDEMPOTENCY GUARANTEE
+// ─────────────────────
+// Before writing, the function checks whether subscriptions/{userId} already
+// exists.  If it does — either because a previous CF invocation succeeded, or
+// because the Stripe webhook has already set a paid tier — the write is
+// skipped entirely.  This means:
+//   • A CF retry cannot duplicate the doc.
+//   • A paid user who somehow re-triggers onCreate (e.g. a fluke duplicate
+//     user doc write) will NOT have their paid tier downgraded to welcome.
+//
+// SubscriptionService in Flutter falls back to UserSubscription.welcome() when
+// the subscription doc is absent, so the user sees the welcome tier
+// immediately while this CF runs asynchronously in the background.
+//
+// PAYLOAD SHAPE (mirrors the former client-side write exactly)
+// ─────────────────────────────────────────────────────────────
+// {
+//   userId:             <uid>,
+//   tier:               'welcome',
+//   billingPeriod:      'monthly',
+//   status:             'active',
+//   platform:           'unknown',   // server cannot determine device platform
+//   startDate:          <ISO now>,
+//   renewalDate:        null,
+//   isActive:           true,
+//   isTrial:            false,
+//   trialDaysRemaining: 0,
+//   isFoundingMember:   false,
+//   createdAt:          FieldValue.serverTimestamp(),
+//   updatedAt:          FieldValue.serverTimestamp(),
+// }
+// ═══════════════════════════════════════════════════════════════════════════
+exports.seedWelcomeSubscription = functions
+    .region("europe-west2") // REGION-RESIDENCY-1
+    .firestore.document("users/{userId}")
+    .onCreate(async (_snap, context) => {
+    var _a, _b;
+    const userId = context.params.userId;
+    functions.logger.info(`[seedWelcomeSubscription] Triggered for userId=${userId}`);
+    const subRef = db.collection("subscriptions").doc(userId);
+    // ── IDEMPOTENCY CHECK ─────────────────────────────────────────────────
+    // Read before write.  If the doc already exists (Stripe already set a real
+    // tier, or a previous CF invocation succeeded) do nothing — never clobber.
+    const existing = await subRef.get();
+    if (existing.exists) {
+        functions.logger.info(`[seedWelcomeSubscription] subscriptions/${userId} already exists ` +
+            `(tier=${(_b = (_a = existing.data()) === null || _a === void 0 ? void 0 : _a.tier) !== null && _b !== void 0 ? _b : "unknown"}) — skipping seed.`);
+        return;
+    }
+    // ── SEED WELCOME DOC ──────────────────────────────────────────────────
+    const now = new Date().toISOString();
+    try {
+        await subRef.set({
+            userId: userId,
+            tier: "welcome",
+            billingPeriod: "monthly",
+            status: "active",
+            // Server cannot determine the client's device platform.
+            // Flutter SubscriptionService reads the doc for tier/status only;
+            // 'platform' is informational.  Stripe webhook overwrites on upgrade.
+            platform: "unknown",
+            startDate: now,
+            renewalDate: null,
+            isActive: true,
+            isTrial: false, // Welcome is free-forever, not a trial
+            trialDaysRemaining: 0, // No time limit on Welcome tier
+            isFoundingMember: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        functions.logger.info(`[seedWelcomeSubscription] Successfully seeded welcome subscription for userId=${userId}`);
+    }
+    catch (err) {
+        // Log and re-throw so Cloud Functions marks this invocation as failed
+        // and Cloud Tasks / the retry policy will attempt again.
+        functions.logger.error(`[seedWelcomeSubscription] Failed to seed subscription for userId=${userId}: ${String(err)}`);
+        throw err;
+    }
 });
 //# sourceMappingURL=index.js.map

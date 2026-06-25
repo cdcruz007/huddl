@@ -1304,37 +1304,21 @@ class FirebaseAuthService {
       'dateOfBirth': onboarding.dateOfBirth ?? '', // e.g. '1990-06-15'
     };
 
-    // PROFILE-COMMIT-1 + SUBSCRIPTION-DUP-1: atomic batch for the two critical
-    // writes. users + subscriptions commit together or not at all.
-    // subscriptions uses doc(userId).set(merge) — idempotent on retry,
-    // aligned with the Stripe-webhook write shape, and keyed by uid
-    // (the read path's primary lookup at firestore_service doc(uid)).
+    // PROFILE-COMMIT-1: atomic batch for the two client-writable, genuinely
+    // all-or-nothing writes: users + user_consents.
+    //
+    // subscriptions is intentionally NOT written here.  Entitlements are
+    // SERVER-AUTHORITATIVE — the Firestore rule is `allow write: if false`
+    // for all client SDKs.  The welcome-tier seed is handled by the
+    // seedWelcomeSubscription Cloud Function (Firestore users/{uid} onCreate
+    // trigger, Admin SDK), which fires moments after this batch commits.
+    // SubscriptionService falls back to UserSubscription.welcome() while the
+    // CF doc has not yet arrived, so there is no broken pre-seed window.
     try {
       final batch = _db.batch();
       batch.set(
         _db.collection('users').doc(userId),
         profile,
-        SetOptions(merge: true),
-      );
-      batch.set(
-        _db.collection('subscriptions').doc(userId),
-        {
-          'userId': userId,
-          'tier': 'welcome',
-          'billingPeriod': 'monthly',
-          'status': 'active',
-          'platform': kIsWeb
-              ? 'web'
-              : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android'),
-          'startDate': DateTime.now().toIso8601String(),
-          'renewalDate': null,
-          'isActive': true,
-          'isTrial': false,         // Welcome is free forever — NOT a trial
-          'trialDaysRemaining': 0,  // No time limit on Welcome tier
-          'isFoundingMember': false,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
         SetOptions(merge: true),
       );
       // LAYER-15: write consent record atomically with the account.

@@ -206,16 +206,22 @@ service cloud.firestore {
 
     // =========================================================================
     // SUBSCRIPTIONS  (one doc per user: subscriptions/{userId})
-    // Written exclusively by the backend (Stripe webhook handler via Admin SDK).
+    // Written exclusively by the backend (Stripe webhook handler via Admin SDK)
+    // and the seedWelcomeSubscription Cloud Function (Admin SDK).
     // Flutter reads to determine the user's tier on app start.
+    //
+    // Entitlements are SERVER-AUTHORITATIVE — the client NEVER writes this
+    // collection.  Welcome-tier seeding is handled by the
+    // seedWelcomeSubscription CF (users/{uid} Firestore onCreate trigger).
     // =========================================================================
     match /subscriptions/{userId} {
       // Users read their own subscription doc only.
       allow read: if isOwner(userId);
 
-      // Client never writes subscription docs — the Railway backend does via
-      // Admin SDK (which bypasses these rules).  Deny all client writes to
-      // prevent tier manipulation.
+      // Client never writes subscription docs — the Railway backend (Stripe
+      // webhook) and the seedWelcomeSubscription CF do via Admin SDK (which
+      // bypasses these rules).  Deny all client writes to prevent tier
+      // manipulation.
       allow write: if false;
     }
 
