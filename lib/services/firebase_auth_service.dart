@@ -1339,6 +1339,27 @@ class FirebaseAuthService {
           'recordedAt': FieldValue.serverTimestamp(),
         },
       );
+      // AUTH-TOKEN-RACE-1: force-refresh the ID token before committing the
+      // batch.  signInWithCredential resolves as soon as the Auth state is set
+      // locally, but the Firestore write channel may not yet carry the new
+      // token — so request.auth is still null at the rules layer, isOwner()
+      // returns false, and the whole batch is denied with PERMISSION_DENIED.
+      //
+      // getIdToken(true) performs a network round-trip to exchange the Auth
+      // credential for a signed ID token and waits until it is fully issued.
+      // After this await, the Firebase SDK's gRPC/HTTP channel attaches the
+      // fresh token to every subsequent Firestore request, guaranteeing
+      // request.auth.uid is populated when the batch evaluates.
+      //
+      // Confirmed root cause: device log shows "Notifying auth state listeners
+      // about user (hRzKu...)" immediately followed by PERMISSION_DENIED —
+      // the batch fired in the same event-loop turn as sign-in completing.
+      // Rules Playground verifies the rules themselves are correct (write
+      // allowed when request.auth.uid is valid) — the race is the only cause.
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        await currentUser.getIdToken(true); // force-refresh; awaits a live token
+      }
       await batch.commit();
       // LAYER-16-NO-FUNNEL-1: funnel step 5 — atomic batch committed successfully.
       // Fires inside the try so it only runs when the write actually landed.
