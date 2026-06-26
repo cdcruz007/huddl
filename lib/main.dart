@@ -16,6 +16,7 @@ import 'services/subscription_service.dart';
 import 'services/browser_storage.dart';
 import 'services/huddl_user_service.dart';
 import 'services/user_privacy_prefs_service.dart';
+import 'services/firebase_auth_service.dart';
 
 /// True only when the app is built with --dart-define=QA_BUILD=true.
 /// Use this for QA / TestFlight builds that need Firebase Console test phone
@@ -232,19 +233,36 @@ void main() async {
   } catch (_) {}
 
   // ── Sync current user's Firestore profile on every cold start ─────────
-  // This ensures the borough field is always up-to-date for the borough
-  // member picker, including users who were already logged in before this
-  // feature was added.
+  // ORPHAN-GUARD-1: Only call syncCurrentUserProfile() when the signed-in
+  // user has a COMPLETE, committed profile (isOnboarding==false AND
+  // borough non-empty). Calling it for a half-provisioned Auth session
+  // (orphan uid) triggers a Firestore set on users/{uid} that will be
+  // PERMISSION_DENIED — the stale token has never cleared the auth gate
+  // in Firestore rules (isOwner + birthYear/Month/Day is int checks).
   //
-  // v5 fix: Do NOT guard with currentUser != null here — on web, currentUser
-  // is still null at this point even for authenticated users (async rehydration).
-  // syncCurrentUserProfile() has its own uid == null guard inside and is safe
-  // to call unconditionally. By this point the v5 reset block above has already
-  // awaited authStateChanges().first, which triggers auth rehydration, so
-  // currentUser SHOULD be non-null — but we skip the guard to be safe.
+  // hasCompletedOnboarding() checks:
+  //   • doc.exists (no Firestore doc → false)
+  //   • isOnboarding == false (explicit false only — absent/true → false)
+  //   • borough.isNotEmpty (null-borough = broken account → false)
+  // Any of those failing → skip the sync so we never trigger a denied
+  // write at startup. The splash router will then route the user to
+  // /onboarding (or sign-out the orphan — see ORPHAN-DETECT-1 in splash).
+  //
+  // Timeout: 5 s for the Firestore probe, 8 s total safety net.
+  // Fail OPEN (catch _): on network error we skip sync rather than block
+  // startup — the sync will happen again on the next launch or after login.
   try {
-    await HuddlUserService().syncCurrentUserProfile()
-        .timeout(const Duration(seconds: 8));
+    final profileComplete = await FirebaseAuthService()
+        .hasCompletedOnboarding()
+        .timeout(const Duration(seconds: 5), onTimeout: () => false);
+    if (profileComplete) {
+      await HuddlUserService().syncCurrentUserProfile()
+          .timeout(const Duration(seconds: 8));
+    } else {
+      if (kDebugMode) {
+        debugPrint('[main] syncCurrentUserProfile skipped — profile not complete (orphan guard)');
+      }
+    }
   } catch (_) {}
 
   // ── Push notifications — DEFERRED to MainShell ────────────────────────

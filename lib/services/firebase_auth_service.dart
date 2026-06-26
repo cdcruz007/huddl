@@ -415,6 +415,23 @@ class FirebaseAuthService {
           return AuthResult.failure(
               'Verification session expired. Please go back and request a new code.');
         }
+        // ── ORPHAN-SIGNOUT-1 (web): pre-flight orphan eviction ──────────
+        // Same logic as the native path: sign out any incomplete-profile
+        // session BEFORE confirm() so the web OTP flow also gets a fresh uid.
+        if (isOnboarding && _auth.currentUser != null) {
+          try {
+            final profileComplete = await hasCompletedOnboarding()
+                .timeout(const Duration(seconds: 4), onTimeout: () => false);
+            if (!profileComplete) {
+              _log('verifySmsCode(web): orphan detected (uid=${_auth.currentUser?.uid}) '
+                  '— signing out before confirm() so a clean session is created');
+              await _auth.signOut();
+            }
+          } catch (_) {
+            // Could not check — do NOT sign out blindly; let the flow continue.
+          }
+        }
+        // ────────────────────────────────────────────────────────────────
         final userCred = await _webConfirmationResult!.confirm(smsCode);
         final isNewUser = userCred.additionalUserInfo?.isNewUser ?? false;
         if (isNewUser || (isOnboarding && !(await hasUserProfile()))) {
@@ -467,6 +484,41 @@ class FirebaseAuthService {
         return AuthResult.failure(
             'Verification session expired. Please go back and request a new code.');
       }
+
+      // ── ORPHAN-SIGNOUT-1: pre-flight orphan eviction ────────────────────
+      // If there is already a signed-in user and we are in the onboarding
+      // flow, verify they have a COMPLETE profile.  A half-provisioned
+      // ("orphan") Auth session — Auth uid exists, no Firestore profile or
+      // profile is not complete — MUST be signed out BEFORE we call
+      // signInWithCredential.
+      //
+      // Why before, not after?  PhoneAuthCredential is single-use: once
+      // consumed by signInWithCredential the credential cannot be replayed.
+      // If the credential is linked to the orphan uid (same phone number),
+      // Firebase Auth returns isNewUser=false and the same stale uid — we
+      // are stuck in the orphan loop.
+      //
+      // Signing out first causes Firebase to treat the subsequent
+      // signInWithCredential as a fresh session: it creates a new uid,
+      // isNewUser=true fires, _createUserProfile runs on the clean uid,
+      // and the batch.commit() succeeds under the real Firestore rules.
+      //
+      // Safety: fail open (catch _) — if the orphan check or sign-out
+      // itself fails we still proceed and let the normal error path handle it.
+      if (isOnboarding && _auth.currentUser != null) {
+        try {
+          final profileComplete = await hasCompletedOnboarding()
+              .timeout(const Duration(seconds: 4), onTimeout: () => false);
+          if (!profileComplete) {
+            _log('verifySmsCode: orphan detected (uid=${_auth.currentUser?.uid}) '
+                '— signing out before signInWithCredential so a clean session is created');
+            await _auth.signOut();
+          }
+        } catch (_) {
+          // Could not check — do NOT sign out blindly; let the flow continue.
+        }
+      }
+      // ───────────────────────────────────────────────────────────────────
 
       _log('verifySmsCode: signing in with credential, verificationId=$vId');
       final credential = PhoneAuthProvider.credential(
@@ -1450,9 +1502,19 @@ class FirebaseAuthService {
       // the batch fired in the same event-loop turn as sign-in completing.
       // Rules Playground verifies the rules themselves are correct (write
       // allowed when request.auth.uid is valid) — the race is the only cause.
+      // AUTH-TOKEN-RACE-1 + ORPHAN-SIGNOUT-1 correctness assertion:
+      // _auth.currentUser here is the NEW user created by signInWithCredential
+      // (the ORPHAN-SIGNOUT-1 pre-flight signed out the stale uid BEFORE
+      // signInWithCredential ran, so Firebase returned a fresh session).
+      // userId == currentUser.uid is verified in the debug log below.
       final currentUser = _auth.currentUser;
       if (currentUser != null) {
+        _log('AUTH-TOKEN-RACE-1: force-refreshing token for uid=${currentUser.uid} '
+            '(profile target uid=$userId — match=${currentUser.uid == userId})');
         await currentUser.getIdToken(true); // force-refresh; awaits a live token
+      } else {
+        _log('AUTH-TOKEN-RACE-1: WARNING — currentUser is null before batch.commit(), '
+            'batch will fire without a token; PERMISSION_DENIED may follow');
       }
       await batch.commit();
       // LAYER-16-NO-FUNNEL-1: funnel step 5 — atomic batch committed successfully.

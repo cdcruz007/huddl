@@ -190,7 +190,31 @@ class _SplashScreenState extends State<SplashScreen>
             destination = biometricEnabled ? '/biometric_lock' : '/home';
           }
         } else {
-          destination = '/onboarding'; // half-account / mid-flow-quit / no-borough → recover
+          // ORPHAN-DETECT-1: signed in but profile is NOT complete.
+          // This is an orphan Auth session — Auth uid exists but profile was
+          // never fully committed (crash/network failure mid-onboarding) OR
+          // borough is missing (broken account).
+          //
+          // Problem: without sign-out, the same stale uid is reused on every
+          // subsequent launch.  verifySmsCode then receives isNewUser=false,
+          // skips the `isNewUser` branch, and hits the stale-auth branch —
+          // which tries to write under the orphan's invalid token →
+          // PERMISSION_DENIED on every Firestore rule that checks isOwner().
+          //
+          // Fix: sign out the orphan session NOW, BEFORE routing to /onboarding.
+          // The next onboarding flow will start from a clean (signed-out) state,
+          // signInWithCredential will return isNewUser=true, and the profile
+          // batch will commit under a fresh, valid token.
+          //
+          // Fail open: if sign-out itself throws, swallow the error and route
+          // to /onboarding anyway — the ORPHAN-SIGNOUT-1 pre-flight in
+          // verifySmsCode is the second line of defence.
+          try {
+            await FirebaseAuthService().signOut();
+            debugPrint('[SplashScreen] ORPHAN-DETECT-1: signed out incomplete-profile '
+                'session before routing to /onboarding');
+          } catch (_) {}
+          destination = '/onboarding';
         }
       } else {
         destination = '/onboarding';
