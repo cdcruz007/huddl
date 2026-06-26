@@ -62,6 +62,15 @@ class OnboardingDataService {
   int? _birthMonth;       // Derived birth month (non-sensitive) — AGE-1-R1
   int? _birthDay;         // Derived birth day   (non-sensitive) — AGE-1-R1
 
+  // RETURNING-USER-1: set to true by verifySmsCode when the Auth entry already
+  // existed and the user has a valid Firestore profile — i.e. they are a
+  // returning user whose email link may have expired.
+  // EmailPendingVerificationScreen reads this on arrival and auto-resends once
+  // if true, then immediately clears the flag so it cannot fire twice.
+  // NOT persisted across cold-start app relaunches (only within the session
+  // that triggered the re-onboarding path).
+  bool _wasReturningUser = false;
+
   // LAYER-15 — consent capture (in-memory only; committed to Firestore in
   // _createUserProfile via the atomic batch so the record is durable and
   // uid-keyed from the moment the account is created).
@@ -112,6 +121,9 @@ class OnboardingDataService {
   bool? get consentMarketing        => _consentMarketing;
   String? get consentPolicyVersion  => _consentPolicyVersion;
   DateTime? get consentedAt         => _consentedAt;
+
+  // RETURNING-USER-1
+  bool get wasReturningUser => _wasReturningUser;
 
   /// Whether the user has changed their postcode (moved to a different borough)
   bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
@@ -239,6 +251,14 @@ class OnboardingDataService {
     _saveToStorage();
   }
 
+  // RETURNING-USER-1: called by verifySmsCode on the returning-user path.
+  // Cleared immediately after EmailPendingVerificationScreen reads it.
+  void setWasReturningUser(bool value) {
+    _wasReturningUser = value;
+    _log('wasReturningUser set: $value');
+    // Intentionally NOT persisted — session-lived signal only.
+  }
+
   // LAYER-15: capture consent values at the data_consent_screen step.
   // Called before the uid exists; _createUserProfile reads these getters and
   // writes a durable user_consents/{uid} record atomically with the account.
@@ -351,6 +371,7 @@ class OnboardingDataService {
     _birthYear  = null;   // AGE-1
     _birthMonth = null;   // AGE-1-R1
     _birthDay   = null;   // AGE-1-R1
+    _wasReturningUser = false; // RETURNING-USER-1
     // LAYER-15: consent fields — in-memory only, no storage to clear
     _consentDataProcessing = null;
     _consentMarketing      = null;

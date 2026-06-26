@@ -58,8 +58,33 @@ class _EmailPendingVerificationScreenState
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _email = (OnboardingDataService().email ?? '').trim();
+    // RETURNING-USER-1: if this is a returning user whose previous verification
+    // link may have expired, auto-send a fresh email immediately on arrival.
+    // The flag is read-and-cleared in one shot so it cannot fire twice even if
+    // the widget is rebuilt or the user leaves and returns to this screen.
+    // _resendEmail() respects the 60s cooldown so a subsequent manual tap is
+    // correctly throttled. Runs fire-and-forget (unawaited) so it doesn't
+    // block the 3s polling delay that follows.
+    unawaited(_autoResendIfReturningUser());
     // Give the backend 3 s to finish writing the welcome email before polling
     Future.delayed(const Duration(seconds: 3), _startPolling);
+  }
+
+  /// RETURNING-USER-1: auto-resend a fresh verification email once for
+  /// returning users, then clear the flag so this is strictly one-shot.
+  Future<void> _autoResendIfReturningUser() async {
+    final onboarding = OnboardingDataService();
+    if (!onboarding.wasReturningUser) return;
+    // Clear immediately — before the await — so even if the user navigates
+    // back to this screen a second time the auto-send does not repeat.
+    onboarding.setWasReturningUser(false);
+    if (kDebugMode) {
+      debugPrint('[EmailPending] RETURNING-USER-1: auto-resending verification email');
+    }
+    // Small delay to let the Firebase ID token settle after verifySmsCode
+    // resolved — the backend's authMiddleware needs a valid token.
+    await Future.delayed(const Duration(milliseconds: 800));
+    await _resendEmail();
   }
 
   @override
@@ -187,6 +212,16 @@ class _EmailPendingVerificationScreenState
                     Text(
                       'Check your inbox!',
                       style: HuddlText.display(),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Didn\'t get it? Tap Resend below.',
+                      style: HuddlText.body(
+                          color: HuddlColors.textSecondary,
+                          weight: FontWeight.w500),
                       textAlign: TextAlign.center,
                     ),
 

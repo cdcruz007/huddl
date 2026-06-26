@@ -458,6 +458,10 @@ class FirebaseAuthService {
               accountDeleted: true,
             );
           }
+          // RETURNING-USER-1: web path — same flag so EmailPendingVerificationScreen
+          // auto-sends a fresh verification email for this returning user.
+          OnboardingDataService().setWasReturningUser(true);
+          _log('verifySmsCode(web): returning user — wasReturningUser flag set');
           await HuddlUserService().syncCurrentUserProfile();
         }
         // Clear the explicit logout flag — user has successfully authenticated
@@ -581,6 +585,11 @@ class FirebaseAuthService {
           );
         } else {
           // Normal returning user with valid profile — sync and continue.
+          // RETURNING-USER-1: flag this session so EmailPendingVerificationScreen
+          // auto-sends a fresh verification email on arrival (their old token may
+          // have expired — they must NOT rely on a stale link sitting in their inbox).
+          OnboardingDataService().setWasReturningUser(true);
+          _log('verifySmsCode: returning user — wasReturningUser flag set');
           await HuddlUserService().syncCurrentUserProfile();
         }
       }
