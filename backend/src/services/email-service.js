@@ -56,22 +56,25 @@ const FROM_NAME    = 'Huddl';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.huddlapp.co.uk';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
+// BRAND PALETTE  (corrected to match lib/theme/huddl_colors.dart — HuddlColors)
+// Replaces the old off-brand object that used #FCA878 (pale peach) as primary
+// and #3580F0 (website blue) as accent. Now uses the real app tokens.
 const B = {
-  primary      : '#FCA878',   // Huddl orange — CTA buttons, accents
-  primaryDark  : '#E8935E',   // darker orange for hover/gradient
-  primaryLight : '#FFD4B2',   // light orange tint
-  accent       : '#3580F0',   // website blue — header bar, links
-  accentDark   : '#2563EB',   // darker blue
-  peachLight   : '#FFF0E6',   // peach highlight panels
-  peachBg      : '#FFF8F3',   // outer email background
-  dark         : '#1E2235',   // near-black for headings
-  text         : '#4A4A5A',   // body text
-  textLight    : '#9E9E9E',   // captions / footer
-  white        : '#FFFFFF',
-  success      : '#199A85',
-  error        : '#E53935',
-  warningBg    : '#FFF3E0',
-  warningBorder: '#E88730',
+  primary      : '#FF965C',   // HuddlColors.primary — THE brand orange (buttons, accents)
+  primaryDark  : '#F2743A',   // connectRingDeep — pressed/hover, gradient end
+  primaryLight : '#FFC7A8',   // primaryPale — soft tint / hairlines
+  accent       : '#FF965C',   // was website blue #3580F0 — now orange (no blue anywhere)
+  peachBg      : '#FFF3ED',   // peachSurface — outer email background
+  peachLight   : '#FFF5F0',   // peachWarm — footer / soft panels
+  dark         : '#1A1A1A',   // neutral900 — headings (near-black)
+  text         : '#43464D',   // textDark — body copy
+  textLight    : '#6C6C6C',   // neutral600 — captions / footer (readable, not washed out)
+  white        : '#FFFFFF',   // neutral0
+  success      : '#199A85',   // brandTeal — the "verified / you're in" accent
+  successBg    : '#E6F5F3',   // tealBg — soft success panel
+  error        : '#FF5151',   // HuddlColors.error
+  warningBg    : '#FEF3C7',   // warningBg
+  warningBorder: '#F59E0B',   // warning
 };
 
 // ── Inline illustration data-URIs (PNG assets from the app) ──────────────────
@@ -87,28 +90,9 @@ const ILLUS_WAVE       = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABjEAAAh2
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
 /**
- * Huddl wordmark — inline SVG so it renders pixel-perfect in every email client.
- * Uses the website's typeface style: lowercase bold, orange on white pill.
- */
-function _logoSvg() {
-  return `
-    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto 10px;">
-      <tr>
-        <td style="background:#ffffff;border-radius:12px;padding:8px 20px;
-                    display:inline-block;line-height:1;">
-          <span style="font-size:24px;font-weight:900;color:${B.primary};
-                        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,
-                        Helvetica,Arial,sans-serif;letter-spacing:-0.5px;">huddl</span>
-        </td>
-      </tr>
-    </table>`;
-}
-
-/**
- * Wraps body HTML in the Huddl-branded email shell.
- * Header: website blue (#3580F0) with white huddl wordmark.
- * Body:   white card on warm peach background.
- * Footer: peach strip with privacy / terms / manage links.
+ * Wraps body HTML in the Huddl email shell — minimalist (Airbnb/Spotify style).
+ * No coloured header bar. Small orange wordmark above white card over peach bg.
+ * One brand-colour moment = the CTA button. Everything else near-black on white.
  */
 function _wrap(title, bodyHtml) {
   return `<!DOCTYPE html>
@@ -116,64 +100,67 @@ function _wrap(title, bodyHtml) {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <meta name="color-scheme" content="light"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-schemes" content="light"/>
   <title>${title}</title>
 </head>
 <body style="margin:0;padding:0;background:${B.peachBg};
              font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,
-             Helvetica,Arial,sans-serif;">
+             Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;">
 
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
-         style="background:${B.peachBg};padding:40px 16px;">
+         style="background:${B.peachBg};padding:48px 16px;">
     <tr>
       <td align="center">
 
+        <!-- Logo above the card — small, restrained, brand orange -->
+        <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto 20px;">
+          <tr>
+            <td style="text-align:center;">
+              <span style="font-size:22px;font-weight:900;color:${B.primary};
+                           letter-spacing:-0.5px;
+                           font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
+                           Roboto,Helvetica,Arial,sans-serif;">huddl</span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- White card -->
         <table width="560" cellpadding="0" cellspacing="0" role="presentation"
                style="max-width:560px;background:${B.white};border-radius:20px;
-                      overflow:hidden;box-shadow:0 4px 24px rgba(53,128,240,0.10);">
+                      overflow:hidden;box-shadow:0 2px 16px rgba(26,26,26,0.06);">
 
-          <!-- ══ HEADER ═══════════════════════════════════════════════════════ -->
+          <!-- BODY -->
           <tr>
-            <td style="background:${B.accent};padding:26px 40px 22px;text-align:center;">
-              ${_logoSvg()}
-              <p style="margin:0;color:rgba(255,255,255,0.85);font-size:12px;
-                         letter-spacing:0.4px;">Your local parent community</p>
-            </td>
-          </tr>
-
-          <!-- ══ BODY ══════════════════════════════════════════════════════════ -->
-          <tr>
-            <td style="padding:36px 40px 28px;">
+            <td style="padding:40px 40px 32px;">
               ${bodyHtml}
-            </td>
-          </tr>
-
-          <!-- ══ FOOTER ════════════════════════════════════════════════════════ -->
-          <tr>
-            <td style="padding:20px 40px 28px;background:${B.peachLight};
-                        border-top:1px solid ${B.primaryLight};text-align:center;">
-              <p style="margin:0 0 6px;font-size:12px;color:${B.textLight};">
-                Huddl &middot; Cambridge, UK
-              </p>
-              <p style="margin:0;font-size:12px;color:${B.textLight};">
-                <a href="${FRONTEND_URL}/privacy"
-                   style="color:${B.accent};text-decoration:none;">Privacy Policy</a>
-                &nbsp;&middot;&nbsp;
-                <a href="${FRONTEND_URL}/terms"
-                   style="color:${B.accent};text-decoration:none;">Terms of Service</a>
-                &nbsp;&middot;&nbsp;
-                <a href="${FRONTEND_URL}/settings/notifications"
-                   style="color:${B.accent};text-decoration:none;">Manage Emails</a>
-              </p>
-              <p style="margin:8px 0 0;font-size:11px;color:${B.textLight};">
-                You can unsubscribe from Huddl emails at any time from your inbox
-                or in the app under Profile &rarr; Notifications.
-              </p>
             </td>
           </tr>
 
         </table>
         <!-- /Card -->
+
+        <!-- Footer — muted, outside the card -->
+        <table width="560" cellpadding="0" cellspacing="0" role="presentation"
+               style="max-width:560px;margin:20px auto 0;">
+          <tr>
+            <td style="text-align:center;padding:0 24px;">
+              <p style="margin:0 0 6px;font-size:12px;color:${B.textLight};">
+                Huddl &middot; Cambridge, UK
+              </p>
+              <p style="margin:0;font-size:12px;color:${B.textLight};">
+                <a href="${FRONTEND_URL}/privacy"
+                   style="color:${B.textLight};text-decoration:underline;">Privacy</a>
+                &nbsp;&middot;&nbsp;
+                <a href="${FRONTEND_URL}/terms"
+                   style="color:${B.textLight};text-decoration:underline;">Terms</a>
+                &nbsp;&middot;&nbsp;
+                <a href="${FRONTEND_URL}/settings/notifications"
+                   style="color:${B.textLight};text-decoration:underline;">Manage emails</a>
+              </p>
+            </td>
+          </tr>
+        </table>
 
       </td>
     </tr>
@@ -242,7 +229,7 @@ async function sendWelcomeEmail({ email, firstName, borough, verifyUrl }) {
 
   // ── Verification callout (shown when verifyUrl is supplied) ───────────────
   const verifyBlock = verifyUrl ? `
-    <div style="background:linear-gradient(135deg,${B.accent},${B.accentDark});
+    <div style="background:linear-gradient(135deg,${B.primary},${B.primaryDark});
                 border-radius:16px;padding:24px;margin:0 0 28px;text-align:center;">
       <p style="margin:0 0 6px;font-size:18px;font-weight:800;color:#ffffff;">
         One last step 🎉
@@ -325,65 +312,48 @@ async function sendWelcomeEmail({ email, firstName, borough, verifyUrl }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 1b. STANDALONE EMAIL VERIFICATION  (sent separately when only verifyUrl available)
 // ─────────────────────────────────────────────────────────────────────────────
+// STANDALONE EMAIL VERIFICATION — minimalist single-column.
+// One illustration (ILLUS_WELCOME), one headline, one sentence, ONE button.
+// Button names the ACTION ("Confirm email") and goes to verifyUrl.
+// Plain-text fallback link + expiry note + "didn't sign up" security line.
 async function sendVerificationEmail({ email, firstName, verifyUrl }) {
-  if (!email) return { success: false, error: 'no email address' };
   if (!verifyUrl) return { success: false, error: 'no verifyUrl' };
-
   const name = firstName || 'there';
 
   const body = `
-    ${_illus(ILLUS_TWO_PEOPLE, 'Two people connecting', '200px')}
+    ${_illus(ILLUS_WELCOME, 'Parents in the Huddl community', '200px')}
 
-    <h2 style="margin:0 0 12px;font-size:24px;font-weight:800;
+    <h1 style="margin:8px 0 12px;font-size:24px;font-weight:800;
                color:${B.dark};text-align:center;line-height:1.3;">
-      Verify your email address
-    </h2>
+      Confirm your email
+    </h1>
 
     <p style="color:${B.text};font-size:15px;line-height:1.65;text-align:center;
-               margin:0 0 28px;">
-      Hi ${name}, just one quick step to confirm your email and unlock
-      full access to your Huddl community.
+              margin:0 0 8px;">
+      Hi ${name} — welcome to Huddl. Tap below to confirm your email and finish
+      setting up your account.
     </p>
 
-    <div style="background:linear-gradient(135deg,${B.accent},${B.accentDark});
-                border-radius:16px;padding:28px 32px;margin:0 0 28px;text-align:center;">
-      <p style="margin:0 0 8px;font-size:17px;font-weight:800;color:#ffffff;">
-        Confirm your email
-      </p>
-      <p style="margin:0 0 22px;font-size:14px;color:rgba(255,255,255,0.88);line-height:1.5;">
-        Tap below to verify. This link is valid for <strong style="color:#ffffff;">72&nbsp;hours</strong>.
-      </p>
-      <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
-        <tr>
-          <td style="background:#ffffff;border-radius:50px;padding:0;">
-            <a href="${verifyUrl}"
-               style="display:inline-block;padding:15px 44px;color:${B.accent};
-                      font-weight:800;font-size:16px;text-decoration:none;
-                      border-radius:50px;letter-spacing:0.3px;">
-              Verify My Email &rarr;
-            </a>
-          </td>
-        </tr>
-      </table>
-    </div>
+    ${_btn('Confirm email', verifyUrl)}
 
-    <p style="color:${B.text};font-size:14px;line-height:1.6;text-align:center;
-               margin:0 0 8px;">
-      If the button doesn't work, copy and paste this link into your browser:
-    </p>
-    <p style="word-break:break-all;font-size:12px;color:${B.accent};text-align:center;
-               margin:0 0 24px;">
-      ${verifyUrl}
+    <p style="color:${B.textLight};font-size:13px;line-height:1.6;text-align:center;
+              margin:8px 0 0;">
+      This link expires in 24&nbsp;hours.
     </p>
 
-    ${_divider()}
+    <p style="color:${B.textLight};font-size:13px;line-height:1.6;text-align:center;
+              margin:20px 0 0;">
+      Button not working? Paste this link into your browser:<br/>
+      <a href="${verifyUrl}" style="color:${B.primary};word-break:break-all;
+         text-decoration:underline;">${verifyUrl}</a>
+    </p>
 
-    <p style="margin:0;font-size:13px;color:${B.textLight};text-align:center;">
-      If you didn't create a Huddl account, you can safely ignore this email.
-      Your address will not be used.
+    <p style="color:${B.textLight};font-size:12px;line-height:1.6;text-align:center;
+              margin:24px 0 0;">
+      Didn't create a Huddl account? You can safely ignore this email.
     </p>`;
 
-  return _send(email, 'Verify your Huddl email address', body);
+  return _send(email, 'Confirm your email for Huddl', body);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

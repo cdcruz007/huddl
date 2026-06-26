@@ -339,55 +339,68 @@ router.get('/smtp-check', async (req, res) => {
 // Branded HTML page returned to the user's browser after clicking Verify Email
 // ─────────────────────────────────────────────────────────────────────────────
 function _verifyPage(type, message) {
-  const icons = { success: '✅', already: '✅', expired: '⏳', invalid: '❌', error: '⚠️' };
-  const icon  = icons[type] || '📧';
-  const isOk  = type === 'success' || type === 'already';
+  const isOk = type === 'success' || type === 'already';
+
+  // Inline SVG status mark — teal tick for success, soft amber/red ring otherwise.
+  const okMark = `
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none"
+         xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px;">
+      <circle cx="28" cy="28" r="28" fill="#E6F5F3"/>
+      <path d="M17 28.5l7 7 15-15" stroke="#199A85" stroke-width="3.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  const warnMark = `
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none"
+         xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px;">
+      <circle cx="28" cy="28" r="28" fill="#FEF3C7"/>
+      <path d="M28 16v16" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="28" cy="40" r="2.5" fill="#F59E0B"/>
+    </svg>`;
+
+  const heading = isOk ? "You're all set" : 'We hit a snag';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Email Verification — Huddl</title>
+  <meta name="color-scheme" content="light only"/>
+  <title>Email verification — Huddl</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#FFF8F3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-         display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
-    .card{background:#fff;border-radius:20px;padding:0;max-width:480px;width:100%;
-          text-align:center;box-shadow:0 4px 24px rgba(53,128,240,0.10);overflow:hidden;}
-    .header{background:#3580F0;padding:24px 32px 20px;}
-    .logo{font-size:22px;font-weight:900;color:#FCA878;letter-spacing:-0.5px;
-          background:#fff;border-radius:10px;display:inline-block;
-          padding:6px 18px;line-height:1;}
-    .tagline{color:rgba(255,255,255,0.85);font-size:12px;margin-top:8px;letter-spacing:0.4px;}
-    .body{padding:36px 32px 28px;}
-    .icon{font-size:56px;margin-bottom:16px;}
-    h1{font-size:22px;font-weight:800;color:#1E2235;margin-bottom:12px;}
-    p{font-size:15px;color:#4A4A5A;line-height:1.6;margin-bottom:24px;}
-    .btn{display:inline-block;background:#FCA878;color:#fff;font-weight:800;font-size:15px;
-         padding:14px 40px;border-radius:50px;text-decoration:none;letter-spacing:0.3px;}
-    .footer-strip{background:#FFF0E6;border-top:1px solid #FFD4B2;padding:16px 32px;
-                  font-size:12px;color:#9E9E9E;}
+    body{background:#FFF3ED;
+         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,
+         Helvetica,Arial,sans-serif;
+         display:flex;align-items:center;justify-content:center;
+         min-height:100vh;padding:24px;}
+    .wrap{width:100%;max-width:460px;text-align:center;}
+    .logo{font-size:22px;font-weight:900;color:#FF965C;letter-spacing:-0.5px;
+          margin-bottom:20px;}
+    .card{background:#fff;border-radius:20px;padding:40px 32px;
+          box-shadow:0 2px 16px rgba(26,26,26,0.06);}
+    h1{font-size:23px;font-weight:800;color:#1A1A1A;margin-bottom:10px;line-height:1.3;}
+    p{font-size:15px;color:#43464D;line-height:1.6;margin-bottom:24px;}
+    .btn{display:inline-block;background:#FF965C;color:#fff;font-weight:800;
+         font-size:15px;padding:14px 40px;border-radius:50px;text-decoration:none;
+         letter-spacing:0.3px;}
+    .hint{font-size:13px;color:#6C6C6C;margin:0;}
+    .foot{margin-top:20px;font-size:12px;color:#6C6C6C;}
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="header">
-      <div class="logo">huddl</div>
-      <div class="tagline">Your local parent community</div>
-    </div>
-    <div class="body">
-      <div class="icon">${icon}</div>
-      <h1>${isOk ? 'Email Verified!' : 'Verification Failed'}</h1>
+  <div class="wrap">
+    <div class="logo">huddl</div>
+    <div class="card">
+      ${isOk ? okMark : warnMark}
+      <h1>${heading}</h1>
       <p>${message}</p>
       ${isOk
-        ? `<a href="${FRONTEND_URL}" class="btn">Open Huddl App</a>`
-        : `<p style="font-size:13px;color:#9E9E9E;">
-             Return to the app and tap <strong>&ldquo;Resend email&rdquo;</strong> to get a fresh link.
-           </p>`
+        ? `<a href="${FRONTEND_URL}" class="btn">Open Huddl</a>`
+        : `<p class="hint">Return to the Huddl app and tap
+             <strong>&ldquo;Resend email&rdquo;</strong> to get a fresh link.</p>`
       }
     </div>
-    <div class="footer-strip">Huddl &middot; Cambridge, UK</div>
+    <div class="foot">Huddl &middot; Cambridge, UK</div>
   </div>
 </body>
 </html>`;
