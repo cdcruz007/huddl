@@ -1267,6 +1267,66 @@ class FirebaseAuthService {
 
     final email = (onboarding.email ?? '').trim();
 
+    // ── AGE-DOB-FALLBACK-1: resolve birth ints, guaranteed non-null ──────────
+    // birthYear/Month/Day are stored in BrowserStorage (non-sensitive).
+    // On a cold-start or app-reload mid-onboarding, BrowserStorage can be
+    // absent while dateOfBirth (in SecurePiiStorage / Keychain) survives —
+    // the cast `as int?` returns null, the Firestore `is int` rule check fails,
+    // and the entire batch is PERMISSION_DENIED even though the user is valid.
+    //
+    // Resolution priority:
+    //   1. In-memory int? fields (happy path — set when DOB screen completes).
+    //   2. Parse from dateOfBirth ISO string (e.g. '1990-06-15') — survives
+    //      reload because it lives in SecurePiiStorage / Keychain.
+    //   3. Neither available → fail-fast BEFORE the batch with a clear message;
+    //      do NOT attempt a write that the rules will deny.
+    int? resolvedBirthYear  = onboarding.birthYear;
+    int? resolvedBirthMonth = onboarding.birthMonth;
+    int? resolvedBirthDay   = onboarding.birthDay;
+    final String resolvedDateOfBirth = onboarding.dateOfBirth ?? '';
+
+    if (resolvedBirthYear == null ||
+        resolvedBirthMonth == null ||
+        resolvedBirthDay == null) {
+      // Attempt fallback: parse from the ISO string (format: 'yyyy-MM-dd').
+      if (resolvedDateOfBirth.isNotEmpty) {
+        try {
+          final parts = resolvedDateOfBirth.split('-');
+          if (parts.length == 3) {
+            resolvedBirthYear  = int.parse(parts[0]);
+            resolvedBirthMonth = int.parse(parts[1]);
+            resolvedBirthDay   = int.parse(parts[2]);
+            _log('AGE-DOB-FALLBACK-1: re-derived DOB ints from dateOfBirth string '
+                '"$resolvedDateOfBirth" → y=$resolvedBirthYear '
+                'm=$resolvedBirthMonth d=$resolvedBirthDay');
+          }
+        } catch (e) {
+          _log('AGE-DOB-FALLBACK-1: failed to parse dateOfBirth "$resolvedDateOfBirth": $e');
+        }
+      }
+    }
+
+    // Fail-fast guard: if DOB ints are still null after fallback, the batch
+    // would be denied by the rules (`is int` check fails for null).  Surface a
+    // targeted error so the user is directed to re-enter their DOB rather than
+    // seeing the generic profile-write failure.
+    if (resolvedBirthYear == null ||
+        resolvedBirthMonth == null ||
+        resolvedBirthDay == null) {
+      _log('AGE-DOB-FALLBACK-1: DOB could not be resolved '
+          '(dateOfBirth="$resolvedDateOfBirth") — aborting batch');
+      return false; // PROFILE-COMMIT-1: caller shows targeted retry message
+    }
+
+    // At this point Dart flow analysis has narrowed all three to non-nullable
+    // int (the null returns above are exhaustive).  Log values in debug mode
+    // so a future regression is immediately visible in device logs.
+
+    _log('AGE-DOB-FALLBACK-1: DOB resolved — '
+        'y=$resolvedBirthYear m=$resolvedBirthMonth d=$resolvedBirthDay '
+        'dateOfBirth="$resolvedDateOfBirth"');
+    // ── end AGE-DOB-FALLBACK-1 ───────────────────────────────────────────────
+
     final Map<String, dynamic> profile = {
       'uid': userId,
       'name': name,
@@ -1298,10 +1358,12 @@ class FirebaseAuthService {
       // AGE-1 / AGE-1-R1: full DOB components written to user doc.
       // Firestore rules enforce precise 18+ via year/month/day at create time.
       // dateOfBirth (ISO-8601 string) retained for audit / future assurance levels.
-      'birthYear':  onboarding.birthYear,          // e.g. 1990  (int)
-      'birthMonth': onboarding.birthMonth,         // e.g. 6     (int) — AGE-1-R1
-      'birthDay':   onboarding.birthDay,           // e.g. 15    (int) — AGE-1-R1
-      'dateOfBirth': onboarding.dateOfBirth ?? '', // e.g. '1990-06-15'
+      //
+      // DOB fields resolved below — see AGE-DOB-FALLBACK-1 block.
+      'birthYear':   resolvedBirthYear,
+      'birthMonth':  resolvedBirthMonth,
+      'birthDay':    resolvedBirthDay,
+      'dateOfBirth': resolvedDateOfBirth,
     };
 
     // PROFILE-COMMIT-1: atomic batch for the two client-writable, genuinely
