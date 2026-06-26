@@ -57,7 +57,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
   bool _obscureRepeat = true;
   String? _errorMsg;
   bool _isLoading = false;
-  bool _agreedToTerms = false;
 
   @override
   void initState() {
@@ -84,8 +83,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
   bool get _canCreate =>
       _PasswordPolicy.isValid(_passCtrl.text) &&
       _passCtrl.text == _repeatCtrl.text &&
-      _repeatCtrl.text.isNotEmpty &&
-      _agreedToTerms;
+      _repeatCtrl.text.isNotEmpty;
 
   Future<void> _createAccount() async {
     if (!_canCreate) return;
@@ -207,78 +205,46 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
                     const SizedBox(height: 24),
 
-                    // GDPR consent checkbox
-                    GestureDetector(
-                      onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    // Non-blocking terms notice — links are tappable, no gate on button
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? HuddlColors.darkTextSecondary
+                              : HuddlColors.disabledText,
+                          height: 1.5,
+                        ),
                         children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Checkbox(
-                              value: _agreedToTerms,
-                              onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
-                              activeColor: HuddlColors.onboardingOrange,
-                              checkColor: Colors.white,
-                              side: BorderSide(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? HuddlColors.darkTextSecondary
-                                    : HuddlColors.textSecondary,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
+                          const TextSpan(text: "By continuing, you agree to Huddl's "),
+                          TextSpan(
+                            text: 'Terms of Service',
+                            style: const TextStyle(
+                              color: HuddlColors.onboardingOrange,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
                             ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => Navigator.pushNamed(context, '/terms'),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).brightness == Brightness.dark
-                                        ? HuddlColors.darkTextSecondary
-                                        : HuddlColors.disabledText,
-                                    height: 1.5),
-                                children: [
-                                  const TextSpan(
-                                      text: "I agree to Huddl's "),
-                                  TextSpan(
-                                    text: 'Terms of Service',
-                                    style: const TextStyle(
-                                      color: HuddlColors.onboardingOrange,
-                                      fontWeight: FontWeight.w600,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () =>
-                                          Navigator.pushNamed(context, '/terms'),
-                                  ),
-                                  const TextSpan(text: ' and '),
-                                  TextSpan(
-                                    text: 'Privacy Policy',
-                                    style: const TextStyle(
-                                      color: HuddlColors.onboardingOrange,
-                                      fontWeight: FontWeight.w600,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () =>
-                                          Navigator.pushNamed(context, '/privacy'),
-                                  ),
-                                  const TextSpan(
-                                      text: ', including the processing of my personal data as described in the Privacy Policy.'),
-                                ],
-                              ),
+                          const TextSpan(text: ' and '),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: const TextStyle(
+                              color: HuddlColors.onboardingOrange,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
                             ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => Navigator.pushNamed(context, '/privacy'),
                           ),
+                          const TextSpan(text: '.'),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Create account button
                     _OrangeButton(
