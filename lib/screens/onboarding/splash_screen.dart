@@ -166,9 +166,29 @@ class _SplashScreenState extends State<SplashScreen>
             );
         if (!mounted) return;
         if (complete) {
-          final biometric = BiometricAuthService();
-          final biometricEnabled = await biometric.isEnabled;
-          destination = biometricEnabled ? '/biometric_lock' : '/home';
+          // EMAIL-GATE-1: profile is complete, but email must also be verified
+          // before the user may enter /home.  checkEmailVerified() fails
+          // closed (returns false on error/timeout) — network unavailability
+          // blocks entry rather than allowing it.
+          //
+          // A user with a complete profile but unverified email relaunching
+          // the app lands back on /email_pending_verification, which resumes
+          // polling and provides the resend affordance.  This is defence-in-
+          // depth on top of the EmailPendingVerificationScreen polling gate.
+          final emailVerified = await auth
+              .isEmailVerified()
+              .timeout(
+                const Duration(seconds: 6),
+                onTimeout: () => false, // fail-closed: can't confirm → block
+              );
+          if (!mounted) return;
+          if (!emailVerified) {
+            destination = '/email_pending_verification';
+          } else {
+            final biometric = BiometricAuthService();
+            final biometricEnabled = await biometric.isEnabled;
+            destination = biometricEnabled ? '/biometric_lock' : '/home';
+          }
         } else {
           destination = '/onboarding'; // half-account / mid-flow-quit / no-borough → recover
         }

@@ -909,6 +909,38 @@ class FirebaseAuthService {
     }
   }
 
+  // ── EMAIL-GATE-1: email-verified check ────────────────────────────────────
+  //
+  // Checks whether the signed-in user has verified their email address.
+  // Called by the splash router AFTER hasCompletedOnboarding() returns true,
+  // as a hard gate before routing to /home.
+  //
+  // Uses BackendApiService.checkEmailVerified() which:
+  //   • returns {emailVerified: true}  when Railway confirms verification
+  //   • returns {emailVerified: false} on non-200, timeout, OR exception
+  //     (fail-closed — network unavailability blocks entry, does not allow it)
+  //
+  // Timeout: 6 s (shorter than the splash's existing 5 s Firestore timeout —
+  // keeps splash fast while giving Railway enough time to respond).
+  // On timeout/error → returns false (fail-closed: no entry without
+  // a POSITIVE confirmation of emailVerified==true).
+  //
+  // DEFENCE IN DEPTH:
+  //   • EmailPendingVerificationScreen polls every 4 s — primary gate.
+  //   • This method guards the splash re-entry path (app relaunch).
+  //   • Neither path allows entry on false.
+  Future<bool> isEmailVerified() async {
+    try {
+      final result = await BackendApiService()
+          .checkEmailVerified()
+          .timeout(const Duration(seconds: 6));
+      return (result['emailVerified'] as bool?) == true;
+    } catch (_) {
+      return false; // fail-closed: timeout or error = not verified = blocked
+    }
+  }
+  // ── end EMAIL-GATE-1 ───────────────────────────────────────────────────────
+
   /// Pre-checks whether a phone number has a registered Huddl account in
   /// Firestore, BEFORE triggering SMS verification.
   ///
