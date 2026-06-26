@@ -74,25 +74,54 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
 
       // A user may only create their own profile document.
-      // AGE-1-R1 (server enforcement — bypass-proof, fail-closed, full DOB):
-      //   All three fields must be present as ints (missing any field → rejected).
-      //   Age is computed precisely, mirroring client _ageFromDob():
-      //     year diff > 18              → always old enough
-      //     year diff == 18, month/day  → birthday must have already occurred today
-      //     year diff < 18              → always too young
-      //   request.time.{year,month,day} are Firestore server values — unspoofable.
-      //   Replaces AGE-1 year-only rule which was permissive by up to ~11 months.
+      // AGE-1-R2 (server enforcement — bypass-proof, fail-closed, full DOB):
+      //
+      //   WHY THIS APPROACH:
+      //   The previous rule (AGE-1-R1) used request.time.year / .month / .day
+      //   member access.  The Firestore Rules engine's `timestamp` type does NOT
+      //   expose .year / .month / .day as readable fields — evaluating them throws
+      //   a CEL type error ("Type error. Received: [timestamp] Expected: [map,path]")
+      //   which the rules engine treats as DENY.  That made EVERY onboarding write
+      //   PERMISSION_DENIED regardless of the user's actual age or auth state.
+      //
+      //   FIX — millis comparison using timestamp.date() (documented valid approach):
+      //   1. Convert the user's supplied DOB to a Unix-millis timestamp using the
+      //      rules built-in: timestamp.date(birthYear, birthMonth, birthDay).toMillis()
+      //   2. Subtract from request.time.toMillis() — the server-supplied current time
+      //      in millis (unspoofable).
+      //   3. Require the elapsed millis ≥ 18 years in millis.
+      //
+      //   18 years in millis = 18 * 365.25 * 24 * 60 * 60 * 1000
+      //                      = 568,036,800,000 ms  (accounts for leap years)
+      //   This is intentionally generous by ~1–2 days vs a strict calendar calc —
+      //   acceptable for an 18+ gate; errs on the side of inclusion for late-Feb
+      //   birthdays on leap years.
+      //
+      //   int() cast: the RHS literal is a float in the rules evaluator (because of
+      //   the 365.25); int() normalises it to integer millis before comparison so
+      //   the types match (both sides are int after cast).
+      //
+      //   Guards:
+      //   • isOwner(userId)          — caller is authenticated AND owns the doc path
+      //   • birthYear/Month/Day is int — rejects null / missing / wrong-type fields
+      //                                  (Firestore rules `is int` fails on null/float)
+      //   • millis elapsed >= 18y    — the actual age gate (server-time, unspoofable)
+      //
+      //   Playground verification (required before every deploy):
+      //   DENY  → birthYear=2010, birthMonth=6, birthDay=26  (≈15 yo today)
+      //   ALLOW → birthYear=1974, birthMonth=3, birthDay=15  (≈51 yo today)
+      //   Neither simulation should produce a type error.
       allow create: if isOwner(userId)
         && request.resource.data.birthYear  is int
         && request.resource.data.birthMonth is int
         && request.resource.data.birthDay   is int
-        && (
-             (request.time.year - request.resource.data.birthYear > 18)
-             || (request.time.year - request.resource.data.birthYear == 18
-                 && (request.time.month > request.resource.data.birthMonth
-                     || (request.time.month == request.resource.data.birthMonth
-                         && request.time.day >= request.resource.data.birthDay)))
-           );
+        && (request.time.toMillis()
+            - timestamp.date(
+                request.resource.data.birthYear,
+                request.resource.data.birthMonth,
+                request.resource.data.birthDay
+              ).toMillis()
+           ) >= int(18 * 365.25 * 24 * 60 * 60 * 1000);
 
       // F-09: owner update is blocked if any blocklisted field is touched.
       //   Blocklist (16 fields): roles, tier, stripeCustomerId, isFoundingMember,
