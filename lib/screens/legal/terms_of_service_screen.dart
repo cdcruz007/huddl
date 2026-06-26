@@ -14,11 +14,22 @@ class TermsOfServiceScreen extends StatelessWidget {
         backgroundColor: HuddlColors.white,
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
-        leading: IconButton(
-          icon: const Icon(HuddlIcons.caretLeft,
-              size: 30, color: HuddlColors.textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
+        // On a cold deep-link hit (e.g. from an email) the navigator stack is
+        // empty — Navigator.pop() would be a no-op or crash.  Show a home
+        // button instead so the user has somewhere to go.
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(HuddlIcons.caretLeft,
+                    size: 30, color: HuddlColors.textDark),
+                onPressed: () => Navigator.pop(context),
+              )
+            : IconButton(
+                icon: const Icon(HuddlIcons.home,
+                    size: 26, color: HuddlColors.textDark),
+                tooltip: 'Home',
+                onPressed: () =>
+                    Navigator.pushReplacementNamed(context, '/home'),
+              ),
         centerTitle: true,
         title: Text(
           'Terms of Service',

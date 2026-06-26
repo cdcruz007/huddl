@@ -159,9 +159,6 @@ function _wrap(title, bodyHtml) {
                 &nbsp;&middot;&nbsp;
                 <a href="${FRONTEND_URL}/terms"
                    style="color:${B.textLight};text-decoration:underline;">Terms</a>
-                &nbsp;&middot;&nbsp;
-                <a href="${FRONTEND_URL}/settings/notifications"
-                   style="color:${B.textLight};text-decoration:underline;">Manage emails</a>
               </p>
             </td>
           </tr>

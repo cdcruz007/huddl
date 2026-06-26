@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './theme/huddl_icons.dart';
-import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint, kDebugMode;
+import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint, kDebugMode, kIsWeb;
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -24,7 +25,29 @@ import 'services/firebase_auth_service.dart';
 /// it defaults to false so real users get full phone-number verification.
 const bool kQaBuild = bool.fromEnvironment('QA_BUILD', defaultValue: false);
 
+/// Returns the route to use as [MaterialApp.initialRoute].
+///
+/// On web, if the browser was opened at /privacy or /terms directly
+/// (e.g. from an email link), we use that path so the user lands on the
+/// correct public screen without being bounced through /splash auth logic.
+/// All other starts — including every native-app cold start — use /splash.
+String _resolveInitialRoute() {
+  if (kIsWeb) {
+    final path = Uri.base.path;
+    if (path == '/privacy' || path == '/terms') return path;
+  }
+  return '/splash';
+}
+
 void main() async {
+  // Path URL strategy MUST be called before WidgetsFlutterBinding.
+  // This switches Flutter web from hash routing (/#/route) to path routing
+  // (/route) so that cold hits from email links land on the correct route.
+  // No new pub dependency — flutter_web_plugins is part of the Flutter SDK.
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // ── Initialize Firebase ────────────────────────────────────────────────
@@ -285,11 +308,13 @@ void main() async {
   // prevents double-initialisation, and the token is registered on the first
   // MainShell mount, which happens within seconds of the user reaching home.
 
-  runApp(const HuddlApp());
+  runApp(HuddlApp(initialRoute: _resolveInitialRoute()));
 }
 
 class HuddlApp extends StatelessWidget {
-  const HuddlApp({super.key});
+  const HuddlApp({super.key, this.initialRoute = '/splash'});
+
+  final String initialRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -318,7 +343,7 @@ class HuddlApp extends StatelessWidget {
           theme: lightTheme,
           darkTheme: HuddlTheme.darkTheme,
           themeMode: ThemeMode.system,
-          initialRoute: '/splash',
+          initialRoute: initialRoute,
           onGenerateRoute: AppRouter.generateRoute,
         );
       },
