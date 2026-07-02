@@ -19,7 +19,7 @@ const { v4: uuidv4 } = require('uuid');
 const { authMiddleware } = require('../middleware/auth-middleware');
 const { getDb, FieldValue } = require('../services/firebase-service');
 const { sendToUser }        = require('../services/notification-service');
-const { sendWelcomeEmail }  = require('../services/email-service');
+const { sendWelcomeEmail, sendVerificationEmail } = require('../services/email-service');
 
 const API_BASE     = process.env.API_BASE_URL  || 'https://api.huddlapp.co.uk';
 const FRONTEND_URL = process.env.FRONTEND_URL  || 'https://www.huddlapp.co.uk';
@@ -80,58 +80,55 @@ router.post('/register-token', authMiddleware, async (req, res, next) => {
 // Auth:   Bearer <Firebase ID token>
 router.post('/welcome', authMiddleware, async (req, res, next) => {
   try {
-    const { email, firstName, borough } = req.body;
+    const { email, firstName } = req.body;
     const db     = getDb();
     const userId = req.userId;
 
     const userRef  = db.collection('users').doc(userId);
     const userDoc  = await userRef.get();
     const userData = userDoc.data() || {};
+    const result   = { success: true };
 
-    const result = { success: true };
+    if (userData.emailVerified) {
+      result.emailSkipped = 'already verified';
+      return res.json(result);
+    }
 
-    // ── Send welcome push notification ───────────────────────────────────
-    sendToUser(userId, 'welcome', {
-      groupCount: userData.assignedGroupCount || 0,
-    }).catch(e => console.warn('[FCM] welcome push failed:', e.message));
-
-    // ── Send welcome email with verification link ─────────────────────────
     const resolvedEmail = (email || userData.email || '').trim().toLowerCase();
-
     if (!resolvedEmail) {
       result.emailSkipped = 'no email address';
       return res.json(result);
     }
 
-    // Issue a fresh verification token every time this endpoint is hit
-    // (idempotent — replaces any previous token)
-    const { token, expiry } = await _issueVerifyToken(db, userId);
+    // Dedupe: skip if a verification email was sent in the last 2 minutes.
+    // Swallows the near-simultaneous double-trigger (incl. un-updated app builds).
+    const lastSent = userData.verificationEmailSentAt
+      ? (userData.verificationEmailSentAt.toMillis?.() ?? new Date(userData.verificationEmailSentAt).getTime())
+      : 0;
+    if (lastSent && (Date.now() - lastSent) < 120000) {
+      result.emailSkipped = 'recently sent';
+      return res.json(result);
+    }
 
-    // Persist email on user doc if not already there
+    const { token, expiry } = await _issueVerifyToken(db, userId);
     await userRef.set(
       { email: resolvedEmail, updatedAt: FieldValue.serverTimestamp() },
       { merge: true }
     );
 
     const verifyUrl   = _verifyUrl(userId, token);
-    const emailResult = await sendWelcomeEmail({
+    const emailResult = await sendVerificationEmail({
       email:     resolvedEmail,
       firstName: firstName || userData.firstName,
-      borough:   borough   || userData.borough,
-      verifyUrl,             // ← passed to the template
+      verifyUrl,
     });
 
-    // Mark that the welcome email was sent (prevents duplicate sends on retry)
-    await userRef.update({
-      welcomeEmailSent:    true,
-      welcomeEmailSentAt:  FieldValue.serverTimestamp(),
-    });
+    await userRef.update({ verificationEmailSentAt: FieldValue.serverTimestamp() });
 
-    result.email            = emailResult;
+    result.email             = emailResult;
     result.verifyTokenExpiry = expiry;
-    console.log(`[welcome] email + verify link sent to ${resolvedEmail} for user ${userId}`);
+    console.log(`[welcome] verification email sent to ${resolvedEmail} for user ${userId}`);
     res.json(result);
-
   } catch (err) {
     next(err);
   }
@@ -165,10 +162,9 @@ router.post('/resend-verification', authMiddleware, async (req, res, next) => {
     const { token, expiry } = await _issueVerifyToken(db, userId);
     const verifyUrl         = _verifyUrl(userId, token);
 
-    const emailResult = await sendWelcomeEmail({
+    const emailResult = await sendVerificationEmail({
       email,
       firstName: userData.firstName,
-      borough:   userData.borough,
       verifyUrl,
     });
 
@@ -227,6 +223,23 @@ router.get('/verify-email', async (req, res) => {
       emailVerifyExpiry:   FieldValue.delete(),
       updatedAt:           FieldValue.serverTimestamp(),
     });
+
+    // Fire the welcome beat exactly once, now that they're verified.
+    if (!data.welcomeEmailSent) {
+      await userRef.update({
+        welcomeEmailSent:   true,
+        welcomeEmailSentAt: FieldValue.serverTimestamp(),
+      });
+      sendWelcomeEmail({
+        email:     data.email,
+        firstName: data.firstName,
+        borough:   data.borough,
+        // no verifyUrl -> welcome template omits the verify CTA automatically
+      }).catch(e => console.warn('[verify-email] welcome email failed:', e.message));
+      sendToUser(uid, 'welcome', {
+        groupCount: data.assignedGroupCount || 0,
+      }).catch(e => console.warn('[FCM] welcome push failed:', e.message));
+    }
 
     console.log(`[verify-email] email verified for user ${uid}`);
     return res.send(_verifyPage('success', `Email verified! Welcome to Huddl, ${data.firstName || 'there'}. You can now return to the app.`));
