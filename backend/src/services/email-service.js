@@ -175,7 +175,7 @@ function _wrap(title, bodyHtml) {
 /** Orange CTA button — pill style matching the website. */
 function _btn(label, url) {
   return `
-    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:24px 0;">
+    <table align="center" cellpadding="0" cellspacing="0" role="presentation" style="margin:24px auto;">
       <tr>
         <td style="background:${B.primary};border-radius:50px;padding:0;">
           <a href="${url}"
