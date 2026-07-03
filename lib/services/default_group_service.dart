@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -847,6 +848,8 @@ class DefaultGroupService {
   /// HYPERLOCAL RULE: A user can only join groups that belong to their
   /// current borough. Cross-borough joins are silently blocked and logged.
   void joinGroup(String userId, String groupId) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    FirebaseCrashlytics.instance.log('[JOIN] joinGroup called: groupId=$groupId, localUserId=$userId, firebaseUid=${uid ?? "NULL"}');
     if (!_defaultGroups.containsKey(groupId)) {
       _log('Group not found: $groupId');
       return;
@@ -891,6 +894,7 @@ class DefaultGroupService {
       // We upsert the group doc (create if new, update memberIds if existing)
       // so both users share the same group in Firestore.
       final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+      FirebaseCrashlytics.instance.log('[JOIN] reached Firestore-sync guard: firebaseUid=${firebaseUid ?? "NULL"} → will ${firebaseUid != null ? "SYNC" : "SKIP"}');
       if (firebaseUid != null) {
         _syncGroupMembershipToFirestore(group, firebaseUid);
       }
@@ -971,10 +975,10 @@ class DefaultGroupService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
-    }).catchError((e) {
-      if (kDebugMode) {
-        if (kDebugMode) debugPrint('[DefaultGroupService] Firestore sync error: $e');
-      }
+    }).then((_) => FirebaseCrashlytics.instance.log('[JOIN] Firestore sync SUCCESS: group=${group.id} uid=$firebaseUid'))
+     .catchError((e, s) {
+      FirebaseCrashlytics.instance.log('[JOIN] Firestore sync FAILED: group=${group.id} uid=$firebaseUid error=$e');
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'default-group join sync failed', fatal: false);
     });
   }
 
