@@ -74,6 +74,13 @@ class HuddlNetworkImage extends StatelessWidget {
     );
   }
 
+  // ── Cache dimension helper ───────────────────────────────────────────────
+  // Returns null (disables cache hint) when the value is non-finite or <= 0.
+  static int? _safeCache(double? v) {
+    if (v == null || !v.isFinite || v <= 0) return null;
+    return v.toInt();
+  }
+
   // ── Image resolver ──────────────────────────────────────────────────────
   Widget _buildImage(BuildContext context) {
     if (url.isEmpty) return _fallback(context);
@@ -114,7 +121,7 @@ class HuddlNetworkImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        memCacheWidth: width?.toInt(),
+        memCacheWidth: _safeCache(width),
         placeholder: (_, __) => _shimmer(context),
         errorWidget: (_, __, ___) => _fallback(context),
       );
