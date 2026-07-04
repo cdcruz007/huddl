@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/group.dart';
 import 'postcode_service.dart';
@@ -889,48 +890,94 @@ class DefaultGroupService {
       // Save to storage
       _saveToStorage();
 
-      // ── Sync to Firestore so other devices can see this user ──────────
-      // Use the real Firebase Auth UID for cross-device visibility.
-      // We upsert the group doc (create if new, update memberIds if existing)
-      // so both users share the same group in Firestore.
+      // ── Sync to Firestore via server-side callable ──────────────────────
+      // joinDefaultGroups (Cloud Function, europe-west2) runs the upsert in an
+      // Admin SDK transaction — eliminates the client-side race where two users
+      // onboarding simultaneously could both read snap.exists=false and the
+      // second tx.set would overwrite the first user's memberIds.
       final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
-      FirebaseCrashlytics.instance.log('[JOIN] reached Firestore-sync guard: firebaseUid=${firebaseUid ?? "NULL"} → will ${firebaseUid != null ? "SYNC" : "SKIP"}');
+      FirebaseCrashlytics.instance.log('[JOIN] reached Firestore-sync guard: firebaseUid=${firebaseUid ?? "NULL"} → will ${firebaseUid != null ? "CALL_CALLABLE" : "SKIP"}');
       if (firebaseUid != null) {
-        _syncGroupMembershipToFirestore(group, firebaseUid);
+        _callJoinDefaultGroups(group);
       }
     }
   }
 
-  /// Upsert a default group into Firestore and add [firebaseUid] to memberIds.
-  /// Called fire-and-forget from joinGroup — errors are swallowed so they
-  /// never block the local in-memory flow.
-  void _syncGroupMembershipToFirestore(Group group, String firebaseUid) {
+  /// Fire-and-forget callable to the joinDefaultGroups Cloud Function.
+  /// Passes the group spec; the server handles create-or-join atomically.
+  /// Logs the returned joined/created/failed arrays to Crashlytics.
+  void _callJoinDefaultGroups(Group group) {
+    final postcode = _onboardingService.postcode ?? '';
+    final borough  = _onboardingService.postcode != null
+        ? (_postcodeService.getBoroughFromPostcode(_onboardingService.postcode!) ?? '')
+        : (group.creatorBorough ?? '');
+
+    final groupSpec = <String, dynamic>{
+      'id':          group.id,
+      'name':        group.name,
+      'description': group.description,
+      'imageUrl':    group.imageUrl,
+      'category':    group.category,
+      'borough':     borough,
+      'postcode':    postcode,
+      if (group.birthYear != null)    'birthYear':     group.birthYear,
+      if (group.level != null)        'level':         group.level,
+      if (group.parentGroupId != null) 'parentGroupId': group.parentGroupId,
+      if (group.lastMessage != null)   'lastMessage':   group.lastMessage,
+      if (group.lastSenderName != null) 'lastSenderName': group.lastSenderName,
+    };
+
+    FirebaseFunctions.instanceFor(region: 'europe-west2')
+        .httpsCallable('joinDefaultGroups')
+        .call<Map<String, dynamic>>({'groups': [groupSpec]})
+        .then((result) {
+          final data   = result.data;
+          final joined  = (data['joined']  as List?)?.cast<String>() ?? [];
+          final created = (data['created'] as List?)?.cast<String>() ?? [];
+          final failed  = (data['failed']  as List?) ?? [];
+          FirebaseCrashlytics.instance.log(
+            '[JOIN] callable SUCCESS: group=${group.id} '
+            'joined=$joined created=$created failed=$failed',
+          );
+        })
+        .catchError((Object e, StackTrace s) {
+          FirebaseCrashlytics.instance.log(
+            '[JOIN] callable FAILED: group=${group.id} error=$e',
+          );
+          FirebaseCrashlytics.instance.recordError(
+            e, s,
+            reason: 'joinDefaultGroups callable failed',
+            fatal: false,
+          );
+        });
+  }
+
+  // ── DEAD CODE — kept for reference; no longer called. ─────────────────────
+  // _syncGroupMembershipToFirestore was the client-side Firestore transaction
+  // that ran the group upsert directly. Replaced by _callJoinDefaultGroups
+  // (which delegates to the joinDefaultGroups Cloud Function) to eliminate the
+  // race condition where two simultaneous onboarding users could both read
+  // snap.exists=false and the second tx.set would overwrite the first user's
+  // memberIds. Delete this method after one release cycle confirms stability.
+  //
+  // ignore: unused_element
+  void _syncGroupMembershipToFirestoreDead(Group group, String firebaseUid) {
     final db = FirebaseFirestore.instance;
     final ref = db.collection('groups').doc(group.id);
 
     db.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (snap.exists) {
-        // Group already in Firestore — add this UID to memberIds AND
-        // ensure isImageLocked=true is stamped (may be missing on older docs
-        // created before the field existed, causing them to leak into the
-        // home feed's public-group suggestions).
         tx.update(ref, {
           'memberIds': FieldValue.arrayUnion([firebaseUid]),
           'memberCount': FieldValue.increment(1),
           'isImageLocked': true,
           'groupType': 'resident',
-          // Stamp level on existing docs during the transition window.
-          // group.level is always 'borough' for groups created by current
-          // callers — no existing group has ward or region level yet.
           if (group.level != null) 'level': group.level!,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
-        // Build geo fields once — used both for the spread and to extract
-        // parentRegionName without calling _buildGeoFields twice.
         final geoFields = _buildGeoFields(_onboardingService.postcode);
-        // Create the group document in Firestore for the first time.
         tx.set(ref, {
           'id': group.id,
           'name': group.name,
@@ -944,16 +991,7 @@ class DefaultGroupService {
               ? (_postcodeService.getBoroughFromPostcode(_onboardingService.postcode!) ?? '')
               : '',
           'postcode': _onboardingService.postcode ?? '',
-          // Additive geo fields — ward, wardCode, districtCode, region.
-          // Populated from the in-memory geo cache; no extra network call.
           ...geoFields,
-          // parentRegionName: stable copy of the region string, written at
-          // borough-group creation time. Provides a durable FK to the region
-          // level that does not depend on naming-convention reconstruction.
-          // Only written when region is non-empty; borough docs whose geo was
-          // never resolved have no parentRegionName and cannot roll up to a
-          // region group until backfill_geo_stack.py + backfill_group_level.py
-          // have been run (see runbook).
           if (geoFields['region'] != null && (geoFields['region'] as String).isNotEmpty)
             'parentRegionName': geoFields['region'],
           'creatorId': firebaseUid,
@@ -961,11 +999,7 @@ class DefaultGroupService {
           'isImageLocked': true,
           'groupType': 'resident',
           if (group.birthYear != null) 'birthYear': group.birthYear,
-          // level defaults to 'borough' for all groups created by current
-          // callers. Ward/region groups supply a non-null group.level.
           'level': group.level ?? 'borough',
-          // Hierarchy FK — null for borough-level groups; non-null for
-          // ward/region groups (points at the parent borough group).
           if (group.parentGroupId != null) 'parentGroupId': group.parentGroupId,
           'invitedMemberIds': [],
           'lastMessage': group.lastMessage ?? 'Welcome to the group!',
