@@ -4683,57 +4683,106 @@ interface JoinGroupSpec {
   lastSenderName?: string;
 }
 
+// ── Static outward-code → borough map (Cambridge launch area) ───────────────
+// Covers CB1–CB11 (Cambridge city) and CB21–CB25 (South Cambridgeshire).
+// All map to "Cambridge" — the single allowed borough for the current launch
+// gate.  No network call required; resolves synchronously from the postcode
+// the client already computed.
+const CB_OUTWARD_BOROUGH: Record<string, string> = {
+  CB1: "Cambridge", CB2: "Cambridge", CB3: "Cambridge", CB4: "Cambridge",
+  CB5: "Cambridge", CB6: "Cambridge", CB7: "Cambridge", CB8: "Cambridge",
+  CB9: "Cambridge", CB10: "Cambridge", CB11: "Cambridge",
+  CB21: "Cambridge", CB22: "Cambridge", CB23: "Cambridge",
+  CB24: "Cambridge", CB25: "Cambridge",
+};
+
 /**
- * Resolve the caller's borough from Firestore, falling back to an outward-code
- * lookup if the users/{uid} doc does not yet have a borough field set.
- * Returns null if resolution fails (no gate rejection — caller decides).
+ * Extract the outward code from a full UK postcode.
+ * "CB1 2AB" → "CB1", "CB21 3XX" → "CB21".
+ * Algorithm: strip all spaces, drop the last 3 characters (always the inward
+ * code: digit + two letters).  Works for all standard UK formats.
  */
-async function _resolveCallerBorough(uid: string, postcode: string): Promise<string | null> {
-  // 1. Try users/{uid}.borough (written by setUserBorough / syncPublicProfile)
-  const userSnap = await db.collection("users").doc(uid).get();
-  const storedBorough = userSnap.exists
-    ? ((userSnap.data() as Record<string, unknown>)["borough"] as string | undefined)
-    : undefined;
-  if (storedBorough && storedBorough.trim() !== "") {
-    return storedBorough.trim();
+function _outwardCode(postcode: string): string {
+  return postcode.trim().toUpperCase().replace(/\s+/g, "").slice(0, -3);
+}
+
+/**
+ * Resolve a borough string for the given uid + postcode.
+ *
+ * Priority order (stops at first non-empty result):
+ *   1. Passed-in borough from the request payload — client already computed it.
+ *   2. users_public/{uid}.borough — the authoritative public mirror.
+ *   3. users/{uid}.borough        — fallback if mirror not yet synced.
+ *   4. Static CB outward-code map — synchronous, no network on the happy path.
+ *   5. postcodes.io /outcodes/:outward — last-resort network call.
+ *
+ * Returns empty string if all five steps fail (caller must add to failed[]).
+ */
+async function _resolveBorough(
+  uid: string,
+  payloadBorough: string,
+  postcode: string,
+): Promise<string> {
+  // 1. Payload borough (client-computed — most reliable on happy path)
+  if (payloadBorough && payloadBorough.trim() !== "") {
+    return payloadBorough.trim();
   }
 
-  // 2. Fall back: outward-code lookup from group.postcode
-  if (!postcode || postcode.trim() === "") return null;
+  // 2. users_public/{uid}.borough (authoritative mirror written by syncPublicProfile)
+  try {
+    const pubSnap = await db.collection("users_public").doc(uid).get();
+    const pub = pubSnap.exists
+      ? ((pubSnap.data() as Record<string, unknown>)["borough"] as string | undefined)
+      : undefined;
+    if (pub && pub.trim() !== "") return pub.trim();
+  } catch { /* fall through */ }
 
-  // Normalise to outward code: take first part before space (e.g. "CB1" from "CB1 2AB")
-  const outward = postcode.trim().toUpperCase().split(/\s+/)[0];
+  // 3. users/{uid}.borough
+  try {
+    const userSnap = await db.collection("users").doc(uid).get();
+    const stored = userSnap.exists
+      ? ((userSnap.data() as Record<string, unknown>)["borough"] as string | undefined)
+      : undefined;
+    if (stored && stored.trim() !== "") return stored.trim();
+  } catch { /* fall through */ }
 
-  return new Promise<string | null>((resolve) => {
-    const path = `/postcodes/${encodeURIComponent(outward)}/autocomplete`;
-    // Use bulk lookup on the outward code — postcodes.io /outcodes/:outward
-    const options: import("https").RequestOptions = {
-      hostname: "api.postcodes.io",
-      path:     `/outcodes/${encodeURIComponent(outward)}`,
-      method:   "GET",
-    };
+  // 4. Static outward-code map — synchronous, zero network
+  if (postcode && postcode.trim() !== "") {
+    const outward = _outwardCode(postcode);
+    const mapped = CB_OUTWARD_BOROUGH[outward];
+    if (mapped) return mapped;
+  }
 
-    const req = https.request(options, (res) => {
-      let raw = "";
-      res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
-      res.on("end", () => {
-        if (res.statusCode !== 200) { resolve(null); return; }
-        try {
-          const parsed = JSON.parse(raw) as {
-            result?: { admin_district?: string[] };
-          };
-          const districts = parsed.result?.admin_district;
-          if (Array.isArray(districts) && districts.length > 0) {
-            resolve(districts[0]);
-          } else {
-            resolve(null);
-          }
-        } catch { resolve(null); }
+  // 5. postcodes.io /outcodes/:outward — last resort
+  if (postcode && postcode.trim() !== "") {
+    const outward = _outwardCode(postcode);
+    const networkBorough = await new Promise<string>((resolve) => {
+      const options: import("https").RequestOptions = {
+        hostname: "api.postcodes.io",
+        path:     `/outcodes/${encodeURIComponent(outward)}`,
+        method:   "GET",
+      };
+      const req = https.request(options, (res) => {
+        let raw = "";
+        res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+        res.on("end", () => {
+          if (res.statusCode !== 200) { resolve(""); return; }
+          try {
+            const parsed = JSON.parse(raw) as {
+              result?: { admin_district?: string[] };
+            };
+            const districts = parsed.result?.admin_district;
+            resolve(Array.isArray(districts) && districts.length > 0 ? districts[0] : "");
+          } catch { resolve(""); }
+        });
       });
+      req.on("error", () => resolve(""));
+      req.end();
     });
-    req.on("error", () => resolve(null));
-    req.end();
-  });
+    if (networkBorough !== "") return networkBorough;
+  }
+
+  return "";
 }
 
 export const joinDefaultGroups = functions
@@ -4775,19 +4824,30 @@ export const joinDefaultGroups = functions
     for (const spec of groups) {
       const groupId = spec.id.trim();
       try {
-        // Resolve the caller's borough for this group (borough may differ per
-        // spec in theory, but in practice all specs share the same postcode).
-        const callerBorough = await _resolveCallerBorough(uid, spec.postcode ?? "");
+        // Resolve borough via 5-step priority chain.
+        // Step 1 uses spec.borough (the client-computed value) — on the happy
+        // path this returns immediately without any Firestore reads.
+        const resolvedBorough = await _resolveBorough(uid, spec.borough ?? "", spec.postcode ?? "");
 
-        // Borough gate — skip (don't hard-fail) if borough doesn't match.
-        // We use the same loose matching as the client: direct equality or
-        // case-insensitive substring (for partial name matches).
-        if (callerBorough && spec.borough) {
-          const cb = callerBorough.toLowerCase();
+        // Hard-fail if borough cannot be resolved at all — surface in failed[]
+        // so it shows up in logs and the caller's return value.
+        if (resolvedBorough === "") {
+          const reason = `borough_unresolved:${spec.postcode ?? ""}`;
+          functions.logger.error(
+            `[joinDefaultGroups] BOROUGH_UNRESOLVED uid=${uid} groupId=${groupId} postcode=${spec.postcode ?? ""}`
+          );
+          failed.push({ id: groupId, reason });
+          continue;
+        }
+
+        // Borough gate — block if the resolved borough doesn't match the group's
+        // expected borough (same loose matching as the client).
+        if (spec.borough && spec.borough.trim() !== "") {
+          const rb = resolvedBorough.toLowerCase();
           const gb = spec.borough.toLowerCase();
-          const boroughMatch = cb === gb || cb.includes(gb) || gb.includes(cb);
+          const boroughMatch = rb === gb || rb.includes(gb) || gb.includes(rb);
           if (!boroughMatch) {
-            const reason = `borough mismatch: caller=${callerBorough} group=${spec.borough}`;
+            const reason = `borough mismatch: caller=${resolvedBorough} group=${spec.borough}`;
             functions.logger.warn(
               `[joinDefaultGroups] BLOCKED uid=${uid} groupId=${groupId} — ${reason}`
             );
@@ -4826,7 +4886,7 @@ export const joinDefaultGroups = functions
 
           } else {
             // Create the group document — system-owned, not first-user-owned
-            const resolvedBorough = spec.borough?.trim() ?? callerBorough ?? "";
+            // Use the fully resolved borough, not the raw payload field.
 
             const docData: Record<string, unknown> = {
               id:            groupId,
