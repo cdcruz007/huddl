@@ -25,9 +25,12 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
     with TickerProviderStateMixin {
   late final AnimationController _ctrl;
   bool _navigated = false;
+  bool _welcomeEmailFired = false;
 
   /// Fire welcome email once — non-blocking, backend is idempotent (welcomeEmailSent guard).
   void _fireWelcomeEmail() {
+    if (_welcomeEmailFired) return;
+    _welcomeEmailFired = true;
     final onboarding = OnboardingDataService();
     final email = (onboarding.email ?? '').trim();
     if (email.isEmpty) return;
