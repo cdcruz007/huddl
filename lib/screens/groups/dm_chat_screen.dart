@@ -1295,8 +1295,42 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   // ── Member profile bottom sheet ────────────────────────────────
-  void _showMemberProfileSheet(BuildContext context) {
+  Future<void> _showMemberProfileSheet(BuildContext context) async {
+    // Load real profile data from users_public/{recipientId} before opening
+    // the sheet — these fields are set during onboarding and mirrored by
+    // syncPublicProfile. Falls back gracefully if any field is absent.
+    Map<String, dynamic>? publicProfile;
+    try {
+      publicProfile = await FirestoreService().getUserProfile(widget.recipientId);
+    } catch (_) {}
+
+    if (!context.mounted) return;
+
     final photoUrl = getProfilePhotoForMember(widget.recipientId);
+
+    // ── Resolve display values from real onboarding fields ────────────────
+    final parentType = (publicProfile?['parentType'] as String? ?? '').trim();
+    final area       = (publicProfile?['borough']    as String? ?? '').trim();
+    final rawStages  = publicProfile?['stagesOfLife'];
+    final stages     = rawStages is List
+        ? rawStages.cast<String>()
+        : <String>[];
+
+    // Map stagesOfLife values to onboarding-accurate labels (no age inference).
+    // These keys are set on the onboarding journey — never derived from DOB.
+    String stageLabel = '';
+    if (stages.isNotEmpty) {
+      final parts = stages.map((s) {
+        switch (s) {
+          case 'aspiring':  return 'Hoping to conceive';
+          case 'expecting': return 'Expecting';
+          case 'parent':    return 'Parent';
+          default:          return s;
+        }
+      }).where((s) => s.isNotEmpty).toList();
+      stageLabel = parts.join(' · ');
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: context.hc.surface,
@@ -1354,7 +1388,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Info cards
+              // Info rows — only shown when the field has a real value
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -1364,13 +1398,29 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ),
                 child: Column(
                   children: [
-                    _profileInfoRow(HuddlIcons.user, 'Parent type', 'Mum'),
-                    Divider(height: 20, color: context.hc.divider),
-                    _profileInfoRow(HuddlIcons.locationPin, 'Area', 'Cambridge'),
-                    Divider(height: 20, color: context.hc.divider),
-                    _profileInfoRow(HuddlIcons.childCare, 'Stage', 'Toddler (1-3 years)'),
-                    Divider(height: 20, color: context.hc.divider),
-                    _profileInfoRow(HuddlIcons.calendar, 'Member since', 'January 2024'),
+                    if (parentType.isNotEmpty) ...[  
+                      _profileInfoRow(HuddlIcons.user, 'Parent type', parentType),
+                    ],
+                    if (parentType.isNotEmpty && area.isNotEmpty)
+                      Divider(height: 20, color: context.hc.divider),
+                    if (area.isNotEmpty) ...[  
+                      _profileInfoRow(HuddlIcons.locationPin, 'Area', area),
+                    ],
+                    if (area.isNotEmpty && stageLabel.isNotEmpty)
+                      Divider(height: 20, color: context.hc.divider),
+                    if (stageLabel.isNotEmpty) ...[  
+                      _profileInfoRow(HuddlIcons.childCare, 'Stage', stageLabel),
+                    ],
+                    // Member since omitted — createdAt is not in users_public
+                    // (private field) and cannot be read for other users.
+                    if (parentType.isEmpty && area.isEmpty && stageLabel.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'No profile info available',
+                          style: HuddlText.body(),
+                        ),
+                      ),
                   ],
                 ),
               ),
