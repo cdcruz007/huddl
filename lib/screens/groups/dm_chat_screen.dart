@@ -1306,7 +1306,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
     if (!context.mounted) return;
 
-    final photoUrl = getProfilePhotoForMember(widget.recipientId);
+    // photoUrl from users_public (mirrored by syncPublicProfile on upload).
+    // Falls back to initials avatar if the user hasn't set a profile photo.
+    final photoUrl = (publicProfile?['photoUrl'] as String? ?? '').trim();
+    final hasPhoto = photoUrl.isNotEmpty && photoUrl.startsWith('http');
 
     // ── Resolve display values from real onboarding fields ────────────────
     final parentType = (publicProfile?['parentType'] as String? ?? '').trim();
@@ -1352,17 +1355,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Large profile photo
+              // Large profile photo — real Firestore photoUrl or initials fallback
               CircleAvatar(
                 radius: 52,
                 backgroundColor: _colorFromHex(widget.recipientAvatarColor).withValues(alpha: 0.15),
-                backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                child: photoUrl == null
-                    ? Text(
+                backgroundImage: hasPhoto ? NetworkImage(photoUrl) : null,
+                child: hasPhoto
+                    ? null
+                    : Text(
                         widget.recipientName.isNotEmpty ? widget.recipientName[0].toUpperCase() : '?',
                         style: HuddlText.display(color: _colorFromHex(widget.recipientAvatarColor)),
-                      )
-                    : null,
+                      ),
               ),
               const SizedBox(height: 16),
               Text(
