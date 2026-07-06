@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_icons.dart';
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../theme/huddl_colors.dart';
@@ -11,6 +10,7 @@ import '../../services/dm_service.dart';
 import '../../services/realtime_dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/browser_storage.dart';
+import '../../services/firestore_service.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import '../../constants/app_text_styles.dart';
 
@@ -204,61 +204,19 @@ class _ForwardSheetState extends State<_ForwardSheet>
       }
     }
 
-    // Joined groups (from InvitationService)
-    final invService = InvitationService();
-    await invService.initialize();
-    for (final g in invService.joinedGroups) {
-      groupList.add(_ForwardTarget(
-        id: g.id,
-        name: g.name,
-        isGroup: true,
-        groupImageUrl: g.imageUrl,
-      ));
-    }
-
-    // Also include user-created groups from local storage
+    // ── Groups: query Firestore for authoritative membership ────────────────
+    // groups/{id}.memberIds arrayContains uid — includes default groups joined
+    // server-side via joinDefaultGroups CF, which are never written to the
+    // local BrowserStorage cache.
     try {
-      final raw = await BrowserStorage.getString('user_created_groups_v1');
-      if (raw != null) {
-        final List<dynamic> decoded = json.decode(raw);
-        for (final j in decoded) {
-          final g = j as Map<String, dynamic>;
-          final gId = g['id'] as String;
-          if (!groupList.any((t) => t.id == gId)) {
-            groupList.add(_ForwardTarget(
-              id: gId,
-              name: g['name'] as String? ?? 'Group',
-              isGroup: true,
-              groupImageUrl: g['imageUrl'] as String?,
-            ));
-          }
-        }
-      }
-    } catch (_) {}
-
-    // Also include default groups the user is in
-    try {
-      final membershipsRaw = await BrowserStorage.getString('user_memberships_v6');
-      if (membershipsRaw != null) {
-        final Map<String, dynamic> membershipsMap = json.decode(membershipsRaw);
-        final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
-        final groupIds = (membershipsMap[uid] as List<dynamic>?)?.cast<String>() ?? [];
-        final groupsRaw = await BrowserStorage.getString('default_groups_v6');
-        if (groupsRaw != null && groupIds.isNotEmpty) {
-          final Map<String, dynamic> groupsMap = json.decode(groupsRaw);
-          for (final entry in groupsMap.entries) {
-            final g = entry.value as Map<String, dynamic>;
-            final gId = g['id'] as String;
-            if (groupIds.contains(gId) && !groupList.any((t) => t.id == gId)) {
-              groupList.add(_ForwardTarget(
-                id: gId,
-                name: g['name'] as String? ?? 'Group',
-                isGroup: true,
-                groupImageUrl: g['imageUrl'] as String?,
-              ));
-            }
-          }
-        }
+      final firestoreGroups = await FirestoreService().getMyGroups();
+      for (final g in firestoreGroups) {
+        groupList.add(_ForwardTarget(
+          id: g.id,
+          name: g.name,
+          isGroup: true,
+          groupImageUrl: g.imageUrl,
+        ));
       }
     } catch (_) {}
 

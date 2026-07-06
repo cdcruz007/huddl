@@ -63,6 +63,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   ];
   bool _allowMultiple = false;
   bool _isCalendarMode = false;
+  bool _submitted = false;
   DateTime? _expiresAt;
 
   /// Selected date/time for each option (calendar mode)
@@ -216,6 +217,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   void _create() {
+    if (_submitted) return;
     List<String> options;
 
     if (_isCalendarMode) {
@@ -231,6 +233,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     }
 
     if (_questionCtrl.text.trim().isEmpty || options.length < 2) return;
+    _submitted = true;
 
     Navigator.pop(
       context,
