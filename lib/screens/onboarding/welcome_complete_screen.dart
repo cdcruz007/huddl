@@ -24,6 +24,7 @@ class WelcomeCompleteScreen extends StatefulWidget {
 class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
     with TickerProviderStateMixin {
   late final AnimationController _ctrl;
+  bool _navigated = false;
 
   /// Fire welcome email once — non-blocking, backend is idempotent (welcomeEmailSent guard).
   void _fireWelcomeEmail() {
@@ -43,7 +44,8 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
   }
 
   void _navigateNext() {
-    if (!mounted) return;
+    if (!mounted || _navigated) return;
+    _navigated = true;
     Navigator.pushNamed(context, '/add_photo');
   }
 
