@@ -37,7 +37,7 @@
  */
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.seedWelcomeSubscription = exports.reconcileGdprErasures = exports.moderateAndSendGroupMessage = exports.onDmMessageCreated = exports.moderateAndSendDM = exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
+exports.joinDefaultGroups = exports.seedWelcomeSubscription = exports.reconcileGdprErasures = exports.moderateAndSendGroupMessage = exports.onDmMessageCreated = exports.moderateAndSendDM = exports.verifyBusiness = exports.deleteUserData = exports.setUserBorough = exports.syncPublicProfile = exports.vertexGenerateContent = exports.generateCopilotSuggestions = exports.huddlCopilotChat = exports.cleanupExpiredRecommendations = exports.recordRecommendationFeedback = exports.refreshUserRecommendations = exports.generateEventRecommendations = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
@@ -3636,5 +3636,238 @@ exports.seedWelcomeSubscription = functions
         functions.logger.error(`[seedWelcomeSubscription] Failed to seed subscription for userId=${userId}: ${String(err)}`);
         throw err;
     }
+});
+// ── Static outward-code → borough map (Cambridge launch area) ───────────────
+// Covers CB1–CB11 (Cambridge city) and CB21–CB25 (South Cambridgeshire).
+// All map to "Cambridge" — the single allowed borough for the current launch
+// gate.  No network call required; resolves synchronously from the postcode
+// the client already computed.
+const CB_OUTWARD_BOROUGH = {
+    CB1: "Cambridge", CB2: "Cambridge", CB3: "Cambridge", CB4: "Cambridge",
+    CB5: "Cambridge", CB6: "Cambridge", CB7: "Cambridge", CB8: "Cambridge",
+    CB9: "Cambridge", CB10: "Cambridge", CB11: "Cambridge",
+    CB21: "Cambridge", CB22: "Cambridge", CB23: "Cambridge",
+    CB24: "Cambridge", CB25: "Cambridge",
+};
+/**
+ * Extract the outward code from a full UK postcode.
+ * "CB1 2AB" → "CB1", "CB21 3XX" → "CB21".
+ * Algorithm: strip all spaces, drop the last 3 characters (always the inward
+ * code: digit + two letters).  Works for all standard UK formats.
+ */
+function _outwardCode(postcode) {
+    return postcode.trim().toUpperCase().replace(/\s+/g, "").slice(0, -3);
+}
+/**
+ * Resolve a borough string for the given uid + postcode.
+ *
+ * Priority order (stops at first non-empty result):
+ *   1. Passed-in borough from the request payload — client already computed it.
+ *   2. users_public/{uid}.borough — the authoritative public mirror.
+ *   3. users/{uid}.borough        — fallback if mirror not yet synced.
+ *   4. Static CB outward-code map — synchronous, no network on the happy path.
+ *   5. postcodes.io /outcodes/:outward — last-resort network call.
+ *
+ * Returns empty string if all five steps fail (caller must add to failed[]).
+ */
+async function _resolveBorough(uid, payloadBorough, postcode) {
+    // 1. Payload borough (client-computed — most reliable on happy path)
+    if (payloadBorough && payloadBorough.trim() !== "") {
+        return payloadBorough.trim();
+    }
+    // 2. users_public/{uid}.borough (authoritative mirror written by syncPublicProfile)
+    try {
+        const pubSnap = await db.collection("users_public").doc(uid).get();
+        const pub = pubSnap.exists
+            ? pubSnap.data()["borough"]
+            : undefined;
+        if (pub && pub.trim() !== "")
+            return pub.trim();
+    }
+    catch ( /* fall through */_a) { /* fall through */ }
+    // 3. users/{uid}.borough
+    try {
+        const userSnap = await db.collection("users").doc(uid).get();
+        const stored = userSnap.exists
+            ? userSnap.data()["borough"]
+            : undefined;
+        if (stored && stored.trim() !== "")
+            return stored.trim();
+    }
+    catch ( /* fall through */_b) { /* fall through */ }
+    // 4. Static outward-code map — synchronous, zero network
+    if (postcode && postcode.trim() !== "") {
+        const outward = _outwardCode(postcode);
+        const mapped = CB_OUTWARD_BOROUGH[outward];
+        if (mapped)
+            return mapped;
+    }
+    // 5. postcodes.io /outcodes/:outward — last resort
+    if (postcode && postcode.trim() !== "") {
+        const outward = _outwardCode(postcode);
+        const networkBorough = await new Promise((resolve) => {
+            const options = {
+                hostname: "api.postcodes.io",
+                path: `/outcodes/${encodeURIComponent(outward)}`,
+                method: "GET",
+            };
+            const req = https.request(options, (res) => {
+                let raw = "";
+                res.on("data", (chunk) => { raw += chunk.toString(); });
+                res.on("end", () => {
+                    var _a;
+                    if (res.statusCode !== 200) {
+                        resolve("");
+                        return;
+                    }
+                    try {
+                        const parsed = JSON.parse(raw);
+                        const districts = (_a = parsed.result) === null || _a === void 0 ? void 0 : _a.admin_district;
+                        resolve(Array.isArray(districts) && districts.length > 0 ? districts[0] : "");
+                    }
+                    catch (_b) {
+                        resolve("");
+                    }
+                });
+            });
+            req.on("error", () => resolve(""));
+            req.end();
+        });
+        if (networkBorough !== "")
+            return networkBorough;
+    }
+    return "";
+}
+exports.joinDefaultGroups = functions
+    .region("europe-west2")
+    .runWith({ timeoutSeconds: 60, memory: "256MB" })
+    .https.onCall(async (data, context) => {
+    var _a, _b, _c, _d;
+    // ── Auth guard ───────────────────────────────────────────────────────────
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Must be signed in to join groups.");
+    }
+    const uid = context.auth.uid;
+    // ── Input validation ─────────────────────────────────────────────────────
+    const input = data;
+    if (!Array.isArray(input.groups) || input.groups.length === 0) {
+        throw new functions.https.HttpsError("invalid-argument", "groups must be a non-empty array.");
+    }
+    const groups = input.groups;
+    for (const g of groups) {
+        if (typeof g.id !== "string" || g.id.trim() === "") {
+            throw new functions.https.HttpsError("invalid-argument", "Each group must have a non-empty id.");
+        }
+    }
+    // ── Result accumulators ──────────────────────────────────────────────────
+    const joined = [];
+    const created = [];
+    const failed = [];
+    // ── Per-group processing ─────────────────────────────────────────────────
+    for (const spec of groups) {
+        const groupId = spec.id.trim();
+        try {
+            // Resolve borough via 5-step priority chain.
+            // Step 1 uses spec.borough (the client-computed value) — on the happy
+            // path this returns immediately without any Firestore reads.
+            const resolvedBorough = await _resolveBorough(uid, (_a = spec.borough) !== null && _a !== void 0 ? _a : "", (_b = spec.postcode) !== null && _b !== void 0 ? _b : "");
+            // Hard-fail if borough cannot be resolved at all — surface in failed[]
+            // so it shows up in logs and the caller's return value.
+            if (resolvedBorough === "") {
+                const reason = `borough_unresolved:${(_c = spec.postcode) !== null && _c !== void 0 ? _c : ""}`;
+                functions.logger.error(`[joinDefaultGroups] BOROUGH_UNRESOLVED uid=${uid} groupId=${groupId} postcode=${(_d = spec.postcode) !== null && _d !== void 0 ? _d : ""}`);
+                failed.push({ id: groupId, reason });
+                continue;
+            }
+            // Borough gate — block if the resolved borough doesn't match the group's
+            // expected borough (same loose matching as the client).
+            if (spec.borough && spec.borough.trim() !== "") {
+                const rb = resolvedBorough.toLowerCase();
+                const gb = spec.borough.toLowerCase();
+                const boroughMatch = rb === gb || rb.includes(gb) || gb.includes(rb);
+                if (!boroughMatch) {
+                    const reason = `borough mismatch: caller=${resolvedBorough} group=${spec.borough}`;
+                    functions.logger.warn(`[joinDefaultGroups] BLOCKED uid=${uid} groupId=${groupId} — ${reason}`);
+                    failed.push({ id: groupId, reason });
+                    continue;
+                }
+            }
+            // ── Admin SDK transaction ────────────────────────────────────────────
+            const ref = db.collection("groups").doc(groupId);
+            let outcome = "joined";
+            await db.runTransaction(async (tx) => {
+                var _a, _b, _c, _d, _e;
+                const snap = await tx.get(ref);
+                if (snap.exists) {
+                    const existing = snap.data();
+                    const memberIds = (_a = existing["memberIds"]) !== null && _a !== void 0 ? _a : [];
+                    if (memberIds.includes(uid)) {
+                        // Already a member — idempotent no-op
+                        outcome = "already_member";
+                        return;
+                    }
+                    // Add to existing group
+                    tx.update(ref, Object.assign(Object.assign({ memberIds: admin.firestore.FieldValue.arrayUnion(uid), memberCount: admin.firestore.FieldValue.increment(1), isImageLocked: true, groupType: "resident" }, (spec.level ? { level: spec.level } : {})), { updatedAt: admin.firestore.FieldValue.serverTimestamp() }));
+                    outcome = "joined";
+                }
+                else {
+                    // Create the group document — system-owned, not first-user-owned
+                    // Use the fully resolved borough, not the raw payload field.
+                    const docData = {
+                        id: groupId,
+                        name: spec.name,
+                        description: spec.description,
+                        imageUrl: spec.imageUrl,
+                        memberIds: [uid],
+                        memberCount: 1,
+                        category: spec.category,
+                        privacy: "public",
+                        borough: resolvedBorough,
+                        creatorBorough: resolvedBorough,
+                        postcode: (_b = spec.postcode) !== null && _b !== void 0 ? _b : "",
+                        // System-owned: not attributed to the first joining user
+                        creatorId: "huddl_system",
+                        creatorName: "Huddl",
+                        isImageLocked: true,
+                        groupType: "resident",
+                        invitedMemberIds: [],
+                        lastMessage: (_c = spec.lastMessage) !== null && _c !== void 0 ? _c : "Welcome to the group!",
+                        lastSenderName: (_d = spec.lastSenderName) !== null && _d !== void 0 ? _d : "Huddl",
+                        level: (_e = spec.level) !== null && _e !== void 0 ? _e : "borough",
+                        lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    };
+                    if (spec.birthYear != null)
+                        docData["birthYear"] = spec.birthYear;
+                    if (spec.parentGroupId)
+                        docData["parentGroupId"] = spec.parentGroupId;
+                    tx.set(ref, docData);
+                    outcome = "created";
+                }
+            });
+            if (outcome === "created") {
+                created.push(groupId);
+                functions.logger.info(`[joinDefaultGroups] CREATED group=${groupId} name="${spec.name}" uid=${uid} borough=${spec.borough}`);
+            }
+            else if (outcome === "joined") {
+                joined.push(groupId);
+                functions.logger.info(`[joinDefaultGroups] JOINED group=${groupId} uid=${uid}`);
+            }
+            else {
+                // already_member — counts as joined for the caller's purposes
+                joined.push(groupId);
+                functions.logger.info(`[joinDefaultGroups] ALREADY_MEMBER group=${groupId} uid=${uid} — no-op`);
+            }
+        }
+        catch (err) {
+            const reason = String(err);
+            functions.logger.error(`[joinDefaultGroups] FAILED group=${groupId} uid=${uid} error=${reason}`);
+            failed.push({ id: groupId, reason });
+        }
+    }
+    functions.logger.info(`[joinDefaultGroups] DONE uid=${uid} ` +
+        `joined=${joined.length} created=${created.length} failed=${failed.length}`);
+    return { joined, created, failed };
 });
 //# sourceMappingURL=index.js.map
