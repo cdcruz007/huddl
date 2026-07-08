@@ -128,7 +128,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool _biometricAvailable = false;
   String _biometricLabel   = 'Biometrics';
 
-  // App version — populated dynamically from pubspec.yaml via package_info_plus
+  // App version — populated dynamically from pubspec.yaml via package_info_plus.
+  // Format: "1.1.51 (116)" — includes build number so testers can verify the exact build.
   String _appVersion = '1.0.0';
 
   // Lottie controller for the Profile header identity animation (play once).
@@ -262,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     // ── App version (non-blocking) ───────────────────────────────────────────
     PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _appVersion = info.version);
+      if (mounted) setState(() => _appVersion = '${info.version} (${info.buildNumber})');
     }).catchError((_) {}); // keep hardcoded fallback on failure
 
     try {
