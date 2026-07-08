@@ -49,7 +49,7 @@ class _WelcomeCompleteScreenState extends State<WelcomeCompleteScreen>
   void _navigateNext() {
     if (!mounted || _navigated) return;
     _navigated = true;
-    Navigator.pushNamed(context, '/add_photo');
+    Navigator.pushReplacementNamed(context, '/add_photo');
   }
 
   @override
