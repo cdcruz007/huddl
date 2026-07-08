@@ -179,9 +179,42 @@ router.post('/resend-verification', authMiddleware, async (req, res, next) => {
       return res.json({ success: true, alreadyVerified: true });
     }
 
-    // Issue a fresh token
-    const { token, expiry } = await _issueVerifyToken(db, userId);
-    const verifyUrl         = _verifyUrl(userId, token);
+    // ── Atomic dedupe — shared 120s window with /welcome ─────────────────────
+    // Uses the same verificationEmailSentAt field and transaction pattern so an
+    // email sent by either endpoint blocks the other for 120 seconds.
+    let shouldSend = false;
+    let token, expiry;
+
+    const userRef = db.collection('users').doc(userId);
+
+    await db.runTransaction(async (txn) => {
+      const snap     = await txn.get(userRef);
+      const data     = snap.data() || {};
+      const sentAt   = data.verificationEmailSentAt;
+      const lastSent = sentAt
+        ? (sentAt.toMillis?.() ?? new Date(sentAt).getTime())
+        : 0;
+
+      if (lastSent && (Date.now() - lastSent) < 120000) {
+        shouldSend = false;
+        return;
+      }
+
+      // Claim the send slot atomically.
+      txn.update(userRef, {
+        verificationEmailSentAt: FieldValue.serverTimestamp(),
+        updatedAt:               FieldValue.serverTimestamp(),
+      });
+      shouldSend = true;
+    });
+
+    if (!shouldSend) {
+      return res.json({ success: true, emailSkipped: 'recently sent' });
+    }
+
+    // Transaction committed — issue a fresh token and send.
+    ({ token, expiry } = await _issueVerifyToken(db, userId));
+    const verifyUrl   = _verifyUrl(userId, token);
 
     const emailResult = await sendVerificationEmail({
       email,
