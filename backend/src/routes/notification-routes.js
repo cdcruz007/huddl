@@ -100,21 +100,44 @@ router.post('/welcome', authMiddleware, async (req, res, next) => {
       return res.json(result);
     }
 
-    // Dedupe: skip if a verification email was sent in the last 2 minutes.
-    // Swallows the near-simultaneous double-trigger (incl. un-updated app builds).
-    const lastSent = userData.verificationEmailSentAt
-      ? (userData.verificationEmailSentAt.toMillis?.() ?? new Date(userData.verificationEmailSentAt).getTime())
-      : 0;
-    if (lastSent && (Date.now() - lastSent) < 120000) {
+    // ── Atomic dedupe via Firestore transaction ───────────────────────────────
+    // Two concurrent requests both reaching this point would race on the
+    // read→check→write sequence.  A transaction serialises that: only the first
+    // committer wins; the second sees the timestamp written by the first and
+    // bails out immediately.
+    let shouldSend = false;
+    let token, expiry;
+
+    await db.runTransaction(async (txn) => {
+      const snap     = await txn.get(userRef);
+      const data     = snap.data() || {};
+      const sentAt   = data.verificationEmailSentAt;
+      const lastSent = sentAt
+        ? (sentAt.toMillis?.() ?? new Date(sentAt).getTime())
+        : 0;
+
+      if (lastSent && (Date.now() - lastSent) < 120000) {
+        // A send already happened (or is in-flight) — do nothing inside txn.
+        shouldSend = false;
+        return;
+      }
+
+      // Claim the send slot atomically.
+      txn.update(userRef, {
+        verificationEmailSentAt: FieldValue.serverTimestamp(),
+        email:                   resolvedEmail,
+        updatedAt:               FieldValue.serverTimestamp(),
+      });
+      shouldSend = true;
+    });
+
+    if (!shouldSend) {
       result.emailSkipped = 'recently sent';
       return res.json(result);
     }
 
-    const { token, expiry } = await _issueVerifyToken(db, userId);
-    await userRef.set(
-      { email: resolvedEmail, updatedAt: FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+    // Transaction committed — we are the sole winner. Issue token and send.
+    ({ token, expiry } = await _issueVerifyToken(db, userId));
 
     const verifyUrl   = _verifyUrl(userId, token);
     const emailResult = await sendVerificationEmail({
@@ -122,8 +145,6 @@ router.post('/welcome', authMiddleware, async (req, res, next) => {
       firstName: firstName || userData.firstName,
       verifyUrl,
     });
-
-    await userRef.update({ verificationEmailSentAt: FieldValue.serverTimestamp() });
 
     result.email             = emailResult;
     result.verifyTokenExpiry = expiry;
