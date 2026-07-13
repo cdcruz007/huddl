@@ -79,12 +79,11 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size       = MediaQuery.of(context).size;
-    final keyboardUp = MediaQuery.of(context).viewInsets.bottom > 0;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false, // no keyboard on this screen
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,
@@ -94,19 +93,16 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
               _OnboardingAppBar(onBack: () => Navigator.pop(context)),
               OnboardingProgressBar(step: OnboardingStep.stageOfLife),
 
-              // ── Hero photo — collapses to zero when the keyboard opens so
-              //    all three stage cards remain visible below the fold.
-              // parent_type=community, stage_of_life=meetup, due_date=community(offset)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                height: keyboardUp ? 0 : size.height * 0.40,
-                clipBehavior: Clip.hardEdge,
-                decoration: const BoxDecoration(),
+              // ── Hero photo — 28% of screen height (down from 40%).
+              //    Leaves ~500px on an 800px phone for all three cards +
+              //    the Continue button without any scrolling required.
+              //    parent_type=community, stage_of_life=meetup, due_date=community(offset)
+              SizedBox(
+                height: size.height * 0.28,
                 child: Transform.scale(
                   scale: _imageScale.value,
                   child: SizedBox(
-                    height: size.height * 0.40,
+                    height: size.height * 0.28,
                     child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -188,62 +184,88 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
                   ),
                 ),
               ),
-              ), // AnimatedContainer
+              ), // SizedBox hero
 
-              // ── Cards + button — fade in after image settles ──────────────
+              // ── Cards + Continue button ───────────────────────────────────
+              // Expanded takes all remaining height after the hero.
+              // SingleChildScrollView + ConstrainedBox(minHeight) + IntrinsicHeight
+              // means the Column fills the available space on normal phones and
+              // can scroll on very small devices (<640px logical height).
               Expanded(
                 child: FadeTransition(
                   opacity: _contentFade,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Your stage of life',
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Theme.of(context).colorScheme.onSurface,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Your stage of life',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w700,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Connect with others at the same stage. You can choose more than one.',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? HuddlColors.darkTextSecondary
+                                              : HuddlColors.disabledText,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+
+                                      // Stage cards — independently toggleable
+                                      ..._stages.map((s) => Padding(
+                                            padding: const EdgeInsets.only(bottom: 12),
+                                            child: _StageCard(
+                                              item: s,
+                                              selected: _selected.contains(s.id),
+                                              onTap: () => _toggle(s.id),
+                                            ),
+                                          )),
+                                    ],
+                                  ),
+                                ),
+
+                                // Spacer pushes Continue to the bottom when
+                                // content is shorter than the available height.
+                                const Spacer(),
+
+                                // Continue button — always at bottom
+                                FadeTransition(
+                                  opacity: _contentFade,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                                    child: _OrangeButton(
+                                      label: 'Continue',
+                                      enabled: _selected.isNotEmpty,
+                                      onTap: _continue,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Connect with others at the same stage. You can choose more than one.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? HuddlColors.darkTextSecondary
-                                : HuddlColors.disabledText,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Stage cards — independently toggleable
-                        ..._stages.map((s) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _StageCard(
-                                item: s,
-                                selected: _selected.contains(s.id),
-                                onTap: () => _toggle(s.id),
-                              ),
-                            )),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Continue button — pinned to bottom
-              FadeTransition(
-                opacity: _contentFade,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-                  child: _OrangeButton(
-                    label: 'Continue',
-                    enabled: _selected.isNotEmpty,
-                    onTap: _continue,
+                      );
+                    },
                   ),
                 ),
               ),
