@@ -74,10 +74,12 @@ class _ChildInfoScreenState extends State<ChildInfoScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size       = MediaQuery.of(context).size;
+    final keyboardUp = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,
@@ -87,12 +89,19 @@ class _ChildInfoScreenState extends State<ChildInfoScreen>
               _OnboardingAppBar(onBack: () => Navigator.pop(context)),
               OnboardingProgressBar(step: OnboardingStep.childInfo),
 
-              // ── Compact hero photo — 34% height, more room for form inputs ─
-              Transform.scale(
-                scale: _imageScale.value,
-                child: SizedBox(
-                  height: size.height * 0.34,
-                  child: Stack(
+              // ── Hero photo — collapses to zero when the keyboard opens so it
+              //    never clips or overlaps the form fields below.
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                height: keyboardUp ? 0 : size.height * 0.34,
+                clipBehavior: Clip.hardEdge,
+                decoration: const BoxDecoration(),
+                child: Transform.scale(
+                  scale: _imageScale.value,
+                  child: SizedBox(
+                    height: size.height * 0.34,
+                    child: Stack(
                     fit: StackFit.expand,
                     children: [
                       // Real photo — meetup photo works well here (parents at park)
@@ -174,6 +183,7 @@ class _ChildInfoScreenState extends State<ChildInfoScreen>
                   ),
                 ),
               ),
+              ), // AnimatedContainer
 
               // ── Form area — fades in after image settles ──────────────────
               Expanded(

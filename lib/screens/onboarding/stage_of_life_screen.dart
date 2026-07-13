@@ -79,10 +79,12 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size       = MediaQuery.of(context).size;
+    final keyboardUp = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,
@@ -92,13 +94,20 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
               _OnboardingAppBar(onBack: () => Navigator.pop(context)),
               OnboardingProgressBar(step: OnboardingStep.stageOfLife),
 
-              // ── Hero photo — 40% height, meetup photo rotates the set ─────
+              // ── Hero photo — collapses to zero when the keyboard opens so
+              //    all three stage cards remain visible below the fold.
               // parent_type=community, stage_of_life=meetup, due_date=community(offset)
-              Transform.scale(
-                scale: _imageScale.value,
-                child: SizedBox(
-                  height: size.height * 0.40,
-                  child: Stack(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                height: keyboardUp ? 0 : size.height * 0.40,
+                clipBehavior: Clip.hardEdge,
+                decoration: const BoxDecoration(),
+                child: Transform.scale(
+                  scale: _imageScale.value,
+                  child: SizedBox(
+                    height: size.height * 0.40,
+                    child: Stack(
                     fit: StackFit.expand,
                     children: [
                       ClipRRect(
@@ -179,6 +188,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen>
                   ),
                 ),
               ),
+              ), // AnimatedContainer
 
               // ── Cards + button — fade in after image settles ──────────────
               Expanded(
