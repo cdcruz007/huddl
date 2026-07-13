@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/photo_upload_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -39,7 +40,10 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
   final _onboarding  = OnboardingDataService();
   final _photoUpload = PhotoUploadService();
 
+  // _pickedFile  = original file from camera/gallery (kept for re-crop via "Adjust")
+  // _croppedFile = result of the cropper — this is what gets previewed + uploaded
   XFile? _pickedFile;
+  XFile? _croppedFile;
   bool   _isLoading  = false;
 
   // Subtle pulse for the arc while loading
@@ -143,28 +147,127 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
     );
   }
 
+  // ── Cropper ────────────────────────────────────────────────────────────────
+
+  /// Opens the circular crop UI on [sourcePath] and returns the cropped XFile,
+  /// or null if the user cancelled.
+  Future<XFile?> _cropImage(String sourcePath) async {
+    // Web: image_cropper uses a different UI on web (no uCrop) — still works
+    // but the circular overlay is cosmetic only on web.
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: sourcePath,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Adjust photo',
+          toolbarColor: const Color(0xFF1A1A1A),
+          toolbarWidgetColor: Colors.white,
+          activeControlsWidgetColor: HuddlColors.onboardingOrange,
+          cropFrameColor: HuddlColors.onboardingOrange,
+          cropGridColor: Colors.white24,
+          dimmedLayerColor: Colors.black87,
+          cropStyle: CropStyle.circle,
+          aspectRatioPresets: [CropAspectRatioPreset.square],
+          lockAspectRatio: true,
+          hideBottomControls: false,
+          showCropGrid: false,
+          initAspectRatio: CropAspectRatioPreset.square,
+        ),
+        IOSUiSettings(
+          title: 'Adjust photo',
+          cancelButtonTitle: 'Cancel',
+          doneButtonTitle: 'Done',
+          cropStyle: CropStyle.circle,
+          aspectRatioPresets: [CropAspectRatioPreset.square],
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+          rotateButtonsHidden: false,
+        ),
+        WebUiSettings(
+          context: context,
+          presentStyle: WebPresentStyle.dialog,
+          size: const CropperSize(width: 520, height: 520),
+          zoomable: true,
+          movable: true,
+          cropBoxMovable: true,
+          cropBoxResizable: false, // locked 1:1
+          guides: false,
+          center: true,
+          background: false,
+        ),
+      ],
+    );
+
+    if (cropped == null) return null;
+    return XFile(cropped.path);
+  }
+
+  // ── Pick → crop → upload pipeline ─────────────────────────────────────────
+
   Future<void> _pickFrom(ImageSource source) async {
     try {
       setState(() => _isLoading = true);
       final file = await _picker.pickImage(
         source: source,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 90,
         preferredCameraDevice: CameraDevice.front,
       );
-      if (file == null || !mounted) return;
-      setState(() => _pickedFile = file);
+      if (file == null || !mounted) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
-      final bytes     = await file.readAsBytes();
+      // Store the original for potential re-crop via "Adjust"
+      _pickedFile = file;
+
+      // Open the cropper immediately — loading spinner stays on
+      await _cropAndUpload(file.path);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not access photos: $e'),
+            backgroundColor: HuddlColors.error,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// Called both after initial pick AND when the user taps "Adjust".
+  Future<void> _adjustCrop() async {
+    if (_pickedFile == null) return;
+    setState(() => _isLoading = true);
+    await _cropAndUpload(_pickedFile!.path);
+  }
+
+  Future<void> _cropAndUpload(String sourcePath) async {
+    try {
+      // Present the circular crop UI
+      final cropped = await _cropImage(sourcePath);
+      if (!mounted) return;
+
+      if (cropped == null) {
+        // User tapped Cancel — keep whatever was there before
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      setState(() => _croppedFile = cropped);
+
+      // Upload the cropped file
+      final bytes     = await cropped.readAsBytes();
       final base64Str = base64Encode(bytes);
-      final mimeType  = file.name.toLowerCase().endsWith('.png')
+      final mimeType  = cropped.name.toLowerCase().endsWith('.png')
           ? 'image/png'
           : 'image/jpeg';
       final dataUrl   = 'data:$mimeType;base64,$base64Str';
       _onboarding.setProfilePhotoObjectUrl(dataUrl);
 
-      final downloadUrl = await _photoUpload.uploadProfilePhoto(file);
+      final downloadUrl = await _photoUpload.uploadProfilePhoto(cropped);
       if (downloadUrl != null) {
         _onboarding.setProfilePhotoPath(downloadUrl);
       } else {
@@ -174,7 +277,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not access photos: $e'),
+            content: Text('Photo processing failed: $e'),
             backgroundColor: HuddlColors.error,
           ),
         );
@@ -192,7 +295,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = _pickedFile != null;
+    final hasPhoto = _croppedFile != null;
 
     return Scaffold(
       // UX-09: White scaffold — consistent with adjacent onboarding screens
@@ -322,7 +425,19 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: Column(
                 children: [
-                  // Add / change photo — white outlined
+                  // "Adjust" — reopen cropper on the original image
+                  if (hasPhoto) ...[
+                    HuddlButton(
+                      label: 'Adjust',
+                      variant: HuddlButtonVariant.secondary,
+                      leadingIcon: HuddlIcons.edit,
+                      fullWidth: true,
+                      onPressed: _isLoading ? null : _adjustCrop,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Add / change photo
                   HuddlButton(
                     label: hasPhoto ? 'Change photo' : 'Add photo',
                     variant: HuddlButtonVariant.secondary,
@@ -357,10 +472,10 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
   }
 
   Widget _buildAvatarContent() {
-    if (_pickedFile != null) {
+    if (_croppedFile != null) {
       if (kIsWeb) {
         return Image.network(
-          _pickedFile!.path,
+          _croppedFile!.path,
           width: 260,
           height: 260,
           fit: BoxFit.cover,
@@ -368,7 +483,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen>
         );
       }
       return Image.file(
-        File(_pickedFile!.path),
+        File(_croppedFile!.path),
         width: 260,
         height: 260,
         fit: BoxFit.cover,
