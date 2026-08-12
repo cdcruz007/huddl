@@ -2490,28 +2490,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
         return;
       }
     }
+    final MediaAttachment? attachment;
     try {
-      final attachment = await _mediaService.takePhoto();
+      attachment = await _mediaService.takePhoto();
       if (attachment == null || !mounted) return;
-      // S-01: resolve conversationId BEFORE upload so the Storage rule's
-      // firestore.get(conversations/{cid}).participants can resolve.
-      final cid = await _ensureConversationId();
-      if (cid == null || !mounted) return;
-      final downloadUrl = await _uploadMediaToStorage(
-        bytes: attachment.bytes,
-        filePath: attachment.filePath,
-        mimeType: attachment.mimeType ?? 'image/jpeg',
-        folder: 'dm_images',
-        conversationId: cid,
-      );
-      if (!mounted) return;
-      if (downloadUrl == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to upload photo. Please try again.')),
-        );
-        return;
-      }
-      await _sendRichMessage(type: MessageType.image, imageUrl: downloadUrl);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2522,7 +2504,27 @@ class _DMChatScreenState extends State<DMChatScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+      return;
     }
+    // S-01: resolve conversationId BEFORE upload so the Storage rule's
+    // firestore.get(conversations/{cid}).participants can resolve.
+    final cid = await _ensureConversationId();
+    if (cid == null || !mounted) return;
+    final downloadUrl = await _uploadMediaToStorage(
+      bytes: attachment.bytes,
+      filePath: attachment.filePath,
+      mimeType: attachment.mimeType ?? 'image/jpeg',
+      folder: 'dm_images',
+      conversationId: cid,
+    );
+    if (!mounted) return;
+    if (downloadUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload photo. Please try again.')),
+      );
+      return;
+    }
+    await _sendRichMessage(type: MessageType.image, imageUrl: downloadUrl);
   }
 
   Future<void> _handleGalleryPick() async {
