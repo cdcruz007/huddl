@@ -106,6 +106,42 @@ post_install do |installer|
       config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
       # Skip debug symbols for pods in release (not needed, saves link time).
       config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf'
+
+      # ── permission_handler iOS permission macros ──────────────────────────
+      # permission_handler_apple compiles EVERY permission strategy behind a
+      # PERMISSION_* macro that DEFAULTS TO 0 (PermissionHandlerEnums.h).
+      # Without these, Permission.camera / Permission.contacts return
+      # permanentlyDenied WITHOUT ever asking iOS — even when the OS has
+      # granted the permission. Huddl uses camera + contacts only; every other
+      # permission is owned by a different plugin (record / geolocator /
+      # firebase_messaging / PHPicker). All unused permissions are explicitly
+      # 0 so App Store review does not flag unused API declarations.
+      # DO NOT enable PERMISSION_PHOTOS — PHPickerViewController requires no
+      # permission, and enabling it introduces a prompt users should not see.
+      # Direct assignment (=) is intentional — ||= silently no-ops when
+      # flutter_additional_ios_build_settings has already set the key.
+      if target.name == 'permission_handler_apple'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = [
+          '$(inherited)',
+          'PERMISSION_CAMERA=1',
+          'PERMISSION_CONTACTS=1',
+          'PERMISSION_EVENTS=0',
+          'PERMISSION_EVENTS_FULL_ACCESS=0',
+          'PERMISSION_REMINDERS=0',
+          'PERMISSION_MICROPHONE=0',
+          'PERMISSION_SPEECH_RECOGNIZER=0',
+          'PERMISSION_PHOTOS=0',
+          'PERMISSION_PHOTOS_ADD_ONLY=0',
+          'PERMISSION_LOCATION=0',
+          'PERMISSION_NOTIFICATIONS=0',
+          'PERMISSION_MEDIA_LIBRARY=0',
+          'PERMISSION_SENSORS=0',
+          'PERMISSION_BLUETOOTH=0',
+          'PERMISSION_APP_TRACKING_TRANSPARENCY=0',
+          'PERMISSION_CRITICAL_ALERTS=0',
+          'PERMISSION_ASSISTANT=0',
+        ]
+      end
     end
 
     # ── Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ───────────────
@@ -138,9 +174,29 @@ post_install do |installer|
   xcconfig_dir = File.join(installer.sandbox.root.to_s, 'Target Support Files')
   Dir.glob(File.join(xcconfig_dir, '**/*.xcconfig')).each do |xcconfig_path|
     content = File.read(xcconfig_path)
+
+    # Belt-and-braces: CLANG_ALLOW_NON_MODULAR_INCLUDES on every pod
     key = 'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'
     unless content.include?(key)
       File.open(xcconfig_path, 'a') { |f| f.puts "\n#{key} = YES" }
+    end
+
+    # Belt-and-braces: permission macros on permission_handler_apple xcconfigs.
+    # Mirrors the in-memory build_settings write above so Xcode reads the same
+    # values whether it consults xcodeproj or the generated xcconfig directly.
+    if xcconfig_path.include?('permission_handler_apple') && !content.include?('PERMISSION_CAMERA')
+      perm_line = 'GCC_PREPROCESSOR_DEFINITIONS = $(inherited)' \
+        ' PERMISSION_CAMERA=1 PERMISSION_CONTACTS=1' \
+        ' PERMISSION_EVENTS=0 PERMISSION_EVENTS_FULL_ACCESS=0' \
+        ' PERMISSION_REMINDERS=0 PERMISSION_MICROPHONE=0' \
+        ' PERMISSION_SPEECH_RECOGNIZER=0 PERMISSION_PHOTOS=0' \
+        ' PERMISSION_PHOTOS_ADD_ONLY=0 PERMISSION_LOCATION=0' \
+        ' PERMISSION_NOTIFICATIONS=0 PERMISSION_MEDIA_LIBRARY=0' \
+        ' PERMISSION_SENSORS=0 PERMISSION_BLUETOOTH=0' \
+        ' PERMISSION_APP_TRACKING_TRANSPARENCY=0 PERMISSION_CRITICAL_ALERTS=0' \
+        ' PERMISSION_ASSISTANT=0'
+      File.open(xcconfig_path, 'a') { |f| f.puts "\n#{perm_line}" }
+      puts "  [Podfile] permission_handler_apple xcconfig patched: #{File.basename(xcconfig_path)}"
     end
   end
   puts '  [Podfile] xcconfig patch done.'
