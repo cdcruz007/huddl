@@ -2490,40 +2490,46 @@ class _DMChatScreenState extends State<DMChatScreen> {
         return;
       }
     }
-    final attachment = await _mediaService.takePhoto();
-    if (attachment == null || !mounted) return;
-    // S-01: resolve conversationId BEFORE upload so the Storage rule's
-    // firestore.get(conversations/{cid}).participants can resolve.
-    final cid = await _ensureConversationId();
-    if (cid == null || !mounted) return;
-    final downloadUrl = await _uploadMediaToStorage(
-      bytes: attachment.bytes,
-      filePath: attachment.filePath,
-      mimeType: attachment.mimeType ?? 'image/jpeg',
-      folder: 'dm_images',
-      conversationId: cid,
-    );
-    if (!mounted) return;
-    if (downloadUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to upload photo. Please try again.')),
+    try {
+      final attachment = await _mediaService.takePhoto();
+      if (attachment == null || !mounted) return;
+      // S-01: resolve conversationId BEFORE upload so the Storage rule's
+      // firestore.get(conversations/{cid}).participants can resolve.
+      final cid = await _ensureConversationId();
+      if (cid == null || !mounted) return;
+      final downloadUrl = await _uploadMediaToStorage(
+        bytes: attachment.bytes,
+        filePath: attachment.filePath,
+        mimeType: attachment.mimeType ?? 'image/jpeg',
+        folder: 'dm_images',
+        conversationId: cid,
       );
-      return;
+      if (!mounted) return;
+      if (downloadUrl == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to upload photo. Please try again.')),
+        );
+        return;
+      }
+      await _sendRichMessage(type: MessageType.image, imageUrl: downloadUrl);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Couldn't open the camera. Please try again."),
+          backgroundColor: HuddlColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
-    await _sendRichMessage(type: MessageType.image, imageUrl: downloadUrl);
   }
 
   Future<void> _handleGalleryPick() async {
-    if (!kIsWeb) {
-      final status = await Permission.photos.request();
-      if (!status.isGranted) {
-        // On Android 13+ photos permission may map to READ_MEDIA_IMAGES —
-        // fall back gracefully if the picker itself grants access.
-        if (kDebugMode) {
-          if (kDebugMode) debugPrint('[DMChat] Photos permission: $status — continuing anyway (picker may still work)');
-        }
-      }
-    }
+    // image_picker uses PHPickerViewController (iOS 14+) and the OS photo
+    // picker on Android 13+ — neither requires a runtime permission grant.
+    // Permission.photos.request() was a no-op: it logged and fell through
+    // regardless of result, so it has been removed.
     final attachments = await _mediaService.pickMultipleImages();
     if (attachments.isEmpty || !mounted) return;
     // S-01: resolve conversationId once before the upload loop.

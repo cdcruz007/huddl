@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -56,9 +57,13 @@ class MediaAttachService {
         fileSize: bytes.length,
         bytes: bytes,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) debugPrint('[MediaAttachService] takePhoto error: $e');
-      return null;
+      FirebaseCrashlytics.instance.recordError(
+        e, stackTrace,
+        reason: 'MediaAttachService.takePhoto',
+      );
+      rethrow;
     }
   }
 
@@ -79,9 +84,13 @@ class MediaAttachService {
         fileSize: bytes.length,
         bytes: bytes,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) debugPrint('[MediaAttachService] recordVideo error: $e');
-      return null;
+      FirebaseCrashlytics.instance.recordError(
+        e, stackTrace,
+        reason: 'MediaAttachService.recordVideo',
+      );
+      rethrow;
     }
   }
 

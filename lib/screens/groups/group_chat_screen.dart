@@ -5114,24 +5114,28 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         return;
       }
     }
-    final attachment = await _mediaService.takePhoto();
-    if (attachment == null || !mounted) return;
-    await _addImageMessage(attachment);
+    try {
+      final attachment = await _mediaService.takePhoto();
+      if (attachment == null || !mounted) return;
+      await _addImageMessage(attachment);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Couldn't open the camera. Please try again."),
+          backgroundColor: HuddlColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   Future<void> _handleGalleryPick() async {
-    // ── Permission gate (native only) ──────────────────────────────────────
-    if (!kIsWeb) {
-      // On Android 13+ (API 33+) use READ_MEDIA_IMAGES; older uses photos
-      // permission_handler maps Permission.photos to the correct one per API.
-      final status = await Permission.photos.request();
-      if (!status.isGranted && !status.isLimited) {
-        // Limited = iOS partial access — still allows picker to work.
-        // On Android 13+ the picker itself may still work even without explicit
-        // grant (OS photo picker doesn't need permission), so log and continue.
-        if (kDebugMode) debugPrint('[GroupChat] Photos permission: $status — continuing (OS picker may still work)');
-      }
-    }
+    // image_picker uses PHPickerViewController (iOS 14+) and the OS photo
+    // picker on Android 13+ — neither requires a runtime permission grant.
+    // Permission.photos.request() was a no-op: it logged and fell through
+    // regardless of result, so it has been removed.
     final attachments = await _mediaService.pickMultipleImages();
     if (attachments.isEmpty || !mounted) return;
     for (final att in attachments) {
