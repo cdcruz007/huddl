@@ -67,7 +67,7 @@ dependencies:
   geolocator: ^12.0.0              # Cross-platform GPS (Android/iOS/Web) — v12 compatible with firebase_auth_web
 
   # Runtime permissions — Android/iOS (no-op on Web)
-  permission_handler: ^11.4.0      # Camera, location, contacts, microphone
+  permission_handler: ^11.4.0      # Camera + contacts only (see ios/Podfile PERMISSION_* macros)
   lottie: ^3.3.3
 
   # ONBOARD-1: secure storage for PII at rest on mobile (Keychain/Keystore).
