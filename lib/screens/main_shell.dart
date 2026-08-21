@@ -59,13 +59,23 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   // heads-up banner AND our SnackBar would fire simultaneously.  By tracking
   // the currently-open chat we can skip the SnackBar for that conversation.
   String? _activeGroupId;       // non-null while a group chat is open
-  String? _activeDmRecipientId; // non-null while a DM screen is open
+  String? _activeDmRecipientId;    // non-null while a DM screen is open
+  /// conversationId of the open DM, matched against data['conversationId']
+  /// in the FCM payload (the Railway notify-dm endpoint sends conversationId,
+  /// not recipientId, so the suppression key must use this field).
+  String? _activeDmConversationId;
 
   /// Called by group chat screen on push/pop so we know when it's visible.
   void setActiveGroupChat(String? groupId) => _activeGroupId = groupId;
 
   /// Called by DM chat screen on push/pop so we know when it's visible.
   void setActiveDmChat(String? recipientId) => _activeDmRecipientId = recipientId;
+
+  /// Called by DM chat screen whenever _conversationId is resolved so the
+  /// FCM suppression guard can match on conversationId (present in payload)
+  /// rather than recipientId (absent from payload).
+  void setActiveDmConversation(String? conversationId) =>
+      _activeDmConversationId = conversationId;
 
   @override
   void initState() {
@@ -108,13 +118,13 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       final data            = message.data;
       final notifType       = data['type'] as String? ?? '';
       final notifGroupId    = data['groupId'] as String? ?? '';
-      final notifRecipId    = data['recipientId'] as String? ?? '';
+      final notifConvId     = data['conversationId'] as String? ?? '';
       final alreadyInGroup  = notifType == 'new_group_message' &&
           notifGroupId.isNotEmpty &&
           notifGroupId == _activeGroupId;
       final alreadyInDm     = (notifType == 'new_dm' || notifType == 'voice_message_dm') &&
-          notifRecipId.isNotEmpty &&
-          notifRecipId == _activeDmRecipientId;
+          notifConvId.isNotEmpty &&
+          notifConvId == _activeDmConversationId;
       if (alreadyInGroup || alreadyInDm) return;
 
       // Only surface FCM messages that have a recognised user-facing type.

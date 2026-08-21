@@ -143,7 +143,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   @override
   void initState() {
     super.initState();
-    _conversationId = widget.conversationId;
+    _setConversationId(widget.conversationId);
     _loadData();
     if (!_isRealUser) {
       // Demo mode: use local DMService with polling
@@ -163,10 +163,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
     });
   }
 
+  /// Routes every _conversationId assignment through one place so the shell's
+  /// FCM suppression guard (_activeDmConversationId) is updated the moment the
+  /// id is known, regardless of which code path resolved it.
+  void _setConversationId(String? id) {
+    _conversationId = id;
+    MainShell.shellKey.currentState?.setActiveDmConversation(id);
+  }
+
   @override
   void dispose() {
     // Clear active chat so banners resume for other conversations.
     MainShell.shellKey.currentState?.setActiveDmChat(null);
+    MainShell.shellKey.currentState?.setActiveDmConversation(null);
     _messageController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
@@ -210,7 +219,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         return;
       }
 
-      _conversationId = convId;
+      _setConversationId(convId);
       debugPrint('[DM-LISTEN] conversationId: $convId');
       await _realtimeDMService.markConversationRead(convId);
 
@@ -236,7 +245,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       final expectedConvId = 'dm_${widget.recipientId}';
       final existing = await _dmService.findConversation(widget.recipientId);
       final resolvedId = existing?.id ?? widget.conversationId ?? expectedConvId;
-      _conversationId = resolvedId;
+      _setConversationId(resolvedId);
 
       if (existing != null) {
         await _dmService.markConversationRead(existing.id);
@@ -247,7 +256,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         final fallbackMsgs = await _dmService.getMessages(expectedConvId);
         if (fallbackMsgs.isNotEmpty) {
           _messages = fallbackMsgs;
-          _conversationId = expectedConvId;
+          _setConversationId(expectedConvId);
         }
       }
 
@@ -380,7 +389,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     // If no conversation ID set, try to find or derive it
     if (_conversationId == null) {
       final conv = await _dmService.findConversation(widget.recipientId);
-      _conversationId = conv?.id ?? expectedConvId;
+      _setConversationId(conv?.id ?? expectedConvId);
     }
 
     // Always check the expected storage key (most reliable)
@@ -390,7 +399,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     List<DirectMessage> allMsgs = msgs;
     if (msgs.isEmpty && _conversationId != expectedConvId) {
       allMsgs = await _dmService.getMessages(expectedConvId);
-      if (allMsgs.isNotEmpty) _conversationId = expectedConvId;
+      if (allMsgs.isNotEmpty) _setConversationId(expectedConvId);
     }
     
     if (mounted && allMsgs.length != _messages.length) {
@@ -524,7 +533,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           widget.recipientId,
         );
         if (convId == null || convId == 'blocked') return;
-        _conversationId = convId;
+        _setConversationId(convId);
         // Subscribe to messages now that we have an ID
         _firestoreMsgSub?.cancel();
         _firestoreMsgSub = _realtimeDMService
@@ -597,7 +606,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           recipientName: widget.recipientName,
           avatarColor: widget.recipientAvatarColor,
         );
-        _conversationId = conv.id;
+        _setConversationId(conv.id);
       }
       final msg = await _dmService.sendMessage(
         conversationId: _conversationId!,
@@ -2451,7 +2460,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         widget.recipientId,
       );
       if (convId == null || convId == 'blocked') return null;
-      _conversationId = convId;
+      _setConversationId(convId);
       // Set up message stream if not already subscribed
       _firestoreMsgSub ??= _realtimeDMService
           .messagesStream(_conversationId!)
@@ -2468,7 +2477,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         recipientName: widget.recipientName,
         avatarColor: widget.recipientAvatarColor,
       );
-      _conversationId = conv.id;
+      _setConversationId(conv.id);
     }
     return _conversationId;
   }
@@ -2960,7 +2969,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           widget.recipientId,
         );
         if (convId == null || convId == 'blocked') return;
-        _conversationId = convId;
+        _setConversationId(convId);
       }
       final mediaTempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
       await _realtimeDMService.sendMessageModerated(
@@ -2985,7 +2994,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           recipientName: widget.recipientName,
           avatarColor: widget.recipientAvatarColor,
         );
-        _conversationId = conv.id;
+        _setConversationId(conv.id);
       }
       await _dmService.sendMessage(
         conversationId: _conversationId!,
