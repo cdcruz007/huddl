@@ -60,10 +60,111 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   // the currently-open chat we can skip the SnackBar for that conversation.
   String? _activeGroupId;       // non-null while a group chat is open
   String? _activeDmRecipientId;    // non-null while a DM screen is open
+
+  // ── Foreground notification overlay ─────────────────────────────────────
+  // ScaffoldMessenger-based SnackBars were not auto-dismissing on the test
+  // device (TalkBack confirmed OFF). An explicit OverlayEntry + Timer gives
+  // us reliable dismissal independent of Scaffold lifecycle.
+  OverlayEntry? _notifBanner;
+  Timer?        _notifBannerTimer;
   /// conversationId of the open DM, matched against data['conversationId']
   /// in the FCM payload (the Railway notify-dm endpoint sends conversationId,
   /// not recipientId, so the suppression key must use this field).
   String? _activeDmConversationId;
+
+  // ── Notification banner helpers ──────────────────────────────────────────
+
+  /// Cancels the auto-dismiss timer and removes the overlay entry.
+  /// Safe to call when nothing is currently showing.
+  void _dismissNotifBanner() {
+    _notifBannerTimer?.cancel();
+    _notifBannerTimer = null;
+    _notifBanner?.remove();
+    _notifBanner = null;
+  }
+
+  /// Replaces any current banner with a new one, then auto-dismisses after 4 s.
+  void _showNotifBanner(String title, String body, RemoteMessage message) {
+    // Dismiss any in-flight banner so messages replace rather than stack.
+    _dismissNotifBanner();
+
+    final overlay = Overlay.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (ctx) => Positioned(
+        left: 16,
+        right: 16,
+        bottom: bottomInset + 16,
+        child: SafeArea(
+          top: false,
+          child: Dismissible(
+            key: ValueKey('notif_banner_${DateTime.now().millisecondsSinceEpoch}'),
+            direction: DismissDirection.horizontal,
+            onDismissed: (_) => _dismissNotifBanner(),
+            child: Material(
+              color: HuddlColors.primary,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    const Icon(HuddlIcons.bellFill, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (title.isNotEmpty)
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          if (body.isNotEmpty)
+                            Text(
+                              body,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        _dismissNotifBanner();
+                        _handleNotificationTap(message);
+                      },
+                      child: const Text(
+                        'Open',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    _notifBanner = entry;
+    overlay.insert(entry);
+    _notifBannerTimer = Timer(
+      const Duration(seconds: 4),
+      _dismissNotifBanner,
+    );
+  }
 
   /// Called by group chat screen on push/pop so we know when it's visible.
   void setActiveGroupChat(String? groupId) => _activeGroupId = groupId;
@@ -148,46 +249,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       };
       if (!kUserFacingTypes.contains(notifType)) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          backgroundColor: HuddlColors.primary,
-          duration: const Duration(seconds: 4),
-          content: Row(
-            children: [
-              const Icon(HuddlIcons.bellFill, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (title.isNotEmpty)
-                      Text(title,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13)),
-                    if (body.isNotEmpty)
-                      Text(body,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 12),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          action: SnackBarAction(
-            label: 'Open',
-            textColor: Colors.white,
-            onPressed: () => _handleNotificationTap(message),
-          ),
-        ),
-      );
+      _showNotifBanner(title, body, message);
     };
 
     // Navigate when the user taps a notification (background or terminated).
@@ -334,6 +396,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _dismissNotifBanner(); // cancel timer + remove overlay before widget unmounts
     WidgetsBinding.instance.removeObserver(this);
     tabNotifier.dispose();
     super.dispose();
