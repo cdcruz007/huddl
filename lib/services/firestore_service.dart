@@ -40,7 +40,9 @@
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'clearable_user_state.dart';
 import 'package:flutter/foundation.dart';
 import '../models/group.dart';
@@ -49,6 +51,15 @@ import 'backend_api_service.dart';
 import 'default_group_service.dart';
 import 'huddl_notification_service.dart';
 import 'subscription_service.dart';
+
+// ── Moderated group message result ────────────────────────────────────────────
+enum GroupSendStatus { sent, blockedWordlist, blockedAi, failed }
+
+class GroupSendResult {
+  final GroupSendStatus status;
+  final String? messageId; // Firestore doc id when status == sent
+  const GroupSendResult(this.status, {this.messageId});
+}
 
 class FirestoreService implements ClearableUserState {
   // ── Singleton ──────────────────────────────────────────────────────────
@@ -497,6 +508,103 @@ class FirestoreService implements ClearableUserState {
     }
 
     return ref.id;
+  }
+
+  /// Sends a group message via the moderateAndSendGroupMessage Cloud Function
+  /// (deployed to europe-west2). The CF runs wordlist + Gemini AI moderation
+  /// before writing to Firestore — this is the only path user-originated text
+  /// and media should take. Do NOT fall back to sendGroupMessage on failure.
+  Future<GroupSendResult> sendGroupMessageModerated({
+    required String groupId,
+    required String message,
+    String? replyToText,
+    String? replyToSender,
+    String? audioUrl,
+    int? audioDuration,
+    String? type,
+    String? imageUrl,
+    double? latitude,
+    double? longitude,
+    String? locationLabel,
+    String? liveUntil,
+    String? contactName,
+    String? contactPhone,
+    String? documentUrl,
+    String? documentName,
+    int? documentSize,
+    String? documentMimeType,
+    String? pollQuestion,
+    List<String>? pollOptions,
+    bool? pollAllowMultiple,
+    String? pollExpiresAt,
+    bool? pollIsCalendarMode,
+    String? pollFirestoreId,
+  }) async {
+    try {
+      // The CF is deployed to europe-west2; the default region is us-central1
+      // and would return NOT_FOUND if used here.
+      final callable = FirebaseFunctions.instanceFor(region: 'europe-west2')
+          .httpsCallable('moderateAndSendGroupMessage');
+
+      // Build the data map using exactly the key names the CF reads.
+      // Omit null values rather than sending explicit nulls.
+      final data = <String, dynamic>{
+        'groupId': groupId,
+        'message': message,
+        'type': type ?? 'text',
+        if (replyToText != null) 'replyToText': replyToText,
+        if (replyToSender != null) 'replyToSender': replyToSender,
+        if (audioUrl != null) 'audioUrl': audioUrl,
+        if (audioDuration != null) 'audioDuration': audioDuration,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+        if (locationLabel != null) 'locationLabel': locationLabel,
+        if (liveUntil != null) 'liveUntil': liveUntil,
+        if (contactName != null) 'contactName': contactName,
+        if (contactPhone != null) 'contactPhone': contactPhone,
+        if (documentUrl != null) 'documentUrl': documentUrl,
+        if (documentName != null) 'documentName': documentName,
+        if (documentSize != null) 'documentSize': documentSize,
+        if (documentMimeType != null) 'documentMimeType': documentMimeType,
+        if (pollQuestion != null) 'pollQuestion': pollQuestion,
+        if (pollOptions != null) 'pollOptions': pollOptions,
+        if (pollAllowMultiple != null) 'pollAllowMultiple': pollAllowMultiple,
+        if (pollExpiresAt != null) 'pollExpiresAt': pollExpiresAt,
+        if (pollIsCalendarMode != null) 'pollIsCalendarMode': pollIsCalendarMode,
+        if (pollFirestoreId != null) 'pollFirestoreId': pollFirestoreId,
+      };
+
+      final result = await callable.call<Map<String, dynamic>>(data);
+      final responseData = result.data;
+
+      // CF returns {status: "blocked", reason: "wordlist"|"ai"} on rejection,
+      // and {status: "ok", messageId: "<docId>"} (or similar) on success.
+      final status = responseData['status'] as String? ?? '';
+      if (status == 'blocked') {
+        final reason = responseData['reason'] as String? ?? '';
+        if (reason == 'wordlist') return const GroupSendResult(GroupSendStatus.blockedWordlist);
+        return const GroupSendResult(GroupSendStatus.blockedAi);
+      }
+
+      final messageId = responseData['messageId'] as String? ??
+          responseData['id'] as String? ?? '';
+      return GroupSendResult(GroupSendStatus.sent, messageId: messageId);
+    } on FirebaseFunctionsException catch (e, stackTrace) {
+      if (kDebugMode) debugPrint('[FirestoreService] CF error ${e.code}: ${e.message}');
+      FirebaseCrashlytics.instance.recordError(
+        e, stackTrace,
+        reason: 'sendGroupMessageModerated',
+      );
+      return const GroupSendResult(GroupSendStatus.failed);
+    } catch (e, stackTrace) {
+      if (kDebugMode) debugPrint('[FirestoreService] sendGroupMessageModerated error: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e, stackTrace,
+        reason: 'sendGroupMessageModerated',
+      );
+      return const GroupSendResult(GroupSendStatus.failed);
+    }
   }
 
   /// Patches latitude/longitude on an existing live_location message doc.

@@ -1235,12 +1235,59 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       return;
     }
 
-    // ── Write to Firestore for real cross-device delivery ───────────────
+    // ── Write to Firestore via moderation CF for real cross-device delivery ──
+    final sendResult = await FirestoreService().sendGroupMessageModerated(
+      groupId: widget.groupId,
+      message: text,
+    );
+
+    if (sendResult.status == GroupSendStatus.blockedWordlist ||
+        sendResult.status == GroupSendStatus.blockedAi) {
+      // CF rejected the message — remove the optimistic bubble (nothing was
+      // written server-side, so leaving it would show a ghost message).
+      if (mounted) {
+        setState(() {
+          _messages.removeWhere((m) => m.id == optimisticId);
+          _messageStatuses.remove(optimisticId);
+        });
+        _firestoreMsgIds.remove(optimisticId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "This message couldn't be sent. Please review our community guidelines.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (sendResult.status == GroupSendStatus.failed) {
+      // CF call failed (network, crash, etc.) — remove bubble, show error.
+      if (mounted) {
+        setState(() {
+          _messages.removeWhere((m) => m.id == optimisticId);
+          _messageStatuses.remove(optimisticId);
+        });
+        _firestoreMsgIds.remove(optimisticId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Couldn't send. Check your connection and try again."),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
+
+    // status == sent
+    final firestoreId = sendResult.messageId ?? optimisticId;
     try {
-      final firestoreId = await FirestoreService().sendGroupMessage(
-        groupId: widget.groupId,
-        message: text,
-      );
       // Record message send against subscription limit
       await SubscriptionService().recordMessageSent();
       // ── Patch local message to use the real Firestore doc ID ──────────
@@ -1274,7 +1321,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
       // Persist locally too so message survives navigation
       await _persistUserTextMessages();
-      // Mark delivered after Firestore write confirmed
+      // Mark delivered after CF write confirmed
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) setState(() => _messageStatuses[firestoreId] = MessageStatus.delivered);
       });
@@ -1295,9 +1342,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         }
       } catch (_) { /* non-critical */ }
     } catch (e) {
-      if (kDebugMode) debugPrint('[GroupChat] Firestore send error: $e');
-      // Still show as sent locally even if Firestore fails (optimistic ID kept)
-      if (mounted) setState(() => _messageStatuses[optimisticId] = MessageStatus.sent);
+      if (kDebugMode) debugPrint('[GroupChat] Post-send error: $e');
+      if (mounted) setState(() => _messageStatuses[firestoreId] = MessageStatus.sent);
       await _persistUserTextMessages();
     }
 
@@ -4663,13 +4709,38 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           );
         }
       });
-      await FirestoreService().sendGroupMessage(
+      final sendResult = await FirestoreService().sendGroupMessageModerated(
         groupId: widget.groupId,
         message: '🎤 Voice message',
         audioUrl: audioUrl,
         audioDuration: result.duration,
         type: 'voice_note',
       );
+      if (!mounted) return;
+      if (sendResult.status == GroupSendStatus.blockedWordlist ||
+          sendResult.status == GroupSendStatus.blockedAi) {
+        setState(() => _messages.removeWhere((m) => m.id == optimisticMsg.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "This message couldn't be sent. Please review our community guidelines.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      } else if (sendResult.status == GroupSendStatus.failed) {
+        setState(() => _messages.removeWhere((m) => m.id == optimisticMsg.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Couldn't send. Check your connection and try again."),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4740,17 +4811,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       // ── Step 1: Write the group_messages announce doc ────────────────
       // This is the message that appears in the chat timeline for all devices.
       String groupMsgId = '';
-      try {
-        groupMsgId = await FirestoreService().sendGroupMessage(
-          groupId: widget.groupId,
-          message: '\u{1F4CA} Poll: "${result.question}"',
-          type: 'poll',
-          pollQuestion: result.question,
-          pollOptions: result.options,
-          pollAllowMultiple: result.allowMultiple,
-          pollIsCalendarMode: result.isCalendarMode,
-          pollExpiresAt: result.expiresAt?.toIso8601String(),
-        );
+      final pollSendResult = await FirestoreService().sendGroupMessageModerated(
+        groupId: widget.groupId,
+        message: '\u{1F4CA} Poll: "${result.question}"',
+        type: 'poll',
+        pollQuestion: result.question,
+        pollOptions: result.options,
+        pollAllowMultiple: result.allowMultiple,
+        pollIsCalendarMode: result.isCalendarMode,
+        pollExpiresAt: result.expiresAt?.toIso8601String(),
+      );
+      if (pollSendResult.status == GroupSendStatus.sent) {
+        groupMsgId = pollSendResult.messageId ?? '';
         // Pre-register ID immediately so the Firestore stream echo (which may
         // arrive before Step 3 patches pollFirestoreId) is recognised as an
         // already-known message and falls through without creating a legacy
@@ -4758,8 +4830,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         if (groupMsgId.isNotEmpty) {
           _firestoreMsgIds.add(groupMsgId);
         }
-      } catch (e) {
-        if (kDebugMode) debugPrint('[GroupChat] Poll msg write error: $e');
+      } else if (mounted &&
+          (pollSendResult.status == GroupSendStatus.blockedWordlist ||
+           pollSendResult.status == GroupSendStatus.blockedAi)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "This message couldn't be sent. Please review our community guidelines.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+        // groupMsgId stays '' — poll creation continues without a chat announce
+      } else if (kDebugMode && pollSendResult.status == GroupSendStatus.failed) {
+        debugPrint('[GroupChat] Poll msg CF failed — continuing without announce');
       }
 
       // ── Step 2: Create the polls/{pollId} Firestore document ─────────
@@ -5228,12 +5314,39 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       // doesn't add it again as a duplicate when the echo comes back.
       _firestoreMsgIds.add('img_$downloadUrl');
 
-      await FirestoreService().sendGroupMessage(
+      final imgSendResult = await FirestoreService().sendGroupMessageModerated(
         groupId: widget.groupId,
         message: '📷 Photo',
         type: 'image',
         imageUrl: downloadUrl,
       );
+      if (!mounted) return;
+      if (imgSendResult.status == GroupSendStatus.blockedWordlist ||
+          imgSendResult.status == GroupSendStatus.blockedAi) {
+        setState(() => _imageMessages.removeWhere((m) => m.imageUrl == downloadUrl));
+        await _persistUserMediaMessages();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "This message couldn't be sent. Please review our community guidelines.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      } else if (imgSendResult.status == GroupSendStatus.failed) {
+        setState(() => _imageMessages.removeWhere((m) => m.imageUrl == downloadUrl));
+        await _persistUserMediaMessages();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Couldn't send. Check your connection and try again."),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Image upload/Firestore error: $e');
       // Sender already sees the image locally — non-fatal, no UI disruption needed
@@ -5314,7 +5427,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 _documentMessages[idx].copyWith(isUploading: false);
           });
         }
-        await FirestoreService().sendGroupMessage(
+        final docMetaSendResult = await FirestoreService().sendGroupMessageModerated(
           groupId: widget.groupId,
           message: '\u{1F4CE} $docName',
           type: 'document',
@@ -5322,6 +5435,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           documentSize: attachment.fileSize,
           documentMimeType: attachment.mimeType,
         );
+        if (docMetaSendResult.status != GroupSendStatus.sent && mounted) {
+          final idx2 = findPending();
+          if (idx2 >= 0) {
+            setState(() {
+              _documentMessages[idx2] = _documentMessages[idx2].copyWith(
+                isUploading: false,
+                uploadError: 'Upload failed. Tap to retry.',
+              );
+            });
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                docMetaSendResult.status == GroupSendStatus.blockedWordlist ||
+                        docMetaSendResult.status == GroupSendStatus.blockedAi
+                    ? "This message couldn't be sent. Please review our community guidelines."
+                    : "Couldn't send. Check your connection and try again.",
+              ),
+              backgroundColor: HuddlColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
         await _persistUserMediaMessages();
         return;
       }
@@ -5331,7 +5468,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       // ── Write Firestore message ────────────────────────────────────────
       // The Firestore write triggers the stream listener, which patches the
       // optimistic bubble with the real URL and sets isUploading:false.
-      await FirestoreService().sendGroupMessage(
+      final docSendResult = await FirestoreService().sendGroupMessageModerated(
         groupId: widget.groupId,
         message: '\u{1F4CE} $docName',
         type: 'document',
@@ -5340,6 +5477,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         documentSize: attachment.fileSize,
         documentMimeType: attachment.mimeType,
       );
+      if (docSendResult.status != GroupSendStatus.sent && mounted) {
+        final idx = findPending();
+        if (idx >= 0) {
+          setState(() {
+            _documentMessages[idx] = _documentMessages[idx].copyWith(
+              isUploading: false,
+              uploadError: 'Upload failed. Tap to retry.',
+            );
+          });
+          await _persistUserMediaMessages();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              docSendResult.status == GroupSendStatus.blockedWordlist ||
+                      docSendResult.status == GroupSendStatus.blockedAi
+                  ? "This message couldn't be sent. Please review our community guidelines."
+                  : "Couldn't send. Check your connection and try again.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
       // _persistUserMediaMessages() will be called again once the stream
       // patches the placeholder (via setState in the stream handler).
     } catch (e) {
@@ -5381,7 +5543,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               _documentMessages[docIndex].copyWith(isUploading: false);
         });
       }
-      await FirestoreService().sendGroupMessage(
+      final retrySendResult = await FirestoreService().sendGroupMessageModerated(
         groupId: widget.groupId,
         message: '\u{1F4CE} ${failed.fileName}',
         type: 'document',
@@ -5389,7 +5551,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         documentSize: failed.fileSize,
         documentMimeType: failed.mimeType,
       );
-      await _persistUserMediaMessages();
+      if (retrySendResult.status != GroupSendStatus.sent && mounted) {
+        setState(() {
+          _documentMessages[docIndex] = _documentMessages[docIndex].copyWith(
+            isUploading: false,
+            uploadError: 'Upload failed. Tap to retry.',
+          );
+        });
+        await _persistUserMediaMessages();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              retrySendResult.status == GroupSendStatus.blockedWordlist ||
+                      retrySendResult.status == GroupSendStatus.blockedAi
+                  ? "This message couldn't be sent. Please review our community guidelines."
+                  : "Couldn't send. Check your connection and try again.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      } else {
+        await _persistUserMediaMessages();
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Document retry error: $e');
       if (mounted) {
@@ -5622,45 +5807,71 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _fireMessageSentNotifier();
     _scrollToEnd();
 
-    // ── 6. Write to Firestore ─────────────────────────────────────────────
-    try {
-      final msgId = await FirestoreService().sendGroupMessage(
-        groupId: widget.groupId,
-        message: '📍 Live location',
-        type: 'live_location',
-        latitude: lat,
-        longitude: lng,
-        locationLabel: 'Live location · $durationLabel',
-        liveUntil: liveUntil.toIso8601String(),
-      );
-      // Back-fill the liveMessageId on the local bubble
-      if (mounted && _activeLiveMsgLocalIndex != null) {
-        final idx = _activeLiveMsgLocalIndex!;
-        if (idx < _imageMessages.length) {
-          setState(() {
-            _imageMessages[idx] = _GroupImageMessage(
-              imageUrl: _imageMessages[idx].imageUrl,
-              isMe: _imageMessages[idx].isMe,
-              timestamp: _imageMessages[idx].timestamp,
-              senderName: _imageMessages[idx].senderName,
-              senderAvatar: _imageMessages[idx].senderAvatar,
-              senderId: _imageMessages[idx].senderId,
-              isLocationPin: true,
-              isLiveLocation: true,
-              latitude: _imageMessages[idx].latitude,
-              longitude: _imageMessages[idx].longitude,
-              locationLabel: _imageMessages[idx].locationLabel,
-              liveUntil: liveUntil,
-              liveMessageId: msgId,
-            );
-          });
-        }
+    // ── 6. Write to Firestore via moderation CF ───────────────────────────
+    final liveSendResult = await FirestoreService().sendGroupMessageModerated(
+      groupId: widget.groupId,
+      message: '📍 Live location',
+      type: 'live_location',
+      latitude: lat,
+      longitude: lng,
+      locationLabel: 'Live location · $durationLabel',
+      liveUntil: liveUntil.toIso8601String(),
+    );
+
+    if (!mounted) return;
+
+    if (liveSendResult.status == GroupSendStatus.blockedWordlist ||
+        liveSendResult.status == GroupSendStatus.blockedAi ||
+        liveSendResult.status == GroupSendStatus.failed) {
+      // Remove the optimistic bubble and clean up live location state.
+      final localIdx = _activeLiveMsgLocalIndex;
+      _activeLiveMsgLocalIndex = null;
+      _activeLiveUntil = null;
+      if (localIdx != null && localIdx < _imageMessages.length) {
+        setState(() => _imageMessages.removeAt(localIdx));
       }
-      // ── 7. Start GPS broadcast stream ──────────────────────────────────
-      _startLiveLocationBroadcast(msgId, liveUntil);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[GroupChat] Live location Firestore write error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            liveSendResult.status == GroupSendStatus.blockedWordlist ||
+                    liveSendResult.status == GroupSendStatus.blockedAi
+                ? "This message couldn't be sent. Please review our community guidelines."
+                : "Couldn't send. Check your connection and try again.",
+          ),
+          backgroundColor: HuddlColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
     }
+
+    final msgId = liveSendResult.messageId ?? '';
+    // Back-fill the liveMessageId on the local bubble
+    if (_activeLiveMsgLocalIndex != null) {
+      final idx = _activeLiveMsgLocalIndex!;
+      if (idx < _imageMessages.length) {
+        setState(() {
+          _imageMessages[idx] = _GroupImageMessage(
+            imageUrl: _imageMessages[idx].imageUrl,
+            isMe: _imageMessages[idx].isMe,
+            timestamp: _imageMessages[idx].timestamp,
+            senderName: _imageMessages[idx].senderName,
+            senderAvatar: _imageMessages[idx].senderAvatar,
+            senderId: _imageMessages[idx].senderId,
+            isLocationPin: true,
+            isLiveLocation: true,
+            latitude: _imageMessages[idx].latitude,
+            longitude: _imageMessages[idx].longitude,
+            locationLabel: _imageMessages[idx].locationLabel,
+            liveUntil: liveUntil,
+            liveMessageId: msgId,
+          );
+        });
+      }
+    }
+    // ── 7. Start GPS broadcast stream ──────────────────────────────────
+    _startLiveLocationBroadcast(msgId, liveUntil);
   }
 
   // ── Contacts permission helpers ────────────────────────────────────────
@@ -5893,11 +6104,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final contactName  = result['name']  ?? 'Unknown';
       final contactPhone = result['phone'] ?? '';
       final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+      final contactOptimisticId = 'gm_contact_${DateTime.now().millisecondsSinceEpoch}';
 
       // Optimistic local add
       setState(() {
         _messages.add(ChatMessage(
-          id: 'gm_contact_${DateTime.now().millisecondsSinceEpoch}',
+          id: contactOptimisticId,
           senderId: currentUid,
           senderName: userName,
           senderAvatar: '#FF975C',
@@ -5910,17 +6122,44 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       _fireMessageSentNotifier();
       _scrollToEnd();
 
-      // ── Write to Firestore so all other devices see the contact card ──
-      try {
-        await FirestoreService().sendGroupMessage(
-          groupId: widget.groupId,
-          message: '\u{1F464} Contact: $contactName',
-          type: 'contact',
-          contactName: contactName,
-          contactPhone: contactPhone,
+      // ── Write to Firestore via moderation CF ──────────────────────────
+      final contactSendResult = await FirestoreService().sendGroupMessageModerated(
+        groupId: widget.groupId,
+        message: '\u{1F464} Contact: $contactName',
+        type: 'contact',
+        contactName: contactName,
+        contactPhone: contactPhone,
+      );
+      if (!mounted) return;
+      if (contactSendResult.status == GroupSendStatus.blockedWordlist ||
+          contactSendResult.status == GroupSendStatus.blockedAi) {
+        setState(() {
+          _messages.removeWhere((m) => m.id == contactOptimisticId);
+        });
+        await _persistUserTextMessages();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "This message couldn't be sent. Please review our community guidelines.",
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
-      } catch (e) {
-        if (kDebugMode) debugPrint('[GroupChat] Contact Firestore write error: $e');
+      } else if (contactSendResult.status == GroupSendStatus.failed) {
+        setState(() {
+          _messages.removeWhere((m) => m.id == contactOptimisticId);
+        });
+        await _persistUserTextMessages();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Couldn't send. Check your connection and try again."),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
       }
     }
   }
