@@ -569,14 +569,3 @@ router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
   }
 });
 module.exports = router;
-          callerId
-        );
-      }
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-});
-module.exports = router;
