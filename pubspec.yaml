@@ -80,6 +80,13 @@ dependencies:
   crypto: ^3.0.6          # HMAC-SHA256 key derivation for SendEncryptionService
   connectivity_plus: ^7.1.1
 
+  # ANDROID-CHANNEL-MISSING-1: Creates huddl_messages + huddl_system_alerts notification
+  # channels on Android 8+ at startup. Without this, FCM pushes targeting
+  # 'huddl_messages' are silently dropped by the OS (no channel = no notification).
+  # Pinned at 18.0.1 — the newest release compatible with firebase_core 3.1.0
+  # (19.x+ pulls firebase_core >=3.3.0 which would force a Firebase upgrade).
+  flutter_local_notifications: 18.0.1
+
   # dependency_overrides: force web sub-packages to versions that accept
   # firebase_core 3.1.0. These are the platform-web implementations bundled
   # inside firebase_auth and firebase_messaging — they are not used on iOS/Android

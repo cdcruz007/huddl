@@ -6,8 +6,9 @@
 //   1. Request permission (iOS prompt + Android 13+ POST_NOTIFICATIONS)
 //   2. Acquire the FCM registration token and register it with the backend
 //   3. Refresh the token when FCM rotates it
-//   4. Handle foreground messages → in-app banner via local_notifications OR
-//      a lightweight SnackBar when flutter_local_notifications is absent
+//   4. Handle foreground messages → in-app OverlayEntry banner (main_shell.dart).
+//      flutter_local_notifications is present but used ONLY for Android channel
+//      creation at startup (ANDROID-CHANNEL-MISSING-1), NOT for foreground display.
 //   5. Handle notification taps (background / terminated → navigate to correct screen)
 //
 // HOW TO USE
@@ -19,9 +20,11 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'backend_api_service.dart';
 import 'user_privacy_prefs_service.dart';
 import 'notification_copy_service.dart';
@@ -46,6 +49,14 @@ class PushNotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  // ANDROID-CHANNEL-MISSING-1: Used solely to call createNotificationChannel().
+  // We do NOT use flutter_local_notifications for foreground display — that is
+  // handled by the OverlayEntry banner in main_shell.dart, verified working
+  // 26 Aug 2026 (tests A1/A5/B1 passed). This plugin instance exists only to
+  // register the Android OS channel entries at startup.
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   bool _initialised = false;
 
@@ -81,6 +92,13 @@ class PushNotificationService {
     try {
       // ── 1. Register background handler (must be done before anything else) ─
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      // ── 1b. Create Android notification channels ───────────────────────────
+      // ANDROID-CHANNEL-MISSING-1: Must run BEFORE requestPermission() so the
+      // channels exist from the moment the first push can arrive. Failures are
+      // non-fatal — wrapped in try/catch with Crashlytics logging so a bad
+      // channel-creation call never blocks token registration.
+      await _createAndroidChannels();
 
       // ── 2. Request permission ──────────────────────────────────────────────
       // IMPORTANT: On Android 13+ (API 33+), requestPermission() triggers the
@@ -317,6 +335,100 @@ class PushNotificationService {
       _log('Prefs synced to Firestore');
     } catch (e) {
       _log('Prefs sync error: $e');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ANDROID-CHANNEL-MISSING-1: Create notification channels
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Registers the two Huddl notification channels with the Android OS.
+  ///
+  /// On Android 8+ (API 26+) a notification whose [channelId] does not match
+  /// a registered channel is **silently dropped** by the OS — FCM returns
+  /// success, the backend logs success, and the device shows nothing.
+  ///
+  /// Two channels are created because:
+  ///   - The backend targets 'huddl_messages' in its FCM android.notification block.
+  ///   - 'huddl_system_alerts' is registered as belt-and-braces for any push
+  ///     that omits channelId. The manifest default is now 'huddl_messages'
+  ///     (changed as part of ANDROID-CHANNEL-MISSING-1), so this channel is
+  ///     no longer the active fallback, but must still exist to avoid drops.
+  /// Both must exist so neither path can silently drop.
+  ///
+  /// iOS is explicitly guarded out — iOS has no channel concept and the
+  /// flutter_local_notifications calls are no-ops there, but the guard makes
+  /// the intent clear and avoids any future platform-specific side-effects.
+  Future<void> _createAndroidChannels() async {
+    if (!Platform.isAndroid) return;
+    try {
+      // '@mipmap/ic_launcher' is the only notification-compatible drawable
+      // that exists in this project. There is NO ic_notification resource —
+      // using that name makes initialize() throw, the catch swallows it, and
+      // NO channels are created (the exact defect in commit 4b2884af).
+      const initSettings = InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      );
+      final bool? initOk = await _localNotifications.initialize(initSettings);
+      if (initOk != true) {
+        throw StateError(
+          'FlutterLocalNotificationsPlugin.initialize() returned $initOk — '
+          'Android notification channels cannot be created. '
+          'Push notifications will be silently dropped by the OS.',
+        );
+      }
+
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+
+      if (androidPlugin == null) {
+        // Throwing rather than returning ensures the failure is visible in
+        // Crashlytics. A silent return is what hid this defect previously.
+        throw StateError(
+          'AndroidFlutterLocalNotificationsPlugin is null on an Android device — '
+          'channels cannot be created and push notifications will be silently dropped.',
+        );
+      }
+
+      // Channel 1 — the channel the backend explicitly targets.
+      // Importance.high is REQUIRED for heads-up banners and lock-screen alerts.
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'huddl_messages',
+          'Messages',
+          description: 'Direct messages and group messages from other parents',
+          importance: Importance.high,
+          playSound: true,
+        ),
+      );
+
+      // Channel 2 — fallback for any push that omits an explicit channelId.
+      // NOTE: the manifest default is now 'huddl_messages' (changed as part of
+      // this fix), so this is belt-and-braces rather than the active default.
+      // Importance.defaultImportance: shade delivery, no heads-up banner —
+      // appropriate for non-urgent system/account notifications.
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'huddl_system_alerts',
+          'Huddl Updates',
+          description: 'Account, safety and app updates from Huddl',
+          importance: Importance.defaultImportance,
+          playSound: true,
+        ),
+      );
+
+      _log('✅ Android notification channels created (huddl_messages, huddl_system_alerts)');
+    } catch (e, stackTrace) {
+      // Non-fatal: log to Crashlytics and continue. A channel-creation failure
+      // must not prevent FCM token registration or the rest of initialise().
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'ANDROID-CHANNEL-MISSING-1 channel creation failed',
+        fatal: false,
+      );
+      _log('❌ Android channel creation failed — push will NOT display: $e');
     }
   }
 
