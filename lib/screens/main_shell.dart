@@ -267,7 +267,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (!mounted) return;
     final data           = message.data;
     final type           = data['type'] as String? ?? '';
-    final route          = data['route'] as String? ?? '';
     final groupId        = data['groupId'] as String? ?? '';
     final groupName      = data['groupName'] as String? ?? 'Group';
     final conversationId = data['conversationId'] as String? ?? '';
@@ -300,8 +299,12 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
             'conversationId':       conversationId,
           },
         );
-      } else if (route.isNotEmpty) {
-        Navigator.of(context).pushNamed(route);
+      } else {
+        // NOTIF-ROUTE-1: never push data['route'] — it is a server-supplied
+        // string ('/dm/{conversationId}') that matches no registered Flutter
+        // route, so pushing it can only produce the "No route defined" screen.
+        // Falling back to the Connect tab (already switched to above) is the
+        // correct degraded behaviour.
       }
     });
   }
