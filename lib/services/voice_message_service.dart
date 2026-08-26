@@ -25,6 +25,11 @@ class VoiceMessageService {
   static final VoiceMessageService instance = VoiceMessageService._();
 
   // ── Recording ────────────────────────────────────────────────────────────
+
+  /// Anything at or below this is an empty MPEG-4 container (header only,
+  /// no audio frames). See VOICE-BROKEN-1.
+  static const int _minValidRecordingBytes = 1024;
+
   final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
   DateTime? _recordingStarted;
@@ -140,7 +145,12 @@ class VoiceMessageService {
       const RecordConfig(
         encoder: AudioEncoder.aacLc,
         bitRate: 64000,
-        sampleRate: 16000,
+        // VOICE-BROKEN-1: MUST be 44100. iOS mic hardware runs at 44.1/48 kHz;
+        // requesting 16000 makes the AAC encoder emit a 28-byte container header
+        // with ZERO audio frames — recording appears to work, playback fails.
+        // Verified on device 25 Aug 2026: 16000 → 28 B (silent fail),
+        // 44100 → 213 KB (plays correctly).
+        sampleRate: 44100,
         numChannels: 1,
       ),
       path: path,
@@ -182,11 +192,52 @@ class VoiceMessageService {
         ? Uri.parse(resolvedPath).toFilePath()
         : resolvedPath;
 
-    // Give the OS up to 500 ms to flush the file
+    // Give the OS time to flush the file, then validate that the recording
+    // contains real audio data (not just an empty MPEG-4 container header).
+    // The old existence-check loop was useless: the file exists from the moment
+    // recording starts, so it always broke on the first iteration.
+    // VOICE-BROKEN-1: Poll file size until stable across two consecutive reads
+    // AND above the minimum threshold, or bail out after 10 × 100 ms.
     if (!kIsWeb) {
-      for (var i = 0; i < 5; i++) {
-        if (await File(cleanPath).exists()) break;
+      int prevLength = -1;
+      int stableCount = 0;
+      int finalLength = 0;
+      for (var i = 0; i < 10; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 100));
+        final int len;
+        try {
+          len = await File(cleanPath).length();
+        } catch (_) {
+          break; // file gone — let the upload path handle the missing-file error
+        }
+        if (len > _minValidRecordingBytes && len == prevLength) {
+          stableCount++;
+          if (stableCount >= 2) {
+            finalLength = len;
+            break;
+          }
+        } else {
+          stableCount = 0;
+        }
+        prevLength = len;
+        finalLength = len;
+      }
+
+      if (finalLength <= _minValidRecordingBytes) {
+        FirebaseCrashlytics.instance.recordError(
+          'Empty voice recording: ${finalLength}B at $cleanPath',
+          StackTrace.current,
+          reason: 'VOICE-BROKEN-1 guard',
+        );
+        if (kDebugMode) {
+          debugPrint(
+            '[VoiceMessageService] VOICE-BROKEN-1 guard: recording is '
+            '${finalLength}B (≤ $_minValidRecordingBytes B threshold) — '
+            'discarding and returning null.',
+          );
+        }
+        _currentRecordingPath = null;
+        return null;
       }
     }
 
