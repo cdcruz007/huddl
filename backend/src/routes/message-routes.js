@@ -243,10 +243,40 @@ router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
       const db        = getDb();
       const messaging = getMessaging();
       const preview   = (messagePreview || '').substring(0, 100);
-      const data      = {
+
+      // ── Derive senderId for the data payload (service path) ─────────────────
+      // senderId is not a named field in the service body — derive it from the
+      // conversation document so we can pass the correct value as `recipientId`
+      // in the FCM data map (see naming note below).
+      let dmSenderId = null;
+      if (conversationId) {
+        try {
+          const svcConvSnap = await db.collection('conversations').doc(conversationId).get();
+          if (svcConvSnap.exists) {
+            const svcParticipants = svcConvSnap.data().participants || [];
+            dmSenderId = svcParticipants.find(uid => uid !== recipientId) || null;
+          }
+        } catch (e) {
+          console.error('[msg-notify] service path: failed to derive senderId from conversation:', e);
+        }
+      }
+
+      const data = {
         type:           'new_dm',
         conversationId: conversationId || '',
         route:          `/dm/${conversationId || ''}`,
+        // ⚠️  NAMING INVERSION — read carefully:
+        // The Flutter DM screen (dm_chat_screen.dart) uses widget.recipientId to
+        // mean "the OTHER person in the conversation".  On the NOTIFICATION
+        // RECIPIENT's device, the other person is the SENDER.  So this key must
+        // carry the SENDER's uid, not the push-delivery recipient's uid.
+        // Omit rather than send the wrong value if derivation failed.
+        ...(dmSenderId ? { recipientId: dmSenderId } : {}),
+        // senderName and recipientName both carry the sender's display name:
+        // senderName  → push notification sender label.
+        // recipientName → /dm_chat screen header title (shows the other person's name).
+        senderName:    serviceSenderName,
+        recipientName: serviceSenderName,
       };
       await _sendToRecipient(db, messaging, recipientId, serviceSenderName, preview, data);
       return res.json({ success: true });
@@ -300,6 +330,17 @@ router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
       type:           'new_dm',
       conversationId,
       route:          `/dm/${conversationId}`,
+      // ⚠️  NAMING INVERSION — read carefully:
+      // The Flutter DM screen (dm_chat_screen.dart) uses widget.recipientId to
+      // mean "the OTHER person in the conversation".  On the NOTIFICATION
+      // RECIPIENT's device, the other person is the SENDER (senderId = req.userId).
+      // So this key carries senderId, not the push-delivery recipientId.
+      recipientId:   senderId,
+      // senderName and recipientName both carry the sender's display name:
+      // senderName  → push notification sender label.
+      // recipientName → /dm_chat screen header title (shows the other person's name).
+      senderName,
+      recipientName: senderName,
     };
 
     await _sendToRecipient(db, messaging, recipientId, senderName, preview, data, senderId);
@@ -517,6 +558,17 @@ router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
           'Item no longer available',
           `"${itemTitle}" you offered on has been sold`,
           { type: 'saved_item_sold', itemId, itemTitle, route: '/marketplace', tab: 'buy' },
+          callerId
+        );
+      }
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+module.exports = router;
           callerId
         );
       }
