@@ -108,7 +108,7 @@
         ──────────────────────────────────────────────────────────────────── -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="huddl_system_alerts" />
+            android:value="huddl_messages" />
 
         <!-- Notification icon: a small monochrome icon shown in the status bar.
              FCM requires a small icon that works on all Android API levels.
