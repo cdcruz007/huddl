@@ -3844,6 +3844,62 @@ function _postRailwayNotifyDm(payload: {
   });
 }
 
+/** POST to Railway notify-group. Mirrors _postRailwayNotifyDm. GROUP-NOTIFY-MISSING-1.
+ *  Fail-soft: the message is already committed, so a Railway outage must never
+ *  surface as a send failure. senderId lets Railway exclude the sender. */
+function _postRailwayNotifyGroup(payload: {
+  groupId: string;
+  groupName: string;
+  messagePreview: string;
+  senderId: string;
+  secret: string;
+}): Promise<void> {
+  return new Promise((resolve) => {
+    const body = JSON.stringify({
+      groupId:        payload.groupId,
+      groupName:      payload.groupName,
+      messagePreview: payload.messagePreview,
+      senderId:       payload.senderId,
+    });
+    const options: import("https").RequestOptions = {
+      hostname: "api.huddlapp.co.uk",
+      path:     "/api/messages/notify-group",
+      method:   "POST",
+      headers:  {
+        "Content-Type":   "application/json",
+        "Content-Length": Buffer.byteLength(body),
+        "X-Service-Auth": payload.secret,
+      },
+    };
+    const timeout = setTimeout(() => {
+      functions.logger.warn("[moderateAndSendGroupMessage] notify-group timeout");
+      req.destroy();
+      resolve();
+    }, 6000);
+    const req = https.request(options, (res) => {
+      res.resume();
+      res.on("end", () => {
+        clearTimeout(timeout);
+        if (res.statusCode && res.statusCode >= 400) {
+          functions.logger.warn(
+            `[moderateAndSendGroupMessage] notify-group returned HTTP ${res.statusCode}`
+          );
+        }
+        resolve();
+      });
+    });
+    req.on("error", (err: Error) => {
+      clearTimeout(timeout);
+      functions.logger.warn(
+        `[moderateAndSendGroupMessage] notify-group request error: ${err.message}`
+      );
+      resolve();
+    });
+    req.write(body);
+    req.end();
+  });
+}
+
 export const onDmMessageCreated = functions
   .region("europe-west2")
   .runWith({
@@ -3999,7 +4055,7 @@ export const moderateAndSendGroupMessage = functions
   .runWith({
     timeoutSeconds: 30,
     memory: "256MB",
-    secrets: ["GEMINI_API_KEY"],
+    secrets: ["GEMINI_API_KEY", "INTERNAL_SERVICE_SECRET"],
   })
   .https.onCall(async (data: Record<string, unknown>, context) => {
 
@@ -4170,7 +4226,27 @@ export const moderateAndSendGroupMessage = functions
       lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Notifications intentionally omitted at Stage 1 (handled by a later stage).
+    // GROUP-NOTIFY-MISSING-1: wired up 26 Aug 2026.
+    const notifySecret = process.env.INTERNAL_SERVICE_SECRET;
+    if (!notifySecret) {
+      functions.logger.warn(
+        "[moderateAndSendGroupMessage] INTERNAL_SERVICE_SECRET not set - notification skipped"
+      );
+    } else {
+      try {
+        await _postRailwayNotifyGroup({
+          groupId,
+          groupName:      String(groupData["name"] ?? "Your group"),
+          messagePreview: messageText,
+          senderId:       uid,
+          secret:         notifySecret,
+        });
+      } catch (notifErr) {
+        functions.logger.warn(
+          `[moderateAndSendGroupMessage] notify-group failed (non-fatal): ${String(notifErr)}`
+        );
+      }
+    }
 
     functions.logger.info(
       `[moderateAndSendGroupMessage] sent groupId=${groupId} messageId=${messageId} uid=${uid} type=${type}`

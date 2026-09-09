@@ -164,8 +164,51 @@ async function _sendToRecipient(db, messaging, userId, title, body, data, sender
 //
 // Spoofing hardening: senderName derived from users/{senderId}.name, not from
 //   req.body. A legitimate member cannot impersonate another user's display name.
-router.post('/notify-group', authMiddleware, async (req, res, next) => {
+router.post('/notify-group', serviceOrAuthMiddleware, async (req, res, next) => {
   try {
+    // GROUP-NOTIFY-MISSING-1: service path. Called by the
+    // moderateAndSendGroupMessage CF with an X-Service-Auth header. The CF has
+    // already enforced group membership, so the M3 gate below is redundant here.
+    // senderId excludes the sender from the fan-out and drives the block-list
+    // check. senderName is ALWAYS derived server-side, never trusted from body.
+    if (req.isService) {
+      const { groupId: svcGroupId, groupName: svcGroupName, messagePreview: svcPreview } = req.body;
+      if (!svcGroupId || !svcGroupName) {
+        return res.status(400).json({ error: 'groupId and groupName are required' });
+      }
+      const svcDb        = getDb();
+      const svcMessaging = getMessaging();
+      const svcGroupSnap = await svcDb.collection('groups').doc(svcGroupId).get();
+      if (!svcGroupSnap.exists) {
+        return res.status(404).json({ error: 'Group not found' });
+      }
+      const svcAllMemberIds = svcGroupSnap.data().memberIds || [];
+      const svcSenderId     = req.body.senderId || null;
+      const svcRecipientIds = svcSenderId
+        ? svcAllMemberIds.filter(uid => uid !== svcSenderId)
+        : svcAllMemberIds;
+      let svcSenderName = 'Someone';
+      if (svcSenderId) {
+        const svcSenderSnap = await svcDb.collection('users').doc(svcSenderId).get();
+        if (svcSenderSnap.exists && svcSenderSnap.data().name) {
+          svcSenderName = svcSenderSnap.data().name;
+        }
+      }
+      const svcBody = `${svcSenderName}: ${(svcPreview || '').substring(0, 100)}`;
+      const svcData = {
+        type:      'new_group_message',
+        groupId:   svcGroupId,
+        groupName: svcGroupName,
+        route:     `/groups/${svcGroupId}`,
+      };
+      await Promise.all(
+        svcRecipientIds.map(uid =>
+          _sendToRecipient(svcDb, svcMessaging, uid, svcGroupName, svcBody, svcData, svcSenderId)
+        )
+      );
+      return res.json({ success: true, recipientCount: svcRecipientIds.length });
+    }
+
     const senderId = req.userId;
     const { groupId, groupName, messagePreview } = req.body;
 
