@@ -1,7 +1,7 @@
 name: huddl_connect
 description: Huddl - Connect with your local community through groups, meetups and marketplace.
 publish_to: 'none'
-version: 1.1.51+122
+version: 1.1.51+123
 
 environment:
   sdk: ^3.9.0
@@ -44,7 +44,7 @@ dependencies:
   firebase_analytics: 11.0.1                # GDPR analytics opt-out toggle (BUG 8)
 
   # Payment / In-App Purchases
-  in_app_purchase: 3.2.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
+  in_app_purchase: 3.3.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
 
   # Biometric Authentication (P3 audit recommendation)
   local_auth: ^2.3.0               # Fingerprint, Face ID, passcode

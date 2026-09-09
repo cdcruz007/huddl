@@ -50,7 +50,7 @@ android {
         // Explicit value required — Google Play mandates API 35 for new apps
         // submitted after August 2024.  Do NOT rely on flutter.targetSdkVersion
         // which may resolve to an older value depending on the Flutter SDK version.
-        targetSdk = 35
+        targetSdk = 36
         // VERSION-SKEW-1: read from pubspec.yaml via the Flutter gradle plugin.
         // dev.flutter.flutter-gradle-plugin (applied above) exposes these from
         // pubspec `version: x.y.z+build` → versionName=x.y.z, versionCode=build.
