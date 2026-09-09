@@ -113,7 +113,13 @@ class PushNotificationService {
       //
       // On a fresh Test Lab device the status will be notDetermined on iOS.
       // On Android 13+ fresh installs it will be notDetermined, but calling
-      // requestPermission with provisional:true grants silently on Android
+      // PERM-PROVISIONAL-1: the note below was WRONG. `provisional` is an
+      // iOS-ONLY flag. On iOS it requests QUIET delivery — Notification
+      // Centre and lock screen only, NO banner, NO sound. On Android it is
+      // a no-op, so POST_NOTIFICATIONS is never granted and NO push arrives.
+      // Verified on both devices 26 Aug 2026. Setting it false restores the
+      // Android system dialog, which may break Firebase Test Lab Robo runs —
+      // that is an accepted trade: working notifications beat passing Robo.
       // without showing any system dialog.
       NotificationSettings settings;
 
@@ -132,14 +138,15 @@ class PushNotificationService {
         _log('Permission previously denied, skipping dialog');
       } else {
         // notDetermined — safe to ask once
-        // provisional:true on Android grants silently without any system dialog
+        // notDetermined — ask once. The Android POST_NOTIFICATIONS dialog
+        // WILL appear; that is required for push to work at all.
         settings = await _messaging.requestPermission(
           alert: true,
           announcement: false,
           badge: true,
           carPlay: false,
           criticalAlert: false,
-          provisional: true,   // true = silent grant on Android (no system dialog)
+          provisional: false,  // PERM-PROVISIONAL-1: MUST stay false.
           sound: true,
         );
       }
