@@ -199,7 +199,7 @@ router.post('/notify-group', serviceOrAuthMiddleware, async (req, res, next) => 
         type:      'new_group_message',
         groupId:   svcGroupId,
         groupName: svcGroupName,
-        route:     `/groups/${svcGroupId}`,
+        huddlRoute:     `/groups/${svcGroupId}`,
       };
       await Promise.all(
         svcRecipientIds.map(uid =>
@@ -249,7 +249,7 @@ router.post('/notify-group', serviceOrAuthMiddleware, async (req, res, next) => 
     const data    = {
       type:           'new_group_message',
       groupId,
-      route:          `/groups/${groupId}`,
+      huddlRoute:          `/groups/${groupId}`,
     };
 
     // Fan-out in parallel — block-check (BLOCK-1) wired via senderId arg
@@ -307,7 +307,7 @@ router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
       const data = {
         type:           'new_dm',
         conversationId: conversationId || '',
-        route:          `/dm/${conversationId || ''}`,
+        huddlRoute:          `/dm/${conversationId || ''}`,
         // ⚠️  NAMING INVERSION — read carefully:
         // The Flutter DM screen (dm_chat_screen.dart) uses widget.recipientId to
         // mean "the OTHER person in the conversation".  On the NOTIFICATION
@@ -372,7 +372,7 @@ router.post('/notify-dm', serviceOrAuthMiddleware, async (req, res, next) => {
     const data    = {
       type:           'new_dm',
       conversationId,
-      route:          `/dm/${conversationId}`,
+      huddlRoute:          `/dm/${conversationId}`,
       // ⚠️  NAMING INVERSION — read carefully:
       // The Flutter DM screen (dm_chat_screen.dart) uses widget.recipientId to
       // mean "the OTHER person in the conversation".  On the NOTIFICATION
@@ -455,7 +455,7 @@ router.post('/notify-offer', authMiddleware, async (req, res, next) => {
       itemId,
       itemTitle,
       offerId,
-      route:     '/marketplace',
+      huddlRoute:     '/marketplace',
       tab:       'sell',
     };
 
@@ -531,7 +531,7 @@ router.post('/notify-offer-response', authMiddleware, async (req, res, next) => 
       itemTitle,
       sellerId:   callerId,
       sellerName,
-      route:      '/marketplace',
+      huddlRoute:      '/marketplace',
       tab:        'buy',
       action:     accepted ? 'open_seller_chat' : '',
     };
@@ -600,7 +600,7 @@ router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
         await _sendToRecipient(db, messaging, uid,
           'Item no longer available',
           `"${itemTitle}" you offered on has been sold`,
-          { type: 'saved_item_sold', itemId, itemTitle, route: '/marketplace', tab: 'buy' },
+          { type: 'saved_item_sold', itemId, itemTitle, huddlRoute: '/marketplace', tab: 'buy' },
           callerId
         );
       }
