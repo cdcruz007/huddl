@@ -313,7 +313,11 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
     final timeStr = '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      // ANDROID-VOICE-UI-OBSCURED-1 - must include MediaQuery.padding.bottom or
+      // the send/cancel controls sit under the Android navigation bar and cannot
+      // be tapped. Mirrors the inset logic of the input row this widget replaces.
+      padding: EdgeInsets.fromLTRB(
+          12, 8, 12, MediaQuery.of(context).padding.bottom + 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(top: BorderSide(color: Theme.of(context).dividerColor, width: 0.5)),
