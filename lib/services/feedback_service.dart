@@ -2,54 +2,46 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'browser_storage.dart';
 import 'package:http/http.dart' as http;
+import 'browser_storage.dart';
 
 /// Service that collects user feedback and delivers it to the Huddl team.
 ///
 /// Delivery chain (in order):
 ///   1. Firestore  — written first so the record is never lost.
-///   2. EmailJS    — sends an email notification to welcome@huddlapp.co.uk.
+///   2. Backend API (/api/notifications/feedback) — sends an email notification
+///      via Resend → SMTP → mock, matching every other transactional email.
 ///
-/// If EmailJS fails the Firestore record is still saved and readable from
-/// the Firebase console at any time.
+/// EMAILJS-UNDECLARED-1 / EMAILJS-CREDS-PUBLIC-1: previously this service
+/// POSTed directly to EmailJS (a US-based processor) from the device, with
+/// credentials stored as static const in a public GitHub repo. EmailJS has
+/// no DPA, the origin-header abuse protection is trivially bypassed on mobile,
+/// and the credentials were visible to anyone reading the repo.
 ///
-/// ── EmailJS Setup (one-time, dashboard only) ────────────────────────────────
-/// 1. Go to https://dashboard.emailjs.com/admin/templates
-/// 2. Click "Create New Template"
-/// 3. Set Subject: "Huddl App Feedback from {{from_name}}"
-/// 4. Set Content (HTML):
-///    <h2>New Feedback</h2>
-///    <p><b>From:</b> {{from_name}}</p>
-///    <p><b>Rating:</b> {{star_rating}}</p>
-///    <p><b>Message:</b><br>{{feedback_text}}</p>
-///    <p><b>Submitted:</b> {{submitted_at}}</p>
-///    <p><b>Firestore ID:</b> {{doc_id}}</p>
-/// 5. Set To Email: welcome@huddlapp.co.uk (or use {{to_email}} variable)
-/// 6. Save and copy the Template ID (format: template_XXXXXXX)
-/// 7. Replace _emailJsTemplateId below with that value.
-/// ────────────────────────────────────────────────────────────────────────────
+/// The backend endpoint resolves fromName server-side from users/{uid}.name
+/// (NOTIFY-SPOOF-1 hardening — matches the message routes). The client does
+/// NOT supply a display name in the request body.
+///
+/// If the email notification fails the Firestore record is still saved and
+/// readable from the Firebase console at any time.
 class FeedbackService extends ChangeNotifier {
   static final FeedbackService _instance = FeedbackService._internal();
   factory FeedbackService() => _instance;
   FeedbackService._internal();
 
-  // ── Destination ────────────────────────────────────────────────────────────
-  static const String _targetEmail = 'welcome@huddlapp.co.uk';
+  // ── Backend base URL (mirrors BackendApiService.baseUrl) ─────────────────
+  // Reuses the same prod/dev URL logic and _authHeaders pattern as
+  // BackendApiService.resendVerificationEmail — same base URL resolution,
+  // same Authorization header, same 15 s timeout (LAYER-10-RAILWAY-TIMEOUT-1).
+  static const String _prodBaseUrl = 'https://api.huddlapp.co.uk';
+  static const String _devBaseUrl  = 'http://localhost:3000';
 
-  // ── EmailJS credentials ────────────────────────────────────────────────────
-  // Service ID and Public Key are confirmed working.
-  // Template ID must match a template in your EmailJS dashboard.
-  // See setup instructions in the class comment above.
-  static const String _emailJsServiceId  = 'service_5hdcs5h';
-  static const String _emailJsPublicKey  = 'imIn2A3lvfFeSVSaJ';
+  String get _baseUrl => kReleaseMode ? _prodBaseUrl : _devBaseUrl;
 
-  static const String _emailJsTemplateId = 'template_z7gxw8h';
-
-  // ── Local cache key ────────────────────────────────────────────────────────
+  // ── Local cache key ───────────────────────────────────────────────────────
   static const String _storageKey = 'huddl_feedback_ratings';
 
-  // ── Cached rating data ─────────────────────────────────────────────────────
+  // ── Cached rating data ────────────────────────────────────────────────────
   List<Map<String, dynamic>> _allRatings = [];
   bool _initialized = false;
 
@@ -82,7 +74,7 @@ class FeedbackService extends ChangeNotifier {
   ///
   /// 1. Persist to BrowserStorage (instant, offline-safe).
   /// 2. Write to Firestore `feedback` collection (permanent cloud record).
-  /// 3. Send email notification via EmailJS.
+  /// 3. POST to /api/notifications/feedback — backend sends email via Resend.
   ///
   /// Returns `true` as long as local + Firestore steps succeed.
   Future<bool> submitFeedback({
@@ -121,18 +113,17 @@ class FeedbackService extends ChangeNotifier {
         'email_sent'  : false,
       });
       firestoreDocId = doc.id;
-      if (kDebugMode) {
-        if (kDebugMode) debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
-      }
+      if (kDebugMode) debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
     } catch (e) {
       if (kDebugMode) debugPrint('[FeedbackService] Firestore write failed: $e');
     }
 
-    // ── Step 3: EmailJS notification ─────────────────────────────────────────
-    final emailSent = await _sendViaEmailJs(
+    // ── Step 3: backend email notification ───────────────────────────────────
+    // Non-fatal: a failed notification does NOT mean feedback was lost —
+    // the Firestore record already exists (step 2).
+    final emailSent = await _sendViaBackend(
       feedbackText: feedbackText,
       starRating  : starRating,
-      userName    : userName,
       submittedAt : now,
       docId       : firestoreDocId,
     );
@@ -149,57 +140,55 @@ class FeedbackService extends ChangeNotifier {
     return true;
   }
 
-  /// POST to EmailJS REST API.
+  /// POST feedback notification to the Railway backend.
   ///
-  /// Template variables used:
-  ///   {{from_name}}     → userName
-  ///   {{feedback_text}} → the full feedback message
-  ///   {{submitted_at}}  → e.g. "2025-01-13 22:42:00"
-  ///   {{doc_id}}        → Firestore document ID (for internal reference)
-  Future<bool> _sendViaEmailJs({
+  /// Pattern reused from BackendApiService.resendVerificationEmail:
+  ///   - same _baseUrl resolution (prod vs dev via kReleaseMode)
+  ///   - same Authorization: Bearer [Firebase ID token] header
+  ///   - same 15 s timeout (LAYER-10-RAILWAY-TIMEOUT-1)
+  ///
+  /// fromName is deliberately NOT sent — the backend derives it server-side
+  /// from users/{uid}.name (NOTIFY-SPOOF-1).
+  Future<bool> _sendViaBackend({
     required String feedbackText,
     required int starRating,
-    required String userName,
     required DateTime submittedAt,
     String? docId,
   }) async {
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      final token = await user?.getIdToken();
+
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
       final body = json.encode({
-        'service_id' : _emailJsServiceId,
-        'template_id': _emailJsTemplateId,
-        'user_id'    : _emailJsPublicKey,
-        'template_params': {
-          'from_name'    : userName.isNotEmpty ? userName : 'Anonymous',
-          'feedback_text': feedbackText,
-          'submitted_at' : submittedAt.toString().substring(0, 19),
-          'doc_id'       : docId ?? 'n/a',
-        },
+        'feedbackText': feedbackText,
+        'starRating'  : starRating,
+        'submittedAt' : submittedAt.toIso8601String(),
+        if (docId != null) 'docId': docId,
       });
 
       final response = await http.post(
-        Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
-        headers: {
-          'Content-Type': 'application/json',
-          'origin'      : 'https://huddl-connect.firebaseapp.com',
-        },
+        Uri.parse('$_baseUrl/api/notifications/feedback'),
+        headers: headers,
         body: body,
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 15)); // LAYER-10-RAILWAY-TIMEOUT-1
 
-      if (response.statusCode == 200) {
-        if (kDebugMode) {
-          if (kDebugMode) debugPrint('[FeedbackService] Email sent via EmailJS ✓');
-        }
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (kDebugMode) debugPrint('[FeedbackService] Backend notification OK');
         return true;
       } else {
-        // Log full details to help diagnose issues
         if (kDebugMode) {
-          debugPrint('[FeedbackService] EmailJS error ${response.statusCode}: ${response.body}');
-          debugPrint('[FeedbackService] service_id=$_emailJsServiceId  template_id=$_emailJsTemplateId');
+          debugPrint('[FeedbackService] Backend notification error '
+              '${response.statusCode}: ${response.body}');
         }
         return false;
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[FeedbackService] EmailJS request exception: $e');
+      if (kDebugMode) debugPrint('[FeedbackService] Backend notification exception: $e');
       return false;
     }
   }
@@ -212,7 +201,6 @@ class FeedbackService extends ChangeNotifier {
       ..writeln('Total      : $totalRatings')
       ..writeln('Real avg   : ${realAverageRating.toStringAsFixed(2)} / 5.0')
       ..writeln('Display avg: $displayRating / 5.0')
-      ..writeln('Recipient  : $_targetEmail')
       ..writeln('');
     for (var i = 0; i < _allRatings.length; i++) {
       final r = _allRatings[i];

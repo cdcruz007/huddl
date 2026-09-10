@@ -48,6 +48,64 @@ function _verifyUrl(userId, token) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// POST /api/notifications/feedback
+// ─────────────────────────────────────────────────────────────────────────────
+// Send an internal email notification for submitted feedback.
+//
+// EMAILJS-UNDECLARED-1 / EMAILJS-CREDS-PUBLIC-1: previously the Flutter app
+// POSTed directly to EmailJS from the device, leaking credentials and sending
+// user-authored text to a US processor without a DPA. Feedback is already
+// written to Firestore before this endpoint is called; the email is a
+// secondary notification only. A failure here MUST NOT make the client think
+// the feedback was lost.
+//
+// NOTIFY-SPOOF-1: fromName is resolved server-side from users/{uid}.name;
+// the client MUST NOT supply a name in the request body.
+//
+// Body:   { feedbackText, starRating?, submittedAt?, docId? }
+// Auth:   Bearer <Firebase ID token>
+router.post('/feedback', authMiddleware, async (req, res, next) => {
+  try {
+    const db     = getDb();
+    const userId = req.userId;
+
+    // Validate feedbackText — the only required field.
+    const { feedbackText, starRating, submittedAt, docId } = req.body;
+    if (!feedbackText || typeof feedbackText !== 'string' || feedbackText.trim() === '') {
+      return res.status(400).json({ error: 'feedbackText is required and must be non-empty' });
+    }
+    // Cap to 5000 chars; the Firestore write already happened, so just truncate.
+    const safeText = feedbackText.substring(0, 5000);
+
+    // NOTIFY-SPOOF-1: derive fromName server-side — never trust a body-supplied name.
+    const userDoc  = await db.collection('users').doc(userId).get();
+    const userData = userDoc.exists ? (userDoc.data() || {}) : {};
+    const fromName = (userData.name || userData.firstName || '').trim() || 'Anonymous';
+
+    // Send email — non-fatal: the Firestore record already exists.
+    try {
+      const emailResult = await sendFeedbackEmail({
+        fromName,
+        feedbackText: safeText,
+        starRating:   typeof starRating === 'number' ? starRating : null,
+        submittedAt:  submittedAt || null,
+        docId:        docId       || null,
+      });
+      console.log(`[feedback] notification email sent for user ${userId}:`, emailResult);
+    } catch (emailErr) {
+      // Non-fatal: log and continue — the Firestore write already succeeded.
+      console.warn(`[feedback] notification email failed (non-fatal) for user ${userId}:`, emailErr.message);
+    }
+
+    // Always return success to the client so it does not surface a failure
+    // that would imply the feedback was lost (it was not — Firestore write OK).
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
 // POST /api/notifications/register-token
 // ─────────────────────────────────────────────────────────────────────────────
 // Register/update the user's FCM push token.

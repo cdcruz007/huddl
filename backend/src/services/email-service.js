@@ -616,6 +616,61 @@ function _currencySymbol(currency) {
 }
 
 // ── Core send function ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FEEDBACK NOTIFICATION  (internal — not user-facing)
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAILJS-UNDECLARED-1: previously sent directly from the device to EmailJS
+// (a US-based processor, no DPA, credentials exposed in a public repo).
+// Feedback is now routed through the Railway backend via Resend → SMTP → mock,
+// matching every other transactional email in this service.
+//
+// Recipient is hardcoded to welcome@huddlapp.co.uk for the same reason FROM_EMAIL
+// is hardcoded as a fallback: feedback must always reach the team regardless of
+// which env-var combination is deployed. An env-var FEEDBACK_RECIPIENT is checked
+// first so the address can be overridden in staging without a code change.
+// ─────────────────────────────────────────────────────────────────────────────
+const FEEDBACK_RECIPIENT = process.env.FEEDBACK_RECIPIENT || 'welcome@huddlapp.co.uk';
+
+/** Escape characters that are significant in HTML. User-supplied text MUST be
+ *  escaped before interpolation — this is an email the team will open. */
+function _escHtml(str) {
+  return String(str)
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#39;');
+}
+
+async function sendFeedbackEmail({ fromName, feedbackText, starRating, submittedAt, docId }) {
+  const safeName    = _escHtml(fromName    || 'Anonymous');
+  const safeText    = _escHtml(feedbackText || '(no text)');
+  const safeDocId   = _escHtml(docId       || 'n/a');
+  const ratingLabel = starRating ? `${starRating} / 5` : 'not rated';
+  const submittedLabel = submittedAt
+    ? _escHtml(new Date(submittedAt).toISOString().replace('T', ' ').substring(0, 19) + ' UTC')
+    : 'unknown';
+
+  const body = `
+    <h2 style="margin:0 0 12px;font-size:20px;color:#1a1a2e;">New app feedback</h2>
+    <table style="border-collapse:collapse;width:100%;font-size:15px;line-height:1.6;">
+      <tr><td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;"><strong>From</strong></td>
+          <td style="padding:6px 0;">${safeName}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;"><strong>Rating</strong></td>
+          <td style="padding:6px 0;">${ratingLabel}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;"><strong>Submitted</strong></td>
+          <td style="padding:6px 0;">${submittedLabel}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;"><strong>Firestore&nbsp;ID</strong></td>
+          <td style="padding:6px 0;font-family:monospace;font-size:13px;">${safeDocId}</td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;"/>
+    <p style="margin:0 0 6px;color:#555;font-size:14px;"><strong>Message</strong></p>
+    <p style="margin:0;white-space:pre-wrap;font-size:15px;line-height:1.65;">${safeText}</p>`;
+
+  const subject = `Huddl feedback — ${ratingLabel} from ${safeName}`;
+  return _send(FEEDBACK_RECIPIENT, subject, body);
+}
+
 async function _send(to, subject, bodyHtml) {
   if (!to) return { success: false, error: 'no recipient address' };
 
@@ -672,6 +727,7 @@ async function _send(to, subject, bodyHtml) {
 module.exports = {
   sendWelcomeEmail,
   sendVerificationEmail,
+  sendFeedbackEmail,
   sendSubscriptionConfirmation,
   sendPaymentReceipt,
   sendPaymentFailedWarning,
