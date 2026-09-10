@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../services/huddl_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
@@ -129,7 +130,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
       final path = 'group_images/${widget.groupId}/thread_${uid}_$ts.$ext';
 
       final bytes = await file.readAsBytes();
-      final ref = FirebaseStorage.instance.ref(path);
+      final ref = HuddlStorage.instance.ref(path);
       await ref.putData(bytes, SettableMetadata(contentType: 'image/$ext'));
       final url = await ref.getDownloadURL();
 

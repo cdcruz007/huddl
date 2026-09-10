@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../services/huddl_storage.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -59,7 +60,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   Future<List<String>> _uploadPendingImages(List<String> images) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return images; // unauthenticated — caller will surface error
-    final storage = FirebaseStorage.instance;
+    final storage = HuddlStorage.instance;
     final result = <String>[];
     for (final img in images) {
       if (!img.startsWith('data:')) {

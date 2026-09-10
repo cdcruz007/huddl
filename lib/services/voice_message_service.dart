@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'huddl_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path_provider/path_provider.dart';
 import 'web_blob_helper_stub.dart' if (dart.library.html) 'web_blob_helper.dart';
@@ -306,7 +307,7 @@ class VoiceMessageService {
     final typeSegment = pathType == VoiceNotePathType.dm ? 'dm' : 'group';
     final storagePath = 'voice_notes/$typeSegment/$contextId/${uid}_$timestamp.$ext';
 
-    final ref = FirebaseStorage.instance.ref(storagePath);
+    final ref = HuddlStorage.instance.ref(storagePath);
 
     UploadTask task;
     if (kIsWeb) {
@@ -528,6 +529,14 @@ class VoiceMessageService {
   Future<String> _refreshStorageUrl(String url) async {
     if (!url.contains('firebasestorage.googleapis.com')) return url;
     try {
+      // STORAGE-REGION-US-1: DO NOT change this to HuddlStorage.instance.
+      // refFromURL resolves the bucket FROM the URL itself — existing voice notes
+      // already uploaded have download URLs pointing at the OLD US bucket
+      // (huddl-connect.firebasestorage.app). Forcing the EU instance here would
+      // cause it to look for those objects in huddl-connect-eu, where they do
+      // not exist, breaking playback of every voice message already sent.
+      // New uploads go to the EU bucket via HuddlStorage.instance.ref() above;
+      // this path only refreshes URLs for previously stored audio.
       final ref = FirebaseStorage.instance.refFromURL(url);
       return await ref.getDownloadURL();
     } catch (e) {

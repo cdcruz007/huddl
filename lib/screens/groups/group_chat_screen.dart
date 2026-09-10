@@ -47,6 +47,7 @@ import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/huddl_notification_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../services/huddl_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -5264,7 +5265,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           return;
         }
       }
-      final storageRef = FirebaseStorage.instance
+      final storageRef = HuddlStorage.instance
           .ref('group_images/${widget.groupId}/${currentUid}_$ts.jpg');
 
       TaskSnapshot snap;
@@ -5403,7 +5404,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final ext = docName.contains('.') ? docName.split('.').last : 'bin';
       // Canonical storage path matches storage.rules group_documents block:
       // group_documents/{groupId}/{uid}_{epoch}.{ext}
-      final storageRef = FirebaseStorage.instance
+      final storageRef = HuddlStorage.instance
           .ref('group_documents/${widget.groupId}/${uid}_$epoch.$ext');
 
       TaskSnapshot snap;

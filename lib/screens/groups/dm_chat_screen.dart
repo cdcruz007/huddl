@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../services/huddl_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../theme/huddl_colors.dart';
@@ -2424,7 +2425,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     final ext = mimeType.contains('/') ? mimeType.split('/').last : 'bin';
     // S-01/S-02: scoped path — conversationId is a path segment so Storage
     // rules can do firestore.get(conversations/{cid}).participants check.
-    final ref = FirebaseStorage.instance.ref('$folder/$conversationId/${uid}_$ts.$ext');
+    final ref = HuddlStorage.instance.ref('$folder/$conversationId/${uid}_$ts.$ext');
     try {
       TaskSnapshot snap;
       if (bytes != null) {
