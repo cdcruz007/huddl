@@ -3762,21 +3762,44 @@ export const moderateAndSendDM = functions
       }
     }
 
-    // ── STEP 3: MODERATE (text only) ────────────────────────────────────────
+    // ── STEP 3: MODERATE (all user-authored text) ──────────────────────────
     const type = String(data.type ?? "text");
     const rawText = String(data.message ?? "");
-    const isTextMessage = type === "text";
     // Hoisted to function scope so the flag-doc path (after the write) can
     // read it without needing to re-enter the moderation block.
     let geminiVerdict: "SAFE" | "UNSAFE" | null = null;
 
-    if (isTextMessage && rawText.trim().length > 0) {
+    // MOD-TEXT-ONLY-1: moderation previously ran only when type === "text", so
+    // poll questions, document filenames, contact names and captions reached the
+    // group completely unchecked. ALL user-authored text is moderated now,
+    // regardless of message type. Adding a new user-authored field to this
+    // callable means adding it HERE too.
+    //
+    // Fields present on moderateAndSendDM:
+    //   data.message      — plain text body (all message types)
+    //   data.documentName — attacker-controlled filename displayed in chat
+    //   data.contactName  — free-text contact name
+    //   NOT included: pollQuestion/pollOptions (DMs do not support polls),
+    //                 caption (no such field on this callable),
+    //                 binary content (imageUrl, audioUrl, documentUrl — URLs only,
+    //                 no text to moderate; Vision/audio moderation is a future seam).
+    const compositeParts: string[] = [];
+    if (rawText.trim().length > 0)                              compositeParts.push(rawText);
+    const _dmDocName = String(data.documentName ?? "").trim();
+    if (_dmDocName.length > 0)                                  compositeParts.push(_dmDocName);
+    const _dmContactName = String(data.contactName ?? "").trim();
+    if (_dmContactName.length > 0)                              compositeParts.push(_dmContactName);
+    // Cap at 4000 chars before sending to the classifier — a long document name
+    // or pasted text should not blow up the Vertex request body.
+    const compositeText = compositeParts.join("\n").slice(0, 4000);
+
+    if (compositeText.length > 0) {
       // 3a. WORDLIST — fail-CLOSED, synchronous, no network.
-      const normalised = _normaliseDmText(rawText);
+      const normalised = _normaliseDmText(compositeText);
       for (const term of AI_HARD_BLOCKLIST) {
         if (normalised.includes(term)) {
           functions.logger.info(
-            `[moderateAndSendDM] BLOCKED by wordlist uid=${uid} term="${term}"`
+            `[moderateAndSendDM] BLOCKED by wordlist uid=${uid} type=${type} term="${term}"`
           );
           return { status: "blocked", reason: "wordlist" };
         }
@@ -3785,20 +3808,19 @@ export const moderateAndSendDM = functions
       // 3b. AI NUANCE — fail-OPEN-but-FLAG.
       // On UNSAFE: drop silently (return blocked, nothing written).
       // On null (error/timeout): write message + write moderationReview flag doc.
-      geminiVerdict = await _vertexClassifyText(rawText);
+      geminiVerdict = await _vertexClassifyText(compositeText);
 
       if (geminiVerdict === "UNSAFE") {
         functions.logger.info(
-          `[moderateAndSendDM] BLOCKED by AI uid=${uid}`
+          `[moderateAndSendDM] BLOCKED by AI uid=${uid} type=${type}`
         );
         return { status: "blocked", reason: "ai" };
       }
       // geminiVerdict === "SAFE"  → proceed to write, no flag.
       // geminiVerdict === null    → proceed to write, flag doc written after.
     }
-    // Non-text types (image, voice_note, document, location, contact,
-    // meetupInvite, etc.) pass through to the write step without AI moderation.
-    // Image moderation via Vision API is a documented future seam (Stage N).
+    // Binary content (imageUrl, audioUrl, documentUrl) carries no user-authored
+    // text. Image / audio moderation via Vision API is a documented future seam.
 
     // ── STEP 4: WRITE (Admin SDK) ────────────────────────────────────────────
     // Resolve senderName + senderAvatar from users/{uid} — never from client.
@@ -3917,18 +3939,19 @@ export const moderateAndSendDM = functions
     // If the AI layer returned null (error/timeout), write a flag doc for
     // human review AFTER the message has been committed successfully.
     // Done post-write so a flag-doc failure never blocks delivery.
-    if (isTextMessage && rawText.trim().length > 0 && geminiVerdict === null) {
+    if (compositeText.length > 0 && geminiVerdict === null) {
       try {
         await db.collection("moderationReview").add({
           conversationId,
           senderId:  uid,
           messageId,
-          text:      rawText,
+          text:      compositeText,
+          type,
           reason:    "ai_unavailable",
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         functions.logger.info(
-          `[moderateAndSendDM] flagged messageId=${messageId} uid=${uid} reason=ai_unavailable`
+          `[moderateAndSendDM] flagged messageId=${messageId} uid=${uid} type=${type} reason=ai_unavailable`
         );
       } catch (flagErr) {
         // Non-fatal: message is already written. Log and continue.
@@ -4294,21 +4317,53 @@ export const moderateAndSendGroupMessage = functions
       );
     }
 
-    // ── STEP 3: MODERATE (text only) ────────────────────────────────────────
+    // ── STEP 3: MODERATE (all user-authored text) ──────────────────────────
     const type         = String(data.type ?? "text");
     const rawText      = String(data.message ?? "");
-    const isTextMsg    = type === "text";
     // Hoisted to function scope so the flag-doc path (post-write) can read it.
     let geminiVerdict: "SAFE" | "UNSAFE" | null = null;
 
-    if (isTextMsg && rawText.trim().length > 0) {
+    // MOD-TEXT-ONLY-1: moderation previously ran only when type === "text", so
+    // poll questions, document filenames, contact names and captions reached the
+    // group completely unchecked. ALL user-authored text is moderated now,
+    // regardless of message type. Adding a new user-authored field to this
+    // callable means adding it HERE too.
+    //
+    // Fields present on moderateAndSendGroupMessage:
+    //   data.message      — plain text body (all message types)
+    //   data.pollQuestion — free text, visible to the whole group
+    //   data.pollOptions  — array of free-text strings, visible to the whole group
+    //   data.documentName — attacker-controlled filename displayed in chat
+    //   data.contactName  — free-text contact name
+    //   NOT included: caption (no such field on this callable),
+    //                 binary content (imageUrl, audioUrl, documentUrl — URLs only,
+    //                 no text to moderate; Vision/audio moderation is a future seam).
+    const grpCompositeParts: string[] = [];
+    if (rawText.trim().length > 0)                                      grpCompositeParts.push(rawText);
+    const _grpPollQ = String(data.pollQuestion ?? "").trim();
+    if (_grpPollQ.length > 0)                                           grpCompositeParts.push(_grpPollQ);
+    if (Array.isArray(data.pollOptions)) {
+      const _grpPollOpts = (data.pollOptions as unknown[])
+        .map((o) => String(o ?? "").trim())
+        .filter((o) => o.length > 0);
+      if (_grpPollOpts.length > 0)                                      grpCompositeParts.push(_grpPollOpts.join("\n"));
+    }
+    const _grpDocName = String(data.documentName ?? "").trim();
+    if (_grpDocName.length > 0)                                         grpCompositeParts.push(_grpDocName);
+    const _grpContactName = String(data.contactName ?? "").trim();
+    if (_grpContactName.length > 0)                                     grpCompositeParts.push(_grpContactName);
+    // Cap at 4000 chars before sending to the classifier — a long poll or
+    // pasted document name should not blow up the Vertex request body.
+    const grpCompositeText = grpCompositeParts.join("\n").slice(0, 4000);
+
+    if (grpCompositeText.length > 0) {
       // 3a. WORDLIST — fail-CLOSED, synchronous, no network.
       //     Reuses the SHARED normaliser and blocklist — not duplicated.
-      const normalised = _normaliseDmText(rawText);
+      const normalised = _normaliseDmText(grpCompositeText);
       for (const term of AI_HARD_BLOCKLIST) {
         if (normalised.includes(term)) {
           functions.logger.info(
-            `[moderateAndSendGroupMessage] BLOCKED by wordlist uid=${uid} groupId=${groupId} term="${term}"`
+            `[moderateAndSendGroupMessage] BLOCKED by wordlist uid=${uid} groupId=${groupId} type=${type} term="${term}"`
           );
           return { status: "blocked", reason: "wordlist" };
         }
@@ -4318,19 +4373,19 @@ export const moderateAndSendGroupMessage = functions
       //     Reuses the SHARED Gemini classifier — not duplicated.
       // On UNSAFE: drop silently (return blocked, nothing written).
       // On null (error/timeout): write message + write moderationReview flag doc.
-      geminiVerdict = await _vertexClassifyText(rawText);
+      geminiVerdict = await _vertexClassifyText(grpCompositeText);
 
       if (geminiVerdict === "UNSAFE") {
         functions.logger.info(
-          `[moderateAndSendGroupMessage] BLOCKED by AI uid=${uid} groupId=${groupId}`
+          `[moderateAndSendGroupMessage] BLOCKED by AI uid=${uid} groupId=${groupId} type=${type}`
         );
         return { status: "blocked", reason: "ai" };
       }
       // geminiVerdict === "SAFE"  → proceed to write, no flag.
       // geminiVerdict === null    → proceed to write, flag doc written after.
     }
-    // Non-text types (image, voice_note, document, location, contact, poll, etc.)
-    // pass through without AI moderation (image Vision API is a future seam).
+    // Binary content (imageUrl, audioUrl, documentUrl) carries no user-authored
+    // text. Image / audio moderation via Vision API is a documented future seam.
 
     // ── STEP 4: WRITE (Admin SDK) ────────────────────────────────────────────
     // Resolve senderName + senderAvatar from users/{uid} server-side.
@@ -4454,18 +4509,19 @@ export const moderateAndSendGroupMessage = functions
     // If the AI layer returned null (error/timeout), write a flag doc for
     // human review AFTER the message has been committed successfully.
     // Done post-write so a flag-doc failure never blocks delivery.
-    if (isTextMsg && rawText.trim().length > 0 && geminiVerdict === null) {
+    if (grpCompositeText.length > 0 && geminiVerdict === null) {
       try {
         await db.collection("moderationReview").add({
           groupId,
           senderId:  uid,
           messageId,
-          text:      rawText,
+          text:      grpCompositeText,
+          type,
           reason:    "ai_unavailable",
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         functions.logger.info(
-          `[moderateAndSendGroupMessage] flagged messageId=${messageId} uid=${uid} reason=ai_unavailable`
+          `[moderateAndSendGroupMessage] flagged messageId=${messageId} uid=${uid} type=${type} reason=ai_unavailable`
         );
       } catch (flagErr) {
         // Non-fatal: message is already written. Log and continue.
