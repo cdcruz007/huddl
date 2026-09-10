@@ -19,7 +19,7 @@ const { v4: uuidv4 } = require('uuid');
 const { authMiddleware } = require('../middleware/auth-middleware');
 const { getDb, FieldValue } = require('../services/firebase-service');
 const { sendToUser }        = require('../services/notification-service');
-const { sendWelcomeEmail, sendVerificationEmail } = require('../services/email-service');
+const { sendWelcomeEmail, sendVerificationEmail, sendFeedbackEmail } = require('../services/email-service');
 
 const API_BASE     = process.env.API_BASE_URL  || 'https://api.huddlapp.co.uk';
 const FRONTEND_URL = process.env.FRONTEND_URL  || 'https://www.huddlapp.co.uk';
