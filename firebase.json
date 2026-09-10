@@ -3,9 +3,16 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "storage.rules"
-  },
+  "storage": [
+    {
+      "target": "default",
+      "rules": "storage.rules"
+    },
+    {
+      "target": "eu",
+      "rules": "storage.rules"
+    }
+  ],
   "functions": [
     {
       "source": "functions",

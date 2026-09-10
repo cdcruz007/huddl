@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "huddl-connect"
-  }
+  },
+  "targets": {
+    "huddl-connect": {
+      "storage": {
+        "default": [
+          "huddl-connect.firebasestorage.app"
+        ],
+        "eu": [
+          "huddl-connect-eu"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
