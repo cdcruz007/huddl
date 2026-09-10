@@ -3434,6 +3434,11 @@ function _normaliseDmText(text: string): string {
  * Call Gemini flash with a safety-classification system prompt.
  * Returns 'SAFE', 'UNSAFE', or null on error/timeout.
  */
+// MOD-AI-UNAVAILABLE-1: superseded by _vertexClassifyText (Vertex AI,
+// europe-west4). Retained for reference only. GEMINI_API_KEY held an OAuth
+// artefact ("AQ.Ab…") rather than an "AIza…" key, so this never worked.
+// Do not re-enable without a valid Generative Language API key AND a decision
+// on data residency — the Generative Language API is globally routed.
 async function _geminiClassifyDmText(text: string): Promise<"SAFE" | "UNSAFE" | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -3525,12 +3530,170 @@ async function _geminiClassifyDmText(text: string): Promise<"SAFE" | "UNSAFE" | 
   });
 }
 
+// ── Module-level token cache for _vertexClassifyText ─────────────────────────
+// Cloud Function instances are reused between invocations. Caching the access
+// token here avoids a JWT mint (~200-400 ms) on every message send. The token
+// is re-minted when fewer than 60 seconds remain before expiry.
+let _classifyTokenCache: { token: string; expiresAt: number } | null = null;
+
+async function _vertexClassifyText(text: string): Promise<"SAFE" | "UNSAFE" | null> {
+  // ── VERTEX_AI_SA_KEY guard ────────────────────────────────────────────────
+  const saKeyRaw = process.env.VERTEX_AI_SA_KEY;
+  if (!saKeyRaw) {
+    functions.logger.warn("[classify] VERTEX_AI_SA_KEY missing — skipping AI layer");
+    return null;
+  }
+
+  // ── Parse service-account JSON ────────────────────────────────────────────
+  let saKey: { client_email: string; private_key: string };
+  try {
+    saKey = JSON.parse(saKeyRaw) as { client_email: string; private_key: string };
+    if (!saKey.client_email || !saKey.private_key) {
+      throw new Error("Missing client_email or private_key in SA JSON.");
+    }
+  } catch (parseErr) {
+    functions.logger.error(`[classify] Failed to parse VERTEX_AI_SA_KEY: ${parseErr}`);
+    return null;
+  }
+
+  // ── Token cache — reuse until 60 s before expiry, then re-mint ───────────
+  // Expiry is tracked as a Unix timestamp (ms). A 60-second safety margin
+  // avoids using a token that expires mid-request.
+  const nowMs = Date.now();
+  let accessToken: string;
+  if (_classifyTokenCache && _classifyTokenCache.expiresAt - nowMs > 60_000) {
+    accessToken = _classifyTokenCache.token;
+  } else {
+    try {
+      const jwt = new JWT({
+        email: saKey.client_email,
+        key: saKey.private_key,
+        scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+      });
+      const tokenResponse = await jwt.authorize();
+      if (!tokenResponse.access_token) {
+        throw new Error("jwt.authorize() returned no access_token.");
+      }
+      accessToken = tokenResponse.access_token;
+      // Google OAuth tokens are valid for 3600 s; store expiry in ms.
+      const expiresInMs = (tokenResponse.expiry_date ?? (nowMs + 3_600_000)) - nowMs;
+      _classifyTokenCache = { token: accessToken, expiresAt: nowMs + expiresInMs };
+    } catch (tokenErr) {
+      functions.logger.error(`[classify] Failed to obtain bearer token: ${tokenErr}`);
+      return null;
+    }
+  }
+
+  // ── Vertex publisher-model path for gemini-2.0-flash (base, not fine-tuned)
+  // Publisher path: /v1/projects/{proj}/locations/{loc}/publishers/google/models/{model}
+  // Shape confirmed from Vertex AI REST reference:
+  //   https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest
+  // The fine-tuned VERTEX_ENDPOINT uses a numeric model ID and targets
+  // huddl-uk-parenting-assistant — deliberately NOT used here because a
+  // parenting-assistant tuned model would not reliably return a bare SAFE/UNSAFE verdict.
+  const CLASSIFY_VERTEX_URL =
+    "https://europe-west4-aiplatform.googleapis.com/v1/projects/huddl-connect" +
+    "/locations/europe-west4/publishers/google/models/gemini-2.0-flash:generateContent";
+
+  const body = JSON.stringify({
+    systemInstruction: {
+      parts: [{
+        text:
+          "You are a content safety classifier for a UK parenting community app. " +
+          "Classify the following user message as SAFE or UNSAFE. " +
+          "UNSAFE means the message contains ANY of: threats of violence or self-harm " +
+          "directed at a specific person; child sexual abuse material (CSAM) or grooming language; " +
+          "severe, targeted harassment or hate speech targeting a person's identity; " +
+          "explicit sexual content. " +
+          "SAFE means everything else, including strong opinions, mild rudeness, complaints, " +
+          "or adult discussion. " +
+          "Respond with ONLY the single word SAFE or UNSAFE.",
+      }],
+    },
+    contents: [{ role: "user", parts: [{ text }] }],
+    // maxOutputTokens raised from 8 → 24: a finishReason of MAX_TOKENS at 8
+    // could yield a candidate with no usable text, silently failing classification.
+    // 24 tokens is still trivially cheap for a one-word response.
+    generationConfig: { temperature: 0, maxOutputTokens: 24 },
+  });
+
+  const parsedUrl = new URL(CLASSIFY_VERTEX_URL);
+
+  return new Promise<"SAFE" | "UNSAFE" | null>((resolve) => {
+    const timeout = setTimeout(() => {
+      functions.logger.warn("[classify] Vertex classify timeout — fail-open");
+      resolve(null);
+    }, 6000);
+
+    const options: import("https").RequestOptions = {
+      hostname: parsedUrl.hostname,
+      path:     parsedUrl.pathname,
+      method:   "POST",
+      headers:  {
+        "Content-Type":   "application/json",
+        "Content-Length": Buffer.byteLength(body),
+        "Authorization":  `Bearer ${accessToken}`,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let raw = "";
+      res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+      // MOD-AI-UNAVAILABLE-1: the raw body MUST be logged. Without it an API error
+      // (bad model, MAX_TOKENS, blocked response) is indistinguishable from a
+      // successful call returning nothing — which hid a total moderation failure.
+      res.on("end", () => {
+        clearTimeout(timeout);
+        if (res.statusCode && res.statusCode >= 300) {
+          functions.logger.error(
+            `[classify] HTTP ${res.statusCode} — body: ${raw.substring(0, 1000)}`
+          );
+        }
+        try {
+          const parsed = JSON.parse(raw) as {
+            candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+          };
+          const verdict = (
+            parsed?.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+          ).trim().toUpperCase();
+          if (verdict === "UNSAFE") { resolve("UNSAFE"); }
+          else if (verdict === "SAFE") { resolve("SAFE"); }
+          else {
+            functions.logger.warn(
+              `[classify] Vertex returned unexpected verdict: "${verdict}" — fail-open`
+            );
+            functions.logger.error(
+              `[classify] unexpected verdict "${verdict}" — HTTP ${res.statusCode} — ` +
+              `body: ${raw.substring(0, 1000)}`
+            );
+            resolve(null);
+          }
+        } catch {
+          functions.logger.warn("[classify] Vertex parse error — fail-open");
+          functions.logger.error(
+            `[classify] parse error — HTTP ${res.statusCode} — body: ${raw.substring(0, 1000)}`
+          );
+          resolve(null);
+        }
+      });
+    });
+
+    req.on("error", (err: Error) => {
+      clearTimeout(timeout);
+      functions.logger.warn(`[classify] Vertex request error: ${err.message} — fail-open`);
+      resolve(null);
+    });
+    req.write(body);
+    req.end();
+  });
+}
+
 export const moderateAndSendDM = functions
   .region("europe-west2")
   .runWith({
     timeoutSeconds: 30,
     memory: "256MB",
-    secrets: ["GEMINI_API_KEY"],
+    secrets: ["GEMINI_API_KEY", "VERTEX_AI_SA_KEY"],
   })
   .https.onCall(async (data: Record<string, unknown>, context) => {
 
@@ -3611,7 +3774,7 @@ export const moderateAndSendDM = functions
       // 3b. AI NUANCE — fail-OPEN-but-FLAG.
       // On UNSAFE: drop silently (return blocked, nothing written).
       // On null (error/timeout): write message + write moderationReview flag doc.
-      geminiVerdict = await _geminiClassifyDmText(rawText);
+      geminiVerdict = await _vertexClassifyText(rawText);
 
       if (geminiVerdict === "UNSAFE") {
         functions.logger.info(
@@ -3859,9 +4022,12 @@ function _postRailwayNotifyDm(payload: {
   });
 }
 
-/** POST to Railway notify-group. Mirrors _postRailwayNotifyDm. GROUP-NOTIFY-MISSING-1.
- *  Fail-soft: the message is already committed, so a Railway outage must never
- *  surface as a send failure. senderId lets Railway exclude the sender. */
+/** POST to the Railway notify-group endpoint using the https module (no fetch in Node 18 CF runtime).
+ *  Fail-soft: a Railway outage must never surface as a group message send failure.
+ *  The message is already committed to Firestore before this is called.
+ *  senderId is passed so the service branch can exclude the sender from the fan-out;
+ *  omitting it causes all members including the sender to receive a notification.
+ */
 function _postRailwayNotifyGroup(payload: {
   groupId: string;
   groupName: string;
@@ -3876,6 +4042,7 @@ function _postRailwayNotifyGroup(payload: {
       messagePreview: payload.messagePreview,
       senderId:       payload.senderId,
     });
+
     const options: import("https").RequestOptions = {
       hostname: "api.huddlapp.co.uk",
       path:     "/api/messages/notify-group",
@@ -3886,30 +4053,33 @@ function _postRailwayNotifyGroup(payload: {
         "X-Service-Auth": payload.secret,
       },
     };
+
     const timeout = setTimeout(() => {
-      functions.logger.warn("[moderateAndSendGroupMessage] notify-group timeout");
+      functions.logger.warn("[moderateAndSendGroupMessage] Railway notify-group timeout — skipping notification");
       req.destroy();
       resolve();
     }, 6000);
+
     const req = https.request(options, (res) => {
+      // Drain the response so the socket is released; we don't need the body.
       res.resume();
       res.on("end", () => {
         clearTimeout(timeout);
         if (res.statusCode && res.statusCode >= 400) {
           functions.logger.warn(
-            `[moderateAndSendGroupMessage] notify-group returned HTTP ${res.statusCode}`
+            `[moderateAndSendGroupMessage] Railway notify-group returned HTTP ${res.statusCode}`
           );
         }
         resolve();
       });
     });
+
     req.on("error", (err: Error) => {
       clearTimeout(timeout);
-      functions.logger.warn(
-        `[moderateAndSendGroupMessage] notify-group request error: ${err.message}`
-      );
-      resolve();
+      functions.logger.warn(`[moderateAndSendGroupMessage] Railway notify-group request error: ${err.message}`);
+      resolve(); // fail-soft
     });
+
     req.write(body);
     req.end();
   });
@@ -4070,7 +4240,7 @@ export const moderateAndSendGroupMessage = functions
   .runWith({
     timeoutSeconds: 30,
     memory: "256MB",
-    secrets: ["GEMINI_API_KEY", "INTERNAL_SERVICE_SECRET"],
+    secrets: ["GEMINI_API_KEY", "INTERNAL_SERVICE_SECRET", "VERTEX_AI_SA_KEY"],
   })
   .https.onCall(async (data: Record<string, unknown>, context) => {
 
@@ -4137,7 +4307,7 @@ export const moderateAndSendGroupMessage = functions
       //     Reuses the SHARED Gemini classifier — not duplicated.
       // On UNSAFE: drop silently (return blocked, nothing written).
       // On null (error/timeout): write message + write moderationReview flag doc.
-      geminiVerdict = await _geminiClassifyDmText(rawText);
+      geminiVerdict = await _vertexClassifyText(rawText);
 
       if (geminiVerdict === "UNSAFE") {
         functions.logger.info(
@@ -4241,22 +4411,25 @@ export const moderateAndSendGroupMessage = functions
       lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // GROUP-NOTIFY-MISSING-1: wired up 26 Aug 2026.
-    const notifySecret = process.env.INTERNAL_SERVICE_SECRET;
-    if (!notifySecret) {
+    // GROUP-NOTIFY-MISSING-1: wired up 26 Aug 2026 — group push notification via Railway notify-group.
+    // _postRailwayNotifyGroup is fail-soft: a Railway outage never surfaces as a send failure.
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    if (!secret) {
       functions.logger.warn(
-        "[moderateAndSendGroupMessage] INTERNAL_SERVICE_SECRET not set - notification skipped"
+        "[moderateAndSendGroupMessage] INTERNAL_SERVICE_SECRET not set — notification skipped"
       );
     } else {
       try {
+        const groupDisplayName = String(groupData["name"] ?? "Your group");
         await _postRailwayNotifyGroup({
           groupId,
-          groupName:      String(groupData["name"] ?? "Your group"),
+          groupName:      groupDisplayName,
           messagePreview: messageText,
           senderId:       uid,
-          secret:         notifySecret,
+          secret,
         });
       } catch (notifErr) {
+        // Non-fatal: message is already written. Log and continue.
         functions.logger.warn(
           `[moderateAndSendGroupMessage] notify-group failed (non-fatal): ${String(notifErr)}`
         );
