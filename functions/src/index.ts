@@ -3476,8 +3476,16 @@ async function _geminiClassifyDmText(text: string): Promise<"SAFE" | "UNSAFE" | 
       (res) => {
         let raw = "";
         res.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+        // MOD-AI-UNAVAILABLE-1: the raw body MUST be logged. Without it an API error
+        // (bad model, MAX_TOKENS, blocked response) is indistinguishable from a
+        // successful call returning nothing — which hid a total moderation failure.
         res.on("end", () => {
           clearTimeout(timeout);
+          if (res.statusCode && res.statusCode >= 300) {
+            functions.logger.error(
+              `[gemini] HTTP ${res.statusCode} — body: ${raw.substring(0, 1000)}`
+            );
+          }
           try {
             const parsed = JSON.parse(raw) as {
               candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -3491,10 +3499,17 @@ async function _geminiClassifyDmText(text: string): Promise<"SAFE" | "UNSAFE" | 
               functions.logger.warn(
                 `[moderateAndSendDM] Gemini returned unexpected verdict: "${verdict}" — fail-open`
               );
+              functions.logger.error(
+                `[gemini] unexpected verdict "${verdict}" — HTTP ${res.statusCode} — ` +
+                `body: ${raw.substring(0, 1000)}`
+              );
               resolve(null);
             }
           } catch {
             functions.logger.warn("[moderateAndSendDM] Gemini parse error — fail-open");
+            functions.logger.error(
+              `[gemini] parse error — HTTP ${res.statusCode} — body: ${raw.substring(0, 1000)}`
+            );
             resolve(null);
           }
         });
