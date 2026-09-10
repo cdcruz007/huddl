@@ -3584,16 +3584,23 @@ async function _vertexClassifyText(text: string): Promise<"SAFE" | "UNSAFE" | nu
     }
   }
 
-  // ── Vertex publisher-model path for gemini-2.0-flash (base, not fine-tuned)
+  // ── Vertex publisher-model path (base model, NOT the fine-tuned endpoint)
   // Publisher path: /v1/projects/{proj}/locations/{loc}/publishers/google/models/{model}
   // Shape confirmed from Vertex AI REST reference:
   //   https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest
   // The fine-tuned VERTEX_ENDPOINT uses a numeric model ID and targets
   // huddl-uk-parenting-assistant — deliberately NOT used here because a
   // parenting-assistant tuned model would not reliably return a bare SAFE/UNSAFE verdict.
+  // Verified against the live API 10 Sep 2026 via Cloud Shell curl: host
+  // aiplatform.googleapis.com, locations/eu (EU multi-region — keeps processing
+  // in the EEA), model gemini-3.5-flash-lite.
+  // gemini-2.0-flash was DISCONTINUED by Google and returns HTTP 404.
+  // gemini-3.6/3.7/3.8-flash are GLOBAL-region only with NO data residency —
+  // do not "upgrade" to them without a residency decision. 3.5 Flash-Lite is the
+  // cheapest model still supporting the eu multi-region.
   const CLASSIFY_VERTEX_URL =
-    "https://europe-west4-aiplatform.googleapis.com/v1/projects/huddl-connect" +
-    "/locations/europe-west4/publishers/google/models/gemini-2.0-flash:generateContent";
+    "https://aiplatform.googleapis.com/v1/projects/huddl-connect" +
+    "/locations/eu/publishers/google/models/gemini-3.5-flash-lite:generateContent";
 
   const body = JSON.stringify({
     systemInstruction: {
@@ -3611,10 +3618,14 @@ async function _vertexClassifyText(text: string): Promise<"SAFE" | "UNSAFE" | nu
       }],
     },
     contents: [{ role: "user", parts: [{ text }] }],
-    // maxOutputTokens raised from 8 → 24: a finishReason of MAX_TOKENS at 8
-    // could yield a candidate with no usable text, silently failing classification.
-    // 24 tokens is still trivially cheap for a one-word response.
-    generationConfig: { temperature: 0, maxOutputTokens: 24 },
+    // temperature REMOVED: gemini-3.5-flash-lite ignores custom temperature, top_k
+    // and top_p (defaults 1.0 / 0.95 / 64). Leaving it in would be a comment that
+    // lies about what the model does.
+    // maxOutputTokens 256: this model family has a thinking mode whose tokens count
+    // against this budget. A tight limit risks finishReason=MAX_TOKENS with NO text
+    // — an empty verdict indistinguishable from the auth failure this change fixed.
+    // Live test used 1-2 output tokens, so 256 costs nothing in practice.
+    generationConfig: { maxOutputTokens: 256 },
   });
 
   const parsedUrl = new URL(CLASSIFY_VERTEX_URL);
