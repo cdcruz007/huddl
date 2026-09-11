@@ -73,6 +73,21 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- PROFILE-PHOTO-CROP-CRASH-1: image_cropper launches
+             com.yalantis.ucrop.UCropActivity via startActivityForResult (request
+             code 69). Without this declaration Android cannot start it, returns
+             RESULT_CANCELED immediately, and image_cropper's onActivityResult
+             calls result.success() TWICE — "Reply already submitted" — which
+             crashes the app. Verified on Android 15 / build 128.
+             Do NOT add com.yalantis.ucrop.UCropFileProvider: that class does not
+             exist in ucrop 2.2.10 and declaring it causes a different crash. -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+
         <!-- FileProvider: Required by image_picker on Android 7+ (API 24+) to share
              camera-captured image URIs via content:// scheme. Without this, taking
              a photo crashes with FileUriExposedException on Android 7+. -->
