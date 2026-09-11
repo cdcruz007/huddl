@@ -5897,6 +5897,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // Already granted — fast path.
     if (status.isGranted) return true;
 
+    // CONTACTS-LIMITED-ACCESS-1: iOS 14+ returns `limited` when the user shares
+    // a SUBSET of their contacts (the option Apple nudges toward on iOS 18).
+    // `limited` is NOT isGranted, but it IS usable access. Treating it as a
+    // denial showed a permission error to users who HAD granted access.
+    // Verified on device 9 Sep 2026.
+    if (status.isLimited) return true;
+
     // Permanently denied — request() won't show system prompt on iOS/Android.
     // Route user straight to Settings with a proper dialog.
     if (status.isPermanentlyDenied) {
@@ -5925,7 +5932,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // notDetermined or denied — ask the OS to show the system permission prompt.
     final result = await Permission.contacts.request();
 
-    if (result.isGranted) return true;
+    // CONTACTS-LIMITED-ACCESS-1: accept `limited` here too — iOS does not
+    // re-prompt when access is already limited, so request() returns `limited`
+    // again and the user would be stuck in a permanent error state.
+    if (result.isGranted || result.isLimited) return true;
 
     if (!mounted) return false;
 
