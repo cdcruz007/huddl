@@ -397,11 +397,15 @@ service cloud.firestore {
       // F-04: caller must be a member of the target group AND must not
       // impersonate another user's senderId.
       // request.resource.data.groupId is the groupId the client intends to post to.
-      allow create: if isAuth()
-        && request.auth.uid in
-            get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
-              .data.memberIds
-        && request.resource.data.senderId == request.auth.uid;
+            // MOD-CLIENT-WRITE-BYPASS-1: client creates are DENIED.
+      // Group messages are written ONLY by moderateAndSendGroupMessage, which
+      // uses the Admin SDK and therefore bypasses these rules. The previous rule
+      // allowed any group member to write straight to Firestore, which made
+      // moderation advisory rather than enforced.
+      // Verified 11 Sep 2026: the only client-side create was
+      // FirestoreService.sendGroupMessage() (firestore_service.dart:428), which
+      // has NO callers. All other client access is read or update.
+      allow create: if false;
 
       // Message author may update their own message (edit text, reactions, etc.).
       // Any GROUP MEMBER may update reactions/reactionUsers/replies/replyCount —
