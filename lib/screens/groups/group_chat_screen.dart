@@ -5437,20 +5437,35 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           documentMimeType: attachment.mimeType,
         );
         if (docMetaSendResult.status != GroupSendStatus.sent && mounted) {
+          // MOD-BLOCKED-DOCUMENT-PERSISTS-1: a moderation block is NOT an upload
+          // failure. The upload succeeded; the content was rejected. Showing "Tap to
+          // retry" invites the user to re-upload a file that will always be rejected,
+          // and leaves blocked content visible in their chat. Remove the bubble and
+          // delete the now-orphaned Storage object.
+          final isBlocked = docMetaSendResult.status == GroupSendStatus.blockedWordlist ||
+              docMetaSendResult.status == GroupSendStatus.blockedAi;
           final idx2 = findPending();
-          if (idx2 >= 0) {
-            setState(() {
-              _documentMessages[idx2] = _documentMessages[idx2].copyWith(
-                isUploading: false,
-                uploadError: 'Upload failed. Tap to retry.',
-              );
-            });
+          if (isBlocked) {
+            // No Storage object exists on this path (metadata-only send) — just
+            // remove the optimistic bubble.
+            if (idx2 >= 0) {
+              setState(() => _documentMessages.removeAt(idx2));
+              await _persistUserMediaMessages();
+            }
+          } else {
+            if (idx2 >= 0) {
+              setState(() {
+                _documentMessages[idx2] = _documentMessages[idx2].copyWith(
+                  isUploading: false,
+                  uploadError: 'Upload failed. Tap to retry.',
+                );
+              });
+            }
           }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                docMetaSendResult.status == GroupSendStatus.blockedWordlist ||
-                        docMetaSendResult.status == GroupSendStatus.blockedAi
+                isBlocked
                     ? "This message couldn't be sent. Please review our community guidelines."
                     : "Couldn't send. Check your connection and try again.",
               ),
@@ -5479,21 +5494,40 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         documentMimeType: attachment.mimeType,
       );
       if (docSendResult.status != GroupSendStatus.sent && mounted) {
+        // MOD-BLOCKED-DOCUMENT-PERSISTS-1: a moderation block is NOT an upload
+        // failure. The upload succeeded; the content was rejected. Showing "Tap to
+        // retry" invites the user to re-upload a file that will always be rejected,
+        // and leaves blocked content visible in their chat. Remove the bubble and
+        // delete the now-orphaned Storage object.
+        final isBlocked = docSendResult.status == GroupSendStatus.blockedWordlist ||
+            docSendResult.status == GroupSendStatus.blockedAi;
         final idx = findPending();
-        if (idx >= 0) {
-          setState(() {
-            _documentMessages[idx] = _documentMessages[idx].copyWith(
-              isUploading: false,
-              uploadError: 'Upload failed. Tap to retry.',
-            );
-          });
-          await _persistUserMediaMessages();
+        if (isBlocked) {
+          // Delete the orphaned Storage object (upload completed before moderation ran).
+          try {
+            await snap.ref.delete();
+          } catch (e) {
+            if (kDebugMode) debugPrint('[GroupChat] Failed to delete orphaned Storage object after moderation block: $e');
+          }
+          if (idx >= 0) {
+            setState(() => _documentMessages.removeAt(idx));
+            await _persistUserMediaMessages();
+          }
+        } else {
+          if (idx >= 0) {
+            setState(() {
+              _documentMessages[idx] = _documentMessages[idx].copyWith(
+                isUploading: false,
+                uploadError: 'Upload failed. Tap to retry.',
+              );
+            });
+            await _persistUserMediaMessages();
+          }
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              docSendResult.status == GroupSendStatus.blockedWordlist ||
-                      docSendResult.status == GroupSendStatus.blockedAi
+              isBlocked
                   ? "This message couldn't be sent. Please review our community guidelines."
                   : "Couldn't send. Check your connection and try again.",
             ),
@@ -5553,18 +5587,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         documentMimeType: failed.mimeType,
       );
       if (retrySendResult.status != GroupSendStatus.sent && mounted) {
-        setState(() {
-          _documentMessages[docIndex] = _documentMessages[docIndex].copyWith(
-            isUploading: false,
-            uploadError: 'Upload failed. Tap to retry.',
-          );
-        });
-        await _persistUserMediaMessages();
+        // MOD-BLOCKED-DOCUMENT-PERSISTS-1: a moderation block is NOT an upload
+        // failure. The upload succeeded; the content was rejected. Showing "Tap to
+        // retry" invites the user to re-upload a file that will always be rejected,
+        // and leaves blocked content visible in their chat. Remove the bubble and
+        // delete the now-orphaned Storage object.
+        final isBlocked = retrySendResult.status == GroupSendStatus.blockedWordlist ||
+            retrySendResult.status == GroupSendStatus.blockedAi;
+        if (isBlocked) {
+          // Retry path is metadata-only (no bytes in memory) — no Storage object
+          // to delete. Remove the optimistic bubble.
+          setState(() => _documentMessages.removeAt(docIndex));
+          await _persistUserMediaMessages();
+        } else {
+          setState(() {
+            _documentMessages[docIndex] = _documentMessages[docIndex].copyWith(
+              isUploading: false,
+              uploadError: 'Upload failed. Tap to retry.',
+            );
+          });
+          await _persistUserMediaMessages();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              retrySendResult.status == GroupSendStatus.blockedWordlist ||
-                      retrySendResult.status == GroupSendStatus.blockedAi
+              isBlocked
                   ? "This message couldn't be sent. Please review our community guidelines."
                   : "Couldn't send. Check your connection and try again.",
             ),
