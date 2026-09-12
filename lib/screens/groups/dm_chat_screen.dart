@@ -1385,24 +1385,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 widget.recipientName,
                 style: HuddlText.display(),
               ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 8, height: 8,
-                    decoration: const BoxDecoration(
-                      color: HuddlColors.nearBlack,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Online',
-                    style: HuddlText.body(),
-                  ),
-                ],
-              ),
+              // PRESENCE-STALE-FIRESTORE-1: presence display removed — users/{uid}.isOnline
+              // is set true at login and never cleared (setOffline() has no callers), so it
+              // is permanently stale. See isUserOnline() in dm_service.dart for what a real
+              // implementation needs.
               const SizedBox(height: 16),
               // Info rows — only shown when the field has a real value
               Container(

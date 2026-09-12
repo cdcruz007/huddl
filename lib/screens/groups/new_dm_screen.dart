@@ -300,8 +300,12 @@ class _MemberTile extends StatelessWidget {
               name: member.name,
               size: 48,
               accentColor: color,
-              showOnlineDot: true,
-              isOnline: member.isOnline,
+              // PRESENCE-STALE-FIRESTORE-1: presence display removed — users/{uid}.isOnline
+              // is set true at login and never cleared (setOffline() has no callers), so it
+              // is permanently stale. See isUserOnline() in dm_service.dart for what a real
+              // implementation needs.
+              showOnlineDot: false,
+              isOnline: false,
               imageUrl: member.photoUrl.isNotEmpty ? member.photoUrl : null,
               parentType: member.parentType,
             ),
@@ -323,18 +327,6 @@ class _MemberTile extends StatelessWidget {
                 ],
               ),
             ),
-            // Online indicator
-            if (member.isOnline) ...[
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: HuddlColors.nearBlack,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
             Icon(HuddlIcons.chat,
                 size: 20, color: context.hc.textTertiary),
           ],
