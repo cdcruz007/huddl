@@ -6,14 +6,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
-// user_privacy_prefs_service.dart import removed — was used only by the
-// now-removed isOnline ternary (PRESENCE-STALE-FIRESTORE-1)
+import '../../services/user_privacy_prefs_service.dart';
+import '../../services/presence_service.dart';
 import 'manage_admins_screen.dart';
 import '../../constants/app_text_styles.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
-// _kOnline removed — was used only by the now-removed subtitle colour
-// expression (PRESENCE-STALE-FIRESTORE-1)
+// PRESENCE-REAL-1: _kOnline restored for the online subtitle colour.
+const Color _kOnline = HuddlColors.success;
 
 class GroupMembersScreen extends StatefulWidget {
   final String groupId;
@@ -98,11 +98,13 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
           final name = (ud['name'] as String?)?.trim() ?? '';
           if (name.isEmpty) continue; // skip users with no name yet
 
-          // PRESENCE-STALE-FIRESTORE-1: presence display removed — users/{uid}.isOnline
-          // is set true at login and never cleared (setOffline() has no callers), so it
-          // is permanently stale. See isUserOnline() in dm_service.dart for what a real
-          // implementation needs.
-          const isOnline = false;
+          // PRESENCE-REAL-1: derive presence from lastActiveAt in users_public.
+          // The doc was just fetched above (users_public batch get), so no extra
+          // read is needed. One-time get: presence reflects the moment the screen
+          // was loaded — acceptable for a member list (not a live chat header).
+          final lat = ud['lastActiveAt'];
+          final latTs = lat is Timestamp ? lat : null;
+          final isOnline = PresenceService.isOnlineFrom(latTs);
           final isCreator = uid == creatorId;
           final isCurrentUser = uid == currentUid;
 
@@ -124,11 +126,13 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
         }
       }
 
-      // Sort: admins first, then alphabetical (online-first removed —
-      // isOnline is permanently stale, PRESENCE-STALE-FIRESTORE-1)
+      // PRESENCE-REAL-1: sort admins first, then online, then alphabetical.
+      // Online-first sort restored now that presence is real.
       loaded.sort((a, b) {
         if (a.role == 'admin' && b.role != 'admin') return -1;
         if (a.role != 'admin' && b.role == 'admin') return 1;
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
         return a.name.compareTo(b.name);
       });
 
@@ -486,8 +490,13 @@ class _MemberTile extends StatelessWidget {
           name: member.name,
           size: 44,
           accentColor: member.accentColor,
-          showOnlineDot: false,
-          isOnline: false,
+          // PRESENCE-REAL-1: show dot using real derived presence.
+          // For the current user ('You'), respect their showOnlineStatus privacy
+          // preference, exactly as the original code did.
+          showOnlineDot: true,
+          isOnline: (member.name == 'You')
+              ? (member.isOnline && UserPrivacyPrefsService().showOnlineStatus)
+              : member.isOnline,
           imageUrl: member.photoUrl,
           parentType: member.parentType,
         ),
@@ -513,12 +522,14 @@ class _MemberTile extends StatelessWidget {
             ],
           ],
         ),
-        subtitle: member.borough.isNotEmpty
-            ? Text(
-                member.borough,
-                style: HuddlText.caption(color: context.hc.textTertiary),
-              )
-            : null,
+        // PRESENCE-REAL-1: subtitle shows Online prefix when present.
+        subtitle: Text(
+          member.borough.isNotEmpty
+              ? '${member.isOnline ? 'Online' : 'Offline'} · ${member.borough}'
+              : (member.isOnline ? 'Online' : 'Offline'),
+          style: HuddlText.caption(
+              color: member.isOnline ? _kOnline : context.hc.textTertiary),
+        ),
         // Section 6E: show ⋮ button for admin users (not on own row)
         trailing: _canActOnMember
             ? IconButton(

@@ -16,6 +16,7 @@ import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/presence_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 import '../constants/app_text_styles.dart';
 // huddl_spring_animations used via home_screen.dart (HuddlSpringPageRoute on nav pushes)
@@ -192,6 +193,8 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
         // AudioPlayer listeners and iOS/Android audio session are ready
         // before any chat screen tries to play a voice message.
         VoiceMessageService.instance.init();
+        // PRESENCE-REAL-1: start heartbeat after first frame so auth is ready.
+        PresenceService().start();
       }
     });
   }
@@ -315,8 +318,16 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   // away from the app and back.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _syncSubscriptionInBackground();
+    // PRESENCE-REAL-1: manage heartbeat alongside subscription sync.
+    switch (state) {
+      case AppLifecycleState.resumed:
+        PresenceService().start();
+        _syncSubscriptionInBackground();
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        PresenceService().stop();
     }
   }
 
@@ -402,6 +413,8 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     _dismissNotifBanner(); // cancel timer + remove overlay before widget unmounts
     WidgetsBinding.instance.removeObserver(this);
     tabNotifier.dispose();
+    // PRESENCE-REAL-1: stop heartbeat so it doesn't fire after shell unmounts.
+    PresenceService().stop();
     super.dispose();
   }
 

@@ -45,6 +45,7 @@ import 'group_chat_screen.dart' show GroupChatScreen;
 import '../search/unified_search_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../main_shell.dart';
+import '../../services/presence_service.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.success; // HuddlColors.success — online = positive status
@@ -782,6 +783,65 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
   }
 
+  // PRESENCE-REAL-1: async helper called from the conversation stream listener.
+  // Fetches lastActiveAt for all DM recipients in one batch get, derives online
+  // status via PresenceService.isOnlineFrom(), and rebuilds the conversation list.
+  Future<void> _updateDmConversationsWithPresence(
+      List<dynamic> firestoreConvs) async {
+    if (!mounted) return;
+
+    final recipientIds = firestoreConvs
+        .map((fc) => fc.otherUserId as String)
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+
+    final Map<String, Timestamp?> presenceMap = {};
+    if (recipientIds.isNotEmpty) {
+      try {
+        // Firestore whereIn limit = 30; DM lists are typically small.
+        final presenceSnap = await FirebaseFirestore.instance
+            .collection('users_public')
+            .where(FieldPath.documentId, whereIn: recipientIds)
+            .get();
+        for (final doc in presenceSnap.docs) {
+          final lat = doc.data()['lastActiveAt'];
+          presenceMap[doc.id] = lat is Timestamp ? lat : null;
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[groups_screen] presence fetch failed: $e');
+        }
+      }
+    }
+
+    if (!mounted) return;
+
+    final converted = firestoreConvs.map((fc) {
+      final latTs = presenceMap[fc.otherUserId as String];
+      return DMConversation(
+        id: fc.id as String,
+        recipientId: fc.otherUserId as String,
+        recipientName: fc.otherUserName as String,
+        recipientAvatarColor: _avatarColorForUid(fc.otherUserId as String),
+        recipientPhotoUrl: (fc.otherUserPhotoUrl as String).isNotEmpty
+            ? fc.otherUserPhotoUrl as String
+            : null,
+        lastMessage: fc.lastMessage as String,
+        lastSenderName: fc.lastSenderName as String,
+        lastMessageTime: fc.lastMessageAt as DateTime?,
+        unreadCount: fc.unreadCount as int,
+        isOnline: PresenceService.isOnlineFrom(latTs),
+      );
+    }).toList();
+
+    setState(() {
+      _dmConversations.removeWhere((c) => c.id.startsWith('conv_'));
+      _dmConversations.addAll(converted);
+      _applyFilter();
+    });
+  }
+
   String _avatarColorForUid(String uid) {
     const colors = [
       '#FF975C', '#3580F0', '#199A85', '#A16AE9',
@@ -808,26 +868,10 @@ class _MessagesTabState extends State<_MessagesTab> {
         _firestoreConvSub = _realtimeDMService.conversationsStream().listen(
           (firestoreConvs) {
             if (!mounted) return;
-            // Convert RealtimeDMConversation → DMConversation
-            final converted = firestoreConvs.map((fc) => DMConversation(
-              id: fc.id,
-              recipientId: fc.otherUserId,
-              recipientName: fc.otherUserName,
-              recipientAvatarColor: _avatarColorForUid(fc.otherUserId),
-              recipientPhotoUrl: fc.otherUserPhotoUrl.isNotEmpty ? fc.otherUserPhotoUrl : null,
-              lastMessage: fc.lastMessage,
-              lastSenderName: fc.lastSenderName,
-              lastMessageTime: fc.lastMessageAt,
-              unreadCount: fc.unreadCount,
-              isOnline: false,
-            )).toList();
-
-            setState(() {
-              // Remove any existing Firestore-backed convs and replace
-              _dmConversations.removeWhere((c) => c.id.startsWith('conv_'));
-              _dmConversations.addAll(converted);
-              _applyFilter();
-            });
+            // PRESENCE-REAL-1: fetch lastActiveAt for all recipients, then
+            // rebuild the conversation list. The async work is isolated in a
+            // helper so the sync listener callback remains valid Dart.
+            _updateDmConversationsWithPresence(firestoreConvs);
           },
           onError: (e) {
             if (kDebugMode) debugPrint('[groups_screen] Firestore conv stream error: $e');
@@ -3383,9 +3427,10 @@ class _DMMessageRow extends StatelessWidget {
                   imageUrl: conversation.recipientPhotoUrl,
                   size: 80,
                   accentColor: color,
-                  // PRESENCE-IS-SIMULATED-1: dot suppressed — presence not implemented.
-                  showOnlineDot: false,
-                  isOnline: false,
+                  // PRESENCE-REAL-1: show dot using real derived presence
+                  // from lastActiveAt fetched alongside the conversation stream.
+                  showOnlineDot: true,
+                  isOnline: conversation.isOnline,
                 ),
                 const SizedBox(width: 12),
 

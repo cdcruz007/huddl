@@ -229,8 +229,26 @@ service cloud.firestore {
       // DM headers, borough member picker — all the reads F-08 previously blocked).
       allow read: if isAuth();
 
-      // All client writes denied — Admin SDK / CF only.
-      allow write: if false;
+      // PRESENCE-REAL-1: the owner may write lastActiveAt, and ONLY
+      // lastActiveAt, to their own public mirror. This is the presence
+      // heartbeat. Writing it here rather than to users/{uid} avoids firing
+      // syncPublicProfile once per heartbeat per user.
+      //
+      // Constraints, all required:
+      //   - owner only (userId == request.auth.uid)
+      //   - affectedKeys is EXACTLY ['lastActiveAt'] — no other field may be
+      //     touched, so name/photoUrl/borough remain CF-only and unspoofable
+      //   - the value must not be in the future, so a client cannot write a
+      //     far-future timestamp to appear permanently online
+      allow update: if isAuth()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastActiveAt'])
+        && request.resource.data.lastActiveAt <= request.time;
+
+      // create and delete remain categorically denied — Admin SDK / CF only.
+      allow create: if false;
+      allow delete: if false;
     }
 
     // =========================================================================

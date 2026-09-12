@@ -42,6 +42,8 @@ import '../../utils/upload_limits.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../services/presence_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 // My-bubble: solid brand orange (Figma spec #E8724A)
@@ -126,6 +128,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
   // Firestore real-time subscription (for real users)
   StreamSubscription<List<RealtimeDMMessage>>? _firestoreMsgSub;
 
+  // PRESENCE-REAL-1: live stream of the recipient's users_public doc so the
+  // DM header reflects real derived presence without the user needing to
+  // leave and re-enter the screen.
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _presenceSub;
+  bool _recipientIsOnline = false;
+
   /// Returns true if the recipient is a real Firebase user (not a demo member).
   bool get _isRealUser =>
       !widget.recipientId.startsWith('mem_') &&
@@ -155,6 +163,27 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
     _savedMessageService.initialize();
     _blockService.initialize();
+    // PRESENCE-REAL-1: subscribe to recipient's public doc for live presence.
+    // Only for real users — demo mem_ IDs have no Firestore doc.
+    if (_isRealUser) {
+      _presenceSub = FirebaseFirestore.instance
+          .collection('users_public')
+          .doc(widget.recipientId)
+          .snapshots()
+          .listen((snap) {
+        if (!mounted) return;
+        final lat = snap.data()?['lastActiveAt'];
+        final latTs = lat is Timestamp ? lat : null;
+        final online = PresenceService.isOnlineFrom(latTs);
+        if (online != _recipientIsOnline) {
+          setState(() => _recipientIsOnline = online);
+        }
+      }, onError: (e) {
+        if (kDebugMode) {
+          debugPrint('[DMChatScreen] presence stream failed: $e');
+        }
+      });
+    }
     // Tell the shell this DM is now active so foreground FCM banners
     // for this conversation are suppressed (OS heads-up is sufficient).
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -183,6 +212,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _focusNode.dispose();
     _refreshTimer?.cancel();
     _firestoreMsgSub?.cancel();
+    _presenceSub?.cancel(); // PRESENCE-REAL-1
     if (_isVoiceRecording) _voiceSvc.cancelRecording();
     _dmService.removeListener(_onServiceUpdate);
     super.dispose();
@@ -1113,11 +1143,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                // PRESENCE-IS-SIMULATED-1: Online/Offline removed — presence
-                // is not implemented. Show typing indicator only; nothing otherwise.
+                // PRESENCE-REAL-1: show 'Online' when derived true, nothing
+                // when false. Typing indicator takes precedence.
                 if (_isRecipientTyping)
                   Text(
                     'typing...',
+                    style: HuddlText.caption(color: HuddlColors.textHint),
+                  )
+                else if (_recipientIsOnline)
+                  Text(
+                    'Online',
                     style: HuddlText.caption(color: HuddlColors.textHint),
                   ),
               ],

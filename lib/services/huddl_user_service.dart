@@ -24,6 +24,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'clearable_user_state.dart';
 import 'onboarding_data_service.dart';
+import 'presence_service.dart';
 
 
 class HuddlUserService implements ClearableUserState {
@@ -166,10 +167,11 @@ class HuddlUserService implements ClearableUserState {
           // before any subsequent reads.
           await _onboarding.flush();
 
-          // Only update presence fields — DO NOT overwrite data-bearing fields
+          // Only update metadata fields — DO NOT overwrite data-bearing fields
           // because we just restored them correctly from Firestore.
+          // PRESENCE-REAL-1: isOnline write removed; presence is now managed
+          // by PresenceService heartbeats to users_public/{uid}.lastActiveAt.
           await _db.collection('users').doc(uid).update({
-            'isOnline': true,
             'lastActiveAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
           });
@@ -193,9 +195,10 @@ class HuddlUserService implements ClearableUserState {
 
     // Build the profile update — only include fields with real values
     // to avoid accidentally overwriting Firestore data with empty strings.
+    // PRESENCE-REAL-1: isOnline write removed; presence is now managed by
+    // PresenceService heartbeats to users_public/{uid}.lastActiveAt.
     final Map<String, dynamic> profile = {
       'uid': uid,
-      'isOnline': true,
       'lastActiveAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -251,29 +254,10 @@ class HuddlUserService implements ClearableUserState {
     }
   }
 
-  /// Mark the user offline (call in app lifecycle pause/detach).
-  Future<void> setOffline() async {
-    final uid = _uid;
-    if (uid == null) return;
-    try {
-      await _db.collection('users').doc(uid).update({
-        'isOnline': false,
-        'lastActiveAt': FieldValue.serverTimestamp(),
-      });
-    } catch (_) {}
-  }
-
-  /// Mark the user online (call in app lifecycle resume).
-  Future<void> setOnline() async {
-    final uid = _uid;
-    if (uid == null) return;
-    try {
-      await _db.collection('users').doc(uid).update({
-        'isOnline': true,
-        'lastActiveAt': FieldValue.serverTimestamp(),
-      });
-    } catch (_) {}
-  }
+  // PRESENCE-REAL-1: setOffline() and setOnline() deleted — they wrote the dead
+  // isOnline boolean which was set true at login and never cleared, making it
+  // permanently stale. Presence is now managed by PresenceService heartbeats
+  // writing lastActiveAt to users_public/{uid}. Both methods had zero callers.
 
   // ── Get current user's borough from Firestore ──────────────────────────────
 
@@ -308,9 +292,11 @@ class HuddlUserService implements ClearableUserState {
           .where((u) => u.uid != uid) // exclude self
           .toList();
 
-      // Sort: online first, then by name
+      // PRESENCE-REAL-1: sort online-first using derived presence.
       members.sort((a, b) {
-        if (a.isOnline != b.isOnline) return a.isOnline ? -1 : 1;
+        final aOnline = PresenceService.isOnlineFrom(a.lastActiveAtTimestamp);
+        final bOnline = PresenceService.isOnlineFrom(b.lastActiveAtTimestamp);
+        if (aOnline != bOnline) return aOnline ? -1 : 1;
         return a.name.compareTo(b.name);
       });
 
@@ -336,8 +322,11 @@ class HuddlUserService implements ClearableUserState {
           .map((doc) => HuddlUser.fromFirestore(doc.data(), doc.id))
           .where((u) => u.uid != uid)
           .toList();
+      // PRESENCE-REAL-1: sort online-first using derived presence.
       members.sort((a, b) {
-        if (a.isOnline != b.isOnline) return a.isOnline ? -1 : 1;
+        final aOnline = PresenceService.isOnlineFrom(a.lastActiveAtTimestamp);
+        final bOnline = PresenceService.isOnlineFrom(b.lastActiveAtTimestamp);
+        if (aOnline != bOnline) return aOnline ? -1 : 1;
         return a.name.compareTo(b.name);
       });
       return members;
@@ -385,8 +374,11 @@ class HuddlUser {
   final String borough;
   final String photoUrl;
   final String bio;
-  final bool isOnline;
+  // PRESENCE-REAL-1: isOnline (stale boolean) replaced by lastActiveAtTimestamp.
+  // Derive presence with PresenceService.isOnlineFrom(lastActiveAtTimestamp).
+  final bool isOnline; // kept for call-site compatibility; derived on construction
   final DateTime? lastActiveAt;
+  final Timestamp? lastActiveAtTimestamp; // raw Timestamp for PresenceService.isOnlineFrom()
 
   const HuddlUser({
     required this.uid,
@@ -402,14 +394,19 @@ class HuddlUser {
     required this.bio,
     required this.isOnline,
     this.lastActiveAt,
+    this.lastActiveAtTimestamp,
   });
 
   factory HuddlUser.fromFirestore(Map<String, dynamic> data, String id) {
-    DateTime? lastActive;
     final lat = data['lastActiveAt'];
-    if (lat is Timestamp) {
-      lastActive = lat.toDate();
-    }
+    final Timestamp? latTs = lat is Timestamp ? lat : null;
+    final DateTime? lastActive = latTs?.toDate();
+
+    // PRESENCE-REAL-1: derive isOnline from lastActiveAt timestamp rather than
+    // reading the stale isOnline boolean.  The stale field may still exist in
+    // users_public docs (written by syncPublicProfile CF) but must not be used
+    // for presence display — it is set true at login and never cleared.
+    final derivedOnline = PresenceService.isOnlineFrom(latTs);
 
     return HuddlUser(
       uid: id,
@@ -423,8 +420,9 @@ class HuddlUser {
       borough: data['borough'] as String? ?? '',
       photoUrl: data['photoUrl'] as String? ?? '',
       bio: data['bio'] as String? ?? '',
-      isOnline: data['isOnline'] as bool? ?? false,
+      isOnline: derivedOnline,
       lastActiveAt: lastActive,
+      lastActiveAtTimestamp: latTs,
     );
   }
 

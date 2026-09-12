@@ -300,12 +300,12 @@ class _MemberTile extends StatelessWidget {
               name: member.name,
               size: 48,
               accentColor: color,
-              // PRESENCE-STALE-FIRESTORE-1: presence display removed — users/{uid}.isOnline
-              // is set true at login and never cleared (setOffline() has no callers), so it
-              // is permanently stale. See isUserOnline() in dm_service.dart for what a real
-              // implementation needs.
-              showOnlineDot: false,
-              isOnline: false,
+              // PRESENCE-REAL-1: HuddlUser.isOnline is now derived from
+              // lastActiveAt in users_public/{uid} via PresenceService.isOnlineFrom().
+              // The member list is a one-time get — presence reflects the moment
+              // the picker was opened, which is acceptable for a chooser screen.
+              showOnlineDot: true,
+              isOnline: member.isOnline,
               imageUrl: member.photoUrl.isNotEmpty ? member.photoUrl : null,
               parentType: member.parentType,
             ),
