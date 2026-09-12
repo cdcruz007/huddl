@@ -4844,7 +4844,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
-        // groupMsgId stays '' — poll creation continues without a chat announce
+        // MOD-POLL-BLOCK-IGNORED-1: a moderation block must abort poll creation
+        // entirely. This branch previously fell through to Step 2, which writes
+        // polls/{pollId} directly to Firestore — so a blocked question became a
+        // live, votable poll visible to the whole group. Verified on device
+        // 12 Sep 2026 with the question "I will kill you".
+        return;
       } else if (kDebugMode && pollSendResult.status == GroupSendStatus.failed) {
         debugPrint('[GroupChat] Poll msg CF failed — continuing without announce');
       }
