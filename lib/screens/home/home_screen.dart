@@ -178,6 +178,14 @@ class _HomeScreenState extends State<HomeScreen>
     _benefitPageCtrl = PageController(viewportFraction: 0.92);
     _benefitAutoScrollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
+      // HOME-PAGECONTROLLER-CRASH-1: `mounted` only proves the State is alive.
+      // MainShell keeps inactive tabs in the tree via Offstage, which EXCLUDES
+      // them from layout — the PageView detaches from this controller while the
+      // State stays mounted, so animateToPage throws
+      // 'PageController is not attached to a PageView'. hasClients is exactly
+      // the positions.isNotEmpty assertion the framework is failing on.
+      // Also covers cold start before the first layout pass.
+      if (!_benefitPageCtrl.hasClients) return;
       final nextPage = (_benefitPageIndex + 1) % _kBenefitNudges.length;
       _benefitPageCtrl.animateToPage(
         nextPage,
