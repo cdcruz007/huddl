@@ -44,7 +44,7 @@ dependencies:
   firebase_analytics: 11.0.1                # GDPR analytics opt-out toggle (BUG 8)
 
   # Payment / In-App Purchases
-  in_app_purchase: 3.3.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
+  in_app_purchase: 3.2.3           # Apple StoreKit + Google Play Billing (official Flutter plugin) — 3.3.0 requires Dart ^3.10.0
 
   # Biometric Authentication (P3 audit recommendation)
   local_auth: ^2.3.0               # Fingerprint, Face ID, passcode
