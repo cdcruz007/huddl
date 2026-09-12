@@ -107,7 +107,6 @@ void main() {
       expect(HyperlocalRules.boroughOnlyFeatures, contains('groups'));
       expect(HyperlocalRules.boroughOnlyFeatures, contains('meetups'));
       expect(HyperlocalRules.boroughOnlyFeatures, contains('marketplace'));
-      expect(HyperlocalRules.boroughOnlyFeatures, contains('matchmaker'));
     });
 
     test('HyperlocalRules defines UK-wide features', () {
@@ -161,8 +160,8 @@ void main() {
       expect(LearningMaturity.values, contains(LearningMaturity.mature));
     });
 
-    test('SignalSource enum has 12 categories', () {
-      expect(SignalSource.values.length, 12);
+    test('SignalSource enum has 11 categories', () {
+      expect(SignalSource.values.length, 11);
       expect(SignalSource.values, contains(SignalSource.copilot));
       expect(SignalSource.values, contains(SignalSource.chat));
       expect(SignalSource.values, contains(SignalSource.group));
@@ -170,7 +169,6 @@ void main() {
       expect(SignalSource.values, contains(SignalSource.event));
       expect(SignalSource.values, contains(SignalSource.marketplace));
       expect(SignalSource.values, contains(SignalSource.offers));
-      // SignalSource.matchmaker removed — AI Matchmaker feature discontinued
     });
 
     test('Cold-start scenario: maturity stages order correctly', () {

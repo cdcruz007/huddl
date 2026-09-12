@@ -7,7 +7,6 @@
 //   - Onboarding data service (provider fields)
 //   - Gemini prompt builder enriched user context
 //   - Feed service enriched nudge types (19 total)
-//   - Matchmaker enriched parent profiles (15 profiles)
 //   - Learning engine new signal source
 //   - Tutorial enriched steps
 //   - Event discovery enriched templates (26 total)
@@ -104,7 +103,6 @@ void main() {
       expect(HyperlocalRules.boroughOnlyFeatures, contains('groups'));
       expect(HyperlocalRules.boroughOnlyFeatures, contains('meetups'));
       expect(HyperlocalRules.boroughOnlyFeatures, contains('marketplace'));
-      expect(HyperlocalRules.boroughOnlyFeatures, contains('matchmaker'));
     });
 
     test('HyperlocalRules prompt context includes borough', () {
@@ -246,8 +244,8 @@ void main() {
       expect(isSignalBoroughScoped(SignalSource.event), isFalse);
     });
 
-    test('Total signal sources count is 12', () {
-      expect(SignalSource.values.length, equals(12));
+    test('Total signal sources count is 11', () {
+      expect(SignalSource.values.length, equals(11));
     });
 
     test('LearningMaturity enum has 4 stages', () {
@@ -295,7 +293,6 @@ void main() {
       expect(boroughOnly, contains('groups'));
       expect(boroughOnly, contains('meetups'));
       expect(boroughOnly, contains('marketplace'));
-      expect(boroughOnly, contains('matchmaker'));
     });
 
     test('UK-wide features list contains only events', () {

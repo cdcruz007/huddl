@@ -128,7 +128,6 @@ void main() {
       expect(summary, contains('groups'));
       expect(summary, contains('meetups'));
       expect(summary, contains('marketplace'));
-      expect(summary, contains('matchmaker'));
     });
 
     test('debugSummary lists events as UK-wide', () {
