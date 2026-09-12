@@ -3383,8 +3383,9 @@ class _DMMessageRow extends StatelessWidget {
                   imageUrl: conversation.recipientPhotoUrl,
                   size: 80,
                   accentColor: color,
-                  showOnlineDot: true,
-                  isOnline: DMService().isUserOnline(conversation.recipientId),
+                  // PRESENCE-IS-SIMULATED-1: dot suppressed — presence not implemented.
+                  showOnlineDot: false,
+                  isOnline: false,
                 ),
                 const SizedBox(width: 12),
 

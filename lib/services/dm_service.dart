@@ -7,7 +7,8 @@ import 'clearable_user_state.dart';
 import '../utils/safe_parse.dart';
 import '../models/direct_message.dart';
 import 'borough_scope_guard.dart';
-import 'user_privacy_prefs_service.dart';
+// user_privacy_prefs_service.dart import removed — was used only by the
+// now-stubbed isUserOnline() simulated presence (PRESENCE-IS-SIMULATED-1);
 
 /// Singleton service that manages DM conversations and messages.
 ///
@@ -47,19 +48,24 @@ class DMService implements ClearableUserState {
     }
   }
 
-  // ── Online status simulation ────────────────────────────────────────────
-  /// Returns simulated online status for a given user.
+  // ── Online status ───────────────────────────────────────────────────────
+
+  /// PRESENCE-IS-SIMULATED-1: presence is NOT implemented. This previously
+  /// returned a hash of the recipient's UID — roughly 40% of users showed as
+  /// "Online" permanently, with no relationship to reality, and it was being
+  /// displayed for REAL users in the DM header and the Connect list.
   ///
-  /// If the CURRENT user has "Show online status" turned off in Privacy
-  /// settings, we always report them as offline to others. For other users
-  /// we simulate ~40% online based on a name hash.
-  bool isUserOnline(String recipientId) {
-    // If this user is "the current user" appearing in their own DM list,
-    // respect their privacy setting.
-    if (!UserPrivacyPrefsService().showOnlineStatus) return false;
-    // Simulate ~40% of users being online
-    return recipientId.hashCode.abs() % 5 < 2;
-  }
+  /// Returns false until real presence exists. Building it properly requires:
+  ///   - a heartbeat writing lastActiveAt while the app is foregrounded
+  ///   - lastActiveAt added to PUBLIC_FIELDS in syncPublicProfile
+  ///     (functions/src/index.ts) so other users can read it
+  ///   - deriving "online" as lastActiveAt within ~2 minutes, NOT a boolean —
+  ///     a boolean leaves ghosts after a force-quit or lost signal
+  /// setOnline()/setOffline() in huddl_user_service.dart already exist and have
+  /// ZERO callers.
+  ///
+  /// Do NOT restore the hash.
+  bool isUserOnline(String recipientId) => false;
 
   // ── Initialisation ──────────────────────────────────────────────────────
   Future<void> initialize() async {

@@ -1113,10 +1113,13 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  _isRecipientTyping ? 'typing...' : (_dmService.isUserOnline(widget.recipientId) ? 'Online' : 'Offline'),
-                  style: HuddlText.caption(color: _dmService.isUserOnline(widget.recipientId) ? HuddlColors.success : HuddlColors.textHint),
-                ),
+                // PRESENCE-IS-SIMULATED-1: Online/Offline removed — presence
+                // is not implemented. Show typing indicator only; nothing otherwise.
+                if (_isRecipientTyping)
+                  Text(
+                    'typing...',
+                    style: HuddlText.caption(color: HuddlColors.textHint),
+                  ),
               ],
             ),
           ),
