@@ -134,6 +134,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _presenceSub;
   bool _recipientIsOnline = false;
 
+  // PRESENCE-NO-EXPIRY-TICK-1: presence is derived from a TIMESTAMP, so it
+  // must be re-evaluated as time passes, not only when the document changes.
+  // Once the recipient backgrounds their app their heartbeat stops, so no
+  // further snapshot arrives and the derived value would stay frozen at
+  // "online" indefinitely.
+  // Verified on device 12 Sep 2026: header showed Online 4+ minutes after
+  // the recipient backgrounded; backing out and re-entering cleared it.
+  Timestamp? _recipientLastActiveAt;
+  Timer? _presenceExpiryTimer;
+
   /// Returns true if the recipient is a real Firebase user (not a demo member).
   bool get _isRealUser =>
       !widget.recipientId.startsWith('mem_') &&
@@ -165,6 +175,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _blockService.initialize();
     // PRESENCE-REAL-1: subscribe to recipient's public doc for live presence.
     // Only for real users — demo mem_ IDs have no Firestore doc.
+    // PRESENCE-NO-EXPIRY-TICK-1: also store the raw Timestamp so the expiry
+    // timer can re-derive status as time passes without a new document event.
     if (_isRealUser) {
       _presenceSub = FirebaseFirestore.instance
           .collection('users_public')
@@ -174,6 +186,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         if (!mounted) return;
         final lat = snap.data()?['lastActiveAt'];
         final latTs = lat is Timestamp ? lat : null;
+        _recipientLastActiveAt = latTs; // keep for expiry timer
         final online = PresenceService.isOnlineFrom(latTs);
         if (online != _recipientIsOnline) {
           setState(() => _recipientIsOnline = online);
@@ -183,6 +196,22 @@ class _DMChatScreenState extends State<DMChatScreen> {
           debugPrint('[DMChatScreen] presence stream failed: $e');
         }
       });
+
+      // PRESENCE-NO-EXPIRY-TICK-1: re-derive presence every 30 seconds so
+      // the header clears when the recipient's lastActiveAt ages past the
+      // 3-minute threshold — even though no new document event fires.
+      // setState is skipped when the derived value has not changed, so ticks
+      // during active heartbeat (recipient foregrounded) are free.
+      _presenceExpiryTimer = Timer.periodic(
+        const Duration(seconds: 30),
+        (_) {
+          if (!mounted) return;
+          final online = PresenceService.isOnlineFrom(_recipientLastActiveAt);
+          if (online != _recipientIsOnline) {
+            setState(() => _recipientIsOnline = online);
+          }
+        },
+      );
     }
     // Tell the shell this DM is now active so foreground FCM banners
     // for this conversation are suppressed (OS heads-up is sufficient).
@@ -212,7 +241,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _focusNode.dispose();
     _refreshTimer?.cancel();
     _firestoreMsgSub?.cancel();
-    _presenceSub?.cancel(); // PRESENCE-REAL-1
+    _presenceSub?.cancel();         // PRESENCE-REAL-1
+    _presenceExpiryTimer?.cancel(); // PRESENCE-NO-EXPIRY-TICK-1
     if (_isVoiceRecording) _voiceSvc.cancelRecording();
     _dmService.removeListener(_onServiceUpdate);
     super.dispose();
