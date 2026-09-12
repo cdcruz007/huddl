@@ -12,7 +12,7 @@ import 'gemini_system_prompt_builder.dart';
 //   4. Classify feature scope consistently
 //
 // HYPERLOCAL RULE:
-//   Borough-only AI services (Matchmaker, Feed, Chat Summariser, Listing,
+//   Borough-only AI services (Feed, Chat Summariser, Listing,
 //   Discover, Messages AI) MUST call boroughPreamble() and reject any
 //   cross-borough data before sending to Gemini.
 //   UK-wide AI services (Event Recommender, Event Discovery, Invisible AI)

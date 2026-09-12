@@ -1294,7 +1294,6 @@ class _FeatureComparisonTable extends StatelessWidget {
               _rowBool('AI Recommendations', true, true, true),
               _rowBool('AI Smart Feed', true, true, true),
               _row('AI Listing Generator', '\u2014', '10/mo', '\u221E'),
-              _rowBool('AI Matchmaker', false, false, true),
 
               // ---- Community Q&A section ----
               _sectionHeader('Community Q&A'),

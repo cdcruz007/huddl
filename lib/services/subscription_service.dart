@@ -382,7 +382,6 @@ class SubscriptionService extends ChangeNotifier implements ClearableUserState {
   int get aiEventDiscoveriesThisWeek => _usage('ai_event_disc_week');
   int get aiChatSummariesToday => _usage('ai_chat_sum_today');
   int get aiListingGenerationsThisMonth => _usage('ai_listing_gen_month');
-  int get aiMatchmakerRequestsThisMonth => _usage('ai_matchmaker_month');
   int get aiSmartFeedRefreshesToday => _usage('ai_feed_today');
 
   // ===========================================================================
@@ -556,12 +555,6 @@ class SubscriptionService extends ChangeNotifier implements ClearableUserState {
       limits.aiSmartFeed &&
       aiSmartFeedRefreshesToday < limits.maxAiSmartFeedRefreshesPerDay;
 
-  /// AI Meetup Matchmaker: parent compatibility scoring & suggested meetups
-  bool get hasAiMeetupMatchmaker => limits.aiMeetupMatchmaker;
-  bool get canUseAiMatchmaker =>
-      limits.aiMeetupMatchmaker &&
-      aiMatchmakerRequestsThisMonth < limits.maxAiMatchmakerRequestsPerMonth;
-
   // ===========================================================================
   // CORE SOCIAL -- USAGE REMAINING HELPERS
   // ===========================================================================
@@ -627,8 +620,6 @@ class SubscriptionService extends ChangeNotifier implements ClearableUserState {
       _incrementUsage('ai_chat_sum_today');
   Future<void> recordAiListingGeneration() =>
       _incrementUsage('ai_listing_gen_month');
-  Future<void> recordAiMatchmakerRequest() =>
-      _incrementUsage('ai_matchmaker_month');
   Future<void> recordAiSmartFeedRefresh() =>
       _incrementUsage('ai_feed_today');
 
@@ -937,7 +928,6 @@ class SubscriptionService extends ChangeNotifier implements ClearableUserState {
       case 'endorsement_replies':
       case 'feed_promotion':
       case 'unlimited_service_listings':
-      case 'ai_matchmaker':
       case 'unlimited_ai':
         return SubscriptionTier.partner;
 
@@ -1017,9 +1007,6 @@ class SubscriptionService extends ChangeNotifier implements ClearableUserState {
         return 'You\'ve used your ${limits.maxAiChatSummariesPerDay} AI chat summary today. Upgrade for up to 10 summaries/day!';
       case 'ai_listing_generator':
         return 'AI Listing Writer is a Huddl Plus feature. Upgrade to auto-generate listings from photos!';
-      case 'ai_matchmaker':
-        return 'AI Meetup Matchmaker is exclusive to Huddl Partner — '
-            'it finds compatible parents nearby and suggests the perfect meetup.';
       case 'ai_event_discovery':
         return 'You\'ve used your weekly AI event discovery. Upgrade to Huddl Plus for daily discovery!';
       case 'ai_smart_feed':

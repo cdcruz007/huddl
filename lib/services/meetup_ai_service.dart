@@ -10,7 +10,7 @@ import 'browser_storage.dart';
 //   B) Smart Sort — silently reorder meetups by personal relevance
 //   E) Smart Nudges — contextual one-line prompts that appear only when useful
 //
-// Design philosophy: No new buttons, no "AI Matchmaker" language, no
+// Design philosophy: No new buttons, no matchmaking language, no
 // dating-app vibes. The AI works in the background to reduce cognitive load.
 // =============================================================================
 

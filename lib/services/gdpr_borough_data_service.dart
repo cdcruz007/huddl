@@ -172,8 +172,8 @@ class GdprBoroughDataService {
             .toList(),
       },
       'data_isolation_statement':
-          'All borough-only features (chat, DMs, groups, meetups, marketplace, '
-              'matchmaker) are restricted to your home borough ($borough). '
+          'All borough-only features (chat, DMs, groups, meetups, marketplace) '
+              'are restricted to your home borough ($borough). '
               'Cross-borough access is blocked by BoroughScopeGuard. '
               'Events are the only UK-wide feature.',
     };

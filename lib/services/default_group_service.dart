@@ -807,8 +807,8 @@ class DefaultGroupService {
   }
 
   /// Get all default groups.
-  /// Returns ALL groups (unfiltered) — used internally by services like
-  /// the matchmaker that need the complete set.
+  /// Returns ALL groups (unfiltered) — used internally by services that
+  /// need the complete set.
   List<Group> getAllDefaultGroups() {
     return _defaultGroups.values.toList();
   }

@@ -170,7 +170,7 @@ void main() {
       expect(SignalSource.values, contains(SignalSource.event));
       expect(SignalSource.values, contains(SignalSource.marketplace));
       expect(SignalSource.values, contains(SignalSource.offers));
-      expect(SignalSource.values, contains(SignalSource.matchmaker));
+      // SignalSource.matchmaker removed — AI Matchmaker feature discontinued
     });
 
     test('Cold-start scenario: maturity stages order correctly', () {

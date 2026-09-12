@@ -40,10 +40,6 @@ void main() {
           FeatureScope.boroughOnly);
     });
 
-    test('matchmaker is borough-only', () {
-      expect(BoroughScopeGuard.scopeOf(HuddlFeature.matchmaker),
-          FeatureScope.boroughOnly);
-    });
 
     test('events is UK-wide (the only exception)', () {
       expect(BoroughScopeGuard.scopeOf(HuddlFeature.events),
@@ -69,7 +65,6 @@ void main() {
         HuddlFeature.groups,
         HuddlFeature.meetups,
         HuddlFeature.marketplace,
-        HuddlFeature.matchmaker,
       ];
       for (final f in boroughOnlyFeatures) {
         expect(BoroughScopeGuard.isBoroughOnly(f), isTrue,

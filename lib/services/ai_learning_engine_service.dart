@@ -58,7 +58,6 @@ import 'ai_knowledge_base_service.dart';
 //   - Feed interactions           (nudge taps, feed scrolls, nudge dismissals)
 //   - External content affinity   (article clicks, knowledge-base queries)
 //   - Offers                      (deal views, taps, redemptions)
-//   - Matchmaker                  (match views, accepts, dismissals)
 //
 // Learning maturity stages (per-borough):
 //   1. Cold Start    (< 10 signals)    — profile mainly from onboarding
@@ -89,7 +88,6 @@ enum SignalSource {
   feed,
   knowledgeBase,
   offers,
-  matchmaker,
   supportOrg, // V3: Interactions with charity/support org content
 }
 
@@ -108,7 +106,6 @@ bool isSignalBoroughScoped(SignalSource source) {
     case SignalSource.feed:
     case SignalSource.knowledgeBase:
     case SignalSource.offers:
-    case SignalSource.matchmaker:
     case SignalSource.supportOrg:
       return true; // Everything else is borough-scoped
   }
@@ -1234,21 +1231,6 @@ class AiLearningEngineService {
     );
   }
 
-  /// Matchmaker: user accepted or viewed a match suggestion (BOROUGH-SCOPED)
-  Future<void> recordMatchInteraction({
-    required String matchId,
-    required String action,
-  }) async {
-    await recordSignal(
-      source: SignalSource.matchmaker,
-      action: 'match_$action',
-      data: {'matchId': matchId},
-      weight: action == 'accepted' ? 0.9 : 0.3,
-      topics: ['social', 'matchmaker'],
-      category: 'social',
-    );
-  }
-
   // ── PROFILE QUERY METHODS ──────────────────────────────────────────────
   // Used by the Prompt Builder and downstream services.
 
@@ -1536,7 +1518,6 @@ class AiLearningEngineService {
         break;
       case SignalSource.group:
       case SignalSource.chat:
-      case SignalSource.matchmaker:
         fp.socialAffinity =
             (fp.socialAffinity + weight * lr).clamp(0.0, 1.0);
         break;
@@ -1582,10 +1563,6 @@ class AiLearningEngineService {
         if (action == 'listing_created') stats.marketplaceListings++;
         if (action == 'item_viewed') stats.marketplaceViews++;
         if (action == 'item_bought') stats.marketplaceItemsBought++;
-        break;
-      case SignalSource.matchmaker:
-        if (action == 'match_accepted') stats.matchesAccepted++;
-        if (action == 'match_dismissed') stats.matchesDismissed++;
         break;
       default:
         break;

@@ -6,7 +6,7 @@
 //   1. Writing the current user's profile (including borough) to Firestore
 //      whenever it changes (login, postcode update, profile edit).
 //   2. Reading other users in the same borough from Firestore for the
-//      member picker (New DM screen, matchmaker, etc.).
+//      member picker (New DM screen, etc.).
 //   3. Providing a real-time stream of borough members.
 //
 // Collection: users/{uid}
@@ -292,7 +292,7 @@ class HuddlUserService implements ClearableUserState {
   // ── Query borough members (for New DM screen / member picker) ─────────────
 
   /// Returns all users in [borough] EXCEPT the current user.
-  /// Used by NewDMScreen and the matchmaker.
+  /// Used by NewDMScreen.
   Future<List<HuddlUser>> getBoroughMembers(String borough) async {
     final uid = _uid;
     if (borough.isEmpty) return [];

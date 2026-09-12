@@ -8,7 +8,7 @@ import 'postcode_service.dart';
 // Central utility that every data service uses to enforce borough isolation.
 //
 // HYPERLOCAL CONTRACT:
-//   Borough-only features  →  Chat, DMs, Groups, Meetups, Marketplace, Matchmaker
+//   Borough-only features  →  Chat, DMs, Groups, Meetups, Marketplace
 //   UK-wide features       →  Events (the ONLY cross-borough feature)
 //
 // This guard provides:
@@ -29,7 +29,6 @@ enum HuddlFeature {
   groups,
   meetups,
   marketplace,
-  matchmaker,
   events, // UK-wide — the only exception
   communityFeed, // Borough-aware (shows local content, but events can cross)
   offers, // Borough-aware (local deals ranked higher)
@@ -64,7 +63,6 @@ class BoroughScopeGuard {
       case HuddlFeature.groups:
       case HuddlFeature.meetups:
       case HuddlFeature.marketplace:
-      case HuddlFeature.matchmaker:
       case HuddlFeature.services:
         return FeatureScope.boroughOnly;
       case HuddlFeature.events:

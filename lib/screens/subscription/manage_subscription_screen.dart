@@ -442,17 +442,6 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   color: HuddlColors.nearBlack,
                 ),
               ],
-              if (limits.aiMeetupMatchmaker) ...[
-                const SizedBox(height: 8),
-                _UsageCard(
-                  icon: HuddlIcons.handshake,
-                  label: 'AI Matchmaker Requests This Month',
-                  used: _service.aiMatchmakerRequestsThisMonth,
-                  limit: limits.maxAiMatchmakerRequestsPerMonth,
-                  color: HuddlColors.accentCoral,
-                ),
-              ],
-
               const SizedBox(height: 24),
 
               // Actions

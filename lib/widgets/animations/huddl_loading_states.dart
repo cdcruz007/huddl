@@ -17,8 +17,7 @@ import '../../constants/app_text_styles.dart';
 //   HuddlLoadingScreen.findingParents()    → finding nearby parents
 //   HuddlLoadingScreen.joiningGroup()      → joining a group
 //   HuddlLoadingScreen.postingNow()        → posting to noticeboard
-//   HuddlLoadingScreen.matchmaking()       → AI matchmaker running
-//   HuddlLoadingScreen.checkingPayment()   → subscription checkout
+  //   HuddlLoadingScreen.checkingPayment()   → subscription checkout
 //
 //   HuddlSkeletonFeed()                    → shimmer feed loading state
 //   HuddlSkeletonCard()                    → single card skeleton
@@ -48,12 +47,6 @@ class HuddlLoadingScreen extends StatefulWidget {
   factory HuddlLoadingScreen.postingNow() => const HuddlLoadingScreen._(
         illustration: _HuddlLoadingIllustration.megaphone,
         message: 'Sharing with your neighbours',
-      );
-
-  factory HuddlLoadingScreen.matchmaking() => const HuddlLoadingScreen._(
-        illustration: _HuddlLoadingIllustration.sparkle,
-        message: 'Finding your perfect match',
-        submessage: 'AI is working its magic',
       );
 
   factory HuddlLoadingScreen.checkingPayment() => const HuddlLoadingScreen._(

@@ -24,8 +24,8 @@ import 'postcode_service.dart';
 // │ HYPERLOCAL ARCHITECTURE — PROMPT FIRST PRINCIPLES                      │
 // │                                                                        │
 // │  1. EVERY prompt opens with HyperlocalRules for the user's borough.    │
-// │  2. Borough-scoped features (Chat, DMs, Groups, Meetups, Marketplace,  │
-// │     Matchmaker) MUST frame all suggestions within the user's borough.  │
+// │  2. Borough-scoped features (Chat, DMs, Groups, Meetups, Marketplace)  │
+// │     MUST frame all suggestions within the user's borough.              │
 // │  3. Events are the ONLY UK-wide feature — prompts for events include   │
 // │     both the home borough AND any target borough the user explores.    │
 // │  4. Borough local directory (parks, libraries, cafes, leisure centres) │
@@ -38,7 +38,6 @@ import 'postcode_service.dart';
 //
 // Service methods:
 //   buildCopilotPrompt()        — General parenting AI assistant
-//   buildMatchmakerPrompt()     — AI parent matcher (borough-only)
 //   buildMarketplacePrompt()    — Listing generator / marketplace AI
 //   buildGroupsMeetupsPrompt()  — Group & meetup AI suggestions
 //   buildEventsPrompt()         — Event discovery / recommendation (UK-wide)
@@ -55,8 +54,8 @@ import 'postcode_service.dart';
 
 /// The prompt scope for a feature — determines which data is injected.
 enum PromptFeatureScope {
-  /// Borough-restricted features: Chat, DMs, Groups, Meetups, Marketplace,
-  /// Matchmaker.  All suggestions scoped to user's borough.
+  /// Borough-restricted features: Chat, DMs, Groups, Meetups, Marketplace.
+  /// All suggestions scoped to user's borough.
   boroughOnly,
 
   /// UK-wide features: Events only.  Suggestions can span any borough.
@@ -298,93 +297,6 @@ class GeminiSystemPromptBuilder {
         '- Keep responses grounded and practical, avoiding overly generic advice.');
     buf.writeln(
         '- If you do not know something specific, say so honestly rather than making up data.');
-    buf.writeln();
-
-    return buf.toString();
-  }
-
-  // ────────────────────────────────────────────────────────────────────────
-  // 2. MATCHMAKER — AI parent matcher (BOROUGH-ONLY)
-  // ────────────────────────────────────────────────────────────────────────
-
-  String buildMatchmakerPrompt({
-    required String matchProfileSummary,
-    String? matchBorough,
-  }) {
-    _refreshUserContext();
-    final buf = StringBuffer();
-    final borough = _currentBorough ?? 'your area';
-
-    buf.writeln(
-        'You are the huddl AI Matchmaker for a UK parents\' HYPERLOCAL '
-        'community app. You help parents in the SAME BOROUGH connect with '
-        'each other based on compatibility.\n');
-
-    // ── Hyperlocal rules ─────────────────────────────────────────────────
-    if (_currentBorough != null) {
-      buf.writeln(HyperlocalRules.toPromptContext(_currentBorough!));
-      buf.writeln();
-    }
-
-    buf.writeln('MATCHMAKER RULES (CRITICAL):');
-    buf.writeln(
-        '- You can ONLY match parents who are BOTH in $borough.');
-    buf.writeln(
-        '- NEVER suggest meeting parents from a different borough.');
-    buf.writeln(
-        '- All suggested meeting locations MUST be within $borough.');
-    buf.writeln(
-        '- Frame all meetup ideas around $borough venues and amenities.');
-    buf.writeln();
-
-    // ── User identity ────────────────────────────────────────────────────
-    buf.writeln(_buildUserIdentityBlock());
-
-    // ── Match profile ────────────────────────────────────────────────────
-    buf.writeln('MATCH PROFILE:');
-    buf.writeln(matchProfileSummary);
-    if (matchBorough != null) {
-      buf.writeln('Match\'s borough: $matchBorough');
-      if (matchBorough != _currentBorough) {
-        buf.writeln(
-            'WARNING: This match is in a DIFFERENT borough ($matchBorough). '
-            'Cross-borough matching is NOT allowed. Suggest the user look '
-            'for matches within $borough instead.');
-      }
-    }
-    buf.writeln();
-
-    // ── Borough directory ────────────────────────────────────────────────
-    if (_currentBorough != null) {
-      final dir = _knowledgeBase.getBoroughDirectory(_currentBorough!);
-      if (dir != null) {
-        buf.writeln('MEETING VENUES IN $borough:');
-        buf.writeln(dir.toPromptContext());
-        buf.writeln();
-      }
-    }
-
-    // ── Learning context ─────────────────────────────────────────────────
-    buf.writeln(_learningEngine.buildPromptContext());
-
-    // ── Empathy ──────────────────────────────────────────────────────────
-    buf.writeln(_knowledgeBase.buildEmpathyInstructions());
-
-    // ── Safety guardrails ────────────────────────────────────────────────
-    buf.writeln(_knowledgeBase.buildSafetyGuardrails());
-
-    // ── Output instructions ──────────────────────────────────────────────
-    buf.writeln('OUTPUT INSTRUCTIONS:');
-    buf.writeln(
-        '- Generate a warm, personalised meetup suggestion for these two parents in $borough.');
-    buf.writeln(
-        '- Suggest a specific venue or location WITHIN $borough.');
-    buf.writeln(
-        '- Include a suggested activity appropriate for their children\'s ages.');
-    buf.writeln(
-        '- Explain in 2-3 sentences why they might get along well.');
-    buf.writeln(
-        '- Keep the tone warm, encouraging, and casual British English.');
     buf.writeln();
 
     return buf.toString();
@@ -642,7 +554,7 @@ class GeminiSystemPromptBuilder {
     buf.writeln(
         '- REMINDER: Events are the ONLY feature that crosses borough boundaries.');
     buf.writeln(
-        '- All OTHER features (groups, meetups, marketplace, chat, matchmaker) '
+        '- All OTHER features (groups, meetups, marketplace, chat) '
         'are STRICTLY $homeBorough only.');
     buf.writeln();
 
@@ -1083,8 +995,6 @@ class GeminiSystemPromptBuilder {
         '- **Meetups**: Organise and join meetups ONLY with parents in $borough');
     buf.writeln(
         '- **Market**: Buy & sell baby/children items ONLY with parents in $borough');
-    buf.writeln(
-        '- **AI Matchmaker**: Matches compatible parents ONLY within $borough');
     buf.writeln(
         '- **DMs & Chat**: Message other parents ONLY within $borough');
     buf.writeln(

@@ -4666,7 +4666,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           : _blockService.blockedUserIds.toList(),
       'Borough Data (GDPR Art. 20)': {
         'Current borough': _borough,
-        'Borough scope': 'Chat, DMs, Groups, Meetups, Marketplace, Matchmaker are borough-only',
+        'Borough scope': 'Chat, DMs, Groups, Meetups, Marketplace are borough-only',
         'UK-wide features': 'Events only',
         'Data isolation': 'Cross-borough access blocked by BoroughScopeGuard',
       },

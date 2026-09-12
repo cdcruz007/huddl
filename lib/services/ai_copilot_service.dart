@@ -498,10 +498,6 @@ class AiCopilotService with BoroughAiContext implements ClearableUserState {
       case CopilotCategory.social:
         return const [
           CopilotAction(
-              label: 'AI Matchmaker',
-              route: '/meetups',
-              icon: 'auto_awesome'),
-          CopilotAction(
               label: 'Browse Meetups',
               route: '/meetups',
               icon: 'groups'),
@@ -659,16 +655,11 @@ class AiCopilotService with BoroughAiContext implements ClearableUserState {
             'Let\'s get you connected, $userName! Here\'s what you can do:\n\n'
             '\u2022 **Browse meetups** happening near you in $borough\n'
             '\u2022 **Create your own meetup** \u2014 coffee mornings are very popular\n'
-            '\u2022 **Try AI Matchmaker** to find compatible parents nearby\n\n'
             'Making parent friends is one of the best things you can do. '
             'The huddl community is here for you!',
         isUser: false,
         category: CopilotCategory.social,
         actions: const [
-          CopilotAction(
-              label: 'AI Matchmaker',
-              route: '/meetups',
-              icon: 'auto_awesome'),
           CopilotAction(
               label: 'Browse Meetups',
               route: '/meetups',

@@ -386,7 +386,6 @@ class HyperlocalRules {
     'groups',
     'meetups',
     'marketplace',
-    'matchmaker',
   ];
 
   /// Features that are open UK-wide (or location-aware but not restricted).
@@ -413,7 +412,6 @@ class HyperlocalRules {
     buf.writeln('  - Groups: Parents can ONLY join/create groups within $borough');
     buf.writeln('  - Meetups: Parents can ONLY create/join meetups within $borough');
     buf.writeln('  - Marketplace: Parents can ONLY buy/sell with other parents in $borough');
-    buf.writeln('  - Matchmaker: AI matches parents ONLY within $borough');
     buf.writeln('');
     buf.writeln('UK-WIDE features (open to all locations):');
     buf.writeln('  - Events: Parents can browse events in ANY borough across the UK');

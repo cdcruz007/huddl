@@ -46,7 +46,6 @@ class TierLimits {
   final int maxAiEventDiscoveriesPerWeek;      // AI-found local events/week
   final int maxAiChatSummariesPerDay;          // AI group summaries/day
   final int maxAiListingGenerationsPerMonth;   // AI listing drafts/month
-  final int maxAiMatchmakerRequestsPerMonth;   // AI meetup suggestions/month
   final int maxAiSmartFeedRefreshesPerDay;     // personalised feed refreshes/day
 
   // ---- AI Feature Booleans ----
@@ -56,7 +55,6 @@ class TierLimits {
   final bool aiChatSummaries;
   final bool aiListingGenerator;
   final bool aiSmartFeed;
-  final bool aiMeetupMatchmaker;
 
   // ---- Community Q&A & Bookmarks (legacy fields — kept for backward compat) ----
   final int maxQuestionsPerWeek;   // legacy — new gate uses maxQuestionsLifetime
@@ -94,7 +92,6 @@ class TierLimits {
     required this.maxAiEventDiscoveriesPerWeek,
     required this.maxAiChatSummariesPerDay,
     required this.maxAiListingGenerationsPerMonth,
-    required this.maxAiMatchmakerRequestsPerMonth,
     required this.maxAiSmartFeedRefreshesPerDay,
     // AI booleans
     required this.aiCopilotAccess,
@@ -103,7 +100,6 @@ class TierLimits {
     required this.aiChatSummaries,
     required this.aiListingGenerator,
     required this.aiSmartFeed,
-    required this.aiMeetupMatchmaker,
     // Community Q&A (legacy defaults)
     this.maxQuestionsPerWeek = 3,
     this.communityBadgesEnabled = false,
@@ -143,7 +139,6 @@ class TierLimits {
     maxAiEventDiscoveriesPerWeek: 1,
     maxAiChatSummariesPerDay: 0,
     maxAiListingGenerationsPerMonth: 0,
-    maxAiMatchmakerRequestsPerMonth: 0,
     maxAiSmartFeedRefreshesPerDay: 2,
     aiCopilotAccess: true,
     aiEventDiscovery: true,
@@ -151,7 +146,6 @@ class TierLimits {
     aiChatSummaries: false,
     aiListingGenerator: false,
     aiSmartFeed: true,
-    aiMeetupMatchmaker: false,
     maxQuestionsPerWeek: 999,   // legacy unlimited
     communityBadgesEnabled: false,
     maxBookmarksPerMonth: 999,  // legacy unlimited
@@ -185,7 +179,6 @@ class TierLimits {
     maxAiEventDiscoveriesPerWeek: 7,
     maxAiChatSummariesPerDay: 10,
     maxAiListingGenerationsPerMonth: 10,
-    maxAiMatchmakerRequestsPerMonth: 0,
     maxAiSmartFeedRefreshesPerDay: 999,
     aiCopilotAccess: true,
     aiEventDiscovery: true,
@@ -193,7 +186,6 @@ class TierLimits {
     aiChatSummaries: true,
     aiListingGenerator: true,
     aiSmartFeed: true,
-    aiMeetupMatchmaker: false,
     maxQuestionsPerWeek: 15,
     communityBadgesEnabled: true,
     maxBookmarksPerMonth: 50,
@@ -219,10 +211,9 @@ class TierLimits {
     customProfileBadge: true,
     maxAiCopilotChatsPerDay: 999, maxAiEventDiscoveriesPerWeek: 999,
     maxAiChatSummariesPerDay: 999, maxAiListingGenerationsPerMonth: 999,
-    maxAiMatchmakerRequestsPerMonth: 999, maxAiSmartFeedRefreshesPerDay: 999,
+    maxAiSmartFeedRefreshesPerDay: 999,
     aiCopilotAccess: true, aiEventDiscovery: true, aiEventRecommendations: true,
     aiChatSummaries: true, aiListingGenerator: true, aiSmartFeed: true,
-    aiMeetupMatchmaker: true,
     maxQuestionsPerWeek: 999, communityBadgesEnabled: true,
     maxBookmarksPerMonth: 999, aiSynthesisAccess: true,
     // ── Lifetime gates — unlimited for Partner ──
@@ -374,12 +365,11 @@ class SubscriptionPlan {
         'Reach analytics — impressions, profile views, booking link clicks',
         'External booking URL on all listings',
         'Post as your verified business on the noticeboard',
-        'AI Meetup Matchmaker — find compatible parents nearby',
       ],
       shortBenefits: [
         'Business profile + unlimited listings + priority directory placement',
         'Borough feed promotion + endorsement replies + reach analytics',
-        'All Plus features unlimited + AI Matchmaker',
+        'All Plus features unlimited + unlimited AI across every feature',
       ],
     ),
   ];
